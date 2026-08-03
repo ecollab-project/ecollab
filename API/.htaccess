@@ -1,0 +1,39 @@
+# ============================================================
+# Ecollab API .htaccess — API-level security hardening
+# ============================================================
+
+# ── JSON API: no caching ────────────────────────────────────
+<IfModule mod_headers.c>
+    Header always set Cache-Control "no-store, no-cache, must-revalidate, private"
+    Header always set Pragma "no-cache"
+    Header always set Expires "0"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    # CORS: restrict to same origin (adjust if frontend is on separate domain)
+    Header always set Access-Control-Allow-Origin "same-origin"
+    Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, X-CSRF-Token"
+    Header always set Access-Control-Max-Age "3600"
+</IfModule>
+
+# ── Only allow GET and POST (block PUT/DELETE direct to API files) ──
+<LimitExcept GET POST OPTIONS>
+    Require all denied
+</LimitExcept>
+
+# ── Block direct access to include/helper files ──────────────
+<FilesMatch "^(db|config|helpers?|functions?|bootstrap)\.php$">
+    Require all denied
+</FilesMatch>
+
+# ── Disable directory listing ────────────────────────────────
+Options -Indexes
+
+# ── Block script injection in query strings ──────────────────
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{QUERY_STRING} (<|%3C).*script.*(>|%3E) [NC,OR]
+    RewriteCond %{QUERY_STRING} \.\.\/ [NC,OR]
+    RewriteCond %{QUERY_STRING} \%00 [NC]
+    RewriteRule ^ - [F,L]
+</IfModule>

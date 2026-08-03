@@ -1,0 +1,76 @@
+/* ── Ecollab Design Tokens ──────────────────────────────────────────────────
+   Single source of truth for all CSS custom properties.
+   Shared across landing, auth, and dashboard pages.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── Landing palette ─────────────────────────────────────── */
+  --bg: #07040F;
+  --card: #0f0c1a;
+  --card2: #110e1e;
+  --pink: #FF2D75;
+  --red: #FF4D4D;
+  --purple: #9F3BFF;
+  --glow-pink: rgba(255, 45, 117, 0.4);
+  --glow-purple: rgba(159, 59, 255, 0.3);
+  --text: #FFFFFF;
+  --muted: #B0B0C0;
+  --border: rgba(255, 255, 255, 0.07);
+  --grad: linear-gradient(135deg, #FF2D75, #FF4D4D);
+
+  /* ── Auth palette ────────────────────────────────────────── */
+  --auth-bg: #05010D;
+  --auth-pink: #FF2D75;
+  --auth-pink2: #FF1493;
+  --auth-purple: #A855F7;
+  --auth-grad: linear-gradient(135deg, #FF5A5F, #FF1493);
+  --auth-muted: #A8A8B8;
+  --auth-border: rgba(255, 255, 255, 0.07);
+
+  /* ── App / chat palette ──────────────────────────────────── */
+  --bg-primary: #0b0f1a;
+  --bg-secondary: #111827;
+  --bg-tertiary: #1a2235;
+  --bg-card: #1f2937;
+  --bg-hover: #252f42;
+  --bg-active: #2a3650;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-purple: #a855f7;
+  --accent-pink: #ec4899;
+  --accent-blue: #3b82f6;
+  --accent-green: #22c55e;
+  --gradient-main: linear-gradient(135deg, #a855f7, #ec4899);
+  --app-border: rgba(255, 255, 255, 0.06);
+
+  /* ── Spacing & radii ─────────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  /* ── Transitions ─────────────────────────────────────────── */
+  --transition: 0.18s ease;
+
+  /* ── Layout ──────────────────────────────────────────────── */
+  --sidebar-left-width: 260px;
+  --sidebar-right-width: 320px;
+  --workspace-width: 56px;
+}
+
+/* ── Global resets ────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 45, 117, 0.35); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 45, 117, 0.6); }

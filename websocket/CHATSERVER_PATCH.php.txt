@@ -1,0 +1,54 @@
+<?php
+/**
+ * PATCH — Apply these changes to websocket/ChatServer.php
+ *
+ * 1. Add DmHandler require near the top (after WhiteboardHandler require):
+ * ─────────────────────────────────────────────────────────────
+ * require_once __DIR__ . '/handlers/DmHandler.php';
+ *
+ *
+ * 2. Add these cases to the match() block in onMessage():
+ * ─────────────────────────────────────────────────────────────
+ *   'dm_message'           => $this->handleDmMessage($from, $data, $meta),
+ *   'dm_typing'            => $this->handleDmTyping($from, $data, $meta),
+ *   'notify_conn_req'      => $this->handleNotifyConnReq($from, $data, $meta),
+ *   'notify_conn_accepted' => $this->handleNotifyConnAccepted($from, $data, $meta),
+ *
+ *
+ * 3. Add these four methods to the ChatServer class body:
+ * ─────────────────────────────────────────────────────────────
+ */
+
+// ── Add this inside class ChatServer ──────────────────────────
+
+private function handleDmMessage(ConnectionInterface $from, array $data, array $meta): void
+{
+    // Store sender full_name + gradient in meta if present (set during auth)
+    DmHandler::handleDmMessage($from, $data, $meta, $this->userConns);
+}
+
+private function handleDmTyping(ConnectionInterface $from, array $data, array $meta): void
+{
+    DmHandler::handleDmTyping($from, $data, $meta, $this->userConns);
+}
+
+private function handleNotifyConnReq(ConnectionInterface $from, array $data, array $meta): void
+{
+    DmHandler::handleNotifyConnReq($from, $data, $meta, $this->userConns);
+}
+
+private function handleNotifyConnAccepted(ConnectionInterface $from, array $data, array $meta): void
+{
+    DmHandler::handleNotifyConnAccepted($from, $data, $meta, $this->userConns);
+}
+
+/**
+ * 4. In handleAuth() — after setting $meta['authed'] = true — store extra
+ *    fields so DmHandler can use them:
+ * ─────────────────────────────────────────────────────────────
+ * $meta['full_name'] = $user['full_name'] ?? $user['username'];
+ * $meta['gradient']  = $user['avatar_color_gradient'] ?? '';
+ *
+ *    The existing handleAuth already sets $meta['user_id'] and $meta['username'],
+ *    so just add those two lines after the existing ones.
+ */

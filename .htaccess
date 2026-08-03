@@ -1,0 +1,71 @@
+# ============================================================
+# Ecollab Root .htaccess — Enhanced Security Configuration
+# ============================================================
+
+# ── PHP engine settings ─────────────────────────────────────
+php_flag  display_errors           Off
+php_flag  log_errors               On
+php_value error_log                logs/php-error.log
+php_flag  expose_php               Off
+php_flag  allow_url_fopen          Off
+php_flag  allow_url_include        Off
+php_value session.use_only_cookies 1
+php_value session.use_strict_mode  1
+php_value session.cookie_httponly  1
+php_value session.cookie_samesite  Lax
+php_value session.gc_maxlifetime   1800
+
+# ── Remove server fingerprints ──────────────────────────────
+<IfModule mod_headers.c>
+    Header always unset X-Powered-By
+    Header always unset Server
+    Header always unset X-AspNet-Version
+</IfModule>
+
+# ── Block access to sensitive files ─────────────────────────
+<FilesMatch "(\.env|\.env\.*|composer\.(json|lock)|package\.json|package-lock\.json|yarn\.lock|\.git|\.gitignore|\.htpasswd|README\.md|Makefile)$">
+    Require all denied
+</FilesMatch>
+
+# ── Block access to hidden files ────────────────────────────
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# ── Disable directory listing ────────────────────────────────
+Options -Indexes -ExecCGI
+
+# ── Block common attack patterns ────────────────────────────
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Null bytes
+    RewriteCond %{QUERY_STRING} (\%00|\%0a|\%0d) [NC]
+    RewriteRule ^ - [F,L]
+
+    # Base64-encoded PHP payloads
+    RewriteCond %{QUERY_STRING} (base64_encode.*\(.*\)) [NC]
+    RewriteRule ^ - [F,L]
+
+    # Script injection
+    RewriteCond %{QUERY_STRING} (<|%3C).*script.*(>|%3E) [NC]
+    RewriteRule ^ - [F,L]
+
+    # Path traversal
+    RewriteCond %{QUERY_STRING} \.\.\/ [NC]
+    RewriteRule ^ - [F,L]
+
+    # SQL UNION injection probes
+    RewriteCond %{QUERY_STRING} union.*select.*\( [NC]
+    RewriteRule ^ - [F,L]
+
+    # Block exploit scanners
+    RewriteCond %{HTTP_USER_AGENT} (sqlmap|nikto|nessus|masscan|dirbuster|gobuster|zgrab) [NC]
+    RewriteRule ^ - [F,L]
+</IfModule>
+
+# ── Limit request body (10 MB) ───────────────────────────────
+LimitRequestBody 10485760
+
+# ── Default charset ──────────────────────────────────────────
+AddDefaultCharset UTF-8

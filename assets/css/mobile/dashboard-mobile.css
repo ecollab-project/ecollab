@@ -1,0 +1,168 @@
+/* ── Ecollab Dashboard — Mobile Overrides ────────────────────────────────────
+   Applied to: student, facilitator, and admin dashboards on viewports < 768px.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+
+  /* ── Sidebar: off-canvas on mobile ────────────────────────────────────── */
+  .sidebar {
+    position: fixed;
+    left: -260px;
+    top: 0; bottom: 0;
+    z-index: 200;
+    width: 260px;
+    transition: left 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+  }
+  .sidebar.open { left: 0; }
+
+  /* ── Main expands to full width ────────────────────────────────────────── */
+  .main,
+  .main-content { margin-left: 0 !important; width: 100% !important; }
+
+  /* ── Header ────────────────────────────────────────────────────────────── */
+  .header,
+  .topbar {
+    padding: 10px 14px;
+    position: sticky; top: 0; z-index: 100;
+  }
+
+  .search-wrap,
+  .tb-search { display: none; }   /* Hidden on mobile — open via FAB if needed */
+
+  /* ── Hamburger button (injected by JS) ─────────────────────────────────── */
+  .mob-hamburger {
+    display: flex !important;
+    flex-direction: column; gap: 4px;
+    cursor: pointer; padding: 4px; flex-shrink: 0;
+  }
+  .mob-hamburger span {
+    display: block; width: 22px; height: 2px;
+    background: var(--muted2,#94a3b8); border-radius: 2px; transition: 0.2s;
+  }
+
+  /* ── Content padding ───────────────────────────────────────────────────── */
+  .content,
+  .page-content { padding: 12px 12px; }
+
+  /* ── Stats grid: 2 columns on mobile ───────────────────────────────────── */
+  .stats-row,
+  .stats-grid,
+  .stat-row { grid-template-columns: 1fr 1fr !important; gap: 9px !important; }
+
+  /* ── Main grid: single column ──────────────────────────────────────────── */
+  .main-grid,
+  .grid-2,
+  .g2,
+  .ins-grid,
+  .analytics-grid { grid-template-columns: 1fr !important; gap: 10px; }
+
+  /* ── Table: horizontal scroll ──────────────────────────────────────────── */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 580px; }
+
+  /* ── Cards ─────────────────────────────────────────────────────────────── */
+  .card { border-radius: 13px; padding: 12px; }
+
+  /* ── Stat card values ───────────────────────────────────────────────────── */
+  .stat-value,
+  .sc-val { font-size: 26px !important; }
+
+  /* ── Bottom grid ────────────────────────────────────────────────────────── */
+  .bottom-grid,
+  .qa-grid { grid-template-columns: 1fr 1fr !important; }
+
+  /* ── Achievements grid ──────────────────────────────────────────────────── */
+  .ach-grid { grid-template-columns: 1fr 1fr !important; }
+  .acp-grid { grid-template-columns: repeat(3, 1fr) !important; }
+
+  /* ── Welcome bar ────────────────────────────────────────────────────────── */
+  .welcome-bar {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+
+  /* ── Activity table ─────────────────────────────────────────────────────── */
+  .act-table { font-size: 11px; }
+  .act-table th, .act-table td { padding: 6px 8px !important; }
+
+  /* ── Members table ──────────────────────────────────────────────────────── */
+  .mb-table { font-size: 11px; }
+
+  /* ── Server/channel rows ────────────────────────────────────────────────── */
+  .server-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .srv-right { flex-direction: row; align-items: center; gap: 8px; }
+
+  /* ── Page title row ─────────────────────────────────────────────────────── */
+  .page-title-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+
+  /* ── Admin: roles grid ──────────────────────────────────────────────────── */
+  .roles-grid { grid-template-columns: 1fr !important; }
+
+  /* ── Health monitors ────────────────────────────────────────────────────── */
+  .health-monitors { grid-template-columns: 1fr 1fr !important; }
+
+  /* ── Matching stats ─────────────────────────────────────────────────────── */
+  .matching-stats { grid-template-columns: 1fr !important; }
+
+  /* ── Prof chip: compact ─────────────────────────────────────────────────── */
+  .prof-chip .pn { display: none; }
+  .prof-chip .pr { display: none; }
+
+  /* ── Pagination ─────────────────────────────────────────────────────────── */
+  .pagination { flex-direction: column; gap: 8px; align-items: flex-start; }
+
+  /* ── Modal ──────────────────────────────────────────────────────────────── */
+  .md, .modal { width: calc(100vw - 24px) !important; max-width: none !important; margin: 12px; }
+  .modal-overlay { align-items: flex-end; }
+  .modal { border-radius: 18px 18px 0 0 !important; }
+
+  /* ── Toast container ────────────────────────────────────────────────────── */
+  .toast-container { bottom: 12px; left: 12px; right: 12px; transform: none; }
+
+  /* ── Chart wrap ─────────────────────────────────────────────────────────── */
+  .chart-wrap { height: 160px !important; }
+
+  /* ── Sidebar overlay ────────────────────────────────────────────────────── */
+  .sidebar-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 199; display: none;
+  }
+  .sidebar-overlay.open { display: block; }
+
+}
+
+@media (max-width: 480px) {
+
+  .stats-row,
+  .stats-grid,
+  .stat-row { grid-template-columns: 1fr !important; }
+
+  .bottom-grid,
+  .qa-grid { grid-template-columns: 1fr !important; }
+
+  .ach-grid { grid-template-columns: 1fr 1fr !important; }
+  .acp-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  .page-title { font-size: 20px !important; }
+  .greeting   { font-size: 18px !important; }
+
+  .stat-value,
+  .sc-val { font-size: 22px !important; }
+
+  .server-row { gap: 6px; }
+  .btn-join   { font-size: 10px; padding: 4px 9px; }
+
+  .filter-bar { flex-wrap: wrap; gap: 6px; }
+  .select-filter { width: 100%; }
+
+}

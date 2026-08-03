@@ -1,0 +1,25 @@
+# ── Secrets — never track ──────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Dependencies (Composer-managed) ─────────────────────────────────────────
+/vendor/
+
+# ── Runtime output ───────────────────────────────────────────────────────────
+/logs/*
+!/logs/.gitkeep
+
+# ── User-uploaded content ────────────────────────────────────────────────────
+/uploads/*
+!/uploads/.gitkeep
+!/uploads/.htaccess
+
+# ── OS / editor cruft ─────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+
+# ── Known duplicate/orphaned files pending Phase 2 cleanup review ───────────
+# (Not deleted yet — Task 2.3 will resolve these explicitly with your review.
+#  Left tracked intentionally for now so the cleanup diff is visible in Git.)

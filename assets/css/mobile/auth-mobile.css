@@ -1,0 +1,35 @@
+/* ── Ecollab Auth — Mobile overrides ─────────────────────────────────────── */
+
+@media (max-width: 500px) {
+  .page { padding: 20px 16px; }
+
+  .card {
+    width: 100%;
+    border-radius: 28px;
+    padding: 22px 22px 28px;
+  }
+
+  .card.signup-card {
+    padding: 18px 18px 22px;
+  }
+
+  .hero-text h1 { font-size: 38px; }
+
+  .brain-chip {
+    right: -10px;
+    width: 46px; height: 46px;
+    font-size: 20px;
+  }
+
+  .otp-group { gap: 5px; }
+  .otp-input { width: 42px; height: 50px; font-size: 1.2rem; border-radius: 10px; }
+
+  .nav-btns { gap: 8px; }
+  .btn-back { padding: 0 14px; font-size: .82rem; }
+}
+
+@media (max-width: 380px) {
+  .hero-text h1 { font-size: 32px; }
+  .card { border-radius: 22px; padding: 18px 16px 22px; }
+  .otp-input { width: 36px; height: 44px; font-size: 1.1rem; }
+}

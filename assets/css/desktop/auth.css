@@ -1,0 +1,867 @@
+/* ── Ecollab Auth Pages CSS ───────────────────────────────────────────────────
+   Extracted from login.html and signup.html.
+   Covers: login, signup (3-step), forgot-password.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+html, body {
+  height: 100%;
+  background: var(--auth-bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
+
+/* ── Ambient background ─────────────────────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 55% 45% at 15% 85%, rgba(255, 45, 117, 0.18) 0%, transparent 65%),
+    radial-gradient(ellipse 40% 40% at 85% 20%, rgba(168, 85, 247, 0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 30% at 50% 50%, rgba(255, 45, 117, 0.04) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Neural grid ────────────────────────────────────────────────────────── */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 45, 117, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 45, 117, 0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Particle canvas ────────────────────────────────────────────────────── */
+#particles {
+  position: fixed; inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ── Blob orbs ──────────────────────────────────────────────────────────── */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
+.orb1 {
+  width: 420px; height: 420px;
+  background: rgba(255, 20, 100, 0.14);
+  bottom: -100px; left: -80px;
+  animation: orb-drift 12s ease-in-out infinite;
+}
+.orb2 {
+  width: 280px; height: 280px;
+  background: rgba(168, 85, 247, 0.10);
+  top: 80px; right: -60px;
+  animation: orb-drift 15s ease-in-out infinite reverse;
+}
+@keyframes orb-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%       { transform: translate(30px, -20px) scale(1.08); }
+}
+
+/* ── Page layout ────────────────────────────────────────────────────────── */
+.page {
+  position: relative; z-index: 2;
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  padding: 20px 28px 16px;
+  overflow: hidden;
+}
+
+/* ── Nav logo ───────────────────────────────────────────────────────────── */
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700; font-size: 1.2rem;
+  text-decoration: none; color: #fff;
+  width: fit-content;
+}
+.nav-logo .ico {
+  width: 34px; height: 34px; border-radius: 9px;
+  background: linear-gradient(135deg, #FF2D75, #FF4D4D);
+  display: grid; place-items: center; font-size: 16px;
+}
+
+/* ── Center container ───────────────────────────────────────────────────── */
+.center {
+  flex: 1; display: flex;
+  align-items: center; justify-content: center;
+  padding: 8px 0;
+  overflow: hidden;
+}
+
+/* ── Card ───────────────────────────────────────────────────────────────── */
+.card {
+  width: 420px;
+  background: rgba(10, 7, 20, 0.92);
+  border: 1.5px solid rgba(255, 70, 130, 0.65);
+  border-radius: 32px;
+  padding: 20px 28px 24px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 0 35px rgba(255, 0, 110, 0.38),
+    0 0 90px rgba(180, 0, 255, 0.12),
+    inset 0 0 60px rgba(255, 45, 117, 0.03);
+  position: relative;
+  animation: card-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(28px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+/* Signup card is slightly more compact */
+.card.signup-card {
+  padding: 16px 24px 18px;
+}
+
+/* ── Back button ────────────────────────────────────────────────────────── */
+.back-btn {
+  width: 40px; height: 40px; border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: grid; place-items: center;
+  cursor: pointer; margin-bottom: 12px;
+  transition: background .2s, border-color .2s, box-shadow .2s;
+  text-decoration: none; color: #fff;
+}
+.back-btn:hover {
+  background: rgba(255, 0, 120, 0.1);
+  border-color: rgba(255, 0, 120, 0.35);
+  box-shadow: 0 0 14px rgba(255, 0, 120, 0.3);
+}
+.back-btn svg {
+  width: 18px; height: 18px;
+  stroke: #fff; stroke-width: 2.2;
+  fill: none; stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* ── Hero text ──────────────────────────────────────────────────────────── */
+.hero-text { text-align: center; margin-bottom: 16px; }
+.hero-text h1 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 44px; font-weight: 800;
+  line-height: 1.0; margin-bottom: 8px;
+}
+.hero-text h1 .white { color: #fff; }
+.hero-text h1 .grad {
+  background: linear-gradient(135deg, #FF416C, #FF2D92);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-text p {
+  color: var(--auth-muted);
+  font-size: .9rem; line-height: 1.65;
+  max-width: 300px; margin: 0 auto;
+}
+
+/* ── Step progress dots (signup) ────────────────────────────────────────── */
+.steps {
+  display: flex; gap: 6px;
+  margin-bottom: 10px;
+}
+.step-dot {
+  flex: 1; height: 4px; border-radius: 2px;
+  background: rgba(255, 255, 255, 0.10);
+  transition: background 0.4s;
+}
+.step-dot.active {
+  background: linear-gradient(90deg, #FF416C, #A855F7);
+}
+
+/* ── Form box ───────────────────────────────────────────────────────────── */
+.form-box {
+  background: rgba(20, 15, 32, 0.92);
+  border: 1px solid rgba(255, 70, 130, 0.35);
+  border-radius: 22px;
+  padding: 14px 16px 16px;
+  box-shadow: 0 0 25px rgba(255, 0, 120, 0.10);
+  margin-bottom: 12px;
+}
+.signup-card .form-box {
+  border-radius: 18px;
+  padding: 10px 14px 12px;
+  margin-bottom: 8px;
+}
+
+/* ── Input fields ───────────────────────────────────────────────────────── */
+.input-wrap {
+  position: relative;
+  margin-bottom: 8px;
+}
+.input-wrap:last-child { margin-bottom: 0; }
+.signup-card .input-wrap { margin-bottom: 6px; }
+
+.input-row {
+  display: flex; align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  height: 48px;
+  padding: 0 16px;
+  transition: border-color .2s, box-shadow .2s;
+}
+.signup-card .input-row { height: 42px; padding: 0 14px; }
+
+.input-row:focus-within {
+  border-color: rgba(255, 45, 117, 0.45);
+  box-shadow: 0 0 0 3px rgba(255, 45, 117, 0.08);
+}
+
+.input-row input,
+.input-row select {
+  flex: 1; background: transparent; border: none; outline: none;
+  color: #fff; font-size: .9rem; font-family: 'Inter', sans-serif; height: 100%;
+}
+.input-row input::placeholder { color: #6e6e82; }
+.input-row select { color: #6e6e82; cursor: pointer; }
+.input-row select option { background: #0a0714; color: #fff; }
+.input-row select.filled { color: #fff; }
+
+.input-suffix {
+  color: rgba(255, 255, 255, 0.28);
+  font-size: .78rem; white-space: nowrap;
+  padding-left: 10px;
+  border-left: 1px solid rgba(255, 255, 255, 0.07);
+  margin-left: 8px;
+}
+
+/* ── Eye toggle button ──────────────────────────────────────────────────── */
+.eye-btn {
+  background: none; border: none; cursor: pointer;
+  color: rgba(255, 255, 255, 0.35);
+  display: grid; place-items: center;
+  padding: 0; transition: color .2s; flex-shrink: 0;
+}
+.eye-btn:hover { color: var(--auth-pink); }
+.eye-btn svg {
+  width: 18px; height: 18px;
+  stroke: currentColor; stroke-width: 2;
+  fill: none; stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* ── Divider between fields ─────────────────────────────────────────────── */
+.field-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  margin: 0 0 12px;
+}
+.signup-card .field-divider { margin: 0 0 8px; }
+
+/* ── Password strength bar ──────────────────────────────────────────────── */
+.strength-wrap { padding: 3px 4px 4px; }
+.strength-bar {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px; overflow: hidden;
+}
+.strength-fill {
+  height: 100%; width: 0%;
+  border-radius: 2px;
+  transition: width .4s, opacity .4s;
+  background: linear-gradient(90deg, red, orange, yellow, #0f0, cyan, blue, violet);
+  opacity: 0;
+}
+
+/* ── Interest tags ──────────────────────────────────────────────────────── */
+.tags-label {
+  font-size: .75rem; color: var(--auth-muted);
+  text-transform: uppercase; letter-spacing: .8px;
+  margin-bottom: 8px;
+}
+.tags-wrap { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+.tag {
+  padding: 4px 11px; border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: .78rem; color: var(--auth-muted);
+  cursor: pointer; transition: all .2s;
+  user-select: none; font-family: 'Inter', sans-serif;
+}
+.tag.selected {
+  border-color: var(--auth-pink);
+  background: rgba(255, 45, 117, 0.15);
+  color: #fff;
+}
+
+/* ── Options row (Remember me + Forgot password) ────────────────────────── */
+.options-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px; padding: 0 2px;
+}
+.remember {
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer; font-size: .82rem; color: #B7B7C9;
+  user-select: none;
+}
+.remember input[type="checkbox"] { display: none; }
+.check-box {
+  width: 18px; height: 18px; border-radius: 5px;
+  border: 1.5px solid rgba(255, 45, 117, 0.5);
+  background: rgba(255, 45, 117, 0.08);
+  display: grid; place-items: center;
+  transition: background .2s; flex-shrink: 0;
+}
+.remember input:checked ~ .check-box {
+  background: var(--auth-pink); border-color: var(--auth-pink);
+}
+.check-box svg {
+  width: 11px; height: 11px;
+  stroke: #fff; stroke-width: 2.5;
+  fill: none; opacity: 0;
+  transition: opacity .2s;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.remember input:checked ~ .check-box svg { opacity: 1; }
+
+.forgot {
+  color: #FF4D88; font-size: .82rem;
+  text-decoration: none; transition: opacity .2s;
+}
+.forgot:hover { opacity: 0.75; }
+
+/* ── Terms checkbox row ─────────────────────────────────────────────────── */
+.check-row {
+  display: flex; align-items: center;
+  margin-bottom: 10px; padding: 0 2px;
+}
+.terms-link { color: #FF4D88; text-decoration: none; }
+.terms-link:hover { text-decoration: underline; }
+
+/* ── Primary action buttons ─────────────────────────────────────────────── */
+.login-btn {
+  width: 100%; height: 52px;
+  background: linear-gradient(135deg, #FF5A5F, #FF1493);
+  border: none; border-radius: 16px;
+  color: #fff; font-family: 'Poppins', sans-serif;
+  font-size: 1rem; font-weight: 700;
+  cursor: pointer; letter-spacing: .03em;
+  box-shadow: 0 0 30px rgba(255, 20, 147, 0.4);
+  transition: transform .2s, box-shadow .2s;
+  margin-bottom: 14px;
+  position: relative; overflow: hidden;
+}
+.login-btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent);
+  opacity: 0; transition: opacity .2s;
+}
+.login-btn:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(255, 20, 147, 0.6); }
+.login-btn:hover::before { opacity: 1; }
+.login-btn:active { transform: translateY(0); }
+.login-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+.signup-btn {
+  width: 100%; height: 44px;
+  background: linear-gradient(135deg, #FF5A5F, #FF1493);
+  border: none; border-radius: 14px;
+  color: #fff; font-family: 'Poppins', sans-serif;
+  font-size: .95rem; font-weight: 700;
+  cursor: pointer; letter-spacing: .03em;
+  box-shadow: 0 0 30px rgba(255, 20, 147, 0.4);
+  transition: transform .2s, box-shadow .2s;
+  margin-bottom: 10px; position: relative; overflow: hidden;
+}
+.signup-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent); opacity: 0; transition: opacity .2s; }
+.signup-btn:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(255, 20, 147, 0.6); }
+.signup-btn:hover::before { opacity: 1; }
+.signup-btn:active { transform: translateY(0); }
+
+/* ── Forgot password button ─────────────────────────────────────────────── */
+.forgot-btn {
+  width: 100%; height: 48px;
+  background: linear-gradient(135deg, #FF5A5F, #FF1493);
+  border: none; border-radius: 14px;
+  color: #fff; font-family: 'Poppins', sans-serif;
+  font-size: .95rem; font-weight: 700;
+  cursor: pointer; letter-spacing: .03em;
+  box-shadow: 0 0 30px rgba(255, 20, 147, 0.4);
+  transition: transform .2s, box-shadow .2s;
+  margin-bottom: 12px; position: relative; overflow: hidden;
+}
+.forgot-btn:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(255, 20, 147, 0.6); }
+.forgot-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+/* ── Step nav buttons (Back + Next) ─────────────────────────────────────── */
+.nav-btns { display: flex; gap: 10px; margin-bottom: 10px; }
+.btn-back {
+  height: 44px; padding: 0 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px; color: #fff;
+  font-family: 'Poppins', sans-serif; font-size: .88rem; font-weight: 600;
+  cursor: pointer; transition: background .2s, border-color .2s; white-space: nowrap;
+}
+.btn-back:hover { background: rgba(255, 0, 120, 0.1); border-color: rgba(255, 0, 120, 0.35); }
+.btn-next {
+  flex: 1; height: 44px;
+  background: linear-gradient(135deg, #FF5A5F, #FF1493);
+  border: none; border-radius: 14px;
+  color: #fff; font-family: 'Poppins', sans-serif; font-size: .95rem; font-weight: 700;
+  cursor: pointer; letter-spacing: .03em;
+  box-shadow: 0 0 30px rgba(255, 20, 147, 0.4);
+  transition: transform .2s, box-shadow .2s; position: relative; overflow: hidden;
+}
+.btn-next:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(255, 20, 147, 0.6); }
+.btn-next:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+/* ── Error message ──────────────────────────────────────────────────────── */
+.err-msg {
+  font-size: .78rem; color: #ff6b6b;
+  margin-top: -6px; margin-bottom: 10px;
+  display: none; padding-left: 2px;
+}
+
+/* ── Alert banners (JS-injected) ────────────────────────────────────────── */
+.alert {
+  border-radius: 10px; padding: 10px 14px;
+  font-size: .83rem; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.alert-error   { background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); color: #fca5a5; }
+.alert-success { background: rgba(34, 197, 94, 0.1);  border: 1px solid rgba(34, 197, 94, 0.3);  color: #86efac; }
+.alert-info    { background: rgba(255, 45, 117, 0.1); border: 1px solid rgba(255, 45, 117, 0.3); color: #fda4af; }
+
+/* ── Social buttons ─────────────────────────────────────────────────────── */
+.social-btn {
+  width: 100%; height: 46px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  color: #fff; font-size: .85rem; font-family: 'Inter', sans-serif;
+  cursor: pointer; margin-bottom: 8px;
+  transition: border-color .2s, box-shadow .2s, background .2s;
+  position: relative;
+}
+.signup-card .social-btn { height: 40px; border-radius: 12px; font-size: .82rem; margin-bottom: 6px; }
+.social-btn:hover {
+  border-color: rgba(255, 0, 120, 0.3);
+  box-shadow: 0 0 18px rgba(255, 0, 120, 0.12);
+  background: rgba(255, 255, 255, 0.02);
+}
+.social-btn .s-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.3; }
+.social-btn .s-sub  { font-size: .7rem; color: var(--auth-muted); }
+
+/* Google icon */
+.g-icon { width: 22px; height: 22px; flex-shrink: 0; }
+
+/* Microsoft squares */
+.ms-icon { width: 20px; height: 20px; flex-shrink: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+.ms-icon span { border-radius: 1px; }
+
+/* ── Sign up / Login crosslinks ─────────────────────────────────────────── */
+.signup-text,
+.login-text {
+  text-align: center; font-size: .82rem; color: var(--auth-muted);
+  margin: 12px 0 14px;
+}
+.signup-card .login-text { margin: 4px 0 8px; }
+.signup-text a, .login-text a { color: #FF4D88; text-decoration: none; font-weight: 600; }
+.signup-text a:hover, .login-text a:hover { text-decoration: underline; }
+
+/* ── Badge ──────────────────────────────────────────────────────────────── */
+.badge {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 999px; padding: 10px 20px;
+  font-size: .8rem; color: #E5E5F0;
+  margin: 0 auto; width: fit-content;
+}
+.signup-card .badge { padding: 7px 16px; font-size: .78rem; margin: 0 auto 6px; }
+.badge .b-ico {
+  width: 22px; height: 22px; border-radius: 6px;
+  background: linear-gradient(135deg, #FF2D75, #FF4D4D);
+  display: grid; place-items: center; font-size: 11px;
+}
+
+/* ── Floating brain chip ────────────────────────────────────────────────── */
+.brain-chip {
+  position: absolute;
+  top: 28px; right: -16px;
+  width: 54px; height: 54px;
+  background: rgba(15, 10, 28, 0.9);
+  border: 1.5px solid rgba(255, 77, 136, 0.5);
+  border-radius: 15px;
+  display: grid; place-items: center;
+  box-shadow: 0 0 24px rgba(255, 45, 117, 0.35), 0 0 50px rgba(168, 85, 247, 0.15);
+  animation: chip-float 5s ease-in-out infinite;
+  font-size: 24px; z-index: 10;
+  backdrop-filter: blur(10px);
+}
+@keyframes chip-float {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50%       { transform: translateY(-10px) rotate(3deg); }
+}
+
+/* ── Step panels ────────────────────────────────────────────────────────── */
+.step-panel { display: none; }
+.step-panel.active { display: block; animation: fade-in .28s ease both; }
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Guest text ─────────────────────────────────────────────────────────── */
+.guest-text { text-align: center; font-size: .78rem; color: var(--auth-muted); }
+.guest-text a { color: #FF4D88; text-decoration: none; }
+.guest-text a:hover { text-decoration: underline; }
+
+/* ── OTP input group ────────────────────────────────────────────────────── */
+.otp-group {
+  display: flex; gap: 8px; justify-content: center;
+  margin-bottom: 12px;
+}
+.otp-input {
+  width: 48px; height: 56px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1.5px solid rgba(255, 255, 255, 0.10);
+  border-radius: 12px;
+  text-align: center; font-size: 1.4rem; font-weight: 700;
+  color: #fff; font-family: 'Poppins', sans-serif;
+  outline: none; transition: border-color .2s, box-shadow .2s;
+  caret-color: var(--auth-pink);
+}
+.otp-input:focus {
+  border-color: rgba(255, 45, 117, 0.6);
+  box-shadow: 0 0 0 3px rgba(255, 45, 117, 0.12);
+}
+.otp-input.filled { border-color: rgba(255, 45, 117, 0.45); color: #FF4D88; }
+
+/* ── Resend timer ───────────────────────────────────────────────────────── */
+.resend-row {
+  text-align: center; font-size: .82rem; color: var(--auth-muted);
+  margin-bottom: 12px;
+}
+.resend-link {
+  color: #FF4D88; cursor: pointer; text-decoration: none; font-weight: 600;
+}
+.resend-link:hover { text-decoration: underline; }
+.resend-link.disabled { color: var(--auth-muted); cursor: default; pointer-events: none; }
+
+/* ── Loading spinner inside button ──────────────────────────────────────── */
+.btn-spinner {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+  vertical-align: middle; margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SIGNUP — 5-STEP REDESIGN
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Card now taller to fit scrollable panels ──────────────────────────── */
+.card.signup-card {
+  padding: 18px 24px 16px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Step header: label + counter ──────────────────────────────────────── */
+.step-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.step-label {
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--auth-white);
+  letter-spacing: -.01em;
+}
+.step-counter {
+  font-size: .72rem;
+  color: var(--auth-muted);
+  font-family: 'Inter', sans-serif;
+}
+
+/* ── 5 dots ─────────────────────────────────────────────────────────────── */
+.steps { gap: 5px; margin-bottom: 14px; }
+
+/* ── Scrollable inner box for long steps ───────────────────────────────── */
+.signup-scroll-box {
+  max-height: 340px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,45,117,0.3) transparent;
+  padding-right: 4px;
+  margin-bottom: 10px;
+}
+.signup-scroll-box::-webkit-scrollbar { width: 4px; }
+.signup-scroll-box::-webkit-scrollbar-track { background: transparent; }
+.signup-scroll-box::-webkit-scrollbar-thumb {
+  background: rgba(255,45,117,0.3);
+  border-radius: 4px;
+}
+
+/* ── Tag sections (category headers) ───────────────────────────────────── */
+.tag-section {
+  margin-bottom: 14px;
+}
+.tag-section:last-child { margin-bottom: 4px; }
+
+.tag-section-label {
+  font-size: .7rem;
+  font-weight: 700;
+  color: var(--auth-muted);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 7px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.tag-section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+  margin-left: 4px;
+}
+
+/* Tags wrap inside sections — tighter gap */
+.tag-section .tags-wrap {
+  gap: 5px;
+  margin-bottom: 0;
+}
+
+/* ── Step hint text ─────────────────────────────────────────────────────── */
+.step-hint {
+  font-size: .78rem;
+  color: var(--auth-muted);
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+/* ── OTP row ─────────────────────────────────────────────────────────────── */
+.otp-row { gap: 6px; }
+.otp-send-btn {
+  flex-shrink: 0;
+  padding: 0 12px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,45,117,0.4);
+  background: rgba(255,45,117,0.1);
+  color: #FF4D88;
+  font-size: .75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+  font-family: 'Inter', sans-serif;
+}
+.otp-send-btn:hover:not(:disabled) {
+  background: rgba(255,45,117,0.2);
+  border-color: rgba(255,45,117,0.7);
+}
+.otp-send-btn:disabled { opacity: .5; cursor: not-allowed; }
+.otp-hint {
+  font-size: .7rem;
+  color: var(--auth-muted);
+  margin: 4px 0 0 2px;
+}
+
+/* ── Hobby Builder ──────────────────────────────────────────────────────── */
+.hobby-builder { margin-bottom: 10px; }
+
+.hobby-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.hobby-card {
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.02);
+  border-radius: 11px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  user-select: none;
+}
+.hobby-card:hover {
+  border-color: rgba(255,45,117,0.3);
+  background: rgba(255,45,117,0.04);
+}
+.hobby-card.expanded {
+  grid-column: 1 / -1;  /* full width when expanded */
+  border-color: rgba(168,85,247,0.4);
+  background: rgba(168,85,247,0.05);
+  cursor: default;
+}
+
+.hobby-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hobby-icon { font-size: 1.1rem; flex-shrink: 0; }
+.hobby-name {
+  flex: 1;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--auth-white);
+}
+.hobby-check {
+  font-size: .8rem;
+  font-weight: 700;
+  color: #a855f7;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Expanded hobby detail */
+.hobby-expanded {
+  margin-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 12px;
+}
+.hobby-row-label {
+  font-size: .68rem;
+  font-weight: 700;
+  color: var(--auth-muted);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin-bottom: 6px;
+  margin-top: 10px;
+}
+.hobby-row-label:first-child { margin-top: 0; }
+.hobby-tags { gap: 5px; flex-wrap: wrap; display: flex; margin-bottom: 0; }
+.hobby-tags .tag { font-size: .72rem; padding: 3px 9px; }
+
+/* Metrics row */
+.hobby-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr 80px;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.metric-item { display: flex; flex-direction: column; gap: 4px; }
+.metric-label {
+  font-size: .65rem;
+  font-weight: 700;
+  color: var(--auth-muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.metric-select, .metric-input {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 7px;
+  color: var(--auth-white);
+  font-size: .75rem;
+  padding: 5px 8px;
+  outline: none;
+  font-family: 'Inter', sans-serif;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color .2s;
+}
+.metric-select:focus, .metric-input:focus {
+  border-color: rgba(168,85,247,0.5);
+}
+.metric-select option { background: #0a0714; }
+.metric-input { text-align: center; }
+/* Remove number spinner */
+.metric-input::-webkit-inner-spin-button,
+.metric-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+.hobby-add-btn {
+  width: 100%;
+  padding: 8px 0;
+  border-radius: 9px;
+  border: 1px solid rgba(168,85,247,0.4);
+  background: rgba(168,85,247,0.1);
+  color: #a855f7;
+  font-size: .78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: 'Inter', sans-serif;
+}
+.hobby-add-btn:hover {
+  background: rgba(168,85,247,0.2);
+  border-color: rgba(168,85,247,0.7);
+}
+
+/* ── Hobby Chips (selected summary) ─────────────────────────────────────── */
+.selected-hobbies-list {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.hobby-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: rgba(168,85,247,0.08);
+  border: 1px solid rgba(168,85,247,0.2);
+  border-radius: 9px;
+  margin-bottom: 5px;
+}
+.hobby-chip-icon { font-size: 1rem; flex-shrink: 0; }
+.hobby-chip-info { flex: 1; min-width: 0; }
+.hobby-chip-name {
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--auth-white);
+  display: block;
+}
+.hobby-chip-sub {
+  font-size: .7rem;
+  color: var(--auth-muted);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hobby-chip-remove {
+  background: none;
+  border: none;
+  color: var(--auth-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color .15s;
+}
+.hobby-chip-remove:hover { color: #ef4444; }
+
+/* ── Tag colour variants per group ──────────────────────────────────────── */
+.tag[data-group="collab"].selected  { border-color: #3b82f6; background: rgba(59,130,246,.15); color: #93c5fd; }
+.tag[data-group="goal"].selected    { border-color: #22c55e; background: rgba(34,197,94,.13);  color: #86efac; }
+.tag[data-group="avail"].selected   { border-color: #f59e0b; background: rgba(245,158,11,.13); color: #fde68a; }
+.tag[data-group="tech"].selected    { border-color: #a855f7; background: rgba(168,85,247,.15); color: #d8b4fe; }
+.tag[data-group="academic"].selected{ border-color: #06b6d4; background: rgba(6,182,212,.13);  color: #a5f3fc; }
+.tag[data-group="creative"].selected{ border-color: #ec4899; background: rgba(236,72,153,.13); color: #f9a8d4; }
+
+/* ── Mobile tweaks ──────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .hobby-main-grid { grid-template-columns: 1fr; }
+  .hobby-metrics   { grid-template-columns: 1fr 1fr; }
+  .metric-item:last-child { grid-column: 1 / -1; }
+  .signup-scroll-box { max-height: 260px; }
+}
+

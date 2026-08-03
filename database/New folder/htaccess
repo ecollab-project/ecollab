@@ -1,0 +1,81 @@
+Options -Indexes -MultiViews
+DirectoryIndex index.php
+
+# ── Security headers ──────────────────────────────────────────────────────────
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set X-XSS-Protection "1; mode=block"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(self), microphone=(self), geolocation=()"
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' https://fonts.googleapis.com 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://lh3.googleusercontent.com https://graph.microsoft.com; connect-src 'self' ws://localhost:8080 wss://localhost:8080 https://accounts.google.com https://oauth2.googleapis.com https://www.googleapis.com https://login.microsoftonline.com https://graph.microsoft.com; form-action 'self' https://accounts.google.com https://login.microsoftonline.com; media-src 'self' blob:; worker-src 'self' blob:;"
+  Header unset Server
+  Header unset X-Powered-By
+</IfModule>
+
+# ── Block access to sensitive files & dirs ────────────────────────────────────
+<FilesMatch "(^\.env|composer\.json|composer\.lock|README\.md|\.gitignore|\.gitkeep)$">
+  Order allow,deny
+  Deny from all
+</FilesMatch>
+
+<FilesMatch "\.(sql|log|sh|bat|ini|cfg|bak)$">
+  Order allow,deny
+  Deny from all
+</FilesMatch>
+
+# ── Routing ───────────────────────────────────────────────────────────────────
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Force HTTPS (uncomment in production with SSL)
+  # RewriteCond %{HTTPS} off
+  # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+  # Block direct access to internal directories
+  RewriteRule ^(database|security|services|includes|logs|websocket)(/|$) - [F,L]
+
+  # ── Auth shortcuts ─────────────────────────────────────────────────────────
+  RewriteRule ^login/?$            modules/auth/login.php            [L]
+  RewriteRule ^signup/?$           modules/auth/signup.php           [L]
+  RewriteRule ^logout/?$           modules/auth/logout.php           [L]
+  RewriteRule ^forgot-password/?$  modules/auth/forgot-password.php  [L]
+
+  # ── Chat shortcut ──────────────────────────────────────────────────────────
+  RewriteRule ^chat/?$             modules/chat/chat.php             [L]
+
+  # ── WebSocket proxy (Apache mod_proxy_wstunnel) ────────────────────────────
+  # RewriteCond %{HTTP:Upgrade} =websocket [NC]
+  # RewriteRule ^ws(.*)$ ws://localhost:8080/$1 [P,L]
+
+  # Fallback: pass unresolved requests to index.php
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.php [L]
+</IfModule>
+
+# ── PHP hardening ─────────────────────────────────────────────────────────────
+<IfModule mod_php.c>
+  php_flag  expose_php              Off
+  php_flag  session.cookie_httponly On
+  php_flag  session.use_strict_mode On
+  php_value session.gc_maxlifetime  3600
+  php_flag  display_errors          Off
+  php_flag  log_errors              On
+</IfModule>
+
+# ── Compression ───────────────────────────────────────────────────────────────
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json text/plain
+</IfModule>
+
+# ── Static asset caching ──────────────────────────────────────────────────────
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css               "access plus 1 week"
+  ExpiresByType application/javascript "access plus 1 week"
+  ExpiresByType image/png              "access plus 1 month"
+  ExpiresByType image/jpeg             "access plus 1 month"
+  ExpiresByType image/webp             "access plus 1 month"
+  ExpiresByType font/woff2             "access plus 1 year"
+</IfModule>

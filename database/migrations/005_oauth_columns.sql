@@ -1,0 +1,31 @@
+-- ============================================================
+-- 005_oauth_columns.sql
+-- ============================================================
+-- NOTE: This migration is now a NO-OP placeholder.
+--
+-- The OAuth/SSO columns (sso_provider, sso_uid) and the
+-- idx_users_sso index are already created by 002_core_schema.sql
+-- (both as an inline KEY definition and via a redundant
+-- CREATE INDEX IF NOT EXISTS statement at the end of that file).
+--
+-- This file is kept in the migration sequence (rather than
+-- deleted) so that:
+--   1. Numbering stays stable for any external references/docs
+--   2. The migration runner records it as "applied" for
+--      databases that expect this filename to exist
+--
+-- The ORIGINAL version of this file contained:
+--   USE ecollab_v2;
+--   CREATE INDEX IF NOT EXISTS idx_users_sso ON users (sso_provider, sso_uid);
+--
+-- Both lines were problematic:
+--   - "USE ecollab_v2" hardcoded a database name and would FAIL
+--     on any installation using a different database name
+--     (e.g. "ecollab", "ecollab_prod", etc.)
+--   - The CREATE INDEX was redundant — 002_core_schema.sql
+--     already creates this exact index
+--
+-- Both issues are resolved by making this migration a no-op.
+-- ============================================================
+
+SELECT 1;

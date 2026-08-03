@@ -1,0 +1,41 @@
+/* ── Ecollab Landing — Mobile overrides ──────────────────────────────────── */
+
+@media (max-width: 768px) {
+  nav {
+    padding: 14px 20px;
+  }
+  .nav-links { display: none; }
+
+  .hero { padding: 110px 20px 40px; }
+  .hero h1 { font-size: clamp(2rem, 8vw, 3rem); }
+  .hero p  { font-size: .95rem; }
+
+  .tablet-wrap { max-width: 100%; padding: 0 8px; }
+  .tablet-outer { transform: rotateX(2deg) rotateY(-1deg); }
+
+  .how-grid { grid-template-columns: 1fr 1fr; gap: 14px; }
+  .feat-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .test-grid { grid-template-columns: 1fr; gap: 16px; }
+  .pricing-grid { grid-template-columns: 1fr; gap: 16px; max-width: 380px; }
+  .price-card.pro { padding: 30px 22px; }
+
+  .banner { margin: 10px 20px 40px; padding: 20px 24px; flex-direction: column; text-align: center; }
+  .banner h3 { font-size: 1rem; }
+
+  footer { padding: 28px 20px; }
+  .footer-bottom { padding: 16px 20px; }
+
+  .how-works, .features, .testimonials, .pricing { padding: 40px 20px; }
+}
+
+@media (max-width: 500px) {
+  .how-grid  { grid-template-columns: 1fr; }
+  .feat-grid { grid-template-columns: 1fr; }
+
+  .hero h1 { font-size: clamp(1.8rem, 9vw, 2.5rem); }
+
+  .tablet-screen { flex-direction: column; min-height: 280px; }
+  .tab-sidebar { width: 100%; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); padding: 12px; }
+
+  .float-icon { display: none; }
+}

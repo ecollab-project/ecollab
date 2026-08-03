@@ -1,0 +1,152 @@
+<?php
+declare(strict_types=1);
+
+use Ratchet\ConnectionInterface;
+
+/**
+ * DmHandler — WebSocket handler for real-time Direct Messages and notifications.
+ *
+ * Add to ChatServer:
+ *   use DmHandler;
+ *
+ * Then in the match block inside onMessage():
+ *   'dm_message'        => $this->handleDmMessage($from, $data, $meta),
+ *   'dm_typing'         => $this->handleDmTyping($from, $data, $meta),
+ *   'notify_conn_req'   => $this->handleNotifyConnReq($from, $data, $meta),
+ */
+class DmHandler
+{
+    /**
+     * Deliver a DM message to the recipient if they are online.
+     *
+     * Expected $data:
+     *   { type: 'dm_message', conversation_id, message_id, recipient_id, body, created_at }
+     */
+    public static function handleDmMessage(
+        ConnectionInterface $from,
+        array $data,
+        array $meta,
+        array $userConns  // user_id => ConnectionInterface
+    ): void {
+        $recipientId    = (int)($data['recipient_id'] ?? 0);
+        $conversationId = (int)($data['conversation_id'] ?? 0);
+        $messageId      = (int)($data['message_id'] ?? 0);
+
+        if (!$recipientId || !$conversationId) return;
+
+        $payload = json_encode([
+            'type'            => 'dm_message',
+            'conversation_id' => $conversationId,
+            'message_id'      => $messageId,
+            'sender_id'       => $meta['user_id'],
+            'sender_name'     => $meta['full_name'] ?? $meta['username'],
+            'sender_gradient' => $meta['gradient'] ?? '',
+            'body'            => $data['body'] ?? '',
+            'created_at'      => $data['created_at'] ?? date('Y-m-d H:i:s'),
+        ]);
+
+        // Send to recipient if online
+        if (isset($userConns[$recipientId])) {
+            try {
+                $userConns[$recipientId]->send($payload);
+            } catch (\Throwable) {}
+        }
+
+        // Echo back to sender for multi-tab sync
+        try {
+            $from->send($payload);
+        } catch (\Throwable) {}
+    }
+
+    /**
+     * Relay DM typing indicator to the other party.
+     *
+     * Expected $data:
+     *   { type: 'dm_typing', conversation_id, recipient_id, is_typing }
+     */
+    public static function handleDmTyping(
+        ConnectionInterface $from,
+        array $data,
+        array $meta,
+        array $userConns
+    ): void {
+        $recipientId    = (int)($data['recipient_id'] ?? 0);
+        $conversationId = (int)($data['conversation_id'] ?? 0);
+
+        if (!$recipientId || !$conversationId) return;
+        if (!isset($userConns[$recipientId])) return;
+
+        $payload = json_encode([
+            'type'            => 'dm_typing',
+            'conversation_id' => $conversationId,
+            'sender_id'       => $meta['user_id'],
+            'sender_name'     => $meta['full_name'] ?? $meta['username'],
+            'is_typing'       => (bool)($data['is_typing'] ?? false),
+        ]);
+
+        try {
+            $userConns[$recipientId]->send($payload);
+        } catch (\Throwable) {}
+    }
+
+    /**
+     * Push a connection-request notification to the addressee if online.
+     *
+     * Expected $data:
+     *   { type: 'notify_conn_req', addressee_id, request_id, requester: {fullName, gradient} }
+     */
+    public static function handleNotifyConnReq(
+        ConnectionInterface $from,
+        array $data,
+        array $meta,
+        array $userConns
+    ): void {
+        $addresseeId = (int)($data['addressee_id'] ?? 0);
+        if (!$addresseeId) return;
+        if (!isset($userConns[$addresseeId])) return;
+
+        $payload = json_encode([
+            'type'       => 'connection_request',
+            'request_id' => (int)($data['request_id'] ?? 0),
+            'requester'  => [
+                'id'       => $meta['user_id'],
+                'fullName' => $meta['full_name'] ?? $meta['username'],
+                'gradient' => $meta['gradient'] ?? '',
+            ],
+        ]);
+
+        try {
+            $userConns[$addresseeId]->send($payload);
+        } catch (\Throwable) {}
+    }
+
+    /**
+     * Push "connection accepted" back to the original requester if online.
+     *
+     * Expected $data:
+     *   { type: 'notify_conn_accepted', requester_id }
+     */
+    public static function handleNotifyConnAccepted(
+        ConnectionInterface $from,
+        array $data,
+        array $meta,
+        array $userConns
+    ): void {
+        $requesterId = (int)($data['requester_id'] ?? 0);
+        if (!$requesterId) return;
+        if (!isset($userConns[$requesterId])) return;
+
+        $payload = json_encode([
+            'type'         => 'connection_accepted',
+            'accepted_by'  => [
+                'id'       => $meta['user_id'],
+                'fullName' => $meta['full_name'] ?? $meta['username'],
+                'gradient' => $meta['gradient'] ?? '',
+            ],
+        ]);
+
+        try {
+            $userConns[$requesterId]->send($payload);
+        } catch (\Throwable) {}
+    }
+}

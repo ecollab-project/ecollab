@@ -1,0 +1,136 @@
+/* ── Ecollab Whiteboard — Mobile Overrides ────────────────────────────────────
+   Applied on top of assets/css/desktop/whiteboard.css for smaller viewports.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* ══════════════════════════════════════════════════════════════
+   TABLET (≤ 900px) — sidebar becomes slide-in drawer
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+
+  .wb-sidebar-toggle-btn { display: flex; }
+  .wb-fit-btn            { display: none; }
+  .wb-hdr-sub            { display: none; }
+  .wb-hdr-center         { gap: 4px; }
+
+  .wb-rsidebar {
+    position: absolute; right: 0; top: 0; bottom: 0;
+    width: 280px; z-index: 50;
+    transform: translateX(100%);
+    transition: transform .22s cubic-bezier(.4,0,.2,1);
+    box-shadow: -4px 0 24px rgba(0,0,0,.5);
+  }
+  .wb-rsidebar.wb-sidebar-open { transform: translateX(0); }
+
+  .wb-sidebar-minimize-btn {
+    display: flex;
+    align-items: center; justify-content: center;
+    flex-shrink: 0; margin-left: auto; margin-right: 6px;
+    width: 32px; height: 32px; border-radius: 7px;
+    border: 1px solid rgba(255,255,255,.08);
+    background: rgba(239,68,68,.08); color: #94a3b8;
+    cursor: pointer; transition: all .15s;
+  }
+  .wb-sidebar-minimize-btn:hover {
+    background: rgba(239,68,68,.2);
+    color: #ef4444;
+    border-color: rgba(239,68,68,.4);
+  }
+
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE (≤ 600px) — horizontal tool strip
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 600px) {
+
+  /* Header */
+  .wb-hdr       { padding: 0 8px; gap: 6px; height: 48px; }
+  .wb-hdr-title { font-size: 12px; }
+  .wb-av:nth-child(n+3) { display: none; }
+  .wb-av-more           { display: none; }
+
+  /* Body stacks vertically: tool strip on top, canvas below */
+  .wb-body { flex-direction: column; }
+
+  /* ── HORIZONTAL TOOL STRIP ── */
+  .wb-tools {
+    /* reset vertical defaults */
+    width: 100% !important;
+    height: 48px !important;
+    flex-direction: row !important;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0 6px;
+    gap: 2px;
+    /* horizontal scroll */
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    /* borders */
+    border-right: none;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    flex-shrink: 0;
+  }
+  .wb-tools::-webkit-scrollbar { display: none; }
+
+  /* Separators: vertical line in horizontal strip */
+  .wb-tsep {
+    width: 1px !important;
+    height: 22px !important;
+    margin: 0 3px;
+    flex-shrink: 0;
+  }
+
+  /* Buttons: fixed size, never wrap */
+  .wb-tbtn {
+    width: 38px !important;
+    height: 38px !important;
+    flex-shrink: 0;
+    font-size: 15px;
+  }
+  .wb-tbtn::after { display: none; } /* no tooltips on touch */
+
+  .wb-tadd {
+    width: 38px !important;
+    height: 38px !important;
+    flex-shrink: 0;
+  }
+
+  /* Canvas fills remaining height */
+  .wb-canvas-wrap { flex: 1; min-height: 0; }
+
+  /* Sidebar full-width when open */
+  .wb-rsidebar { width: 100%; }
+
+  /* Bottom colour/stroke bar */
+  .wb-bottom-bar {
+    bottom: 8px; left: 50%; transform: translateX(-50%);
+    max-width: calc(100vw - 16px);
+    flex-wrap: nowrap; overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .wb-bottom-bar::-webkit-scrollbar { display: none; }
+  .wb-clr { width: 18px; height: 18px; }
+
+  /* Status bar */
+  .wb-status-item:not(:nth-child(1)):not(:nth-child(2)) { display: none; }
+  .wb-share-btn { padding: 0 10px; font-size: 11px; }
+
+}
+
+/* ══════════════════════════════════════════════════════════════
+   VERY SMALL (≤ 380px)
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 380px) {
+
+  .wb-hdr-center { display: none; }
+  .wb-av-stack   { display: none; }
+  .wb-invite-btn { display: none; }
+
+  .wb-tools  { height: 44px !important; }
+  .wb-tbtn   { width: 34px !important; height: 34px !important; font-size: 14px; }
+  .wb-tadd   { width: 34px !important; height: 34px !important; }
+
+}
