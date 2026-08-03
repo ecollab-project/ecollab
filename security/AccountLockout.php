@@ -334,7 +334,7 @@ class AccountLockout
 
     private function ensureTables(): void
     {
-        // Tables are created by migration 014_security.sql (schema-security.sql).
+        // Tables are created by migration 014_security.sql.
         // On databases that haven't applied this migration yet (old version
         // running alongside new code), gracefully disable lockout tracking
         // rather than fatal-erroring on every login attempt.
