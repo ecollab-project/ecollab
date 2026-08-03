@@ -318,6 +318,30 @@ class AuthService {
                 }
             }
 
+            // ── Seed peer-matching study preferences (pm_user_study_prefs) ─
+            // Reuses $styleMapped / $goalMapped already computed above from the
+            // dedicated study_style / primary_goal form fields — these are exact
+            // matches for pm_user_study_prefs' enums, so no slug inference is
+            // needed here. Other columns are left to the table's own defaults
+            // (same defaults pm_save_profile() uses) since onboarding doesn't
+            // collect session_length/time_preference/learning_mode/pace/comm_style.
+            $pmStyle = in_array($styleMapped, ['solo', 'group', 'mixed'], true) ? $styleMapped : 'mixed';
+            $pmGoal  = in_array($goalMapped, [
+                'pass_exams', 'build_projects', 'find_study_partners',
+                'improve_skills', 'network_collaborate', 'research',
+            ], true) ? $goalMapped : 'improve_skills';
+
+            $this->db->prepare("
+                INSERT INTO pm_user_study_prefs (user_id, study_style, primary_goal)
+                VALUES (:uid, :style, :goal)
+                ON DUPLICATE KEY UPDATE
+                    study_style = VALUES(study_style), primary_goal = VALUES(primary_goal)
+            ")->execute([
+                ':uid'   => $userId,
+                ':style' => $pmStyle,
+                ':goal'  => $pmGoal,
+            ]);
+
             $this->db->commit();
 
             // Write session for the new user
