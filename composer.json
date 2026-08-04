@@ -7,6 +7,9 @@
     "cboden/ratchet": "^0.4",
     "react/event-loop": "^1.3"
   },
+  "require-dev": {
+    "phpunit/phpunit": "^10.5"
+  },
   "autoload": {
     "files": [
       "config.php",
@@ -27,6 +30,11 @@
       "websocket/handlers/TypingHandler.php",
       "websocket/handlers/WhiteboardHandler.php"
     ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
   },
   "config": {
     "optimize-autoloader": true
