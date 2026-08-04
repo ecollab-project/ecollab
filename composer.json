@@ -27,8 +27,7 @@
       "websocket/ChatServer.php",
       "websocket/handlers/MessageHandler.php",
       "websocket/handlers/PresenceHandler.php",
-      "websocket/handlers/TypingHandler.php",
-      "websocket/handlers/WhiteboardHandler.php"
+      "websocket/handlers/TypingHandler.php"
     ]
   },
   "autoload-dev": {
