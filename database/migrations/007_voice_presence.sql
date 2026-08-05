@@ -18,7 +18,7 @@
 
 -- ── Add voice_channel_id column (idempotent on both engines) ──
 ALTER TABLE `users`
-  ADD COLUMN IF NOT EXISTS `voice_channel_id` BIGINT UNSIGNED NULL DEFAULT NULL AFTER `last_active_at`;
+  ADD COLUMN IF NOT EXISTS `voice_channel_id` INT UNSIGNED NULL DEFAULT NULL AFTER `last_active_at`;
 
 -- ── Add index for voice channel lookups (guarded) ───────────
 SET @idx_exists := (

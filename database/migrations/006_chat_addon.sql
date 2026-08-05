@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `message_attachments` (
 -- ── message_reads ──────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS `message_reads` (
   `user_id`      BIGINT UNSIGNED NOT NULL,
-  `channel_id`   BIGINT UNSIGNED NOT NULL,
+  `channel_id`   INT UNSIGNED    NOT NULL,
   `last_read_at` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`user_id`, `channel_id`),
   KEY `idx_channel_id` (`channel_id`),
@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS `message_reads` (
 -- ── whiteboards ────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS `whiteboards` (
   `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `channel_id`  BIGINT UNSIGNED NOT NULL,
+  `channel_id`  INT UNSIGNED    NOT NULL,
   `state_json`  LONGTEXT        NOT NULL,
   `created_by`  BIGINT UNSIGNED NOT NULL,
   `updated_by`  BIGINT UNSIGNED     NULL DEFAULT NULL,
