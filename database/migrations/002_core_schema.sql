@@ -127,7 +127,7 @@ CREATE TABLE users (
   KEY idx_institution (institution_id),
   KEY idx_sso (sso_provider, sso_uid),
   CONSTRAINT fk_user_institution FOREIGN KEY (institution_id)
-    REFERENCES institutions(id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES institutions(id) ON DELETE SET NULL ON UPDATE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='All platform users across all roles';
 
 
