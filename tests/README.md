@@ -5,14 +5,25 @@ Phase 3, Task 3.1. Two tiers: **Unit** (no infrastructure) and **Integration** (
 ## Setup
 
 ```bash
-composer install   # pulls in phpunit/phpunit — not run yet in this environment, do this yourself
-
-# One-time: create a separate test database and apply the existing migrations to it
-mysql -u root -e "CREATE DATABASE IF NOT EXISTS ecollab_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
-ECOLLAB_TEST_DB_NAME=ecollab_test DB_NAME=ecollab_test php database/migrate.php
+composer install   # pulls in phpunit/phpunit
 ```
 
-`tests/bootstrap.php` points `DB_NAME` at `ecollab_test` (or whatever `ECOLLAB_TEST_DB_NAME` is set to) **before** `config.php` loads — no application code was changed to make this work, and it refuses to run if the resolved database name doesn't contain the word "test", as a guard against ever pointing integration tests at real data.
+**Unit tests need nothing else** — `vendor/bin/phpunit --testsuite Unit` works immediately after `composer install`, no database required.
+
+**Integration tests need a real, separate test database**, and — important — because `vendor/bin/phpunit` loads `vendor/autoload.php` (and therefore `config.php`, which is first in `composer.json`'s `autoload.files` list) *before* `tests/bootstrap.php` ever runs, the test database name **must be set as a real OS environment variable in your terminal, before you invoke phpunit** — not inside any PHP file, since by then `config.php` has already loaded from your real `.env`:
+
+```bash
+# One-time: create the test database and apply migrations to it
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS ecollab_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+DB_NAME=ecollab_test php database/migrate.php
+
+# Every time you run integration tests:
+export DB_NAME=ecollab_test        # macOS/Linux
+set DB_NAME=ecollab_test           # Windows cmd
+vendor/bin/phpunit --testsuite Integration
+```
+
+This only works if `config.php`'s `.env`-loading loop respects an already-set environment variable rather than overwriting it from `.env` — see "Known gaps" below if you hit `DB_NAME ("ecollab_v2") does not contain 'test'` even after setting it.
 
 ## Running
 
@@ -34,6 +45,8 @@ vendor/bin/phpunit                           # both
 | `Integration/RateLimiterTest.php` | `RateLimiter::attempt()`, `::clear()` | Integration |
 
 ## Known gaps (not covered, and why)
+
+**`config.php` doesn't yet respect a pre-set OS environment variable over `.env`'s value.** Discovered while actually running this suite: `config.php`'s `.env`-loading loop only checks `if (!array_key_exists($key, $_ENV))` before writing a value — it doesn't check `getenv()` first, so a real environment variable set in your terminal (e.g. `set DB_NAME=ecollab_test`) can get silently overwritten by `.env`'s value, depending on your PHP's `variables_order` ini setting. The fix is a small, well-justified change to `config.php` itself (env vars should take precedence over a `.env` file — standard practice), not just a test workaround. Not made yet — flagged here as the next concrete step for enabling Integration tests to actually run, pending review since it touches the file every request in the app depends on.
 
 **`RoleMiddleware::requireRole()` / `::requireMinRole()`, and `CSRF::verify()`'s failure path** — all three call `http_response_code()` + `exit()` on failure. Safely asserting an `exit()`-terminated path needs PHPUnit's `@runInSeparateProcess` isolation, which could not be verified against a live interpreter here. Rather than ship a test that might not actually run cleanly, these are left as a follow-up. The success/non-exiting paths of the same classes (`hasRole`, `atLeast`, `verify()` with a valid token) are fully covered.
 
