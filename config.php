@@ -15,7 +15,12 @@ if (file_exists($envFile)) {
         if (str_starts_with(trim($line), '#') || !str_contains($line, '=')) continue;
         [$key, $val] = array_map('trim', explode('=', $line, 2));
         $val = trim($val, '"\'');
-        if (!array_key_exists($key, $_ENV)) {
+        // An already-set real environment variable (e.g. `set DB_NAME=...`
+        // in a terminal, before this process even started) takes precedence
+        // over .env — checked via getenv() directly since $_ENV isn't
+        // reliably populated from the OS environment unless php.ini's
+        // variables_order includes "E".
+        if (!array_key_exists($key, $_ENV) && getenv($key) === false) {
             $_ENV[$key] = $val;
             putenv("$key=$val");
         }
