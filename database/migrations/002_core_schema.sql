@@ -1332,25 +1332,25 @@ VALUES
 -- Roles: admin, facilitator, moderator, student (x many)
 -- Passwords are bcrypt hashes of "Password123!"
 INSERT INTO users
-  (id, institution_id username, email, student_id,
+  (id, institution_id, username, email, student_id,
    password_hash, full_name, avatar_color_gradient, role, status,
    email_verified, is_online, tokens_balance, is_verified)
 VALUES
   -- Admin
-  (1, 1, 3, 'super_admin',     'admin@fatima.edu.ph',         'ADMIN-001',
+  (1, 1, 'super_admin',     'admin@fatima.edu.ph',         'ADMIN-001',
    '$2y$12$/c2ioXP8IYPhxSyEOL61p.5cpTWpgxDr6x/yDFj2wXYyhNnQiQblu', 'System Administrator',
    '#ff4fd8,#7c5cff', 'admin', 'active', 1, 1, 9999, 1),
 
   -- Moderator
-  (2, 1, 3, 'mod_carlos',      'carlos.reyes@fatima.edu.ph',  'MOD-001',
+  (2, 1, 'mod_carlos',      'carlos.reyes@fatima.edu.ph',  'MOD-001',
    '$2y$12$/c2ioXP8IYPhxSyEOL61p.5cpTWpgxDr6x/yDFj2wXYyhNnQiQblu',   'Carlos Reyes',
    '#00d4ff,#3b82f6', 'moderator', 'active', 1, 1, 500, 1),
 
   -- Facilitators
-  (3, 1, 3, 'adam_smith',      'adam.smith@fatima.edu.ph',    'FAC-001',
+  (3, 1, 'adam_smith',      'adam.smith@fatima.edu.ph',    'FAC-001',
    '$2y$12$/c2ioXP8IYPhxSyEOL61p.5cpTWpgxDr6x/yDFj2wXYyhNnQiQblu',  'Adam Smith',
    '#ef4444,#dc2626', 'facilitator', 'active', 1, 1, 300, 1),
-  (4, 1, 3, 'prof_santos',     'maria.santos@fatima.edu.ph',  'FAC-002',
+  (4, 1, 'prof_santos',     'maria.santos@fatima.edu.ph',  'FAC-002',
    '$2y$12$/c2ioXP8IYPhxSyEOL61p.5cpTWpgxDr6x/yDFj2wXYyhNnQiQblu',  'Maria Santos',
    '#7c5cff,#ff4fd8', 'facilitator', 'active', 1, 0, 300, 1),
 
@@ -1358,7 +1358,7 @@ VALUES
   (5, 1, 'fatima_student',  'fatima.student@fatima.edu.ph','2025-001',
    '$2y$12$/c2ioXP8IYPhxSyEOL61p.5cpTWpgxDr6x/yDFj2wXYyhNnQiQblu',  'Fatima Santos',
    '#ff4fd8,#7c5cff', 'student', 'active', 1, 1, 80, 0),
-  (6, 1, 2, 'john_doe',        'john.doe@fatima.edu.ph',      '2025-002',
+  (6, 1, 'john_doe',        'john.doe@fatima.edu.ph',      '2025-002',
    '$2y$12$/c2ioXP8IYPhxSyEOL61p.5cpTWpgxDr6x/yDFj2wXYyhNnQiQblu',  'John Doe',
    '#3b82f6,#00d4ff', 'student', 'active', 1, 1, 150, 0),
   (7, 1, 'sara_kim',        'sara.kim@fatima.edu.ph',      '2025-003',
@@ -1367,7 +1367,7 @@ VALUES
   (8, 1, 'mike_lee',        'mike.lee@fatima.edu.ph',      '2025-004',
    '$2y$12$/c2ioXP8IYPhxSyEOL61p.5cpTWpgxDr6x/yDFj2wXYyhNnQiQblu',  'Mike Lee',
    '#f59e0b,#ef4444', 'student', 'active', 1, 1, 40, 0),
-  (9, 1, 2, 'david_wilson',    'david.wilson@fatima.edu.ph',  '2025-005',
+  (9, 1, 'david_wilson',    'david.wilson@fatima.edu.ph',  '2025-005',
    '$2y$12$/c2ioXP8IYPhxSyEOL61p.5cpTWpgxDr6x/yDFj2wXYyhNnQiQblu',  'David Wilson',
    '#7c5cff,#ff4fd8', 'student', 'active', 1, 0, 200, 0),
   (10,1, 'leyla_ahmed',     'leyla.ahmed@fatima.edu.ph',   '2025-006',
