@@ -1543,7 +1543,7 @@ INSERT INTO messages (id, channel_id, sender_id, content, content_type) VALUES
   (2, 1, 5,  'Thank you, Prof! Looking forward to the CNNs chapter.', 'text'),
   (3, 1, 6,  'Can someone share the Chapter 5 notes?', 'text'),
   (4, 1, 7,  'I uploaded them in the resources section!', 'text'),
-  (5, 2, 3,  'Midterm exam will be on May 28. Coverage: Chapters 1-6.', 'announcement'),
+  (5, 2, 3,  'Midterm exam will be on May 28. Coverage: Chapters 1-6.', 'text'),
   (6, 5, 5,  'Quick question – when to use BST vs Heap?', 'text'),
   (7, 5, 6,  'BST for ordered data, Heap for priority queues!', 'text'),
   (8, 8, 4,  'Lab 3 submission deadline is this Friday.', 'text');
