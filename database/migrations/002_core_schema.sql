@@ -1249,8 +1249,29 @@ CREATE TABLE IF NOT EXISTS user_hobbies (
   COMMENT='Per-user hobby data with engagement metrics for AI matching';
 
 
+-- 6. INTEREST TAGS (moved ahead of the "EXTRA" auto-increment block below,
+--    since user_interests hardcodes interest_tag_id 1-10 expecting these
+--    exact rows to claim those IDs first)
+INSERT INTO interest_tags (id, name, slug, category)
+VALUES
+  (1,  'AI',           'ai',           'technology'),
+  (2,  'Web Dev',      'web-dev',      'technology'),
+  (3,  'Cybersecurity','cybersecurity','technology'),
+  (4,  'Data Science', 'data-science', 'technology'),
+  (5,  'Mobile Apps',  'mobile-apps',  'technology'),
+  (6,  'Game Dev',     'game-dev',     'technology'),
+  (7,  'Cloud',        'cloud',        'technology'),
+  (8,  'DevOps',       'devops',       'technology'),
+  (9,  'Algorithms',   'algorithms',   'computer-science'),
+  (10, 'Databases',    'databases',    'computer-science');
+
+
 -- EXTRA: missing interest_tags seed rows for new slugs
--- Run after schema + seeds.
+-- Run after schema + seeds. Uses INSERT IGNORE deliberately: several of
+-- these slugs (ai, cybersecurity, data-science, devops, game-dev) already
+-- exist from the explicit-id block above and are safely skipped here;
+-- only the genuinely new collab/goal/availability/academic/creative slugs
+-- get inserted.
 INSERT IGNORE INTO interest_tags (name, slug, category) VALUES
   -- Collaboration style
   ('Solo Learning', 'solo-learning', 'collab'),
@@ -1386,21 +1407,6 @@ VALUES
   (8,  1, 4, 'group',  'network_collaborate',  315.0, 2100, 21, 30),
   (9,  2, 2, 'mixed',  'improve_skills',        64.0, 430,  0, 12),
   (10, 1, 1, 'solo',   'pass_exams',            22.0, 180,  2, 10);
-
-
--- 6. INTEREST TAGS
-INSERT INTO interest_tags (id, name, slug, category)
-VALUES
-  (1,  'AI',           'ai',           'technology'),
-  (2,  'Web Dev',      'web-dev',      'technology'),
-  (3,  'Cybersecurity','cybersecurity','technology'),
-  (4,  'Data Science', 'data-science', 'technology'),
-  (5,  'Mobile Apps',  'mobile-apps',  'technology'),
-  (6,  'Game Dev',     'game-dev',     'technology'),
-  (7,  'Cloud',        'cloud',        'technology'),
-  (8,  'DevOps',       'devops',       'technology'),
-  (9,  'Algorithms',   'algorithms',   'computer-science'),
-  (10, 'Databases',    'databases',    'computer-science');
 
 
 -- New interest tag slugs for 5-step signup (collab, goal, availability, tech, academic, creative)
