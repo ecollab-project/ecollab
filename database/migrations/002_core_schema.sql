@@ -2213,16 +2213,16 @@ ON DUPLICATE KEY UPDATE content = VALUES(content);
 -- ── Activity logs ─────────────────────────────────────────────────────────
 INSERT INTO activity_logs (user_id, action, level, ip_address, created_at)
 VALUES
-  (1,  'Platform initialized',                         'success', '127.0.0.1',   DATE_SUB(NOW(), INTERVAL 30 DAY)),
-  (5,  'User registered: Fatima_Student',              'success', '192.168.1.10', DATE_SUB(NOW(), INTERVAL 28 DAY)),
-  (6,  'User registered: John_Doe',                    'success', '192.168.1.11', DATE_SUB(NOW(), INTERVAL 26 DAY)),
+  (1,  'Platform initialized',                         'info',    '127.0.0.1',   DATE_SUB(NOW(), INTERVAL 30 DAY)),
+  (5,  'User registered: Fatima_Student',              'info',    '192.168.1.10', DATE_SUB(NOW(), INTERVAL 28 DAY)),
+  (6,  'User registered: John_Doe',                    'info',    '192.168.1.11', DATE_SUB(NOW(), INTERVAL 26 DAY)),
   (3,  'Facilitator created channel: CS 305',          'info',    '192.168.1.3',  DATE_SUB(NOW(), INTERVAL 20 DAY)),
   (NULL,'System backup completed: 2.3GB archived',     'info',    '127.0.0.1',   DATE_SUB(NOW(), INTERVAL 10 DAY)),
   (5,  'User logged in',                               'info',    '192.168.1.10', DATE_SUB(NOW(), INTERVAL 1 DAY)),
   (6,  'User logged in',                               'info',    '192.168.1.11', DATE_SUB(NOW(), INTERVAL 1 DAY)),
-  (NULL,'High memory usage detected (67%)',             'warn',    '127.0.0.1',   DATE_SUB(NOW(), INTERVAL 12 HOUR)),
-  (1,  'New user registered: Sara_Kim',                'success', '192.168.1.20', DATE_SUB(NOW(), INTERVAL 5 HOUR)),
-  (1,  'Report submitted in #general by Fatima_Student','warn',   '192.168.1.10', DATE_SUB(NOW(), INTERVAL 3 HOUR)),
+  (NULL,'High memory usage detected (67%)',             'warning', '127.0.0.1',   DATE_SUB(NOW(), INTERVAL 12 HOUR)),
+  (1,  'New user registered: Sara_Kim',                'info',    '192.168.1.20', DATE_SUB(NOW(), INTERVAL 5 HOUR)),
+  (1,  'Report submitted in #general by Fatima_Student','warning',   '192.168.1.10', DATE_SUB(NOW(), INTERVAL 3 HOUR)),
   (NULL,'Auto-scaling triggered, capacity increased',   'info',    '127.0.0.1',   DATE_SUB(NOW(), INTERVAL 2 HOUR)),
   (5,  'John_Doe logged in',                           'info',    '192.168.1.11', DATE_SUB(NOW(), INTERVAL 30 MINUTE))
 ON DUPLICATE KEY UPDATE action = VALUES(action);
