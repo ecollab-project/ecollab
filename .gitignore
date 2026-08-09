@@ -20,6 +20,9 @@
 Thumbs.db
 *.swp
 
+# ── Generated convenience exports (not source of truth — regenerate as needed) ──
+/database/ecollab_combined_setup.sql
+
 # ── Known duplicate/orphaned files pending Phase 2 cleanup review ───────────
 # (Not deleted yet — Task 2.3 will resolve these explicitly with your review.
 #  Left tracked intentionally for now so the cleanup diff is visible in Git.)
