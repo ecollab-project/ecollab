@@ -2241,16 +2241,16 @@ UPDATE user_profiles SET progress_percentage = 47.0, hours_spent = 8.3, bio  = '
 UPDATE user_profiles SET progress_percentage = 91.0, hours_spent = 28.4, bio = 'Top performer. Planning a research project on NLP.' WHERE user_id = 10;
 
 -- ── Notification seeds for demo ────────────────────────────────────────────
-INSERT INTO notifications (user_id, title, message, type, icon, is_read, created_at)
+INSERT INTO notifications (recipient_id, title, body, type, is_read, created_at)
 VALUES
-  (5, 'Fatima replied',   'Fatima_Student replied to your post in AI & ML Hub',   'mention',  '💬', 0, DATE_SUB(NOW(), INTERVAL 2 HOUR)),
-  (5, 'Quiz available',   'New quiz available: Neural Networks Basics',            'quiz',     '✅', 0, DATE_SUB(NOW(), INTERVAL 3 HOUR)),
-  (5, 'Achievement',      'Achievement Unlocked: Consistent Learner!',             'achievement','🏆',0, DATE_SUB(NOW(), INTERVAL 1 DAY)),
-  (5, 'Session reminder', 'Backpropagation Study Group starts in 30 minutes',      'reminder', '📅', 1, DATE_SUB(NOW(), INTERVAL 2 DAY)),
-  (6, 'John replied',     'John_Doe replied to your question in #project-help',    'mention',  '💬', 0, DATE_SUB(NOW(), INTERVAL 1 HOUR)),
-  (6, 'New session',      'CS 305 study session scheduled for tomorrow at 3 PM',   'session',  '📅', 0, DATE_SUB(NOW(), INTERVAL 4 HOUR)),
-  (7, 'Resource added',   'New lecture notes uploaded to CS 201 Resources',        'resource', '📄', 0, DATE_SUB(NOW(), INTERVAL 5 HOUR))
-ON DUPLICATE KEY UPDATE message = VALUES(message);
+  (5, 'Fatima replied',   'Fatima_Student replied to your post in AI & ML Hub',   'mention',      0, DATE_SUB(NOW(), INTERVAL 2 HOUR)),
+  (5, 'Quiz available',   'New quiz available: Neural Networks Basics',            'class_update', 0, DATE_SUB(NOW(), INTERVAL 3 HOUR)),
+  (5, 'Achievement',      'Achievement Unlocked: Consistent Learner!',             'system',       0, DATE_SUB(NOW(), INTERVAL 1 DAY)),
+  (5, 'Session reminder', 'Backpropagation Study Group starts in 30 minutes',      'system',       1, DATE_SUB(NOW(), INTERVAL 2 DAY)),
+  (6, 'John replied',     'John_Doe replied to your question in #project-help',    'mention',      0, DATE_SUB(NOW(), INTERVAL 1 HOUR)),
+  (6, 'New session',      'CS 305 study session scheduled for tomorrow at 3 PM',   'class_update', 0, DATE_SUB(NOW(), INTERVAL 4 HOUR)),
+  (7, 'Resource added',   'New lecture notes uploaded to CS 201 Resources',        'class_update', 0, DATE_SUB(NOW(), INTERVAL 5 HOUR))
+ON DUPLICATE KEY UPDATE body = VALUES(body);
 
 
 SET FOREIGN_KEY_CHECKS = 1;
