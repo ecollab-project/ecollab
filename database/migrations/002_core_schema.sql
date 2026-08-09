@@ -2154,12 +2154,12 @@ ON DUPLICATE KEY UPDATE name = VALUES(name);
 -- ── Study room sessions ───────────────────────────────────────────────────
 INSERT INTO study_room_sessions (id, room_id, channel_id, title, description, status, scheduled_start, scheduled_end, created_by)
 VALUES
-  (1, 1, 1, 'Backpropagation Study Session',  'Chapter 4 deep dive',   'scheduled', DATE_ADD(NOW(), INTERVAL 1 DAY),   DATE_ADD(NOW(), INTERVAL 1 DAY + INTERVAL 2 HOUR),  3),
-  (2, 1, 1, 'Chapter 5 Q&A Session',          'Office hours style',    'scheduled', DATE_ADD(NOW(), INTERVAL 3 DAY),   DATE_ADD(NOW(), INTERVAL 3 DAY + INTERVAL 1 HOUR),  3),
-  (3, 2, 4, 'Graph Algorithms Practice',      'Leetcode + theory',     'scheduled', DATE_ADD(NOW(), INTERVAL 2 DAY),   DATE_ADD(NOW(), INTERVAL 2 DAY + INTERVAL 2 HOUR),  4),
-  (4, 3, 1, 'AI Project Sprint Planning',     'Sprint 3 kickoff',      'scheduled', DATE_ADD(NOW(), INTERVAL 4 DAY),   DATE_ADD(NOW(), INTERVAL 4 DAY + INTERVAL 1 HOUR),  5),
-  (5, 1, 1, 'Neural Networks Q&A (past)',     'Past session',          'ended',     DATE_SUB(NOW(), INTERVAL 2 DAY),   DATE_SUB(NOW(), INTERVAL 2 DAY - INTERVAL 2 HOUR),  3),
-  (6, 2, 4, 'Trees & Graphs Review (past)',   'Past session',          'ended',     DATE_SUB(NOW(), INTERVAL 4 DAY),   DATE_SUB(NOW(), INTERVAL 4 DAY - INTERVAL 1 HOUR),  4)
+  (1, 1, 1, 'Backpropagation Study Session',  'Chapter 4 deep dive',   'scheduled', DATE_ADD(NOW(), INTERVAL 1 DAY),   DATE_ADD(DATE_ADD(NOW(), INTERVAL 1 DAY), INTERVAL 2 HOUR),  3),
+  (2, 1, 1, 'Chapter 5 Q&A Session',          'Office hours style',    'scheduled', DATE_ADD(NOW(), INTERVAL 3 DAY),   DATE_ADD(DATE_ADD(NOW(), INTERVAL 3 DAY), INTERVAL 1 HOUR),  3),
+  (3, 2, 4, 'Graph Algorithms Practice',      'Leetcode + theory',     'scheduled', DATE_ADD(NOW(), INTERVAL 2 DAY),   DATE_ADD(DATE_ADD(NOW(), INTERVAL 2 DAY), INTERVAL 2 HOUR),  4),
+  (4, 3, 1, 'AI Project Sprint Planning',     'Sprint 3 kickoff',      'scheduled', DATE_ADD(NOW(), INTERVAL 4 DAY),   DATE_ADD(DATE_ADD(NOW(), INTERVAL 4 DAY), INTERVAL 1 HOUR),  5),
+  (5, 1, 1, 'Neural Networks Q&A (past)',     'Past session',          'ended',     DATE_SUB(NOW(), INTERVAL 2 DAY),   DATE_ADD(DATE_SUB(NOW(), INTERVAL 2 DAY), INTERVAL 2 HOUR),  3),
+  (6, 2, 4, 'Trees & Graphs Review (past)',   'Past session',          'ended',     DATE_SUB(NOW(), INTERVAL 4 DAY),   DATE_ADD(DATE_SUB(NOW(), INTERVAL 4 DAY), INTERVAL 1 HOUR),  4)
 ON DUPLICATE KEY UPDATE title = VALUES(title);
 
 -- ── Study room participants ───────────────────────────────────────────────
