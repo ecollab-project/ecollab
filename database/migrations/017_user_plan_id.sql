@@ -63,7 +63,7 @@ SET @fk_exists := (
       AND constraint_type   = 'FOREIGN KEY'
 );
 SET @sql := IF(@fk_exists = 0,
-    'ALTER TABLE users ADD CONSTRAINT fk_user_plan FOREIGN KEY (plan_id) REFERENCES subscription_plans(id) ON DELETE SET NULL ON UPDATE CASCADE',
+    'ALTER TABLE users ADD CONSTRAINT fk_user_plan FOREIGN KEY (plan_id) REFERENCES subscription_plans(id) ON DELETE RESTRICT ON UPDATE CASCADE',
     'SELECT 1'
 );
 PREPARE stmt FROM @sql;
