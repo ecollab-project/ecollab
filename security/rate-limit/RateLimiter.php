@@ -27,24 +27,31 @@ class RateLimiter {
      * @return array  ['allowed' => bool, 'attempts' => int, 'retry_after' => int]
      */
     public function attempt(string $action, string $identity, int $maxAttempts = 10, int $windowSeconds = 900): array {
-        $key      = $action . ':' . hash('sha256', $identity);
-        $windowStart = date('Y-m-d H:i:s', time() - $windowSeconds);
+        $key = $action . ':' . hash('sha256', $identity);
+
+        // Window boundary is computed by MySQL itself (NOW() - INTERVAL ... SECOND),
+        // not by PHP's date()/time(). Comparing a PHP-computed timestamp against a
+        // MySQL-generated `created_at` column is unsafe unless PHP's date.timezone
+        // and MySQL's own timezone are guaranteed identical -- if they're not, this
+        // count query can silently exclude rows inserted moments ago by this same
+        // process, making every attempt() call look like the first one and
+        // defeating rate limiting entirely.
 
         // Count recent attempts
         $count = $this->db->prepare("
             SELECT COUNT(*) FROM rate_limit_log
-            WHERE lookup_key = :key AND created_at >= :window
+            WHERE lookup_key = :key AND created_at >= (NOW() - INTERVAL :window SECOND)
         ");
-        $count->execute([':key' => $key, ':window' => $windowStart]);
+        $count->execute([':key' => $key, ':window' => $windowSeconds]);
         $attempts = (int)$count->fetchColumn();
 
         if ($attempts >= $maxAttempts) {
             // Find oldest attempt in window to calculate retry_after
             $oldest = $this->db->prepare("
                 SELECT MIN(created_at) FROM rate_limit_log
-                WHERE lookup_key = :key AND created_at >= :window
+                WHERE lookup_key = :key AND created_at >= (NOW() - INTERVAL :window SECOND)
             ");
-            $oldest->execute([':key' => $key, ':window' => $windowStart]);
+            $oldest->execute([':key' => $key, ':window' => $windowSeconds]);
             $oldestTs   = strtotime($oldest->fetchColumn() ?: 'now');
             $retryAfter = max(0, ($oldestTs + $windowSeconds) - time());
             return ['allowed' => false, 'attempts' => $attempts, 'retry_after' => $retryAfter];
@@ -58,9 +65,9 @@ class RateLimiter {
 
         // Purge old entries for this key
         $del = $this->db->prepare("
-            DELETE FROM rate_limit_log WHERE lookup_key = :key AND created_at < :window
+            DELETE FROM rate_limit_log WHERE lookup_key = :key AND created_at < (NOW() - INTERVAL :window SECOND)
         ");
-        $del->execute([':key' => $key, ':window' => $windowStart]);
+        $del->execute([':key' => $key, ':window' => $windowSeconds]);
 
         return ['allowed' => true, 'attempts' => $attempts + 1, 'retry_after' => 0];
     }
@@ -78,13 +85,12 @@ class RateLimiter {
      * Check remaining attempts without recording one.
      */
     public function remaining(string $action, string $identity, int $maxAttempts, int $windowSeconds): int {
-        $key         = $action . ':' . hash('sha256', $identity);
-        $windowStart = date('Y-m-d H:i:s', time() - $windowSeconds);
+        $key = $action . ':' . hash('sha256', $identity);
         $count = $this->db->prepare("
             SELECT COUNT(*) FROM rate_limit_log
-            WHERE lookup_key = :key AND created_at >= :window
+            WHERE lookup_key = :key AND created_at >= (NOW() - INTERVAL :window SECOND)
         ");
-        $count->execute([':key' => $key, ':window' => $windowStart]);
+        $count->execute([':key' => $key, ':window' => $windowSeconds]);
         return max(0, $maxAttempts - (int)$count->fetchColumn());
     }
 

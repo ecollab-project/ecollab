@@ -75,7 +75,7 @@ final class AuthServiceTest extends TestCase
         $result = $authService->register($this->validRegistrationData());
 
         $this->assertTrue($result['success'], $result['error'] ?? 'expected success');
-        $this->assertArrayHasKey('user', $result);
+        $this->assertArrayHasKey('user_id', $result);
     }
 
     public function testRegisterRejectsPasswordUnderEightCharacters(): void
@@ -120,7 +120,7 @@ final class AuthServiceTest extends TestCase
         $result = $authService->register($data);
         $this->assertTrue($result['success'], $result['error'] ?? 'expected success');
 
-        $userId = $result['user']['id'];
+        $userId = $result['user_id'];
         $stmt = $this->db->prepare("SELECT study_style, primary_goal FROM pm_user_study_prefs WHERE user_id = :id");
         $stmt->execute([':id' => $userId]);
         $row = $stmt->fetch();
@@ -139,7 +139,7 @@ final class AuthServiceTest extends TestCase
         $this->assertTrue($result['success'], $result['error'] ?? 'expected success');
 
         $stmt = $this->db->prepare("SELECT study_style, primary_goal FROM pm_user_study_prefs WHERE user_id = :id");
-        $stmt->execute([':id' => $result['user']['id']]);
+        $stmt->execute([':id' => $result['user_id']]);
         $row = $stmt->fetch();
 
         $this->assertSame('mixed', $row['study_style'], 'unrecognized style should fall back to mixed');
