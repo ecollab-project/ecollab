@@ -255,11 +255,12 @@ class AccountLockout
 
     private function getIpAttemptCount(string $ip): int
     {
+        $window = (int)self::IP_WINDOW_SECONDS;
         $stmt = $this->db->prepare("
             SELECT COUNT(*) FROM failed_login_analytics
-            WHERE ip_address = :ip AND attempted_at >= (NOW() - INTERVAL :window SECOND)
+            WHERE ip_address = :ip AND attempted_at >= (NOW() - INTERVAL $window SECOND)
         ");
-        $stmt->execute([':ip' => $ip, ':window' => self::IP_WINDOW_SECONDS]);
+        $stmt->execute([':ip' => $ip]);
         return (int)$stmt->fetchColumn();
     }
 
