@@ -19,10 +19,14 @@ final class RateLimiterTest extends TestCase
     protected function setUp(): void
     {
         $this->db = \Database::getInstance();
-        // Unique action name per test run so parallel/repeated runs never
-        // collide on leftover rows from a previous run.
-        $this->action   = 'phpunit_test_' . uniqid();
-        $this->identity = 'test-identity-' . uniqid();
+        // lookup_key is VARCHAR(80): action + ':' + a 64-char sha256 hex digest
+        // leaves only 15 characters of budget for the action string itself.
+        // uniqid('a') = 'a' + 13 hex chars = 14 chars, safely within that budget
+        // (the earlier 'phpunit_test_' . uniqid() was 26 chars -- 11 over budget,
+        // silently truncated/mismatched, which was the actual root cause of every
+        // RateLimiterTest failure below, not the SQL window-comparison logic).
+        $this->action   = uniqid('a');
+        $this->identity = 'test-identity-' . uniqid(); // identity length is irrelevant — always hashed to a fixed 64 chars
     }
 
     protected function tearDown(): void
@@ -91,7 +95,7 @@ final class RateLimiterTest extends TestCase
     public function testDifferentActionsHaveIndependentLimitsForSameIdentity(): void
     {
         $limiter = new \RateLimiter();
-        $otherAction = 'phpunit_other_action_' . uniqid();
+        $otherAction = uniqid('b'); // 14 chars, within lookup_key's 15-char action budget
 
         $limiter->attempt($this->action, $this->identity, maxAttempts: 1, windowSeconds: 900);
         $blocked = $limiter->attempt($this->action, $this->identity, maxAttempts: 1, windowSeconds: 900);
