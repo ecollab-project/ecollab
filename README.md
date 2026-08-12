@@ -169,6 +169,8 @@ server {
 
 All endpoints accept and return JSON. Mutating endpoints require `X-CSRF-Token` header.
 
+**This section covers the 9 auth endpoints in detail. For every other endpoint (chat, peer-matching, collaboration tools, DMs, friendships, servers, notifications, profiles, and the admin/facilitator/student dashboards — 56 files in total), see [`docs/API_REFERENCE.md`](docs/API_REFERENCE.md).**
+
 | Method | Endpoint                          | Description                     | Auth |
 |--------|-----------------------------------|---------------------------------|------|
 | POST   | `/API/auth/login.php`             | Login with email + password     | No   |
