@@ -1,0 +1,37 @@
+parameters:
+    # Level 2 for a first pass on a codebase that has never been statically
+    # analyzed before. Levels run 0 (loosest) to 9 (strictest, full type
+    # coverage). Level 2 catches genuine bugs (undefined variables/methods,
+    # wrong argument counts, obviously-wrong types, calling methods that
+    # don't exist) without the very large first-run noise floor that jumping
+    # straight to a high level would produce on unanalyzed code.
+    #
+    # To raise it later, once the level-2 baseline is clean: bump this number
+    # by 1, re-run, fix or baseline what it finds, repeat. Going level-by-level
+    # is much more tractable than jumping straight to 9.
+    level: 2
+
+    paths:
+        - security
+        - services
+        - API
+        - database
+        - websocket
+
+    excludePaths:
+        - vendor/*
+        - tests/*
+        - database/migrations/*
+        - database/*.sql
+
+    # This project defines many global classes/functions via files loaded
+    # through composer.json's autoload.files (Database, CSRF, AuthMiddleware,
+    # AuthService, etc.), not via PSR-4 namespaced classes. PHPStan resolves
+    # these automatically through the same vendor/autoload.php the project
+    # itself uses — no extra bootstrap needed as long as `composer install`
+    # has been run first.
+
+    # Several API/ files are plain scripts with top-level executable code
+    # (auth checks, JSON output, exit calls) rather than classes/functions —
+    # PHPStan analyzes these fine; it type-checks statically, it doesn't
+    # execute anything.
