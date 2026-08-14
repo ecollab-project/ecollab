@@ -18,6 +18,8 @@ try {
         exit;
     }
 
+    $db = Database::getInstance();
+
     $service = new ChannelService();
     $channel = $service->getChannel((int)$channelId, $user['id']);
     if (!$channel) {
@@ -44,7 +46,6 @@ try {
     ");
 
     // Determine if user can manage the channel and if they have access
-    $db = Database::getInstance();
     $roleStmt = $db->prepare("SELECT server_role FROM server_members WHERE server_id = :sid AND user_id = :uid LIMIT 1");
     $roleStmt->execute([':sid' => $channel['server_id'], ':uid' => $user['id']]);
     $serverRole = $roleStmt->fetchColumn();

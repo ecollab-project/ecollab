@@ -74,7 +74,7 @@ function extra_flashcards(PDO $db, int $uid, string $uname, int $cid, string $ac
             $s->execute([':c'=>$cid]);
             json_ok(['decks'=>$s->fetchAll()]);
         })(),
-        'get_deck' => (function() use ($db, $cid, $body) {
+        'get_deck' => (function() use ($db, $uid, $cid, $body) {
             $did = (int)($body['deck_id']??$_GET['deck_id']??0);
             if (!$did) json_fail('deck_id required');
             $d = $db->prepare("SELECT * FROM collab_decks WHERE id=:id AND channel_id=:c LIMIT 1");

@@ -46,8 +46,7 @@ $chat = new ChatServer();
 $server = IoServer::factory(
     new HttpServer(new WsServer($chat)),
     $port,
-    $host,
-    $loop
+    $host
 );
 
 // ── Drain ws_relay table every 200 ms ───────────────────────────────────────
