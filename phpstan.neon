@@ -35,3 +35,16 @@ parameters:
     # (auth checks, JSON output, exit calls) rather than classes/functions —
     # PHPStan analyzes these fine; it type-checks statically, it doesn't
     # execute anything.
+
+    ignoreErrors:
+        # Ratchet\ConnectionInterface doesn't declare $resourceId, but the
+        # concrete connection objects Ratchet actually passes in at runtime
+        # do have it (a well-documented Ratchet+PHPStan pattern — see
+        # https://phpstan.org/blog/solving-phpstan-access-to-undefined-property).
+        # Not a real bug. Scoped narrowly (exact message + this one file) so
+        # it can't accidentally swallow an unrelated future finding in the
+        # same file.
+        -
+            message: '#Access to an undefined property Ratchet\\ConnectionInterface::\$resourceId#'
+            path: websocket/ChatServer.php
+            count: 9

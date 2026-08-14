@@ -39,7 +39,6 @@ Companion to `README.md`'s API Reference section (which covers the 9 `API/auth/*
 | POST | `/API/chat/ai-assist.php` | Get an AI-suggested reply (Anthropic-backed) | Session |
 | GET | `/API/chat/nav-view-data.php` | Sidebar/nav bootstrap data (servers, channels, DMs) | Session |
 | GET | `/API/chat/send-test.php` | Manual WebSocket send test (dev tool) | Session |
-| GET | `/API/chat/debug-check.php` | Debug/diagnostic dump (dev tool) | None |
 
 ### Chat — Peer Matching (`API/chat/peer-match.php`, one router, `?action=`)
 
