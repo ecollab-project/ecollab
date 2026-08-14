@@ -8,7 +8,7 @@ require_once dirname(__DIR__, 2) . '/security/csrf/csrf.php';
 
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
-AuthMiddleware::requireAuth();
+AuthMiddleware::requireAuth(true);
 
 $userId = (int)$_SESSION['user_id'];
 $db     = Database::getInstance();

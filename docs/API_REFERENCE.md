@@ -112,8 +112,8 @@ All tools/actions: **Session** auth required. Same note as above re: exhaustive 
 
 | Method | Endpoint | Description | Auth |
 |---|---|---|---|
-| GET | `/API/onboarding/get-server-suggestions.php` | Suggested servers based on onboarding answers | Session (weaker: `requireAuth()` not `requireAuth(true)`) |
-| POST | `/API/onboarding/join-servers.php` | Bulk-join the servers picked during onboarding | Session (weaker, same as above) |
+| GET | `/API/onboarding/get-server-suggestions.php` | Suggested servers based on onboarding answers | Session |
+| POST | `/API/onboarding/join-servers.php` | Bulk-join the servers picked during onboarding | Session |
 
 ### Notifications
 
@@ -345,5 +345,5 @@ A representative set — not every single action, but enough to show the shape c
 Documented here rather than silently working around them, so they're visible for future cleanup:
 
 - **`API/friendship/API_get-matches.php`** — the file itself is named with a redundant `API_` prefix (every other file in this directory doesn't have this). Left as-is; renaming would break whatever currently links to it.
-- **`API/onboarding/get-server-suggestions.php`** and **`join-servers.php`** use `AuthMiddleware::requireAuth()` (no `true` argument) rather than `requireAuth(true)` like every other authenticated endpoint in the project. The practical difference (per `AuthMiddleware`'s own implementation) is whether a failed auth check redirects to the login page (`requireAuth()`) versus returns a JSON 401 response (`requireAuth(true)`) — for a JSON API endpoint, `requireAuth(true)` is the pattern used everywhere else and is almost certainly what was intended here too. Not changed as part of this documentation task — flagged for a future fix.
+- **`API/onboarding/get-server-suggestions.php`** and **`join-servers.php`** — ~~used `AuthMiddleware::requireAuth()`~~ **fixed**: now use `requireAuth(true)` like every other JSON endpoint. (Previously used the redirect-on-failure variant, meaningless to a `fetch()`-based JS caller.)
 - **Collaboration tool routers** (`collab.php`, `collab-extra.php`) are deep two-level dispatchers (`?tool=` then an internal `?action=` per tool) with many sub-actions each. This document covers them at the tool level rather than exhaustively listing every sub-action's request/response shape — that level of detail would roughly triple this document's length for two files out of fifty-six. If a future task needs full per-action documentation for these two files specifically, that's a reasonable, scoped follow-up.
