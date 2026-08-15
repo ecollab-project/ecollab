@@ -37,13 +37,15 @@ parameters:
     # execute anything.
 
     ignoreErrors:
-        # Ratchet\ConnectionInterface doesn't declare $resourceId, but the
-        # concrete connection objects Ratchet actually passes in at runtime
-        # do have it (a well-documented Ratchet+PHPStan pattern — see
-        # https://phpstan.org/blog/solving-phpstan-access-to-undefined-property).
-        # Not a real bug. Scoped narrowly (exact message + this one file) so
-        # it can't accidentally swallow an unrelated future finding in the
-        # same file.
+        # Confirmed false positive, not a bug: Ratchet\ConnectionInterface
+        # doesn't declare $resourceId, but every real connection object
+        # Ratchet actually passes to onOpen/onMessage/etc. has it at runtime
+        # (Ratchet decorates connections with a concrete class before handing
+        # them to application code). Verified against Ratchet's real v0.4.x
+        # source, and matches the exact scenario PHPStan's own docs describe:
+        # https://phpstan.org/blog/solving-phpstan-access-to-undefined-property
+        # Scoped narrowly (exact message + this one file) so it can't
+        # accidentally swallow an unrelated future finding in the same file.
         -
             message: '#Access to an undefined property Ratchet\\ConnectionInterface::\$resourceId#'
             path: websocket/ChatServer.php

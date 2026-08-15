@@ -107,7 +107,7 @@ function collab_notes(PDO $db, int $uid, string $username, int $cid, string $act
     match ($action) {
 
         // ── GET full document for initial load ───────────────────────────────
-        'note_load' => (function() use ($db, $cid, $ensureNote) {
+        'note_load' => (function() use ($ensureNote) {
             $note = $ensureNote();
             json_ok([
                 'note' => [
@@ -122,7 +122,7 @@ function collab_notes(PDO $db, int $uid, string $username, int $cid, string $act
         })(),
 
         // ── POST op — receive, transform, persist, broadcast ─────────────────
-        'note_op' => (function() use ($db, $uid, $username, $cid, $body, $ensureNote) {
+        'note_op' => (function() use ($db, $uid, $username, $cid, $body) {
             $noteId   = (int)($body['note_id']  ?? 0);
             $opJson   = $body['op']              ?? null;
             $clientRev = (int)($body['revision'] ?? 0);
@@ -235,7 +235,7 @@ function collab_notes(PDO $db, int $uid, string $username, int $cid, string $act
         })(),
 
         // ── Legacy full-save (fallback for clients without OT engine) ─────────
-        'get' => (function() use ($db, $cid, $ensureNote) {
+        'get' => (function() use ($ensureNote) {
             $note = $ensureNote();
             json_ok(['note' => $note]);
         })(),
@@ -453,7 +453,7 @@ function collab_tasks(PDO $db, int $uid, string $username, int $cid, string $act
             json_ok(['task_id' => $taskId]);
         })(),
 
-        'move_task' => (function() use ($db, $uid, $username, $cid, $body) {
+        'move_task' => (function() use ($db, $username, $cid, $body) {
             $taskId   = (int)($body['task_id']    ?? 0);
             $toCol    = (int)($body['to_column']  ?? 0);
             $position = (int)($body['position']   ?? 0);
@@ -467,7 +467,7 @@ function collab_tasks(PDO $db, int $uid, string $username, int $cid, string $act
             json_ok();
         })(),
 
-        'update_task' => (function() use ($db, $uid, $username, $cid, $body) {
+        'update_task' => (function() use ($db, $username, $cid, $body) {
             $taskId = (int)($body['task_id'] ?? 0);
             if (!$taskId) json_fail('task_id required');
             $allowed = ['title','description','priority','due_date','assignee_id','done'];
@@ -485,7 +485,7 @@ function collab_tasks(PDO $db, int $uid, string $username, int $cid, string $act
             json_ok();
         })(),
 
-        'delete_task' => (function() use ($db, $uid, $username, $cid, $body) {
+        'delete_task' => (function() use ($db, $username, $cid, $body) {
             $taskId = (int)($body['task_id'] ?? 0);
             if (!$taskId) json_fail('task_id required');
             $db->prepare("DELETE FROM collab_tasks WHERE id=:tid")->execute([':tid' => $taskId]);
@@ -589,7 +589,7 @@ function collab_timer(PDO $db, int $uid, string $username, int $cid, string $act
 
     match ($action) {
 
-        'get' => (function() use ($fetch, $cid) {
+        'get' => (function() use ($fetch) {
             $t = $fetch();
             // Compute live elapsed if running
             if ($t['state'] === 'running' && $t['started_at']) {
@@ -611,7 +611,7 @@ function collab_timer(PDO $db, int $uid, string $username, int $cid, string $act
             json_ok(['timer' => $fetch()]);
         })(),
 
-        'pause' => (function() use ($db, $uid, $username, $cid, $fetch) {
+        'pause' => (function() use ($db, $username, $cid, $fetch) {
             $t = $fetch();
             if ($t['state'] !== 'running') json_fail('Timer not running');
             $elapsed = (int)$t['elapsed_sec'] + (time() - strtotime($t['started_at']));
@@ -621,7 +621,7 @@ function collab_timer(PDO $db, int $uid, string $username, int $cid, string $act
             json_ok(['elapsed_sec'=>$elapsed]);
         })(),
 
-        'resume' => (function() use ($db, $uid, $username, $cid, $fetch) {
+        'resume' => (function() use ($db, $username, $cid, $fetch) {
             $t = $fetch();
             if ($t['state'] !== 'paused') json_fail('Timer not paused');
             $db->prepare("UPDATE collab_timers SET state='running', started_at=NOW() WHERE channel_id=:cid")
@@ -630,14 +630,14 @@ function collab_timer(PDO $db, int $uid, string $username, int $cid, string $act
             json_ok();
         })(),
 
-        'reset' => (function() use ($db, $uid, $username, $cid) {
+        'reset' => (function() use ($db, $username, $cid) {
             $db->prepare("UPDATE collab_timers SET state='idle', elapsed_sec=0, started_at=NULL, paused_at=NULL WHERE channel_id=:cid")
                ->execute([':cid'=>$cid]);
             ws_broadcast($db, $cid, ['type'=>'collab_timer_reset','channel_id'=>$cid,'actor'=>$username]);
             json_ok();
         })(),
 
-        'complete' => (function() use ($db, $uid, $username, $cid, $body, $fetch) {
+        'complete' => (function() use ($db, $uid, $username, $cid, $fetch) {
             $t = $fetch();
             $db->prepare("UPDATE collab_timers SET state='done', elapsed_sec=0, round=LEAST(round+1,total_rounds) WHERE channel_id=:cid")
                ->execute([':cid'=>$cid]);
@@ -750,7 +750,7 @@ function collab_quiz(PDO $db, int $uid, string $username, int $cid, string $acti
             json_ok(['score'=>$score,'max_score'=>$max]);
         })(),
 
-        'results' => (function() use ($db, $cid, $body) {
+        'results' => (function() use ($db, $body) {
             $qid = (int)($body['quiz_id']??$_GET['quiz_id']??0);
             if (!$qid) json_fail('quiz_id required');
             $stmt = $db->prepare("SELECT a.*, u.username, u.full_name FROM collab_quiz_attempts a JOIN users u ON u.id=a.user_id WHERE a.quiz_id=:qid ORDER BY a.score DESC");

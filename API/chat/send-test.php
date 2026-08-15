@@ -118,4 +118,4 @@ try {
     $steps[] = 'fetch_msg: ' . ($msg ? 'OK' : 'NOT FOUND — this would throw RuntimeException 500');
 } catch (Throwable $e) { die(json_encode(['steps' => $steps, 'step' => 'fetch_msg', 'error' => $e->getMessage()])); }
 
-echo json_encode(['steps' => $steps, 'result' => 'ALL STEPS PASSED', 'msg_id' => $msgId ?? null]);
+echo json_encode(['steps' => $steps, 'result' => 'ALL STEPS PASSED', 'msg_id' => $msgId]);

@@ -27,7 +27,7 @@ try {
     $stmt->execute([':uid'=>$uid,':uid2'=>$uid,':uid3'=>$uid,':uid4'=>$uid]);
     $users = $stmt->fetchAll();
     $roleMap = ['student'=>'student','facilitator'=>'professor','admin'=>'professor','moderator'=>'professor','super_admin'=>'professor'];
-    $matches = array_map(function($u) use ($uid) {
+    $matches = array_map(function($u) {
         $grad  = $u['avatar_color_gradient'] ?? '#a855f7,#ec4899';
         $type  = in_array($u['role'],['facilitator','admin','super_admin','moderator']) ? 'professor' : 'student';
         $score = min(99, 60 + (int)$u['mutual_servers'] * 10);

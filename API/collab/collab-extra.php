@@ -115,7 +115,7 @@ function extra_flashcards(PDO $db, int $uid, string $uname, int $cid, string $ac
             ws_broadcast($db,$cid,['type'=>'collab_flashcards_updated','channel_id'=>$cid,'deck_id'=>$did,'actor'=>$uname]);
             json_ok(['card_id'=>(int)$db->lastInsertId()]);
         })(),
-        'rate_card' => (function() use ($db, $uid, $cid, $body) {
+        'rate_card' => (function() use ($db, $uid, $body) {
             $cid2   = (int)($body['card_id']??0);
             $rating = max(1,min(3,(int)($body['rating']??3)));
             if (!$cid2) json_fail('card_id required');
@@ -386,7 +386,7 @@ function extra_goals(PDO $db, int $uid, string $uname, int $cid, string $action,
             $db->prepare("UPDATE collab_goal_milestones SET done=1-done WHERE id=:id")->execute([':id'=>$mid]);
             json_ok();
         })(),
-        'react' => (function() use ($db,$uid,$cid,$body) {
+        'react' => (function() use ($db,$uid,$body) {
             $gid=(int)($body['goal_id']??0); if (!$gid) json_fail('goal_id required');
             $emoji=mb_substr(trim($body['emoji']??'👍'),0,10)?:'👍';
             $db->prepare("INSERT INTO collab_goal_reactions (goal_id,user_id,emoji) VALUES(:g,:u,:e)
@@ -444,7 +444,7 @@ function extra_resources(PDO $db, int $uid, string $uname, int $cid, string $act
             ws_broadcast($db,$cid,['type'=>'collab_resource_added','channel_id'=>$cid,'resource_id'=>$rid,'title'=>$title,'actor'=>$uname]);
             json_ok(['resource_id'=>$rid]);
         })(),
-        'vote' => (function() use ($db,$uid,$cid,$body) {
+        'vote' => (function() use ($db,$uid,$body) {
             $rid=(int)($body['resource_id']??0); if (!$rid) json_fail('resource_id required');
             // Toggle vote
             $v=$db->prepare("SELECT 1 FROM collab_resource_votes WHERE resource_id=:r AND user_id=:u LIMIT 1");
@@ -467,7 +467,7 @@ function extra_resources(PDO $db, int $uid, string $uname, int $cid, string $act
             ws_broadcast($db,$cid,['type'=>'collab_resource_commented','channel_id'=>$cid,'resource_id'=>$rid,'actor'=>$uname]);
             json_ok(['comment_id'=>(int)$db->lastInsertId()]);
         })(),
-        'get_comments' => (function() use ($db,$cid,$body) {
+        'get_comments' => (function() use ($db,$body) {
             $rid=(int)($body['resource_id']??$_GET['resource_id']??0); if (!$rid) json_fail('resource_id required');
             $s=$db->prepare("SELECT c.*,u.username FROM collab_resource_comments c JOIN users u ON u.id=c.user_id WHERE c.resource_id=:r ORDER BY c.created_at");
             $s->execute([':r'=>$rid]);
