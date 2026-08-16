@@ -109,6 +109,7 @@ CREATE TABLE users (
   email_verified       TINYINT(1)        NOT NULL DEFAULT 0,
   is_online            TINYINT(1)        NOT NULL DEFAULT 0,
   last_seen_at         DATETIME          NULL,
+  last_active_at        DATETIME          NULL,
   current_activity     VARCHAR(120)       NULL,
   bio                  TEXT              NULL,
   tokens_balance       INT UNSIGNED      NOT NULL DEFAULT 0,  -- platform token economy
