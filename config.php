@@ -15,11 +15,7 @@ if (file_exists($envFile)) {
         if (str_starts_with(trim($line), '#') || !str_contains($line, '=')) continue;
         [$key, $val] = array_map('trim', explode('=', $line, 2));
         $val = trim($val, "\"'");
-        // An already-set real environment variable (e.g. `set DB_NAME=...`
-        // in a terminal, before this process even started) takes precedence
-        // over .env — checked via getenv() directly since $_ENV isn't
-        // reliably populated from the OS environment unless php.ini's
-        // variables_order includes "E".
+        // An already-set real environment variable takes precedence over .env.
         if (!array_key_exists($key, $_ENV) && getenv($key) === false) {
             $_ENV[$key] = $val;
             putenv("$key=$val");
@@ -54,13 +50,9 @@ function guessAppUrl(): string
 /**
  * Resolve the application URL for the current runtime.
  *
- * Local Apache/XAMPP installs are intentionally resolved from the actual
- * document-root path instead of trusting a stale APP_URL from an older local
- * checkout. This prevents broken CSS/JS links and redirects such as:
- *   /ecollab_sample5/ecollab/...
- * when the project is actually running at:
- *   /ecollab/...
- *
+ * On XAMPP/local Apache, the actual folder is authoritative. This prevents a
+ * stale APP_URL from an older checkout (for example /ecollab_sample5/ecollab)
+ * from breaking every CSS/JS asset and every authentication redirect.
  * Production hosts continue to use the configured APP_URL.
  */
 function resolveAppUrl(): string
@@ -69,13 +61,10 @@ function resolveAppUrl(): string
 
     if (!empty($_SERVER['HTTP_HOST'])) {
         $host = strtolower((string)$_SERVER['HTTP_HOST']);
-        $host = preg_replace('/:\\d+$/', '', $host) ?: $host;
+        $host = preg_replace('/:\d+$/', '', $host) ?: $host;
 
-        $isLocalHost = in_array($host, [
-            'localhost',
-            '127.0.0.1',
-            '::1',
-        ], true) || str_ends_with($host, '.local');
+        $isLocalHost = in_array($host, ['localhost', '127.0.0.1', '::1'], true)
+            || str_ends_with($host, '.local');
 
         if ($isLocalHost) {
             return rtrim(guessAppUrl(), '/');
@@ -83,6 +72,19 @@ function resolveAppUrl(): string
     }
 
     return rtrim($configured !== '' ? $configured : guessAppUrl(), '/');
+}
+
+function isLocalRuntime(): bool
+{
+    if (empty($_SERVER['HTTP_HOST'])) {
+        return false;
+    }
+
+    $host = strtolower((string)$_SERVER['HTTP_HOST']);
+    $host = preg_replace('/:\d+$/', '', $host) ?: $host;
+
+    return in_array($host, ['localhost', '127.0.0.1', '::1'], true)
+        || str_ends_with($host, '.local');
 }
 
 // ── Application ─────────────────────────────────────────────────────────────
@@ -135,7 +137,7 @@ define('WS_PORT', (int)env('WS_PORT', 8080));
 define('WS_URL',  env('WS_URL',  'ws://localhost:8080'));
 
 // ── File uploads ──────────────────────────────────────────────────────────────
-define('UPLOAD_MAX_BYTES', (int)env('UPLOAD_MAX_BYTES', 20 * 1024 * 1024)); // 20 MB
+define('UPLOAD_MAX_BYTES', (int)env('UPLOAD_MAX_BYTES', 20 * 1024 * 1024));
 define('UPLOAD_DIR',       ROOT_PATH . '/uploads/');
 
 // ── Institution ───────────────────────────────────────────────────────────────
@@ -153,11 +155,21 @@ if (APP_DEBUG) {
 }
 
 // ── OAuth / SSO ───────────────────────────────────────────────────────────────
+// Localhost always follows the active XAMPP path. This avoids stale callback
+// URLs copied from previous local project folders.
+$googleRedirectUri = isLocalRuntime()
+    ? APP_URL . '/API/auth/oauth-callback.php?provider=google'
+    : env('GOOGLE_REDIRECT_URI', APP_URL . '/API/auth/oauth-callback.php?provider=google');
+
+$microsoftRedirectUri = isLocalRuntime()
+    ? APP_URL . '/API/auth/oauth-callback.php?provider=microsoft'
+    : env('MICROSOFT_REDIRECT_URI', APP_URL . '/API/auth/oauth-callback.php?provider=microsoft');
+
 define('GOOGLE_CLIENT_ID',      env('GOOGLE_CLIENT_ID',      ''));
 define('GOOGLE_CLIENT_SECRET',  env('GOOGLE_CLIENT_SECRET',  ''));
-define('GOOGLE_REDIRECT_URI',   env('GOOGLE_REDIRECT_URI',   APP_URL . '/API/auth/oauth-callback.php?provider=google'));
+define('GOOGLE_REDIRECT_URI',   $googleRedirectUri);
 
 define('MICROSOFT_CLIENT_ID',     env('MICROSOFT_CLIENT_ID',     ''));
 define('MICROSOFT_CLIENT_SECRET', env('MICROSOFT_CLIENT_SECRET', ''));
 define('MICROSOFT_TENANT_ID',     env('MICROSOFT_TENANT_ID',     'common'));
-define('MICROSOFT_REDIRECT_URI',  env('MICROSOFT_REDIRECT_URI',  APP_URL . '/API/auth/oauth-callback.php?provider=microsoft'));
+define('MICROSOFT_REDIRECT_URI',  $microsoftRedirectUri);
