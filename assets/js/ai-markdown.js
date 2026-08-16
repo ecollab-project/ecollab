@@ -78,4 +78,33 @@
             }[character];
         });
     }
+
+    // Phase 4.7: the student dashboard already loads this shared AI utility,
+    // so use it as the lightweight bootstrap point for peer matching. This
+    // keeps the dashboard's large legacy script untouched.
+    function loadPeerMatching() {
+        if (!document.getElementById('peer-matching-css')) {
+            const link = document.createElement('link');
+            link.id = 'peer-matching-css';
+            link.rel = 'stylesheet';
+            link.href = String(window.ECOLLAB_BASE || '').replace(/\/$/, '') + '/assets/css/peer-matching.css';
+            document.head.appendChild(link);
+        }
+
+        if (document.querySelector('script[data-peer-matching]')) {
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.src = String(window.ECOLLAB_BASE || '').replace(/\/$/, '') + '/assets/js/peer-matching.js';
+        script.defer = true;
+        script.dataset.peerMatching = 'true';
+        document.head.appendChild(script);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadPeerMatching, { once: true });
+    } else {
+        loadPeerMatching();
+    }
 })();
