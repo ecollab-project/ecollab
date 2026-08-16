@@ -1,0 +1,120 @@
+/* Ecollab Phase 4.4 — AI Markdown rendering */
+
+#aiModal .ec-ai-msg {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.55;
+}
+
+#aiModal .ec-ai-msg p {
+  margin: 0 0 8px;
+}
+
+#aiModal .ec-ai-msg p:last-child {
+  margin-bottom: 0;
+}
+
+#aiModal .ec-ai-msg h1,
+#aiModal .ec-ai-msg h2,
+#aiModal .ec-ai-msg h3,
+#aiModal .ec-ai-msg h4,
+#aiModal .ec-ai-msg h5,
+#aiModal .ec-ai-msg h6 {
+  margin: 12px 0 7px;
+  line-height: 1.3;
+}
+
+#aiModal .ec-ai-msg h1 {
+  font-size: 1.35em;
+}
+
+#aiModal .ec-ai-msg h2 {
+  font-size: 1.25em;
+}
+
+#aiModal .ec-ai-msg h3 {
+  font-size: 1.15em;
+}
+
+#aiModal .ec-ai-msg ul,
+#aiModal .ec-ai-msg ol {
+  margin: 7px 0;
+  padding-left: 22px;
+}
+
+#aiModal .ec-ai-msg li {
+  margin: 3px 0;
+}
+
+#aiModal .ec-ai-msg blockquote {
+  margin: 9px 0;
+  padding: 5px 0 5px 12px;
+  border-left: 3px solid var(--purple, #a78bfa);
+  color: var(--muted, #cbd5e1);
+}
+
+#aiModal .ec-ai-msg code {
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    "Liberation Mono",
+    monospace;
+
+  font-size: 0.9em;
+}
+
+#aiModal .ec-ai-msg :not(pre) > code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(127, 127, 127, 0.16);
+}
+
+#aiModal .ec-ai-msg pre {
+  margin: 9px 0;
+  padding: 11px;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+#aiModal .ec-ai-msg pre code {
+  display: block;
+  white-space: pre;
+  line-height: 1.5;
+}
+
+#aiModal .ec-ai-msg a {
+  text-decoration: underline;
+}
+
+#aiModal .ec-ai-msg hr {
+  margin: 12px 0;
+  border: 0;
+  border-top: 1px solid var(--border2, #273244);
+}
+
+#aiModal .ec-ai-msg table {
+  width: 100%;
+  margin: 9px 0;
+  border-collapse: collapse;
+}
+
+#aiModal .ec-ai-msg th,
+#aiModal .ec-ai-msg td {
+  padding: 6px 8px;
+  border: 1px solid var(--border2, #273244);
+  text-align: left;
+}
+
+#aiModal .ec-ai-msg th {
+  font-weight: 700;
+}
+
+#aiModal .ec-ai-msg img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+}

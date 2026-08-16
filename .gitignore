@@ -25,6 +25,7 @@ Thumbs.db
 
 Google Oauth.txt
 .phpunit.cache/
+node_modules/
 
 # ── Known duplicate/orphaned files pending Phase 2 cleanup review ───────────
 # (Not deleted yet — Task 2.3 will resolve these explicitly with your review.

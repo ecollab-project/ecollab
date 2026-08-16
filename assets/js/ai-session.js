@@ -17,7 +17,7 @@
     }, options.headers || {});
     if (options.method && options.method !== 'GET') headers['X-CSRF-Token'] = csrf();
 
-    const response = await fetch(base + path, Object.assign({}, options, {headers}));
+    const response = await fetch(base + path, Object.assign({}, options, { headers }));
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
     return data;
@@ -25,7 +25,7 @@
 
   function escapeHtml(value) {
     return String(value).replace(/[&<>"']/g, c => ({
-      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;'
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
     }[c]));
   }
 
@@ -51,7 +51,11 @@
       #aiModal .ec-ai-compose{display:flex;gap:7px;margin-top:8px}
       #aiModal .ec-ai-compose input{flex:1}
       #aiModal .ec-ai-loading{opacity:.65}
-      #aiModal .ec-ai-msg{white-space:pre-wrap;word-break:break-word}
+      #aiModal .ec-ai-msg{
+  word-break:break-word;
+  overflow-wrap:anywhere;
+  line-height:1.55;
+}
       #aiModal .ec-ai-prompts{display:flex;gap:5px;flex-wrap:wrap;margin:7px 0}
       #aiModal .ec-ai-prompt{font-size:9.5px;padding:5px 8px}
       @media(max-width:700px){#aiModal .ec-ai-shell{grid-template-columns:1fr}#aiModal .ec-ai-sidebar{border-right:0;border-bottom:1px solid var(--border2,#273244);padding:0 0 8px;max-height:130px}}
@@ -196,7 +200,7 @@
     try {
       const data = await request('/API/ai/sessions.php', {
         method: 'POST',
-        body: JSON.stringify({title: 'New AI Conversation'})
+        body: JSON.stringify({ title: 'New AI Conversation' })
       });
       currentSessionId = data.session.id;
       if (reload) await loadSessions(false);
@@ -249,7 +253,15 @@
 
     const bubble = document.createElement('div');
     bubble.className = 'ai-msg ' + (role === 'user' ? 'me' : 'ai') + ' ec-ai-msg';
-    bubble.textContent = content;
+
+    if (
+      role === 'assistant' &&
+      typeof window.renderAiMarkdownInto === 'function'
+    ) {
+      window.renderAiMarkdownInto(bubble, content);
+    } else {
+      bubble.textContent = content;
+    }
 
     wrapper.append(label, bubble);
     log.appendChild(wrapper);
@@ -341,7 +353,7 @@
     try {
       await request('/API/ai/session.php', {
         method: 'DELETE',
-        body: JSON.stringify({session_id: currentSessionId})
+        body: JSON.stringify({ session_id: currentSessionId })
       });
       currentSessionId = null;
       await loadSessions(true);
@@ -376,6 +388,6 @@
       const visible = modal.classList.contains('open') || modal.style.display === 'flex';
       if (visible) initPersistentAI();
     });
-    observer.observe(modal, {attributes: true, attributeFilter: ['class', 'style']});
+    observer.observe(modal, { attributes: true, attributeFilter: ['class', 'style'] });
   });
 })();
