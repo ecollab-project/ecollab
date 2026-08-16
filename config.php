@@ -58,6 +58,18 @@ function guessAppUrl(): string
 function resolveAppUrl(): string
 {
     $configured = trim((string)env('APP_URL', ''));
+    $rootDir = realpath(__DIR__) ?: '';
+
+    // CLI has no HTTP_HOST, so detect the Windows XAMPP htdocs layout directly.
+    // This also makes `php -r ...` diagnostics report the same URL the browser
+    // should use, instead of returning a stale APP_URL from an older checkout.
+    if (PHP_OS_FAMILY === 'Windows' && preg_match('~^[A-Za-z]:[\\\\/]xampp[\\\\/]htdocs(?:[\\\\/]|$)~i', $rootDir)) {
+        $htdocs = realpath(dirname(dirname($rootDir))) ?: '';
+        if ($htdocs !== '' && str_starts_with(strtolower($rootDir), strtolower($htdocs . DIRECTORY_SEPARATOR))) {
+            $relative = trim(str_replace('\\', '/', substr($rootDir, strlen($htdocs))), '/');
+            return 'http://localhost' . ($relative !== '' ? '/' . $relative : '');
+        }
+    }
 
     if (!empty($_SERVER['HTTP_HOST'])) {
         $host = strtolower((string)$_SERVER['HTTP_HOST']);
@@ -76,15 +88,18 @@ function resolveAppUrl(): string
 
 function isLocalRuntime(): bool
 {
-    if (empty($_SERVER['HTTP_HOST'])) {
-        return false;
+    if (!empty($_SERVER['HTTP_HOST'])) {
+        $host = strtolower((string)$_SERVER['HTTP_HOST']);
+        $host = preg_replace('/:\d+$/', '', $host) ?: $host;
+
+        return in_array($host, ['localhost', '127.0.0.1', '::1'], true)
+            || str_ends_with($host, '.local');
     }
 
-    $host = strtolower((string)$_SERVER['HTTP_HOST']);
-    $host = preg_replace('/:\d+$/', '', $host) ?: $host;
-
-    return in_array($host, ['localhost', '127.0.0.1', '::1'], true)
-        || str_ends_with($host, '.local');
+    // CLI commands run without HTTP_HOST. Treat the Windows XAMPP checkout as local.
+    $rootDir = realpath(__DIR__) ?: '';
+    return PHP_OS_FAMILY === 'Windows'
+        && preg_match('~^[A-Za-z]:[\\\\/]xampp[\\\\/]htdocs(?:[\\\\/]|$)~i', $rootDir) === 1;
 }
 
 // ── Application ─────────────────────────────────────────────────────────────
@@ -109,7 +124,7 @@ define('SESSION_LIFETIME', (int)env('SESSION_LIFETIME', 3600));
 define('SESSION_SECURE',   env('SESSION_SECURE',   'false') === 'true');
 define('SESSION_SAMESITE', env('SESSION_SAMESITE', 'Lax'));
 
-// ── Security ──────────────────────────────────────────────────────────────────
+// ── Security ───────────────────────────────────────────────────────────────────
 define('BCRYPT_COST',        (int)env('BCRYPT_COST',        12));
 define('CSRF_TOKEN_LENGTH',  (int)env('CSRF_TOKEN_LENGTH',  32));
 
