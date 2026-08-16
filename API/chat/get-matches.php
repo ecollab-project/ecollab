@@ -82,57 +82,81 @@ try {
 
     $service = new PeerMatchingService();
     $currentProfile = $loadProfile($uid, $prefsStmt, $subjectsStmt, $interestsStmt, $hobbiesStmt);
+
+    // A match should be based on real peer-profile data. Previously, users
+    // with completely empty profiles could receive 13% because the study
+    // preference scorer returned a neutral 50/100 value for missing data.
+    // That made every unconfigured account look like a real match.
+    $currentProfileReady = !empty($currentProfile['subjects'])
+        || !empty($currentProfile['interests'])
+        || !empty($currentProfile['hobbies']);
+
     $matches = [];
 
-    foreach ($users as $candidate) {
-        $candidateId = (int)$candidate['id'];
-        $candidateProfile = $loadProfile($candidateId, $prefsStmt, $subjectsStmt, $interestsStmt, $hobbiesStmt);
-        $score = $service->scoreProfiles($currentProfile, $candidateProfile);
+    if ($currentProfileReady) {
+        foreach ($users as $candidate) {
+            $candidateId = (int)$candidate['id'];
+            $candidateProfile = $loadProfile($candidateId, $prefsStmt, $subjectsStmt, $interestsStmt, $hobbiesStmt);
 
-        $a = min($uid, $candidateId);
-        $b = max($uid, $candidateId);
-        $cacheStmt->execute([
-            $a,
-            $b,
-            $score['total'],
-            $score['subjects'],
-            $score['interests'],
-            $score['hobbies'],
-            $score['style'],
-            $score['shared_subjects'],
-            $score['shared_interests'],
-            $score['shared_hobbies'],
-            json_encode($score['tags'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
-        ]);
+            // Do not advertise users who have not configured any matcher
+            // dimensions yet. They cannot produce a meaningful compatibility
+            // score and were the source of the misleading 13% cards.
+            $candidateReady = !empty($candidateProfile['subjects'])
+                || !empty($candidateProfile['interests'])
+                || !empty($candidateProfile['hobbies']);
 
-        $name = (string)($candidate['full_name'] ?: $candidate['username']);
-        $role = (string)($candidate['role'] ?? 'student');
-        $matches[] = [
-            'id' => $candidateId,
-            'name' => $name,
-            'initials' => strtoupper(substr($name, 0, 2)),
-            'detail' => ucfirst($role) . ($candidate['bio'] ? ' • ' . substr((string)$candidate['bio'], 0, 60) : ''),
-            'pct' => (int)round((float)$score['total']),
-            'type' => in_array($role, ['facilitator', 'admin', 'super_admin', 'moderator'], true) ? 'professor' : 'student',
-            'online' => (bool)$candidate['is_online'],
-            'tags' => $score['tags'],
-            'components' => [
-                'subjects' => $score['subjects'],
-                'style' => $score['style'],
-                'interests' => $score['interests'],
-                'hobbies' => $score['hobbies'],
-            ],
-            'shared_subjects' => $score['shared_subjects'],
-            'shared_interests' => $score['shared_interests'],
-            'shared_hobbies' => $score['shared_hobbies'],
-            'grad' => (string)($candidate['avatar_color_gradient'] ?? '#a855f7,#ec4899'),
-        ];
+            if (!$candidateReady) {
+                continue;
+            }
+
+            $score = $service->scoreProfiles($currentProfile, $candidateProfile);
+
+            $a = min($uid, $candidateId);
+            $b = max($uid, $candidateId);
+            $cacheStmt->execute([
+                $a,
+                $b,
+                $score['total'],
+                $score['subjects'],
+                $score['interests'],
+                $score['hobbies'],
+                $score['style'],
+                $score['shared_subjects'],
+                $score['shared_interests'],
+                $score['shared_hobbies'],
+                json_encode($score['tags'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+            ]);
+
+            $name = (string)($candidate['full_name'] ?: $candidate['username']);
+            $role = (string)($candidate['role'] ?? 'student');
+            $matches[] = [
+                'id' => $candidateId,
+                'name' => $name,
+                'initials' => strtoupper(substr($name, 0, 2)),
+                'detail' => ucfirst($role) . ($candidate['bio'] ? ' • ' . substr((string)$candidate['bio'], 0, 60) : ''),
+                'pct' => (int)round((float)$score['total']),
+                'type' => in_array($role, ['facilitator', 'admin', 'super_admin', 'moderator'], true) ? 'professor' : 'student',
+                'online' => (bool)$candidate['is_online'],
+                'tags' => $score['tags'],
+                'components' => [
+                    'subjects' => $score['subjects'],
+                    'style' => $score['style'],
+                    'interests' => $score['interests'],
+                    'hobbies' => $score['hobbies'],
+                ],
+                'shared_subjects' => $score['shared_subjects'],
+                'shared_interests' => $score['shared_interests'],
+                'shared_hobbies' => $score['shared_hobbies'],
+                'grad' => (string)($candidate['avatar_color_gradient'] ?? '#a855f7,#ec4899'),
+            ];
+        }
     }
 
     usort($matches, static fn(array $a, array $b): int => $b['pct'] <=> $a['pct']);
 
     echo json_encode([
         'success' => true,
+        'profile_ready' => $currentProfileReady,
         'matches' => array_slice($matches, 0, 12),
     ], JSON_THROW_ON_ERROR);
 } catch (Throwable $e) {
