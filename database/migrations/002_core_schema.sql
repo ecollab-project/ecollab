@@ -109,6 +109,7 @@ CREATE TABLE users (
   email_verified       TINYINT(1)        NOT NULL DEFAULT 0,
   is_online            TINYINT(1)        NOT NULL DEFAULT 0,
   last_seen_at         DATETIME          NULL,
+  current_activity     VARCHAR(120)       NULL,
   bio                  TEXT              NULL,
   tokens_balance       INT UNSIGNED      NOT NULL DEFAULT 0,  -- platform token economy
   is_verified          TINYINT(1)        NOT NULL DEFAULT 0,  -- blue verified chip
@@ -150,6 +151,9 @@ CREATE TABLE user_profiles (
   github_url       VARCHAR(255)    NULL,
   linkedin_url     VARCHAR(255)    NULL,
   portfolio_url    VARCHAR(255)    NULL,
+  progress_percentage DECIMAL(5,2)  NOT NULL DEFAULT 0.00,
+  hours_spent       DECIMAL(8,2)    NOT NULL DEFAULT 0.00,
+  bio               TEXT            NULL,
   updated_at       DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (user_id),
   KEY idx_program (academic_program_id),
@@ -630,6 +634,7 @@ CREATE TABLE notifications (
   title        VARCHAR(120)     NOT NULL,
   body         VARCHAR(500)     NULL,
   link_url     VARCHAR(255)     NULL,
+  icon         VARCHAR(10)      NOT NULL DEFAULT '🔔',
   is_read      TINYINT(1)       NOT NULL DEFAULT 0,
   created_at   DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
   read_at      DATETIME         NULL,
@@ -1195,28 +1200,11 @@ CREATE TABLE IF NOT EXISTS `whiteboards` (
   CONSTRAINT `fk_wb_updated_by`  FOREIGN KEY (`updated_by`) REFERENCES `users`    (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ── Columns that may be missing from messages table ────────
-ALTER TABLE `messages`
-  MODIFY COLUMN `content_type` ENUM('text','image','file','code','poll') NOT NULL DEFAULT 'text',
-  ADD COLUMN IF NOT EXISTS `is_pinned`    TINYINT(1)       NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS `is_edited`    TINYINT(1)       NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS `reaction_count` INT UNSIGNED   NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS `deleted_at`   DATETIME             NULL DEFAULT NULL;
-
--- ── Columns that may be missing from channels table ────────
-ALTER TABLE `channels`
-  ADD COLUMN IF NOT EXISTS `is_locked`   TINYINT(1)  NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS `member_count` INT UNSIGNED NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS `created_by`  BIGINT UNSIGNED NULL DEFAULT NULL,
-  ADD COLUMN IF NOT EXISTS `position`    INT          NOT NULL DEFAULT 0;
-
--- ── is_online / last_active_at on users ───────────────────
-ALTER TABLE `users`
-  ADD COLUMN IF NOT EXISTS `is_online`       TINYINT(1) NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS `last_active_at`  DATETIME       NULL DEFAULT NULL,
-  ADD COLUMN IF NOT EXISTS `avatar_color_gradient` VARCHAR(64) NOT NULL DEFAULT '#a855f7,#ec4899';
-
-
+-- Chat-related columns are defined directly in the canonical
+-- `messages`, `channels`, and `users` CREATE TABLE statements above.
+-- This avoids MySQL-incompatible ADD COLUMN IF NOT EXISTS syntax.
+-- `messages.content_type` is intentionally not modified here because
+-- the canonical definition already includes `system` and `ai_response`.
 
 -- ============================================================
 -- ADDON: MISSING TABLES FOR ChannelService
@@ -1931,7 +1919,10 @@ UPDATE users SET avatar_color_gradient = '#ec4899,#db2777' WHERE id = 10;
 
 -- Ecollab Dashboard — Additive Schema
 -- Run AFTER schema.txt and schema-chat-addon.sql
--- Uses IF NOT EXISTS and ADD COLUMN IF NOT EXISTS for safety.
+-- Tables use CREATE TABLE IF NOT EXISTS for safe re-runs.
+-- Columns belonging to canonical tables are defined in their
+-- CREATE TABLE statements instead of ADD COLUMN IF NOT EXISTS,
+-- which is not portable to the MySQL version used by CI.
 
 
 -- ── student_notes ─────────────────────────────────────────────────────
@@ -2078,25 +2069,9 @@ CREATE TABLE IF NOT EXISTS `server_interest_tags` (
   PRIMARY KEY (`server_id`, `interest_tag_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ── Add missing columns to existing tables ────────────────────────────
-
--- users
-ALTER TABLE `users`
-  ADD COLUMN IF NOT EXISTS `current_activity` VARCHAR(120) NULL DEFAULT NULL,
-  ADD COLUMN IF NOT EXISTS `last_seen_at`     DATETIME     NULL DEFAULT NULL;
-
--- user_profiles
-ALTER TABLE `user_profiles`
-  ADD COLUMN IF NOT EXISTS `progress_percentage` DECIMAL(5,2) NOT NULL DEFAULT 0.00,
-  ADD COLUMN IF NOT EXISTS `hours_spent`         DECIMAL(8,2) NOT NULL DEFAULT 0.00,
-  ADD COLUMN IF NOT EXISTS `bio`                 TEXT             NULL;
-
--- notifications
-ALTER TABLE `notifications`
-  ADD COLUMN IF NOT EXISTS `icon` VARCHAR(10) NOT NULL DEFAULT '🔔',
-  ADD COLUMN IF NOT EXISTS `type` VARCHAR(40) NOT NULL DEFAULT 'general';
-
-
+-- Dashboard columns are defined directly in the canonical
+-- CREATE TABLE statements above. No ADD COLUMN IF NOT EXISTS
+-- statements are used in this migration.
 
 -- ============================================================
 -- SEED DATA — Dashboard Extension
