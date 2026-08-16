@@ -25,6 +25,7 @@
       "services/ChannelService.php",
       "services/MessageService.php",
       "services/WhiteboardService.php",
+      "services/UserService.php",
       "websocket/ChatServer.php",
       "websocket/handlers/MessageHandler.php",
       "websocket/handlers/PresenceHandler.php",
