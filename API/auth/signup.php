@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
@@ -10,7 +9,7 @@ require_once dirname(__DIR__, 2) . '/security/csrf/csrf.php';
 require_once dirname(__DIR__, 2) . '/security/rate-limit/RateLimiter.php';
 require_once dirname(__DIR__, 2) . '/services/AuthService.php';
 
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 AuthMiddleware::startSession();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -35,19 +34,29 @@ if (!$result['allowed']) {
     exit;
 }
 
-$body = json_decode(file_get_contents('php://input'), true) ?? [];
+$body = json_decode(file_get_contents('php://input'), true);
+if (!is_array($body)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'Invalid JSON request.']);
+    exit;
+}
 
-// Basic input sanitization
+// Basic input sanitization. Keep the complete onboarding payload so the
+// service can persist Focus Areas, Interests, Availability and Hobbies.
 $data = [
-    'full_name'    => strip_tags(trim((string)($body['full_name']    ?? ''))),
-    'email'        => strtolower(trim((string)($body['email']        ?? ''))),
-    'password'     => (string)($body['password']     ?? ''),
-    'course'       => strip_tags(trim((string)($body['course']       ?? ''))),
-    'year_level'   => (int)($body['year_level']      ?? 0),
-    'study_style'  => strip_tags(trim((string)($body['study_style']  ?? ''))),
-    'primary_goal' => strip_tags(trim((string)($body['primary_goal'] ?? ''))),
-    'interests'    => array_map('strip_tags', (array)($body['interests'] ?? [])),
-    'terms_agreed' => !empty($body['terms_agreed']),
+    'full_name'      => strip_tags(trim((string)($body['full_name'] ?? ''))),
+    'email'          => strtolower(trim((string)($body['email'] ?? ''))),
+    'password'       => (string)($body['password'] ?? ''),
+    'course'         => strip_tags(trim((string)($body['course'] ?? ''))),
+    'year_level'     => (int)($body['year_level'] ?? 0),
+    'study_style'    => strip_tags(trim((string)($body['study_style'] ?? ''))),
+    'primary_goal'   => strip_tags(trim((string)($body['primary_goal'] ?? ''))),
+    'interests'      => array_map('strip_tags', (array)($body['interests'] ?? [])),
+    'collab_style'   => array_map('strip_tags', (array)($body['collab_style'] ?? [])),
+    'goals'          => array_map('strip_tags', (array)($body['goals'] ?? [])),
+    'availability'   => array_map('strip_tags', (array)($body['availability'] ?? [])),
+    'hobbies'        => is_array($body['hobbies'] ?? null) ? $body['hobbies'] : [],
+    'terms_agreed'   => !empty($body['terms_agreed']),
 ];
 
 try {
