@@ -34,8 +34,19 @@ INSERT IGNORE INTO subscription_plans (id, code, name, description, token_grant,
     (3, 'institution',   'Institution',   'Unlimited usage for university accounts', 100000, 0);
 
 -- ── Add plan_id to users (idempotent) ───────────────────────
-ALTER TABLE users
-  ADD COLUMN IF NOT EXISTS plan_id SMALLINT UNSIGNED NOT NULL DEFAULT 1 AFTER tokens_balance;
+SET @col_exists := (
+    SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE table_schema = DATABASE()
+      AND table_name = 'users'
+      AND column_name = 'plan_id'
+);
+SET @sql := IF(@col_exists = 0,
+    'ALTER TABLE users ADD COLUMN plan_id SMALLINT UNSIGNED NOT NULL DEFAULT 1 AFTER tokens_balance',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- ── Add index for plan-based queries ────────────────────────
 -- (MySQL 8 lacks "ADD INDEX IF NOT EXISTS", so we use a guarded

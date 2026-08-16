@@ -63,25 +63,6 @@ CREATE TABLE IF NOT EXISTS `whiteboards` (
   CONSTRAINT `fk_wb_updated_by`  FOREIGN KEY (`updated_by`) REFERENCES `users`    (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ── Columns that may be missing from messages table ────────
-ALTER TABLE `messages`
-  MODIFY COLUMN `content_type` ENUM('text','image','file','code','poll') NOT NULL DEFAULT 'text',
-  ADD COLUMN IF NOT EXISTS `is_pinned`    TINYINT(1)       NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS `is_edited`    TINYINT(1)       NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS `reaction_count` INT UNSIGNED   NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS `deleted_at`   DATETIME             NULL DEFAULT NULL;
-
--- ── Columns that may be missing from channels table ────────
-ALTER TABLE `channels`
-  ADD COLUMN IF NOT EXISTS `is_locked`   TINYINT(1)  NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS `member_count` INT UNSIGNED NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS `created_by`  BIGINT UNSIGNED NULL DEFAULT NULL,
-  ADD COLUMN IF NOT EXISTS `position`    INT          NOT NULL DEFAULT 0;
-
--- ── is_online / last_active_at on users ───────────────────
-ALTER TABLE `users`
-  ADD COLUMN IF NOT EXISTS `is_online`       TINYINT(1) NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS `last_active_at`  DATETIME       NULL DEFAULT NULL,
-  ADD COLUMN IF NOT EXISTS `avatar_color_gradient` VARCHAR(64) NOT NULL DEFAULT '#a855f7,#ec4899';
-
+-- Column definitions for messages/channels/users are canonicalized in
+-- 002_core_schema.sql. This migration only adds the chat-specific tables.
 SET foreign_key_checks = 1;

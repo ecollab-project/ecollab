@@ -4,11 +4,8 @@
 -- Adds voice_channel_id to users so the WebSocket server can
 -- track which voice channel a user currently occupies.
 --
--- COMPATIBILITY FIX: the original version of this file used
---   ADD CONSTRAINT IF NOT EXISTS `fk_user_voice_channel` ...
--- which is NOT valid MySQL 8 syntax (only MariaDB 10.6+ supports
--- "IF NOT EXISTS" at the constraint level). On MySQL 8 this would
--- fatal with a syntax error and abort the entire migration run.
+-- Compatibility: MySQL has no ADD CONSTRAINT IF NOT EXISTS, so the
+-- foreign key below is guarded through information_schema.
 --
 -- This version uses the guarded information_schema + PREPARE/
 -- EXECUTE pattern (same as 017_user_plan_id.sql) so it works
@@ -16,9 +13,20 @@
 -- re-run on a database that already has the column/constraint.
 -- ============================================================
 
--- ── Add voice_channel_id column (idempotent on both engines) ──
-ALTER TABLE `users`
-  ADD COLUMN IF NOT EXISTS `voice_channel_id` INT UNSIGNED NULL DEFAULT NULL AFTER `last_active_at`;
+-- ── Add voice_channel_id column (guarded) ───────────────────
+SET @col_exists := (
+    SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE table_schema = DATABASE()
+      AND table_name = 'users'
+      AND column_name = 'voice_channel_id'
+);
+SET @sql := IF(@col_exists = 0,
+    'ALTER TABLE users ADD COLUMN voice_channel_id INT UNSIGNED NULL DEFAULT NULL AFTER last_active_at',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- ── Add index for voice channel lookups (guarded) ───────────
 SET @idx_exists := (
