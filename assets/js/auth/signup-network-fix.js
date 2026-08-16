@@ -1,7 +1,7 @@
 /* signup-network-fix.js
  * Defensive signup submit handler.
- * Keeps the existing 5-step UI but reports the actual server response instead
- * of incorrectly turning JSON/HTTP errors into the generic "Network error".
+ * Keeps the existing 5-step UI, preserves the complete onboarding payload,
+ * and reports the actual server response instead of a misleading Network error.
  */
 (function () {
   'use strict';
@@ -19,9 +19,22 @@
       .map(t => t.slug);
 
     const selectedHobbies = Array.isArray(hobbies) ? hobbies : [];
+
+    // AuthService currently accepts the legacy display-value forms for these
+    // two fields. Keep the newer slug arrays above for interest persistence.
     const studyStyle = collab.includes('solo-learning')
-      ? 'solo'
-      : collab.includes('team-projects') ? 'group' : 'mixed';
+      ? 'Solo'
+      : collab.includes('team-projects') ? 'Group' : 'Mixed';
+
+    const goalMap = {
+      'pass-exams': 'Pass exams',
+      'build-portfolio': 'Build projects',
+      'learn-new-skills': 'Improve skills',
+      'find-teammates': 'Find study partners',
+      'networking': 'Network & collaborate',
+      'freelancing': 'Build projects',
+      'startup-building': 'Build projects',
+    };
 
     const payload = {
       full_name: document.getElementById('fullName')?.value.trim() || '',
@@ -37,7 +50,7 @@
       hobbies: selectedHobbies,
       terms_agreed: document.getElementById('terms')?.checked || false,
       study_style: studyStyle,
-      primary_goal: goals[0] || '',
+      primary_goal: goalMap[goals[0]] || 'Improve skills',
     };
 
     try {
