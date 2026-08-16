@@ -79,3 +79,8 @@ function navItem(string $page, string $icon, string $label, $badge, string $acti
     <div class="cr-status"><div class="cr-dot"></div>In Progress</div>
   </div>
 </aside>
+
+<!-- Peer matching is shared by student pages. The script safely no-ops when the
+     Find Study Buddies modal is not present. -->
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/peer-matching.css?v=1">
+<script src="<?= BASE_URL ?>/assets/js/peer-matching.js?v=1" defer></script>
