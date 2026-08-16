@@ -30,7 +30,8 @@
       "websocket/handlers/MessageHandler.php",
       "websocket/handlers/PresenceHandler.php",
       "websocket/handlers/TypingHandler.php",
-      "services/AiSessionService.php"
+      "services/AiSessionService.php",
+      "services/PeerMatchingService.php"
     ]
   },
   "autoload-dev": {
