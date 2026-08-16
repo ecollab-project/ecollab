@@ -323,6 +323,7 @@ var FAC_DATA = <?= json_encode([
 if (!FAC_DATA.engData.length) FAC_DATA.engData = [38, 42, 35, 48, 52, 45, 38];
 </script>
 <script src="<?= BASE_URL ?>/assets/js/facilitator/dashboard.js" defer></script>
+<script src="<?= BASE_URL ?>/assets/js/ai-session.js" defer></script>
 
 <script>
 // ── Mobile sidebar ─────────────────────────────────────────────────

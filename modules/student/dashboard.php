@@ -653,6 +653,7 @@ if (!DASH_DATA.courseHours.length)  DASH_DATA.courseHours  = [7.2, 4.1, 3.5, 2.8
 </script>
 
 <script src="<?= BASE_URL ?>/assets/js/student/dashboard.js" defer></script>
+<script src="<?= BASE_URL ?>/assets/js/ai-session.js" defer></script>
 
 <script>
 // ── Mobile sidebar ─────────────────────────────────────────────────

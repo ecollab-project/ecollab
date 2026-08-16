@@ -28,7 +28,8 @@
       "websocket/ChatServer.php",
       "websocket/handlers/MessageHandler.php",
       "websocket/handlers/PresenceHandler.php",
-      "websocket/handlers/TypingHandler.php"
+      "websocket/handlers/TypingHandler.php",
+      "services/AiSessionService.php"
     ]
   },
   "autoload-dev": {
