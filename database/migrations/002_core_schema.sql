@@ -1107,7 +1107,28 @@ CREATE TABLE IF NOT EXISTS user_hobbies (
 -- This file just ensures the index exists and the DB is correct.
 -- Run against ecollab_v2.
 
-CREATE INDEX IF NOT EXISTS idx_users_sso ON users (sso_provider, sso_uid);
+-- COMPATIBILITY FIX: this previously used
+--   CREATE INDEX IF NOT EXISTS idx_users_sso ON users (...)
+-- which is a MariaDB-only extension -- real MySQL (including MySQL 8)
+-- has never supported "IF NOT EXISTS" on CREATE INDEX at all. This was
+-- discovered when the CI workflow's real mysql:8.0 container rejected
+-- it with a syntax error, even though it always worked locally against
+-- XAMPP's bundled MariaDB. Same guarded information_schema +
+-- PREPARE/EXECUTE pattern already used in 007_voice_presence.sql and
+-- 017_user_plan_id.sql, which works identically on both engines.
+SET @idx_exists := (
+    SELECT COUNT(*) FROM information_schema.STATISTICS
+    WHERE table_schema = DATABASE()
+      AND table_name   = 'users'
+      AND index_name   = 'idx_users_sso'
+);
+SET @sql := IF(@idx_exists = 0,
+    'CREATE INDEX idx_users_sso ON users (sso_provider, sso_uid)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- ============================================================
 -- ADDON: CHAT TABLES (message_reactions, attachments, reads,
