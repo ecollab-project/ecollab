@@ -6,28 +6,34 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
   test:
+    name: PHP 8.2 / MySQL 8.0
     runs-on: ubuntu-latest
 
-    # Real MySQL, not SQLite — this project's migrations use MySQL-specific
-    # syntax (ENUM columns, INTERVAL arithmetic, etc.) discovered and fixed
-    # over the course of getting this project's test suite running for the
-    # first time. A different DB engine would not catch the same class of
-    # bug the Integration tests exist to catch.
     services:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
           MYSQL_DATABASE: ecollab_test
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot --silent"
+          --health-interval=5s
           --health-timeout=5s
-          --health-retries=5
+          --health-retries=20
+
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_NAME: ecollab_test
+      DB_USER: root
+      DB_PASS: ""
 
     steps:
       - name: Checkout code
@@ -36,51 +42,51 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: "8.2"
           extensions: mbstring, pdo, pdo_mysql, curl, zip, sodium
           coverage: none
 
+      - name: Validate Composer configuration
+        run: composer validate --no-check-publish
+
       - name: Get Composer cache directory
         id: composer-cache
-        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
 
       - name: Cache Composer packages
         uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
+          restore-keys: |
+            ${{ runner.os }}-composer-
 
       - name: Install dependencies
-        run: composer install --prefer-dist --no-progress
+        run: composer install --prefer-dist --no-progress --no-interaction
 
-      - name: Wait for MySQL to be ready
+      - name: Wait for MySQL
         run: |
           for i in {1..30}; do
-            mysqladmin ping -h 127.0.0.1 -P 3306 -u root --silent && break
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root --silent; then
+              echo "MySQL is ready."
+              exit 0
+            fi
+
+            echo "Waiting for MySQL..."
             sleep 2
           done
 
+          echo "MySQL did not become ready in time."
+          exit 1
+
       - name: Apply database migrations
-        env:
-          DB_HOST: 127.0.0.1
-          DB_PORT: 3306
-          DB_NAME: ecollab_test
-          DB_USER: root
-          DB_PASS: ""
         run: php database/migrate.php
 
       - name: Run Unit tests
         run: vendor/bin/phpunit --testsuite Unit
 
       - name: Run Integration tests
-        env:
-          DB_HOST: 127.0.0.1
-          DB_PORT: 3306
-          DB_NAME: ecollab_test
-          DB_USER: root
-          DB_PASS: ""
         run: vendor/bin/phpunit --testsuite Integration
 
       - name: Run PHPStan
-        run: vendor/bin/phpstan analyse --error-format=github
+        run: vendor/bin/phpstan analyse --error-format=github --no-progress
