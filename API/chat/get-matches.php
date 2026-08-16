@@ -15,18 +15,10 @@ try {
     $db = Database::getInstance();
     $uid = (int)$user['id'];
 
-    // Keep the candidate pool intentionally small. The compatibility engine is
-    // deterministic and explainable, so the API can rank the resulting profiles
-    // without maintaining a second scoring implementation here.
     $stmt = $db->prepare("
         SELECT DISTINCT
-            u.id,
-            u.username,
-            u.full_name,
-            u.role,
-            u.avatar_color_gradient,
-            u.bio,
-            u.is_online
+            u.id, u.username, u.full_name, u.role,
+            u.avatar_color_gradient, u.bio, u.is_online
         FROM users u
         LEFT JOIN friendships f
           ON (f.requester_id = :uid1 AND f.addressee_id = u.id)
@@ -45,11 +37,28 @@ try {
     ]);
 
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
     $prefsStmt = $db->prepare('SELECT * FROM pm_user_study_prefs WHERE user_id = ?');
     $subjectsStmt = $db->prepare('SELECT subject_id, role, proficiency FROM pm_user_subjects WHERE user_id = ?');
     $interestsStmt = $db->prepare('SELECT interest_id FROM pm_user_interests WHERE user_id = ?');
     $hobbiesStmt = $db->prepare('SELECT hobby_id FROM pm_user_hobbies WHERE user_id = ?');
+    $cacheStmt = $db->prepare("
+        INSERT INTO pm_compatibility
+            (user_a_id, user_b_id, score_total, score_subjects, score_interests,
+             score_hobbies, score_style, shared_subjects, shared_interests,
+             shared_hobbies, match_tags)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+            score_total = VALUES(score_total),
+            score_subjects = VALUES(score_subjects),
+            score_interests = VALUES(score_interests),
+            score_hobbies = VALUES(score_hobbies),
+            score_style = VALUES(score_style),
+            shared_subjects = VALUES(shared_subjects),
+            shared_interests = VALUES(shared_interests),
+            shared_hobbies = VALUES(shared_hobbies),
+            match_tags = VALUES(match_tags),
+            computed_at = CURRENT_TIMESTAMP
+    ");
 
     $loadProfile = static function (
         int $userId,
@@ -77,29 +86,34 @@ try {
 
     foreach ($users as $candidate) {
         $candidateId = (int)$candidate['id'];
-        $candidateProfile = $loadProfile(
-            $candidateId,
-            $prefsStmt,
-            $subjectsStmt,
-            $interestsStmt,
-            $hobbiesStmt
-        );
-
+        $candidateProfile = $loadProfile($candidateId, $prefsStmt, $subjectsStmt, $interestsStmt, $hobbiesStmt);
         $score = $service->scoreProfiles($currentProfile, $candidateProfile);
+
+        $a = min($uid, $candidateId);
+        $b = max($uid, $candidateId);
+        $cacheStmt->execute([
+            $a,
+            $b,
+            $score['total'],
+            $score['subjects'],
+            $score['interests'],
+            $score['hobbies'],
+            $score['style'],
+            $score['shared_subjects'],
+            $score['shared_interests'],
+            $score['shared_hobbies'],
+            json_encode($score['tags'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+        ]);
+
         $name = (string)($candidate['full_name'] ?: $candidate['username']);
         $role = (string)($candidate['role'] ?? 'student');
-        $type = in_array($role, ['facilitator', 'admin', 'super_admin', 'moderator'], true)
-            ? 'professor'
-            : 'student';
-        $grad = (string)($candidate['avatar_color_gradient'] ?? '#a855f7,#ec4899');
-
         $matches[] = [
             'id' => $candidateId,
             'name' => $name,
             'initials' => strtoupper(substr($name, 0, 2)),
             'detail' => ucfirst($role) . ($candidate['bio'] ? ' • ' . substr((string)$candidate['bio'], 0, 60) : ''),
             'pct' => (int)round((float)$score['total']),
-            'type' => $type,
+            'type' => in_array($role, ['facilitator', 'admin', 'super_admin', 'moderator'], true) ? 'professor' : 'student',
             'online' => (bool)$candidate['is_online'],
             'tags' => $score['tags'],
             'components' => [
@@ -111,13 +125,11 @@ try {
             'shared_subjects' => $score['shared_subjects'],
             'shared_interests' => $score['shared_interests'],
             'shared_hobbies' => $score['shared_hobbies'],
-            'grad' => $grad,
+            'grad' => (string)($candidate['avatar_color_gradient'] ?? '#a855f7,#ec4899'),
         ];
     }
 
-    usort($matches, static function (array $a, array $b): int {
-        return $b['pct'] <=> $a['pct'];
-    });
+    usort($matches, static fn(array $a, array $b): int => $b['pct'] <=> $a['pct']);
 
     echo json_encode([
         'success' => true,
@@ -129,8 +141,6 @@ try {
     echo json_encode([
         'success' => false,
         'matches' => [],
-        'message' => (defined('APP_DEBUG') && APP_DEBUG)
-            ? $e->getMessage()
-            : 'Unable to load peer matches.',
+        'message' => (defined('APP_DEBUG') && APP_DEBUG) ? $e->getMessage() : 'Unable to load peer matches.',
     ]);
 }
