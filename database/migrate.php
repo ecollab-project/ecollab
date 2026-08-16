@@ -167,13 +167,23 @@ exit(0);
  */
 function applyMigration(PDO $db, string $sql): void
 {
-    // Remove line comments that are on their own line (-- ...) to simplify splitting,
-    // but keep them for readability in error messages by operating on a copy.
     $statements = splitSqlStatements($sql);
 
     foreach ($statements as $stmt) {
         $stmt = trim($stmt);
         if ($stmt === '') continue;
+
+        // PDO::exec() is intended for statements that do not return rows.
+        // Some MySQL configurations can leave an active result set when a
+        // row-returning statement such as SELECT is executed through exec().
+        // Consume row-returning statements explicitly before continuing.
+        if (preg_match('/^(?:SELECT|SHOW|DESCRIBE|DESC|EXPLAIN)\b/i', $stmt)) {
+            $statement = $db->query($stmt);
+            $statement->fetchAll(PDO::FETCH_ASSOC);
+            $statement->closeCursor();
+            continue;
+        }
+
         $db->exec($stmt);
     }
 }
