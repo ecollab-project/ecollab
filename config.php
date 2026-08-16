@@ -14,7 +14,7 @@ if (file_exists($envFile)) {
     foreach ($lines as $line) {
         if (str_starts_with(trim($line), '#') || !str_contains($line, '=')) continue;
         [$key, $val] = array_map('trim', explode('=', $line, 2));
-        $val = trim($val, '"\'');
+        $val = trim($val, "\"'");
         // An already-set real environment variable (e.g. `set DB_NAME=...`
         // in a terminal, before this process even started) takes precedence
         // over .env — checked via getenv() directly since $_ENV isn't
@@ -51,10 +51,44 @@ function guessAppUrl(): string
     return $scheme . '://' . $host;
 }
 
-// ── Application ─────────────────────────────────────────────────────────────────
+/**
+ * Resolve the application URL for the current runtime.
+ *
+ * Local Apache/XAMPP installs are intentionally resolved from the actual
+ * document-root path instead of trusting a stale APP_URL from an older local
+ * checkout. This prevents broken CSS/JS links and redirects such as:
+ *   /ecollab_sample5/ecollab/...
+ * when the project is actually running at:
+ *   /ecollab/...
+ *
+ * Production hosts continue to use the configured APP_URL.
+ */
+function resolveAppUrl(): string
+{
+    $configured = trim((string)env('APP_URL', ''));
+
+    if (!empty($_SERVER['HTTP_HOST'])) {
+        $host = strtolower((string)$_SERVER['HTTP_HOST']);
+        $host = preg_replace('/:\\d+$/', '', $host) ?: $host;
+
+        $isLocalHost = in_array($host, [
+            'localhost',
+            '127.0.0.1',
+            '::1',
+        ], true) || str_ends_with($host, '.local');
+
+        if ($isLocalHost) {
+            return rtrim(guessAppUrl(), '/');
+        }
+    }
+
+    return rtrim($configured !== '' ? $configured : guessAppUrl(), '/');
+}
+
+// ── Application ─────────────────────────────────────────────────────────────
 define('APP_NAME',    env('APP_NAME',    'Ecollab'));
 define('APP_ENV',     env('APP_ENV',     'production'));
-define('APP_URL',     env('APP_URL',     guessAppUrl()));
+define('APP_URL',     resolveAppUrl());
 define('APP_DEBUG',   env('APP_DEBUG',   'false') === 'true');
 define('APP_KEY',     env('APP_KEY',     ''));
 define('ROOT_PATH',   __DIR__);
