@@ -64,7 +64,7 @@ function resolveAppUrl(): string
     // This also makes `php -r ...` diagnostics report the same URL the browser
     // should use, instead of returning a stale APP_URL from an older checkout.
     if (PHP_OS_FAMILY === 'Windows' && preg_match('~^[A-Za-z]:[\\\\/]xampp[\\\\/]htdocs(?:[\\\\/]|$)~i', $rootDir)) {
-        $htdocs = realpath(dirname(dirname($rootDir))) ?: '';
+        $htdocs = realpath(dirname($rootDir)) ?: '';
         if ($htdocs !== '' && str_starts_with(strtolower($rootDir), strtolower($htdocs . DIRECTORY_SEPARATOR))) {
             $relative = trim(str_replace('\\', '/', substr($rootDir, strlen($htdocs))), '/');
             return 'http://localhost' . ($relative !== '' ? '/' . $relative : '');
