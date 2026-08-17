@@ -121,12 +121,20 @@
   document.addEventListener('DOMContentLoaded',clearDemoNotifications,{once:true});
   if(document.readyState!=='loading')clearDemoNotifications();
 
-  // Threads v2 loader. Kept here because functionality-overrides.js is the
-  // last deferred script on chat.php, so the thread UI cleanly replaces the
-  // old localStorage/DM-only Threads view without changing the chat template.
   (function loadThreadsV2(){
     if(document.getElementById('threadsV2Script'))return;
     const s=document.createElement('script');s.id='threadsV2Script';s.defer=true;s.src=base()+'/assets/js/chat/threads-v2.js?v=1';
     document.head.appendChild(s);
   })();
+})();
+
+/* Profile viewer is loaded last so it intentionally overrides the old
+ * mini/full profile presentation without touching chat.js or chat-features.js. */
+(function loadProfileView(){
+  if(document.getElementById('profileViewScript')) return;
+  const s=document.createElement('script');
+  s.id='profileViewScript';
+  s.defer=true;
+  s.src=(window.ECOLLAB?.baseUrl||'')+'/assets/js/chat/profile-view.js?v=1';
+  document.head.appendChild(s);
 })();
