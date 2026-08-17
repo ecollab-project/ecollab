@@ -12,6 +12,9 @@ $me = AuthMiddleware::requireAuth(true);
 try {
     $db = Database::getInstance();
 
+    // Fetch notifications first and fully consume the result before issuing
+    // the unread-count query. This keeps the endpoint safe with both buffered
+    // and unbuffered PDO/MySQL configurations.
     $stmt = $db->prepare("
         SELECT id, type, title, body, ref_id, is_read, created_at
         FROM notifications
@@ -21,19 +24,21 @@ try {
     ");
     $stmt->execute([':uid' => $me['id']]);
     $notifs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmt->closeCursor();
 
-    $unreadCount = (int)$db->prepare("
-        SELECT COUNT(*) FROM notifications WHERE user_id = :uid AND is_read = 0
-    ")->execute([':uid' => $me['id']]) ? 0 : 0; // will use subquery below
-
-    $ucStmt = $db->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = :uid AND is_read = 0");
+    $ucStmt = $db->prepare("
+        SELECT COUNT(*)
+        FROM notifications
+        WHERE user_id = :uid AND is_read = 0
+    ");
     $ucStmt->execute([':uid' => $me['id']]);
     $unreadCount = (int)$ucStmt->fetchColumn();
+    $ucStmt->closeCursor();
 
     echo json_encode([
-        'success'      => true,
+        'success'       => true,
         'notifications' => $notifs,
-        'unread_count' => $unreadCount,
+        'unread_count'  => $unreadCount,
     ]);
 
 } catch (Throwable $e) {
