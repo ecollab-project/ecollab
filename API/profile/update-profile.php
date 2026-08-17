@@ -44,7 +44,7 @@ try {
     }
 
     $db = Database::getInstance();
-    $stmt = $db->prepare('UPDATE users SET full_name = :full_name, bio = :bio, avatar_color_gradient = :gradient, updated_at = CURRENT_TIMESTAMP WHERE id = :id LIMIT 1');
+    $stmt = $db->prepare('UPDATE users SET full_name = :full_name, bio = :bio, avatar_color_gradient = :gradient WHERE id = :id LIMIT 1');
     $stmt->execute([
         ':full_name' => $fullName,
         ':bio' => $bio,
