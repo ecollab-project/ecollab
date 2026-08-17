@@ -67,7 +67,7 @@
       document.getElementById('ecProfileStyle').textContent=p.study_style||'—';document.getElementById('ecProfileGoal').textContent=p.goals||'—';document.getElementById('ecProfileCompat').textContent=p.compatibility_score!=null?`${p.compatibility_score}%`:'—';document.getElementById('ecProfileStreak').textContent=p.streak_days?`${p.streak_days}d`:'—';document.getElementById('ecProfileHours').textContent=p.study_hours?`${p.study_hours}h`:'—';document.getElementById('ecProfileServers').textContent=Array.isArray(p.mutual_servers)?p.mutual_servers.length:'0';
       const board=document.getElementById('ecProfileBoard');const servers=Array.isArray(p.mutual_servers)?p.mutual_servers:[];board.innerHTML=servers.length?`<div class="ec-widget-grid">${servers.slice(0,6).map(s=>`<div class="ec-widget"><span>⭐ ${esc(s)}</span></div>`).join('')}</div>`:`<div class="ec-empty-board">${p.id===Number(window.ECOLLAB?.userId)?'Your profile is ready. Use Dashboard to manage your study workspace.':'No mutual servers yet.'}</div>`;
       const actions=document.getElementById('ecProfileActions');const me=Number(window.ECOLLAB?.userId||0);actions.innerHTML='';
-      if(Number(p.id)===me){actions.innerHTML=`<button class="ec-pbtn primary" id="ecDashboardBtn">🏠 Dashboard</button><button class="ec-pbtn secondary" id="ecEditProfileBtn">✎ Edit Profile</button>`;document.getElementById('ecDashboardBtn').onclick=()=>{if(typeof window.goToDashboard==='function')window.goToDashboard();else window.location.href=base()+'/dashboard/';};document.getElementById('ecEditProfileBtn').onclick=()=>{close();window.openUserSettings?.();};}
+      if(Number(p.id)===me){actions.innerHTML=`<button class="ec-pbtn primary" id="ecDashboardBtn">🏠 Dashboard</button><button class="ec-pbtn secondary" id="ecEditProfileBtn">✎ Edit Profile</button>`;document.getElementById('ecDashboardBtn').onclick=()=>{if(typeof window.goToDashboard==='function')window.goToDashboard();else window.location.href=base()+'/modules/student/dashboard.php';};document.getElementById('ecEditProfileBtn').onclick=()=>{close();window.openUserSettings?.();};}
       else{
         const msg=document.createElement('button');msg.className='ec-pbtn primary';msg.textContent='💬 Message';msg.onclick=()=>openDM(p.id,p.full_name||p.username);actions.appendChild(msg);
         const conn=document.createElement('button');conn.className='ec-pbtn secondary';conn.id='ecConnectBtn';conn.textContent=p.connection_status==='accepted'?'Connected ✓':p.connection_status==='pending'?'⏳ Pending…':'＋ Connect';conn.disabled=p.connection_status==='accepted'||p.connection_status==='pending';if(!conn.disabled)conn.onclick=async()=>{try{const r=await json(`${base()}/API/friendship/send-request.php`,{method:'POST',body:JSON.stringify({addressee_id:Number(p.id)})});conn.textContent=r.status==='accepted'?'Connected ✓':'⏳ Pending…';conn.disabled=true;window.showToast?.(r.status==='accepted'?'Already connected':'Connection request sent!','success');}catch(e){window.showToast?.(e.message||'Could not connect','info');}};actions.appendChild(conn);
@@ -89,4 +89,12 @@
     window.__real_openMiniProfile=window.openMiniProfile;
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
+})();
+
+/* Settings entry point: the workspace/profile menu should open the full
+ * Discord-style Ecollab settings screen rather than a placeholder modal. */
+(function(){
+  'use strict';
+  const base=()=>window.ECOLLAB?.baseUrl||'';
+  window.openUserSettings=function(){window.location.href=base()+'/modules/chat/settings.php';};
 })();
