@@ -35,13 +35,26 @@ try {
         throw new RuntimeException('File too large. Max 20 MB.', 400);
     }
 
-    // Allowed MIME types
+    // MIME validation matches the attachment UI: images/videos, documents,
+    // archives, and audio/voice messages. Keep this allow-list explicit.
     $allowedMimes = [
         'image/jpeg',
         'image/png',
         'image/gif',
         'image/webp',
         'image/svg+xml',
+        'video/mp4',
+        'video/webm',
+        'video/quicktime',
+        'audio/mpeg',
+        'audio/mp3',
+        'audio/wav',
+        'audio/x-wav',
+        'audio/wave',
+        'audio/ogg',
+        'audio/webm',
+        'audio/mp4',
+        'audio/x-m4a',
         'application/pdf',
         'text/plain',
         'text/csv',
@@ -58,7 +71,6 @@ try {
         throw new RuntimeException('File type not allowed: ' . htmlspecialchars($mimeType), 400);
     }
 
-    // Sanitize filename
     $originalName = preg_replace('/[^a-zA-Z0-9._\-]/', '_', basename($file['name']));
     $extension    = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
     $uniqueName   = sprintf('%s_%s.%s', date('Ymd_His'), bin2hex(random_bytes(6)), $extension);
@@ -74,12 +86,12 @@ try {
     }
 
     echo json_encode([
-        'success'         => true,
-        'file_name'       => $originalName,
-        'file_path'       => 'uploads/' . $uniqueName,
-        'file_size'       => $file['size'],
-        'mime_type'       => $mimeType,
-        'url'             => BASE_URL . '/uploads/' . $uniqueName,
+        'success'   => true,
+        'file_name' => $originalName,
+        'file_path' => 'uploads/' . $uniqueName,
+        'file_size' => $file['size'],
+        'mime_type' => $mimeType,
+        'url'       => BASE_URL . '/uploads/' . $uniqueName,
     ]);
 } catch (RuntimeException $e) {
     $code = ($e->getCode() >= 400 && $e->getCode() < 600) ? $e->getCode() : 500;
