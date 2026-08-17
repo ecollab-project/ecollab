@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__,2).'/config.php';
 require_once dirname(__DIR__,2).'/database/config/db.php';
 require_once dirname(__DIR__,2).'/security/middleware/AuthMiddleware.php';
+require_once dirname(__DIR__,2).'/services/Phase46Schema.php';
 header('Content-Type: application/json; charset=utf-8');
 AuthMiddleware::startSession(); $me=AuthMiddleware::requireAuth(true); $db=Database::getInstance();
 function ciJson(array $d,int $s=200):never{http_response_code($s);echo json_encode(['success'=>$s<400,...$d],JSON_UNESCAPED_UNICODE);exit;}
@@ -12,6 +13,7 @@ function ciManager(PDO $db,array $ch,int $uid):bool{return in_array(ciRole($db,(
 function ciCreateAllowed(PDO $db,array $ch,int $uid):bool{$r=ciRole($db,(int)$ch['server_id'],$uid);return $r!==null&&((int)$ch['is_private']===0||in_array($r,['owner','admin','moderator'],true)||(int)$ch['created_by']===$uid);}
 function ciUrl(string $t):string{return rtrim((string)BASE_URL,'/').'/modules/chat/chat.php?channel_invite='.rawurlencode($t);}
 try{
+ ensurePhase46Schema($db);
  $method=strtoupper($_SERVER['REQUEST_METHOD']??'GET');$action=(string)($_GET['action']??'');$body=$method==='POST'?(json_decode(file_get_contents('php://input'),true)?:$_POST):$_GET;if($method==='POST')AuthMiddleware::verifyCsrf();
  if($action==='create'){
   $cid=(int)($body['channel_id']??0);$ch=ciChannel($db,$cid);if(!$ch)ciJson(['error'=>'Channel not found'],404);if(!ciCreateAllowed($db,$ch,(int)$me['id']))ciJson(['error'=>'Channel invite permission denied'],403);
