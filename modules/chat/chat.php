@@ -3255,6 +3255,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <!-- Compatibility detail modal -->
   <div id="pmCompatModal"></div>
 
+<script src="<?= BASE_URL ?>/assets/js/chat/functionality-overrides.js" defer></script>
 </body>
 
   <!-- ── FLASHCARD MODALS ── -->
