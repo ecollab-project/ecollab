@@ -17,5 +17,8 @@ CREATE TABLE IF NOT EXISTS subscription_plans (
 INSERT IGNORE INTO subscription_plans (id,code,name,description,token_grant,price_cents) VALUES
 (1,'capstone','Ecollab Full Access','Full-capacity capstone access for students and facilitators',100000,0);
 
-ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_id SMALLINT UNSIGNED NOT NULL DEFAULT 1 AFTER tokens_balance;
+-- MySQL 8.0 does not support ADD COLUMN IF NOT EXISTS in this form.
+-- The migration runner records this migration only after the whole file
+-- succeeds, so a normal ADD COLUMN is the correct portable operation here.
+ALTER TABLE users ADD COLUMN plan_id SMALLINT UNSIGNED NOT NULL DEFAULT 1 AFTER tokens_balance;
 UPDATE users SET plan_id=1 WHERE plan_id IS NULL OR plan_id=0;
