@@ -9,7 +9,6 @@ permissions:
 
 jobs:
   patch-chat-loader:
-    if: github.event.head_commit.message != 'Phase 4.6: add server/channel management loader'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
