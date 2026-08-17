@@ -17,10 +17,10 @@
 -- ── Subscription plan catalogue ─────────────────────────────
 CREATE TABLE IF NOT EXISTS subscription_plans (
     id          SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    code        VARCHAR(30)  NOT NULL,           -- 'free','student_plus','institution'
+    code        VARCHAR(30)  NOT NULL,
     name        VARCHAR(60)  NOT NULL,
     description VARCHAR(255),
-    token_grant INT UNSIGNED NOT NULL DEFAULT 0, -- monthly token allowance
+    token_grant INT UNSIGNED NOT NULL DEFAULT 0,
     price_cents INT UNSIGNED NOT NULL DEFAULT 0,
     is_active   TINYINT(1)   NOT NULL DEFAULT 1,
     created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -42,15 +42,13 @@ SET @col_exists := (
 );
 SET @sql := IF(@col_exists = 0,
     'ALTER TABLE users ADD COLUMN plan_id SMALLINT UNSIGNED NOT NULL DEFAULT 1 AFTER tokens_balance',
-    'SELECT 1'
+    'DO 0'
 );
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 -- ── Add index for plan-based queries ────────────────────────
--- (MySQL 8 lacks "ADD INDEX IF NOT EXISTS", so we use a guarded
---  procedure to avoid "Duplicate key name" on re-run)
 SET @idx_exists := (
     SELECT COUNT(*) FROM information_schema.STATISTICS
     WHERE table_schema = DATABASE()
@@ -59,7 +57,7 @@ SET @idx_exists := (
 );
 SET @sql := IF(@idx_exists = 0,
     'ALTER TABLE users ADD INDEX idx_plan_id (plan_id)',
-    'SELECT 1'
+    'DO 0'
 );
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
@@ -75,7 +73,7 @@ SET @fk_exists := (
 );
 SET @sql := IF(@fk_exists = 0,
     'ALTER TABLE users ADD CONSTRAINT fk_user_plan FOREIGN KEY (plan_id) REFERENCES subscription_plans(id) ON DELETE RESTRICT ON UPDATE CASCADE',
-    'SELECT 1'
+    'DO 0'
 );
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
