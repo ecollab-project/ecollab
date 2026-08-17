@@ -30,34 +30,41 @@ try {
     $roleStmt = $db->prepare('SELECT role FROM users WHERE id = :uid LIMIT 1');
     $roleStmt->execute([':uid' => $user['id']]);
     $userRole = $roleStmt->fetchColumn() ?: 'student';
+    $roleStmt->closeCursor();
     $isPrivileged = in_array($userRole, ['admin', 'super_admin', 'moderator'], true);
 
     if (!$isPrivileged) {
-        $accessStmt = $db->prepare('
-            SELECT c.is_private, c.created_by, sm.server_role,
-                   EXISTS(
-                       SELECT 1 FROM channel_members cm
-                       WHERE cm.channel_id = c.id AND cm.user_id = :uid_access
-                   ) AS has_channel_access
-            FROM channels c
-            JOIN server_members sm
-              ON sm.server_id = c.server_id AND sm.user_id = :uid_member
-            WHERE c.id = :cid
-            LIMIT 1
-        ');
+        // Use a double-quoted SQL string so MySQL receives real newlines
+        // instead of the literal "\\n" characters from the old PHP string.
+        $accessStmt = $db->prepare(
+            "SELECT c.is_private, c.created_by, sm.server_role,
+                    EXISTS(
+                        SELECT 1 FROM channel_members cm
+                        WHERE cm.channel_id = c.id AND cm.user_id = :uid_access
+                    ) AS has_channel_access
+             FROM channels c
+             JOIN server_members sm
+               ON sm.server_id = c.server_id AND sm.user_id = :uid_member
+             WHERE c.id = :cid
+             LIMIT 1"
+        );
         $accessStmt->execute([
             ':uid_access' => $user['id'],
             ':uid_member' => $user['id'],
             ':cid'        => $channelId,
         ]);
-        $access = $accessStmt->fetch();
+        $access = $accessStmt->fetch(PDO::FETCH_ASSOC);
+        $accessStmt->closeCursor();
 
         if (!$access) {
             throw new RuntimeException('Access denied', 403);
         }
 
-        $canManage = in_array($access['server_role'], ['owner', 'admin', 'moderator'], true)
-            || (int)$access['created_by'] === (int)$user['id'];
+        $canManage = in_array(
+            $access['server_role'],
+            ['owner', 'admin', 'moderator'],
+            true
+        ) || (int)$access['created_by'] === (int)$user['id'];
 
         if ((int)$access['is_private'] === 1 && !(bool)$access['has_channel_access'] && !$canManage) {
             throw new RuntimeException('You do not have access to this private channel', 403);
