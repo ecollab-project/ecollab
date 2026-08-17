@@ -997,6 +997,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-liveeditor.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-extra.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/peer-matching.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/server-channel-management.js" defer></script>
 
 
   <!-- ── VOICE CHANNEL MODALS ─────────────────────────────────────────────── -->
