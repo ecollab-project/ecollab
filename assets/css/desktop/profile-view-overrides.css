@@ -1,0 +1,253 @@
+/* Ecollab profile viewer — eye-friendly dark treatment.
+ * Loaded after the base chat styles and intentionally uses !important where
+ * profile-view.js injects inline styles at runtime.
+ */
+#profileCardModal.ec-profile-overlay {
+  z-index: 12000 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 18px !important;
+  background: rgba(8, 10, 14, .86) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+#profileCardModal.ec-profile-overlay .ec-profile-card {
+  width: min(980px, 94vw) !important;
+  height: min(680px, 90vh) !important;
+  max-height: 680px !important;
+  background: #1e2024 !important;
+  border: 1px solid #30343b !important;
+  border-radius: 14px !important;
+  box-shadow: 0 22px 70px rgba(0, 0, 0, .55) !important;
+  color: #e6e9ed !important;
+}
+
+.ec-profile-side {
+  width: 215px !important;
+  flex: 0 0 215px !important;
+  background: #17191d !important;
+  border-right: 1px solid #2d3137 !important;
+  padding: 16px 10px !important;
+}
+
+.ec-profile-side-title {
+  color: #f0f2f5 !important;
+  padding: 8px 10px 12px !important;
+}
+
+.ec-profile-nav {
+  color: #aeb4bd !important;
+  border-radius: 7px !important;
+  padding: 10px !important;
+  margin-bottom: 2px !important;
+}
+
+.ec-profile-nav.active {
+  background: #30343b !important;
+  color: #f2f4f7 !important;
+}
+
+.ec-profile-nav:hover {
+  background: #282c32 !important;
+  color: #f2f4f7 !important;
+}
+
+.ec-profile-main {
+  background: #23262b !important;
+  scrollbar-color: #41464e transparent !important;
+}
+
+.ec-profile-banner {
+  height: 112px !important;
+  background: #2b2f35 !important;
+  border-bottom: 1px solid #343941 !important;
+}
+
+.ec-profile-banner::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: 0 !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.015), rgba(0,0,0,.10)) !important;
+  pointer-events: none !important;
+}
+
+.ec-profile-close {
+  z-index: 2 !important;
+  right: 12px !important;
+  top: 12px !important;
+  width: 32px !important;
+  height: 32px !important;
+  background: #181a1e !important;
+  border: 1px solid #363a41 !important;
+  color: #b8bec7 !important;
+  box-shadow: none !important;
+}
+
+.ec-profile-close:hover {
+  background: #292d33 !important;
+  color: #fff !important;
+}
+
+.ec-profile-content {
+  padding: 0 28px 30px !important;
+}
+
+.ec-profile-avatar {
+  width: 96px !important;
+  height: 96px !important;
+  margin-top: -48px !important;
+  border: 6px solid #23262b !important;
+  background: #343840 !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,.35) !important;
+}
+
+/* Do not let the user's avatar gradient become a giant saturated visual. */
+#ecProfileAvatar {
+  background: #3b3f47 !important;
+  color: #f1f3f5 !important;
+}
+
+.ec-profile-actions {
+  justify-content: flex-start !important;
+  margin-top: -46px !important;
+  margin-bottom: 48px !important;
+  padding-left: 108px !important;
+}
+
+.ec-pbtn {
+  padding: 8px 14px !important;
+  border-radius: 7px !important;
+  background: #30343b !important;
+  color: #e6e9ed !important;
+  border: 1px solid #444951 !important;
+  box-shadow: none !important;
+}
+
+.ec-pbtn.primary {
+  background: #3a3f47 !important;
+  color: #fff !important;
+  border: 1px solid #4b515a !important;
+}
+
+.ec-pbtn.secondary {
+  background: #202328 !important;
+  color: #c8cdd5 !important;
+  border: 1px solid #3b4048 !important;
+}
+
+.ec-pbtn.success {
+  background: #2f6b4f !important;
+  border-color: #3a805d !important;
+}
+
+.ec-pbtn:hover:not(:disabled) {
+  filter: brightness(1.12) !important;
+}
+
+.ec-profile-name {
+  font-size: 24px !important;
+  color: #f1f3f5 !important;
+}
+
+.ec-profile-handle {
+  color: #9da4ae !important;
+}
+
+.ec-profile-meta .ec-pill,
+.ec-profile-tag {
+  background: #1b1e22 !important;
+  border-color: #383d44 !important;
+  color: #c3c8d0 !important;
+}
+
+.ec-profile-section {
+  margin-top: 22px !important;
+}
+
+.ec-profile-section h4 {
+  color: #9ea5af !important;
+}
+
+.ec-profile-bio {
+  color: #d0d4da !important;
+}
+
+.ec-profile-stats {
+  gap: 8px !important;
+}
+
+.ec-stat {
+  background: #1b1e22 !important;
+  border: 1px solid #30353c !important;
+  border-radius: 8px !important;
+}
+
+.ec-stat b {
+  color: #edf0f3 !important;
+}
+
+.ec-stat span {
+  color: #8f97a2 !important;
+}
+
+.ec-profile-right {
+  width: 315px !important;
+  flex: 0 0 315px !important;
+  background: #1b1e22 !important;
+  border-left: 1px solid #2d3137 !important;
+  padding: 22px !important;
+}
+
+.ec-board-tabs {
+  border-bottom-color: #363b42 !important;
+}
+
+.ec-board-tab {
+  color: #8f97a2 !important;
+}
+
+.ec-board-tab.active {
+  color: #f1f3f5 !important;
+  border-bottom-color: #b8bec7 !important;
+}
+
+.ec-widget {
+  min-height: 82px !important;
+  background: #262a30 !important;
+  border-color: #363b42 !important;
+  color: #dfe3e8 !important;
+}
+
+.ec-widget::before {
+  background: none !important;
+  opacity: 0 !important;
+}
+
+.ec-empty-board {
+  background: #22252a !important;
+  border-color: #353a41 !important;
+  color: #9199a4 !important;
+}
+
+@media (max-width: 800px) {
+  #profileCardModal.ec-profile-overlay {
+    padding: 8px !important;
+  }
+
+  #profileCardModal.ec-profile-overlay .ec-profile-card {
+    height: 94vh !important;
+    max-height: none !important;
+    width: 98vw !important;
+    border-radius: 12px !important;
+  }
+
+  .ec-profile-content {
+    padding: 0 18px 24px !important;
+  }
+
+  .ec-profile-actions {
+    padding-left: 0 !important;
+    margin-top: -32px !important;
+    margin-bottom: 34px !important;
+  }
+}
