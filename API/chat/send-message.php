@@ -2,11 +2,9 @@
 declare(strict_types=1);
 
 // ── Catch absolutely everything, including fatal errors ──────────────────────
-// This runs even if PHP dies mid-execution
 register_shutdown_function(function () {
     $err = error_get_last();
     if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
-        // Only output if no response sent yet, or if headers are still changeable
         if (!headers_sent()) {
             http_response_code(500);
             header('Content-Type: application/json');
@@ -22,9 +20,8 @@ register_shutdown_function(function () {
 
 require_once dirname(__DIR__, 2) . '/config.php';
 
-// Override .htaccess suppression in debug mode
 if (defined('APP_DEBUG') && APP_DEBUG) {
-    ini_set('display_errors', '0'); // keep display off (avoid corrupting JSON)
+    ini_set('display_errors', '0');
     ini_set('log_errors', '1');
     error_reporting(E_ALL);
 }
@@ -53,6 +50,47 @@ try {
         http_response_code(400);
         echo json_encode(['error' => 'channel_id is required']);
         exit;
+    }
+
+    // Private-channel access must be enforced here as well as in the UI.
+    // Without this check a regular server member who knows a private channel ID
+    // could post directly to send-message.php.
+    $db = Database::getInstance();
+    $roleStmt = $db->prepare('SELECT role FROM users WHERE id = :uid LIMIT 1');
+    $roleStmt->execute([':uid' => $user['id']]);
+    $userRole = $roleStmt->fetchColumn() ?: 'student';
+    $isPrivileged = in_array($userRole, ['admin', 'super_admin', 'moderator'], true);
+
+    if (!$isPrivileged) {
+        $accessStmt = $db->prepare('
+            SELECT c.is_private, c.created_by, sm.server_role,
+                   EXISTS(
+                       SELECT 1 FROM channel_members cm
+                       WHERE cm.channel_id = c.id AND cm.user_id = :uid_access
+                   ) AS has_channel_access
+            FROM channels c
+            JOIN server_members sm
+              ON sm.server_id = c.server_id AND sm.user_id = :uid_member
+            WHERE c.id = :cid
+            LIMIT 1
+        ');
+        $accessStmt->execute([
+            ':uid_access' => $user['id'],
+            ':uid_member' => $user['id'],
+            ':cid'        => $channelId,
+        ]);
+        $access = $accessStmt->fetch();
+
+        if (!$access) {
+            throw new RuntimeException('Access denied', 403);
+        }
+
+        $canManage = in_array($access['server_role'], ['owner', 'admin', 'moderator'], true)
+            || (int)$access['created_by'] === (int)$user['id'];
+
+        if ((int)$access['is_private'] === 1 && !(bool)$access['has_channel_access'] && !$canManage) {
+            throw new RuntimeException('You do not have access to this private channel', 403);
+        }
     }
 
     $service = new MessageService();
