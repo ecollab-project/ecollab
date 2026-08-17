@@ -19,14 +19,54 @@ try {
         exit;
     }
 
-    $before   = filter_input(INPUT_GET, 'before', FILTER_VALIDATE_INT) ?: null;
-    $limit    = filter_input(INPUT_GET, 'limit',  FILTER_VALIDATE_INT) ?: 50;
+    $before     = filter_input(INPUT_GET, 'before', FILTER_VALIDATE_INT) ?: null;
+    $limit      = filter_input(INPUT_GET, 'limit', FILTER_VALIDATE_INT) ?: 50;
     $pinnedOnly = filter_input(INPUT_GET, 'pinned', FILTER_VALIDATE_INT) === 1;
 
-    $service  = new MessageService();
+    // Enforce private-channel membership before either normal or pinned reads.
+    // The frontend can display an access-request state, but the API must never
+    // return message data to a user who is only a member of the parent server.
+    $db = Database::getInstance();
+    $roleStmt = $db->prepare('SELECT role FROM users WHERE id = :uid LIMIT 1');
+    $roleStmt->execute([':uid' => $user['id']]);
+    $userRole = $roleStmt->fetchColumn() ?: 'student';
+    $isPrivileged = in_array($userRole, ['admin', 'super_admin', 'moderator'], true);
+
+    if (!$isPrivileged) {
+        $accessStmt = $db->prepare('
+            SELECT c.is_private, c.created_by, sm.server_role,
+                   EXISTS(
+                       SELECT 1 FROM channel_members cm
+                       WHERE cm.channel_id = c.id AND cm.user_id = :uid_access
+                   ) AS has_channel_access
+            FROM channels c
+            JOIN server_members sm
+              ON sm.server_id = c.server_id AND sm.user_id = :uid_member
+            WHERE c.id = :cid
+            LIMIT 1
+        ');
+        $accessStmt->execute([
+            ':uid_access' => $user['id'],
+            ':uid_member' => $user['id'],
+            ':cid'        => $channelId,
+        ]);
+        $access = $accessStmt->fetch();
+
+        if (!$access) {
+            throw new RuntimeException('Access denied', 403);
+        }
+
+        $canManage = in_array($access['server_role'], ['owner', 'admin', 'moderator'], true)
+            || (int)$access['created_by'] === (int)$user['id'];
+
+        if ((int)$access['is_private'] === 1 && !(bool)$access['has_channel_access'] && !$canManage) {
+            throw new RuntimeException('You do not have access to this private channel', 403);
+        }
+    }
+
+    $service = new MessageService();
 
     if ($pinnedOnly) {
-        // Return only pinned messages for this channel (used by the pin-icon modal)
         $messages = $service->getPinnedMessages((int)$channelId, $user['id']);
         echo json_encode(['success' => true, 'messages' => $messages]);
         exit;
