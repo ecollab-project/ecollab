@@ -8,7 +8,7 @@
 
   async function request(path, action, params = {}, method = 'GET', body = null) {
     const qs = new URLSearchParams({action, ...params});
-    const opts = {method, credentials:'same-origin', headers:{'Content-Type':'application/json','X-CSRF-Token':csrf()}};
+    const opts = {method, credentials:'same-origin', cache:'no-store', headers:{'Content-Type':'application/json','X-CSRF-Token':csrf()}};
     if (body) opts.body = JSON.stringify(body);
     const res = await fetch(`${base()}${path}?${qs}`, opts);
     const data = await res.json().catch(() => ({}));
@@ -173,7 +173,14 @@
   }
 
   function setupServerMemberActions(id) {
-    window.scmAddMember=async uid=>{try{await request('/API/server/members.php','add',{},'POST',{server_id:id,user_id:uid});toast('Member added','success');if(typeof window.scmRefreshServerMembers==='function')await window.scmRefreshServerMembers();}catch(e){toast(e.message,'error');}};
+    window.scmAddMember=async uid=>{
+      try{
+        await request('/API/server/members.php','add',{},'POST',{server_id:id,user_id:uid});
+        toast('Member added','success');
+        if(typeof window.scmRefreshServerMembers==='function') await window.scmRefreshServerMembers();
+        await scmTab('Members');
+      }catch(e){toast(e.message,'error');}
+    };
     window.scmRemoveMember=async uid=>{if(!confirm('Remove this member from the server?'))return;try{await request('/API/server/members.php','remove',{},'POST',{server_id:id,user_id:uid});toast('Member removed','success');await loadServerMembers();}catch(e){toast(e.message,'error');}};
   }
 
@@ -189,8 +196,9 @@
   async function renderServerMembers(body){
     const id=currentServer?.id||serverId();
     setupServerMemberActions(id);
-    body.innerHTML=`<div class="scm-muted" style="margin-bottom:10px">Current members of this server.</div><div id="scmMembers"><div class="scm-empty">Loading…</div></div>`;
-    await loadServerMembers();
+    body.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px"><div class="scm-muted">Current members of this server.</div><button class="scm-btn" id="scmRefreshMembersBtn">↻ Refresh</button></div><div id="scmMembers"><div class="scm-empty">Loading…</div></div>`;
+    document.getElementById('scmRefreshMembersBtn').onclick=()=>loadServerMembers(true);
+    await loadServerMembers(true);
   }
 
   function memberRow(u,add){
@@ -198,9 +206,9 @@
     return `<div class="scm-row"><div class="scm-avatar" style="background:linear-gradient(135deg,${a},${b})">${esc((u.full_name||u.username||'?')[0].toUpperCase())}</div><div class="scm-info"><div class="scm-name">${esc(u.full_name||u.username)}</div><div class="scm-meta">@${esc(u.username)} · ${esc(u.server_role||u.role||'student')}</div></div>${add?`<button class="scm-btn green" onclick="window.scmAddMember(${u.id})">+ Add</button>`:(u.server_role!=='owner'?`<button class="scm-btn red" onclick="window.scmRemoveMember(${u.id})">Remove</button>`:'')}</div>`;
   }
 
-  async function loadServerMembers(){
+  async function loadServerMembers(forceFresh=false){
     const el=document.getElementById('scmMembers');if(!el)return;
-    try{const d=await request('/API/server/members.php','list',{server_id:currentServer?.id||serverId()});el.innerHTML=d.members.length?d.members.map(u=>memberRow(u,false)).join(''):'<div class="scm-empty">No members.</div>';}catch(e){el.innerHTML=`<div class="scm-empty">${esc(e.message)}</div>`;}
+    try{const params={server_id:currentServer?.id||serverId()};if(forceFresh)params._ts=Date.now();const d=await request('/API/server/members.php','list',params);el.innerHTML=d.members.length?d.members.map(u=>memberRow(u,false)).join(''):'<div class="scm-empty">No members.</div>';}catch(e){el.innerHTML=`<div class="scm-empty">${esc(e.message)}</div>`;}
   }
 
   window.scmRefreshServerMembers=loadServerMembers;
