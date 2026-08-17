@@ -138,3 +138,16 @@
   s.src=(window.ECOLLAB?.baseUrl||'')+'/assets/js/chat/profile-view.js?v=1';
   document.head.appendChild(s);
 })();
+
+/* Load the eye-friendly profile theme after profile-view.js injects its
+ * runtime style element. !important rules in the stylesheet intentionally
+ * win over the profile viewer's inline presentation styles. */
+(function loadProfileViewTheme(){
+  const id='profileViewThemeStyles';
+  if(document.getElementById(id)) return;
+  const link=document.createElement('link');
+  link.id=id;
+  link.rel='stylesheet';
+  link.href=(window.ECOLLAB?.baseUrl||'')+'/assets/css/desktop/profile-view-overrides.css?v=1';
+  document.head.appendChild(link);
+})();
