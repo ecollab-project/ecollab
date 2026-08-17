@@ -1,0 +1,33 @@
+-- Ecollab user settings persistence
+-- All users share the same full-capacity plan; these are per-user preferences only.
+CREATE TABLE IF NOT EXISTS user_settings (
+    user_id BIGINT UNSIGNED NOT NULL,
+    connection_requests TINYINT(1) NOT NULL DEFAULT 1,
+    direct_messages TINYINT(1) NOT NULL DEFAULT 1,
+    activity_status TINYINT(1) NOT NULL DEFAULT 1,
+    read_receipts TINYINT(1) NOT NULL DEFAULT 1,
+    screenshot_alerts TINYINT(1) NOT NULL DEFAULT 1,
+    ai_matching TINYINT(1) NOT NULL DEFAULT 1,
+    profile_visibility ENUM('everyone','servers','connections') NOT NULL DEFAULT 'everyone',
+    avatar_gradient VARCHAR(32) NOT NULL DEFAULT '#a855f7,#ec4899',
+    theme ENUM('dark','light','system') NOT NULL DEFAULT 'dark',
+    compact_mode TINYINT(1) NOT NULL DEFAULT 0,
+    reduce_motion TINYINT(1) NOT NULL DEFAULT 0,
+    high_contrast TINYINT(1) NOT NULL DEFAULT 0,
+    screen_reader_mode TINYINT(1) NOT NULL DEFAULT 0,
+    notification_desktop TINYINT(1) NOT NULL DEFAULT 1,
+    notification_messages TINYINT(1) NOT NULL DEFAULT 1,
+    notification_mentions TINYINT(1) NOT NULL DEFAULT 1,
+    notification_matches TINYINT(1) NOT NULL DEFAULT 1,
+    notification_sound TINYINT(1) NOT NULL DEFAULT 1,
+    input_device VARCHAR(255) NULL,
+    output_device VARCHAR(255) NULL,
+    mic_volume TINYINT UNSIGNED NOT NULL DEFAULT 100,
+    output_volume TINYINT UNSIGNED NOT NULL DEFAULT 100,
+    noise_suppression TINYINT(1) NOT NULL DEFAULT 1,
+    echo_cancellation TINYINT(1) NOT NULL DEFAULT 1,
+    auto_gain_control TINYINT(1) NOT NULL DEFAULT 1,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id),
+    CONSTRAINT fk_user_settings_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
