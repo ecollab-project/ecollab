@@ -17,10 +17,10 @@ if (PHP_SAPI !== 'cli') {
 
 define('ROOT', dirname(__DIR__, 2));
 
-require ROOT . '/vendor/autoload.php';
-require ROOT . '/config.php';
-require ROOT . '/database/config/db.php';
-require ROOT . '/websocket/ChatServer.php';
+require_once ROOT . '/vendor/autoload.php';
+require_once ROOT . '/config.php';
+require_once ROOT . '/database/config/db.php';
+require_once ROOT . '/websocket/ChatServer.php';
 
 use Ratchet\Server\IoServer;
 use Ratchet\Http\HttpServer;
