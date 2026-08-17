@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
+require_once dirname(__DIR__, 2) . '/services/Phase46Schema.php';
 
 header('Content-Type: application/json; charset=utf-8');
 AuthMiddleware::startSession();
@@ -28,6 +29,10 @@ function inviteUrl(string $token): string {
 }
 
 try {
+    // Existing XAMPP databases may not have run migration 019 yet.
+    // Keep the Phase 4.6 API self-healing and idempotent.
+    ensurePhase46Schema($db);
+
     $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
     $action = (string)($_GET['action'] ?? '');
     $body = $method === 'POST' ? (json_decode(file_get_contents('php://input'), true) ?: $_POST) : $_GET;
