@@ -2,124 +2,73 @@
 declare(strict_types=1);
 /**
  * channel-members.php
- * Handles private channel access management.
+ * Private-channel member/access management.
  *
- * GET  ?channel_id=X                    → list members + server members (for owner/admin)
- * POST action=add    channel_id, user_id → grant access
- * POST action=remove channel_id, user_id → revoke access
+ * GET  ?channel_id=X                    -> list server members + access state
+ * POST action=add    channel_id,user_id  -> grant access (server member only)
+ * POST action=remove channel_id,user_id -> revoke access
  */
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 AuthMiddleware::startSession();
 $me = AuthMiddleware::requireAuth(true);
-
 $db = Database::getInstance();
 
-// ── GET: list all server members with their access status ─────────────────
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $channelId = (int)($_GET['channel_id'] ?? 0);
-    if (!$channelId) {
-        http_response_code(400);
-        echo json_encode(['error' => 'channel_id required']);
-        exit;
-    }
-
-    // Get channel info
-    $chStmt = $db->prepare("SELECT id, server_id, name, is_private, created_by FROM channels WHERE id = :cid LIMIT 1");
-    $chStmt->execute([':cid' => $channelId]);
-    $channel = $chStmt->fetch(PDO::FETCH_ASSOC);
-    if (!$channel) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Channel not found']);
-        exit;
-    }
-
-    $serverId = (int)$channel['server_id'];
-
-    // Verify requester is channel creator or server owner/admin
-    $roleStmt = $db->prepare("SELECT server_role FROM server_members WHERE server_id = :sid AND user_id = :uid LIMIT 1");
-    $roleStmt->execute([':sid' => $serverId, ':uid' => $me['id']]);
-    $myRole = $roleStmt->fetchColumn();
-    $canManage = in_array($myRole, ['owner', 'admin', 'moderator'], true) || (int)$channel['created_by'] === (int)$me['id'];
-    if (!$canManage) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Insufficient permissions']);
-        exit;
-    }
-
-    // Return all server members with access status
-    $stmt = $db->prepare("
-        SELECT
-            u.id,
-            u.username,
-            u.full_name,
-            u.role,
-            u.avatar_color_gradient AS grad,
-            u.is_online,
-            sm.server_role,
-            sm.nickname,
-            CASE WHEN cm.user_id IS NOT NULL THEN 1 ELSE 0 END AS has_access
-        FROM users u
-        JOIN server_members sm ON sm.user_id = u.id AND sm.server_id = :sid
-        LEFT JOIN channel_members cm ON cm.channel_id = :cid AND cm.user_id = u.id
-        WHERE u.id <> :me AND u.deleted_at IS NULL
-        ORDER BY has_access DESC, u.full_name ASC
-    ");
-    $stmt->execute([':sid' => $serverId, ':cid' => $channelId, ':me' => $me['id']]);
-    $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    echo json_encode(['success' => true, 'channel' => $channel, 'members' => $members]);
+function cmJson(array $data, int $status = 200): never {
+    http_response_code($status);
+    echo json_encode(['success' => $status < 400, ...$data], JSON_UNESCAPED_UNICODE);
     exit;
 }
+function cmChannel(PDO $db, int $id): ?array {
+    $s=$db->prepare('SELECT id,server_id,name,is_private,created_by FROM channels WHERE id=? LIMIT 1');
+    $s->execute([$id]); return $s->fetch(PDO::FETCH_ASSOC) ?: null;
+}
+function cmRole(PDO $db,int $serverId,int $userId): ?string {
+    $s=$db->prepare('SELECT server_role FROM server_members WHERE server_id=? AND user_id=? LIMIT 1');
+    $s->execute([$serverId,$userId]); return $s->fetchColumn() ?: null;
+}
+function cmCanManage(PDO $db,array $channel,int $userId): bool {
+    return in_array(cmRole($db,(int)$channel['server_id'],$userId),['owner','admin','moderator'],true) || (int)$channel['created_by']===$userId;
+}
 
-// ── POST: add or remove ────────────────────────────────────────────────────
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+try {
+    $method=strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+    if ($method==='GET') {
+        $channelId=(int)($_GET['channel_id'] ?? 0);
+        if(!$channelId) cmJson(['error'=>'channel_id required'],400);
+        $channel=cmChannel($db,$channelId);
+        if(!$channel) cmJson(['error'=>'Channel not found'],404);
+        if(!cmCanManage($db,$channel,(int)$me['id'])) cmJson(['error'=>'Insufficient permissions'],403);
+        $s=$db->prepare("SELECT u.id,u.username,u.full_name,u.role,u.avatar_color_gradient AS grad,u.is_online,sm.server_role,sm.nickname,CASE WHEN cm.user_id IS NOT NULL THEN 1 ELSE 0 END AS has_access FROM users u JOIN server_members sm ON sm.user_id=u.id AND sm.server_id=? LEFT JOIN channel_members cm ON cm.channel_id=? AND cm.user_id=u.id WHERE u.id<>? AND u.deleted_at IS NULL ORDER BY has_access DESC,u.full_name,u.username");
+        $s->execute([(int)$channel['server_id'],$channelId,(int)$me['id']]);
+        cmJson(['channel'=>$channel,'members'=>$s->fetchAll(PDO::FETCH_ASSOC)]);
+    }
+
+    if($method!=='POST') cmJson(['error'=>'Method not allowed'],405);
     AuthMiddleware::verifyCsrf();
-    $body      = json_decode(file_get_contents('php://input'), true) ?? $_POST;
-    $action    = $body['action'] ?? '';
-    $channelId = (int)($body['channel_id'] ?? 0);
-    $targetId  = (int)($body['user_id'] ?? 0);
+    $body=json_decode(file_get_contents('php://input'),true) ?: $_POST;
+    $action=(string)($body['action'] ?? '');
+    $channelId=(int)($body['channel_id'] ?? 0);
+    $targetId=(int)($body['user_id'] ?? 0);
+    if(!$channelId || !$targetId || !in_array($action,['add','remove'],true)) cmJson(['error'=>'action, channel_id, and user_id required'],400);
+    $channel=cmChannel($db,$channelId);
+    if(!$channel) cmJson(['error'=>'Channel not found'],404);
+    if(!cmCanManage($db,$channel,(int)$me['id'])) cmJson(['error'=>'Insufficient permissions'],403);
 
-    if (!$channelId || !$targetId || !in_array($action, ['add', 'remove'], true)) {
-        http_response_code(400);
-        echo json_encode(['error' => 'action, channel_id, and user_id required']);
-        exit;
-    }
+    $serverMember=$db->prepare('SELECT 1 FROM server_members WHERE server_id=? AND user_id=? LIMIT 1');
+    $serverMember->execute([(int)$channel['server_id'],$targetId]);
+    if(!$serverMember->fetchColumn()) cmJson(['error'=>'User must be a member of this server first'],409);
 
-    $chStmt = $db->prepare("SELECT id, server_id, is_private, created_by FROM channels WHERE id = :cid LIMIT 1");
-    $chStmt->execute([':cid' => $channelId]);
-    $channel = $chStmt->fetch(PDO::FETCH_ASSOC);
-    if (!$channel) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Channel not found']);
-        exit;
+    if($action==='add') {
+        $db->prepare('INSERT IGNORE INTO channel_members(channel_id,user_id) VALUES(?,?)')->execute([$channelId,$targetId]);
+        cmJson(['message'=>'Channel access granted']);
     }
-
-    $serverId = (int)$channel['server_id'];
-    $roleStmt = $db->prepare("SELECT server_role FROM server_members WHERE server_id = :sid AND user_id = :uid LIMIT 1");
-    $roleStmt->execute([':sid' => $serverId, ':uid' => $me['id']]);
-    $myRole = $roleStmt->fetchColumn();
-    $canManage = in_array($myRole, ['owner', 'admin', 'moderator'], true) || (int)$channel['created_by'] === (int)$me['id'];
-    if (!$canManage) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Insufficient permissions']);
-        exit;
-    }
-
-    if ($action === 'add') {
-        $ins = $db->prepare("INSERT IGNORE INTO channel_members (channel_id, user_id) VALUES (:cid, :uid)");
-        $ins->execute([':cid' => $channelId, ':uid' => $targetId]);
-        echo json_encode(['success' => true, 'message' => 'User granted access']);
-    } else {
-        $del = $db->prepare("DELETE FROM channel_members WHERE channel_id = :cid AND user_id = :uid");
-        $del->execute([':cid' => $channelId, ':uid' => $targetId]);
-        echo json_encode(['success' => true, 'message' => 'User access revoked']);
-    }
-    exit;
+    $db->prepare('DELETE FROM channel_members WHERE channel_id=? AND user_id=?')->execute([$channelId,$targetId]);
+    cmJson(['message'=>'Channel access revoked']);
+} catch(Throwable $e) {
+    error_log('[chat/channel-members] '.$e->getMessage());
+    cmJson(['error'=>defined('APP_DEBUG')&&APP_DEBUG?$e->getMessage():'Channel member service unavailable'],500);
 }
-
-http_response_code(405);
-echo json_encode(['error' => 'Method not allowed']);
