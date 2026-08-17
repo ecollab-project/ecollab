@@ -30,11 +30,61 @@
   }
 
   function channelId() {
-    return Number(window.ECOLLAB?.currentChannelId || window._currentChannelMeta?.id || document.querySelector('.channel-item.active[data-channel-id]')?.dataset.channelId || document.querySelector('.voice-channel.active[data-channel-id]')?.dataset.channelId || 0);
+    const e = window.ECOLLAB || {};
+    const candidates = [
+      e.currentChannelId,
+      window._currentChannelMeta?.id,
+      window.currentChannelId,
+      window.activeChannelId,
+      window.selectedChannelId,
+      window.currentChannel?.id,
+      document.querySelector('#channelList .channel-item.active[data-channel-id]')?.dataset.channelId,
+      document.querySelector('.channel-item.active[data-channel-id]')?.dataset.channelId,
+      document.querySelector('.voice-channel.active[data-channel-id]')?.dataset.channelId
+    ];
+    for (const value of candidates) {
+      const id = Number(value || 0);
+      if (Number.isInteger(id) && id > 0) return id;
+    }
+    return 0;
   }
 
   function channelName() {
     return String(window._currentChannelMeta?.name || document.querySelector('.channel-item.active[data-channel-id]')?.dataset.channelName || document.getElementById('channelTitle')?.textContent || 'channel');
+  }
+
+  function syncChannelContext(id) {
+    id = Number(id || 0);
+    if (!id) return 0;
+    window.ECOLLAB = window.ECOLLAB || {};
+    window.ECOLLAB.currentChannelId = id;
+    window.currentChannelId = id;
+    window.activeChannelId = id;
+    window._currentChannelMeta = Object.assign({}, window._currentChannelMeta || {}, {id, name: channelName()});
+    return id;
+  }
+
+  function hideLegacyManager() {
+    const legacy = document.getElementById('privateChannelManagerModal');
+    if (legacy) {
+      legacy.style.display = 'none';
+      legacy.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  function trackChannelContext() {
+    syncChannelContext(channelId());
+    document.addEventListener('click', event => {
+      const item = event.target.closest?.('[data-channel-id]');
+      if (!item) return;
+      const id = Number(item.dataset.channelId || 0);
+      if (id) syncChannelContext(id);
+    }, true);
+    const observer = new MutationObserver(() => {
+      hideLegacyManager();
+      syncChannelContext(channelId());
+    });
+    observer.observe(document.body, {subtree:true, childList:true, attributes:true, attributeFilter:['class','data-channel-id','data-channel-name']});
   }
 
   function styles() {
@@ -90,12 +140,13 @@
   window.openServerManager = openServerManager;
 
   async function openChannelManager(tab = 'Invite') {
-    const id = channelId();
+    const id = syncChannelContext(channelId());
     if (!id) return toast('Select a channel first');
     context = 'channel'; open('Channel Management', ['Invite','Members'], tab);
     try {
       const d = await request('/API/chat/channel-members.php','list',{channel_id:id});
       currentChannel = d.channel || {id,name:channelName()};
+      syncChannelContext(currentChannel.id);
       scmTab(tab, d);
     } catch (e) {
       currentChannel = {id,name:channelName()};
@@ -234,9 +285,15 @@
 
   function boot() {
     styles();
+    hideLegacyManager();
+    trackChannelContext();
     headerActions();
     handleInviteQuery();
-    const observer = new MutationObserver(headerActions);
+    const observer = new MutationObserver(() => {
+      hideLegacyManager();
+      trackChannelContext();
+      headerActions();
+    });
     observer.observe(document.body,{subtree:true,childList:true});
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',boot); else boot();
