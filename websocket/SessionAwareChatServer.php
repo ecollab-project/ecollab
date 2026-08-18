@@ -88,7 +88,18 @@ class SessionAwareChatServer extends ChatServer
             $metaProperty = $reflection->getProperty('connMeta');
             $metaProperty->setAccessible(true);
             $connMeta = $metaProperty->getValue($this);
-            $rid = $conn->resourceId;
+
+            // Ratchet's ConnectionInterface does not declare resourceId, although
+            // Ratchet's concrete connection supplies it at runtime. Read the
+            // dynamic property through get_object_vars so PHPStan can analyze the
+            // interface safely while preserving the existing ChatServer key.
+            $connectionVars = get_object_vars($conn);
+            $ridValue = $connectionVars['resourceId'] ?? null;
+            if (!is_int($ridValue) && !is_string($ridValue)) {
+                return false;
+            }
+            $rid = (string)$ridValue;
+
             if (!isset($connMeta[$rid])) {
                 return false;
             }
