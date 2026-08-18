@@ -3,6 +3,21 @@
 ## Mission
 E-Collab is a full-stack collaborative education platform. Treat this repository as an existing production-like capstone system. Preserve working behavior and the established UI unless a change is explicitly requested.
 
+## Default agent behavior
+For non-trivial tasks, prefer the **E-Collab Orchestrator** as the entry point. It must analyze the request and designate one or more specialist agents based on the actual task. It must not invoke every specialist by default.
+
+The specialist agents are:
+- `ecollab-fullstack`
+- `ecollab-frontend`
+- `ecollab-backend`
+- `ecollab-ai-ml`
+- `ecollab-database`
+- `ecollab-debugger`
+- `ecollab-security`
+- `ecollab-realtime`
+
+The Orchestrator may use one specialist for focused work or combine multiple specialists for cross-stack work. Independent investigations may run in parallel; conflicting edits must be sequenced. A final integration pass is required for multi-agent tasks.
+
 ## Repository architecture
 - Frontend: PHP-rendered pages plus modular vanilla JavaScript and CSS.
 - Backend: PHP 8.1+ APIs and services using PDO.
@@ -56,11 +71,12 @@ Never guess that a file, function, session field, API parameter, database column
 - Prefer measurable evaluation over claims that an AI feature is "working".
 
 ## Security
-Treat authentication, authorization, IDOR/ownership checks, SQL injection, XSS, CSRF, file uploads, session handling, WebSocket authorization, secrets, and AI data leakage as first-class concerns.
+Treat authentication, authorization, IDOR/ownership checks, SQL injection, XSS, CSRF, file uploads, session handling, WebSocket authorization, secrets, and AI data leakage as first-class concerns. Any task that changes these boundaries should include the Security specialist in the orchestration plan.
 
 ## Changes and reporting
 Keep changes focused. Do not silently refactor unrelated code. At the end, report:
 - root cause or design decision
+- agents used, when orchestrated
 - files changed
 - important behavior changes
 - validation/tests performed
