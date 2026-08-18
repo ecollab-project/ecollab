@@ -22,7 +22,9 @@
   };
 
   var script = document.createElement('script');
-  script.src = (window.ECOLLAB?.baseUrl || '') + '/assets/js/chat/socket-core.js?v=wsfix';
+  // Bump the cache key whenever the socket core changes so browsers cannot
+  // keep executing an older token/authentication implementation.
+  script.src = (window.ECOLLAB?.baseUrl || '') + '/assets/js/chat/socket-core.js?v=wsfix3';
   script.onload = function () {
     window.__ECOLLAB_SOCKET_CORE_LOADED = true;
     window.__ECOLLAB_SOCKET_CORE_LOADING = false;
