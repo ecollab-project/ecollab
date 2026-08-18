@@ -20,7 +20,7 @@ define('ROOT', dirname(__DIR__, 2));
 require_once ROOT . '/vendor/autoload.php';
 require_once ROOT . '/config.php';
 require_once ROOT . '/database/config/db.php';
-require_once ROOT . '/websocket/ChatServer.php';
+require_once ROOT . '/websocket/SessionAwareChatServer.php';
 
 use Ratchet\Server\IoServer;
 use Ratchet\Http\HttpServer;
@@ -41,7 +41,7 @@ echo " Time : " . date('Y-m-d H:i:s') . "\n";
 echo "──────────────────────────────────────\n";
 
 $loop = Loop::get();
-$chat = new ChatServer();
+$chat = new SessionAwareChatServer();
 
 $server = IoServer::factory(
     new HttpServer(new WsServer($chat)),
