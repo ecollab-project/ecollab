@@ -21,10 +21,29 @@
     console.debug('[WS] Socket core is already booting; duplicate init ignored.');
   };
 
+  // The WS-token endpoint is authenticated and must never be satisfied from
+  // a browser/HTTP cache. A stale cached token can be perfectly well formed
+  // but no longer exist in ws_tokens, producing the misleading "Invalid or
+  // expired auth token" response from the WebSocket server.
+  var nativeFetch = window.fetch.bind(window);
+  window.fetch = function (input, init) {
+    try {
+      var url = typeof input === 'string' ? input : (input && input.url) || '';
+      if (url.indexOf('/API/auth/ws-token.php') !== -1) {
+        var busted = new URL(url, window.location.href);
+        busted.searchParams.set('_ts', String(Date.now()));
+        var nextInit = Object.assign({}, init || {}, { cache: 'no-store', credentials: 'same-origin' });
+        return nativeFetch(busted.toString(), nextInit);
+      }
+    } catch (e) {
+      // Fall through to the normal fetch implementation.
+    }
+    return nativeFetch(input, init);
+  };
+
   var script = document.createElement('script');
-  // Bump the cache key whenever the socket core changes so browsers cannot
-  // keep executing an older token/authentication implementation.
-  script.src = (window.ECOLLAB?.baseUrl || '') + '/assets/js/chat/socket-core.js?v=wsfix3';
+  // Bump the cache key so the browser also gets this bootstrap fix.
+  script.src = (window.ECOLLAB?.baseUrl || '') + '/assets/js/chat/socket-core.js?v=wsfix4';
   script.onload = function () {
     window.__ECOLLAB_SOCKET_CORE_LOADED = true;
     window.__ECOLLAB_SOCKET_CORE_LOADING = false;
