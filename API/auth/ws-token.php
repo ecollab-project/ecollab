@@ -16,6 +16,9 @@ require_once dirname(__DIR__, 2) . '/security/AuditLogger.php';
 require_once dirname(__DIR__, 2) . '/security/SecurityHeaders.php';
 
 header('Content-Type: application/json');
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
 SecurityHeaders::send(isApi: true);
 AuthMiddleware::startSession();
 $user = AuthMiddleware::requireAuth(true);
