@@ -44,19 +44,16 @@ $db->exec("
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
 
-// Use the database clock for both creation and validation. PHP's date.timezone
-// and MySQL's time_zone can differ on local XAMPP installations; storing a
-// PHP-formatted local timestamp while validating with MySQL NOW() can make a
-// freshly-issued token appear expired or not-yet-valid. UTC_TIMESTAMP() keeps
-// both sides on the same clock regardless of local timezone configuration.
-$db->exec("DELETE FROM ws_tokens WHERE expires_at < UTC_TIMESTAMP()");
+// Use the same MySQL clock that ChatServer uses for validation. This avoids
+// PHP/MySQL timezone differences on local XAMPP installations.
+$db->exec("DELETE FROM ws_tokens WHERE expires_at < NOW()");
 
 $token     = bin2hex(random_bytes(32));
 $tokenHash = hash('sha256', $token);
 
 $db->prepare("
     INSERT INTO ws_tokens (user_id, token_hash, expires_at)
-    VALUES (:uid, :hash, DATE_ADD(UTC_TIMESTAMP(), INTERVAL 120 SECOND))
+    VALUES (:uid, :hash, DATE_ADD(NOW(), INTERVAL 120 SECOND))
 ")->execute([
     ':uid'  => $user['id'],
     ':hash' => $tokenHash,
