@@ -15,6 +15,14 @@ if (PHP_SAPI !== 'cli') {
     exit(1);
 }
 
+// Keep the long-running CLI process from marking PHP headers as sent before
+// the session-backed WebSocket authentication has a chance to resume the
+// browser's PHP session. Ratchet handles the actual WebSocket handshake;
+// this buffer is only for the server's console output and deprecation notices.
+if (ob_get_level() === 0) {
+    ob_start();
+}
+
 define('ROOT', dirname(__DIR__, 2));
 
 require_once ROOT . '/vendor/autoload.php';
