@@ -6,10 +6,6 @@ declare(strict_types=1);
  * SessionAwareChatServer
  *
  * WebSocket authentication fallback for local/browser sessions.
- * The normal ws_token path remains supported by ChatServer. When the browser
- * sends its authenticated PHP session cookie during the WebSocket handshake,
- * this class can authenticate directly from that same session. This removes
- * the HTTP-token/database race while preserving the existing token flow.
  */
 
 require_once __DIR__ . '/ChatServer.php';
@@ -46,7 +42,7 @@ class SessionAwareChatServer extends ChatServer
             }
 
             $sessionCookieName = session_name();
-            if (!preg_match('/(?:^|;\\s*)' . preg_quote($sessionCookieName, '/') . '=([^;]+)/', $cookieHeader, $match)) {
+            if (!preg_match('/(?:^|;\s*)' . preg_quote($sessionCookieName, '/') . '=([^;]+)/', $cookieHeader, $match)) {
                 return false;
             }
 
@@ -111,8 +107,11 @@ class SessionAwareChatServer extends ChatServer
             $userConns[(int)$user['id']][] = $conn;
             $connsProperty->setValue($this, $userConns);
 
-            // Reuse the existing private presence helper when available.
-            foreach (['setUserOnline' => [(int)$user['id'], true], 'broadcastPresence' => [(int)$user['id'], true, (string)$user['username']] as $method => $args) {
+            $presenceMethods = [
+                'setUserOnline' => [(int)$user['id'], true],
+                'broadcastPresence' => [(int)$user['id'], true, (string)$user['username']],
+            ];
+            foreach ($presenceMethods as $method => $args) {
                 try {
                     $m = $reflection->getMethod($method);
                     $m->setAccessible(true);
