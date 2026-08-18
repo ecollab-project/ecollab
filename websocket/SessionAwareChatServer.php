@@ -36,7 +36,19 @@ class SessionAwareChatServer extends ChatServer
                 return false;
             }
 
-            $cookieHeader = (string)$request->getHeader('Cookie');
+            // Ratchet/React may expose a header as an array when multiple values
+            // are present. Normalize it before using it as a string.
+            $cookieHeaderValue = $request->getHeader('Cookie');
+            if (is_array($cookieHeaderValue)) {
+                $cookieHeader = implode('; ', array_map('strval', $cookieHeaderValue));
+            } elseif (is_string($cookieHeaderValue)) {
+                $cookieHeader = $cookieHeaderValue;
+            } elseif ($cookieHeaderValue === null) {
+                $cookieHeader = '';
+            } else {
+                $cookieHeader = (string)$cookieHeaderValue;
+            }
+
             if ($cookieHeader === '') {
                 return false;
             }
@@ -90,9 +102,8 @@ class SessionAwareChatServer extends ChatServer
             $connMeta = $metaProperty->getValue($this);
 
             // Ratchet's ConnectionInterface does not declare resourceId, although
-            // Ratchet's concrete connection supplies it at runtime. Read the
-            // dynamic property through get_object_vars so PHPStan can analyze the
-            // interface safely while preserving the existing ChatServer key.
+            // the concrete connection supplies it at runtime. Read the dynamic
+            // property through get_object_vars so PHPStan can analyze the interface.
             $connectionVars = get_object_vars($conn);
             $ridValue = $connectionVars['resourceId'] ?? null;
             if (!is_int($ridValue) && !is_string($ridValue)) {
