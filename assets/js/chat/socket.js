@@ -43,10 +43,57 @@
 
   var script = document.createElement('script');
   // Bump the cache key so the browser also gets this bootstrap fix.
-  script.src = (window.ECOLLAB?.baseUrl || '') + '/assets/js/chat/socket-core.js?v=wsfix4';
+  script.src = (window.ECOLLAB?.baseUrl || '') + '/assets/js/chat/socket-core.js?v=wsfix5';
   script.onload = function () {
     window.__ECOLLAB_SOCKET_CORE_LOADED = true;
     window.__ECOLLAB_SOCKET_CORE_LOADING = false;
+
+    // socket-core.js historically attached the stop timer to the numeric
+    // return value of setTimeout(). Browsers return a number for setTimeout,
+    // so assigning `_stop` to that value throws. Keep timer handles separate.
+    var typingSendTimer = null;
+    var typingStopTimer = null;
+    var typingState = false;
+
+    window.sendTypingEvent = function (isTyping) {
+      var channelId = window.ECOLLAB?.currentChannelId;
+      if (!channelId || typeof window.wsSend !== 'function') return;
+
+      if (isTyping) {
+        typingState = true;
+        clearTimeout(typingSendTimer);
+        typingSendTimer = setTimeout(function () {
+          window.wsSend({
+            type: 'typing',
+            channel_id: channelId,
+            typing: true,
+          });
+        }, 80);
+
+        clearTimeout(typingStopTimer);
+        typingStopTimer = setTimeout(function () {
+          typingState = false;
+          window.wsSend({
+            type: 'typing',
+            channel_id: window.ECOLLAB?.currentChannelId || channelId,
+            typing: false,
+          });
+        }, 4000);
+        return;
+      }
+
+      if (!typingState) return;
+      typingState = false;
+      clearTimeout(typingSendTimer);
+      clearTimeout(typingStopTimer);
+      typingSendTimer = setTimeout(function () {
+        window.wsSend({
+          type: 'typing',
+          channel_id: window.ECOLLAB?.currentChannelId || channelId,
+          typing: false,
+        });
+      }, 80);
+    };
   };
   script.onerror = function () {
     window.__ECOLLAB_SOCKET_CORE_LOADING = false;
