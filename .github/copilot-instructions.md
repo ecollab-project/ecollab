@@ -4,7 +4,7 @@
 E-Collab is a full-stack collaborative education platform. Treat this repository as an existing production-like capstone system. Preserve working behavior and the established UI unless a change is explicitly requested.
 
 ## Default agent behavior
-For non-trivial tasks, prefer the **E-Collab Orchestrator** as the entry point. It must analyze the request and designate one or more specialist agents based on the actual task. It must not invoke every specialist by default.
+For non-trivial tasks, prefer the **E-Collab Orchestrator** as the entry point. It must analyze the request and designate one or more specialist agents AND the smallest compatible set of skills based on evidence. It must not invoke every specialist or skill by default.
 
 The specialist agents are:
 - `ecollab-fullstack`
@@ -16,7 +16,12 @@ The specialist agents are:
 - `ecollab-security`
 - `ecollab-realtime`
 
-The Orchestrator may use one specialist for focused work or combine multiple specialists for cross-stack work. Independent investigations may run in parallel; conflicting edits must be sequenced. A final integration pass is required for multi-agent tasks.
+## Skill system
+Skills live under `.github/skills/` and are progressively activated when relevant. Use `.github/skills/agent-skill-stack/SKILL.md` to choose the minimum compatible stack.
+
+Core E-Collab skills include project loop, codebase knowledge, PHP/API debugging, database integrity, realtime, security, AI/ML engineering, AI evaluation, API contracts, frontend quality, webapp testing, regression analysis, failure memory, harness engineering, quality playbook, AI team orchestration, and skill creation.
+
+Never load all skills just because they exist. Avoid overlapping instructions and keep project-local adaptations authoritative.
 
 ## Repository architecture
 - Frontend: PHP-rendered pages plus modular vanilla JavaScript and CSS.
@@ -26,18 +31,20 @@ The Orchestrator may use one specialist for focused work or combine multiple spe
 - Realtime: Ratchet + React event loop under `websocket/`.
 - AI: PHP AI endpoints under `API/ai/` and AI-assisted chat/collaboration features.
 - Tests/static analysis: PHPUnit and PHPStan; CI is defined in `.github/workflows/ci.yml`.
-- API contract: `docs/API_REFERENCE.md` and the endpoint implementations are authoritative together.
+- API contract: `docs/API_REFERENCE.md` and endpoint implementations are authoritative together.
 
 ## Non-negotiable workflow
 Before changing code:
-1. Inspect the relevant files and their callers/callees.
-2. Trace the data flow across browser -> JS -> API -> service -> database and back when applicable.
-3. Inspect the database schema/migrations before changing SQL.
+1. Inspect relevant files and callers/callees.
+2. Trace browser -> JS -> API -> service -> database and back when applicable.
+3. Inspect schema/migrations before changing SQL.
 4. Check authentication, authorization, CSRF, validation, and ownership boundaries.
-5. Identify the root cause and state a short implementation plan.
-6. Make the smallest coherent change.
-7. Run the narrowest useful validation, then broader tests when practical.
-8. Re-check related frontend/backend/API contracts for regressions.
+5. Identify root cause and state a short implementation plan.
+6. Select the minimum useful agents and skills.
+7. Make the smallest coherent change.
+8. Run narrow validation, then broader tests when practical.
+9. Re-check related contracts and regressions.
+10. If validation fails, loop back to evidence and fix the root cause.
 
 Never guess that a file, function, session field, API parameter, database column, or service exists. Verify it.
 
@@ -51,33 +58,32 @@ Never guess that a file, function, session field, API parameter, database column
 - Reuse existing services/helpers when appropriate instead of duplicating business logic.
 
 ## Frontend rules
-- Use the existing vanilla JS/CSS architecture unless the repository already establishes another pattern for the target area.
-- Preserve the existing E-Collab visual design, responsive behavior, accessibility, and interaction patterns.
+- Use the existing vanilla JS/CSS architecture unless the repository establishes another pattern for the target area.
+- Preserve visual design, responsive behavior, accessibility, and interaction patterns.
 - Do not rewrite unrelated pages or replace working modules merely for style preference.
-- Keep API URLs, request payloads, response handling, loading states, empty states, and error states synchronized with the backend.
+- Keep API URLs, payloads, response handling, loading states, empty states, and errors synchronized with backend behavior.
 
 ## Realtime/WebSocket rules
-- Trace both the browser WebSocket client and the Ratchet server before changing either side.
-- Verify authentication/token issuance, origin/configuration, connection lifecycle, subscriptions, message routing, and reconnect behavior.
+- Trace both browser client and Ratchet server before changing either side.
+- Verify authentication/token issuance, origin/configuration, connection lifecycle, subscriptions, routing, and reconnect behavior.
 - Do not weaken authentication just to make a socket connect.
 
 ## AI/ML engineering rules
-- First determine whether deterministic logic, search, an existing API, an LLM, embeddings/RAG, or a trained ML model is actually appropriate.
+- Determine whether deterministic logic, search, an existing provider API, an LLM, embeddings/RAG, or trained ML is appropriate.
 - Keep provider secrets server-side; never expose AI API keys in frontend code.
 - Treat model output as untrusted data. Validate and constrain outputs before persistence or privileged actions.
 - Prevent cross-user and cross-project context leakage.
-- For ML work, explicitly track dataset source, preprocessing, train/validation/test split, leakage risks, baseline, metrics, reproducibility, and inference behavior.
-- For LLM/RAG work, track retrieval scope, grounding sources, prompt-injection risks, context limits, latency, cost, and failure behavior.
-- Prefer measurable evaluation over claims that an AI feature is "working".
+- For ML, track data source, preprocessing, split, leakage, baseline, metrics, reproducibility, and inference behavior.
+- For LLM/RAG, track retrieval scope, grounding, prompt-injection risks, context limits, latency, cost, and failure behavior.
+- Prefer measurable evaluation over claims that an AI feature is working.
 
 ## Security
-Treat authentication, authorization, IDOR/ownership checks, SQL injection, XSS, CSRF, file uploads, session handling, WebSocket authorization, secrets, and AI data leakage as first-class concerns. Any task that changes these boundaries should include the Security specialist in the orchestration plan.
+Treat authentication, authorization, IDOR/ownership checks, SQL injection, XSS, CSRF, file uploads, session handling, WebSocket authorization, secrets, and AI data leakage as first-class concerns. Changes affecting these boundaries require a Security review.
+
+## Harness and failure memory
+When an important or recurring agent mistake is discovered, use `harness-engineering` and `ecollab-failure-memory` to turn it into durable guidance, regression detection, or tests. Do not record guesses as failures.
 
 ## Changes and reporting
-Keep changes focused. Do not silently refactor unrelated code. At the end, report:
-- root cause or design decision
-- agents used, when orchestrated
-- files changed
-- important behavior changes
-- validation/tests performed
-- remaining risks or follow-up work
+Keep changes focused. Do not silently refactor unrelated code. At the end, report root cause/design decision, agents and skills used, files changed, validation performed, integration status, and remaining risks.
+
+See `.github/skills/skill-sources.md` for audited upstream sources and the policy for adapting external skills.
