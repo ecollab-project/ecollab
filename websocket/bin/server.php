@@ -15,20 +15,12 @@ if (PHP_SAPI !== 'cli') {
     exit(1);
 }
 
-// Keep the long-running CLI process from marking PHP headers as sent before
-// the session-backed WebSocket authentication has a chance to resume the
-// browser's PHP session. Ratchet handles the actual WebSocket handshake;
-// this buffer is only for the server's console output and deprecation notices.
-if (ob_get_level() === 0) {
-    ob_start();
-}
-
 define('ROOT', dirname(__DIR__, 2));
 
 require_once ROOT . '/vendor/autoload.php';
 require_once ROOT . '/config.php';
 require_once ROOT . '/database/config/db.php';
-require_once ROOT . '/websocket/SessionAwareChatServer.php';
+require_once ROOT . '/websocket/ChatServer.php';
 
 use Ratchet\Server\IoServer;
 use Ratchet\Http\HttpServer;
@@ -49,7 +41,7 @@ echo " Time : " . date('Y-m-d H:i:s') . "\n";
 echo "──────────────────────────────────────\n";
 
 $loop = Loop::get();
-$chat = new SessionAwareChatServer();
+$chat = new ChatServer();
 
 $server = IoServer::factory(
     new HttpServer(new WsServer($chat)),
@@ -57,7 +49,7 @@ $server = IoServer::factory(
     $host
 );
 
-// ── Drain ws_relay table every 200 ms ───────────────────────────────────────
+// Drain ws_relay table every 200 ms.
 // Collab-tool PHP APIs write events here; we push them to WebSocket subscribers.
 $loop->addPeriodicTimer(0.2, fn() => $chat->drainRelayTable());
 
