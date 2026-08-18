@@ -4,15 +4,9 @@ declare(strict_types=1);
 /**
  * API/auth/ws-token.php
  *
- * Issues a short-lived, one-time WebSocket auth token for the authenticated session.
- * The JavaScript chat client fetches this token before opening the WebSocket, then
- * sends it in the first { "type": "auth", "ws_token": "<token>" } message.
- *
- * The ChatServer verifies the token against the ws_tokens table (hash comparison)
- * and deletes it on first use, preventing replay attacks.
- *
- * GET /API/auth/ws-token.php
- * Response: { "token": "<hex>" }
+ * Issues a short-lived WebSocket auth token for the authenticated session.
+ * Multiple valid tokens may coexist for the same user so duplicate browser
+ * bootstraps, tabs, and devices cannot invalidate a token already being used.
  */
 
 require_once dirname(__DIR__, 2) . '/config.php';
@@ -24,7 +18,7 @@ require_once dirname(__DIR__, 2) . '/security/SecurityHeaders.php';
 header('Content-Type: application/json');
 SecurityHeaders::send(isApi: true);
 AuthMiddleware::startSession();
-$user = AuthMiddleware::requireAuth(true); // returns JSON 401 if unauthenticated
+$user = AuthMiddleware::requireAuth(true);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
@@ -34,7 +28,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 $db = Database::getInstance();
 
-// Ensure ws_tokens table exists
 $db->exec("
     CREATE TABLE IF NOT EXISTS ws_tokens (
         id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -48,14 +41,14 @@ $db->exec("
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
 
-// Expire old tokens for this user (housekeeping)
-$db->prepare("DELETE FROM ws_tokens WHERE user_id = :uid OR expires_at < NOW()")
-   ->execute([':uid' => $user['id']]);
+// Only remove expired tokens. Do NOT delete all tokens for this user:
+// another tab/device or duplicate bootstrap may already be authenticating
+// with a still-valid token.
+$db->exec("DELETE FROM ws_tokens WHERE expires_at < NOW()");
 
-// Generate a cryptographically random token
-$token     = bin2hex(random_bytes(32)); // 64 hex chars, 256 bits
+$token     = bin2hex(random_bytes(32));
 $tokenHash = hash('sha256', $token);
-$expiresAt = date('Y-m-d H:i:s', time() + 120); // 2-minute window
+$expiresAt = date('Y-m-d H:i:s', time() + 120);
 
 $db->prepare("
     INSERT INTO ws_tokens (user_id, token_hash, expires_at)
