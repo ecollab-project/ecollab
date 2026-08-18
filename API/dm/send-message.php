@@ -28,7 +28,7 @@ if (!$convId || $text === '' || mb_strlen($text) > 4000) {
 try {
     $db = Database::getInstance();
 
-    // Verify this user is part of the conversation
+    // Verify this user is part of the conversation.
     $check = $db->prepare("
         SELECT id, user_a, user_b FROM dm_conversations
         WHERE id = :cid AND (user_a = :me OR user_b = :me2)
@@ -43,42 +43,55 @@ try {
         exit;
     }
 
-    // Insert message
-    $ins = $db->prepare("
-        INSERT INTO dm_messages (conversation_id, sender_id, body) VALUES (:cid, :uid, :body)
-    ");
+    // The message itself is the core operation and must not be rolled back
+    // because an optional read/notification table is missing on an older local
+    // database.
+    $ins = $db->prepare(
+        "INSERT INTO dm_messages (conversation_id, sender_id, body) VALUES (:cid, :uid, :body)"
+    );
     $ins->execute([':cid' => $convId, ':uid' => $me['id'], ':body' => $text]);
     $msgId = (int)$db->lastInsertId();
 
-    // Update conversation last_message
-    $db->prepare("
-        UPDATE dm_conversations SET last_message = :body, last_msg_at = NOW() WHERE id = :cid
-    ")->execute([':body' => mb_substr($text, 0, 120), ':cid' => $convId]);
+    $db->prepare(
+        "UPDATE dm_conversations SET last_message = :body, last_msg_at = NOW() WHERE id = :cid"
+    )->execute([':body' => mb_substr($text, 0, 120), ':cid' => $convId]);
 
-    // Mark sender as read
-    $db->prepare("
-        INSERT INTO dm_reads (user_id, conversation_id, last_read_at) VALUES (:uid, :cid, NOW())
-        ON DUPLICATE KEY UPDATE last_read_at = NOW()
-    ")->execute([':uid' => $me['id'], ':cid' => $convId]);
+    // Read cursor is supplementary. Older installations may not have the
+    // dm_reads table or its current key yet; that must not make sending fail.
+    try {
+        $db->prepare(
+            "INSERT INTO dm_reads (user_id, conversation_id, last_read_at)
+             VALUES (:uid, :cid, NOW())
+             ON DUPLICATE KEY UPDATE last_read_at = NOW()"
+        )->execute([':uid' => $me['id'], ':cid' => $convId]);
+    } catch (Throwable $e) {
+        error_log('[dm/send-message] read cursor update skipped: ' . $e->getMessage());
+    }
 
-    // Create notification for recipient
     $recipientId = ($conv['user_a'] == $me['id']) ? (int)$conv['user_b'] : (int)$conv['user_a'];
-    $db->prepare("
-        INSERT INTO notifications (user_id, type, title, body, ref_id)
-        VALUES (:uid, 'dm', :title, :body2, :ref)
-    ")->execute([
-        ':uid'   => $recipientId,
-        ':title' => ($me['full_name'] ?: $me['username']) . ' sent you a message',
-        ':body2' => mb_substr($text, 0, 120),
-        ':ref'   => $msgId,
-    ]);
+
+    // Notifications are supplementary. Older databases may have a legacy
+    // notifications schema; sending the DM must still succeed in that case.
+    try {
+        $db->prepare(
+            "INSERT INTO notifications (user_id, type, title, body, ref_id)
+             VALUES (:uid, 'dm', :title, :body2, :ref)"
+        )->execute([
+            ':uid'   => $recipientId,
+            ':title' => ($me['full_name'] ?: $me['username']) . ' sent you a message',
+            ':body2' => mb_substr($text, 0, 120),
+            ':ref'   => $msgId,
+        ]);
+    } catch (Throwable $e) {
+        error_log('[dm/send-message] notification insert skipped: ' . $e->getMessage());
+    }
 
     echo json_encode([
-        'success'    => true,
-        'message_id' => $msgId,
-        'sender_id'  => $me['id'],
-        'body'       => $text,
-        'created_at' => date('Y-m-d H:i:s'),
+        'success'      => true,
+        'message_id'   => $msgId,
+        'sender_id'    => $me['id'],
+        'body'         => $text,
+        'created_at'   => date('Y-m-d H:i:s'),
         'recipient_id' => $recipientId,
     ]);
 
