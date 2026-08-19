@@ -28,7 +28,7 @@ if (!$convId || $text === '' || mb_strlen($text) > 4000) {
 try {
     $db = Database::getInstance();
 
-    // Verify this user is part of the conversation
+    // Verify this user is part of the conversation.
     $check = $db->prepare("
         SELECT id, user_a, user_b FROM dm_conversations
         WHERE id = :cid AND (user_a = :me OR user_b = :me2)
@@ -43,42 +43,55 @@ try {
         exit;
     }
 
-    // Insert message
+    // Insert message.
     $ins = $db->prepare("
-        INSERT INTO dm_messages (conversation_id, sender_id, body) VALUES (:cid, :uid, :body)
+        INSERT INTO dm_messages (conversation_id, sender_id, body)
+        VALUES (:cid, :uid, :body)
     ");
     $ins->execute([':cid' => $convId, ':uid' => $me['id'], ':body' => $text]);
     $msgId = (int)$db->lastInsertId();
 
-    // Update conversation last_message
+    // Update conversation last_message.
     $db->prepare("
-        UPDATE dm_conversations SET last_message = :body, last_msg_at = NOW() WHERE id = :cid
-    ")->execute([':body' => mb_substr($text, 0, 120), ':cid' => $convId]);
+        UPDATE dm_conversations
+        SET last_message = :body, last_msg_at = NOW()
+        WHERE id = :cid
+    ")->execute([
+        ':body' => mb_substr($text, 0, 120),
+        ':cid'  => $convId,
+    ]);
 
-    // Mark sender as read
+    // Mark sender as read.
     $db->prepare("
-        INSERT INTO dm_reads (user_id, conversation_id, last_read_at) VALUES (:uid, :cid, NOW())
+        INSERT INTO dm_reads (user_id, conversation_id, last_read_at)
+        VALUES (:uid, :cid, NOW())
         ON DUPLICATE KEY UPDATE last_read_at = NOW()
     ")->execute([':uid' => $me['id'], ':cid' => $convId]);
 
-    // Create notification for recipient
-    $recipientId = ($conv['user_a'] == $me['id']) ? (int)$conv['user_b'] : (int)$conv['user_a'];
+    // Create a notification using the canonical notifications schema.
+    $recipientId = ($conv['user_a'] == $me['id'])
+        ? (int)$conv['user_b']
+        : (int)$conv['user_a'];
+
     $db->prepare("
-        INSERT INTO notifications (user_id, type, title, body, ref_id)
-        VALUES (:uid, 'dm', :title, :body2, :ref)
+        INSERT INTO notifications
+            (recipient_id, actor_id, type, title, body, link_url, is_read)
+        VALUES
+            (:recipient_id, :actor_id, 'message', :title, :body, :link_url, 0)
     ")->execute([
-        ':uid'   => $recipientId,
-        ':title' => ($me['full_name'] ?: $me['username']) . ' sent you a message',
-        ':body2' => mb_substr($text, 0, 120),
-        ':ref'   => $msgId,
+        ':recipient_id' => $recipientId,
+        ':actor_id'     => $me['id'],
+        ':title'        => ($me['full_name'] ?: $me['username']) . ' sent you a message',
+        ':body'         => mb_substr($text, 0, 120),
+        ':link_url'     => '/ecollab/?conversation_id=' . $convId,
     ]);
 
     echo json_encode([
-        'success'    => true,
-        'message_id' => $msgId,
-        'sender_id'  => $me['id'],
-        'body'       => $text,
-        'created_at' => date('Y-m-d H:i:s'),
+        'success'      => true,
+        'message_id'   => $msgId,
+        'sender_id'    => $me['id'],
+        'body'         => $text,
+        'created_at'   => date('Y-m-d H:i:s'),
         'recipient_id' => $recipientId,
     ]);
 
