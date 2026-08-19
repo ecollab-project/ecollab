@@ -12,9 +12,6 @@ $me = AuthMiddleware::requireAuth(true);
 try {
     $db = Database::getInstance();
 
-    // Notifications have changed slightly across older Ecollab database
-    // versions. Read the actual table shape first so an older local database
-    // cannot turn the notification bell into a HTTP 500.
     $tableStmt = $db->query("SHOW TABLES LIKE 'notifications'");
     $tableExists = (bool)$tableStmt->fetchColumn();
     $tableStmt->closeCursor();
@@ -35,9 +32,14 @@ try {
     }
     $columnsStmt->closeCursor();
 
-    // user_id is required for a useful notification row. If an old/incomplete
-    // table has no user_id, fail soft rather than breaking the whole chat page.
-    if (!isset($columns['user_id'])) {
+    // Canonical schema uses recipient_id. Keep a safe fallback for databases
+    // that have not yet run the notification-schema migration.
+    $recipientColumn = isset($columns['recipient_id']) ? 'recipient_id' : null;
+    if ($recipientColumn === null && isset($columns['user_id'])) {
+        $recipientColumn = 'user_id';
+    }
+
+    if ($recipientColumn === null) {
         echo json_encode([
             'success'       => true,
             'notifications' => [],
@@ -46,9 +48,12 @@ try {
         exit;
     }
 
-    // Use SELECT * for compatibility with schema revisions, then normalize the
-    // fields expected by the JavaScript notification UI.
-    $stmt = $db->prepare("SELECT * FROM notifications WHERE user_id = :uid ORDER BY created_at DESC LIMIT 30");
+    $stmt = $db->prepare(
+        "SELECT * FROM notifications
+         WHERE {$recipientColumn} = :uid
+         ORDER BY created_at DESC
+         LIMIT 30"
+    );
     $stmt->execute([':uid' => $me['id']]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $stmt->closeCursor();
@@ -76,6 +81,8 @@ try {
             'title'      => $row['title'] ?? ($row['subject'] ?? ''),
             'body'       => $row['body'] ?? ($row['message'] ?? ($row['content'] ?? '')),
             'ref_id'     => $row['ref_id'] ?? ($row['reference_id'] ?? null),
+            'link_url'   => $row['link_url'] ?? null,
+            'actor_id'   => $row['actor_id'] ?? null,
             'is_read'    => $isRead ? 1 : 0,
             'created_at' => $row['created_at'] ?? ($row['sent_at'] ?? null),
         ];
@@ -89,8 +96,6 @@ try {
 
 } catch (Throwable $e) {
     error_log('[notifications/get] ' . $e->getMessage());
-    // Notifications are supplementary UI. Never allow this endpoint to take
-    // down the chat page when a local database is on an older schema.
     http_response_code(200);
     echo json_encode([
         'success'       => true,
