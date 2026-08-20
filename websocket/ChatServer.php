@@ -36,18 +36,8 @@ class ChatServer implements MessageComponentInterface
         $this->db        = Database::getInstance();
         $this->wbHandler = new WhiteboardHandler();
 
-        // Ensure ws_relay table exists (used by PHP API to push collab-tool events)
-        $this->db->exec("
-            CREATE TABLE IF NOT EXISTS ws_relay (
-                id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                channel_id INT UNSIGNED    NOT NULL,
-                payload    TEXT            NOT NULL,
-                created_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (id),
-                KEY idx_channel_id (channel_id),
-                KEY idx_created_at (created_at)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-        ");
+        // NOTE: ws_relay table is created by database/migrations/022_websocket_relay_table.sql
+        // Do not recreate it here; assume migration has run at startup.
 
         echo "[ChatServer] Started\n";
     }
@@ -66,7 +56,10 @@ class ChatServer implements MessageComponentInterface
                 $ids[]     = (int)$row['id'];
                 $channelId = (int)$row['channel_id'];
                 foreach ($this->channelSubs[$channelId] ?? [] as $conn) {
-                    try { $conn->send($row['payload']); } catch (\Exception) {}
+                    try {
+                        $conn->send($row['payload']);
+                    } catch (\Exception) {
+                    }
                 }
             }
             $this->db->exec('DELETE FROM ws_relay WHERE id IN (' . implode(',', $ids) . ')');
@@ -109,7 +102,7 @@ class ChatServer implements MessageComponentInterface
         }
 
         match ($type) {
-            'ping'            => $from->send(json_encode(['type' => 'pong'])),
+            'ping'            => $this->handlePing($from, $data, $meta),
             'join_channel'    => $this->handleJoinChannel($from, $data, $meta),
             'leave_channel'   => $this->handleLeaveChannel($from, $data, $meta),
             'message'         => $this->handleMessage($from, $data, $meta),
@@ -166,22 +159,31 @@ class ChatServer implements MessageComponentInterface
                 if (!empty($meta['wb_channel_id'])) {
                     $wbChanId = (int)$meta['wb_channel_id'];
                     $remainingIds = $this->wbHandler->leave($wbChanId, $uid);
-                    $leaveNotify = json_encode(['type'=>'wb_peer_left','channel_id'=>$wbChanId,'user_id'=>$uid,'username'=>$username]);
-                    foreach ($remainingIds as $peerId) foreach ($this->userConns[$peerId] ?? [] as $peerConn) try { $peerConn->send($leaveNotify); } catch (\Exception) {}
+                    $leaveNotify = json_encode(['type' => 'wb_peer_left', 'channel_id' => $wbChanId, 'user_id' => $uid, 'username' => $username]);
+                    foreach ($remainingIds as $peerId) foreach ($this->userConns[$peerId] ?? [] as $peerConn) try {
+                        $peerConn->send($leaveNotify);
+                    } catch (\Exception) {
+                    }
                 }
 
                 foreach ($this->voiceRooms as $vcId => &$participants) {
                     $wasInRoom = array_filter($participants, fn($p) => $p['user_id'] === $uid);
                     if (!empty($wasInRoom)) {
                         $participants = array_values(array_filter($participants, fn($p) => $p['user_id'] !== $uid));
-                        $leavePayload = json_encode(['type'=>'voice_leave','user_id'=>$uid,'username'=>$username,'channel_id'=>$vcId]);
-                        foreach ($participants as $p) foreach ($this->userConns[(int)$p['user_id']] ?? [] as $peerConn) try { $peerConn->send($leavePayload); } catch (\Exception) {}
+                        $leavePayload = json_encode(['type' => 'voice_leave', 'user_id' => $uid, 'username' => $username, 'channel_id' => $vcId]);
+                        foreach ($participants as $p) foreach ($this->userConns[(int)$p['user_id']] ?? [] as $peerConn) try {
+                            $peerConn->send($leavePayload);
+                        } catch (\Exception) {
+                        }
                         $this->broadcastToAll($leavePayload, $conn);
                         if (empty($participants)) unset($this->voiceRooms[$vcId]);
                     }
                 }
                 unset($participants);
-                try { $this->db->prepare("UPDATE users SET voice_channel_id=NULL WHERE id=:id")->execute([':id'=>$uid]); } catch (\Exception) {}
+                try {
+                    $this->db->prepare("UPDATE users SET voice_channel_id=NULL WHERE id=:id")->execute([':id' => $uid]);
+                } catch (\Exception) {
+                }
                 $this->setUserOnline($uid, false);
                 $this->broadcastPresence($uid, false, $username);
             }
@@ -202,7 +204,7 @@ class ChatServer implements MessageComponentInterface
     {
         $wsToken = trim($data['ws_token'] ?? '');
         if ($wsToken === '') {
-            $conn->send(json_encode(['type'=>'error','message'=>'Invalid auth: ws_token required']));
+            $conn->send(json_encode(['type' => 'error', 'message' => 'Invalid auth: ws_token required']));
             return;
         }
 
@@ -216,16 +218,16 @@ class ChatServer implements MessageComponentInterface
               AND u.deleted_at IS NULL
             LIMIT 1
         ");
-        $stmt->execute([':hash'=>$hash]);
+        $stmt->execute([':hash' => $hash]);
         $user = $stmt->fetch();
         $stmt->closeCursor();
 
         if (!$user) {
-            $conn->send(json_encode(['type'=>'error','message'=>'Invalid or expired auth token']));
+            $conn->send(json_encode(['type' => 'error', 'message' => 'Invalid or expired auth token']));
             return;
         }
         if ($user['status'] !== 'active') {
-            $conn->send(json_encode(['type'=>'error','message'=>'Account is not active']));
+            $conn->send(json_encode(['type' => 'error', 'message' => 'Account is not active']));
             return;
         }
 
@@ -241,7 +243,7 @@ class ChatServer implements MessageComponentInterface
         $this->userConns[$userId][] = $conn;
         $this->setUserOnline($userId, true);
         $this->broadcastPresence($userId, true, $username);
-        $conn->send(json_encode(['type'=>'auth_ok','user_id'=>$userId]));
+        $conn->send(json_encode(['type' => 'auth_ok', 'user_id' => $userId]));
         echo "[WS] User {$username} ({$userId}) authenticated on {$conn->resourceId}\n";
     }
 
@@ -252,7 +254,31 @@ class ChatServer implements MessageComponentInterface
         if ($meta['channel_id']) $this->removeFromChannel($conn, (int)$meta['channel_id']);
         $meta['channel_id'] = $channelId;
         $this->channelSubs[$channelId][] = $conn;
-        $conn->send(json_encode(['type'=>'joined_channel','channel_id'=>$channelId]));
+
+        // Update user_presence: record which channel user is viewing
+        $userId = (int)$meta['user_id'];
+        try {
+            $stmt = $this->db->prepare("
+                SELECT c.server_id FROM channels c WHERE c.id=:cid LIMIT 1
+            ");
+            $stmt->execute([':cid' => $channelId]);
+            $channel = $stmt->fetch();
+            if ($channel) {
+                $serverId = (int)$channel['server_id'];
+                $stmt = $this->db->prepare("
+                    INSERT INTO user_presence (user_id, server_id, status, current_channel_id, last_activity_at)
+                    VALUES (:uid, :sid, 'online', :cid, NOW())
+                    ON DUPLICATE KEY UPDATE
+                        current_channel_id=VALUES(current_channel_id),
+                        last_activity_at=NOW()
+                ");
+                $stmt->execute([':uid' => $userId, ':sid' => $serverId, ':cid' => $channelId]);
+            }
+        } catch (\Exception $e) {
+            echo "[WS] Presence update error: {$e->getMessage()}\n";
+        }
+
+        $conn->send(json_encode(['type' => 'joined_channel', 'channel_id' => $channelId]));
     }
 
     private function handleLeaveChannel(ConnectionInterface $conn, array $data, array &$meta): void
@@ -261,6 +287,27 @@ class ChatServer implements MessageComponentInterface
         if ($channelId) {
             $this->removeFromChannel($conn, $channelId);
             $meta['channel_id'] = null;
+
+            // Update user_presence: clear current_channel_id for this server
+            $userId = (int)$meta['user_id'];
+            try {
+                $stmt = $this->db->prepare("
+                    SELECT c.server_id FROM channels c WHERE c.id=:cid LIMIT 1
+                ");
+                $stmt->execute([':cid' => $channelId]);
+                $channel = $stmt->fetch();
+                if ($channel) {
+                    $serverId = (int)$channel['server_id'];
+                    $stmt = $this->db->prepare("
+                        UPDATE user_presence
+                        SET current_channel_id=NULL, last_activity_at=NOW()
+                        WHERE user_id=:uid AND server_id=:sid
+                    ");
+                    $stmt->execute([':uid' => $userId, ':sid' => $serverId]);
+                }
+            } catch (\Exception $e) {
+                echo "[WS] Presence update error: {$e->getMessage()}\n";
+            }
         }
     }
 
@@ -268,21 +315,76 @@ class ChatServer implements MessageComponentInterface
     {
         $channelId = (int)($data['channel_id'] ?? $meta['channel_id'] ?? 0);
         if (!$channelId || empty($data['message'])) return;
-        $this->broadcastToChannel($channelId, json_encode(['type'=>'message','message'=>$data['message']]), $from);
+        $this->broadcastToChannel($channelId, json_encode(['type' => 'message', 'message' => $data['message']]), $from);
     }
 
     private function handleTyping(ConnectionInterface $from, array $data, array $meta): void
     {
         $channelId = (int)($data['channel_id'] ?? $meta['channel_id'] ?? 0);
         if (!$channelId) return;
-        $this->broadcastToChannel($channelId, json_encode(['type'=>'typing','channel_id'=>$channelId,'user_id'=>$meta['user_id'],'username'=>$meta['username'],'typing'=>(bool)($data['typing'] ?? false)]), $from);
+        $this->broadcastToChannel($channelId, json_encode(['type' => 'typing', 'channel_id' => $channelId, 'user_id' => $meta['user_id'], 'username' => $meta['username'], 'typing' => (bool)($data['typing'] ?? false)]), $from);
     }
 
     private function handlePresence(ConnectionInterface $from, array $data, array $meta): void
     {
         $channelId = (int)($meta['channel_id'] ?? 0);
-        $payload = json_encode(['type'=>'presence','user_id'=>$meta['user_id'],'online'=>true,'muted'=>(bool)($data['muted'] ?? false)]);
-        if ($channelId) $this->broadcastToChannel($channelId, $payload, $from);
+        $userId = (int)$meta['user_id'];
+
+        // Update user_presence with activity and optional status change
+        try {
+            $newStatus = trim($data['status'] ?? '');
+            if (in_array($newStatus, ['online', 'idle', 'dnd'], true)) {
+                // User explicitly set their status (idle, dnd, etc.)
+                $stmt = $this->db->prepare("
+    UPDATE user_presence
+    SET status=:status, last_activity_at=NOW()
+    WHERE user_id=:uid
+");
+                $stmt->execute([':status' => $newStatus, ':uid' => $userId]);
+            } else {
+                // Just update activity timestamp (set status back to online if idle)
+                $stmt = $this->db->prepare("
+        UPDATE user_presence
+        SET status='online', last_activity_at=NOW()
+        WHERE user_id=:uid
+");
+                $stmt->execute([':uid' => $userId]);
+            }
+        } catch (\Exception $e) {
+            echo "[WS] Presence update error: {$e->getMessage()}\n";
+        }
+
+        // Broadcast presence event to channel
+        $payload = json_encode([
+            'type' => 'presence',
+            'user_id' => $userId,
+            'online' => true,
+            'muted' => (bool)($data['muted'] ?? false),
+            'status' => $data['status'] ?? 'online'
+        ]);
+        if ($channelId) {
+            $this->broadcastToChannel($channelId, $payload, $from);
+        }
+    }
+
+
+    private function handlePing(ConnectionInterface $from, array $data, array $meta): void
+    {
+        $userId = (int)$meta['user_id'];
+
+        // Update activity timestamp in user_presence
+        try {
+            $stmt = $this->db->prepare("
+                UPDATE user_presence
+                SET last_activity_at=NOW()
+                WHERE user_id=:uid AND status='online'
+            ");
+            $stmt->execute([':uid' => $userId]);
+        } catch (\Exception $e) {
+            echo "[WS] Heartbeat error: {$e->getMessage()}\n";
+        }
+
+        $from->send(json_encode(['type' => 'pong']));
     }
 
     private function handleJoinVoice(ConnectionInterface $from, array $data, array &$meta): void
@@ -290,7 +392,7 @@ class ChatServer implements MessageComponentInterface
         $channelId = (int)($data['channel_id'] ?? 0);
         if (!$channelId) return;
         $stmt = $this->db->prepare("SELECT id, username, full_name, avatar_color_gradient, role FROM users WHERE id = :id");
-        $stmt->execute([':id'=>$meta['user_id']]);
+        $stmt->execute([':id' => $meta['user_id']]);
         $user = $stmt->fetch() ?: [];
         $uid = (int)$meta['user_id'];
         $meta['voice_channel_id'] = $channelId;
@@ -298,65 +400,315 @@ class ChatServer implements MessageComponentInterface
         unset($participants);
         $existingParticipants = array_values($this->voiceRooms[$channelId] ?? []);
         $this->voiceRooms[$channelId] ??= [];
-        $this->voiceRooms[$channelId][] = ['user_id'=>$uid,'username'=>$meta['username'],'full_name'=>$user['full_name']??$meta['username'],'avatar_color_gradient'=>$user['avatar_color_gradient']??'#3b82f6,#6366f1','role'=>$user['role']??'student','resourceId'=>$from->resourceId];
-        try { $this->db->prepare("UPDATE users SET voice_channel_id=:cid WHERE id=:id")->execute([':cid'=>$channelId,':id'=>$uid]); } catch (\Exception) {}
-        $payload = json_encode(['type'=>'voice_join','user'=>$user,'channel_id'=>$channelId]);
-        $already=[];
-        foreach ($existingParticipants as $p) foreach ($this->userConns[(int)$p['user_id']]??[] as $peerConn) { try {$peerConn->send($payload);$already[$peerConn->resourceId]=true;}catch(\Exception){} }
-        foreach ($this->clients as $client) { if($client===$from)continue; $rid=$client->resourceId; if(empty($this->connMeta[$rid]['authed'])||isset($already[$rid]))continue; try{$client->send($payload);}catch(\Exception){} }
-        $peers=array_values(array_map(fn($p)=>['user_id'=>$p['user_id'],'username'=>$p['username'],'full_name'=>$p['full_name']??$p['username'],'avatar_color_gradient'=>$p['avatar_color_gradient']??'#3b82f6,#6366f1','role'=>$p['role']??'student','muted'=>$p['muted']??false],$existingParticipants));
-        $from->send(json_encode(['type'=>'voice_peers','peers'=>$peers,'channel_id'=>$channelId]));
+        $this->voiceRooms[$channelId][] = ['user_id' => $uid, 'username' => $meta['username'], 'full_name' => $user['full_name'] ?? $meta['username'], 'avatar_color_gradient' => $user['avatar_color_gradient'] ?? '#3b82f6,#6366f1', 'role' => $user['role'] ?? 'student', 'resourceId' => $from->resourceId];
+        try {
+            $this->db->prepare("UPDATE users SET voice_channel_id=:cid WHERE id=:id")->execute([':cid' => $channelId, ':id' => $uid]);
+        } catch (\Exception) {
+        }
+        $payload = json_encode(['type' => 'voice_join', 'user' => $user, 'channel_id' => $channelId]);
+        $already = [];
+        foreach ($existingParticipants as $p) foreach ($this->userConns[(int)$p['user_id']] ?? [] as $peerConn) {
+            try {
+                $peerConn->send($payload);
+                $already[$peerConn->resourceId] = true;
+            } catch (\Exception) {
+            }
+        }
+        foreach ($this->clients as $client) {
+            if ($client === $from) continue;
+            $rid = $client->resourceId;
+            if (empty($this->connMeta[$rid]['authed']) || isset($already[$rid])) continue;
+            try {
+                $client->send($payload);
+            } catch (\Exception) {
+            }
+        }
+        $peers = array_values(array_map(fn($p) => ['user_id' => $p['user_id'], 'username' => $p['username'], 'full_name' => $p['full_name'] ?? $p['username'], 'avatar_color_gradient' => $p['avatar_color_gradient'] ?? '#3b82f6,#6366f1', 'role' => $p['role'] ?? 'student', 'muted' => $p['muted'] ?? false], $existingParticipants));
+        $from->send(json_encode(['type' => 'voice_peers', 'peers' => $peers, 'channel_id' => $channelId]));
     }
 
     private function handleLeaveVoice(ConnectionInterface $from, array $data, array &$meta): void
     {
-        $uid=(int)$meta['user_id'];$channelId=(int)($meta['voice_channel_id']??0);$remaining=[];
-        if($channelId&&isset($this->voiceRooms[$channelId])){$this->voiceRooms[$channelId]=array_values(array_filter($this->voiceRooms[$channelId],fn($p)=>$p['user_id']!==$uid));$remaining=$this->voiceRooms[$channelId];if(empty($this->voiceRooms[$channelId]))unset($this->voiceRooms[$channelId]);}
-        $meta['voice_channel_id']=null;try{$this->db->prepare("UPDATE users SET voice_channel_id=NULL WHERE id=:id")->execute([':id'=>$uid]);}catch(\Exception){}
-        $payload=json_encode(['type'=>'voice_leave','user_id'=>$uid,'username'=>$meta['username'],'channel_id'=>$channelId]);
-        foreach($remaining as $p)foreach($this->userConns[(int)$p['user_id']]??[] as $peerConn)try{$peerConn->send($payload);}catch(\Exception){}
-        $this->broadcastToAll($payload,$from);
+        $uid = (int)$meta['user_id'];
+        $channelId = (int)($meta['voice_channel_id'] ?? 0);
+        $remaining = [];
+        if ($channelId && isset($this->voiceRooms[$channelId])) {
+            $this->voiceRooms[$channelId] = array_values(array_filter($this->voiceRooms[$channelId], fn($p) => $p['user_id'] !== $uid));
+            $remaining = $this->voiceRooms[$channelId];
+            if (empty($this->voiceRooms[$channelId])) unset($this->voiceRooms[$channelId]);
+        }
+        $meta['voice_channel_id'] = null;
+        try {
+            $this->db->prepare("UPDATE users SET voice_channel_id=NULL WHERE id=:id")->execute([':id' => $uid]);
+        } catch (\Exception) {
+        }
+        $payload = json_encode(['type' => 'voice_leave', 'user_id' => $uid, 'username' => $meta['username'], 'channel_id' => $channelId]);
+        foreach ($remaining as $p) foreach ($this->userConns[(int)$p['user_id']] ?? [] as $peerConn) try {
+            $peerConn->send($payload);
+        } catch (\Exception) {
+        }
+        $this->broadcastToAll($payload, $from);
     }
 
-    private function handleWebRtcSignal(ConnectionInterface $from,array $data,array $meta,string $type):void
+    private function handleWebRtcSignal(ConnectionInterface $from, array $data, array $meta, string $type): void
     {
-        $target=(int)($data['target_user_id']??0);if(!$target||empty($this->userConns[$target])){$from->send(json_encode(['type'=>'error','message'=>'Peer not connected']));return;}
-        $payload=json_encode(['type'=>$type,'from_user_id'=>$meta['user_id'],'from_username'=>$meta['username'],'sdp'=>$data['sdp']??null,'candidate'=>$data['candidate']??null,'is_screen_offer'=>$data['is_screen_offer']??false]);
-        foreach($this->userConns[$target] as $peerConn)try{$peerConn->send($payload);}catch(\Exception $e){error_log('[WS] WebRTC relay error: '.$e->getMessage());}
+        $target = (int)($data['target_user_id'] ?? 0);
+        if (!$target || empty($this->userConns[$target])) {
+            $from->send(json_encode(['type' => 'error', 'message' => 'Peer not connected']));
+            return;
+        }
+        $payload = json_encode(['type' => $type, 'from_user_id' => $meta['user_id'], 'from_username' => $meta['username'], 'sdp' => $data['sdp'] ?? null, 'candidate' => $data['candidate'] ?? null, 'is_screen_offer' => $data['is_screen_offer'] ?? false]);
+        foreach ($this->userConns[$target] as $peerConn) try {
+            $peerConn->send($payload);
+        } catch (\Exception $e) {
+            error_log('[WS] WebRTC relay error: ' . $e->getMessage());
+        }
     }
 
-    private function handleScreenShareNotify(ConnectionInterface $from,array $data,array $meta):void
+    private function handleScreenShareNotify(ConnectionInterface $from, array $data, array $meta): void
     {
-        $uid=(int)$meta['user_id'];$channelId=(int)($meta['voice_channel_id']??$meta['channel_id']??0);$payload=json_encode(['type'=>'screen_share_notify','user_id'=>$uid,'username'=>$meta['username'],'active'=>(bool)($data['active']??false),'channel_id'=>$channelId]);
-        foreach($this->voiceRooms[$channelId]??[] as $p){$peerId=(int)$p['user_id'];if($peerId===$uid)continue;foreach($this->userConns[$peerId]??[] as $conn)try{$conn->send($payload);}catch(\Exception){}}
+        $uid = (int)$meta['user_id'];
+        $channelId = (int)($meta['voice_channel_id'] ?? $meta['channel_id'] ?? 0);
+        $payload = json_encode(['type' => 'screen_share_notify', 'user_id' => $uid, 'username' => $meta['username'], 'active' => (bool)($data['active'] ?? false), 'channel_id' => $channelId]);
+        foreach ($this->voiceRooms[$channelId] ?? [] as $p) {
+            $peerId = (int)$p['user_id'];
+            if ($peerId === $uid) continue;
+            foreach ($this->userConns[$peerId] ?? [] as $conn) try {
+                $conn->send($payload);
+            } catch (\Exception) {
+            }
+        }
     }
 
-    private function handleDeletedBroadcast(ConnectionInterface $from,array $data,array $meta):void
-    {$channelId=(int)($meta['channel_id']??0);$messageId=(int)($data['message_id']??0);if(!$channelId||!$messageId)return;$this->broadcastToChannel($channelId,json_encode(['type'=>'message_deleted','message_id'=>$messageId]),$from);}
-    private function handleWhiteboardSync(ConnectionInterface $from,array $data,array $meta):void
-    {$channelId=(int)($data['channel_id']??$meta['channel_id']??0);if(!$channelId)return;$this->broadcastToChannel($channelId,json_encode(['type'=>'whiteboard_sync','channel_id'=>$channelId,'user_id'=>$meta['user_id'],'state_json'=>$data['state_json']??'']),$from);}
-    private function handleConnectionRequest(ConnectionInterface $from,array $data,array $meta):void
-    {$addresseeId=(int)($data['addressee_id']??0);if(!$addresseeId)return;if(!empty($this->userConns[$addresseeId])){foreach($this->userConns[$addresseeId] as $peerConn)try{$peerConn->send(json_encode(['type'=>'connection_request','request_id'=>$data['request_id']??null,'addressee_id'=>$addresseeId,'requester'=>$data['requester']??[]]));}catch(\Exception){}}}
-    private function handleDmMessage(ConnectionInterface $from,array $data,array $meta):void{DmHandler::handleDmMessage($from,$data,$meta,$this->userConns);}
-    private function handleDmTyping(ConnectionInterface $from,array $data,array $meta):void{DmHandler::handleDmTyping($from,$data,$meta,$this->userConns);}
-    private function handleNotifyConnReq(ConnectionInterface $from,array $data,array $meta):void{DmHandler::handleNotifyConnReq($from,$data,$meta,$this->userConns);}
-    private function handleNotifyConnAccepted(ConnectionInterface $from,array $data,array $meta):void{DmHandler::handleNotifyConnAccepted($from,$data,$meta,$this->userConns);}
-    private function handleNoteRelay(ConnectionInterface $from,array $data,array $meta):void{$channelId=(int)($data['channel_id']??$meta['channel_id']??0);if(!$channelId)return;foreach($this->channelSubs[$channelId]??[] as $conn){if($conn===$from)continue;try{$conn->send(json_encode($data));}catch(\Exception){}}}
-    private function handleEditedBroadcast(ConnectionInterface $from,array $data,array $meta):void{$channelId=(int)($data['channel_id']??$meta['channel_id']??0);if(!$channelId||empty($data['message']))return;$this->broadcastToChannel($channelId,json_encode(['type'=>'message_edited','message'=>$data['message']]),$from);}
-    private function handlePinnedBroadcast(ConnectionInterface $from,array $data,array $meta):void{$channelId=(int)($data['channel_id']??$meta['channel_id']??0);if(!$channelId)return;$this->broadcastToChannel($channelId,json_encode(['type'=>'message_pinned','channel_id'=>$channelId,'message_id'=>(int)($data['message_id']??0),'pinned'=>(bool)($data['pinned']??true),'pinned_by'=>$meta['username']]),$from);}
-    private function handleChannelSeen(ConnectionInterface $from,array $data,array $meta):void{$channelId=(int)($data['channel_id']??0);if(!$channelId)return;$uid=(int)$meta['user_id'];$payload=json_encode(['type'=>'channel_seen','channel_id'=>$channelId,'user_id'=>$uid]);foreach($this->userConns[$uid]??[] as $conn){if($conn===$from)continue;try{$conn->send($payload);}catch(\Exception){}}}
-    private function handleDraftSave(ConnectionInterface $from,array $data,array $meta):void{$channelId=(int)($data['channel_id']??0);if(!$channelId)return;$uid=(int)$meta['user_id'];$payload=json_encode(['type'=>'draft_saved','channel_id'=>$channelId,'channel_name'=>$data['channel_name']??'','text'=>$data['text']??'']);foreach($this->userConns[$uid]??[] as $conn){if($conn===$from)continue;try{$conn->send($payload);}catch(\Exception){}}}
-    private function handleThreadReply(ConnectionInterface $from,array $data,array $meta):void{$channelId=(int)($data['channel_id']??$meta['channel_id']??0);$parentId=(int)($data['parent_id']??0);if(!$channelId||!$parentId||empty($data['reply']))return;$this->broadcastToChannel($channelId,json_encode(['type'=>'thread_reply','channel_id'=>$channelId,'parent_id'=>$parentId,'reply'=>$data['reply']]),$from);}
-    private function handleMentionRelay(ConnectionInterface $from,array $data,array $meta):void{$target=(int)($data['target_user_id']??0);if(!$target)return;foreach($this->userConns[$target]??[] as $conn)try{$conn->send(json_encode(['type'=>'mention','entry'=>$data['entry']??[]]));}catch(\Exception){}}
-    private function broadcastToChannel(int $channelId,string $payload,?ConnectionInterface $exclude=null):void{foreach($this->channelSubs[$channelId]??[] as $conn){if($exclude&&$conn===$exclude)continue;try{$conn->send($payload);}catch(\Exception $e){echo "[WS] Send error: {$e->getMessage()}\n";}}}
-    private function broadcastToAll(string $payload,?ConnectionInterface $exclude=null):void{foreach($this->clients as $client){if($exclude&&$client===$exclude)continue;$rid=$client->resourceId;if(empty($this->connMeta[$rid]['authed']))continue;try{$client->send($payload);}catch(\Exception){}}}
-    private function removeFromChannel(ConnectionInterface $conn,int $channelId):void{if(!isset($this->channelSubs[$channelId]))return;$this->channelSubs[$channelId]=array_values(array_filter($this->channelSubs[$channelId],fn($c)=>$c!==$conn));if(empty($this->channelSubs[$channelId]))unset($this->channelSubs[$channelId]);}
-    private function setUserOnline(int $userId,bool $online):void{try{$stmt=$this->db->prepare("UPDATE users SET is_online=:o,last_active_at=NOW() WHERE id=:id");$stmt->execute([':o'=>(int)$online,':id'=>$userId]);}catch(\Exception $e){echo "[WS] DB error: {$e->getMessage()}\n";}}
-    private function broadcastPresence(int $userId,bool $online,string $username):void{$payload=json_encode(['type'=>'presence','user_id'=>$userId,'username'=>$username,'online'=>$online]);foreach($this->clients as $client)try{$client->send($payload);}catch(\Exception){}}
-    private function handleWbJoin(ConnectionInterface $from,array $data,array &$meta):void{$channelId=(int)($data['channel_id']??$meta['channel_id']??0);if(!$channelId)return;$uid=(int)$meta['user_id'];$username=$meta['username'];$meta['wb_channel_id']=$channelId;$init=$this->wbHandler->join($channelId,$uid,$username);$from->send(json_encode($init));$notify=json_encode(['type'=>'wb_peer_joined','channel_id'=>$channelId,'peer'=>$init['you']]);foreach($init['peers'] as $peer){foreach($this->userConns[(int)$peer['user_id']]??[] as $peerConn)try{$peerConn->send($notify);}catch(\Exception){}}}
-    private function handleWbLeave(ConnectionInterface $from,array $data,array &$meta):void{$channelId=(int)($data['channel_id']??$meta['wb_channel_id']??0);if(!$channelId)return;$uid=(int)$meta['user_id'];if(!empty($data['state_json']))$this->wbHandler->persistSnapshot($channelId,$uid,$data['state_json']);$remaining=$this->wbHandler->leave($channelId,$uid);$meta['wb_channel_id']=null;$notify=json_encode(['type'=>'wb_peer_left','channel_id'=>$channelId,'user_id'=>$uid,'username'=>$meta['username']]);foreach($remaining as $peerId)foreach($this->userConns[$peerId]??[] as $peerConn)try{$peerConn->send($notify);}catch(\Exception){}}
-    private function handleWbOp(ConnectionInterface $from,array $data,array $meta):void{$channelId=(int)($data['channel_id']??$meta['wb_channel_id']??0);if(!$channelId||empty($data['op']))return;$stamped=$this->wbHandler->recordOp($channelId,(int)$meta['user_id'],$data);$payload=json_encode(array_merge(['type'=>'wb_op'],$stamped));foreach($this->wbHandler->getRoomUserIds($channelId,(int)$meta['user_id']) as $peerId)foreach($this->userConns[$peerId]??[] as $peerConn)try{$peerConn->send($payload);}catch(\Exception){}}
-    private function handleWbCursor(ConnectionInterface $from,array $data,array $meta):void{$channelId=(int)($data['channel_id']??$meta['wb_channel_id']??0);if(!$channelId)return;$uid=(int)$meta['user_id'];$peer=$this->wbHandler->getUserMeta($channelId,$uid);$payload=json_encode(['type'=>'wb_cursor','channel_id'=>$channelId,'user_id'=>$uid,'username'=>$meta['username'],'color'=>$peer['color']??'#a855f7','initial'=>$peer['initial']??'?','x'=>$data['x']??0,'y'=>$data['y']??0]);foreach($this->wbHandler->getRoomUserIds($channelId,$uid) as $peerId)foreach($this->userConns[$peerId]??[] as $peerConn)try{$peerConn->send($payload);}catch(\Exception){}}
-    private function handleWbStateSave(ConnectionInterface $from,array $data,array $meta):void{$channelId=(int)($data['channel_id']??$meta['wb_channel_id']??0);if(!$channelId||empty($data['state_json']))return;$this->wbHandler->persistSnapshot($channelId,(int)$meta['user_id'],$data['state_json']);$from->send(json_encode(['type'=>'wb_state_saved','channel_id'=>$channelId]));}
-    private function handleWbRequestState(ConnectionInterface $from,array $data,array $meta):void{$channelId=(int)($data['channel_id']??$meta['wb_channel_id']??0);if(!$channelId)return;$state=$this->wbHandler->getState($channelId);$from->send(json_encode(['type'=>'wb_state','channel_id'=>$channelId,'state_json'=>$state,'members'=>$this->wbHandler->getMembers($channelId)]));}
+    private function handleDeletedBroadcast(ConnectionInterface $from, array $data, array $meta): void
+    {
+        $channelId = (int)($meta['channel_id'] ?? 0);
+        $messageId = (int)($data['message_id'] ?? 0);
+        if (!$channelId || !$messageId) return;
+        $this->broadcastToChannel($channelId, json_encode(['type' => 'message_deleted', 'message_id' => $messageId]), $from);
+    }
+    private function handleWhiteboardSync(ConnectionInterface $from, array $data, array $meta): void
+    {
+        $channelId = (int)($data['channel_id'] ?? $meta['channel_id'] ?? 0);
+        if (!$channelId) return;
+        $this->broadcastToChannel($channelId, json_encode(['type' => 'whiteboard_sync', 'channel_id' => $channelId, 'user_id' => $meta['user_id'], 'state_json' => $data['state_json'] ?? '']), $from);
+    }
+    private function handleConnectionRequest(ConnectionInterface $from, array $data, array $meta): void
+    {
+        $addresseeId = (int)($data['addressee_id'] ?? 0);
+        if (!$addresseeId) return;
+        if (!empty($this->userConns[$addresseeId])) {
+            foreach ($this->userConns[$addresseeId] as $peerConn) try {
+                $peerConn->send(json_encode(['type' => 'connection_request', 'request_id' => $data['request_id'] ?? null, 'addressee_id' => $addresseeId, 'requester' => $data['requester'] ?? []]));
+            } catch (\Exception) {
+            }
+        }
+    }
+    private function handleDmMessage(ConnectionInterface $from, array $data, array $meta): void
+    {
+        DmHandler::handleDmMessage($from, $data, $meta, $this->userConns);
+    }
+    private function handleDmTyping(ConnectionInterface $from, array $data, array $meta): void
+    {
+        DmHandler::handleDmTyping($from, $data, $meta, $this->userConns);
+    }
+    private function handleNotifyConnReq(ConnectionInterface $from, array $data, array $meta): void
+    {
+        DmHandler::handleNotifyConnReq($from, $data, $meta, $this->userConns);
+    }
+    private function handleNotifyConnAccepted(ConnectionInterface $from, array $data, array $meta): void
+    {
+        DmHandler::handleNotifyConnAccepted($from, $data, $meta, $this->userConns);
+    }
+    private function handleNoteRelay(ConnectionInterface $from, array $data, array $meta): void
+    {
+        $channelId = (int)($data['channel_id'] ?? $meta['channel_id'] ?? 0);
+        if (!$channelId) return;
+        foreach ($this->channelSubs[$channelId] ?? [] as $conn) {
+            if ($conn === $from) continue;
+            try {
+                $conn->send(json_encode($data));
+            } catch (\Exception) {
+            }
+        }
+    }
+    private function handleEditedBroadcast(ConnectionInterface $from, array $data, array $meta): void
+    {
+        $channelId = (int)($data['channel_id'] ?? $meta['channel_id'] ?? 0);
+        if (!$channelId || empty($data['message'])) return;
+        $this->broadcastToChannel($channelId, json_encode(['type' => 'message_edited', 'message' => $data['message']]), $from);
+    }
+    private function handlePinnedBroadcast(ConnectionInterface $from, array $data, array $meta): void
+    {
+        $channelId = (int)($data['channel_id'] ?? $meta['channel_id'] ?? 0);
+        if (!$channelId) return;
+        $this->broadcastToChannel($channelId, json_encode(['type' => 'message_pinned', 'channel_id' => $channelId, 'message_id' => (int)($data['message_id'] ?? 0), 'pinned' => (bool)($data['pinned'] ?? true), 'pinned_by' => $meta['username']]), $from);
+    }
+    private function handleChannelSeen(ConnectionInterface $from, array $data, array $meta): void
+    {
+        $channelId = (int)($data['channel_id'] ?? 0);
+        if (!$channelId) return;
+        $uid = (int)$meta['user_id'];
+        $payload = json_encode(['type' => 'channel_seen', 'channel_id' => $channelId, 'user_id' => $uid]);
+        foreach ($this->userConns[$uid] ?? [] as $conn) {
+            if ($conn === $from) continue;
+            try {
+                $conn->send($payload);
+            } catch (\Exception) {
+            }
+        }
+    }
+    private function handleDraftSave(ConnectionInterface $from, array $data, array $meta): void
+    {
+        $channelId = (int)($data['channel_id'] ?? 0);
+        if (!$channelId) return;
+        $uid = (int)$meta['user_id'];
+        $payload = json_encode(['type' => 'draft_saved', 'channel_id' => $channelId, 'channel_name' => $data['channel_name'] ?? '', 'text' => $data['text'] ?? '']);
+        foreach ($this->userConns[$uid] ?? [] as $conn) {
+            if ($conn === $from) continue;
+            try {
+                $conn->send($payload);
+            } catch (\Exception) {
+            }
+        }
+    }
+    private function handleThreadReply(ConnectionInterface $from, array $data, array $meta): void
+    {
+        $channelId = (int)($data['channel_id'] ?? $meta['channel_id'] ?? 0);
+        $parentId = (int)($data['parent_id'] ?? 0);
+        if (!$channelId || !$parentId || empty($data['reply'])) return;
+        $this->broadcastToChannel($channelId, json_encode(['type' => 'thread_reply', 'channel_id' => $channelId, 'parent_id' => $parentId, 'reply' => $data['reply']]), $from);
+    }
+    private function handleMentionRelay(ConnectionInterface $from, array $data, array $meta): void
+    {
+        $target = (int)($data['target_user_id'] ?? 0);
+        if (!$target) return;
+        foreach ($this->userConns[$target] ?? [] as $conn) try {
+            $conn->send(json_encode(['type' => 'mention', 'entry' => $data['entry'] ?? []]));
+        } catch (\Exception) {
+        }
+    }
+    private function broadcastToChannel(int $channelId, string $payload, ?ConnectionInterface $exclude = null): void
+    {
+        foreach ($this->channelSubs[$channelId] ?? [] as $conn) {
+            if ($exclude && $conn === $exclude) continue;
+            try {
+                $conn->send($payload);
+            } catch (\Exception $e) {
+                echo "[WS] Send error: {$e->getMessage()}\n";
+            }
+        }
+    }
+    private function broadcastToAll(string $payload, ?ConnectionInterface $exclude = null): void
+    {
+        foreach ($this->clients as $client) {
+            if ($exclude && $client === $exclude) continue;
+            $rid = $client->resourceId;
+            if (empty($this->connMeta[$rid]['authed'])) continue;
+            try {
+                $client->send($payload);
+            } catch (\Exception) {
+            }
+        }
+    }
+    private function removeFromChannel(ConnectionInterface $conn, int $channelId): void
+    {
+        if (!isset($this->channelSubs[$channelId])) return;
+        $this->channelSubs[$channelId] = array_values(array_filter($this->channelSubs[$channelId], fn($c) => $c !== $conn));
+        if (empty($this->channelSubs[$channelId])) unset($this->channelSubs[$channelId]);
+    }
+    private function setUserOnline(int $userId, bool $online): void
+    {
+        try {
+            $stmt = $this->db->prepare("UPDATE users SET is_online=:o,last_active_at=NOW() WHERE id=:id");
+            $stmt->execute([':o' => (int)$online, ':id' => $userId]);
+
+            // Also update user_presence for all servers this user belongs to
+            $status = $online ? 'online' : 'offline';
+            $stmt = $this->db->prepare("
+                UPDATE user_presence
+                SET status=:status, last_activity_at=NOW()
+                WHERE user_id=:uid
+            ");
+            $stmt->execute([':status' => $status, ':uid' => $userId]);
+        } catch (\Exception $e) {
+            echo "[WS] DB error: {$e->getMessage()}\n";
+        }
+    }
+    private function broadcastPresence(int $userId, bool $online, string $username): void
+    {
+        $payload = json_encode(['type' => 'presence', 'user_id' => $userId, 'username' => $username, 'online' => $online]);
+        foreach ($this->clients as $client) try {
+            $client->send($payload);
+        } catch (\Exception) {
+        }
+    }
+    private function handleWbJoin(ConnectionInterface $from, array $data, array &$meta): void
+    {
+        $channelId = (int)($data['channel_id'] ?? $meta['channel_id'] ?? 0);
+        if (!$channelId) return;
+        $uid = (int)$meta['user_id'];
+        $username = $meta['username'];
+        $meta['wb_channel_id'] = $channelId;
+        $init = $this->wbHandler->join($channelId, $uid, $username);
+        $from->send(json_encode($init));
+        $notify = json_encode(['type' => 'wb_peer_joined', 'channel_id' => $channelId, 'peer' => $init['you']]);
+        foreach ($init['peers'] as $peer) {
+            foreach ($this->userConns[(int)$peer['user_id']] ?? [] as $peerConn) try {
+                $peerConn->send($notify);
+            } catch (\Exception) {
+            }
+        }
+    }
+    private function handleWbLeave(ConnectionInterface $from, array $data, array &$meta): void
+    {
+        $channelId = (int)($data['channel_id'] ?? $meta['wb_channel_id'] ?? 0);
+        if (!$channelId) return;
+        $uid = (int)$meta['user_id'];
+        if (!empty($data['state_json'])) $this->wbHandler->persistSnapshot($channelId, $uid, $data['state_json']);
+        $remaining = $this->wbHandler->leave($channelId, $uid);
+        $meta['wb_channel_id'] = null;
+        $notify = json_encode(['type' => 'wb_peer_left', 'channel_id' => $channelId, 'user_id' => $uid, 'username' => $meta['username']]);
+        foreach ($remaining as $peerId) foreach ($this->userConns[$peerId] ?? [] as $peerConn) try {
+            $peerConn->send($notify);
+        } catch (\Exception) {
+        }
+    }
+    private function handleWbOp(ConnectionInterface $from, array $data, array $meta): void
+    {
+        $channelId = (int)($data['channel_id'] ?? $meta['wb_channel_id'] ?? 0);
+        if (!$channelId || empty($data['op'])) return;
+        $stamped = $this->wbHandler->recordOp($channelId, (int)$meta['user_id'], $data);
+        $payload = json_encode(array_merge(['type' => 'wb_op'], $stamped));
+        foreach ($this->wbHandler->getRoomUserIds($channelId, (int)$meta['user_id']) as $peerId) foreach ($this->userConns[$peerId] ?? [] as $peerConn) try {
+            $peerConn->send($payload);
+        } catch (\Exception) {
+        }
+    }
+    private function handleWbCursor(ConnectionInterface $from, array $data, array $meta): void
+    {
+        $channelId = (int)($data['channel_id'] ?? $meta['wb_channel_id'] ?? 0);
+        if (!$channelId) return;
+        $uid = (int)$meta['user_id'];
+        $peer = $this->wbHandler->getUserMeta($channelId, $uid);
+        $payload = json_encode(['type' => 'wb_cursor', 'channel_id' => $channelId, 'user_id' => $uid, 'username' => $meta['username'], 'color' => $peer['color'] ?? '#a855f7', 'initial' => $peer['initial'] ?? '?', 'x' => $data['x'] ?? 0, 'y' => $data['y'] ?? 0]);
+        foreach ($this->wbHandler->getRoomUserIds($channelId, $uid) as $peerId) foreach ($this->userConns[$peerId] ?? [] as $peerConn) try {
+            $peerConn->send($payload);
+        } catch (\Exception) {
+        }
+    }
+    private function handleWbStateSave(ConnectionInterface $from, array $data, array $meta): void
+    {
+        $channelId = (int)($data['channel_id'] ?? $meta['wb_channel_id'] ?? 0);
+        if (!$channelId || empty($data['state_json'])) return;
+        $this->wbHandler->persistSnapshot($channelId, (int)$meta['user_id'], $data['state_json']);
+        $from->send(json_encode(['type' => 'wb_state_saved', 'channel_id' => $channelId]));
+    }
+    private function handleWbRequestState(ConnectionInterface $from, array $data, array $meta): void
+    {
+        $channelId = (int)($data['channel_id'] ?? $meta['wb_channel_id'] ?? 0);
+        if (!$channelId) return;
+        $state = $this->wbHandler->getState($channelId);
+        $from->send(json_encode(['type' => 'wb_state', 'channel_id' => $channelId, 'state_json' => $state, 'members' => $this->wbHandler->getMembers($channelId)]));
+    }
 }
