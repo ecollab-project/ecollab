@@ -1,0 +1,32 @@
+{
+  "protocol_version": "1.0",
+  "project": "ecollab-project/ecollab",
+  "default_branch": "main",
+  "engineering_branch": "copilot/ecollab-engineering-agents",
+  "current_task": "ECOLLAB-P1-WS-001",
+  "state": "QUEUED",
+  "iteration": 0,
+  "max_automatic_iterations": 5,
+  "agents": {
+    "orchestrator": "ecollab-orchestrator",
+    "audit": "openai",
+    "implementation": "claude",
+    "verification": "openai",
+    "deterministic_validation": "github-actions"
+  },
+  "human_gates": [
+    "destructive_database_change",
+    "production_credentials",
+    "irreversible_data_change",
+    "security_control_disable",
+    "merge_to_main"
+  ],
+  "artifacts": {
+    "task": "docs/ai-orchestration/tasks/ECOLLAB-P1-WS-001.md",
+    "audit": "docs/ai-orchestration/audits/ECOLLAB-P1-WS-001-openai.md",
+    "contract": "docs/ai-orchestration/contracts/ECOLLAB-P1-WS-001.md",
+    "implementation": "docs/ai-orchestration/implementation/ECOLLAB-P1-WS-001-claude.md",
+    "review": "docs/ai-orchestration/reviews/ECOLLAB-P1-WS-001-openai.md",
+    "verification": "docs/ai-orchestration/verification/ECOLLAB-P1-WS-001.md"
+  }
+}
