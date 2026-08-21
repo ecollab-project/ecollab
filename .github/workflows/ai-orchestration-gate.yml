@@ -8,12 +8,16 @@ on:
         required: true
         default: "ECOLLAB-P1-WS-001"
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
+      - copilot/ecollab-engineering-agents
     paths:
       - "docs/ai-orchestration/**"
       - "tools/ai-orchestrator/**"
       - ".github/agents/**"
       - ".github/skills/**"
+      - ".github/ai/**"
+      - ".github/workflows/ai-orchestration-gate.yml"
 
 permissions:
   contents: read
@@ -30,27 +34,48 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -f .github/ai/PROTOCOL.md
-          test -f docs/ai-orchestration/README.md
-          test -f docs/ai-orchestration/task-template.md
-          test -f docs/ai-orchestration/state.json
-          test -f tools/ai-orchestrator/eCollab-AI-Orchestrator.ps1
+          required_files=(
+            ".github/ai/PROTOCOL.md"
+            "docs/ai-orchestration/README.md"
+            "docs/ai-orchestration/task-template.md"
+            "docs/ai-orchestration/state.json"
+            "tools/ai-orchestrator/eCollab-AI-Orchestrator.ps1"
+          )
+          for file in "${required_files[@]}"; do
+            if [[ ! -f "$file" ]]; then
+              echo "ERROR: required control-plane file is missing: $file"
+              exit 1
+            fi
+            echo "OK: $file"
+          done
 
       - name: Validate state JSON
         shell: bash
-        run: python - <<'PY'
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
           import json
           from pathlib import Path
-          p = Path('docs/ai-orchestration/state.json')
-          state = json.loads(p.read_text(encoding='utf-8'))
-          required = ['protocol_version', 'project', 'current_task', 'state', 'agents', 'human_gates', 'artifacts']
-          missing = [k for k in required if k not in state]
+
+          path = Path('docs/ai-orchestration/state.json')
+          state = json.loads(path.read_text(encoding='utf-8'))
+          required = [
+              'protocol_version', 'project', 'current_task', 'state',
+              'agents', 'human_gates', 'artifacts'
+          ]
+          missing = [key for key in required if key not in state]
           if missing:
               raise SystemExit(f'Missing state keys: {missing}')
-          allowed = {'QUEUED','AUDITING','CONTRACT_READY','IMPLEMENTING','TESTING','REVIEWING','REWORK_REQUIRED','VERIFIED','HUMAN_APPROVAL','MERGED','BLOCKED'}
+
+          allowed = {
+              'QUEUED', 'AUDITING', 'CONTRACT_READY', 'IMPLEMENTING',
+              'TESTING', 'REVIEWING', 'REWORK_REQUIRED', 'VERIFIED',
+              'HUMAN_APPROVAL', 'MERGED', 'BLOCKED'
+          }
           if state['state'] not in allowed:
               raise SystemExit(f"Invalid state: {state['state']}")
-          print('AI orchestration state is valid.')
+
+          print(f"OK: state={state['state']} task={state['current_task']}")
           PY
 
       - name: Validate task exists
@@ -59,5 +84,9 @@ jobs:
           TASK_ID: ${{ inputs.task_id || 'ECOLLAB-P1-WS-001' }}
         run: |
           set -euo pipefail
-          test -f "docs/ai-orchestration/tasks/${TASK_ID}.md"
-          echo "Task ${TASK_ID} exists."
+          task_path="docs/ai-orchestration/tasks/${TASK_ID}.md"
+          if [[ ! -f "$task_path" ]]; then
+            echo "ERROR: task artifact is missing: $task_path"
+            exit 1
+          fi
+          echo "OK: task ${TASK_ID} exists at ${task_path}"
