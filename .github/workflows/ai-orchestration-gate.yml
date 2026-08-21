@@ -1,0 +1,63 @@
+name: AI Orchestration Gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      task_id:
+        description: "Existing task ID under docs/ai-orchestration/tasks"
+        required: true
+        default: "ECOLLAB-P1-WS-001"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "docs/ai-orchestration/**"
+      - "tools/ai-orchestrator/**"
+      - ".github/agents/**"
+      - ".github/skills/**"
+
+permissions:
+  contents: read
+
+jobs:
+  protocol-check:
+    name: Validate AI orchestration control plane
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate required control-plane files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f .github/ai/PROTOCOL.md
+          test -f docs/ai-orchestration/README.md
+          test -f docs/ai-orchestration/task-template.md
+          test -f docs/ai-orchestration/state.json
+          test -f tools/ai-orchestrator/eCollab-AI-Orchestrator.ps1
+
+      - name: Validate state JSON
+        shell: bash
+        run: python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('docs/ai-orchestration/state.json')
+          state = json.loads(p.read_text(encoding='utf-8'))
+          required = ['protocol_version', 'project', 'current_task', 'state', 'agents', 'human_gates', 'artifacts']
+          missing = [k for k in required if k not in state]
+          if missing:
+              raise SystemExit(f'Missing state keys: {missing}')
+          allowed = {'QUEUED','AUDITING','CONTRACT_READY','IMPLEMENTING','TESTING','REVIEWING','REWORK_REQUIRED','VERIFIED','HUMAN_APPROVAL','MERGED','BLOCKED'}
+          if state['state'] not in allowed:
+              raise SystemExit(f"Invalid state: {state['state']}")
+          print('AI orchestration state is valid.')
+          PY
+
+      - name: Validate task exists
+        shell: bash
+        env:
+          TASK_ID: ${{ inputs.task_id || 'ECOLLAB-P1-WS-001' }}
+        run: |
+          set -euo pipefail
+          test -f "docs/ai-orchestration/tasks/${TASK_ID}.md"
+          echo "Task ${TASK_ID} exists."
