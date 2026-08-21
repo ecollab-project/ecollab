@@ -68,7 +68,15 @@ try {
         echo json_encode(['success' => true, 'redirect' => $redirect, 'role' => $role]);
     } else {
         http_response_code(401);
-        echo json_encode(['success' => false, 'error' => $outcome['error']]);
+        // Do not reveal whether the supplied identifier belongs to an account.
+        // Preserve lockout/disabled/SSO messages because they do not distinguish
+        // an existing account from a nonexistent one during normal login failure.
+        $error = (string)($outcome['error'] ?? '');
+        if (str_starts_with($error, 'No account found with that email or Student ID.')
+            || str_starts_with($error, 'Incorrect password.')) {
+            $error = 'Invalid credentials. Please check your email/Student ID and password.';
+        }
+        echo json_encode(['success' => false, 'error' => $error]);
     }
 } catch (Throwable $e) {
     error_log('[API/auth/login] ' . $e->getMessage());
