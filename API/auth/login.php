@@ -68,14 +68,30 @@ try {
         echo json_encode(['success' => true, 'redirect' => $redirect, 'role' => $role]);
     } else {
         http_response_code(401);
-        // Do not reveal whether the supplied identifier belongs to an account.
-        // Preserve lockout/disabled/SSO messages because they do not distinguish
-        // an existing account from a nonexistent one during normal login failure.
+
         $error = (string)($outcome['error'] ?? '');
-        if (str_starts_with($error, 'No account found with that email or Student ID.')
-            || str_starts_with($error, 'Incorrect password.')) {
+
+        // Normalize all account-specific authentication failures. This keeps
+        // disabled/banned/SSO accounts from becoming existence oracles.
+        $isNoAccount = str_starts_with($error, 'No account found with that email or Student ID.');
+        $isWrongPassword = str_starts_with($error, 'Incorrect password.');
+        $isAccountStatus = str_starts_with($error, 'Your account has been ');
+        $isSsoAccount = str_starts_with($error, 'This account uses SSO login');
+
+        // Equalize bcrypt work after AuthService returns. Existing-password
+        // failures already paid for one real password_verify(); nonexistent,
+        // disabled, and SSO accounts did not. Add dummy verification work to
+        // reduce timing differences without changing the AuthService contract.
+        $dummyHash = '$2y$12$izNb9hZPzRSLFU8pC3Ly4.jQ/4.k81MDfof4dh0lT0I1KQ0qKYe0a';
+        $dummyChecks = ($isWrongPassword || (!$isNoAccount && !$isAccountStatus && !$isSsoAccount)) ? 1 : 2;
+        for ($i = 0; $i < $dummyChecks; $i++) {
+            password_verify($password, $dummyHash);
+        }
+
+        if ($isNoAccount || $isWrongPassword || $isAccountStatus || $isSsoAccount) {
             $error = 'Invalid credentials. Please check your email/Student ID and password.';
         }
+
         echo json_encode(['success' => false, 'error' => $error]);
     }
 } catch (Throwable $e) {
