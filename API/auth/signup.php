@@ -59,11 +59,41 @@ $data = [
     'terms_agreed'   => !empty($body['terms_agreed']),
 ];
 
+// Signup verification is intentionally enforced at the API boundary. The
+// OTP is bound to the current session and the exact email that requested it,
+// so the client cannot bypass verification by omitting the OTP field.
+$otp = preg_replace('/\D/', '', (string)($body['otp'] ?? ''));
+$pendingOtpHash = (string)($_SESSION['pending_otp'] ?? '');
+$pendingOtpEmail = strtolower(trim((string)($_SESSION['pending_otp_email'] ?? '')));
+$pendingOtpExpiry = (int)($_SESSION['pending_otp_expiry'] ?? 0);
+
+if ($otp === '' || !preg_match('/^\d{6}$/', $otp)
+    || $pendingOtpHash === ''
+    || $pendingOtpEmail === ''
+    || !hash_equals($pendingOtpEmail, $data['email'])
+    || $pendingOtpExpiry < time()
+    || !password_verify($otp, $pendingOtpHash)
+) {
+    http_response_code(422);
+    echo json_encode([
+        'success' => false,
+        'error'   => 'Please verify your email with the current 6-digit code before creating your account.',
+        'field'   => 'otp',
+    ]);
+    exit;
+}
+
 try {
     $service = new AuthService();
     $outcome = $service->register($data);
 
     if ($outcome['success']) {
+        // Persist the successful verification and invalidate the session OTP.
+        $db = Database::getInstance();
+        $db->prepare('UPDATE users SET email_verified=1 WHERE id=:id')
+            ->execute([':id' => (int)$outcome['user_id']]);
+        unset($_SESSION['pending_otp'], $_SESSION['pending_otp_email'], $_SESSION['pending_otp_expiry']);
+
         CSRF::regenerate();
         echo json_encode([
             'success'  => true,
