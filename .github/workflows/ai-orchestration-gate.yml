@@ -94,7 +94,6 @@ jobs:
 
   websocket-syntax:
     name: Validate WebSocket PHP syntax
-    if: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.changed_files, 'websocket/') || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
