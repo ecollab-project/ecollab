@@ -18,8 +18,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Rewrite Code Sandbox execution path
+      - name: Rewrite and validate Code Sandbox
         run: |
+          set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
           import re
@@ -127,28 +128,22 @@ window.runCode = runCode;'''
           if 'new Function(' in new_text or 'eval(' in new_text:
               raise SystemExit('Unsafe execution primitive remains in collab-tools.js')
           if 'sandbox', 'allow-scripts' not in new_text:
-              raise SystemExit('Sandbox attribute validation failed')
+              raise SystemExit('Sandbox validation failed')
           path.write_text(new_text, encoding='utf-8')
           PY
 
-      - name: Validate and commit rewiring
-        run: |
-          set -euo pipefail
           grep -n "new Function\|eval(" assets/js/chat/collab-tools.js && exit 1 || true
           grep -n "sandbox.*allow-scripts" assets/js/chat/collab-tools.js
           grep -n "allow-same-origin" assets/js/chat/collab-tools.js && exit 1 || true
           git diff --check
-          git status --short
-          git diff -- assets/js/chat/collab-tools.js
+
+      - name: Commit application change and remove one-shot workflow together
+        run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add assets/js/chat/collab-tools.js
-          git commit -m "fix(collab): isolate Code Sandbox execution"
-          git push origin HEAD:fix/security-code-sandbox-isolation
-
-      - name: Remove one-shot workflow
-        run: |
-          set -euo pipefail
           git rm .github/workflows/phase3-rewire-once.yml
-          git commit -m "chore(phase3): remove one-shot sandbox rewiring workflow"
+          git diff --cached --check
+          git commit -m "fix(collab): isolate Code Sandbox execution"
           git push origin HEAD:fix/security-code-sandbox-isolation
