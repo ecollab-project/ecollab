@@ -7,17 +7,44 @@ require_once __DIR__ . '/ChatServer.php';
 use Ratchet\ConnectionInterface;
 
 /**
- * WebSocket authorization boundary for channel subscriptions.
+ * WebSocket authorization boundary for channel access.
  *
  * ChatServer owns the connection lifecycle and channel subscription state.
- * This wrapper intercepts join_channel before ChatServer can mutate
- * channelSubs, ensuring an authenticated user can only subscribe to a
- * channel they are allowed to access.
+ * This wrapper enforces the channel permission model before ChatServer can
+ * subscribe a connection or route a channel-scoped event.
  */
 class AuthorizedChatServer extends ChatServer
 {
     /** @var array<int, int> resourceId => authenticated user ID */
     private array $authorizedUsers = [];
+
+    /**
+     * Channel-scoped event types. These events must use the connection's
+     * server-verified current channel rather than a client-selected channel.
+     *
+     * @var array<string, true>
+     */
+    private const CHANNEL_SCOPED_TYPES = [
+        'leave_channel' => true,
+        'message' => true,
+        'message_edited' => true,
+        'message_deleted' => true,
+        'message_pinned' => true,
+        'collab_note_cursor' => true,
+        'collab_note_presence' => true,
+        'typing' => true,
+        'channel_seen' => true,
+        'draft_save' => true,
+        'thread_reply' => true,
+        'mention' => true,
+        'whiteboard_sync' => true,
+        'wb_join' => true,
+        'wb_leave' => true,
+        'wb_op' => true,
+        'wb_cursor' => true,
+        'wb_state_save' => true,
+        'wb_request_state' => true,
+    ];
 
     public function onMessage(ConnectionInterface $from, $rawMsg): void
     {
@@ -28,7 +55,7 @@ class AuthorizedChatServer extends ChatServer
         }
 
         $resourceId = $from->resourceId;
-        $type = $data['type'];
+        $type = (string)$data['type'];
 
         if ($type === 'auth') {
             $this->rememberAuthenticatedUser($resourceId, $data);
@@ -36,21 +63,49 @@ class AuthorizedChatServer extends ChatServer
             return;
         }
 
-        if ($type === 'join_channel') {
-            $userId = $this->authorizedUsers[$resourceId] ?? null;
-            if ($userId === null) {
-                $from->send(json_encode([
-                    'type' => 'error',
-                    'message' => 'Unauthenticated',
-                ]));
-                return;
-            }
+        $userId = $this->authorizedUsers[$resourceId] ?? null;
+        if ($userId === null) {
+            $from->send(json_encode([
+                'type' => 'error',
+                'message' => 'Unauthenticated',
+            ]));
+            return;
+        }
 
+        if ($type === 'join_channel') {
             $channelId = (int)($data['channel_id'] ?? 0);
             if ($channelId <= 0 || !$this->canJoinChannel($channelId, $userId)) {
                 $from->send(json_encode([
                     'type' => 'error',
                     'message' => 'Not authorized to join this channel',
+                ]));
+                return;
+            }
+
+            parent::onMessage($from, $rawMsg);
+            return;
+        }
+
+        if (isset(self::CHANNEL_SCOPED_TYPES[$type])) {
+            $currentChannelId = (int)($this->connMeta[$resourceId]['channel_id'] ?? 0);
+            if ($currentChannelId <= 0) {
+                $from->send(json_encode([
+                    'type' => 'error',
+                    'message' => 'Join a channel before sending channel events',
+                ]));
+                return;
+            }
+
+            // Never allow a client to select a different channel in the
+            // payload. ChatServer's handlers historically prefer
+            // data['channel_id'] over connMeta['channel_id'], so normalize it
+            // to the server-tracked, previously authorized subscription.
+            $data['channel_id'] = $currentChannelId;
+            $rawMsg = json_encode($data);
+            if ($rawMsg === false) {
+                $from->send(json_encode([
+                    'type' => 'error',
+                    'message' => 'Invalid channel event',
                 ]));
                 return;
             }
@@ -101,11 +156,21 @@ class AuthorizedChatServer extends ChatServer
         $this->authorizedUsers[$resourceId] = (int)$userId;
     }
 
+    /**
+     * Mirror the REST channel-access model in API/chat/get-channel.php:
+     * - the user must belong to the channel's server;
+     * - public channels are accessible to server members;
+     * - private channels require channel_members membership unless the user
+     *   is a server owner/admin/moderator or the channel creator.
+     *
+     * Global users.role is deliberately not used as a server-scoped bypass.
+     */
     private function canJoinChannel(int $channelId, int $userId): bool
     {
         $stmt = $this->authorizationDb()->prepare("
             SELECT
                 c.is_private,
+                c.created_by,
                 EXISTS(
                     SELECT 1
                     FROM server_members sm
@@ -120,12 +185,11 @@ class AuthorizedChatServer extends ChatServer
                 ) AS is_channel_member,
                 EXISTS(
                     SELECT 1
-                    FROM users u
-                    WHERE u.id = :uid_role
-                      AND u.role IN ('admin', 'super_admin', 'moderator')
-                      AND u.status = 'active'
-                      AND u.deleted_at IS NULL
-                ) AS is_global_moderator
+                    FROM server_members sm_role
+                    WHERE sm_role.server_id = c.server_id
+                      AND sm_role.user_id = :uid_role
+                      AND sm_role.server_role IN ('owner', 'admin', 'moderator')
+                ) AS can_manage_server
             FROM channels c
             WHERE c.id = :channel_id
             LIMIT 1
@@ -139,20 +203,17 @@ class AuthorizedChatServer extends ChatServer
         $channel = $stmt->fetch();
         $stmt->closeCursor();
 
-        if (!$channel) {
+        if (!$channel || (int)$channel['is_server_member'] !== 1) {
             return false;
         }
 
-        if ((int)$channel['is_global_moderator'] === 1) {
+        if ((int)$channel['is_private'] === 0) {
             return true;
         }
 
-        if ((int)$channel['is_server_member'] !== 1) {
-            return false;
-        }
-
-        return (int)$channel['is_private'] === 0
-            || (int)$channel['is_channel_member'] === 1;
+        return (int)$channel['is_channel_member'] === 1
+            || (int)$channel['can_manage_server'] === 1
+            || (int)$channel['created_by'] === $userId;
     }
 
     private function authorizationDb(): PDO
