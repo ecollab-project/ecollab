@@ -86,6 +86,53 @@ class AuthorizedChatServer extends ChatServer
             return;
         }
 
+        if ($type === 'join_voice') {
+            $voiceChannelId = (int)($data['channel_id'] ?? 0);
+            if ($voiceChannelId <= 0 || !$this->canJoinChannel($voiceChannelId, $userId)) {
+                $from->send(json_encode([
+                    'type' => 'error',
+                    'message' => 'Not authorized to join this voice channel',
+                ]));
+                return;
+            }
+
+            parent::onMessage($from, $rawMsg);
+            return;
+        }
+
+        if ($type === 'screen_share_notify') {
+            $voiceChannelId = (int)($this->connMeta[$resourceId]['voice_channel_id'] ?? 0);
+            if ($voiceChannelId <= 0 || !$this->isVoiceParticipant($voiceChannelId, $userId)) {
+                $from->send(json_encode([
+                    'type' => 'error',
+                    'message' => 'Join a voice channel before sharing your screen',
+                ]));
+                return;
+            }
+
+            $data['channel_id'] = $voiceChannelId;
+            $rawMsg = json_encode($data);
+            if ($rawMsg === false) {
+                $from->send(json_encode([
+                    'type' => 'error',
+                    'message' => 'Invalid voice event',
+                ]));
+                return;
+            }
+        }
+
+        if (in_array($type, ['webrtc_offer', 'webrtc_answer', 'webrtc_candidate'], true)) {
+            $voiceChannelId = (int)($this->connMeta[$resourceId]['voice_channel_id'] ?? 0);
+            $targetUserId = (int)($data['target_user_id'] ?? 0);
+            if ($voiceChannelId <= 0 || $targetUserId <= 0 || !$this->isVoiceParticipant($voiceChannelId, $userId) || !$this->isVoiceParticipant($voiceChannelId, $targetUserId)) {
+                $from->send(json_encode([
+                    'type' => 'error',
+                    'message' => 'Peer is not in your authorized voice channel',
+                ]));
+                return;
+            }
+        }
+
         if (isset(self::CHANNEL_SCOPED_TYPES[$type])) {
             $currentChannelId = (int)($this->connMeta[$resourceId]['channel_id'] ?? 0);
             if ($currentChannelId <= 0) {
@@ -154,6 +201,22 @@ class AuthorizedChatServer extends ChatServer
         }
 
         $this->authorizedUsers[$resourceId] = (int)$userId;
+    }
+
+    /**
+     * Check that a user is an active participant in a server-authorized voice
+     * room. The room state is the server-side source of truth for WebRTC peer
+     * signaling and screen-share notifications.
+     */
+    private function isVoiceParticipant(int $voiceChannelId, int $userId): bool
+    {
+        foreach ($this->voiceRooms[$voiceChannelId] ?? [] as $participant) {
+            if ((int)($participant['user_id'] ?? 0) === $userId) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
