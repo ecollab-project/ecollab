@@ -1,4 +1,4 @@
-/**
+﻿/**
  * collab-tools.js — 6 real-time collaboration tools for Ecollab
  *
  * Tools:
@@ -345,39 +345,201 @@ async function saveCode(manual = false) {
 window.saveCode = saveCode;
 
 async function runCode() {
-  const lang   = document.getElementById('codeLang')?.value || 'javascript';
-  const code   = document.getElementById('codeEditor')?.value || '';
-  const outEl  = document.getElementById('codeOutput');
-  if (outEl) outEl.textContent = '⏳ Running…';
-  const t0 = Date.now();
-  let output = '', error = '';
+  const lang  = document.getElementById('codeLang')?.value || 'javascript';
+  const code  = document.getElementById('codeEditor')?.value || '';
+  const outEl = document.getElementById('codeOutput');
+  if (outEl) {
+    outEl.textContent = '⏳ Running…';
+    outEl.style.color = '';
+  }
+  const startedAt = Date.now();
+  let output = '';
+  let error = '';
   try {
     if (lang === 'javascript') {
-      // Client-side JS execution in isolated scope
-      const lines = [];
-      const fakeConsole = { log: (...a) => lines.push(a.map(String).join(' ')),
-                            error: (...a) => lines.push('ERROR: ' + a.join(' ')),
-                            warn: (...a) => lines.push('WARN: ' + a.join(' ')) };
-      try {
-        const fn = new Function('console', code);
-        fn(fakeConsole);
-        output = lines.join('\n') || '(no output)';
-      } catch (e) { error = e.message; }
+      const iframe = document.createElement('iframe');
+      const nonce =
+        window.crypto?.randomUUID?.() ||
+        `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+      const baseUrl = window.ECOLLAB?.baseUrl || '';
+      const runnerUrl =
+        `${baseUrl}/assets/js/chat/code-sandbox-runner.html`;
+      const timeoutMs = 5000;
+      /*
+       * Security boundary:
+       *
+       * allow-scripts is intentionally the ONLY sandbox permission.
+       *
+       * The absence of allow-same-origin gives the runner an opaque
+       * origin and prevents it from accessing application cookies,
+       * storage, DOM, or same-origin JavaScript state.
+       */
+      iframe.setAttribute('sandbox', 'allow-scripts');
+      iframe.setAttribute('aria-hidden', 'true');
+      iframe.tabIndex = -1;
+      iframe.style.cssText =
+        'position:fixed;width:1px;height:1px;left:-9999px;' +
+        'border:0;opacity:0;pointer-events:none;';
+      iframe.referrerPolicy = 'strict-origin';
+      const result = await new Promise((resolve) => {
+        let settled = false;
+        let timer = null;
+        const cleanup = () => {
+          if (timer !== null) {
+            clearTimeout(timer);
+            timer = null;
+          }
+          window.removeEventListener('message', onMessage);
+          iframe.remove();
+        };
+        const finish = (value) => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          cleanup();
+          resolve(value);
+        };
+        const onMessage = (event) => {
+          /*
+           * Sandboxed documents without allow-same-origin report
+           * an opaque origin ("null").
+           *
+           * Source identity + nonce + protocol fields are therefore
+           * used together to bind the response to this iframe/run.
+           */
+          if (
+            event.source !== iframe.contentWindow ||
+            event.origin !== 'null'
+          ) {
+            return;
+          }
+          const data = event.data;
+          if (
+            !data ||
+            typeof data !== 'object' ||
+            data.channel !== 'ecollab-code-sandbox' ||
+            typeof data.nonce !== 'string' ||
+            data.nonce !== nonce ||
+            data.type !== 'done'
+          ) {
+            return;
+          }
+          finish({
+            output:
+              typeof data.output === 'string'
+                ? data.output
+                : '',
+            error:
+              typeof data.error === 'string'
+                ? data.error
+                : ''
+          });
+        };
+        window.addEventListener('message', onMessage);
+        iframe.addEventListener(
+          'load',
+          () => {
+            if (!iframe.contentWindow) {
+              finish({
+                output: '',
+                error: 'Sandbox failed to initialize.'
+              });
+              return;
+            }
+            /*
+             * Opaque origins cannot be targeted with a concrete
+             * postMessage targetOrigin, so "*" is required here.
+             *
+             * Security is provided by:
+             *   1. exact iframe.contentWindow source validation
+             *   2. random per-run nonce
+             *   3. strict message schema
+             */
+            iframe.contentWindow.postMessage(
+              {
+                type: 'ecollab-code-run',
+                channel: 'ecollab-code-sandbox',
+                nonce,
+                code
+              },
+              '*'
+            );
+          },
+          { once: true }
+        );
+        iframe.addEventListener(
+          'error',
+          () => {
+            finish({
+              output: '',
+              error: 'Sandbox failed to load.'
+            });
+          },
+          { once: true }
+        );
+        /*
+         * The actual JavaScript execution occurs in a Worker
+         * created by the sandbox runner.
+         *
+         * Therefore this timeout remains responsive even when
+         * user code contains a synchronous infinite loop.
+         *
+         * Removing the iframe also destroys its execution context.
+         */
+        timer = window.setTimeout(() => {
+          finish({
+            output: '',
+            error:
+              `Execution timed out after ${timeoutMs / 1000} seconds.`
+          });
+        }, timeoutMs);
+        iframe.src = runnerUrl;
+        document.body.appendChild(iframe);
+      });
+      output = result.output;
+      error = result.error;
     } else {
-      output = `▶ ${lang} execution runs server-side.\nSave the snippet and use your dev environment.`;
+      /*
+       * Non-JavaScript languages retain the existing behavior.
+       *
+       * No client-side interpreter is introduced here.
+       */
+      output =
+        `▶ ${lang} execution runs server-side.\n` +
+        'Save the snippet and use your dev environment.';
     }
-  } catch (e) { error = e.message; }
-
-  const dur = Date.now() - t0;
-  if (outEl) {
-    outEl.textContent = error ? `⚠ Error:\n${error}` : output;
-    outEl.style.color = error ? '#ef4444' : '#22c55e';
+  } catch (e) {
+    error = e?.message || String(e);
   }
-
-  // Log the run via API for the run history panel
-  const snippetId = parseInt(document.querySelector('[data-snippet-id]')?.dataset.snippetId || '0');
+  const durationMs = Date.now() - startedAt;
+  if (outEl) {
+    outEl.textContent = error
+      ? `⚠ Error:\n${error}`
+      : output;
+    outEl.style.color = error
+      ? '#ef4444'
+      : '#22c55e';
+  }
+  /*
+   * Preserve existing run-history logging.
+   */
+  const snippetId = parseInt(
+    document.querySelector('[data-snippet-id]')
+      ?.dataset.snippetId || '0',
+    10
+  );
   if (snippetId) {
-    await collabFetch('code', 'log_run', { snippet_id: snippetId, output, error, duration_ms: dur }).catch(() => {});
+    await collabFetch(
+      'code',
+      'log_run',
+      {
+        snippet_id: snippetId,
+        output,
+        error,
+        duration_ms: durationMs
+      }
+    ).catch(() => {});
   }
 }
 window.runCode = runCode;
