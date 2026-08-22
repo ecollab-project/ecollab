@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - fix/security-code-sandbox-isolation
+  pull_request:
+    branches:
+      - copilot/ecollab-engineering-agents
 
 permissions:
   contents: write
@@ -138,4 +141,4 @@ window.runCode = runCode;'''
             exit 0
           fi
           git commit -m 'fix(collab): isolate Code Sandbox execution'
-          git push origin HEAD:${GITHUB_REF_NAME}
+          git push origin HEAD:${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}
