@@ -1,22 +1,15 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <!--
-    This document is intentionally designed to run inside:
-        sandbox="allow-scripts"
-    without allow-same-origin.
-    Therefore the iframe receives an opaque origin ("null").
-    No application cookies, localStorage, DOM, or same-origin JS state
-    are available to the executed code.
-    The CSP is intentionally restrictive:
-      - no network connections
-      - no images/media/fonts
-      - no frames
-      - no plugins
-      - workers allowed only from blob URLs
-      - eval/Function allowed ONLY inside this already-isolated runner
-        because arbitrary JavaScript execution is the purpose of this tool
+    Code executes only inside a sandboxed iframe and a dedicated Worker.
+    The iframe intentionally has sandbox="allow-scripts" without
+    allow-same-origin, giving it an opaque origin.
+
+    The worker protocol is deliberately single-use. Trusted worker state
+    is kept in an outer closure and user code is never given a reference to
+    the trusted result function or postMessage capability.
   -->
   <meta http-equiv="Content-Security-Policy"
         content="
@@ -38,148 +31,124 @@
 <body>
 <script>
 'use strict';
+
 const CHANNEL = 'ecollab-code-sandbox';
+
 function safeString(value) {
   try {
-    if (typeof value === 'string') {
-      return value;
-    }
-    if (value instanceof Error) {
-      return value.message || String(value);
-    }
+    if (typeof value === 'string') return value;
+    if (value instanceof Error) return value.message || String(value);
     const json = JSON.stringify(value);
-    if (json !== undefined) {
-      return json;
-    }
-  } catch (_) {
-    // Ignore serialization failures.
-  }
+    if (json !== undefined) return json;
+  } catch (_) {}
   try {
     return String(value);
   } catch (_) {
     return '[unserializable value]';
   }
 }
+
 function sendToParent(nonce, output, error) {
-  window.parent.postMessage(
-    {
-      type: 'done',
-      channel: CHANNEL,
-      nonce,
-      output: typeof output === 'string' ? output : '',
-      error: typeof error === 'string' ? error : ''
-    },
-    '*'
-  );
+  window.parent.postMessage({
+    type: 'done',
+    channel: CHANNEL,
+    nonce,
+    output: typeof output === 'string' ? output : '',
+    error: typeof error === 'string' ? error : ''
+  }, '*');
 }
+
 function createWorker(code, workerToken) {
   const workerSource = `
     'use strict';
-    const WORKER_TOKEN = ${JSON.stringify(workerToken)};
-    function safeString(value) {
-      try {
-        if (typeof value === 'string') return value;
-        if (value instanceof Error) {
-          return value.message || String(value);
+
+    /*
+     * Everything below this IIFE is trusted worker plumbing.
+     *
+     * The critical invariant is structural:
+     * after the first legitimate run handler begins, it can never be
+     * entered again. The guard is declared outside the handler, so a
+     * nested call through self.onmessage, dispatchEvent(), a saved
+     * reference, or another event path cannot obtain fresh trusted state.
+     */
+    (() => {
+      const trustedPostMessage = self.postMessage.bind(self);
+      const token = ${JSON.stringify(workerToken)};
+      let runStarted = false;
+
+      function report(output, error) {
+        trustedPostMessage({
+          type: 'worker-result',
+          token,
+          output: typeof output === 'string' ? output : '',
+          error: typeof error === 'string' ? error : ''
+        });
+      }
+
+      /*
+       * User code must not be able to invoke a trusted result path through
+       * WorkerGlobalScope event-handler properties.
+       *
+       * Synchronous user-code exceptions are caught below, so these global
+       * error hooks do not need to expose trusted reporting closures.
+       */
+      self.onerror = null;
+      self.onunhandledrejection = null;
+
+      /*
+       * Do not expose a trusted message handler through onmessage.
+       * addEventListener keeps the handler reference in this closure.
+       * A synthetic dispatchEvent() can still invoke listeners, so the
+       * single-use guard is deliberately outside the listener function.
+       */
+      const handleRun = function(event) {
+        if (runStarted) {
+          return;
         }
-        const json = JSON.stringify(value);
-        if (json !== undefined) return json;
-      } catch (_) {}
-      try {
-        return String(value);
-      } catch (_) {
-        return '[unserializable value]';
-      }
-    }
-    function sendResult(output, error) {
-      self.postMessage({
-        type: 'worker-result',
-        token: WORKER_TOKEN,
-        output: typeof output === 'string' ? output : '',
-        error: typeof error === 'string' ? error : ''
-      });
-    }
-    self.onmessage = function(event) {
-      if (
-        !event.data ||
-        event.data.type !== 'run'
-      ) {
-        return;
-      }
-      const source = typeof event.data.code === 'string'
-        ? event.data.code
-        : '';
-      const lines = [];
-      const fakeConsole = {
-        log: (...args) => {
-          lines.push(args.map(safeString).join(' '));
-        },
-        info: (...args) => {
-          lines.push(args.map(safeString).join(' '));
-        },
-        debug: (...args) => {
-          lines.push(args.map(safeString).join(' '));
-        },
-        warn: (...args) => {
-          lines.push('WARN: ' + args.map(safeString).join(' '));
-        },
-        error: (...args) => {
-          lines.push('ERROR: ' + args.map(safeString).join(' '));
+        runStarted = true;
+
+        if (!event || !event.data || event.data.type !== 'run') {
+          return;
+        }
+
+        const source = typeof event.data.code === 'string'
+          ? event.data.code
+          : '';
+        const lines = [];
+
+        const fakeConsole = {
+          log: (...args) => lines.push(args.map(safeString).join(' ')),
+          info: (...args) => lines.push(args.map(safeString).join(' ')),
+          debug: (...args) => lines.push(args.map(safeString).join(' ')),
+          warn: (...args) => lines.push('WARN: ' + args.map(safeString).join(' ')),
+          error: (...args) => lines.push('ERROR: ' + args.map(safeString).join(' '))
+        };
+
+        try {
+          const fn = new Function(
+            'console',
+            '"use strict";\\n' + source
+          );
+          const result = fn(fakeConsole);
+
+          if (result !== undefined && lines.length === 0) {
+            lines.push(safeString(result));
+          }
+
+          report(lines.join('\\n') || '(no output)', '');
+        } catch (error) {
+          report(
+            lines.join('\\n'),
+            error && error.message ? error.message : safeString(error)
+          );
         }
       };
-      self.onerror = function(message) {
-        sendResult(
-          lines.join('\\n'),
-          safeString(message)
-        );
-        self.close();
-      };
-      self.onunhandledrejection = function(event) {
-        sendResult(
-          lines.join('\\n'),
-          'Unhandled promise rejection: ' +
-            safeString(event.reason)
-        );
-        self.close();
-      };
-      try {
-        /*
-         * IMPORTANT:
-         *
-         * This dynamic execution exists only inside the worker,
-         * which itself exists only inside the opaque sandboxed iframe.
-         *
-         * The main application page never evaluates user code.
-         */
-        const fn = new Function(
-          'console',
-          '"use strict";\\n' + source
-        );
-        const result = fn(fakeConsole);
-        if (
-          result !== undefined &&
-          lines.length === 0
-        ) {
-          lines.push(safeString(result));
-        }
-        sendResult(
-          lines.join('\\n') || '(no output)',
-          ''
-        );
-      } catch (error) {
-        sendResult(
-          lines.join('\\n'),
-          error && error.message
-            ? error.message
-            : safeString(error)
-        );
-      }
-    };
+
+      self.addEventListener('message', handleRun);
+    })();
   `;
-  const blob = new Blob(
-    [workerSource],
-    { type: 'text/javascript' }
-  );
+
+  const blob = new Blob([workerSource], { type: 'text/javascript' });
   const blobUrl = URL.createObjectURL(blob);
   let worker;
   try {
@@ -189,17 +158,10 @@ function createWorker(code, workerToken) {
   }
   return worker;
 }
+
 window.addEventListener('message', function(event) {
-  /*
-   * The parent application is the only trusted sender.
-   *
-   * Because this document is sandboxed without allow-same-origin,
-   * its own origin is opaque. The source window is therefore the
-   * primary identity binding.
-   */
-  if (event.source !== window.parent) {
-    return;
-  }
+  if (event.source !== window.parent) return;
+
   const data = event.data;
   if (
     !data ||
@@ -211,20 +173,12 @@ window.addEventListener('message', function(event) {
   ) {
     return;
   }
+
   const nonce = data.nonce;
-  /*
-   * Unique token used only between this runner and its worker.
-   *
-   * The user's code does not receive this token, so it cannot
-   * forge the worker-result protocol.
-   */
   const workerToken =
     crypto.randomUUID?.() ||
-    (
-      Date.now() +
-      '-' +
-      Math.random().toString(36).slice(2)
-    );
+    (Date.now() + '-' + Math.random().toString(36).slice(2));
+
   let worker;
   try {
     worker = createWorker(data.code, workerToken);
@@ -232,23 +186,19 @@ window.addEventListener('message', function(event) {
     sendToParent(
       nonce,
       '',
-      error && error.message
-        ? error.message
-        : String(error)
+      error && error.message ? error.message : String(error)
     );
     return;
   }
+
   let settled = false;
   const finish = function(output, error) {
-    if (settled) {
-      return;
-    }
+    if (settled) return;
     settled = true;
-    try {
-      worker.terminate();
-    } catch (_) {}
+    try { worker.terminate(); } catch (_) {}
     sendToParent(nonce, output, error);
   };
+
   worker.addEventListener('message', function(workerEvent) {
     const result = workerEvent.data;
     if (
@@ -258,28 +208,17 @@ window.addEventListener('message', function(event) {
     ) {
       return;
     }
+
     finish(
-      typeof result.output === 'string'
-        ? result.output
-        : '',
-      typeof result.error === 'string'
-        ? result.error
-        : ''
+      typeof result.output === 'string' ? result.output : '',
+      typeof result.error === 'string' ? result.error : ''
     );
   });
+
   worker.addEventListener('error', function(errorEvent) {
-    finish(
-      '',
-      errorEvent.message || 'Sandbox worker failed.'
-    );
+    finish('', errorEvent.message || 'Sandbox worker failed.');
   });
-  /*
-   * Send code into the worker.
-   *
-   * The worker runs separately from the iframe event loop,
-   * allowing the parent to remain responsive and terminate
-   * runaway execution.
-   */
+
   worker.postMessage({
     type: 'run',
     code: data.code
