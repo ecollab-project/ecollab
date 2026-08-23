@@ -2,36 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <!--
-    Code executes only inside a sandboxed iframe and a dedicated Worker.
-    The iframe intentionally has sandbox="allow-scripts" without
-    allow-same-origin, giving it an opaque origin.
-
-    The worker protocol is deliberately single-use. Trusted worker state
-    is kept in an outer closure and user code is never given a reference to
-    the trusted result function or postMessage capability.
-  -->
+  <!-- Code executes only inside a sandboxed iframe and a dedicated Worker. -->
   <meta http-equiv="Content-Security-Policy"
-        content="
-          default-src 'none';
-          script-src 'unsafe-inline' 'unsafe-eval';
-          worker-src blob:;
-          connect-src 'none';
-          img-src 'none';
-          media-src 'none';
-          font-src 'none';
-          style-src 'none';
-          frame-src 'none';
-          object-src 'none';
-          base-uri 'none';
-          form-action 'none';
-        ">
+        content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; worker-src blob:; connect-src 'none'; img-src 'none'; media-src 'none'; font-src 'none'; style-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none';">
   <title>eCollab Code Sandbox</title>
 </head>
 <body>
 <script>
 'use strict';
-
 const CHANNEL = 'ecollab-code-sandbox';
 
 function safeString(value) {
@@ -41,18 +19,12 @@ function safeString(value) {
     const json = JSON.stringify(value);
     if (json !== undefined) return json;
   } catch (_) {}
-  try {
-    return String(value);
-  } catch (_) {
-    return '[unserializable value]';
-  }
+  try { return String(value); } catch (_) { return '[unserializable value]'; }
 }
 
 function sendToParent(nonce, output, error) {
   window.parent.postMessage({
-    type: 'done',
-    channel: CHANNEL,
-    nonce,
+    type: 'done', channel: CHANNEL, nonce,
     output: typeof output === 'string' ? output : '',
     error: typeof error === 'string' ? error : ''
   }, '*');
@@ -61,61 +33,42 @@ function sendToParent(nonce, output, error) {
 function createWorker(code, workerToken) {
   const workerSource = `
     'use strict';
-
-    /*
-     * Everything below this IIFE is trusted worker plumbing.
-     *
-     * The critical invariant is structural:
-     * after the first legitimate run handler begins, it can never be
-     * entered again. The guard is declared outside the handler, so a
-     * nested call through self.onmessage, dispatchEvent(), a saved
-     * reference, or another event path cannot obtain fresh trusted state.
-     */
     (() => {
+      /*
+       * Trusted state lives in this closure. User code created by
+       * new Function() cannot reach this lexical environment.
+       * runStarted is deliberately outside the handler so re-entry can
+       * never obtain a fresh trusted state object.
+       */
       const trustedPostMessage = self.postMessage.bind(self);
       const token = ${JSON.stringify(workerToken)};
       let runStarted = false;
 
       function report(output, error) {
         trustedPostMessage({
-          type: 'worker-result',
-          token,
+          type: 'worker-result', token,
           output: typeof output === 'string' ? output : '',
           error: typeof error === 'string' ? error : ''
         });
       }
 
-      /*
-       * User code must not be able to invoke a trusted result path through
-       * WorkerGlobalScope event-handler properties.
-       *
-       * Synchronous user-code exceptions are caught below, so these global
-       * error hooks do not need to expose trusted reporting closures.
-       */
+      /* User code never needs these browser error-handler properties. */
       self.onerror = null;
       self.onunhandledrejection = null;
 
       /*
-       * Do not expose a trusted message handler through onmessage.
-       * addEventListener keeps the handler reference in this closure.
-       * A synthetic dispatchEvent() can still invoke listeners, so the
-       * single-use guard is deliberately outside the listener function.
+       * Keep the trusted message listener in the closure rather than in
+       * self.onmessage. Synthetic dispatchEvent() can still invoke a
+       * listener, therefore runStarted must be checked before any other
+       * trusted work and must live outside this function.
        */
       const handleRun = function(event) {
-        if (runStarted) {
-          return;
-        }
+        if (runStarted) return;
         runStarted = true;
 
-        if (!event || !event.data || event.data.type !== 'run') {
-          return;
-        }
-
-        const source = typeof event.data.code === 'string'
-          ? event.data.code
-          : '';
+        if (!event || !event.data || event.data.type !== 'run') return;
+        const source = typeof event.data.code === 'string' ? event.data.code : '';
         const lines = [];
-
         const fakeConsole = {
           log: (...args) => lines.push(args.map(safeString).join(' ')),
           info: (...args) => lines.push(args.map(safeString).join(' ')),
@@ -125,69 +78,38 @@ function createWorker(code, workerToken) {
         };
 
         try {
-          const fn = new Function(
-            'console',
-            '"use strict";\\n' + source
-          );
+          const fn = new Function('console', '"use strict";\\n' + source);
           const result = fn(fakeConsole);
-
-          if (result !== undefined && lines.length === 0) {
-            lines.push(safeString(result));
-          }
-
+          if (result !== undefined && lines.length === 0) lines.push(safeString(result));
           report(lines.join('\\n') || '(no output)', '');
         } catch (error) {
-          report(
-            lines.join('\\n'),
-            error && error.message ? error.message : safeString(error)
-          );
+          report(lines.join('\\n'), error && error.message ? error.message : safeString(error));
         }
       };
 
       self.addEventListener('message', handleRun);
     })();
   `;
-
   const blob = new Blob([workerSource], { type: 'text/javascript' });
   const blobUrl = URL.createObjectURL(blob);
   let worker;
-  try {
-    worker = new Worker(blobUrl);
-  } finally {
-    URL.revokeObjectURL(blobUrl);
-  }
+  try { worker = new Worker(blobUrl); } finally { URL.revokeObjectURL(blobUrl); }
   return worker;
 }
 
 window.addEventListener('message', function(event) {
   if (event.source !== window.parent) return;
-
   const data = event.data;
-  if (
-    !data ||
-    typeof data !== 'object' ||
-    data.type !== 'ecollab-code-run' ||
-    data.channel !== CHANNEL ||
-    typeof data.nonce !== 'string' ||
-    typeof data.code !== 'string'
-  ) {
-    return;
-  }
+  if (!data || typeof data !== 'object' || data.type !== 'ecollab-code-run' ||
+      data.channel !== CHANNEL || typeof data.nonce !== 'string' ||
+      typeof data.code !== 'string') return;
 
   const nonce = data.nonce;
-  const workerToken =
-    crypto.randomUUID?.() ||
-    (Date.now() + '-' + Math.random().toString(36).slice(2));
-
+  const workerToken = crypto.randomUUID?.() || (Date.now() + '-' + Math.random().toString(36).slice(2));
   let worker;
-  try {
-    worker = createWorker(data.code, workerToken);
-  } catch (error) {
-    sendToParent(
-      nonce,
-      '',
-      error && error.message ? error.message : String(error)
-    );
+  try { worker = createWorker(data.code, workerToken); }
+  catch (error) {
+    sendToParent(nonce, '', error && error.message ? error.message : String(error));
     return;
   }
 
@@ -201,28 +123,13 @@ window.addEventListener('message', function(event) {
 
   worker.addEventListener('message', function(workerEvent) {
     const result = workerEvent.data;
-    if (
-      !result ||
-      result.type !== 'worker-result' ||
-      result.token !== workerToken
-    ) {
-      return;
-    }
-
-    finish(
-      typeof result.output === 'string' ? result.output : '',
-      typeof result.error === 'string' ? result.error : ''
-    );
+    if (!result || result.type !== 'worker-result' || result.token !== workerToken) return;
+    finish(typeof result.output === 'string' ? result.output : '', typeof result.error === 'string' ? result.error : '');
   });
-
   worker.addEventListener('error', function(errorEvent) {
     finish('', errorEvent.message || 'Sandbox worker failed.');
   });
-
-  worker.postMessage({
-    type: 'run',
-    code: data.code
-  });
+  worker.postMessage({ type: 'run', code: data.code });
 });
 </script>
 </body>
