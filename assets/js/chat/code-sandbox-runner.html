@@ -62,9 +62,8 @@ function createWorker(code) {
    * the WorkerGlobalScope prototype chain and recovering the original
    * reporting channel.
    *
-   * The user's own assignment to self.postMessage is harmless after this:
-   * the original trusted function is closure-only and no application code
-   * listens to arbitrary Worker messages as a trusted completion path.
+   * After this point the only reference to the original function is the
+   * closure-local realPostMessage above; user code cannot reach that value.
    */
   let current = self;
   while (current) {
