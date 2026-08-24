@@ -8,9 +8,9 @@
 
     Trust-boundary invariant:
       1. User code executes only inside this isolated iframe's Worker.
-      2. The trusted Worker reporting reference is closure-only.
+      2. The trusted Worker result channel is a closure-only MessagePort.
       3. The Worker accepts exactly one run invocation per Worker lifetime.
-      4. User code has no reachable original postMessage function.
+      4. The iframe never treats ordinary Worker message events as results.
       5. Global error-handler properties are inert; synchronous errors are
          caught around user execution and Worker failures are observed by
          the outer iframe.
@@ -52,41 +52,7 @@ function createWorker(code) {
    * This IIFE is the trusted side of the Worker protocol. Values declared
    * here are closure locals and are not visible to new Function() code.
    */
-  const realPostMessage = self.postMessage.bind(self);
-  const noop = function() {};
   let runAccepted = false;
-
-  /*
-   * Remove every reachable prototype-level copy of postMessage, not just
-   * the immediate prototype. This prevents a user snippet from walking
-   * the WorkerGlobalScope prototype chain and recovering the original
-   * reporting channel.
-   *
-   * After this point the only reference to the original function is the
-   * closure-local realPostMessage above; user code cannot reach that value.
-   */
-  let current = self;
-  while (current) {
-    try {
-      Object.defineProperty(current, 'postMessage', {
-        value: noop,
-        writable: true,
-        configurable: true,
-        enumerable: false
-      });
-    } catch (_) {
-      try { current.postMessage = noop; } catch (_) {}
-    }
-    try { current = Object.getPrototypeOf(current); } catch (_) { current = null; }
-  }
-
-  /*
-   * These properties must never expose trusted reporting closures.
-   * We intentionally do not install trusted onerror/onunhandledrejection
-   * handlers here; real Worker failures are observed by the iframe.
-   */
-  try { self.onerror = noop; } catch (_) {}
-  try { self.onunhandledrejection = noop; } catch (_) {}
 
   function stringify(value) {
     try {
@@ -110,12 +76,20 @@ function createWorker(code) {
    * Worker.postMessage call. At that point runAccepted is set before any
    * attacker-controlled code executes, so every direct call, saved-handler
    * call, dispatchEvent re-entry, or nested invocation is rejected.
+   *
+   * The trusted MessagePort arrives only in the legitimate first message
+   * and remains a closure local. It is never passed to new Function().
    */
   self.onmessage = function(event) {
     if (runAccepted) return;
     runAccepted = true;
 
     if (!event || !event.data || event.data.type !== 'run') return;
+    const trustedPort = event.data.port;
+    if (!trustedPort || typeof trustedPort.postMessage !== 'function') return;
+
+    try { trustedPort.start(); } catch (_) {}
+
     const source = typeof event.data.code === 'string' ? event.data.code : '';
     const lines = [];
     let reported = false;
@@ -123,7 +97,7 @@ function createWorker(code) {
     const report = function(output, error) {
       if (reported) return;
       reported = true;
-      realPostMessage({
+      trustedPort.postMessage({
         type: 'worker-result',
         output: typeof output === 'string' ? output : '',
         error: typeof error === 'string' ? error : ''
@@ -181,28 +155,34 @@ window.addEventListener('message', function(event) {
     return;
   }
 
+  const resultChannel = new MessageChannel();
   let settled = false;
   const finish = function(output, error) {
     if (settled) return;
     settled = true;
+    try { resultChannel.port1.close(); } catch (_) {}
     try { worker.terminate(); } catch (_) {}
     sendToParent(nonce, output, error);
   };
 
-  worker.addEventListener('message', function(workerEvent) {
-    const result = workerEvent.data;
+  resultChannel.port1.addEventListener('message', function(event) {
+    const result = event.data;
     if (!result || result.type !== 'worker-result') return;
     finish(
       typeof result.output === 'string' ? result.output : '',
       typeof result.error === 'string' ? result.error : ''
     );
   });
+  resultChannel.port1.start();
 
   worker.addEventListener('error', function(errorEvent) {
     finish('', errorEvent.message || 'Sandbox worker failed.');
   });
 
-  worker.postMessage({ type: 'run', code: data.code });
+  worker.postMessage(
+    { type: 'run', code: data.code, port: resultChannel.port2 },
+    [resultChannel.port2]
+  );
 });
 </script>
 </body>
