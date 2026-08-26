@@ -41,12 +41,14 @@
   }
 
   function frameDocument() {
+    const parentOrigin = JSON.stringify(window.location.origin);
     return `<!doctype html><html><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; connect-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; object-src 'none'; frame-ancestors 'none'">
 </head><body><script>
 (function () {
   'use strict';
 
+  const expectedParentOrigin = ${parentOrigin};
   let consumed = false;
   let port = null;
   let expectedNonce = null;
@@ -98,8 +100,9 @@
 
   window.addEventListener('message', function (event) {
     // The only bootstrap message accepted is the trusted parent connection.
-    // The sandbox has an opaque origin, so the parent is identified by source.
-    if (!event.isTrusted || event.source !== window.parent || event.origin === 'null' || consumed) return;
+    // The sandbox itself has an opaque origin; identify the sender by both
+    // source and the exact parent origin captured when this frame was built.
+    if (!event.isTrusted || event.source !== window.parent || event.origin !== expectedParentOrigin || consumed) return;
     if (!event.ports || event.ports.length !== 1) return;
     if (!event.data || event.data.type !== 'connect') return;
     const candidate = event.ports[0];
@@ -162,7 +165,8 @@
       frame.addEventListener('load', () => {
         try {
           // Sandboxed srcdoc has an opaque origin, so '*' is required for this
-          // initial port transfer. The receiver also checks source/isTrusted.
+          // initial port transfer. The receiver checks source, origin and
+          // isTrusted before accepting it.
           frame.contentWindow.postMessage({ type: 'connect' }, '*', [channel.port2]);
         } catch (_) {
           finish({ output: '', error: 'Sandbox initialization failed.', duration_ms: 0 });
