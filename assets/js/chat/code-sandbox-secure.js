@@ -179,6 +179,10 @@
           // initial port transfer. The receiver checks source, origin and
           // isTrusted before accepting it.
           frame.contentWindow.postMessage({ type: 'connect' }, '*', [channel.port2]);
+          // The transferred port is now owned by the iframe. Send the actual
+          // execution request over the private channel; never use window.postMessage
+          // for the untrusted code payload itself.
+          channel.port1.postMessage({ type: 'run', code: String(code || ''), nonce });
         } catch (_) {
           finish({ output: '', error: 'Sandbox initialization failed.', duration_ms: 0 });
         }
