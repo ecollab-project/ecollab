@@ -47,8 +47,6 @@
 (function () {
   'use strict';
 
-  // The guard is private to this bootstrap closure. It is set before invoking
-  // any attacker-controlled code and cannot be reached through window/global.
   let consumed = false;
   let port = null;
   let expectedNonce = null;
@@ -63,7 +61,7 @@
   }
 
   function runOnce(message) {
-    // Check the guard first, before any attacker-controlled operation.
+    // Guard is checked before any attacker-controlled operation.
     if (consumed) return;
     consumed = true;
 
@@ -83,11 +81,10 @@
     const started = performance.now();
 
     try {
-      // This Function constructor exists only inside the opaque, sandboxed
-      // iframe. The parent application never evaluates attacker code.
+      // Function evaluation is confined to this opaque, sandboxed iframe.
       const fn = new Function('console', message.code);
       fn(fakeConsole);
-      output = lines.join('\\n') || '(no output)';
+      output = lines.join('\n') || '(no output)';
     } catch (err) {
       error = safeString(err && err.message ? err.message : err);
     }
@@ -100,8 +97,6 @@
   }
 
   window.addEventListener('message', function (event) {
-    // This bootstrap listener is deliberately not a privileged host listener.
-    // It only accepts the private transferred MessagePort once.
     if (consumed || !event.ports || event.ports.length !== 1) return;
     const candidate = event.ports[0];
     if (!candidate) return;
@@ -160,9 +155,6 @@
       };
       channel.port1.start();
 
-      // The only host-to-sandbox capability is this private port. The sandbox
-      // has no same-origin access to the parent and the parent has no window
-      // message listener for sandbox commands/results.
       frame.addEventListener('load', () => {
         try {
           frame.contentWindow.postMessage({ type: 'connect' }, '*', [channel.port2]);
@@ -182,5 +174,32 @@
       };
     }
     return runIsolatedJavaScript(String(code || ''));
+  };
+
+  // functionality-overrides.js loads this file last. Replace the vulnerable
+  // public action with the isolated implementation while retaining the
+  // existing output/run-history UX.
+  window.runCode = async function runCode() {
+    const lang = document.getElementById('codeLang')?.value || 'javascript';
+    const code = document.getElementById('codeEditor')?.value || '';
+    const outEl = document.getElementById('codeOutput');
+    if (outEl) { outEl.textContent = '⏳ Running…'; outEl.style.color = ''; }
+    const started = Date.now();
+    const result = await window.runCodeSecure(lang, code);
+    const duration = Number.isFinite(result.duration_ms) ? result.duration_ms : Date.now() - started;
+    if (outEl) {
+      outEl.textContent = result.error ? `⚠ Error:\n${result.error}` : result.output;
+      outEl.style.color = result.error ? '#ef4444' : '#22c55e';
+    }
+
+    const snippetId = parseInt(document.querySelector('[data-snippet-id]')?.dataset.snippetId || '0', 10);
+    if (snippetId && typeof window.collabFetch === 'function') {
+      await window.collabFetch('code', 'log_run', {
+        snippet_id: snippetId,
+        output: result.output || '',
+        error: result.error || '',
+        duration_ms: duration,
+      }).catch(() => {});
+    }
   };
 })();
