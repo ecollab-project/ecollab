@@ -3,8 +3,8 @@
  *
  * Untrusted JavaScript executes only inside a sandboxed iframe with an opaque
  * origin. The parent never executes user code. Communication uses a private
- * MessageChannel and an unguessable per-run nonce; no parent window message
- * handler is used for sandbox results.
+ * MessageChannel and an unguessable per-run nonce; sandbox-to-parent window
+ * messages are actively blocked while a run is active.
  */
 (function () {
   'use strict';
@@ -32,6 +32,9 @@
     if (activeRun?.timer) clearTimeout(activeRun.timer);
     if (activeRun?.port) {
       try { activeRun.port.close(); } catch (_) {}
+    }
+    if (activeRun?.blockParentMessages) {
+      window.removeEventListener('message', activeRun.blockParentMessages, true);
     }
     if (activeFrame) {
       activeFrame.remove();
@@ -99,9 +102,6 @@
   }
 
   window.addEventListener('message', function (event) {
-    // The only bootstrap message accepted is the trusted parent connection.
-    // The sandbox itself has an opaque origin; identify the sender by both
-    // source and the exact parent origin captured when this frame was built.
     if (!event.isTrusted || event.source !== window.parent || event.origin !== expectedParentOrigin || consumed) return;
     if (!event.ports || event.ports.length !== 1) return;
     if (!event.data || event.data.type !== 'connect') return;
@@ -128,6 +128,16 @@
     frame.tabIndex = -1;
     frame.style.cssText = 'position:fixed;width:1px;height:1px;left:-10000px;top:-10000px;border:0;opacity:0;pointer-events:none;';
     frame.srcdoc = frameDocument();
+
+    // Prevent untrusted sandbox code from reaching unrelated host message
+    // listeners. The private MessageChannel is the only result channel.
+    const blockParentMessages = (event) => {
+      if (event.source !== frame.contentWindow) return;
+      event.stopImmediatePropagation();
+      event.preventDefault();
+    };
+    window.addEventListener('message', blockParentMessages, true);
+
     document.body.appendChild(frame);
     activeFrame = frame;
 
@@ -136,6 +146,7 @@
         if (!activeRun) return;
         clearTimeout(activeRun.timer);
         try { channel.port1.close(); } catch (_) {}
+        window.removeEventListener('message', blockParentMessages, true);
         if (activeFrame === frame) {
           frame.remove();
           activeFrame = null;
@@ -150,7 +161,7 @@
         duration_ms: MAX_RUN_MS,
       }), MAX_RUN_MS);
 
-      activeRun = { port: channel.port1, timer };
+      activeRun = { port: channel.port1, timer, blockParentMessages };
       channel.port1.onmessage = (event) => {
         const data = event.data;
         if (!data || data.type !== 'result' || data.nonce !== nonce) return;
@@ -208,9 +219,6 @@
     return runIsolatedJavaScript(String(code || ''));
   };
 
-  // functionality-overrides.js loads this file last. Replace the vulnerable
-  // public action with the isolated implementation while retaining the
-  // existing output/run-history UX.
   window.runCode = async function runCode() {
     const lang = document.getElementById('codeLang')?.value || 'javascript';
     const code = document.getElementById('codeEditor')?.value || '';
