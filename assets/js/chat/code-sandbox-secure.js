@@ -61,7 +61,7 @@
   }
 
   function runOnce(message) {
-    // Guard is checked before any attacker-controlled operation.
+    // Check the guard first, before any attacker-controlled operation.
     if (consumed) return;
     consumed = true;
 
@@ -97,7 +97,11 @@
   }
 
   window.addEventListener('message', function (event) {
-    if (consumed || !event.ports || event.ports.length !== 1) return;
+    // The only bootstrap message accepted is the trusted parent connection.
+    // The sandbox has an opaque origin, so the parent is identified by source.
+    if (!event.isTrusted || event.source !== window.parent || event.origin === 'null' || consumed) return;
+    if (!event.ports || event.ports.length !== 1) return;
+    if (!event.data || event.data.type !== 'connect') return;
     const candidate = event.ports[0];
     if (!candidate) return;
     port = candidate;
@@ -105,7 +109,7 @@
       runOnce(portEvent.data);
     };
     port.start();
-  });
+  }, { once: true });
 })();
 </script></body></html>`;
   }
@@ -157,12 +161,36 @@
 
       frame.addEventListener('load', () => {
         try {
+          // Sandboxed srcdoc has an opaque origin, so '*' is required for this
+          // initial port transfer. The receiver also checks source/isTrusted.
           frame.contentWindow.postMessage({ type: 'connect' }, '*', [channel.port2]);
         } catch (_) {
           finish({ output: '', error: 'Sandbox initialization failed.', duration_ms: 0 });
         }
       }, { once: true });
     });
+  }
+
+  async function logRun(result, duration) {
+    const snippetId = parseInt(document.querySelector('[data-snippet-id]')?.dataset.snippetId || '0', 10);
+    const channelId = Number(window.ECOLLAB?.currentChannelId || 0);
+    if (!snippetId || !channelId) return;
+    try {
+      const base = window.ECOLLAB?.baseUrl || '';
+      const csrf = window.ECOLLAB?.csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || '';
+      await fetch(`${base}/API/collab/collab.php?tool=code&action=log_run&channel_id=${channelId}`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+        body: JSON.stringify({
+          channel_id: channelId,
+          snippet_id: snippetId,
+          output: result.output || '',
+          error: result.error || '',
+          duration_ms: duration,
+        }),
+      });
+    } catch (_) {}
   }
 
   window.runCodeSecure = async function runCodeSecure(lang, code) {
@@ -191,15 +219,6 @@
       outEl.textContent = result.error ? `⚠ Error:\n${result.error}` : result.output;
       outEl.style.color = result.error ? '#ef4444' : '#22c55e';
     }
-
-    const snippetId = parseInt(document.querySelector('[data-snippet-id]')?.dataset.snippetId || '0', 10);
-    if (snippetId && typeof window.collabFetch === 'function') {
-      await window.collabFetch('code', 'log_run', {
-        snippet_id: snippetId,
-        output: result.output || '',
-        error: result.error || '',
-        duration_ms: duration,
-      }).catch(() => {});
-    }
+    await logRun(result, duration);
   };
 })();
