@@ -151,3 +151,14 @@
   link.href=(window.ECOLLAB?.baseUrl||'')+'/assets/css/desktop/profile-view-overrides.css?v=1';
   document.head.appendChild(link);
 })();
+
+/* C1: load the isolated Code Sandbox after every legacy chat override. */
+(function loadSecureCodeSandbox(){
+  const id = 'codeSandboxSecureScript';
+  if (document.getElementById(id)) return;
+  const script = document.createElement('script');
+  script.id = id;
+  script.defer = true;
+  script.src = (window.ECOLLAB?.baseUrl || '') + '/assets/js/chat/code-sandbox-secure.js?v=1';
+  document.head.appendChild(script);
+})();
