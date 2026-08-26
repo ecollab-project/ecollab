@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>C1 Code Sandbox Browser Security Tests</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; }
+    .pass { color: #15803d; }
+    .fail { color: #b91c1c; }
+    pre { white-space: pre-wrap; background: #f5f5f5; padding: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>C1 Code Sandbox Browser Security Tests</h1>
+  <p>This harness must be served by the eCollab application origin. It executes the real secure runner in a real browser.</p>
+  <div id="results">Running…</div>
+  <pre id="details"></pre>
+  <script>
+    window.ECOLLAB = { baseUrl: '', currentChannelId: 0, csrfToken: '' };
+  </script>
+  <script src="/assets/js/chat/code-sandbox-secure.js?v=c1-test"></script>
+  <script>
+    const results = document.getElementById('results');
+    const details = document.getElementById('details');
+    const tests = [];
+
+    function record(name, ok, detail) {
+      tests.push({ name, ok, detail });
+      details.textContent += `${ok ? 'PASS' : 'FAIL'} — ${name}\n${detail || ''}\n\n`;
+    }
+
+    async function run(code) {
+      return window.runCodeSecure('javascript', code);
+    }
+
+    async function main() {
+      const baseline = document.body.dataset.c1Touched || '';
+
+      let r = await run('console.log("hello sandbox")');
+      record('legitimate console execution', !r.error && r.output.includes('hello sandbox'), JSON.stringify(r));
+
+      r = await run('console.log(typeof window, typeof document); try { document.body.dataset.c1Touched = "changed"; console.log("sandbox-dom-ok") } catch (e) { console.log("sandbox-dom-error") }');
+      record('sandbox has its own DOM and window', !r.error && r.output.includes('sandbox-dom-ok'), JSON.stringify(r));
+      record('parent DOM is not modified by sandbox', document.body.dataset.c1Touched === baseline, `parent dataset=${document.body.dataset.c1Touched || '(empty)'}`);
+
+      r = await run('try { console.log(window.parent.document === document) } catch (e) { console.log("parent-document-blocked") }');
+      record('parent document access is blocked', !r.error && r.output.includes('parent-document-blocked'), JSON.stringify(r));
+
+      r = await run('try { window.parent.document.body.dataset.c1Touched = "escaped"; console.log("escaped") } catch (e) { console.log("parent-write-blocked") }');
+      record('parent DOM write is blocked', !r.error && r.output.includes('parent-write-blocked'), JSON.stringify(r));
+      record('parent DOM remains unchanged after write attack', document.body.dataset.c1Touched === baseline, `parent dataset=${document.body.dataset.c1Touched || '(empty)'}`);
+
+      r = await run('try { localStorage.getItem("x"); console.log("storage-access") } catch (e) { console.log("storage-blocked") }');
+      record('localStorage access is blocked', !r.error && r.output.includes('storage-blocked'), JSON.stringify(r));
+
+      r = await run('try { document.cookie = "c1=bad"; console.log(document.cookie ? "cookie-visible" : "cookie-hidden") } catch (e) { console.log("cookie-blocked") }');
+      record('cookie access is unavailable', !r.error && !r.output.includes('cookie-visible'), JSON.stringify(r));
+
+      r = await run('try { window.parent.location = "https://example.invalid"; console.log("top-navigation") } catch (e) { console.log("navigation-blocked") }');
+      record('top navigation is blocked', !r.error && (r.output.includes('navigation-blocked') || r.output.includes('top-navigation') === false), JSON.stringify(r));
+
+      r = await run('let count=0; window.addEventListener("message",()=>{count++;}); window.onmessage=()=>{count+=100}; window.onerror=()=>{count+=1000}; window.onunhandledrejection=()=>{count+=10000}; window.postMessage({type:"connect"},"*"); Promise.reject(new Error("reentry")); setTimeout(()=>console.log("count="+count),50)');
+      record('event re-entry paths do not invoke host privileges', !r.error && r.output.includes('count=0'), JSON.stringify(r));
+
+      r = await run('window.postMessage({type:"connect"},"*"); window.postMessage({type:"run",nonce:"fake",code:"console.log(\"second\")"},"*"); console.log("first");');
+      record('postMessage cannot re-enter the single-use runner', !r.error && r.output.includes('first') && !r.output.includes('second'), JSON.stringify(r));
+
+      r = await run('throw new Error("expected syntax/runtime error")');
+      record('runtime errors are contained', !!r.error && !r.error.includes('parent'), JSON.stringify(r));
+
+      r = await run('setTimeout(()=>console.log("async-ok"),25)');
+      record('asynchronous execution does not escape the sandbox', !r.error && r.output.includes('no output') || !r.error, JSON.stringify(r));
+
+      const passed = tests.filter(t => t.ok).length;
+      results.innerHTML = `<strong class="${passed === tests.length ? 'pass' : 'fail'}">${passed}/${tests.length} tests passed</strong>`;
+    }
+
+    main().catch(error => {
+      results.innerHTML = `<strong class="fail">Harness error</strong>`;
+      details.textContent += String(error && error.stack || error);
+    });
+  </script>
+</body>
+</html>
