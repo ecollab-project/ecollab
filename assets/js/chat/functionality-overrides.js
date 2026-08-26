@@ -152,6 +152,14 @@
   document.head.appendChild(link);
 })();
 
+/* C1: fail closed immediately so the legacy runCode() can never execute
+ * while the secure sandbox script is still loading or if it fails to load. */
+window.runCode = async function c1SandboxInitializing() {
+  const out = document.getElementById('codeOutput');
+  if (out) out.textContent = '⚠ Secure Code Sandbox is initializing. Please try again.';
+  toast('Secure Code Sandbox is still loading.', 'info');
+};
+
 /* C1: load the isolated Code Sandbox after every legacy chat override. */
 (function loadSecureCodeSandbox(){
   const id = 'codeSandboxSecureScript';
@@ -160,5 +168,6 @@
   script.id = id;
   script.defer = true;
   script.src = (window.ECOLLAB?.baseUrl || '') + '/assets/js/chat/code-sandbox-secure.js?v=1';
+  script.onerror = () => toast('Secure Code Sandbox failed to load. Execution remains disabled.', 'error');
   document.head.appendChild(script);
 })();
