@@ -305,20 +305,53 @@ class MessageService
         if (!$msg) {
             throw new RuntimeException('Message not found', 404);
         }
-        // Privileged roles can pin any message.
-        // Regular members can pin any message in a channel they belong to.
-        $canPin = in_array($userRole, ['admin', 'moderator', 'super_admin', 'facilitator'], true);
-        if (!$canPin) {
+
+        // Authorization mirrors the model already used by
+        // API/chat/get-channel.php and the WebSocket layer's
+        // canJoinChannel(): access is scoped per-server via
+        // server_members.server_role, not the global users.role. A
+        // global role (e.g. a site-wide "moderator") is intentionally
+        // NOT treated as a blanket bypass here, matching that existing,
+        // already-audited precedent -- a per-server owner/admin/moderator,
+        // or the channel's own creator, can manage any message in their
+        // channel; anyone else additionally needs explicit channel_members
+        // access if the channel is private.
+        $channel = $this->db->prepare("
+            SELECT server_id, is_private, created_by
+            FROM channels WHERE id = :cid LIMIT 1
+        ");
+        $channel->execute([':cid' => (int)$msg['channel_id']]);
+        $chan = $channel->fetch();
+        if (!$chan) {
+            throw new RuntimeException('Forbidden', 403);
+        }
+
+        $roleStmt = $this->db->prepare("
+            SELECT server_role FROM server_members
+            WHERE server_id = :sid AND user_id = :uid LIMIT 1
+        ");
+        $roleStmt->execute([':sid' => $chan['server_id'], ':uid' => $userId]);
+        $serverRole = $roleStmt->fetchColumn();
+
+        if ($serverRole === false) {
+            // Not even a member of the server this channel belongs to.
+            throw new RuntimeException('Forbidden', 403);
+        }
+
+        $canManage = in_array($serverRole, ['owner', 'admin', 'moderator'], true)
+            || (int)($chan['created_by'] ?? 0) === $userId;
+
+        if ((int)$chan['is_private'] === 1 && !$canManage) {
             $access = $this->db->prepare("
-                SELECT 1 FROM channels c
-                JOIN server_members sm ON sm.server_id = c.server_id AND sm.user_id = :uid
-                WHERE c.id = :cid LIMIT 1
+                SELECT 1 FROM channel_members
+                WHERE channel_id = :cid AND user_id = :uid LIMIT 1
             ");
-            $access->execute([':uid' => $userId, ':cid' => (int)$msg['channel_id']]);
+            $access->execute([':cid' => (int)$msg['channel_id'], ':uid' => $userId]);
             if (!$access->fetch()) {
                 throw new RuntimeException('Forbidden', 403);
             }
         }
+
         $newPin = $msg['is_pinned'] ? 0 : 1;
         $upd = $this->db->prepare("UPDATE messages SET is_pinned=:p WHERE id=:id");
         $upd->execute([':p' => $newPin, ':id' => $messageId]);
