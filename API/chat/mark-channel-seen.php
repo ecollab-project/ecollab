@@ -69,6 +69,12 @@ try {
         exit;
     }
 
+    // This endpoint is already the authenticated server-side record of which
+    // channel the user has opened. Uploads use this state instead of trusting
+    // an independently supplied destination identifier.
+    $_SESSION['ecollab_upload_channel_id'] = (int)$channel['id'];
+    $_SESSION['ecollab_upload_server_id'] = (int)$channel['server_id'];
+
     // Auto-create channel_seen table if it doesn't exist yet.
     $db->exec("
         CREATE TABLE IF NOT EXISTS channel_seen (
