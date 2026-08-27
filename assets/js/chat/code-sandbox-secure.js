@@ -16,7 +16,7 @@
 
   function clip(value) {
     const text = String(value ?? '');
-    return text.length > MAX_OUTPUT_CHARS ? text.slice(0, MAX_OUTPUT_CHARS) + '\\n…[output truncated]' : text;
+    return text.length > MAX_OUTPUT_CHARS ? text.slice(0, MAX_OUTPUT_CHARS) + '\n…[output truncated]' : text;
   }
 
   function makeNonce() {

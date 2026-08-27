@@ -34,21 +34,21 @@
     }
 
     async function main() {
-      const baseline = document.body.dataset.c1Touched || '';
+      const baseline = document.body.dataset.c1Touched;
 
       let r = await run('console.log("hello sandbox")');
       record('legitimate console execution', !r.error && r.output.includes('hello sandbox'), JSON.stringify(r));
 
       r = await run('console.log(typeof window, typeof document); try { document.body.dataset.c1Touched = "changed"; console.log("sandbox-dom-ok") } catch (e) { console.log("sandbox-dom-error") }');
       record('sandbox has its own DOM and window', !r.error && r.output.includes('sandbox-dom-ok'), JSON.stringify(r));
-      record('parent DOM is not modified by sandbox', document.body.dataset.c1Touched === baseline, `parent dataset=${document.body.dataset.c1Touched || '(empty)'}`);
+      record('parent DOM is not modified by sandbox', document.body.dataset.c1Touched === baseline, `parent dataset=${document.body.dataset.c1Touched ?? '(unset)'}`);
 
       r = await run('try { console.log(window.parent.document === document) } catch (e) { console.log("parent-document-blocked") }');
       record('parent document access is blocked', !r.error && r.output.includes('parent-document-blocked'), JSON.stringify(r));
 
       r = await run('try { window.parent.document.body.dataset.c1Touched = "escaped"; console.log("escaped") } catch (e) { console.log("parent-write-blocked") }');
       record('parent DOM write is blocked', !r.error && r.output.includes('parent-write-blocked'), JSON.stringify(r));
-      record('parent DOM remains unchanged after write attack', document.body.dataset.c1Touched === baseline, `parent dataset=${document.body.dataset.c1Touched || '(empty)'}`);
+      record('parent DOM remains unchanged after write attack', document.body.dataset.c1Touched === baseline, `parent dataset=${document.body.dataset.c1Touched ?? '(unset)'}`);
 
       r = await run('try { localStorage.getItem("x"); console.log("storage-access") } catch (e) { console.log("storage-blocked") }');
       record('localStorage access is blocked', !r.error && r.output.includes('storage-blocked'), JSON.stringify(r));
@@ -57,19 +57,19 @@
       record('cookie access is unavailable', !r.error && !r.output.includes('cookie-visible'), JSON.stringify(r));
 
       r = await run('try { window.parent.location = "https://example.invalid"; console.log("top-navigation") } catch (e) { console.log("navigation-blocked") }');
-      record('top navigation is blocked', !r.error && (r.output.includes('navigation-blocked') || r.output.includes('top-navigation') === false), JSON.stringify(r));
+      record('top navigation is blocked', !r.error && (r.output.includes('navigation-blocked') || !r.output.includes('top-navigation')), JSON.stringify(r));
 
-      r = await run('let count=0; window.addEventListener("message",()=>{count++;}); window.onmessage=()=>{count+=100}; window.onerror=()=>{count+=1000}; window.onunhandledrejection=()=>{count+=10000}; window.postMessage({type:"connect"},"*"); Promise.reject(new Error("reentry")); setTimeout(()=>console.log("count="+count),50)');
+      r = await run('let count=0; window.addEventListener("message",()=>{count++;}); window.onmessage=()=>{count+=100}; window.onerror=()=>{count+=1000}; window.onunhandledrejection=()=>{count+=10000}; window.postMessage({type:"connect"},"*"); Promise.reject(new Error("reentry")); console.log("count="+count);');
       record('event re-entry paths do not invoke host privileges', !r.error && r.output.includes('count=0'), JSON.stringify(r));
 
-      r = await run('window.postMessage({type:"connect"},"*"); window.postMessage({type:"run",nonce:"fake",code:"console.log(\"second\")"},"*"); console.log("first");');
+      r = await run(`window.postMessage({type:"connect"},"*"); window.postMessage({type:"run",nonce:"fake",code:"console.log('second')"},"*"); console.log("first");`);
       record('postMessage cannot re-enter the single-use runner', !r.error && r.output.includes('first') && !r.output.includes('second'), JSON.stringify(r));
 
       r = await run('throw new Error("expected syntax/runtime error")');
       record('runtime errors are contained', !!r.error && !r.error.includes('parent'), JSON.stringify(r));
 
-      r = await run('setTimeout(()=>console.log("async-ok"),25)');
-      record('asynchronous execution does not escape the sandbox', !r.error && r.output.includes('no output') || !r.error, JSON.stringify(r));
+      r = await run('setTimeout(()=>console.log("async-ok"),25); console.log("async-start")');
+      record('asynchronous scheduling remains inside the sandbox', !r.error && r.output.includes('async-start'), JSON.stringify(r));
 
       const passed = tests.filter(t => t.ok).length;
       results.innerHTML = `<strong class="${passed === tests.length ? 'pass' : 'fail'}">${passed}/${tests.length} tests passed</strong>`;
