@@ -61,27 +61,35 @@ try {
     $userRole = $roleStmt->fetchColumn() ?: 'student';
     $isPrivileged = in_array($userRole, ['admin', 'super_admin', 'moderator'], true);
 
-    if (!$isPrivileged) {
-        $accessStmt = $db->prepare('
-            SELECT c.is_private, c.created_by, sm.server_role,
-                   EXISTS(
-                       SELECT 1 FROM channel_members cm
-                       WHERE cm.channel_id = c.id AND cm.user_id = :uid_access
-                   ) AS has_channel_access
-            FROM channels c
-            JOIN server_members sm
-              ON sm.server_id = c.server_id AND sm.user_id = :uid_member
-            WHERE c.id = :cid
-            LIMIT 1
-        ');
-        $accessStmt->execute([
-            ':uid_access' => $user['id'],
-            ':uid_member' => $user['id'],
-            ':cid'        => $channelId,
-        ]);
-        $access = $accessStmt->fetch();
+    $accessStmt = $db->prepare('
+        SELECT c.server_id, c.is_private, c.created_by, c.is_locked, c.type, sm.server_role,
+               EXISTS(
+                   SELECT 1 FROM channel_members cm
+                   WHERE cm.channel_id = c.id AND cm.user_id = :uid_access
+               ) AS has_channel_access
+        FROM channels c
+        LEFT JOIN server_members sm
+          ON sm.server_id = c.server_id AND sm.user_id = :uid_member
+        WHERE c.id = :cid
+        LIMIT 1
+    ');
+    $accessStmt->execute([
+        ':uid_access' => $user['id'],
+        ':uid_member' => $user['id'],
+        ':cid'        => $channelId,
+    ]);
+    $access = $accessStmt->fetch();
 
-        if (!$access) {
+    if (!$access) {
+        throw new RuntimeException('Access denied', 403);
+    }
+
+    if ((int)$access['is_locked'] === 1 || !in_array($access['type'], ['text', 'study_room'], true)) {
+        throw new RuntimeException('Channel is not available for messages', 403);
+    }
+
+    if (!$isPrivileged) {
+        if (empty($access['server_role'])) {
             throw new RuntimeException('Access denied', 403);
         }
 
@@ -93,8 +101,45 @@ try {
         }
     }
 
+    // An uploaded file is a server-side staged resource. Never accept a bare
+    // client-supplied uploads/<name> path: require the exact file to have been
+    // uploaded by this authenticated session and bound to this destination.
+    if (!empty($body['attachment_path'])) {
+        $attachmentPath = (string)$body['attachment_path'];
+        $staged = $_SESSION['ecollab_uploads'][$attachmentPath] ?? null;
+
+        if (!is_array($staged)
+            || (int)($staged['user_id'] ?? 0) !== (int)$user['id']
+            || (int)($staged['server_id'] ?? 0) !== (int)$access['server_id']
+            || (int)($staged['channel_id'] ?? 0) !== (int)$channelId
+            || (int)($staged['expires_at'] ?? 0) < time()
+            || !preg_match('#^uploads/[A-Za-z0-9._-]+$#', $attachmentPath)
+        ) {
+            throw new RuntimeException('Attachment is not authorized for this channel', 403);
+        }
+
+        $absolutePath = rtrim(UPLOAD_DIR, '/\\') . DIRECTORY_SEPARATOR . basename($attachmentPath);
+        if (!is_file($absolutePath)) {
+            unset($_SESSION['ecollab_uploads'][$attachmentPath]);
+            throw new RuntimeException('Attachment is no longer available', 400);
+        }
+
+        // Ignore client-tampered attachment metadata. Use only the server-side
+        // metadata recorded by upload-file.php.
+        $body['attachment_path'] = $staged['file_path'];
+        $body['attachment_name'] = $staged['file_name'];
+        $body['attachment_size'] = (int)$staged['file_size'];
+        $body['attachment_mime'] = $staged['mime_type'];
+    }
+
     $service = new MessageService();
     $message = $service->sendMessage((int)$channelId, $user['id'], $body);
+
+    // Consume the staged upload only after the message/attachment record was
+    // created successfully. A failed send can therefore be retried safely.
+    if (!empty($body['attachment_path'])) {
+        unset($_SESSION['ecollab_uploads'][$body['attachment_path']]);
+    }
 
     http_response_code(201);
     echo json_encode(['success' => true, 'message' => $message]);
