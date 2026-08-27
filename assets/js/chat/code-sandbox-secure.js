@@ -16,7 +16,7 @@
 
   function clip(value) {
     const text = String(value ?? '');
-    return text.length > MAX_OUTPUT_CHARS ? text.slice(0, MAX_OUTPUT_CHARS) + '\n…[output truncated]' : text;
+    return text.length > MAX_OUTPUT_CHARS ? text.slice(0, MAX_OUTPUT_CHARS) + '\\n…[output truncated]' : text;
   }
 
   function makeNonce() {
@@ -89,7 +89,7 @@
       // Function evaluation is confined to this opaque, sandboxed iframe.
       const fn = new Function('console', message.code);
       fn(fakeConsole);
-      output = lines.join('\n') || '(no output)';
+      output = lines.join('\\n') || '(no output)';
     } catch (err) {
       error = safeString(err && err.message ? err.message : err);
     }
@@ -129,8 +129,6 @@
     frame.style.cssText = 'position:fixed;width:1px;height:1px;left:-10000px;top:-10000px;border:0;opacity:0;pointer-events:none;';
     frame.srcdoc = frameDocument();
 
-    // Prevent untrusted sandbox code from reaching unrelated host message
-    // listeners. The private MessageChannel is the only result channel.
     const blockParentMessages = (event) => {
       if (event.source !== frame.contentWindow) return;
       event.stopImmediatePropagation();
@@ -175,13 +173,7 @@
 
       frame.addEventListener('load', () => {
         try {
-          // Sandboxed srcdoc has an opaque origin, so '*' is required for this
-          // initial port transfer. The receiver checks source, origin and
-          // isTrusted before accepting it.
           frame.contentWindow.postMessage({ type: 'connect' }, '*', [channel.port2]);
-          // The transferred port is now owned by the iframe. Send the actual
-          // execution request over the private channel; never use window.postMessage
-          // for the untrusted code payload itself.
           channel.port1.postMessage({ type: 'run', code: String(code || ''), nonce });
         } catch (_) {
           finish({ output: '', error: 'Sandbox initialization failed.', duration_ms: 0 });
@@ -201,24 +193,14 @@
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
-        body: JSON.stringify({
-          channel_id: channelId,
-          snippet_id: snippetId,
-          output: result.output || '',
-          error: result.error || '',
-          duration_ms: duration,
-        }),
+        body: JSON.stringify({ channel_id: channelId, snippet_id: snippetId, output: result.output || '', error: result.error || '', duration_ms: duration }),
       });
     } catch (_) {}
   }
 
   window.runCodeSecure = async function runCodeSecure(lang, code) {
     if (lang !== 'javascript') {
-      return {
-        output: `▶ ${lang} execution runs server-side.\nSave the snippet and use your dev environment.`,
-        error: '',
-        duration_ms: 0,
-      };
+      return { output: `▶ ${lang} execution runs server-side.\nSave the snippet and use your dev environment.`, error: '', duration_ms: 0 };
     }
     return runIsolatedJavaScript(String(code || ''));
   };
