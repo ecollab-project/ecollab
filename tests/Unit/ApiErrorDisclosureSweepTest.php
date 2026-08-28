@@ -74,8 +74,8 @@ final class ApiErrorDisclosureSweepTest extends TestCase
         $this->assertStringNotContainsString('"error_msg"', $source);
         $this->assertStringNotContainsString("'ip_address'", $source);
         $this->assertStringNotContainsString('"ip_address"', $source);
-        $this->assertStringContainsString("unset($schema['error'])", $source);
-        $this->assertStringContainsString("$user = AuthMiddleware::requireAuth(true);", $source);
-        $this->assertStringContainsString("$level !== 'full'", $source);
+        $this->assertStringContainsString("unset(\$schema['error'])", $source);
+        $this->assertStringContainsString("\$user = AuthMiddleware::requireAuth(true);", $source);
+        $this->assertStringContainsString("\$level !== 'full'", $source);
     }
 }
