@@ -7,6 +7,7 @@ require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 require_once dirname(__DIR__, 2) . '/security/SecurityHeaders.php';
 require_once dirname(__DIR__, 2) . '/security/rate-limit/RateLimiter.php';
+require_once dirname(__DIR__, 2) . '/security/ApiErrorResponder.php';
 require_once dirname(__DIR__, 2) . '/services/AiSessionService.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -87,8 +88,9 @@ try {
 
     aiJson(['success' => false, 'error' => 'Method not allowed.'], 405);
 } catch (Throwable $e) {
-    error_log('[ai/session] ' . $e->getMessage());
     $status = $e->getCode();
-    if ($status < 400 || $status > 599) $status = 500;
-    aiJson(['success' => false, 'error' => APP_DEBUG ? $e->getMessage() : 'Server error.'], $status);
+    if ($status < 400 || $status > 599) {
+        $status = 500;
+    }
+    ApiErrorResponder::throwable('ai/session', $e, $status, 'Unable to complete the AI session request.');
 }
