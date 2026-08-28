@@ -78,4 +78,17 @@ final class ApiErrorDisclosureSweepTest extends TestCase
         $this->assertStringContainsString("\$user = AuthMiddleware::requireAuth(true);", $source);
         $this->assertStringContainsString("\$level !== 'full'", $source);
     }
+
+    public function testAppDebugIsNotRequestControlled(): void
+    {
+        $path = dirname(__DIR__, 2) . '/config.php';
+        $source = file_get_contents($path);
+
+        $this->assertIsString($source);
+        $this->assertStringContainsString("define('APP_DEBUG',   env('APP_DEBUG',   'false') === 'true');", $source);
+        $this->assertStringNotContainsString("\$_GET['APP_DEBUG']", $source);
+        $this->assertStringNotContainsString("\$_POST['APP_DEBUG']", $source);
+        $this->assertStringNotContainsString("\$_REQUEST['APP_DEBUG']", $source);
+        $this->assertStringNotContainsString('HTTP_APP_DEBUG', $source);
+    }
 }
