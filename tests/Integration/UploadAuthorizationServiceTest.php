@@ -66,6 +66,124 @@ final class UploadAuthorizationServiceTest extends TestCase
         );
     }
 
+    public function testGlobalModeratorWithoutServerMembershipIsBlocked(): void
+    {
+        $fixture = $this->findUploadableChannelWithGlobalRoleOutsider();
+        if ($fixture === null) {
+            $this->markTestSkipped('No global-role outsider fixture exists in ecollab_test.');
+        }
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionCode(403);
+        $this->service->authorize(
+            (int)$fixture['user_id'],
+            (int)$fixture['server_id'],
+            (int)$fixture['channel_id']
+        );
+    }
+
+    public function testGlobalAdminWithoutServerMembershipIsBlocked(): void
+    {
+        $fixture = $this->findUploadableChannelWithGlobalRoleOutsider('admin');
+        if ($fixture === null) {
+            $this->markTestSkipped('No global-admin outsider fixture exists in ecollab_test.');
+        }
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionCode(403);
+        $this->service->authorize(
+            (int)$fixture['user_id'],
+            (int)$fixture['server_id'],
+            (int)$fixture['channel_id']
+        );
+    }
+
+    public function testGlobalSuperAdminWithoutServerMembershipIsBlocked(): void
+    {
+        $fixture = $this->findUploadableChannelWithGlobalRoleOutsider('super_admin');
+        if ($fixture === null) {
+            $this->markTestSkipped('No global-super-admin outsider fixture exists in ecollab_test.');
+        }
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionCode(403);
+        $this->service->authorize(
+            (int)$fixture['user_id'],
+            (int)$fixture['server_id'],
+            (int)$fixture['channel_id']
+        );
+    }
+
+    public function testGlobalModeratorInServerAIsBlockedFromServerB(): void
+    {
+        $stmt = $this->db->query("
+            SELECT u.id AS user_id, target.id AS server_id, c.id AS channel_id
+            FROM users u
+            CROSS JOIN servers target
+            JOIN channels c ON c.server_id = target.id
+            WHERE u.role = 'moderator'
+              AND c.is_locked = 0
+              AND c.type IN ('text', 'study_room')
+              AND NOT EXISTS (
+                  SELECT 1 FROM server_members sm
+                  WHERE sm.server_id = target.id AND sm.user_id = u.id
+              )
+            LIMIT 1
+        ");
+        $fixture = $stmt->fetch();
+        if (!$fixture) {
+            $this->markTestSkipped('No moderator/non-member cross-server fixture exists in ecollab_test.');
+        }
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionCode(403);
+        $this->service->authorize(
+            (int)$fixture['user_id'],
+            (int)$fixture['server_id'],
+            (int)$fixture['channel_id']
+        );
+    }
+
+    public function testGlobalRoleDoesNotBypassPrivateChannelMembership(): void
+    {
+        $stmt = $this->db->query("
+            SELECT u.id AS user_id, c.server_id, c.id AS channel_id
+            FROM users u
+            JOIN channels c ON c.is_private = 1
+            WHERE u.role IN ('admin', 'super_admin', 'moderator')
+              AND c.is_locked = 0
+              AND c.type IN ('text', 'study_room')
+              AND EXISTS (
+                  SELECT 1 FROM server_members sm
+                  WHERE sm.server_id = c.server_id AND sm.user_id = u.id
+              )
+              AND NOT EXISTS (
+                  SELECT 1 FROM channel_members cm
+                  WHERE cm.channel_id = c.id AND cm.user_id = u.id
+              )
+              AND NOT EXISTS (
+                  SELECT 1 FROM server_members sm2
+                  WHERE sm2.server_id = c.server_id
+                    AND sm2.user_id = u.id
+                    AND sm2.server_role IN ('owner', 'admin', 'moderator')
+              )
+              AND c.created_by <> u.id
+            LIMIT 1
+        ");
+        $fixture = $stmt->fetch();
+        if (!$fixture) {
+            $this->markTestSkipped('No global-role/private-channel non-member fixture exists in ecollab_test.');
+        }
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionCode(403);
+        $this->service->authorize(
+            (int)$fixture['user_id'],
+            (int)$fixture['server_id'],
+            (int)$fixture['channel_id']
+        );
+    }
+
     public function testForgedServerIdIsBlocked(): void
     {
         $fixture = $this->findRegularMemberWithUploadableChannel();
@@ -175,6 +293,35 @@ final class UploadAuthorizationServiceTest extends TestCase
             (int)$fixture['server_id'],
             (int)$fixture['channel_id']
         );
+    }
+
+    private function findUploadableChannelWithGlobalRoleOutsider(?string $role = null): ?array
+    {
+        $roleClause = $role === null
+            ? "u.role IN ('admin', 'super_admin', 'moderator')"
+            : 'u.role = :role';
+
+        $sql = "
+            SELECT u.id AS user_id, c.server_id, c.id AS channel_id
+            FROM users u
+            JOIN channels c
+              ON c.is_locked = 0
+             AND c.type IN ('text', 'study_room')
+            WHERE {$roleClause}
+              AND NOT EXISTS (
+                  SELECT 1 FROM server_members sm
+                  WHERE sm.server_id = c.server_id AND sm.user_id = u.id
+              )
+            LIMIT 1
+        ";
+        $stmt = $this->db->prepare($sql);
+        if ($role !== null) {
+            $stmt->execute([':role' => $role]);
+        } else {
+            $stmt->execute();
+        }
+        $row = $stmt->fetch();
+        return $row ?: null;
     }
 
     private function findRegularMemberWithUploadableChannel(): ?array
