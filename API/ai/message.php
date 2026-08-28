@@ -7,6 +7,7 @@ require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 require_once dirname(__DIR__, 2) . '/security/SecurityHeaders.php';
 require_once dirname(__DIR__, 2) . '/security/rate-limit/RateLimiter.php';
+require_once dirname(__DIR__, 2) . '/security/ApiErrorResponder.php';
 require_once dirname(__DIR__, 2) . '/services/AiSessionService.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -190,7 +191,6 @@ try {
         $assistantTokens
     );
 
-    // Automatically give an untitled/new session a useful title from its first prompt.
     if (($session['message_count'] ?? 0) === 0 || $session['session_title'] === 'New AI Conversation') {
         $title = preg_replace('/\s+/', ' ', $prompt) ?? $prompt;
         $title = mb_substr(trim($title), 0, 117);
@@ -215,8 +215,9 @@ try {
         ],
     ]);
 } catch (Throwable $e) {
-    error_log('[ai/message] ' . $e->getMessage());
     $status = $e->getCode();
-    if ($status < 400 || $status > 599) $status = 500;
-    aiJson(['success' => false, 'error' => APP_DEBUG ? $e->getMessage() : $e->getMessage()], $status);
+    if ($status < 400 || $status > 599) {
+        $status = 500;
+    }
+    ApiErrorResponder::throwable('ai/message', $e, $status, 'AI service is temporarily unavailable.');
 }
