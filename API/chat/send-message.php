@@ -52,16 +52,11 @@ try {
         exit;
     }
 
-    // Private-channel access must be enforced here as well as in the UI.
-    // Without this check a regular server member who knows a private channel ID
-    // could post directly to send-message.php.
+    // Authorization is scoped to the target server, not the user's global
+    // users.role. A global admin/moderator/super_admin is not automatically a
+    // member or moderator of every server.
     $db = Database::getInstance();
-    $roleStmt = $db->prepare('SELECT role FROM users WHERE id = :uid LIMIT 1');
-    $roleStmt->execute([':uid' => $user['id']]);
-    $userRole = $roleStmt->fetchColumn() ?: 'student';
-    $isPrivileged = in_array($userRole, ['admin', 'super_admin', 'moderator'], true);
-
-    $accessStmt = $db->prepare('
+    $accessStmt = $db->prepare("
         SELECT c.server_id, c.is_private, c.created_by, c.is_locked, c.type, sm.server_role,
                EXISTS(
                    SELECT 1 FROM channel_members cm
@@ -72,7 +67,7 @@ try {
           ON sm.server_id = c.server_id AND sm.user_id = :uid_member
         WHERE c.id = :cid
         LIMIT 1
-    ');
+    ");
     $accessStmt->execute([
         ':uid_access' => $user['id'],
         ':uid_member' => $user['id'],
@@ -88,17 +83,18 @@ try {
         throw new RuntimeException('Channel is not available for messages', 403);
     }
 
-    if (!$isPrivileged) {
-        if (empty($access['server_role'])) {
-            throw new RuntimeException('Access denied', 403);
-        }
+    // Every sender must belong to the target server. Server-scoped owner/admin/
+    // moderator roles may manage private channels; channel creators retain the
+    // existing carve-out. Global users.role is deliberately ignored.
+    if (empty($access['server_role'])) {
+        throw new RuntimeException('Access denied', 403);
+    }
 
-        $canManage = in_array($access['server_role'], ['owner', 'admin', 'moderator'], true)
-            || (int)$access['created_by'] === (int)$user['id'];
+    $canManage = in_array($access['server_role'], ['owner', 'admin', 'moderator'], true)
+        || (int)$access['created_by'] === (int)$user['id'];
 
-        if ((int)$access['is_private'] === 1 && !(bool)$access['has_channel_access'] && !$canManage) {
-            throw new RuntimeException('You do not have access to this private channel', 403);
-        }
+    if ((int)$access['is_private'] === 1 && !(bool)$access['has_channel_access'] && !$canManage) {
+        throw new RuntimeException('You do not have access to this private channel', 403);
     }
 
     // An uploaded file is a server-side staged resource. Never accept a bare
