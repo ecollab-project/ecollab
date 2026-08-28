@@ -7,9 +7,10 @@ require_once dirname(__DIR__) . '/database/config/db.php';
 /**
  * Centralizes the existing chat authorization model for file uploads.
  *
- * Regular users must belong to the target server. Private channels additionally
- * require channel membership unless the user manages the channel. Privileged
- * global roles retain the same global override already used by messaging.
+ * Access is always scoped to the target server. Private channels additionally
+ * require channel membership unless the user manages the channel through a
+ * server-scoped role or is the channel creator. Global users.role never grants
+ * access to an arbitrary server or channel.
  */
 class UploadAuthorizationService
 {
@@ -30,11 +31,6 @@ class UploadAuthorizationService
         if ($userId <= 0 || $serverId <= 0 || $channelId <= 0) {
             throw new RuntimeException('Valid server_id and channel_id are required', 400);
         }
-
-        $roleStmt = $this->db->prepare('SELECT role FROM users WHERE id = :uid LIMIT 1');
-        $roleStmt->execute([':uid' => $userId]);
-        $userRole = $roleStmt->fetchColumn() ?: 'student';
-        $isPrivileged = in_array($userRole, ['admin', 'super_admin', 'moderator'], true);
 
         $stmt = $this->db->prepare("
             SELECT
@@ -72,16 +68,12 @@ class UploadAuthorizationService
             throw new RuntimeException('Channel is locked', 403);
         }
 
-        // Match MessageService::sendMessage(): only normal text/study-room
-        // channels accept regular message attachments.
         if (!in_array($channel['type'], ['text', 'study_room'], true)) {
             throw new RuntimeException('Uploads are not allowed in this channel type', 403);
         }
 
-        if ($isPrivileged) {
-            return $this->trustedContext($channel, $userId, $userRole);
-        }
-
+        // Server membership is mandatory. A global users.role is intentionally
+        // not consulted here because it is not scoped to the target server.
         if (empty($channel['server_role'])) {
             throw new RuntimeException('Not a member of this server', 403);
         }
@@ -93,20 +85,19 @@ class UploadAuthorizationService
             throw new RuntimeException('You do not have access to this private channel', 403);
         }
 
-        return $this->trustedContext($channel, $userId, $userRole);
+        return $this->trustedContext($channel, $userId);
     }
 
-    private function trustedContext(array $channel, int $userId, string $userRole): array
+    private function trustedContext(array $channel, int $userId): array
     {
         return [
-            'user_id'          => $userId,
-            'user_role'        => $userRole,
-            'server_id'        => (int)$channel['server_id'],
-            'channel_id'       => (int)$channel['id'],
-            'channel_type'     => (string)$channel['type'],
-            'is_private'       => (bool)$channel['is_private'],
-            'is_locked'        => (bool)$channel['is_locked'],
-            'server_role'      => $channel['server_role'] ?? null,
+            'user_id'            => $userId,
+            'server_id'          => (int)$channel['server_id'],
+            'channel_id'         => (int)$channel['id'],
+            'channel_type'       => (string)$channel['type'],
+            'is_private'         => (bool)$channel['is_private'],
+            'is_locked'          => (bool)$channel['is_locked'],
+            'server_role'        => $channel['server_role'] ?? null,
             'has_channel_access' => (bool)$channel['has_channel_access'],
         ];
     }
