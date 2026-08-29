@@ -1,32 +1,9 @@
 <?php
 declare(strict_types=1);
 
-// ── Catch absolutely everything, including fatal errors ──────────────────────
-register_shutdown_function(function () {
-    $err = error_get_last();
-    if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
-        if (!headers_sent()) {
-            http_response_code(500);
-            header('Content-Type: application/json');
-        }
-        $debug = defined('APP_DEBUG') && APP_DEBUG;
-        echo json_encode([
-            'error' => $debug
-                ? '[FATAL] ' . $err['message'] . ' in ' . basename($err['file']) . ':' . $err['line']
-                : 'Server error',
-        ]);
-    }
-});
-
 require_once dirname(__DIR__, 2) . '/config.php';
-
-if (defined('APP_DEBUG') && APP_DEBUG) {
-    ini_set('display_errors', '0');
-    ini_set('log_errors', '1');
-    error_reporting(E_ALL);
-}
-
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
+require_once dirname(__DIR__, 2) . '/security/ApiErrorResponder.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 require_once dirname(__DIR__, 2) . '/services/MessageService.php';
 
@@ -34,128 +11,43 @@ header('Content-Type: application/json');
 AuthMiddleware::startSession();
 $user = AuthMiddleware::requireAuth(true);
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed']);
-    exit;
-}
-
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo json_encode(['error'=>'Method not allowed']); exit; }
 AuthMiddleware::verifyCsrf();
 
 try {
     $body = json_decode(file_get_contents('php://input'), true) ?? $_POST;
-
     $channelId = filter_var($body['channel_id'] ?? 0, FILTER_VALIDATE_INT);
-    if (!$channelId) {
-        http_response_code(400);
-        echo json_encode(['error' => 'channel_id is required']);
-        exit;
-    }
+    if (!$channelId) { http_response_code(400); echo json_encode(['error'=>'channel_id is required']); exit; }
 
-    // Authorization is scoped to the target server, not the user's global
-    // users.role. A global admin/moderator/super_admin is not automatically a
-    // member or moderator of every server.
     $db = Database::getInstance();
-    $accessStmt = $db->prepare("
-        SELECT c.server_id, c.is_private, c.created_by, c.is_locked, c.type, sm.server_role,
-               EXISTS(
-                   SELECT 1 FROM channel_members cm
-                   WHERE cm.channel_id = c.id AND cm.user_id = :uid_access
-               ) AS has_channel_access
-        FROM channels c
-        LEFT JOIN server_members sm
-          ON sm.server_id = c.server_id AND sm.user_id = :uid_member
-        WHERE c.id = :cid
-        LIMIT 1
-    ");
-    $accessStmt->execute([
-        ':uid_access' => $user['id'],
-        ':uid_member' => $user['id'],
-        ':cid'        => $channelId,
-    ]);
-    $access = $accessStmt->fetch();
+    $stmt = $db->prepare("SELECT c.server_id,c.is_private,c.created_by,c.is_locked,c.type,sm.server_role,EXISTS(SELECT 1 FROM channel_members cm WHERE cm.channel_id=c.id AND cm.user_id=:uid_access) AS has_channel_access FROM channels c LEFT JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid_member WHERE c.id=:cid LIMIT 1");
+    $stmt->execute([':uid_access'=>$user['id'],':uid_member'=>$user['id'],':cid'=>$channelId]);
+    $access=$stmt->fetch();
+    if (!$access) throw new RuntimeException('Access denied',403);
+    if ((int)$access['is_locked']===1 || !in_array($access['type'],['text','study_room'],true)) throw new RuntimeException('Channel is not available for messages',403);
+    if (empty($access['server_role'])) throw new RuntimeException('Access denied',403);
+    $canManage=in_array($access['server_role'],['owner','admin','moderator'],true)||(int)$access['created_by']===(int)$user['id'];
+    if ((int)$access['is_private']===1 && !(bool)$access['has_channel_access'] && !$canManage) throw new RuntimeException('You do not have access to this private channel',403);
 
-    if (!$access) {
-        throw new RuntimeException('Access denied', 403);
-    }
-
-    if ((int)$access['is_locked'] === 1 || !in_array($access['type'], ['text', 'study_room'], true)) {
-        throw new RuntimeException('Channel is not available for messages', 403);
-    }
-
-    // Every sender must belong to the target server. Server-scoped owner/admin/
-    // moderator roles may manage private channels; channel creators retain the
-    // existing carve-out. Global users.role is deliberately ignored.
-    if (empty($access['server_role'])) {
-        throw new RuntimeException('Access denied', 403);
-    }
-
-    $canManage = in_array($access['server_role'], ['owner', 'admin', 'moderator'], true)
-        || (int)$access['created_by'] === (int)$user['id'];
-
-    if ((int)$access['is_private'] === 1 && !(bool)$access['has_channel_access'] && !$canManage) {
-        throw new RuntimeException('You do not have access to this private channel', 403);
-    }
-
-    // An uploaded file is a server-side staged resource. Never accept a bare
-    // client-supplied uploads/<name> path: require the exact file to have been
-    // uploaded by this authenticated session and bound to this destination.
     if (!empty($body['attachment_path'])) {
-        $attachmentPath = (string)$body['attachment_path'];
-        $staged = $_SESSION['ecollab_uploads'][$attachmentPath] ?? null;
-
-        if (!is_array($staged)
-            || (int)($staged['user_id'] ?? 0) !== (int)$user['id']
-            || (int)($staged['server_id'] ?? 0) !== (int)$access['server_id']
-            || (int)($staged['channel_id'] ?? 0) !== (int)$channelId
-            || (int)($staged['expires_at'] ?? 0) < time()
-            || !preg_match('#^uploads/[A-Za-z0-9._-]+$#', $attachmentPath)
-        ) {
-            throw new RuntimeException('Attachment is not authorized for this channel', 403);
-        }
-
-        $absolutePath = rtrim(UPLOAD_DIR, '/\\') . DIRECTORY_SEPARATOR . basename($attachmentPath);
-        if (!is_file($absolutePath)) {
-            unset($_SESSION['ecollab_uploads'][$attachmentPath]);
-            throw new RuntimeException('Attachment is no longer available', 400);
-        }
-
-        // Ignore client-tampered attachment metadata. Use only the server-side
-        // metadata recorded by upload-file.php.
-        $body['attachment_path'] = $staged['file_path'];
-        $body['attachment_name'] = $staged['file_name'];
-        $body['attachment_size'] = (int)$staged['file_size'];
-        $body['attachment_mime'] = $staged['mime_type'];
+        $attachmentPath=(string)$body['attachment_path'];
+        $staged=$_SESSION['ecollab_uploads'][$attachmentPath]??null;
+        if (!is_array($staged)||(int)($staged['user_id']??0)!==(int)$user['id']||(int)($staged['server_id']??0)!==(int)$access['server_id']||(int)($staged['channel_id']??0)!==(int)$channelId||(int)($staged['expires_at']??0)<time()||!preg_match('#^uploads/[A-Za-z0-9._-]+$#',$attachmentPath)) throw new RuntimeException('Attachment is not authorized for this channel',403);
+        $absolutePath=rtrim(UPLOAD_DIR,'/\\').DIRECTORY_SEPARATOR.basename($attachmentPath);
+        if (!is_file($absolutePath)) { unset($_SESSION['ecollab_uploads'][$attachmentPath]); throw new RuntimeException('Attachment is no longer available',400); }
+        $body['attachment_path']=$staged['file_path']; $body['attachment_name']=$staged['file_name']; $body['attachment_size']=(int)$staged['file_size']; $body['attachment_mime']=$staged['mime_type'];
     }
 
-    $service = new MessageService();
-    $message = $service->sendMessage((int)$channelId, $user['id'], $body);
-
-    // Consume the staged upload only after the message/attachment record was
-    // created successfully. A failed send can therefore be retried safely.
-    if (!empty($body['attachment_path'])) {
-        unset($_SESSION['ecollab_uploads'][$body['attachment_path']]);
-    }
-
-    http_response_code(201);
-    echo json_encode(['success' => true, 'message' => $message]);
-
+    $message=(new MessageService())->sendMessage((int)$channelId,$user['id'],$body);
+    if (!empty($body['attachment_path'])) unset($_SESSION['ecollab_uploads'][$body['attachment_path']]);
+    http_response_code(201); echo json_encode(['success'=>true,'message'=>$message]);
 } catch (InvalidArgumentException $e) {
-    http_response_code(400);
-    echo json_encode(['error' => $e->getMessage()]);
-
+    ApiErrorResponder::throwable('chat/send-message validation',$e,400,'Invalid request.');
+} catch (PDOException $e) {
+    ApiErrorResponder::throwable('chat/send-message database',$e,500,'Unable to send message.');
 } catch (RuntimeException $e) {
-    $code = ($e->getCode() >= 400 && $e->getCode() < 600) ? $e->getCode() : 500;
-    http_response_code($code);
-    echo json_encode(['error' => $e->getMessage()]);
-
+    $code=($e->getCode()>=400&&$e->getCode()<600)?$e->getCode():500;
+    ApiErrorResponder::throwable('chat/send-message runtime',$e,$code,$e->getMessage());
 } catch (Throwable $e) {
-    error_log('[Ecollab] send-message Throwable: ' . $e->getMessage()
-        . ' in ' . $e->getFile() . ':' . $e->getLine());
-    http_response_code(500);
-    echo json_encode([
-        'error' => (defined('APP_DEBUG') && APP_DEBUG)
-            ? $e->getMessage() . ' — ' . basename($e->getFile()) . ':' . $e->getLine()
-            : 'Server error',
-    ]);
+    ApiErrorResponder::throwable('chat/send-message throwable',$e,500,'Server error.');
 }
