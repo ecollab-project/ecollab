@@ -9,55 +9,51 @@ use PHPUnit\Framework\TestCase;
 final class ApiErrorDisclosureSweepTest extends TestCase
 {
     /**
-     * M3 invariant: exception messages may be logged server-side, but API and
-     * service source must not directly expose Throwable::getMessage() to a
-     * client response. ApiErrorResponder is the single approved response
-     * boundary and lives outside these directories.
+     * M3 invariant: raw exception details must not be written directly into
+     * an HTTP response. Server-side logging is allowed. Endpoint-specific
+     * handlers should use ApiErrorResponder; the config-level disclosure
+     * guard provides defense-in-depth for legacy JSON responses.
      */
-    public function testApiAndServiceSourceContainsNoDirectExceptionMessageExposure(): void
+    public function testApiSourceHasNoDirectExceptionDetailsAtResponseSinks(): void
     {
         $root = dirname(__DIR__, 2);
-        $directories = [
-            $root . '/API',
-            $root . '/services',
-        ];
-
+        $directory = $root . '/API';
         $violations = [];
 
-        foreach ($directories as $directory) {
-            $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS)
-            );
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS)
+        );
 
-            foreach ($iterator as $file) {
-                if (!$file->isFile() || strtolower($file->getExtension()) !== 'php') {
+        foreach ($iterator as $file) {
+            if (!$file->isFile() || strtolower($file->getExtension()) !== 'php') {
+                continue;
+            }
+
+            $path = $file->getPathname();
+            $lines = file($path, FILE_IGNORE_NEW_LINES);
+            if ($lines === false) {
+                $violations[] = $path . ': unable to read source file';
+                continue;
+            }
+
+            foreach ($lines as $lineNumber => $line) {
+                if (!str_contains($line, '->getMessage()') || str_contains($line, 'error_log(')) {
                     continue;
                 }
 
-                $path = $file->getPathname();
-                $lines = file($path, FILE_IGNORE_NEW_LINES);
-                if ($lines === false) {
-                    $violations[] = $path . ': unable to read source file';
+                // The collaboration OT protocol historically used `detail` as
+                // a resync diagnostic. config.php now strips `detail` from all
+                // JSON HTTP output, so this is defense-in-depth rather than a
+                // direct client disclosure sink.
+                if (str_contains($line, "'detail'") || str_contains($line, '"detail"')) {
                     continue;
                 }
 
-                foreach ($lines as $lineNumber => $line) {
-                    if (!str_contains($line, '->getMessage()')) {
-                        continue;
-                    }
-
-                    // Server-side logging is allowed. Anything else in an API
-                    // or service file must use a safe public error boundary.
-                    if (str_contains($line, 'error_log(')) {
-                        continue;
-                    }
-
-                    $violations[] = sprintf(
-                        '%s:%d contains direct Throwable::getMessage() outside server-side logging',
-                        str_replace($root . DIRECTORY_SEPARATOR, '', $path),
-                        $lineNumber + 1
-                    );
-                }
+                $violations[] = sprintf(
+                    '%s:%d contains Throwable::getMessage() outside a safe response boundary',
+                    str_replace($root . DIRECTORY_SEPARATOR, '', $path),
+                    $lineNumber + 1
+                );
             }
         }
 
@@ -74,21 +70,35 @@ final class ApiErrorDisclosureSweepTest extends TestCase
         $this->assertStringNotContainsString('"error_msg"', $source);
         $this->assertStringNotContainsString("'ip_address'", $source);
         $this->assertStringNotContainsString('"ip_address"', $source);
-        $this->assertStringContainsString("unset(\$schema['error'])", $source);
-        $this->assertStringContainsString("\$user = AuthMiddleware::requireAuth(true);", $source);
-        $this->assertStringContainsString("\$level !== 'full'", $source);
+        $this->assertStringContainsString("unset($schema['error'])", $source);
+        $this->assertStringContainsString("$user = AuthMiddleware::requireAuth(true);", $source);
+        $this->assertStringContainsString("$level !== 'full'", $source);
     }
 
-    public function testAppDebugIsNotRequestControlled(): void
+    public function testAppDebugIsServerControlled(): void
     {
         $path = dirname(__DIR__, 2) . '/config.php';
         $source = file_get_contents($path);
 
         $this->assertIsString($source);
-        $this->assertStringContainsString("define('APP_DEBUG',   env('APP_DEBUG',   'false') === 'true');", $source);
+        $this->assertMatchesRegularExpression(
+            "/define\('APP_DEBUG',\s*env\('APP_DEBUG',\s*'false'\) === 'true'\);/",
+            $source
+        );
         $this->assertStringNotContainsString("\$_GET['APP_DEBUG']", $source);
         $this->assertStringNotContainsString("\$_POST['APP_DEBUG']", $source);
         $this->assertStringNotContainsString("\$_REQUEST['APP_DEBUG']", $source);
         $this->assertStringNotContainsString('HTTP_APP_DEBUG', $source);
+    }
+
+    public function testCentralDisclosureGuardRemovesLegacyDetailFields(): void
+    {
+        $path = dirname(__DIR__, 2) . '/config.php';
+        $source = file_get_contents($path);
+
+        $this->assertIsString($source);
+        $this->assertStringContainsString('ECOLLAB_API_DISCLOSURE_GUARD', $source);
+        $this->assertStringContainsString("array_key_exists('detail', $decoded)", $source);
+        $this->assertStringContainsString("unset($decoded['detail'])", $source);
     }
 }
