@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 use Ratchet\ConnectionInterface;
@@ -26,13 +27,36 @@ class DmHandler
         ConnectionInterface $from,
         array $data,
         array $meta,
-        array $userConns  // user_id => ConnectionInterface
+        array $userConns,  // user_id => ConnectionInterface
+        PDO $db
     ): void {
         $recipientId    = (int)($data['recipient_id'] ?? 0);
         $conversationId = (int)($data['conversation_id'] ?? 0);
         $messageId      = (int)($data['message_id'] ?? 0);
 
-        if (!$recipientId || !$conversationId) return;
+        if (!$recipientId || !$conversationId || !$messageId) return;
+
+        $messageStmt = $db->prepare(
+            'SELECT dm.body, dm.created_at
+                         FROM dm_messages dm
+                         JOIN dm_conversations dc ON dc.id = dm.conversation_id
+                         WHERE dm.id = :mid AND dm.conversation_id = :cid
+                             AND dm.sender_id = :sender AND dm.is_deleted = 0
+                             AND ((dc.user_a = :sender_a AND dc.user_b = :recipient_a)
+                                 OR (dc.user_b = :sender_b AND dc.user_a = :recipient_b))
+                         LIMIT 1'
+        );
+        $messageStmt->execute([
+            ':mid' => $messageId,
+            ':cid' => $conversationId,
+            ':sender' => (int)$meta['user_id'],
+            ':sender_a' => (int)$meta['user_id'],
+            ':recipient_a' => $recipientId,
+            ':sender_b' => (int)$meta['user_id'],
+            ':recipient_b' => $recipientId,
+        ]);
+        $message = $messageStmt->fetch(PDO::FETCH_ASSOC);
+        if (!$message) return;
 
         $payload = json_encode([
             'type'            => 'dm_message',
@@ -41,21 +65,23 @@ class DmHandler
             'sender_id'       => $meta['user_id'],
             'sender_name'     => $meta['full_name'] ?? $meta['username'],
             'sender_gradient' => $meta['gradient'] ?? '',
-            'body'            => $data['body'] ?? '',
-            'created_at'      => $data['created_at'] ?? date('Y-m-d H:i:s'),
+            'body'            => $message['body'],
+            'created_at'      => $message['created_at'],
         ]);
 
         // Send to recipient if online
         if (isset($userConns[$recipientId])) {
             try {
                 $userConns[$recipientId]->send($payload);
-            } catch (\Throwable) {}
+            } catch (\Throwable) {
+            }
         }
 
         // Echo back to sender for multi-tab sync
         try {
             $from->send($payload);
-        } catch (\Throwable) {}
+        } catch (\Throwable) {
+        }
     }
 
     /**
@@ -68,12 +94,14 @@ class DmHandler
         ConnectionInterface $from,
         array $data,
         array $meta,
-        array $userConns
+        array $userConns,
+        PDO $db
     ): void {
         $recipientId    = (int)($data['recipient_id'] ?? 0);
         $conversationId = (int)($data['conversation_id'] ?? 0);
 
         if (!$recipientId || !$conversationId) return;
+        if (!self::conversationPeer($db, $conversationId, (int)$meta['user_id'], $recipientId)) return;
         if (!isset($userConns[$recipientId])) return;
 
         $payload = json_encode([
@@ -86,7 +114,8 @@ class DmHandler
 
         try {
             $userConns[$recipientId]->send($payload);
-        } catch (\Throwable) {}
+        } catch (\Throwable) {
+        }
     }
 
     /**
@@ -99,7 +128,8 @@ class DmHandler
         ConnectionInterface $from,
         array $data,
         array $meta,
-        array $userConns
+        array $userConns,
+        PDO $db
     ): void {
         $addresseeId = (int)($data['addressee_id'] ?? 0);
         if (!$addresseeId) return;
@@ -117,7 +147,8 @@ class DmHandler
 
         try {
             $userConns[$addresseeId]->send($payload);
-        } catch (\Throwable) {}
+        } catch (\Throwable) {
+        }
     }
 
     /**
@@ -130,7 +161,8 @@ class DmHandler
         ConnectionInterface $from,
         array $data,
         array $meta,
-        array $userConns
+        array $userConns,
+        PDO $db
     ): void {
         $requesterId = (int)($data['requester_id'] ?? 0);
         if (!$requesterId) return;
@@ -147,6 +179,26 @@ class DmHandler
 
         try {
             $userConns[$requesterId]->send($payload);
-        } catch (\Throwable) {}
+        } catch (\Throwable) {
+        }
+    }
+
+    private static function conversationPeer(PDO $db, int $conversationId, int $userId, int $peerId): bool
+    {
+        $stmt = $db->prepare(
+            'SELECT 1 FROM dm_conversations
+             WHERE id = :cid
+               AND ((user_a = :uid_a AND user_b = :peer_a)
+                 OR (user_b = :uid_b AND user_a = :peer_b))
+             LIMIT 1'
+        );
+        $stmt->execute([
+            ':cid' => $conversationId,
+            ':uid_a' => $userId,
+            ':peer_a' => $peerId,
+            ':uid_b' => $userId,
+            ':peer_b' => $peerId,
+        ]);
+        return (bool)$stmt->fetchColumn();
     }
 }
