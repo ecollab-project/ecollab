@@ -27,6 +27,8 @@ const wbState = {
   _pathSeq: 0,
   // Cursor throttle
   _lastCursorSend: 0,
+  locked: false,
+  dirty: false,
 };
 
 // ── Avatar colour pool ──────────────────────────────────────
@@ -83,6 +85,22 @@ function wbHandleWsMessage(msg) {
     case 'wb_state_saved':
       // Acknowledged — nothing to do
       break;
+    case 'wb_lock_changed':
+      wbState.locked = !!msg.locked;
+      wbApplyLockState();
+      break;
+    case 'wb_version_saved':
+      if (msg.user_id !== wbGetCurrentUser().id) wbLoadVersions();
+      break;
+    case 'wb_state_reverted':
+      wbApplyFullState(msg.state_json);
+      wbState.dirty = false;
+      wbLoadVersions();
+      break;
+    case 'wb_locked':
+      wbState.locked = true;
+      wbApplyLockState();
+      break;
   }
 }
 
@@ -95,10 +113,15 @@ if (window.__wsMsgHandlers) {
   window.__wsMsgHandlers['wb_cursor']     = wbHandleWsMessage;
   window.__wsMsgHandlers['wb_state']      = wbHandleWsMessage;
   window.__wsMsgHandlers['wb_state_saved']= wbHandleWsMessage;
+  window.__wsMsgHandlers['wb_locked'] = wbHandleWsMessage;
+  window.__wsMsgHandlers['wb_lock_changed'] = wbHandleWsMessage;
+  window.__wsMsgHandlers['wb_version_saved'] = wbHandleWsMessage;
+  window.__wsMsgHandlers['wb_state_reverted'] = wbHandleWsMessage;
 }
 
 // ── Send helper ───────────────────────────────────────────
 function wbSend(payload) {
+  if (payload.op && payload.op !== 'cursor') wbState.dirty = true;
   const ws = wbGetWs();
   if (!ws || ws.readyState !== WebSocket.OPEN) return;
   ws.send(JSON.stringify(payload));
@@ -108,12 +131,23 @@ function wbSend(payload) {
 //  Open / close
 // ══════════════════════════════════════════════════════════
 function openWhiteboard(boardName, sessionOwnerId, channelId) {
+  // Chat's legacy launcher passes (boardName, channelId).
+  if (channelId === undefined && Number.isInteger(Number(sessionOwnerId))) {
+    channelId = Number(sessionOwnerId);
+    sessionOwnerId = null;
+  }
+  const targetChannelId = channelId || window.ECOLLAB?.currentChannelId || window.__currentChannelId;
+  if (targetChannelId && !window.ECOLLAB?.whiteboardStandalone) {
+    window.location.href = `${window.ECOLLAB?.baseUrl || ''}/modules/whiteboard/index.php?channel_id=${encodeURIComponent(targetChannelId)}`;
+    return;
+  }
   const overlay = document.getElementById('wbOverlay');
   if (!overlay) return;
 
   wbState.boardName  = boardName || 'Whiteboard Session';
   wbState.sessionId  = sessionOwnerId || null;
   wbState.channelId  = channelId || window.__currentChannelId || null;
+  wbState.dirty = false;
 
   const me           = wbGetCurrentUser();
   wbState.isOwner    = !sessionOwnerId || (sessionOwnerId === me.id);
@@ -123,6 +157,7 @@ function openWhiteboard(boardName, sessionOwnerId, channelId) {
   wbState.open = true;
 
   setTimeout(() => {
+    wbApi('state').then(data => { wbState.locked = !!data.whiteboard.locked; wbState.isOwner = !!data.whiteboard.is_host; wbApplyFullState(data.whiteboard.state_json); wbApplyLockState(); }).catch(() => {});
     wbInitCanvas();
     wbAnimateCursors();
     wbStartAutoSave();
@@ -200,6 +235,55 @@ function _wbDoClose(saveState = true) {
   document.getElementById('wbOverlay').classList.remove('wb-visible');
   wbState.open = false;
 }
+
+function wbApi(action, body = {}, method = 'GET') {
+  const base = window.ECOLLAB?.baseUrl || '';
+  const url = `${base}/API/chat/whiteboard-sync.php?channel_id=${encodeURIComponent(wbState.channelId)}${action === 'versions' || action === 'download' ? `&action=${action}` : ''}`;
+  const opts = { method, credentials: 'same-origin', headers: { 'X-CSRF-Token': window.ECOLLAB?.csrfToken || '', 'Content-Type': 'application/json' } };
+  if (method !== 'GET') opts.body = JSON.stringify({ ...body, action });
+  return fetch(url, opts).then(async response => { const data = await response.json(); if (!response.ok) throw new Error(data.error || 'Whiteboard request failed'); return data; });
+}
+
+async function wbSaveVersion() {
+  if (!wbState.channelId) return;
+  const title = wbState.boardName || 'Whiteboard Session';
+  const stateJson = JSON.stringify({ paths: wbState.paths, savedAt: new Date().toISOString() });
+  try { await wbApi('save_version', { title, state_json: stateJson }, 'POST'); wbState.dirty = false; wbLoadVersions(); const label = document.getElementById('wbSaveLabel'); if (label) label.textContent = 'Saved just now'; }
+  catch (error) { showToast(`Could not save version: ${error.message}`, 'error'); }
+}
+window.wbSaveVersion = wbSaveVersion;
+
+async function wbLoadVersions() {
+  if (!wbState.channelId) return;
+  try { const data = await wbApi('versions'); const list = document.getElementById('wbVersionList'); if (list) list.innerHTML = data.versions.length ? data.versions.map(v => `<div class="wb-version-row"><span>Version ${v.version_no}</span><a href="${window.ECOLLAB.baseUrl}/API/chat/whiteboard-sync.php?channel_id=${wbState.channelId}&action=download&version_id=${v.id}">Download</a><button class="wb-page-btn" type="button" onclick="wbRestoreVersion(${v.id})">Revert</button></div>`).join('') : '<div class="wb-version-row">No saved versions</div>'; }
+  catch (error) { const list = document.getElementById('wbVersionList'); if (list) list.textContent = error.message; }
+}
+window.wbLoadVersions = wbLoadVersions;
+async function wbRestoreVersion(versionId) {
+  if (!confirm('Revert the current whiteboard to this saved version?')) return;
+  try {
+    const data = await wbApi('restore_version', { version_id: versionId }, 'POST');
+    wbApplyFullState(data.whiteboard.state_json);
+    wbState.dirty = false;
+    wbLoadVersions();
+    showToast('Whiteboard reverted to saved version', 'success');
+  } catch (error) {
+    showToast(`Could not revert version: ${error.message}`, 'error');
+  }
+}
+window.wbRestoreVersion = wbRestoreVersion;
+function wbToggleVersions() { document.getElementById('wbVersionPanel')?.classList.toggle('open'); wbLoadVersions(); }
+window.wbToggleVersions = wbToggleVersions;
+async function wbToggleLock() {
+  if (!wbState.isOwner) return;
+  try { const data = await wbApi('lock', { locked: !wbState.locked }, 'POST'); wbState.locked = data.whiteboard.locked; wbApplyLockState(); }
+  catch (error) { showToast(`Could not change lock: ${error.message}`, 'error'); }
+}
+window.wbToggleLock = wbToggleLock;
+function wbApplyLockState() { document.body.classList.toggle('wb-locked', wbState.locked); const button=document.getElementById('wbLockButton'); if(button){button.hidden=!wbState.isOwner;button.textContent=wbState.locked?'Unlock':'Lock';} const label=document.getElementById('wbLockLabel'); if(label) label.textContent=wbState.locked?'Locked by host':''; }
+window.wbApplyLockState = wbApplyLockState;
+
+window.addEventListener('beforeunload', event => { if (wbState.open && wbState.dirty) { event.preventDefault(); event.returnValue = ''; } });
 
 function closeWhiteboard() {
   if (wbState.isOwner && wbState.open) { wbRequestClose(); return; }
@@ -478,6 +562,7 @@ function wbMakeDraggable(el, objId) {
   let dragging = false, ox = 0, oy = 0;
 
   function startDrag(cx, cy) {
+    if (wbState.locked && !wbState.isOwner) return false;
     if (wbState.tool !== 'cursor') return false;
     dragging = true;
     const r = el.getBoundingClientRect();
@@ -524,6 +609,8 @@ function wbPos(e, canvas) {
 }
 
 function wbDown(e, ctx, canvas) {
+  if (wbState.locked && !wbState.isOwner) return;
+  wbState.dirty = true;
   const pos = wbPos(e, canvas);
   if (wbState.tool === 'pen' || wbState.tool === 'highlight' || wbState.tool === 'arrow') {
     const pathId = `${wbGetCurrentUser().id}_${Date.now()}_${wbState._pathSeq++}`;

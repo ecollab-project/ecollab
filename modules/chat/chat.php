@@ -21,9 +21,12 @@ $servers        = $channelService->getServersForUser($user['id']);
 $requestedServerId = (int)($_GET['server_id'] ?? 0);
 $firstServer = null;
 if ($requestedServerId > 0) {
-    foreach ($servers as $srv) {
-        if ((int)$srv['id'] === $requestedServerId) { $firstServer = $srv; break; }
+  foreach ($servers as $srv) {
+    if ((int)$srv['id'] === $requestedServerId) {
+      $firstServer = $srv;
+      break;
     }
+  }
 }
 $firstServer    = $firstServer ?? ($servers[0] ?? null);
 $channels       = $firstServer ? $channelService->getChannelsForUser((int)$firstServer['id'], $user['id']) : [];
@@ -47,6 +50,11 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/whiteboard-mobile.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/collab-tools.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/peer-matching.css">
+  <style>
+    #wbOverlay {
+      display: none !important;
+    }
+  </style>
 </head>
 
 <body>
@@ -145,9 +153,13 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
                 <?= $isNew ? 'data-is-new="1"' : '' ?>
                 onclick="switchChannel(this, <?= (int)$ch['id'] ?>)">
                 <?php if ($ch['type'] === 'announcement'): ?>
-                  <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24" style="color:var(--accent-yellow);flex-shrink:0;margin-right:2px;"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6V11c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+                  <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24" style="color:var(--accent-yellow);flex-shrink:0;margin-right:2px;">
+                    <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6V11c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
+                  </svg>
                 <?php elseif (!empty($ch['is_private'])): ?>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="color:var(--text-muted);flex-shrink:0;margin-right:2px;" title="Private channel"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="color:var(--text-muted);flex-shrink:0;margin-right:2px;" title="Private channel">
+                    <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+                  </svg>
                 <?php else: ?>
                   <span class="channel-hash">#</span>
                 <?php endif; ?>
@@ -295,7 +307,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       <div style="display:flex;align-items:center;gap:4px;">
         <!-- Manage private channel members - shown only when current channel is private and user is owner/admin -->
         <button class="header-icon-btn" id="manageChannelBtn" onclick="openPrivateChannelManager()" title="Manage Channel Members" style="display:none;">
-          <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+          </svg>
         </button>
         <button class="header-icon-btn header-search" onclick="openSearchModal()" title="Search">
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -741,10 +755,14 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:8px;">Select Members with Access</div>
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">
             <span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="#22c55e"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg> Unlocked = can see
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="#22c55e">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+              </svg> Unlocked = can see
             </span>
             <span style="display:inline-flex;align-items:center;gap:4px;">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--text-muted)"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg> Locked = no access
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--text-muted)">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+              </svg> Locked = no access
             </span>
           </div>
           <div id="privateMembersLoading" style="font-size:12px;color:var(--text-muted);text-align:center;padding:12px 0;">Loading members…</div>
@@ -769,7 +787,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <div style="display:flex;gap:8px;">
           <button onclick="openFullProfileCard()" style="flex:1;padding:8px;background:var(--gradient-main);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;">View Profile</button>
           <button id="mpThreadBtn" onclick="openThreadDMFromMiniProfile()" style="padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;color:var(--text-secondary);font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:5px;">
-            <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+            <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
+            </svg>
             Thread
           </button>
         </div>
@@ -877,6 +897,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       currentChannelId: null,
       wsUrl: '<?= defined("WS_URL") ? WS_URL : "ws://localhost:8080" ?>',
       baseUrl: <?= json_encode(BASE_URL) ?>,
+      whiteboardStandalone: false,
     };
 
     // Safe stubs for functions defined in defer-loaded scripts.
@@ -947,7 +968,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:0;width:520px;max-width:96vw;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.6);">
       <!-- Header -->
       <div style="padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
-        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24" style="color:#a855f7;flex-shrink:0;"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24" style="color:#a855f7;flex-shrink:0;">
+          <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+        </svg>
         <div style="flex:1;">
           <div style="font-size:15px;font-weight:700;color:var(--text-primary);" id="pcmChannelName">Private Channel</div>
           <div style="font-size:11px;color:var(--text-muted);">Manage who can access this channel</div>
@@ -3103,19 +3126,19 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       <button class="collab-hub-close" onclick="closeCollabHub()" title="Close">✕</button>
     </div>
     <div class="collab-tab-bar">
-      <button class="collab-tab-btn" data-tool="notes"    onclick="_switchCollabTool('notes')">
+      <button class="collab-tab-btn" data-tool="notes" onclick="_switchCollabTool('notes')">
         <span class="tab-icon">📝</span>Notes
       </button>
-      <button class="collab-tab-btn" data-tool="tasks"    onclick="_switchCollabTool('tasks')">
+      <button class="collab-tab-btn" data-tool="tasks" onclick="_switchCollabTool('tasks')">
         <span class="tab-icon">📋</span>Tasks
       </button>
-      <button class="collab-tab-btn" data-tool="code"     onclick="_switchCollabTool('code')">
+      <button class="collab-tab-btn" data-tool="code" onclick="_switchCollabTool('code')">
         <span class="tab-icon">💻</span>Code
       </button>
-      <button class="collab-tab-btn" data-tool="timer"    onclick="_switchCollabTool('timer')">
+      <button class="collab-tab-btn" data-tool="timer" onclick="_switchCollabTool('timer')">
         <span class="tab-icon">⏱</span>Timer
       </button>
-      <button class="collab-tab-btn" data-tool="quiz"     onclick="_switchCollabTool('quiz')">
+      <button class="collab-tab-btn" data-tool="quiz" onclick="_switchCollabTool('quiz')">
         <span class="tab-icon">📝</span>Quiz
       </button>
       <button class="collab-tab-btn" data-tool="calendar" onclick="_switchCollabTool('calendar')">
@@ -3141,18 +3164,18 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       </button>
     </div>
 
-    <div id="collabPane_notes"    class="collab-pane"></div>
-    <div id="collabPane_tasks"    class="collab-pane"></div>
-    <div id="collabPane_code"     class="collab-pane"></div>
-    <div id="collabPane_timer"    class="collab-pane"></div>
-    <div id="collabPane_quiz"     class="collab-pane"></div>
-    <div id="collabPane_calendar"    class="collab-pane"></div>
+    <div id="collabPane_notes" class="collab-pane"></div>
+    <div id="collabPane_tasks" class="collab-pane"></div>
+    <div id="collabPane_code" class="collab-pane"></div>
+    <div id="collabPane_timer" class="collab-pane"></div>
+    <div id="collabPane_quiz" class="collab-pane"></div>
+    <div id="collabPane_calendar" class="collab-pane"></div>
     <div id="collabPane_flashcards" class="collab-pane"></div>
-    <div id="collabPane_mindmap"    class="collab-pane"></div>
-    <div id="collabPane_review"     class="collab-pane"></div>
-    <div id="collabPane_summary"    class="collab-pane"></div>
-    <div id="collabPane_goals"      class="collab-pane"></div>
-    <div id="collabPane_resources"  class="collab-pane"></div>
+    <div id="collabPane_mindmap" class="collab-pane"></div>
+    <div id="collabPane_review" class="collab-pane"></div>
+    <div id="collabPane_summary" class="collab-pane"></div>
+    <div id="collabPane_goals" class="collab-pane"></div>
+    <div id="collabPane_resources" class="collab-pane"></div>
   </div>
 
   <!-- Task detail modal -->
@@ -3163,13 +3186,15 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <button class="modal-close" onclick="closeTaskDetail()">✕</button>
       </div>
       <div class="modal-body">
-        <input  id="tdTitle"    class="collab-input" placeholder="Task title*"/>
-        <textarea id="tdDesc"  class="collab-input" placeholder="Description" rows="3" style="resize:vertical"></textarea>
-        <select   id="tdPriority" class="code-lang-select" style="width:100%">
-          <option value="low">🟢 Low</option><option value="medium" selected>🟡 Medium</option>
-          <option value="high">🔴 High</option><option value="urgent">🟣 Urgent</option>
+        <input id="tdTitle" class="collab-input" placeholder="Task title*" />
+        <textarea id="tdDesc" class="collab-input" placeholder="Description" rows="3" style="resize:vertical"></textarea>
+        <select id="tdPriority" class="code-lang-select" style="width:100%">
+          <option value="low">🟢 Low</option>
+          <option value="medium" selected>🟡 Medium</option>
+          <option value="high">🔴 High</option>
+          <option value="urgent">🟣 Urgent</option>
         </select>
-        <input  id="tdDue"   class="collab-input" type="date" placeholder="Due date"/>
+        <input id="tdDue" class="collab-input" type="date" placeholder="Due date" />
         <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary)">
           <input type="checkbox" id="tdDone"> Mark as done
         </label>
@@ -3190,7 +3215,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <button class="modal-close" onclick="closeCreateQuiz()">✕</button>
       </div>
       <div class="modal-body">
-        <input id="quizTitleInput" class="collab-input" placeholder="Quiz title*" style="margin-bottom:10px"/>
+        <input id="quizTitleInput" class="collab-input" placeholder="Quiz title*" style="margin-bottom:10px" />
         <div id="quizQuestionsContainer"></div>
         <button class="collab-btn-xs" style="width:100%;margin-top:4px" onclick="addQuizQuestion()">+ Add Question</button>
       </div>
@@ -3220,11 +3245,11 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <button class="pm-close" onclick="closePeerMatchingModal()">✕</button>
       </div>
       <div class="pm-tab-bar">
-        <button class="pm-tab-btn pm-active" data-tab="matches"     onclick="_pmShowTab('matches')">✨ Matches</button>
-        <button class="pm-tab-btn"           data-tab="search"      onclick="_pmShowTab('search')">🔍 Search</button>
-        <button class="pm-tab-btn"           data-tab="requests"    onclick="_pmShowTab('requests')">📬 Requests</button>
-        <button class="pm-tab-btn"           data-tab="leaderboard" onclick="_pmShowTab('leaderboard')">🏆 Top</button>
-        <button class="pm-tab-btn"           data-tab="profile"     onclick="_pmShowTab('profile')">⚙ Profile</button>
+        <button class="pm-tab-btn pm-active" data-tab="matches" onclick="_pmShowTab('matches')">✨ Matches</button>
+        <button class="pm-tab-btn" data-tab="search" onclick="_pmShowTab('search')">🔍 Search</button>
+        <button class="pm-tab-btn" data-tab="requests" onclick="_pmShowTab('requests')">📬 Requests</button>
+        <button class="pm-tab-btn" data-tab="leaderboard" onclick="_pmShowTab('leaderboard')">🏆 Top</button>
+        <button class="pm-tab-btn" data-tab="profile" onclick="_pmShowTab('profile')">⚙ Profile</button>
       </div>
       <div id="pmModalBody"></div>
     </div>
@@ -3255,103 +3280,106 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <!-- Compatibility detail modal -->
   <div id="pmCompatModal"></div>
 
-<script src="<?= BASE_URL ?>/assets/js/chat/functionality-overrides.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/functionality-overrides.js" defer></script>
 </body>
 
-  <!-- ── FLASHCARD MODALS ── -->
-  <div id="createDeckModal" class="collab-modal-overlay" style="display:none">
-    <div class="modal-box" style="max-width:480px;width:92%">
-      <div class="modal-header"><span>🃏 Create Flashcard Deck</span><button class="modal-close" onclick="closeCreateDeckModal()">✕</button></div>
-      <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
-        <input  id="deckTitleInput" class="collab-input" placeholder="Deck title*"/>
-        <input  id="deckDescInput"  class="collab-input" placeholder="Description (optional)"/>
-        <label style="font-size:12px;color:var(--text-muted)">Cards (one per line: <code>front | back | hint</code>)</label>
-        <textarea id="deckCardsInput" class="collab-input" rows="6" placeholder="What is OT? | Operational Transformation | A conflict-free editing algorithm"></textarea>
-      </div>
-      <div class="modal-footer">
-        <button class="timer-reset-btn" onclick="closeCreateDeckModal()">Cancel</button>
-        <button class="timer-start-btn" style="padding:7px 18px;font-size:13px" onclick="submitCreateDeck()">Create Deck</button>
-      </div>
+<!-- ── FLASHCARD MODALS ── -->
+<div id="createDeckModal" class="collab-modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:480px;width:92%">
+    <div class="modal-header"><span>🃏 Create Flashcard Deck</span><button class="modal-close" onclick="closeCreateDeckModal()">✕</button></div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
+      <input id="deckTitleInput" class="collab-input" placeholder="Deck title*" />
+      <input id="deckDescInput" class="collab-input" placeholder="Description (optional)" />
+      <label style="font-size:12px;color:var(--text-muted)">Cards (one per line: <code>front | back | hint</code>)</label>
+      <textarea id="deckCardsInput" class="collab-input" rows="6" placeholder="What is OT? | Operational Transformation | A conflict-free editing algorithm"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="timer-reset-btn" onclick="closeCreateDeckModal()">Cancel</button>
+      <button class="timer-start-btn" style="padding:7px 18px;font-size:13px" onclick="submitCreateDeck()">Create Deck</button>
     </div>
   </div>
+</div>
 
-  <div id="addCardModal" class="collab-modal-overlay" style="display:none">
-    <div class="modal-box" style="max-width:420px;width:92%">
-      <div class="modal-header"><span>🃏 Add Card</span><button class="modal-close" onclick="closeAddCardModal()">✕</button></div>
-      <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
-        <textarea id="cardFrontInput" class="collab-input" rows="3" placeholder="Question / Front*"></textarea>
-        <textarea id="cardBackInput"  class="collab-input" rows="3" placeholder="Answer / Back*"></textarea>
-        <input    id="cardHintInput"  class="collab-input" placeholder="Hint (optional)"/>
-      </div>
-      <div class="modal-footer">
-        <button class="timer-reset-btn" onclick="closeAddCardModal()">Cancel</button>
-        <button class="timer-start-btn" style="padding:7px 18px;font-size:13px" onclick="submitAddCard()">Add Card</button>
-      </div>
+<div id="addCardModal" class="collab-modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:420px;width:92%">
+    <div class="modal-header"><span>🃏 Add Card</span><button class="modal-close" onclick="closeAddCardModal()">✕</button></div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
+      <textarea id="cardFrontInput" class="collab-input" rows="3" placeholder="Question / Front*"></textarea>
+      <textarea id="cardBackInput" class="collab-input" rows="3" placeholder="Answer / Back*"></textarea>
+      <input id="cardHintInput" class="collab-input" placeholder="Hint (optional)" />
+    </div>
+    <div class="modal-footer">
+      <button class="timer-reset-btn" onclick="closeAddCardModal()">Cancel</button>
+      <button class="timer-start-btn" style="padding:7px 18px;font-size:13px" onclick="submitAddCard()">Add Card</button>
     </div>
   </div>
+</div>
 
-  <!-- ── PEER REVIEW MODALS ── -->
-  <div id="createReviewModal" class="collab-modal-overlay" style="display:none">
-    <div class="modal-box" style="max-width:520px;width:92%">
-      <div class="modal-header"><span>📋 Request Peer Review</span><button class="modal-close" onclick="closeCreateReviewModal()">✕</button></div>
-      <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
-        <input    id="reviewTitleInput"   class="collab-input" placeholder="Title*"/>
-        <textarea id="reviewContentInput" class="collab-input" rows="5" placeholder="Paste your work here for review…"></textarea>
-        <input    id="reviewFileUrl"      class="collab-input" placeholder="Link to file/doc (optional)"/>
-      </div>
-      <div class="modal-footer">
-        <button class="timer-reset-btn" onclick="closeCreateReviewModal()">Cancel</button>
-        <button class="timer-start-btn" style="padding:7px 18px;font-size:13px" onclick="submitCreateReview()">Post Request</button>
-      </div>
+<!-- ── PEER REVIEW MODALS ── -->
+<div id="createReviewModal" class="collab-modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:520px;width:92%">
+    <div class="modal-header"><span>📋 Request Peer Review</span><button class="modal-close" onclick="closeCreateReviewModal()">✕</button></div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
+      <input id="reviewTitleInput" class="collab-input" placeholder="Title*" />
+      <textarea id="reviewContentInput" class="collab-input" rows="5" placeholder="Paste your work here for review…"></textarea>
+      <input id="reviewFileUrl" class="collab-input" placeholder="Link to file/doc (optional)" />
+    </div>
+    <div class="modal-footer">
+      <button class="timer-reset-btn" onclick="closeCreateReviewModal()">Cancel</button>
+      <button class="timer-start-btn" style="padding:7px 18px;font-size:13px" onclick="submitCreateReview()">Post Request</button>
     </div>
   </div>
-  <div id="reviewDetailModal" class="collab-modal-overlay" style="display:none"></div>
+</div>
+<div id="reviewDetailModal" class="collab-modal-overlay" style="display:none"></div>
 
-  <!-- ── STUDY GOALS MODAL ── -->
-  <div id="createGoalModal" class="collab-modal-overlay" style="display:none">
-    <div class="modal-box" style="max-width:460px;width:92%">
-      <div class="modal-header"><span>🎯 New Study Goal</span><button class="modal-close" onclick="closeCreateGoalModal()">✕</button></div>
-      <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
-        <input  id="goalTitleInput" class="collab-input" placeholder="Goal title*"/>
-        <textarea id="goalDescInput" class="collab-input" rows="2" placeholder="Description (optional)"></textarea>
-        <select id="goalScopeSelect" class="code-lang-select" style="width:100%">
-          <option value="group">👥 Group goal (visible to channel)</option>
-          <option value="personal">👤 Personal goal (only you)</option>
-        </select>
-        <input id="goalDateInput" class="collab-input" type="date" placeholder="Target date (optional)"/>
-        <label style="font-size:12px;color:var(--text-muted)">Milestones (one per line)</label>
-        <textarea id="goalMilestonesInput" class="collab-input" rows="4" placeholder="Read chapter 1&#10;Complete exercises&#10;Review notes"></textarea>
-      </div>
-      <div class="modal-footer">
-        <button class="timer-reset-btn" onclick="closeCreateGoalModal()">Cancel</button>
-        <button class="timer-start-btn" style="padding:7px 18px;font-size:13px" onclick="submitCreateGoal()">Create Goal</button>
-      </div>
+<!-- ── STUDY GOALS MODAL ── -->
+<div id="createGoalModal" class="collab-modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:460px;width:92%">
+    <div class="modal-header"><span>🎯 New Study Goal</span><button class="modal-close" onclick="closeCreateGoalModal()">✕</button></div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
+      <input id="goalTitleInput" class="collab-input" placeholder="Goal title*" />
+      <textarea id="goalDescInput" class="collab-input" rows="2" placeholder="Description (optional)"></textarea>
+      <select id="goalScopeSelect" class="code-lang-select" style="width:100%">
+        <option value="group">👥 Group goal (visible to channel)</option>
+        <option value="personal">👤 Personal goal (only you)</option>
+      </select>
+      <input id="goalDateInput" class="collab-input" type="date" placeholder="Target date (optional)" />
+      <label style="font-size:12px;color:var(--text-muted)">Milestones (one per line)</label>
+      <textarea id="goalMilestonesInput" class="collab-input" rows="4" placeholder="Read chapter 1&#10;Complete exercises&#10;Review notes"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="timer-reset-btn" onclick="closeCreateGoalModal()">Cancel</button>
+      <button class="timer-start-btn" style="padding:7px 18px;font-size:13px" onclick="submitCreateGoal()">Create Goal</button>
     </div>
   </div>
+</div>
 
-  <!-- ── RESOURCE LIBRARY MODAL ── -->
-  <div id="addResourceModal" class="collab-modal-overlay" style="display:none">
-    <div class="modal-box" style="max-width:460px;width:92%">
-      <div class="modal-header"><span>📚 Add Resource</span><button class="modal-close" onclick="closeAddResourceModal()">✕</button></div>
-      <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
-        <input  id="resTitleInput" class="collab-input" placeholder="Title*"/>
-        <input  id="resUrlInput"   class="collab-input" placeholder="URL (optional)"/>
-        <select id="resTypeSelect" class="code-lang-select" style="width:100%">
-          <option value="link">🔗 Link</option><option value="pdf">📄 PDF</option>
-          <option value="video">🎥 Video</option><option value="image">🖼 Image</option>
-          <option value="file">📁 File</option><option value="note">📝 Note</option>
-          <option value="other">📌 Other</option>
-        </select>
-        <textarea id="resDescInput" class="collab-input" rows="2" placeholder="Description (optional)"></textarea>
-        <input    id="resTagsInput" class="collab-input" placeholder="Tags (comma-separated, optional)"/>
-      </div>
-      <div class="modal-footer">
-        <button class="timer-reset-btn" onclick="closeAddResourceModal()">Cancel</button>
-        <button class="timer-start-btn" style="padding:7px 18px;font-size:13px" onclick="submitAddResource()">Add Resource</button>
-      </div>
+<!-- ── RESOURCE LIBRARY MODAL ── -->
+<div id="addResourceModal" class="collab-modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:460px;width:92%">
+    <div class="modal-header"><span>📚 Add Resource</span><button class="modal-close" onclick="closeAddResourceModal()">✕</button></div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
+      <input id="resTitleInput" class="collab-input" placeholder="Title*" />
+      <input id="resUrlInput" class="collab-input" placeholder="URL (optional)" />
+      <select id="resTypeSelect" class="code-lang-select" style="width:100%">
+        <option value="link">🔗 Link</option>
+        <option value="pdf">📄 PDF</option>
+        <option value="video">🎥 Video</option>
+        <option value="image">🖼 Image</option>
+        <option value="file">📁 File</option>
+        <option value="note">📝 Note</option>
+        <option value="other">📌 Other</option>
+      </select>
+      <textarea id="resDescInput" class="collab-input" rows="2" placeholder="Description (optional)"></textarea>
+      <input id="resTagsInput" class="collab-input" placeholder="Tags (comma-separated, optional)" />
+    </div>
+    <div class="modal-footer">
+      <button class="timer-reset-btn" onclick="closeAddResourceModal()">Cancel</button>
+      <button class="timer-start-btn" style="padding:7px 18px;font-size:13px" onclick="submitAddResource()">Add Resource</button>
     </div>
   </div>
-  <div id="resourceCommentsModal" class="collab-modal-overlay" style="display:none"></div>
+</div>
+<div id="resourceCommentsModal" class="collab-modal-overlay" style="display:none"></div>
 
 </body>
 

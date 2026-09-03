@@ -42,48 +42,57 @@ async function connectWebSocket() {
 function initWebSocket() {
   const wsUrl = window.ECOLLAB?.wsUrl || 'ws://localhost:8080';
 
+  if (chatSocket && (chatSocket.readyState === WebSocket.CONNECTING || chatSocket.readyState === WebSocket.OPEN)) {
+    return;
+  }
+
   try {
-    chatSocket        = new WebSocket(wsUrl);
-    window.chatSocket = chatSocket;
+    const socket = new WebSocket(wsUrl);
+    chatSocket = socket;
+    window.chatSocket = socket;
+
+    socket.onopen = () => {
+      if (chatSocket !== socket || socket.readyState !== WebSocket.OPEN) return;
+      console.log('[WS] Connected');
+      socketReconnectDelay    = 2000;
+      socketReconnectAttempts = 0;
+      _authed                 = false;
+
+      // Authenticate this exact socket; a reconnect may have replaced the global.
+      socket.send(JSON.stringify({ type: 'auth', ws_token: _wsToken }));
+    };
+
+    socket.onmessage = (event) => {
+      if (chatSocket !== socket) return;
+      let data;
+      try { data = JSON.parse(event.data); } catch { return; }
+      handleSocketMessage(data);
+    };
+
+    socket.onclose = (event) => {
+      if (chatSocket !== socket) return;
+      chatSocket = null;
+      _authed = false;
+      console.info(`[WS] Closed (code ${event.code})`);
+      if (event.code === 1006 && socketReconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+        console.info('[WS] Server unreachable — switching to polling mode');
+        startPollingFallback();
+        return;
+      }
+      if (socketReconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+        scheduleReconnect();
+      } else {
+        console.info('[WS] Max reconnect attempts — polling mode');
+        startPollingFallback();
+      }
+    };
+
+    socket.onerror = () => { /* onclose fires immediately after */ };
   } catch (err) {
     console.warn('[WS] WebSocket constructor threw — polling mode.');
     startPollingFallback();
     return;
   }
-
-  chatSocket.onopen = () => {
-    console.log('[WS] Connected');
-    socketReconnectDelay    = 2000;
-    socketReconnectAttempts = 0;
-    _authed                 = false;
-
-    // Authenticate using the server-issued token (never trust client-supplied user_id)
-    chatSocket.send(JSON.stringify({ type: 'auth', ws_token: _wsToken }));
-  };
-
-  chatSocket.onmessage = (event) => {
-    let data;
-    try { data = JSON.parse(event.data); } catch { return; }
-    handleSocketMessage(data);
-  };
-
-  chatSocket.onclose = (event) => {
-    _authed = false;
-    console.info(`[WS] Closed (code ${event.code})`);
-    if (event.code === 1006 && socketReconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-      console.info('[WS] Server unreachable — switching to polling mode');
-      startPollingFallback();
-      return;
-    }
-    if (socketReconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-      scheduleReconnect();
-    } else {
-      console.info('[WS] Max reconnect attempts — polling mode');
-      startPollingFallback();
-    }
-  };
-
-  chatSocket.onerror = () => { /* onclose fires immediately after */ };
 }
 
 function scheduleReconnect() {
@@ -221,6 +230,9 @@ function handleSocketMessage(data) {
     case 'wb_cursor':
     case 'wb_state':
     case 'wb_state_saved':
+    case 'wb_lock_changed':
+    case 'wb_version_saved':
+    case 'wb_state_reverted':
       if (window.wbHandleWsMessage) window.wbHandleWsMessage(data);
       break;
 

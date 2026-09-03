@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
@@ -42,10 +43,14 @@ class WhiteboardHandler
 
     /** Palette for remote cursor / avatar colours (gradient pairs) */
     private const PALETTE = [
-        ['#3b82f6','#1d4ed8'], ['#ec4899','#be185d'],
-        ['#14b8a6','#0f766e'], ['#f59e0b','#b45309'],
-        ['#22c55e','#15803d'], ['#6366f1','#4338ca'],
-        ['#ef4444','#b91c1c'], ['#f97316','#c2410c'],
+        ['#3b82f6', '#1d4ed8'],
+        ['#ec4899', '#be185d'],
+        ['#14b8a6', '#0f766e'],
+        ['#f59e0b', '#b45309'],
+        ['#22c55e', '#15803d'],
+        ['#6366f1', '#4338ca'],
+        ['#ef4444', '#b91c1c'],
+        ['#f97316', '#c2410c'],
     ];
 
     public function __construct()
@@ -131,6 +136,18 @@ class WhiteboardHandler
     public function getMembers(int $channelId): array
     {
         return array_values($this->rooms[$channelId] ?? []);
+    }
+
+    public function canEdit(int $channelId, int $userId): bool
+    {
+        try {
+            $stmt = $this->db->prepare('SELECT created_by, locked FROM whiteboards WHERE channel_id=:cid ORDER BY updated_at DESC LIMIT 1');
+            $stmt->execute([':cid' => $channelId]);
+            $board = $stmt->fetch();
+            return !$board || !(bool)$board['locked'] || (int)$board['created_by'] === $userId;
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────
@@ -227,7 +244,8 @@ class WhiteboardHandler
                 $this->stateCache[$channelId] = $row['state_json'];
                 return $row['state_json'];
             }
-        } catch (\Exception) {}
+        } catch (\Exception) {
+        }
         return null;
     }
 }

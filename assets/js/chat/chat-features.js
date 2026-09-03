@@ -1131,6 +1131,11 @@ function _vcNoop(name) { if (typeof window[name] === 'function' && window[name] 
 // openWhiteboard and closeWhiteboard are implemented in whiteboard.js
 // These shims ensure backward-compatibility if whiteboard.js hasn't loaded yet
 function openWhiteboard(boardName, channelId) {
+  const targetChannelId = channelId || window.ECOLLAB?.currentChannelId || window.__currentChannelId;
+  if (targetChannelId && !window.ECOLLAB?.whiteboardStandalone) {
+    window.location.href = `${window.ECOLLAB?.baseUrl || ''}/modules/whiteboard/index.php?channel_id=${encodeURIComponent(targetChannelId)}`;
+    return;
+  }
   if (window._wbOpen) { window._wbOpen(boardName, channelId); return; }
   const overlay = document.getElementById('wbOverlay');
   if (overlay) { overlay.classList.add('wb-visible'); }

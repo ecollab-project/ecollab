@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 /**
  * API/collab/collab.php — Unified REST API for all collaboration tools.
@@ -53,9 +54,16 @@ $stmt->execute([':cid' => $channelId, ':uid' => $uid]);
 if (!$stmt->fetch()) json_fail('Not a member of this channel', 403);
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-function json_ok(array $data = []): never  { echo json_encode(['ok' => true] + $data); exit; }
-function json_fail(string $msg, int $code = 400): never {
-    http_response_code($code); echo json_encode(['ok' => false, 'error' => $msg]); exit;
+function json_ok(array $data = []): never
+{
+    echo json_encode(['ok' => true] + $data);
+    exit;
+}
+function json_fail(string $msg, int $code = 400): never
+{
+    http_response_code($code);
+    echo json_encode(['ok' => false, 'error' => $msg]);
+    exit;
 }
 
 /**
@@ -63,13 +71,15 @@ function json_fail(string $msg, int $code = 400): never {
  * The WS server polls this table every 200 ms and pushes to subscribers.
  * (No direct TCP connection needed from PHP — avoids Ratchet dependency in HTTP context.)
  */
-function ws_broadcast(PDO $db, int $channelId, array $payload): void {
+function ws_broadcast(PDO $db, int $channelId, array $payload): void
+{
     try {
         $db->prepare("
             INSERT INTO ws_relay (channel_id, payload, created_at)
             VALUES (:cid, :payload, NOW())
         ")->execute([':cid' => $channelId, ':payload' => json_encode($payload)]);
-    } catch (\Throwable) { /* non-fatal */ }
+    } catch (\Throwable) { /* non-fatal */
+    }
 }
 
 // ── Router ───────────────────────────────────────────────────────────────────
@@ -86,19 +96,21 @@ match ($tool) {
 // ════════════════════════════════════════════════════════════════════════════
 // SHARED NOTES — Operational Transform (Google Docs-grade live editing)
 // ════════════════════════════════════════════════════════════════════════════
-function collab_notes(PDO $db, int $uid, string $username, int $cid, string $action, array $body, string $method): never {
+function collab_notes(PDO $db, int $uid, string $username, int $cid, string $action, array $body, string $method): never
+{
 
     // Auto-create or fetch the channel's note row
-    $ensureNote = function() use ($db, $uid, $cid): array {
+    $ensureNote = function () use ($db, $uid, $cid): array {
         $stmt = $db->prepare("SELECT * FROM collab_notes WHERE channel_id=:cid LIMIT 1");
         $stmt->execute([':cid' => $cid]);
         $note = $stmt->fetch();
         if (!$note) {
             $db->prepare("
                 INSERT INTO collab_notes (channel_id, title, content, revision, version, created_by, updated_by)
-                VALUES (:cid, 'Untitled Document', '', 0, 1, :uid, :uid)
-            ")->execute([':cid' => $cid, ':uid' => $uid]);
-            $stmt->execute([':cid' => $cid]);
+                VALUES (:cid, 'Untitled Document', '', 0, 1, :created_by, :updated_by)
+            ")->execute([':cid' => $cid, ':created_by' => $uid, ':updated_by' => $uid]);
+            $stmt = $db->prepare("SELECT * FROM collab_notes WHERE channel_id=? LIMIT 1");
+            $stmt->execute([$cid]);
             $note = $stmt->fetch();
         }
         return $note;
@@ -107,7 +119,7 @@ function collab_notes(PDO $db, int $uid, string $username, int $cid, string $act
     match ($action) {
 
         // ── GET full document for initial load ───────────────────────────────
-        'note_load' => (function() use ($ensureNote) {
+        'note_load' => (function () use ($ensureNote) {
             $note = $ensureNote();
             json_ok([
                 'note' => [
@@ -122,7 +134,7 @@ function collab_notes(PDO $db, int $uid, string $username, int $cid, string $act
         })(),
 
         // ── POST op — receive, transform, persist, broadcast ─────────────────
-        'note_op' => (function() use ($db, $uid, $username, $cid, $body) {
+        'note_op' => (function () use ($db, $uid, $username, $cid, $body) {
             $noteId   = (int)($body['note_id']  ?? 0);
             $opJson   = $body['op']              ?? null;
             $clientRev = (int)($body['revision'] ?? 0);
@@ -140,7 +152,10 @@ function collab_notes(PDO $db, int $uid, string $username, int $cid, string $act
                 );
                 $stmt->execute([':id' => $noteId, ':cid' => $cid]);
                 $note = $stmt->fetch();
-                if (!$note) { $db->rollBack(); json_fail('Note not found', 404); }
+                if (!$note) {
+                    $db->rollBack();
+                    json_fail('Note not found', 404);
+                }
 
                 $serverRev = (int)$note['revision'];
 
@@ -157,7 +172,7 @@ function collab_notes(PDO $db, int $uid, string $username, int $cid, string $act
                     // Transform client op against each committed op
                     foreach ($pending as $pendingJson) {
                         $serverOp = json_decode($pendingJson, true);
-                        [$clientOp, ] = ot_transform($clientOp, $serverOp, 'right');
+                        [$clientOp,] = ot_transform($clientOp, $serverOp, 'right');
                     }
                 }
 
@@ -206,23 +221,22 @@ function collab_notes(PDO $db, int $uid, string $username, int $cid, string $act
                 ]);
 
                 json_ok(['revision' => $newRev, 'last_editor' => $username]);
-
             } catch (\Throwable $e) {
                 $db->rollBack();
                 // Signal client to perform a full resync
                 http_response_code(409);
-                echo json_encode(['ok' => false, 'error' => 'RESYNC', 'detail' => $e->getMessage()]);
+                echo json_encode(['ok' => false, 'error' => 'RESYNC']);
                 exit;
             }
         })(),
 
         // ── POST title-only update (no OT needed) ────────────────────────────
-        'note_title' => (function() use ($db, $uid, $username, $cid, $body) {
+        'note_title' => (function () use ($db, $uid, $username, $cid, $body) {
             $noteId = (int)($body['note_id'] ?? 0);
             $title  = mb_substr(trim($body['title'] ?? ''), 0, 200) ?: 'Untitled Document';
             if (!$noteId) json_fail('note_id required');
             $db->prepare("UPDATE collab_notes SET title=:t, updated_by=:uid WHERE id=:id AND channel_id=:cid")
-               ->execute([':t' => $title, ':uid' => $uid, ':id' => $noteId, ':cid' => $cid]);
+                ->execute([':t' => $title, ':uid' => $uid, ':id' => $noteId, ':cid' => $cid]);
             ws_broadcast($db, $cid, [
                 'type'       => 'collab_note_op',
                 'channel_id' => $cid,
@@ -235,12 +249,12 @@ function collab_notes(PDO $db, int $uid, string $username, int $cid, string $act
         })(),
 
         // ── Legacy full-save (fallback for clients without OT engine) ─────────
-        'get' => (function() use ($ensureNote) {
+        'get' => (function () use ($ensureNote) {
             $note = $ensureNote();
             json_ok(['note' => $note]);
         })(),
 
-        'save' => (function() use ($db, $uid, $username, $cid, $body, $ensureNote) {
+        'save' => (function () use ($db, $uid, $username, $cid, $body, $ensureNote) {
             $title   = mb_substr(trim($body['title']   ?? 'Untitled Document'), 0, 200);
             $content = mb_substr($body['content'] ?? '', 0, 65535);
             $version = (int)($body['version'] ?? 0);
@@ -253,20 +267,20 @@ function collab_notes(PDO $db, int $uid, string $username, int $cid, string $act
                 $db->prepare(
                     "UPDATE collab_notes SET title=:t, content=:c, version=version+1,
                      revision=revision+1, updated_by=:uid WHERE id=:id"
-                )->execute([':t'=>$title,':c'=>$content,':uid'=>$uid,':id'=>$note['id']]);
+                )->execute([':t' => $title, ':c' => $content, ':uid' => $uid, ':id' => $note['id']]);
                 $noteId = (int)$note['id'];
                 $newVer = (int)$note['version'] + 1;
             } else {
                 $db->prepare(
                     "INSERT INTO collab_notes (channel_id,title,content,version,revision,created_by,updated_by)
                      VALUES(:cid,:t,:c,1,1,:uid,:uid)"
-                )->execute([':cid'=>$cid,':t'=>$title,':c'=>$content,':uid'=>$uid]);
+                )->execute([':cid' => $cid, ':t' => $title, ':c' => $content, ':uid' => $uid]);
                 $noteId = (int)$db->lastInsertId();
                 $newVer = 1;
             }
             ws_broadcast($db, $cid, [
                 'type'      => 'collab_note_updated',
-                'channel_id'=> $cid,
+                'channel_id' => $cid,
                 'note_id'   => $noteId,
                 'title'     => $title,
                 'content'   => $content,
@@ -278,6 +292,7 @@ function collab_notes(PDO $db, int $uid, string $username, int $cid, string $act
 
         default => json_fail("Unknown notes action: $action"),
     };
+    throw new LogicException('Notes dispatch unexpectedly returned');
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -288,8 +303,10 @@ function collab_notes(PDO $db, int $uid, string $username, int $cid, string $act
  * Apply an OT op (array of retain/insert/delete components) to a string.
  * @throws \RuntimeException on inconsistency
  */
-function ot_apply(string $s, array $op): string {
-    $idx = 0; $out = '';
+function ot_apply(string $s, array $op): string
+{
+    $idx = 0;
+    $out = '';
     foreach ($op as $c) {
         if (isset($c['retain'])) {
             $n = (int)$c['retain'];
@@ -314,55 +331,98 @@ function ot_apply(string $s, array $op): string {
  * Transform op_a against op_b. Returns [a_prime, b_prime].
  * side = 'left' means op_a wins ties (server wins).
  */
-function ot_transform(array $a, array $b, string $side = 'left'): array {
-    $a2 = []; $b2 = [];
-    $ai = 0; $bi = 0;
+function ot_transform(array $a, array $b, string $side = 'left'): array
+{
+    $a2 = [];
+    $b2 = [];
+    $ai = 0;
+    $bi = 0;
 
     $aComp = $a[$ai] ?? null;
     $bComp = $b[$bi] ?? null;
 
-    $pushA = function($c) use (&$a2) {
+    $pushA = function ($c) use (&$a2) {
         $last = end($a2);
-        if ($last && isset($last['retain']) && isset($c['retain'])) { $a2[array_key_last($a2)]['retain'] += $c['retain']; return; }
-        if ($last && isset($last['insert']) && isset($c['insert'])) { $a2[array_key_last($a2)]['insert'] .= $c['insert']; return; }
-        if ($last && isset($last['delete']) && isset($c['delete'])) { $a2[array_key_last($a2)]['delete'] += $c['delete']; return; }
+        if ($last && isset($last['retain']) && isset($c['retain'])) {
+            $a2[array_key_last($a2)]['retain'] += $c['retain'];
+            return;
+        }
+        if ($last && isset($last['insert']) && isset($c['insert'])) {
+            $a2[array_key_last($a2)]['insert'] .= $c['insert'];
+            return;
+        }
+        if ($last && isset($last['delete']) && isset($c['delete'])) {
+            $a2[array_key_last($a2)]['delete'] += $c['delete'];
+            return;
+        }
         $a2[] = $c;
     };
-    $pushB = function($c) use (&$b2) {
+    $pushB = function ($c) use (&$b2) {
         $last = end($b2);
-        if ($last && isset($last['retain']) && isset($c['retain'])) { $b2[array_key_last($b2)]['retain'] += $c['retain']; return; }
-        if ($last && isset($last['insert']) && isset($c['insert'])) { $b2[array_key_last($b2)]['insert'] .= $c['insert']; return; }
-        if ($last && isset($last['delete']) && isset($c['delete'])) { $b2[array_key_last($b2)]['delete'] += $c['delete']; return; }
+        if ($last && isset($last['retain']) && isset($c['retain'])) {
+            $b2[array_key_last($b2)]['retain'] += $c['retain'];
+            return;
+        }
+        if ($last && isset($last['insert']) && isset($c['insert'])) {
+            $b2[array_key_last($b2)]['insert'] .= $c['insert'];
+            return;
+        }
+        if ($last && isset($last['delete']) && isset($c['delete'])) {
+            $b2[array_key_last($b2)]['delete'] += $c['delete'];
+            return;
+        }
         $b2[] = $c;
     };
 
     while ($aComp !== null || $bComp !== null) {
 
         if (isset($aComp['insert']) && isset($bComp['insert'])) {
-            if ($side === 'left') { $pushA(['insert' => $aComp['insert']]); $pushB(['retain' => mb_strlen($aComp['insert'])]); $aComp = $a[++$ai] ?? null; }
-            else                  { $pushA(['retain' => mb_strlen($bComp['insert'])]); $pushB(['insert' => $bComp['insert']]); $bComp = $b[++$bi] ?? null; }
+            if ($side === 'left') {
+                $pushA(['insert' => $aComp['insert']]);
+                $pushB(['retain' => mb_strlen($aComp['insert'])]);
+                $aComp = $a[++$ai] ?? null;
+            } else {
+                $pushA(['retain' => mb_strlen($bComp['insert'])]);
+                $pushB(['insert' => $bComp['insert']]);
+                $bComp = $b[++$bi] ?? null;
+            }
             continue;
         }
-        if (isset($aComp['insert'])) { $pushA(['insert' => $aComp['insert']]); $pushB(['retain' => mb_strlen($aComp['insert'])]); $aComp = $a[++$ai] ?? null; continue; }
-        if (isset($bComp['insert'])) { $pushA(['retain' => mb_strlen($bComp['insert'])]); $pushB(['insert' => $bComp['insert']]); $bComp = $b[++$bi] ?? null; continue; }
+        if (isset($aComp['insert'])) {
+            $pushA(['insert' => $aComp['insert']]);
+            $pushB(['retain' => mb_strlen($aComp['insert'])]);
+            $aComp = $a[++$ai] ?? null;
+            continue;
+        }
+        if (isset($bComp['insert'])) {
+            $pushA(['retain' => mb_strlen($bComp['insert'])]);
+            $pushB(['insert' => $bComp['insert']]);
+            $bComp = $b[++$bi] ?? null;
+            continue;
+        }
 
         if ($aComp === null || $bComp === null) break;
 
         if (isset($aComp['retain']) && isset($bComp['retain'])) {
             $n = min($aComp['retain'], $bComp['retain']);
-            $pushA(['retain'=>$n]); $pushB(['retain'=>$n]);
-            $aComp['retain'] -= $n; $bComp['retain'] -= $n;
+            $pushA(['retain' => $n]);
+            $pushB(['retain' => $n]);
+            $aComp['retain'] -= $n;
+            $bComp['retain'] -= $n;
         } elseif (isset($aComp['delete']) && isset($bComp['delete'])) {
             $n = min($aComp['delete'], $bComp['delete']);
-            $aComp['delete'] -= $n; $bComp['delete'] -= $n;
+            $aComp['delete'] -= $n;
+            $bComp['delete'] -= $n;
         } elseif (isset($aComp['delete']) && isset($bComp['retain'])) {
             $n = min($aComp['delete'], $bComp['retain']);
-            $pushA(['delete'=>$n]);
-            $aComp['delete'] -= $n; $bComp['retain'] -= $n;
+            $pushA(['delete' => $n]);
+            $aComp['delete'] -= $n;
+            $bComp['retain'] -= $n;
         } elseif (isset($aComp['retain']) && isset($bComp['delete'])) {
             $n = min($aComp['retain'], $bComp['delete']);
-            $pushB(['delete'=>$n]);
-            $aComp['retain'] -= $n; $bComp['delete'] -= $n;
+            $pushB(['delete' => $n]);
+            $aComp['retain'] -= $n;
+            $bComp['delete'] -= $n;
         }
 
         if (isset($aComp['retain']) && $aComp['retain'] === 0) $aComp = $a[++$ai] ?? null;
@@ -381,18 +441,19 @@ function ot_transform(array $a, array $b, string $side = 'left'): array {
 // ════════════════════════════════════════════════════════════════════════════
 // TASK BOARD (Kanban)
 // ════════════════════════════════════════════════════════════════════════════
-function collab_tasks(PDO $db, int $uid, string $username, int $cid, string $action, array $body, string $method): never {
+function collab_tasks(PDO $db, int $uid, string $username, int $cid, string $action, array $body, string $method): never
+{
 
     match ($action) {
 
-        'get_board' => (function() use ($db, $uid, $cid) {
+        'get_board' => (function () use ($db, $uid, $cid) {
             // Auto-create board + default columns on first access
             $stmt = $db->prepare("SELECT * FROM collab_boards WHERE channel_id=:cid LIMIT 1");
             $stmt->execute([':cid' => $cid]);
             $board = $stmt->fetch();
             if (!$board) {
                 $db->prepare("INSERT INTO collab_boards (channel_id, name, created_by) VALUES(:cid,'Task Board',:uid)")
-                   ->execute([':cid' => $cid, ':uid' => $uid]);
+                    ->execute([':cid' => $cid, ':uid' => $uid]);
                 $boardId = (int)$db->lastInsertId();
                 $defaults = [
                     ['To Do',       '#64748b', 0],
@@ -401,7 +462,7 @@ function collab_tasks(PDO $db, int $uid, string $username, int $cid, string $act
                     ['Done',        '#22c55e', 3],
                 ];
                 $colStmt = $db->prepare("INSERT INTO collab_columns (board_id,title,color,position) VALUES(:bid,:t,:c,:p)");
-                foreach ($defaults as [$t, $c, $p]) $colStmt->execute([':bid'=>$boardId,':t'=>$t,':c'=>$c,':p'=>$p]);
+                foreach ($defaults as [$t, $c, $p]) $colStmt->execute([':bid' => $boardId, ':t' => $t, ':c' => $c, ':p' => $p]);
                 $board = ['id' => $boardId, 'channel_id' => $cid, 'name' => 'Task Board'];
             }
             $boardId = (int)$board['id'];
@@ -425,53 +486,68 @@ function collab_tasks(PDO $db, int $uid, string $username, int $cid, string $act
             json_ok(['board' => $board, 'columns' => $columns]);
         })(),
 
-        'add_task' => (function() use ($db, $uid, $username, $cid, $body) {
+        'add_task' => (function () use ($db, $uid, $username, $cid, $body) {
             $colId  = (int)($body['column_id'] ?? 0);
             $title  = mb_substr(trim($body['title'] ?? ''), 0, 300);
             if (!$colId || $title === '') json_fail('column_id and title required');
 
-            $stmt = $db->prepare("SELECT board_id FROM collab_columns WHERE id=:cid LIMIT 1");
-            $stmt->execute([':cid' => $colId]);
+            $stmt = $db->prepare("SELECT c.board_id FROM collab_columns c JOIN collab_boards b ON b.id=c.board_id WHERE c.id=:cid AND b.channel_id=:channel_id LIMIT 1");
+            $stmt->execute([':cid' => $colId, ':channel_id' => $cid]);
             $col = $stmt->fetch();
             if (!$col) json_fail('Column not found', 404);
 
             $db->prepare("INSERT INTO collab_tasks (column_id,board_id,title,description,priority,due_date,assignee_id,created_by)
                 VALUES(:col,:bid,:title,:desc,:priority,:due,:assignee,:uid)")
-               ->execute([
-                    ':col' => $colId, ':bid' => $col['board_id'],
+                ->execute([
+                    ':col' => $colId,
+                    ':bid' => $col['board_id'],
                     ':title' => $title,
                     ':desc'  => mb_substr($body['description'] ?? '', 0, 2000),
-                    ':priority' => in_array($body['priority']??'', ['low','medium','high','urgent']) ? $body['priority'] : 'medium',
+                    ':priority' => in_array($body['priority'] ?? '', ['low', 'medium', 'high', 'urgent']) ? $body['priority'] : 'medium',
                     ':due'   => $body['due_date'] ?: null,
                     ':assignee' => $body['assignee_id'] ?: null,
                     ':uid'   => $uid,
-               ]);
+                ]);
             $taskId = (int)$db->lastInsertId();
 
-            ws_broadcast($db, $cid, ['type' => 'collab_task_added', 'channel_id' => $cid,
-                'task_id' => $taskId, 'column_id' => $colId, 'title' => $title, 'actor' => $username]);
+            ws_broadcast($db, $cid, [
+                'type' => 'collab_task_added',
+                'channel_id' => $cid,
+                'task_id' => $taskId,
+                'column_id' => $colId,
+                'title' => $title,
+                'actor' => $username
+            ]);
             json_ok(['task_id' => $taskId]);
         })(),
 
-        'move_task' => (function() use ($db, $username, $cid, $body) {
+        'move_task' => (function () use ($db, $username, $cid, $body) {
             $taskId   = (int)($body['task_id']    ?? 0);
             $toCol    = (int)($body['to_column']  ?? 0);
             $position = (int)($body['position']   ?? 0);
             if (!$taskId || !$toCol) json_fail('task_id and to_column required');
 
-            $db->prepare("UPDATE collab_tasks SET column_id=:col, position=:pos WHERE id=:tid")
-               ->execute([':col' => $toCol, ':pos' => $position, ':tid' => $taskId]);
+            $updated = $db->prepare("UPDATE collab_tasks t JOIN collab_boards b ON b.id=t.board_id JOIN collab_columns c ON c.id=:col AND c.board_id=b.id SET t.column_id=:col2, t.position=:pos WHERE t.id=:tid AND b.channel_id=:channel_id");
+            $updated->execute([':col' => $toCol, ':col2' => $toCol, ':pos' => $position, ':tid' => $taskId, ':channel_id' => $cid]);
+            if ($updated->rowCount() === 0) json_fail('Task or destination column not found', 404);
 
-            ws_broadcast($db, $cid, ['type' => 'collab_task_moved', 'channel_id' => $cid,
-                'task_id' => $taskId, 'to_column' => $toCol, 'position' => $position, 'actor' => $username]);
+            ws_broadcast($db, $cid, [
+                'type' => 'collab_task_moved',
+                'channel_id' => $cid,
+                'task_id' => $taskId,
+                'to_column' => $toCol,
+                'position' => $position,
+                'actor' => $username
+            ]);
             json_ok();
         })(),
 
-        'update_task' => (function() use ($db, $username, $cid, $body) {
+        'update_task' => (function () use ($db, $username, $cid, $body) {
             $taskId = (int)($body['task_id'] ?? 0);
             if (!$taskId) json_fail('task_id required');
-            $allowed = ['title','description','priority','due_date','assignee_id','done'];
-            $sets = []; $params = [':tid' => $taskId];
+            $allowed = ['title', 'description', 'priority', 'due_date', 'assignee_id', 'done'];
+            $sets = [];
+            $params = [':tid' => $taskId];
             foreach ($allowed as $f) {
                 if (array_key_exists($f, $body)) {
                     $sets[] = "$f = :$f";
@@ -479,41 +555,55 @@ function collab_tasks(PDO $db, int $uid, string $username, int $cid, string $act
                 }
             }
             if (!$sets) json_fail('Nothing to update');
-            $db->prepare("UPDATE collab_tasks SET " . implode(', ', $sets) . " WHERE id=:tid")->execute($params);
-            ws_broadcast($db, $cid, ['type' => 'collab_task_updated', 'channel_id' => $cid,
-                'task_id' => $taskId, 'changes' => array_intersect_key($body, array_flip($allowed)), 'actor' => $username]);
+            $params[':channel_id'] = $cid;
+            $db->prepare("UPDATE collab_tasks t JOIN collab_boards b ON b.id=t.board_id SET " . implode(', ', array_map(fn($set) => 't.' . $set, $sets)) . " WHERE t.id=:tid AND b.channel_id=:channel_id")->execute($params);
+            ws_broadcast($db, $cid, [
+                'type' => 'collab_task_updated',
+                'channel_id' => $cid,
+                'task_id' => $taskId,
+                'changes' => array_intersect_key($body, array_flip($allowed)),
+                'actor' => $username
+            ]);
             json_ok();
         })(),
 
-        'delete_task' => (function() use ($db, $username, $cid, $body) {
+        'delete_task' => (function () use ($db, $username, $cid, $body) {
             $taskId = (int)($body['task_id'] ?? 0);
             if (!$taskId) json_fail('task_id required');
-            $db->prepare("DELETE FROM collab_tasks WHERE id=:tid")->execute([':tid' => $taskId]);
-            ws_broadcast($db, $cid, ['type' => 'collab_task_deleted', 'channel_id' => $cid,
-                'task_id' => $taskId, 'actor' => $username]);
+            $deleted = $db->prepare("DELETE t FROM collab_tasks t JOIN collab_boards b ON b.id=t.board_id WHERE t.id=:tid AND b.channel_id=:channel_id");
+            $deleted->execute([':tid' => $taskId, ':channel_id' => $cid]);
+            if ($deleted->rowCount() === 0) json_fail('Task not found', 404);
+            ws_broadcast($db, $cid, [
+                'type' => 'collab_task_deleted',
+                'channel_id' => $cid,
+                'task_id' => $taskId,
+                'actor' => $username
+            ]);
             json_ok();
         })(),
 
         default => json_fail("Unknown tasks action: $action"),
     };
+    throw new LogicException('Tasks dispatch unexpectedly returned');
 }
 
 // ════════════════════════════════════════════════════════════════════════════
 // CODE SANDBOX
 // ════════════════════════════════════════════════════════════════════════════
-function collab_code(PDO $db, int $uid, string $username, int $cid, string $action, array $body, string $method): never {
-    $ALLOWED_LANGS = ['javascript','python','php','html','css','sql','bash','json','markdown','typescript'];
+function collab_code(PDO $db, int $uid, string $username, int $cid, string $action, array $body, string $method): never
+{
+    $ALLOWED_LANGS = ['javascript', 'python', 'php', 'html', 'css', 'sql', 'bash', 'json', 'markdown', 'typescript'];
 
     match ($action) {
 
-        'get' => (function() use ($db, $cid) {
+        'get' => (function () use ($db, $cid) {
             $stmt = $db->prepare("SELECT * FROM collab_snippets WHERE channel_id=:cid ORDER BY updated_at DESC LIMIT 1");
             $stmt->execute([':cid' => $cid]);
             $snippet = $stmt->fetch() ?: ['id' => null, 'title' => 'Untitled', 'language' => 'javascript', 'code' => '', 'version' => 0];
             json_ok(['snippet' => $snippet]);
         })(),
 
-        'save' => (function() use ($db, $uid, $username, $cid, $body, $ALLOWED_LANGS) {
+        'save' => (function () use ($db, $uid, $username, $cid, $body, $ALLOWED_LANGS) {
             $title   = mb_substr(trim($body['title'] ?? 'Untitled'), 0, 200);
             $lang    = in_array($body['language'] ?? '', $ALLOWED_LANGS) ? $body['language'] : 'javascript';
             $code    = mb_substr($body['code'] ?? '', 0, 65535);
@@ -526,23 +616,30 @@ function collab_code(PDO $db, int $uid, string $username, int $cid, string $acti
             if ($existing) {
                 if ((int)$existing['version'] > $version) json_fail('Version conflict', 409);
                 $db->prepare("UPDATE collab_snippets SET title=:t,language=:l,code=:c,version=version+1,updated_by=:uid WHERE id=:id")
-                   ->execute([':t' => $title, ':l' => $lang, ':c' => $code, ':uid' => $uid, ':id' => $existing['id']]);
+                    ->execute([':t' => $title, ':l' => $lang, ':c' => $code, ':uid' => $uid, ':id' => $existing['id']]);
                 $snipId = (int)$existing['id'];
                 $newVer = $version + 1;
             } else {
-                $db->prepare("INSERT INTO collab_snippets (channel_id,title,language,code,version,created_by,updated_by) VALUES(:cid,:t,:l,:c,1,:uid,:uid)")
-                   ->execute([':cid' => $cid, ':t' => $title, ':l' => $lang, ':c' => $code, ':uid' => $uid]);
+                $db->prepare("INSERT INTO collab_snippets (channel_id,title,language,code,version,created_by,updated_by) VALUES(:cid,:t,:l,:c,1,:created_by,:updated_by)")
+                    ->execute([':cid' => $cid, ':t' => $title, ':l' => $lang, ':c' => $code, ':created_by' => $uid, ':updated_by' => $uid]);
                 $snipId = (int)$db->lastInsertId();
                 $newVer = 1;
             }
 
-            ws_broadcast($db, $cid, ['type' => 'collab_code_updated', 'channel_id' => $cid,
-                'snippet_id' => $snipId, 'title' => $title, 'language' => $lang,
-                'code' => $code, 'version' => $newVer, 'editor' => $username]);
+            ws_broadcast($db, $cid, [
+                'type' => 'collab_code_updated',
+                'channel_id' => $cid,
+                'snippet_id' => $snipId,
+                'title' => $title,
+                'language' => $lang,
+                'code' => $code,
+                'version' => $newVer,
+                'editor' => $username
+            ]);
             json_ok(['snippet_id' => $snipId, 'version' => $newVer]);
         })(),
 
-        'run_history' => (function() use ($db, $cid) {
+        'run_history' => (function () use ($db, $cid) {
             $stmt = $db->prepare("
                 SELECT r.*, u.username
                 FROM collab_snippet_runs r
@@ -555,31 +652,41 @@ function collab_code(PDO $db, int $uid, string $username, int $cid, string $acti
             json_ok(['runs' => $stmt->fetchAll()]);
         })(),
 
-        'log_run' => (function() use ($db, $uid, $username, $cid, $body) {
+        'log_run' => (function () use ($db, $uid, $username, $cid, $body) {
             $snipId = (int)($body['snippet_id'] ?? 0);
             if (!$snipId) json_fail('snippet_id required');
+            $check = $db->prepare("SELECT id FROM collab_snippets WHERE id=:sid AND channel_id=:cid LIMIT 1");
+            $check->execute([':sid' => $snipId, ':cid' => $cid]);
+            if (!$check->fetch()) json_fail('Snippet not found', 404);
             $db->prepare("INSERT INTO collab_snippet_runs (snippet_id,user_id,output,error,duration_ms)
                 VALUES(:sid,:uid,:out,:err,:dur)")
-               ->execute([
-                    ':sid' => $snipId, ':uid' => $uid,
+                ->execute([
+                    ':sid' => $snipId,
+                    ':uid' => $uid,
                     ':out' => mb_substr($body['output'] ?? '', 0, 10000),
                     ':err' => mb_substr($body['error']  ?? '', 0, 2000),
                     ':dur' => (int)($body['duration_ms'] ?? 0),
-               ]);
-            ws_broadcast($db, $cid, ['type' => 'collab_code_run', 'channel_id' => $cid,
-                'snippet_id' => $snipId, 'runner' => $username,
-                'has_error' => !empty($body['error'])]);
+                ]);
+            ws_broadcast($db, $cid, [
+                'type' => 'collab_code_run',
+                'channel_id' => $cid,
+                'snippet_id' => $snipId,
+                'runner' => $username,
+                'has_error' => !empty($body['error'])
+            ]);
             json_ok(['run_id' => (int)$db->lastInsertId()]);
         })(),
 
         default => json_fail("Unknown code action: $action"),
     };
+    throw new LogicException('Code dispatch unexpectedly returned');
 }
 
 // ════════════════════════════════════════════════════════════════════════════
 // STUDY TIMER  (shared Pomodoro)
 // ════════════════════════════════════════════════════════════════════════════
-function collab_timer(PDO $db, int $uid, string $username, int $cid, string $action, array $body, string $method): never {
+function collab_timer(PDO $db, int $uid, string $username, int $cid, string $action, array $body, string $method): never
+{
 
     // Auto-create timer row
     $ensure = $db->prepare("INSERT IGNORE INTO collab_timers (channel_id) VALUES(:cid)");
@@ -589,7 +696,7 @@ function collab_timer(PDO $db, int $uid, string $username, int $cid, string $act
 
     match ($action) {
 
-        'get' => (function() use ($fetch) {
+        'get' => (function () use ($fetch) {
             $t = $fetch();
             // Compute live elapsed if running
             if ($t['state'] === 'running' && $t['started_at']) {
@@ -598,139 +705,156 @@ function collab_timer(PDO $db, int $uid, string $username, int $cid, string $act
             json_ok(['timer' => $t]);
         })(),
 
-        'start' => (function() use ($db, $uid, $username, $cid, $body, $fetch) {
+        'start' => (function () use ($db, $uid, $username, $cid, $body, $fetch) {
             $t = $fetch();
             if ($t['state'] === 'running') json_fail('Timer already running');
-            $mode    = in_array($body['mode']??'', ['focus','short_break','long_break']) ? $body['mode'] : 'focus';
+            $mode    = in_array($body['mode'] ?? '', ['focus', 'short_break', 'long_break']) ? $body['mode'] : 'focus';
             $dur     = min(60, max(1, (int)($body['duration_min'] ?? ($mode === 'focus' ? 25 : ($mode === 'short_break' ? 5 : 15)))));
             $db->prepare("UPDATE collab_timers SET state='running', mode=:mode, duration_min=:dur,
                 started_at=NOW(), elapsed_sec=0, started_by=:uid WHERE channel_id=:cid")
-               ->execute([':mode'=>$mode,':dur'=>$dur,':uid'=>$uid,':cid'=>$cid]);
-            ws_broadcast($db, $cid, ['type'=>'collab_timer_start','channel_id'=>$cid,
-                'mode'=>$mode,'duration_min'=>$dur,'actor'=>$username]);
+                ->execute([':mode' => $mode, ':dur' => $dur, ':uid' => $uid, ':cid' => $cid]);
+            ws_broadcast($db, $cid, [
+                'type' => 'collab_timer_start',
+                'channel_id' => $cid,
+                'mode' => $mode,
+                'duration_min' => $dur,
+                'actor' => $username
+            ]);
             json_ok(['timer' => $fetch()]);
         })(),
 
-        'pause' => (function() use ($db, $username, $cid, $fetch) {
+        'pause' => (function () use ($db, $username, $cid, $fetch) {
             $t = $fetch();
             if ($t['state'] !== 'running') json_fail('Timer not running');
             $elapsed = (int)$t['elapsed_sec'] + (time() - strtotime($t['started_at']));
             $db->prepare("UPDATE collab_timers SET state='paused', elapsed_sec=:el, paused_at=NOW() WHERE channel_id=:cid")
-               ->execute([':el'=>$elapsed,':cid'=>$cid]);
-            ws_broadcast($db, $cid, ['type'=>'collab_timer_pause','channel_id'=>$cid,'elapsed_sec'=>$elapsed,'actor'=>$username]);
-            json_ok(['elapsed_sec'=>$elapsed]);
+                ->execute([':el' => $elapsed, ':cid' => $cid]);
+            ws_broadcast($db, $cid, ['type' => 'collab_timer_pause', 'channel_id' => $cid, 'elapsed_sec' => $elapsed, 'actor' => $username]);
+            json_ok(['elapsed_sec' => $elapsed]);
         })(),
 
-        'resume' => (function() use ($db, $username, $cid, $fetch) {
+        'resume' => (function () use ($db, $username, $cid, $fetch) {
             $t = $fetch();
             if ($t['state'] !== 'paused') json_fail('Timer not paused');
             $db->prepare("UPDATE collab_timers SET state='running', started_at=NOW() WHERE channel_id=:cid")
-               ->execute([':cid'=>$cid]);
-            ws_broadcast($db, $cid, ['type'=>'collab_timer_resume','channel_id'=>$cid,'elapsed_sec'=>(int)$t['elapsed_sec'],'actor'=>$username]);
+                ->execute([':cid' => $cid]);
+            ws_broadcast($db, $cid, ['type' => 'collab_timer_resume', 'channel_id' => $cid, 'elapsed_sec' => (int)$t['elapsed_sec'], 'actor' => $username]);
             json_ok();
         })(),
 
-        'reset' => (function() use ($db, $username, $cid) {
+        'reset' => (function () use ($db, $username, $cid) {
             $db->prepare("UPDATE collab_timers SET state='idle', elapsed_sec=0, started_at=NULL, paused_at=NULL WHERE channel_id=:cid")
-               ->execute([':cid'=>$cid]);
-            ws_broadcast($db, $cid, ['type'=>'collab_timer_reset','channel_id'=>$cid,'actor'=>$username]);
+                ->execute([':cid' => $cid]);
+            ws_broadcast($db, $cid, ['type' => 'collab_timer_reset', 'channel_id' => $cid, 'actor' => $username]);
             json_ok();
         })(),
 
-        'complete' => (function() use ($db, $uid, $username, $cid, $fetch) {
+        'complete' => (function () use ($db, $uid, $username, $cid, $fetch) {
             $t = $fetch();
             $db->prepare("UPDATE collab_timers SET state='done', elapsed_sec=0, round=LEAST(round+1,total_rounds) WHERE channel_id=:cid")
-               ->execute([':cid'=>$cid]);
+                ->execute([':cid' => $cid]);
             // Log completion for analytics
             $db->prepare("INSERT INTO collab_timer_log (channel_id,user_id,mode,duration_min,completed) VALUES(:cid,:uid,:mode,:dur,1)")
-               ->execute([':cid'=>$cid,':uid'=>$uid,':mode'=>$t['mode'],':dur'=>$t['duration_min']]);
-            ws_broadcast($db, $cid, ['type'=>'collab_timer_done','channel_id'=>$cid,'mode'=>$t['mode'],'actor'=>$username]);
+                ->execute([':cid' => $cid, ':uid' => $uid, ':mode' => $t['mode'], ':dur' => $t['duration_min']]);
+            ws_broadcast($db, $cid, ['type' => 'collab_timer_done', 'channel_id' => $cid, 'mode' => $t['mode'], 'actor' => $username]);
             json_ok();
         })(),
 
         default => json_fail("Unknown timer action: $action"),
     };
+    throw new LogicException('Timer dispatch unexpectedly returned');
 }
 
 // ════════════════════════════════════════════════════════════════════════════
 // QUIZ BUILDER
 // ════════════════════════════════════════════════════════════════════════════
-function collab_quiz(PDO $db, int $uid, string $username, int $cid, string $action, array $body, string $method): never {
+function collab_quiz(PDO $db, int $uid, string $username, int $cid, string $action, array $body, string $method): never
+{
 
     match ($action) {
 
-        'list' => (function() use ($db, $cid) {
+        'list' => (function () use ($db, $cid) {
             $stmt = $db->prepare("SELECT q.*, u.username AS creator FROM collab_quizzes q JOIN users u ON u.id=q.created_by WHERE q.channel_id=:cid ORDER BY q.created_at DESC");
-            $stmt->execute([':cid'=>$cid]);
-            json_ok(['quizzes'=>$stmt->fetchAll()]);
+            $stmt->execute([':cid' => $cid]);
+            json_ok(['quizzes' => $stmt->fetchAll()]);
         })(),
 
-        'get' => (function() use ($db, $cid, $body) {
+        'get' => (function () use ($db, $cid, $body) {
             $qid = (int)($body['quiz_id'] ?? $_GET['quiz_id'] ?? 0);
             if (!$qid) json_fail('quiz_id required');
             $q = $db->prepare("SELECT * FROM collab_quizzes WHERE id=:qid AND channel_id=:cid LIMIT 1");
-            $q->execute([':qid'=>$qid,':cid'=>$cid]);
+            $q->execute([':qid' => $qid, ':cid' => $cid]);
             $quiz = $q->fetch();
             if (!$quiz) json_fail('Quiz not found', 404);
             $qs = $db->prepare("SELECT * FROM collab_quiz_questions WHERE quiz_id=:qid ORDER BY position");
-            $qs->execute([':qid'=>$qid]);
+            $qs->execute([':qid' => $qid]);
             $quiz['questions'] = $qs->fetchAll();
-            json_ok(['quiz'=>$quiz]);
+            json_ok(['quiz' => $quiz]);
         })(),
 
-        'create' => (function() use ($db, $uid, $username, $cid, $body) {
-            $title = mb_substr(trim($body['title']??''), 0, 200);
+        'create' => (function () use ($db, $uid, $username, $cid, $body) {
+            $title = mb_substr(trim($body['title'] ?? ''), 0, 200);
             if ($title === '') json_fail('title required');
             $db->prepare("INSERT INTO collab_quizzes (channel_id,title,description,time_limit,created_by) VALUES(:cid,:t,:desc,:lim,:uid)")
-               ->execute([':cid'=>$cid,':t'=>$title,':desc'=>mb_substr($body['description']??'',0,1000),
-                          ':lim'=>$body['time_limit']??null,':uid'=>$uid]);
+                ->execute([
+                    ':cid' => $cid,
+                    ':t' => $title,
+                    ':desc' => mb_substr($body['description'] ?? '', 0, 1000),
+                    ':lim' => $body['time_limit'] ?? null,
+                    ':uid' => $uid
+                ]);
             $qid = (int)$db->lastInsertId();
 
             // Insert questions if provided
             if (!empty($body['questions']) && is_array($body['questions'])) {
                 $qs = $db->prepare("INSERT INTO collab_quiz_questions (quiz_id,question,type,options,correct,points,position) VALUES(:qid,:q,:type,:opts,:corr,:pts,:pos)");
                 foreach (array_slice($body['questions'], 0, 50) as $i => $q) {
-                    $qs->execute([':qid'=>$qid,':q'=>mb_substr($q['question']??'',0,1000),
-                                  ':type'=>in_array($q['type']??'',['mcq','true_false','short_answer'])?$q['type']:'mcq',
-                                  ':opts'=>isset($q['options'])?json_encode($q['options']):null,
-                                  ':corr'=>mb_substr($q['correct']??'',0,500),
-                                  ':pts'=>min(10, max(1,(int)($q['points']??1))), ':pos'=>$i]);
+                    $qs->execute([
+                        ':qid' => $qid,
+                        ':q' => mb_substr($q['question'] ?? '', 0, 1000),
+                        ':type' => in_array($q['type'] ?? '', ['mcq', 'true_false', 'short_answer']) ? $q['type'] : 'mcq',
+                        ':opts' => isset($q['options']) ? json_encode($q['options']) : null,
+                        ':corr' => mb_substr($q['correct'] ?? '', 0, 500),
+                        ':pts' => min(10, max(1, (int)($q['points'] ?? 1))),
+                        ':pos' => $i
+                    ]);
                 }
             }
-            ws_broadcast($db, $cid, ['type'=>'collab_quiz_created','channel_id'=>$cid,'quiz_id'=>$qid,'title'=>$title,'actor'=>$username]);
-            json_ok(['quiz_id'=>$qid]);
+            ws_broadcast($db, $cid, ['type' => 'collab_quiz_created', 'channel_id' => $cid, 'quiz_id' => $qid, 'title' => $title, 'actor' => $username]);
+            json_ok(['quiz_id' => $qid]);
         })(),
 
-        'set_state' => (function() use ($db, $uid, $username, $cid, $body) {
-            $qid   = (int)($body['quiz_id']??0);
-            $state = in_array($body['state']??'', ['draft','live','closed']) ? $body['state'] : '';
+        'set_state' => (function () use ($db, $uid, $username, $cid, $body) {
+            $qid   = (int)($body['quiz_id'] ?? 0);
+            $state = in_array($body['state'] ?? '', ['draft', 'live', 'closed']) ? $body['state'] : '';
             if (!$qid || !$state) json_fail('quiz_id and state required');
             // Only creator can change state
             $q = $db->prepare("SELECT created_by FROM collab_quizzes WHERE id=:qid AND channel_id=:cid LIMIT 1");
-            $q->execute([':qid'=>$qid,':cid'=>$cid]);
+            $q->execute([':qid' => $qid, ':cid' => $cid]);
             $quiz = $q->fetch();
-            if (!$quiz) json_fail('Quiz not found',404);
-            if ((int)$quiz['created_by'] !== $uid) json_fail('Only the creator can change quiz state',403);
+            if (!$quiz) json_fail('Quiz not found', 404);
+            if ((int)$quiz['created_by'] !== $uid) json_fail('Only the creator can change quiz state', 403);
             $ts = $state === 'live' ? ', started_at=NOW()' : ($state === 'closed' ? ', closed_at=NOW()' : '');
-            $db->prepare("UPDATE collab_quizzes SET state=:state$ts WHERE id=:qid")->execute([':state'=>$state,':qid'=>$qid]);
-            ws_broadcast($db, $cid, ['type'=>'collab_quiz_state','channel_id'=>$cid,'quiz_id'=>$qid,'state'=>$state,'actor'=>$username]);
+            $db->prepare("UPDATE collab_quizzes SET state=:state$ts WHERE id=:qid")->execute([':state' => $state, ':qid' => $qid]);
+            ws_broadcast($db, $cid, ['type' => 'collab_quiz_state', 'channel_id' => $cid, 'quiz_id' => $qid, 'state' => $state, 'actor' => $username]);
             json_ok();
         })(),
 
-        'submit' => (function() use ($db, $uid, $username, $cid, $body) {
-            $qid     = (int)($body['quiz_id']??0);
+        'submit' => (function () use ($db, $uid, $username, $cid, $body) {
+            $qid     = (int)($body['quiz_id'] ?? 0);
             $answers = $body['answers'] ?? [];
             if (!$qid || !is_array($answers)) json_fail('quiz_id and answers required');
 
             $q = $db->prepare("SELECT * FROM collab_quizzes WHERE id=:qid AND channel_id=:cid AND state='live' LIMIT 1");
-            $q->execute([':qid'=>$qid,':cid'=>$cid]);
-            if (!$q->fetch()) json_fail('Quiz not live',400);
+            $q->execute([':qid' => $qid, ':cid' => $cid]);
+            if (!$q->fetch()) json_fail('Quiz not live', 400);
 
             $qs = $db->prepare("SELECT * FROM collab_quiz_questions WHERE quiz_id=:qid");
-            $qs->execute([':qid'=>$qid]);
+            $qs->execute([':qid' => $qid]);
             $questions = $qs->fetchAll();
 
-            $score = 0; $max = 0;
+            $score = 0;
+            $max = 0;
             foreach ($questions as $question) {
                 $max += (int)$question['points'];
                 $given = strtolower(trim((string)($answers[$question['id']] ?? '')));
@@ -741,35 +865,50 @@ function collab_quiz(PDO $db, int $uid, string $username, int $cid, string $acti
             $db->prepare("INSERT INTO collab_quiz_attempts (quiz_id,user_id,answers,score,max_score)
                 VALUES(:qid,:uid,:ans,:score,:max)
                 ON DUPLICATE KEY UPDATE answers=:ans2, score=:score2, max_score=:max2, submitted_at=NOW()")
-               ->execute([':qid'=>$qid,':uid'=>$uid,':ans'=>json_encode($answers),
-                          ':score'=>$score,':max'=>$max,':ans2'=>json_encode($answers),
-                          ':score2'=>$score,':max2'=>$max]);
+                ->execute([
+                    ':qid' => $qid,
+                    ':uid' => $uid,
+                    ':ans' => json_encode($answers),
+                    ':score' => $score,
+                    ':max' => $max,
+                    ':ans2' => json_encode($answers),
+                    ':score2' => $score,
+                    ':max2' => $max
+                ]);
 
-            ws_broadcast($db, $cid, ['type'=>'collab_quiz_submission','channel_id'=>$cid,
-                'quiz_id'=>$qid,'actor'=>$username,'score'=>$score,'max'=>$max]);
-            json_ok(['score'=>$score,'max_score'=>$max]);
+            ws_broadcast($db, $cid, [
+                'type' => 'collab_quiz_submission',
+                'channel_id' => $cid,
+                'quiz_id' => $qid,
+                'actor' => $username,
+                'score' => $score,
+                'max' => $max
+            ]);
+            json_ok(['score' => $score, 'max_score' => $max]);
         })(),
 
-        'results' => (function() use ($db, $body) {
-            $qid = (int)($body['quiz_id']??$_GET['quiz_id']??0);
+        'results' => (function () use ($db, $cid, $body) {
+            $qid = (int)($body['quiz_id'] ?? $_GET['quiz_id'] ?? 0);
             if (!$qid) json_fail('quiz_id required');
-            $stmt = $db->prepare("SELECT a.*, u.username, u.full_name FROM collab_quiz_attempts a JOIN users u ON u.id=a.user_id WHERE a.quiz_id=:qid ORDER BY a.score DESC");
-            $stmt->execute([':qid'=>$qid]);
-            json_ok(['results'=>$stmt->fetchAll()]);
+            $stmt = $db->prepare("SELECT a.*, u.username, u.full_name FROM collab_quiz_attempts a JOIN users u ON u.id=a.user_id JOIN collab_quizzes q ON q.id=a.quiz_id WHERE a.quiz_id=:qid AND q.channel_id=:cid ORDER BY a.score DESC");
+            $stmt->execute([':qid' => $qid, ':cid' => $cid]);
+            json_ok(['results' => $stmt->fetchAll()]);
         })(),
 
         default => json_fail("Unknown quiz action: $action"),
     };
+    throw new LogicException('Quiz dispatch unexpectedly returned');
 }
 
 // ════════════════════════════════════════════════════════════════════════════
 // GROUP CALENDAR
 // ════════════════════════════════════════════════════════════════════════════
-function collab_calendar(PDO $db, int $uid, string $username, int $cid, string $action, array $body, string $method): never {
+function collab_calendar(PDO $db, int $uid, string $username, int $cid, string $action, array $body, string $method): never
+{
 
     match ($action) {
 
-        'list' => (function() use ($db, $cid) {
+        'list' => (function () use ($db, $cid) {
             $from  = $_GET['from'] ?? date('Y-m-01');
             $to    = $_GET['to']   ?? date('Y-m-t');
             $stmt  = $db->prepare("
@@ -780,78 +919,100 @@ function collab_calendar(PDO $db, int $uid, string $username, int $cid, string $
                 WHERE e.channel_id=:cid AND e.start_time BETWEEN :from AND :to
                 ORDER BY e.start_time
             ");
-            $stmt->execute([':cid'=>$cid,':from'=>$from.' 00:00:00',':to'=>$to.' 23:59:59']);
-            json_ok(['events'=>$stmt->fetchAll()]);
+            $stmt->execute([':cid' => $cid, ':from' => $from . ' 00:00:00', ':to' => $to . ' 23:59:59']);
+            json_ok(['events' => $stmt->fetchAll()]);
         })(),
 
-        'create' => (function() use ($db, $uid, $username, $cid, $body) {
-            $title = mb_substr(trim($body['title']??''), 0, 200);
+        'create' => (function () use ($db, $uid, $username, $cid, $body) {
+            $title = mb_substr(trim($body['title'] ?? ''), 0, 200);
             if ($title === '') json_fail('title required');
-            $types = ['study','deadline','meeting','exam','social','other'];
+            $types = ['study', 'deadline', 'meeting', 'exam', 'social', 'other'];
             $db->prepare("INSERT INTO collab_events (channel_id,title,description,type,color,start_time,end_time,all_day,recurring,created_by)
                 VALUES(:cid,:title,:desc,:type,:color,:start,:end,:allday,:rec,:uid)")
-               ->execute([
-                    ':cid'=>$cid,':title'=>$title,
-                    ':desc'=>mb_substr($body['description']??'',0,1000),
-                    ':type'=>in_array($body['type']??'study',$types)?$body['type']:'study',
-                    ':color'=>preg_match('/^#[0-9a-fA-F]{6}$/',$body['color']??'')?$body['color']:'#a855f7',
-                    ':start'=>$body['start_time']??date('Y-m-d H:i:s'),
-                    ':end'=>$body['end_time']??date('Y-m-d H:i:s', strtotime('+1 hour')),
-                    ':allday'=>(int)($body['all_day']??0),
-                    ':rec'=>in_array($body['recurring']??'none',['none','daily','weekly','monthly'])?$body['recurring']:'none',
-                    ':uid'=>$uid,
-               ]);
+                ->execute([
+                    ':cid' => $cid,
+                    ':title' => $title,
+                    ':desc' => mb_substr($body['description'] ?? '', 0, 1000),
+                    ':type' => in_array($body['type'] ?? 'study', $types) ? $body['type'] : 'study',
+                    ':color' => preg_match('/^#[0-9a-fA-F]{6}$/', $body['color'] ?? '') ? $body['color'] : '#a855f7',
+                    ':start' => $body['start_time'] ?? date('Y-m-d H:i:s'),
+                    ':end' => $body['end_time'] ?? date('Y-m-d H:i:s', strtotime('+1 hour')),
+                    ':allday' => (int)($body['all_day'] ?? 0),
+                    ':rec' => in_array($body['recurring'] ?? 'none', ['none', 'daily', 'weekly', 'monthly']) ? $body['recurring'] : 'none',
+                    ':uid' => $uid,
+                ]);
             $eventId = (int)$db->lastInsertId();
             // Creator RSVPs as "going" automatically
             $db->prepare("INSERT IGNORE INTO collab_event_rsvps (event_id,user_id,status) VALUES(:eid,:uid,'going')")
-               ->execute([':eid'=>$eventId,':uid'=>$uid]);
-            ws_broadcast($db, $cid, ['type'=>'collab_event_created','channel_id'=>$cid,
-                'event_id'=>$eventId,'title'=>$title,'start_time'=>$body['start_time'],'actor'=>$username]);
-            json_ok(['event_id'=>$eventId]);
+                ->execute([':eid' => $eventId, ':uid' => $uid]);
+            ws_broadcast($db, $cid, [
+                'type' => 'collab_event_created',
+                'channel_id' => $cid,
+                'event_id' => $eventId,
+                'title' => $title,
+                'start_time' => $body['start_time'],
+                'actor' => $username
+            ]);
+            json_ok(['event_id' => $eventId]);
         })(),
 
-        'update' => (function() use ($db, $uid, $username, $cid, $body) {
-            $eid = (int)($body['event_id']??0);
+        'update' => (function () use ($db, $uid, $username, $cid, $body) {
+            $eid = (int)($body['event_id'] ?? 0);
             if (!$eid) json_fail('event_id required');
             $e = $db->prepare("SELECT created_by FROM collab_events WHERE id=:eid AND channel_id=:cid LIMIT 1");
-            $e->execute([':eid'=>$eid,':cid'=>$cid]);
+            $e->execute([':eid' => $eid, ':cid' => $cid]);
             $event = $e->fetch();
-            if (!$event) json_fail('Event not found',404);
-            if ((int)$event['created_by'] !== $uid) json_fail('Only the creator can edit this event',403);
-            $allowed = ['title','description','type','color','start_time','end_time','all_day','recurring'];
-            $sets = []; $params = [':eid'=>$eid];
-            foreach ($allowed as $f) { if (array_key_exists($f,$body)) { $sets[] = "$f=:$f"; $params[":$f"]=$body[$f]; } }
-            if ($sets) $db->prepare("UPDATE collab_events SET ".implode(',',$sets)." WHERE id=:eid")->execute($params);
-            ws_broadcast($db, $cid, ['type'=>'collab_event_updated','channel_id'=>$cid,'event_id'=>$eid,'actor'=>$username]);
+            if (!$event) json_fail('Event not found', 404);
+            if ((int)$event['created_by'] !== $uid) json_fail('Only the creator can edit this event', 403);
+            $allowed = ['title', 'description', 'type', 'color', 'start_time', 'end_time', 'all_day', 'recurring'];
+            $sets = [];
+            $params = [':eid' => $eid];
+            foreach ($allowed as $f) {
+                if (array_key_exists($f, $body)) {
+                    $sets[] = "$f=:$f";
+                    $params[":$f"] = $body[$f];
+                }
+            }
+            if ($sets) $db->prepare("UPDATE collab_events SET " . implode(',', $sets) . " WHERE id=:eid")->execute($params);
+            ws_broadcast($db, $cid, ['type' => 'collab_event_updated', 'channel_id' => $cid, 'event_id' => $eid, 'actor' => $username]);
             json_ok();
         })(),
 
-        'delete' => (function() use ($db, $uid, $username, $cid, $body) {
-            $eid = (int)($body['event_id']??0);
+        'delete' => (function () use ($db, $uid, $username, $cid, $body) {
+            $eid = (int)($body['event_id'] ?? 0);
             if (!$eid) json_fail('event_id required');
             $e = $db->prepare("SELECT created_by FROM collab_events WHERE id=:eid AND channel_id=:cid LIMIT 1");
-            $e->execute([':eid'=>$eid,':cid'=>$cid]);
+            $e->execute([':eid' => $eid, ':cid' => $cid]);
             $event = $e->fetch();
-            if (!$event) json_fail('Event not found',404);
-            if ((int)$event['created_by'] !== $uid) json_fail('Only the creator can delete this event',403);
-            $db->prepare("DELETE FROM collab_events WHERE id=:eid")->execute([':eid'=>$eid]);
-            $db->prepare("DELETE FROM collab_event_rsvps WHERE event_id=:eid")->execute([':eid'=>$eid]);
-            ws_broadcast($db, $cid, ['type'=>'collab_event_deleted','channel_id'=>$cid,'event_id'=>$eid,'actor'=>$username]);
+            if (!$event) json_fail('Event not found', 404);
+            if ((int)$event['created_by'] !== $uid) json_fail('Only the creator can delete this event', 403);
+            $db->prepare("DELETE FROM collab_events WHERE id=:eid")->execute([':eid' => $eid]);
+            $db->prepare("DELETE FROM collab_event_rsvps WHERE event_id=:eid")->execute([':eid' => $eid]);
+            ws_broadcast($db, $cid, ['type' => 'collab_event_deleted', 'channel_id' => $cid, 'event_id' => $eid, 'actor' => $username]);
             json_ok();
         })(),
 
-        'rsvp' => (function() use ($db, $uid, $username, $cid, $body) {
-            $eid    = (int)($body['event_id']??0);
-            $status = in_array($body['status']??'', ['going','maybe','not_going']) ? $body['status'] : 'going';
+        'rsvp' => (function () use ($db, $uid, $username, $cid, $body) {
+            $eid    = (int)($body['event_id'] ?? 0);
+            $status = in_array($body['status'] ?? '', ['going', 'maybe', 'not_going']) ? $body['status'] : 'going';
             if (!$eid) json_fail('event_id required');
+            $check = $db->prepare("SELECT id FROM collab_events WHERE id=:eid AND channel_id=:cid LIMIT 1");
+            $check->execute([':eid' => $eid, ':cid' => $cid]);
+            if (!$check->fetch()) json_fail('Event not found', 404);
             $db->prepare("INSERT INTO collab_event_rsvps (event_id,user_id,status) VALUES(:eid,:uid,:s)
                 ON DUPLICATE KEY UPDATE status=:s2, rsvped_at=NOW()")
-               ->execute([':eid'=>$eid,':uid'=>$uid,':s'=>$status,':s2'=>$status]);
-            ws_broadcast($db, $cid, ['type'=>'collab_event_rsvp','channel_id'=>$cid,
-                'event_id'=>$eid,'status'=>$status,'actor'=>$username]);
+                ->execute([':eid' => $eid, ':uid' => $uid, ':s' => $status, ':s2' => $status]);
+            ws_broadcast($db, $cid, [
+                'type' => 'collab_event_rsvp',
+                'channel_id' => $cid,
+                'event_id' => $eid,
+                'status' => $status,
+                'actor' => $username
+            ]);
             json_ok();
         })(),
 
         default => json_fail("Unknown calendar action: $action"),
     };
+    throw new LogicException('Calendar dispatch unexpectedly returned');
 }

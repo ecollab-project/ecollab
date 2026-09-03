@@ -679,7 +679,9 @@ class ChatServer implements MessageComponentInterface
         $channelId = (int)($data['channel_id'] ?? $meta['wb_channel_id'] ?? 0);
         if (!$channelId) return;
         $uid = (int)$meta['user_id'];
-        if (!empty($data['state_json'])) $this->wbHandler->persistSnapshot($channelId, $uid, $data['state_json']);
+        if (!empty($data['state_json']) && $this->wbHandler->canEdit($channelId, $uid)) {
+            $this->wbHandler->persistSnapshot($channelId, $uid, $data['state_json']);
+        }
         $remaining = $this->wbHandler->leave($channelId, $uid);
         $meta['wb_channel_id'] = null;
         $notify = json_encode(['type' => 'wb_peer_left', 'channel_id' => $channelId, 'user_id' => $uid, 'username' => $meta['username']]);
@@ -692,6 +694,10 @@ class ChatServer implements MessageComponentInterface
     {
         $channelId = (int)($data['channel_id'] ?? $meta['wb_channel_id'] ?? 0);
         if (!$channelId || empty($data['op'])) return;
+        if (!$this->wbHandler->canEdit($channelId, (int)$meta['user_id'])) {
+            $from->send(json_encode(['type' => 'wb_locked', 'channel_id' => $channelId, 'message' => 'The host locked this whiteboard.']));
+            return;
+        }
         $stamped = $this->wbHandler->recordOp($channelId, (int)$meta['user_id'], $data);
         $payload = json_encode(array_merge(['type' => 'wb_op'], $stamped));
         foreach ($this->wbHandler->getRoomUserIds($channelId, (int)$meta['user_id']) as $peerId) foreach ($this->userConns[$peerId] ?? [] as $peerConn) try {
@@ -715,6 +721,10 @@ class ChatServer implements MessageComponentInterface
     {
         $channelId = (int)($data['channel_id'] ?? $meta['wb_channel_id'] ?? 0);
         if (!$channelId || empty($data['state_json'])) return;
+        if (!$this->wbHandler->canEdit($channelId, (int)$meta['user_id'])) {
+            $from->send(json_encode(['type' => 'wb_locked', 'channel_id' => $channelId, 'message' => 'The host locked this whiteboard.']));
+            return;
+        }
         $this->wbHandler->persistSnapshot($channelId, (int)$meta['user_id'], $data['state_json']);
         $from->send(json_encode(['type' => 'wb_state_saved', 'channel_id' => $channelId]));
     }

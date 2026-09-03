@@ -1472,8 +1472,9 @@ function openWhiteboardChannel(channelId, channelName) {
   const topicEl = document.getElementById('channelTopic');
   if (topicEl) topicEl.textContent = 'Collaborative whiteboard';
 
-  // Open the whiteboard view
-  if (window.openWhiteboard) window.openWhiteboard(channelName, channelId);
+  // Whiteboards have their own workspace so refresh/recovery and saved versions
+  // are not tied to the chat panel lifecycle.
+  window.location.href = `${window.ECOLLAB?.baseUrl || ''}/modules/whiteboard/index.php?channel_id=${encodeURIComponent(channelId)}`;
 }
 window.openWhiteboardChannel = openWhiteboardChannel;
 

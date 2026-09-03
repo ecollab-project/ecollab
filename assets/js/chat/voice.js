@@ -638,9 +638,12 @@ function selectScreenQuality(btn, quality) {
 
 // ── Whiteboard ────────────────────────────────────────────────────────────
 function openWhiteboard() {
-  if (!vcMinimized) toggleVcMinimize();
-  if (window.openWhiteboardView) window.openWhiteboardView();
-  else showToast('📋 Whiteboard feature requires a whiteboard channel', 'info');
+  const channelId = window.ECOLLAB?.currentChannelId || window.__currentChannelId;
+  if (!channelId) {
+    showToast('📋 Select a channel before opening the whiteboard', 'info');
+    return;
+  }
+  window.location.href = `${window.ECOLLAB?.baseUrl || ''}/modules/whiteboard/index.php?channel_id=${encodeURIComponent(channelId)}`;
 }
 
 // ── Noise / Audio settings helpers ────────────────────────────────────────
