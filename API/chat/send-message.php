@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 // ── Catch absolutely everything, including fatal errors ──────────────────────
@@ -9,11 +10,8 @@ register_shutdown_function(function () {
             http_response_code(500);
             header('Content-Type: application/json');
         }
-        $debug = defined('APP_DEBUG') && APP_DEBUG;
         echo json_encode([
-            'error' => $debug
-                ? '[FATAL] ' . $err['message'] . ' in ' . basename($err['file']) . ':' . $err['line']
-                : 'Server error',
+            'error' => 'Server error',
         ]);
     }
 });
@@ -98,23 +96,16 @@ try {
 
     http_response_code(201);
     echo json_encode(['success' => true, 'message' => $message]);
-
 } catch (InvalidArgumentException $e) {
     http_response_code(400);
     echo json_encode(['error' => $e->getMessage()]);
-
 } catch (RuntimeException $e) {
     $code = ($e->getCode() >= 400 && $e->getCode() < 600) ? $e->getCode() : 500;
     http_response_code($code);
     echo json_encode(['error' => $e->getMessage()]);
-
 } catch (Throwable $e) {
     error_log('[Ecollab] send-message Throwable: ' . $e->getMessage()
         . ' in ' . $e->getFile() . ':' . $e->getLine());
     http_response_code(500);
-    echo json_encode([
-        'error' => (defined('APP_DEBUG') && APP_DEBUG)
-            ? $e->getMessage() . ' — ' . basename($e->getFile()) . ':' . $e->getLine()
-            : 'Server error',
-    ]);
+    echo json_encode(['error' => 'Server error']);
 }

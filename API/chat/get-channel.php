@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/config.php';
@@ -78,5 +79,5 @@ try {
 } catch (Throwable $e) {
     $code = ($e->getCode() >= 400 && $e->getCode() < 600) ? $e->getCode() : 500;
     http_response_code($code);
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(['error' => $code < 500 ? $e->getMessage() : 'Server error']);
 }

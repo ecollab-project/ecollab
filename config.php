@@ -106,7 +106,7 @@ function isLocalRuntime(): bool
 define('APP_NAME',    env('APP_NAME',    'Ecollab'));
 define('APP_ENV',     env('APP_ENV',     'production'));
 define('APP_URL',     resolveAppUrl());
-define('APP_DEBUG',   env('APP_DEBUG',   'false') === 'true');
+define('APP_DEBUG',   env('APP_DEBUG',   'false') === 'true' && env('APP_ENV', 'production') !== 'production');
 define('APP_KEY',     env('APP_KEY',     ''));
 define('ROOT_PATH',   __DIR__);
 define('BASE_URL',    rtrim(APP_URL, '/'));
