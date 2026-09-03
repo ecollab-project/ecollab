@@ -18,6 +18,7 @@ The highest-risk verified findings were in WebSocket authorization and diagnosti
 | DISC-002 | P2 | Error disclosure | `API/chat/get-channel.php`, `API/chat/get-channels.php`, `API/chat/get-mentions.php`, `API/chat/pin-message.php`, `API/chat/whiteboard-sync.php`, `API/threads/get-server-members.php`, `API/chat/send-message.php` | Several exception handlers returned raw runtime/database details, including unconditional detail in one endpoint. | Return generic server errors for 5xx responses while retaining controlled client-facing 4xx messages. Removed fatal/debug response details from message sending. | PHP lint and error-detail scan. |
 | CFG-001 | P2 | Production configuration | `config.php` | `APP_DEBUG=true` in a production environment could enable debug behavior. | `APP_DEBUG` is now disabled whenever `APP_ENV=production`, regardless of the debug flag. | PHP lint; configuration logic review. |
 | JS-001 | P2 | JavaScript correctness | `assets/js/landing.js` | A closing HTML `</script>` token was present in a standalone JavaScript file. | Removed the invalid token. | All 29 application JavaScript files pass `node --check`. |
+| WS-004 | P2 | WebSocket startup | `websocket/ChatServer.php` | Direct execution declared Ratchet interfaces before Composer autoloading and did not start the server. | Load Composer dependencies before the class declaration and add a guarded standalone CLI entrypoint matching the supported launcher. | `php websocket/ChatServer.php --host=127.0.0.1 --port=18080` initialized and listened successfully; process was stopped after startup verification. |
 
 ## Remaining Issues
 
@@ -57,6 +58,7 @@ The local `.env` is ignored by Git and contains development values, but OAuth/AP
 - PHPUnit full suite: 46 tests, 124 assertions, passing.
 - PHPUnit focused unit suite: 25 tests, 56 assertions, passing.
 - PHPStan: no errors at the configured level.
+- Direct WebSocket startup: `ChatServer.php` initialized Ratchet and listened successfully on a temporary local port.
 - Repository scan: no server-side `shell_exec`, `system`, `passthru`, `proc_open`, `popen`, or `pcntl_exec` application path was found.
 - Git whitespace check: no whitespace errors reported by `git diff --check`.
 - Browser, live WebSocket, database migration, upload authorization, and external OAuth integration checks were not executable in the current environment.

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+require_once dirname(__DIR__, 1) . '/vendor/autoload.php';
 require_once dirname(__DIR__, 1) . '/database/config/db.php';
 require_once __DIR__ . '/handlers/WhiteboardHandler.php';
 require_once __DIR__ . '/handlers/DmHandler.php';
@@ -724,4 +725,25 @@ class ChatServer implements MessageComponentInterface
         $state = $this->wbHandler->getState($channelId);
         $from->send(json_encode(['type' => 'wb_state', 'channel_id' => $channelId, 'state_json' => $state, 'members' => $this->wbHandler->getMembers($channelId)]));
     }
+}
+
+if (
+    PHP_SAPI === 'cli'
+    && isset($_SERVER['SCRIPT_FILENAME'])
+    && realpath($_SERVER['SCRIPT_FILENAME']) === realpath(__FILE__)
+) {
+    $options = getopt('', ['port::', 'host::']);
+    $port = (int)($options['port'] ?? getenv('WS_PORT') ?: 8080);
+    $host = $options['host'] ?? getenv('WS_HOST') ?: '0.0.0.0';
+
+    $loop = \React\EventLoop\Loop::get();
+    $chat = new ChatServer();
+    $server = \Ratchet\Server\IoServer::factory(
+        new \Ratchet\Http\HttpServer(new \Ratchet\WebSocket\WsServer($chat)),
+        $port,
+        $host
+    );
+    $loop->addPeriodicTimer(0.2, static fn() => $chat->drainRelayTable());
+    echo "Ecollab WebSocket server running on {$host}:{$port}\n";
+    $server->run();
 }
