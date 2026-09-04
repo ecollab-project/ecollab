@@ -5,11 +5,9 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once ROOT_PATH . '/database/config/db.php';
 require_once ROOT_PATH . '/security/middleware/AuthMiddleware.php';
-require_once ROOT_PATH . '/security/SecurityHeaders.php';
 
 AuthMiddleware::startSession();
 $user = AuthMiddleware::requireAuth();
-SecurityHeaders::send();
 
 $db = Database::getInstance();
 $channelId = (int)($_GET['channel_id'] ?? 0);
@@ -32,6 +30,28 @@ if ($channelId > 0) {
 $etherpadUrl = rtrim((string)env('ETHERPAD_URL', ''), '/');
 $excalidrawUrl = rtrim((string)env('EXCALIDRAW_URL', ''), '/');
 $onlyofficeUrl = rtrim((string)env('ONLYOFFICE_EDITOR_URL', ''), '/');
+
+// Build a CSP specifically for this page. External frame origins are taken
+// only from server-side environment configuration; arbitrary query-string
+// URLs are never accepted.
+$frameOrigins = [];
+foreach ([$etherpadUrl, $excalidrawUrl, $onlyofficeUrl] as $configuredUrl) {
+    if ($configuredUrl === '') continue;
+    $parts = parse_url($configuredUrl);
+    if (!$parts || empty($parts['scheme']) || empty($parts['host'])) continue;
+    if (!in_array(strtolower($parts['scheme']), ['http', 'https'], true)) continue;
+    $origin = strtolower($parts['scheme']) . '://' . $parts['host'];
+    if (isset($parts['port'])) $origin .= ':' . (int)$parts['port'];
+    $frameOrigins[] = $origin;
+}
+$frameOrigins = array_values(array_unique($frameOrigins));
+$frameSrc = "'self'" . ($frameOrigins ? ' ' . implode(' ', $frameOrigins) : '');
+$nonce = base64_encode(random_bytes(16));
+header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{$nonce}'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self'; frame-src {$frameSrc}; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'");
+header('X-Frame-Options: DENY');
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+header('Cache-Control: no-store, private');
 
 // Do not expose APP_KEY. It is only used server-side to create a stable,
 // non-guessable Etherpad pad name for each authorized eCollab channel.
@@ -116,7 +136,7 @@ $initials = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 2));
         </main>
     <?php endif; ?>
 </div>
-<script>
+<script nonce="<?= htmlspecialchars($nonce, ENT_QUOTES, 'UTF-8') ?>">
 (function () {
     const buttons = document.querySelectorAll('.ec-tabs button');
     const panels = document.querySelectorAll('.ec-panel');
