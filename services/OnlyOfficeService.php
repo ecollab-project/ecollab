@@ -13,6 +13,12 @@ final class OnlyOfficeService
         return rtrim((string)env('ONLYOFFICE_DOCUMENT_SERVER_URL', ''), '/');
     }
 
+    /** URL that the ONLYOFFICE container/server uses to reach eCollab. */
+    private static function storageBaseUrl(): string
+    {
+        return rtrim((string)env('ONLYOFFICE_STORAGE_BASE_URL', APP_URL), '/');
+    }
+
     public static function jwtSecret(): string
     {
         $secret = (string)env('ONLYOFFICE_JWT_SECRET', '');
@@ -33,38 +39,26 @@ final class OnlyOfficeService
     public static function verify(string $jwt): array
     {
         $parts = explode('.', $jwt);
-        if (count($parts) !== 3) {
-            throw new RuntimeException('Invalid JWT.');
-        }
+        if (count($parts) !== 3) throw new RuntimeException('Invalid JWT.');
         [$header, $body, $signature] = $parts;
         $expected = self::base64Url(hash_hmac('sha256', $header . '.' . $body, self::jwtSecret(), true));
-        if (!hash_equals($expected, $signature)) {
-            throw new RuntimeException('Invalid JWT signature.');
-        }
+        if (!hash_equals($expected, $signature)) throw new RuntimeException('Invalid JWT signature.');
         $decoded = json_decode(self::base64UrlDecode($body), true);
-        if (!is_array($decoded)) {
-            throw new RuntimeException('Invalid JWT payload.');
-        }
-        if (isset($decoded['exp']) && (int)$decoded['exp'] < time()) {
-            throw new RuntimeException('Expired JWT.');
-        }
+        if (!is_array($decoded)) throw new RuntimeException('Invalid JWT payload.');
+        if (isset($decoded['exp']) && (int)$decoded['exp'] < time()) throw new RuntimeException('Expired JWT.');
         return $decoded;
     }
 
     public static function signedFileUrl(int $documentId, string $documentKey): string
     {
-        $base = rtrim(APP_URL, '/') . '/API/collaboration/documents/file.php';
-        $token = self::sign([
-            'document_id' => $documentId,
-            'key' => $documentKey,
-            'exp' => time() + 3600,
-        ]);
+        $base = self::storageBaseUrl() . '/API/collaboration/documents/file.php';
+        $token = self::sign(['document_id' => $documentId, 'key' => $documentKey, 'exp' => time() + 3600]);
         return $base . '?id=' . $documentId . '&token=' . rawurlencode($token);
     }
 
     public static function callbackUrl(int $documentId): string
     {
-        return rtrim(APP_URL, '/') . '/API/collaboration/documents/callback.php?id=' . $documentId;
+        return self::storageBaseUrl() . '/API/collaboration/documents/callback.php?id=' . $documentId;
     }
 
     private static function base64Url(string $data): string
@@ -76,9 +70,7 @@ final class OnlyOfficeService
     {
         $data .= str_repeat('=', (4 - strlen($data) % 4) % 4);
         $decoded = base64_decode(strtr($data, '-_', '+/'), true);
-        if ($decoded === false) {
-            throw new RuntimeException('Invalid base64 data.');
-        }
+        if ($decoded === false) throw new RuntimeException('Invalid base64 data.');
         return $decoded;
     }
 }
