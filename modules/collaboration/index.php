@@ -13,6 +13,7 @@ $db = Database::getInstance();
 $channelId = (int)($_GET['channel_id'] ?? 0);
 $channel = null;
 $canUseWorkspace = false;
+$documents = [];
 
 if ($channelId > 0) {
     $stmt = $db->prepare(<<<SQL
@@ -25,17 +26,19 @@ if ($channelId > 0) {
     $stmt->execute([':cid' => $channelId, ':uid' => (int)$user['id']]);
     $channel = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     $canUseWorkspace = $channel !== null;
+    if ($canUseWorkspace) {
+        $docs = $db->prepare('SELECT id, title, file_name, file_type, updated_at FROM collab_documents WHERE channel_id = :cid ORDER BY updated_at DESC');
+        $docs->execute([':cid' => $channelId]);
+        $documents = $docs->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 
 $etherpadUrl = rtrim((string)env('ETHERPAD_URL', ''), '/');
 $excalidrawUrl = rtrim((string)env('EXCALIDRAW_URL', ''), '/');
-$onlyofficeUrl = rtrim((string)env('ONLYOFFICE_EDITOR_URL', ''), '/');
+$onlyofficeServerUrl = rtrim((string)env('ONLYOFFICE_DOCUMENT_SERVER_URL', ''), '/');
 
-// Build a CSP specifically for this page. External frame origins are taken
-// only from server-side environment configuration; arbitrary query-string
-// URLs are never accepted.
 $frameOrigins = [];
-foreach ([$etherpadUrl, $excalidrawUrl, $onlyofficeUrl] as $configuredUrl) {
+foreach ([$etherpadUrl, $excalidrawUrl] as $configuredUrl) {
     if ($configuredUrl === '') continue;
     $parts = parse_url($configuredUrl);
     if (!$parts || empty($parts['scheme']) || empty($parts['host'])) continue;
@@ -44,7 +47,6 @@ foreach ([$etherpadUrl, $excalidrawUrl, $onlyofficeUrl] as $configuredUrl) {
     if (isset($parts['port'])) $origin .= ':' . (int)$parts['port'];
     $frameOrigins[] = $origin;
 }
-$frameOrigins = array_values(array_unique($frameOrigins));
 $frameSrc = "'self'" . ($frameOrigins ? ' ' . implode(' ', $frameOrigins) : '');
 $nonce = base64_encode(random_bytes(16));
 header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{$nonce}'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self'; frame-src {$frameSrc}; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'");
@@ -53,8 +55,6 @@ header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header('Cache-Control: no-store, private');
 
-// Do not expose APP_KEY. It is only used server-side to create a stable,
-// non-guessable Etherpad pad name for each authorized eCollab channel.
 $padName = $channelId > 0
     ? 'ecollab-' . substr(hash_hmac('sha256', 'channel:' . $channelId, (string)APP_KEY), 0, 32)
     : '';
@@ -71,7 +71,7 @@ $initials = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 2));
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Collaboration Hub – <?= htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8') ?></title>
     <meta name="csrf-token" content="<?= htmlspecialchars(AuthMiddleware::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
-    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/external-collab.css?v=1">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/external-collab.css?v=2">
 </head>
 <body>
 <div class="ec-shell">
@@ -92,10 +92,7 @@ $initials = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 2));
         </section>
     <?php else: ?>
         <section class="ec-workspace-head">
-            <div>
-                <span class="ec-kicker">WORKSPACE</span>
-                <h2><?= htmlspecialchars((string)$channel['name']) ?></h2>
-            </div>
+            <div><span class="ec-kicker">WORKSPACE</span><h2><?= htmlspecialchars((string)$channel['name']) ?></h2></div>
             <span class="ec-security">🔒 eCollab membership protected</span>
         </section>
 
@@ -125,13 +122,38 @@ $initials = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 2));
             </section>
 
             <section class="ec-panel" id="tab-documents">
-                <div class="ec-panel-head"><div><h3>Collaborative Documents</h3><p>ONLYOFFICE Docs provides Word-like documents, spreadsheets and presentations with real-time co-editing.</p></div><span class="ec-badge">COMMUNITY EDITION</span></div>
-                <?php if ($onlyofficeUrl): ?>
-                    <iframe class="ec-frame" src="<?= htmlspecialchars($onlyofficeUrl, ENT_QUOTES, 'UTF-8') ?>" title="eCollab collaborative documents"></iframe>
+                <div class="ec-panel-head">
+                    <div><h3>Collaborative Documents</h3><p>Word documents, spreadsheets and presentations can be edited by multiple channel members in real time.</p></div>
+                    <span class="ec-badge">ONLYOFFICE</span>
+                </div>
+                <?php if ($onlyofficeServerUrl): ?>
+                    <div class="ec-doc-create">
+                        <form method="post" action="<?= BASE_URL ?>/API/collaboration/documents.php" id="oo-create-form">
+                            <input type="hidden" name="channel_id" value="<?= $channelId ?>">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(AuthMiddleware::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
+                            <input name="title" maxlength="220" placeholder="Document name" required>
+                            <select name="type" aria-label="Document type"><option value="docx">Word document</option><option value="xlsx">Spreadsheet</option><option value="pptx">Presentation</option></select>
+                            <button type="submit">＋ Create</button>
+                        </form>
+                    </div>
+                    <div id="oo-create-error" class="ec-error" hidden></div>
+                    <?php if ($documents): ?>
+                        <div class="ec-doc-list">
+                        <?php foreach ($documents as $document): ?>
+                            <a class="ec-doc-item" href="<?= BASE_URL ?>/modules/collaboration/documents/editor.php?channel_id=<?= $channelId ?>&id=<?= (int)$document['id'] ?>">
+                                <span class="ec-doc-icon"><?= $document['file_type'] === 'xlsx' ? '📊' : ($document['file_type'] === 'pptx' ? '📽️' : '📄') ?></span>
+                                <span><strong><?= htmlspecialchars((string)$document['title']) ?></strong><small><?= strtoupper(htmlspecialchars((string)$document['file_type'])) ?> · Updated <?= htmlspecialchars((string)$document['updated_at']) ?></small></span>
+                                <span>Open →</span>
+                            </a>
+                        <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="ec-config"><span>📄</span><div><h3>No collaborative documents yet</h3><p>Create the first document above. It will be stored by eCollab and opened through ONLYOFFICE Docs.</p></div></div>
+                    <?php endif; ?>
                 <?php else: ?>
-                    <div class="ec-config"><span>📄</span><div><h3>ONLYOFFICE connector is not configured yet</h3><p>Set <code>ONLYOFFICE_EDITOR_URL</code> after installing ONLYOFFICE Docs Community Edition and wiring its storage/callback integration. Do not expose the Document Server directly as a document URL.</p></div></div>
+                    <div class="ec-config"><span>📄</span><div><h3>ONLYOFFICE is not configured yet</h3><p>Set <code>ONLYOFFICE_DOCUMENT_SERVER_URL</code> and <code>ONLYOFFICE_JWT_SECRET</code> after installing ONLYOFFICE Docs Community Edition. The editor uses a signed document URL and validated callbacks; a raw Document Server iframe is not used.</p></div></div>
                 <?php endif; ?>
-                <div class="ec-note">eCollab controls authentication and channel membership. The document service should enforce its own signed integration requests and callback validation.</div>
+                <div class="ec-note">eCollab owns authentication, channel membership and document storage. ONLYOFFICE provides the editor and real-time co-editing.</div>
             </section>
         </main>
     <?php endif; ?>
@@ -145,6 +167,26 @@ $initials = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 2));
         buttons.forEach(b => b.classList.toggle('active', b === button));
         panels.forEach(p => p.classList.toggle('active', p.id === 'tab-' + tab));
     }));
+    const form = document.getElementById('oo-create-form');
+    if (form) form.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        const error = document.getElementById('oo-create-error');
+        error.hidden = true;
+        try {
+            const body = Object.fromEntries(new FormData(form).entries());
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRF-Token': body.csrf_token},
+                body: JSON.stringify(body)
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) throw new Error(data.error || 'Could not create document.');
+            window.location.href = '<?= BASE_URL ?>/modules/collaboration/documents/editor.php?channel_id=<?= $channelId ?>&id=' + encodeURIComponent(data.document.id);
+        } catch (e) {
+            error.textContent = e.message;
+            error.hidden = false;
+        }
+    });
 })();
 </script>
 </body>
