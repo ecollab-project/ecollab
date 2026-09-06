@@ -1,0 +1,179 @@
+<?php
+
+declare(strict_types=1);
+
+require_once dirname(__DIR__, 2) . '/config.php';
+require_once ROOT_PATH . '/database/config/db.php';
+require_once ROOT_PATH . '/security/middleware/AuthMiddleware.php';
+require_once ROOT_PATH . '/services/CoworkspaceService.php';
+
+AuthMiddleware::startSession();
+$user = AuthMiddleware::requireAuth(true);
+header('Content-Type: application/json; charset=utf-8');
+$db = Database::getInstance();
+$uid = (int)$user['id'];
+
+function workspaceJsonFail(string $message, int $status = 400): never
+{
+    http_response_code($status);
+    echo json_encode(['success' => false, 'error' => $message]);
+    exit;
+}
+
+function workspaceInput(): array
+{
+    $input = json_decode(file_get_contents('php://input'), true);
+    return is_array($input) ? $input : $_POST;
+}
+
+$method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+$workspaceId = (int)($_GET['id'] ?? $_POST['workspace_id'] ?? 0);
+
+try {
+    if ($method === 'GET') {
+        $channelId = (int)($_GET['channel_id'] ?? 0);
+        if ($channelId < 1) workspaceJsonFail('A channel is required.');
+        CoworkspaceService::assertChannelMember($db, $channelId, $uid);
+
+        $stmt = $db->prepare(
+            'SELECT w.id, w.channel_id, w.name, w.visibility, w.host_id,
+                    w.allow_create_documents, w.allow_edit_documents,
+                    w.allow_whiteboard, w.allow_member_invites, w.created_at, w.updated_at,
+                    COALESCE(cm.role, IF(w.host_id = :uid_host, "host", NULL)) AS member_role,
+                    (SELECT COUNT(*) FROM collab_workspace_members x WHERE x.workspace_id = w.id) AS member_count
+             FROM collab_workspaces w
+             LEFT JOIN collab_workspace_members cm ON cm.workspace_id = w.id AND cm.user_id = :uid_member
+             WHERE w.channel_id = :cid AND w.archived = 0
+             ORDER BY w.updated_at DESC'
+        );
+        $stmt->execute([':uid_host' => $uid, ':uid_member' => $uid, ':cid' => $channelId]);
+        echo json_encode(['success' => true, 'workspaces' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+        exit;
+    }
+
+    if ($method !== 'POST') workspaceJsonFail('Method not allowed.', 405);
+    AuthMiddleware::verifyCsrf();
+    $input = workspaceInput();
+    $action = (string)($input['action'] ?? 'create');
+
+    if ($action === 'create') {
+        $channelId = (int)($input['channel_id'] ?? 0);
+        $name = trim((string)($input['name'] ?? ''));
+        $visibility = strtolower((string)($input['visibility'] ?? 'public'));
+        if ($channelId < 1) workspaceJsonFail('A channel is required.');
+        if ($name === '') workspaceJsonFail('Coworkspace name is required.');
+        if (!in_array($visibility, ['public', 'private'], true)) workspaceJsonFail('Visibility must be public or private.');
+        CoworkspaceService::assertChannelMember($db, $channelId, $uid);
+        $name = trim(substr(preg_replace('/[\x00-\x1F\x7F]/', '', $name) ?: 'Coworkspace', 0, 200));
+
+        $db->beginTransaction();
+        $stmt = $db->prepare(
+            'INSERT INTO collab_workspaces
+             (channel_id, name, visibility, host_id, allow_create_documents, allow_edit_documents, allow_whiteboard, allow_member_invites)
+             VALUES (:cid, :name, :visibility, :uid, :create_docs, :edit_docs, :whiteboard, :invites)'
+        );
+        $stmt->execute([
+            ':cid' => $channelId,
+            ':name' => $name,
+            ':visibility' => $visibility,
+            ':uid' => $uid,
+            ':create_docs' => !empty($input['allow_create_documents']) ? 1 : 0,
+            ':edit_docs' => !empty($input['allow_edit_documents']) ? 1 : 0,
+            ':whiteboard' => !empty($input['allow_whiteboard']) ? 1 : 0,
+            ':invites' => !empty($input['allow_member_invites']) ? 1 : 0,
+        ]);
+        $id = (int)$db->lastInsertId();
+        $member = $db->prepare('INSERT INTO collab_workspace_members (workspace_id,user_id,role) VALUES (:wid,:uid,"host")');
+        $member->execute([':wid' => $id, ':uid' => $uid]);
+        $db->commit();
+        echo json_encode(['success' => true, 'workspace' => ['id' => $id, 'name' => $name, 'visibility' => $visibility, 'role' => 'host']]);
+        exit;
+    }
+
+    if ($workspaceId < 1) workspaceJsonFail('A Coworkspace is required.');
+
+    if ($action === 'join') {
+        $workspace = CoworkspaceService::get($db, $workspaceId, $uid);
+        if (!CoworkspaceService::canJoin($db, $workspace, $uid)) {
+            workspaceJsonFail('This is a private Coworkspace. An invitation or approved access request is required.', 403);
+        }
+        $stmt = $db->prepare(
+            'INSERT INTO collab_workspace_members (workspace_id,user_id,role)
+             VALUES (:wid,:uid,"member")
+             ON DUPLICATE KEY UPDATE role = role'
+        );
+        $stmt->execute([':wid' => $workspaceId, ':uid' => $uid]);
+        echo json_encode(['success' => true, 'role' => 'member']);
+        exit;
+    }
+
+    if ($action === 'request_access') {
+        $workspace = CoworkspaceService::get($db, $workspaceId, $uid, false);
+        if ((int)$workspace['host_id'] === $uid || (string)$workspace['visibility'] === 'public') {
+            workspaceJsonFail('Access requests are only needed for private Coworkspaces.');
+        }
+        $stmt = $db->prepare(
+            'INSERT INTO collab_workspace_access_requests (workspace_id,user_id,status)
+             VALUES (:wid,:uid,"pending")
+             ON DUPLICATE KEY UPDATE status = IF(status = "denied", "pending", status), updated_at = CURRENT_TIMESTAMP'
+        );
+        $stmt->execute([':wid' => $workspaceId, ':uid' => $uid]);
+        echo json_encode(['success' => true, 'status' => 'pending']);
+        exit;
+    }
+
+    if ($action === 'settings') {
+        CoworkspaceService::requireHost($db, $workspaceId, $uid);
+        $name = trim((string)($input['name'] ?? ''));
+        $visibility = strtolower((string)($input['visibility'] ?? 'public'));
+        if ($name === '' || !in_array($visibility, ['public', 'private'], true)) workspaceJsonFail('Invalid Coworkspace settings.');
+        $name = trim(substr(preg_replace('/[\x00-\x1F\x7F]/', '', $name) ?: 'Coworkspace', 0, 200));
+        $stmt = $db->prepare(
+            'UPDATE collab_workspaces
+             SET name=:name, visibility=:visibility,
+                 allow_create_documents=:create_docs,
+                 allow_edit_documents=:edit_docs,
+                 allow_whiteboard=:whiteboard,
+                 allow_member_invites=:invites
+             WHERE id=:wid'
+        );
+        $stmt->execute([
+            ':name' => $name,
+            ':visibility' => $visibility,
+            ':create_docs' => !empty($input['allow_create_documents']) ? 1 : 0,
+            ':edit_docs' => !empty($input['allow_edit_documents']) ? 1 : 0,
+            ':whiteboard' => !empty($input['allow_whiteboard']) ? 1 : 0,
+            ':invites' => !empty($input['allow_member_invites']) ? 1 : 0,
+            ':wid' => $workspaceId,
+        ]);
+        echo json_encode(['success' => true]);
+        exit;
+    }
+
+    if ($action === 'archive' || $action === 'delete') {
+        CoworkspaceService::requireHost($db, $workspaceId, $uid);
+        if ($action === 'archive') {
+            $stmt = $db->prepare('UPDATE collab_workspaces SET archived=1 WHERE id=:wid');
+            $stmt->execute([':wid' => $workspaceId]);
+        } else {
+            $db->beginTransaction();
+            foreach ([
+                'DELETE FROM collab_workspace_access_requests WHERE workspace_id=:wid',
+                'DELETE FROM collab_workspace_members WHERE workspace_id=:wid',
+                'DELETE FROM collab_workspaces WHERE id=:wid',
+            ] as $sql) {
+                $stmt = $db->prepare($sql);
+                $stmt->execute([':wid' => $workspaceId]);
+            }
+            $db->commit();
+        }
+        echo json_encode(['success' => true]);
+        exit;
+    }
+
+    workspaceJsonFail('Unknown Coworkspace action.');
+} catch (Throwable $e) {
+    if ($db->inTransaction()) $db->rollBack();
+    $status = (int)$e->getCode();
+    workspaceJsonFail($e->getMessage(), ($status >= 400 && $status < 600) ? $status : 500);
+}
