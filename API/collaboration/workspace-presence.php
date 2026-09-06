@@ -25,7 +25,21 @@ try {
     if ($workspaceId < 1) presenceFail('A Coworkspace is required.');
 
     $workspace = CoworkspaceService::get($db, $workspaceId, $uid);
-    if (strtoupper($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+    $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+
+    if ($method === 'GET') {
+        $role = (string)($workspace['member_role'] ?? '');
+        if ($role === '') presenceFail('You do not have access to this Coworkspace.', 403);
+
+        // GET is used by the workspace's 30-second presence poll. Refresh the
+        // caller first, then return all members seen within the 45-second TTL.
+        $touch = $db->prepare(
+            'INSERT INTO collab_workspace_presence (workspace_id,user_id,last_seen_at)
+             VALUES (:wid,:uid,CURRENT_TIMESTAMP)
+             ON DUPLICATE KEY UPDATE last_seen_at=CURRENT_TIMESTAMP'
+        );
+        $touch->execute([':wid' => $workspaceId, ':uid' => $uid]);
+
         $stmt = $db->prepare(
             'SELECT p.user_id, u.username, u.full_name, m.role, p.last_seen_at
              FROM collab_workspace_presence p
@@ -39,6 +53,7 @@ try {
         exit;
     }
 
+    if ($method !== 'POST') presenceFail('Method not allowed.', 405);
     AuthMiddleware::verifyCsrf();
     $role = (string)($workspace['member_role'] ?? '');
     if ($role === '') presenceFail('You do not have access to this Coworkspace.', 403);
