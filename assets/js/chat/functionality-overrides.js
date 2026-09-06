@@ -18,6 +18,11 @@
     }[c]));
   }
 
+  // Shared by the collaboration-hub IIFE below.
+  window.ecollabBase = base;
+  window.ecollabCsrf = csrf;
+  window.ecollabEsc = esc;
+
   async function jsonPost(path, payload) {
     const res = await fetch(base() + path, {
       method: 'POST',
@@ -162,6 +167,12 @@
  * ───────────────────────────────────────────────────────────────────────── */
 (function configureChatCollaborationHub(){
   'use strict';
+
+  const base = window.ecollabBase || (() => window.ECOLLAB?.baseUrl || '');
+  const csrf = window.ecollabCsrf || (() => window.ECOLLAB?.csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || '');
+  const esc = window.ecollabEsc || (value => String(value ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
 
   const privilegedRoles = new Set(['facilitator', 'moderator', 'admin', 'super_admin']);
   const role = String(window.ECOLLAB?.role || 'student').toLowerCase();
@@ -373,8 +384,6 @@
   function initialise() {
     if (!ensureDocumentsUI()) return;
     filterTabs();
-    // Non-facilitators always start in Notes, keeping the collaboration
-    // surface focused on shared notes and documents.
     if (!isPrivileged) {
       const panel = collabPanel();
       if (panel) panel.querySelectorAll('.collab-tab-btn').forEach(btn => {
