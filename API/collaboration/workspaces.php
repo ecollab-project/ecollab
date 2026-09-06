@@ -109,6 +109,7 @@ try {
 
     if ($action === 'request_access') {
         $workspace = CoworkspaceService::get($db, $workspaceId, $uid, false);
+        CoworkspaceService::assertChannelMember($db, (int)$workspace['channel_id'], $uid);
         if ((int)$workspace['host_id'] === $uid || (string)$workspace['visibility'] === 'public') {
             workspaceJsonFail('Access requests are only needed for private Coworkspaces.');
         }
@@ -159,6 +160,7 @@ try {
             $db->beginTransaction();
             foreach ([
                 'DELETE FROM collab_workspace_access_requests WHERE workspace_id=:wid',
+                'DELETE FROM collab_workspace_presence WHERE workspace_id=:wid',
                 'DELETE FROM collab_workspace_members WHERE workspace_id=:wid',
                 'DELETE FROM collab_workspaces WHERE id=:wid',
             ] as $sql) {
