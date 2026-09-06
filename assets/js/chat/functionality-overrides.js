@@ -172,7 +172,7 @@ window.ECOLLAB_ESC = esc;
 
     const base = window.ecollabBase || (() => window.ECOLLAB?.baseUrl || '');
     const csrf = window.ecollabCsrf || (() => window.ECOLLAB?.csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || '');
-    const esc = window.ecollabEsc || (value => String(value ?? '').replace(/[&<>"']/g, c => ({
+    const esc = window.ECOLLAB_ESC || (value => String(value ?? '').replace(/[&<>"']/g, c => ({
     '&': '&amp;',
     '<': '&lt;',
     '>': '&gt;',
