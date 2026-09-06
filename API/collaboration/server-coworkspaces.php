@@ -41,6 +41,90 @@ function requireServerMember(PDO $db, int $serverId, int $userId): array
     return $server;
 }
 
+/**
+ * Ensure every active server has one default server-wide Coworkspace.
+ * Existing workspaces are never duplicated or modified.
+ */
+function ensureServerCoworkspace(PDO $db, array $server, int $userId): array
+{
+    $serverId = (int)$server['id'];
+
+    $stmt = $db->prepare(
+        'SELECT w.id
+         FROM collab_workspaces w
+         WHERE w.server_id = :sid AND w.archived = 0
+         ORDER BY w.id ASC
+         LIMIT 1'
+    );
+    $stmt->execute([':sid' => $serverId]);
+    $existingId = (int)($stmt->fetchColumn() ?: 0);
+    if ($existingId > 0) {
+        return ['id' => $existingId, 'created' => false];
+    }
+
+    $channelStmt = $db->prepare(
+        'SELECT id
+         FROM channels
+         WHERE server_id = :sid
+         ORDER BY position ASC, id ASC
+         LIMIT 1'
+    );
+    $channelStmt->execute([':sid' => $serverId]);
+    $channelId = (int)($channelStmt->fetchColumn() ?: 0);
+    if ($channelId < 1) {
+        throw new RuntimeException('This server has no channel available for its Coworkspace.');
+    }
+
+    $name = trim(substr((string)$server['name'], 0, 200));
+    if ($name === '') $name = 'Collabs';
+
+    $db->beginTransaction();
+    try {
+        // Re-check inside the transaction so concurrent first visits do not
+        // create duplicate default Coworkspaces for the same server.
+        $check = $db->prepare(
+            'SELECT id
+             FROM collab_workspaces
+             WHERE server_id = :sid AND archived = 0
+             ORDER BY id ASC
+             LIMIT 1
+             FOR UPDATE'
+        );
+        $check->execute([':sid' => $serverId]);
+        $existingId = (int)($check->fetchColumn() ?: 0);
+        if ($existingId > 0) {
+            $db->commit();
+            return ['id' => $existingId, 'created' => false];
+        }
+
+        $insert = $db->prepare(
+            'INSERT INTO collab_workspaces
+             (channel_id, server_id, name, visibility, host_id,
+              allow_create_documents, allow_edit_documents, allow_whiteboard, allow_member_invites)
+             VALUES (:cid, :sid, :name, "public", :uid, 1, 1, 1, 0)'
+        );
+        $insert->execute([
+            ':cid' => $channelId,
+            ':sid' => $serverId,
+            ':name' => $name,
+            ':uid' => $userId,
+        ]);
+        $workspaceId = (int)$db->lastInsertId();
+
+        $member = $db->prepare(
+            'INSERT INTO collab_workspace_members (workspace_id, user_id, role)
+             VALUES (:wid, :uid, "host")'
+        );
+        $member->execute([':wid' => $workspaceId, ':uid' => $userId]);
+
+        $db->commit();
+        return ['id' => $workspaceId, 'created' => true];
+    } catch (Throwable $e) {
+        if ($db->inTransaction()) $db->rollBack();
+        throw $e;
+    }
+}
+
 $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
 $input = serverCoworkspaceInput();
 $serverId = (int)($_GET['server_id'] ?? $input['server_id'] ?? 0);
@@ -64,6 +148,11 @@ try {
     $server = requireServerMember($db, $serverId, $uid);
 
     if ($method === 'GET') {
+        // A server member entering Collabs automatically gets the server's
+        // persistent Coworkspace. The currently selected Chat server is the
+        // only server context needed; channels are not authorization scopes.
+        ensureServerCoworkspace($db, $server, $uid);
+
         if ($workspaceId > 0) {
             $stmt = $db->prepare(
                 'SELECT w.id,w.server_id,w.channel_id,w.name,w.visibility,w.host_id,
