@@ -151,3 +151,238 @@
   link.href=(window.ECOLLAB?.baseUrl||'')+'/assets/css/desktop/profile-view-overrides.css?v=1';
   document.head.appendChild(link);
 })();
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * CHAT COLLABORATION ACCESS + DOCUMENTS
+ *
+ * Students/member roles get the focused collaboration surface: Notes +
+ * Documents. Facilitator-level roles retain the existing advanced tools.
+ * Documents are backed by the existing channel-membership protected
+ * ONLYOFFICE document API and open in the existing editor route.
+ * ───────────────────────────────────────────────────────────────────────── */
+(function configureChatCollaborationHub(){
+  'use strict';
+
+  const privilegedRoles = new Set(['facilitator', 'moderator', 'admin', 'super_admin']);
+  const role = String(window.ECOLLAB?.role || 'student').toLowerCase();
+  const isPrivileged = privilegedRoles.has(role);
+  const memberTools = new Set(['notes', 'documents']);
+
+  function collabPanel() { return document.getElementById('collabHub'); }
+  function collabTabBar() { return collabPanel()?.querySelector('.collab-tab-bar'); }
+
+  function setPane(tool) {
+    const panel = collabPanel();
+    if (!panel) return;
+    panel.querySelectorAll('.collab-tab-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tool === tool);
+    });
+    panel.querySelectorAll('.collab-pane').forEach(pane => {
+      pane.style.display = pane.id === `collabPane_${tool}` ? 'flex' : 'none';
+    });
+  }
+
+  function ensureDocumentsUI() {
+    const panel = collabPanel();
+    const bar = collabTabBar();
+    if (!panel || !bar) return false;
+
+    let tab = bar.querySelector('.collab-tab-btn[data-tool="documents"]');
+    if (!tab) {
+      tab = document.createElement('button');
+      tab.className = 'collab-tab-btn';
+      tab.dataset.tool = 'documents';
+      tab.type = 'button';
+      tab.innerHTML = '<span class="tab-icon">📄</span>Documents';
+      tab.addEventListener('click', () => window._switchCollabTool?.('documents'));
+      bar.insertBefore(tab, bar.children[1] || null);
+    }
+
+    let pane = document.getElementById('collabPane_documents');
+    if (!pane) {
+      pane = document.createElement('div');
+      pane.id = 'collabPane_documents';
+      pane.className = 'collab-pane';
+      pane.style.flexDirection = 'column';
+      panel.appendChild(pane);
+    }
+    return true;
+  }
+
+  function filterTabs() {
+    const panel = collabPanel();
+    if (!panel) return;
+    panel.querySelectorAll('.collab-tab-btn').forEach(btn => {
+      const tool = btn.dataset.tool;
+      btn.style.display = (!isPrivileged && !memberTools.has(tool)) ? 'none' : '';
+    });
+  }
+
+  async function loadDocuments() {
+    const pane = document.getElementById('collabPane_documents');
+    const channelId = Number(window.ECOLLAB?.currentChannelId || 0);
+    if (!pane || !channelId) return;
+
+    pane.innerHTML = `
+      <div class="collab-loading"><div class="collab-spinner"></div></div>`;
+    try {
+      const response = await fetch(`${base()}/API/collaboration/documents.php?channel_id=${encodeURIComponent(channelId)}`, {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { 'Accept': 'application/json' },
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.success) throw new Error(data.error || 'Could not load documents.');
+
+      const documents = Array.isArray(data.documents) ? data.documents : [];
+      pane.innerHTML = `
+        <div class="collab-documents-head" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;">
+          <div>
+            <div style="font-size:16px;font-weight:800;color:var(--text-primary);">Documents</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">Real-time Word, Excel and PowerPoint collaboration.</div>
+          </div>
+          <button type="button" class="collab-btn-sm" id="collabCreateDocumentBtn">＋ New</button>
+        </div>
+        <div id="collabDocumentCreate" style="display:none;margin-bottom:12px;padding:10px;border:1px solid var(--border-color,rgba(148,163,184,.15));border-radius:10px;background:rgba(15,23,42,.35);">
+          <div style="display:flex;gap:7px;flex-wrap:wrap;">
+            <input id="collabDocumentTitle" type="text" maxlength="220" placeholder="Document name" style="flex:1;min-width:160px;background:var(--bg-secondary,#111827);border:1px solid rgba(148,163,184,.18);border-radius:7px;padding:8px 9px;color:var(--text-primary,#fff);font:inherit;">
+            <select id="collabDocumentType" style="background:var(--bg-secondary,#111827);border:1px solid rgba(148,163,184,.18);border-radius:7px;padding:8px;color:var(--text-primary,#fff);font:inherit;">
+              <option value="docx">Word</option>
+              <option value="xlsx">Excel</option>
+              <option value="pptx">PowerPoint</option>
+            </select>
+            <button type="button" class="collab-btn-sm" id="collabCreateDocumentSubmit">Create</button>
+          </div>
+          <div id="collabDocumentError" style="display:none;margin-top:7px;color:#fca5a5;font-size:11px;"></div>
+        </div>
+        <div id="collabDocumentList" style="display:flex;flex-direction:column;gap:7px;min-height:40px;"></div>`;
+
+      const list = document.getElementById('collabDocumentList');
+      if (!documents.length) {
+        list.innerHTML = `
+          <div style="padding:28px 14px;text-align:center;border:1px dashed rgba(148,163,184,.18);border-radius:10px;color:var(--text-muted);">
+            <div style="font-size:28px;margin-bottom:7px;">📄</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text-primary);">No documents yet</div>
+            <div style="font-size:11px;margin-top:4px;">Create a shared document for this channel.</div>
+          </div>`;
+      } else {
+        list.innerHTML = documents.map(doc => {
+          const type = String(doc.file_type || 'docx').toLowerCase();
+          const icon = type === 'xlsx' ? '📊' : (type === 'pptx' ? '📽️' : '📄');
+          const editor = `${base()}/modules/collaboration/documents/editor.php?channel_id=${encodeURIComponent(channelId)}&id=${encodeURIComponent(doc.id)}`;
+          return `
+            <div class="collab-document-row" style="display:flex;align-items:center;gap:9px;padding:10px;border:1px solid rgba(148,163,184,.12);border-radius:9px;background:rgba(15,23,42,.28);">
+              <div style="font-size:22px;flex:0 0 auto;">${icon}</div>
+              <div style="min-width:0;flex:1;">
+                <div style="font-size:12px;font-weight:700;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(doc.title || doc.file_name || 'Untitled Document')}</div>
+                <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${esc(type.toUpperCase())} · v${esc(doc.version || 1)}</div>
+              </div>
+              <button type="button" class="collab-btn-sm" data-editor-url="${esc(editor)}">Open</button>
+            </div>`;
+        }).join('');
+      }
+
+      document.getElementById('collabCreateDocumentBtn')?.addEventListener('click', () => {
+        const form = document.getElementById('collabDocumentCreate');
+        if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        document.getElementById('collabDocumentTitle')?.focus();
+      });
+      document.getElementById('collabCreateDocumentSubmit')?.addEventListener('click', createDocument);
+      list.querySelectorAll('[data-editor-url]').forEach(button => {
+        button.addEventListener('click', () => {
+          const url = button.getAttribute('data-editor-url');
+          if (url) window.open(url, '_blank', 'noopener');
+        });
+      });
+    } catch (error) {
+      pane.innerHTML = `<div class="collab-err">⚠ ${esc(error.message || 'Could not load documents.')}</div>`;
+    }
+  }
+
+  async function createDocument() {
+    const titleEl = document.getElementById('collabDocumentTitle');
+    const typeEl = document.getElementById('collabDocumentType');
+    const errorEl = document.getElementById('collabDocumentError');
+    const channelId = Number(window.ECOLLAB?.currentChannelId || 0);
+    if (!channelId) return;
+    const title = titleEl?.value?.trim() || 'Untitled Document';
+    const type = typeEl?.value || 'docx';
+    if (errorEl) { errorEl.style.display = 'none'; errorEl.textContent = ''; }
+
+    try {
+      const response = await fetch(`${base()}/API/collaboration/documents.php`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrf(),
+        },
+        body: JSON.stringify({ channel_id: channelId, title, type, csrf_token: csrf() }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.success) throw new Error(data.error || 'Could not create document.');
+      const id = Number(data.document?.id || 0);
+      if (!id) throw new Error('The document was created without an editor id.');
+      const editor = `${base()}/modules/collaboration/documents/editor.php?channel_id=${encodeURIComponent(channelId)}&id=${encodeURIComponent(id)}`;
+      window.open(editor, '_blank', 'noopener');
+      loadDocuments();
+      toast('Document created.', 'success');
+    } catch (error) {
+      if (errorEl) { errorEl.textContent = error.message || 'Could not create document.'; errorEl.style.display = 'block'; }
+      toast(error.message || 'Could not create document.', 'error');
+    }
+  }
+
+  function switchTool(tool) {
+    const requested = String(tool || 'notes');
+    if (!isPrivileged && !memberTools.has(requested)) return originalSwitch('notes');
+    if (requested === 'documents') {
+      ensureDocumentsUI();
+      setPane('documents');
+      loadDocuments();
+      return;
+    }
+    originalSwitch(requested);
+  }
+
+  const originalSwitch = window._switchCollabTool;
+  const originalOpen = window.openCollabHub;
+  if (typeof originalSwitch !== 'function' || typeof originalOpen !== 'function') return;
+
+  function openHub(tool) {
+    const requested = String(tool || 'notes');
+    const safeTool = (!isPrivileged && !memberTools.has(requested)) ? 'notes' : requested;
+    ensureDocumentsUI();
+    filterTabs();
+    if (safeTool === 'documents') {
+      const panel = collabPanel();
+      if (!panel) return;
+      panel.style.display = 'flex';
+      requestAnimationFrame(() => panel.classList.add('collab-open'));
+      setPane('documents');
+      loadDocuments();
+      return;
+    }
+    originalOpen(safeTool);
+    filterTabs();
+  }
+
+  window._switchCollabTool = switchTool;
+  window.openCollabHub = openHub;
+
+  function initialise() {
+    if (!ensureDocumentsUI()) return;
+    filterTabs();
+    // Non-facilitators always start in Notes, keeping the collaboration
+    // surface focused on shared notes and documents.
+    if (!isPrivileged) {
+      const panel = collabPanel();
+      if (panel) panel.querySelectorAll('.collab-tab-btn').forEach(btn => {
+        if (!memberTools.has(btn.dataset.tool)) btn.style.display = 'none';
+      });
+    }
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialise, { once: true });
+  else initialise();
+})();
