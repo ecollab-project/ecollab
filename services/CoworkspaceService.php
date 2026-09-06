@@ -6,7 +6,7 @@ require_once __DIR__ . '/../database/config/db.php';
 
 final class CoworkspaceService
 {
-    public static function get(PDO $db, int $workspaceId, int $userId, bool $allowHost = true): array
+    public static function get(PDO $db, int $workspaceId, int $userId, bool $requireAccess = true): array
     {
         $stmt = $db->prepare(
             'SELECT w.*, cm.role AS member_role
@@ -22,14 +22,16 @@ final class CoworkspaceService
             throw new RuntimeException('Coworkspace not found.', 404);
         }
 
-        $role = (string)($workspace['member_role'] ?? '');
-        $isMember = $role !== '';
-        $isHost = (int)$workspace['host_id'] === $userId;
-        if (!$isMember && !$isHost) {
-            throw new RuntimeException('You do not have access to this Coworkspace.', 403);
-        }
-        if ($isHost && $role === '') {
-            $workspace['member_role'] = 'host';
+        if ($requireAccess) {
+            $role = (string)($workspace['member_role'] ?? '');
+            $isMember = $role !== '';
+            $isHost = (int)$workspace['host_id'] === $userId;
+            if (!$isMember && !$isHost) {
+                throw new RuntimeException('You do not have access to this Coworkspace.', 403);
+            }
+            if ($isHost && $role === '') {
+                $workspace['member_role'] = 'host';
+            }
         }
         return $workspace;
     }
