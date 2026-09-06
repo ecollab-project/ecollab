@@ -9,7 +9,7 @@
   function collabsUrl() {
     const params = new URLSearchParams(window.location.search);
     const channelId = params.get('channel_id');
-    const url = baseUrl() + '/modules/collaboration/coworkspaces.php';
+    const url = baseUrl() + '/modules/collaboration/server-coworkspaces.php';
     return channelId ? url + '?channel_id=' + encodeURIComponent(channelId) : url;
   }
 
