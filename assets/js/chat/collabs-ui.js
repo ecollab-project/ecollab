@@ -6,16 +6,46 @@
     return window.ECOLLAB?.baseUrl || '';
   }
 
-  function collabsUrl() {
+  function activeServerId() {
     const params = new URLSearchParams(window.location.search);
-    const channelId = params.get('channel_id');
-    const serverId = params.get('server_id') || params.get('guild_id');
+    const fromUrl = params.get('server_id') || params.get('guild_id');
+    if (fromUrl) return fromUrl;
+
+    // Chat keeps the currently selected server on the active workspace icon.
+    const activeWorkspace = document.querySelector('.workspace-icon.active[data-server-id]');
+    if (activeWorkspace?.dataset.serverId) return activeWorkspace.dataset.serverId;
+
+    // Some Chat code exposes the current server directly.
+    const fromState = window.ECOLLAB?.currentServerId || window.ECOLLAB?.serverId;
+    return fromState ? String(fromState) : '';
+  }
+
+  function activeChannelId() {
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get('channel_id');
+    if (fromUrl) return fromUrl;
+    const fromState = window.ECOLLAB?.currentChannelId;
+    return fromState ? String(fromState) : '';
+  }
+
+  function collabsUrl() {
     const url = baseUrl() + '/modules/collaboration/server-coworkspaces.php';
     const query = new URLSearchParams();
+    const serverId = activeServerId();
+    const channelId = activeChannelId();
     if (serverId) query.set('server_id', serverId);
     if (channelId) query.set('channel_id', channelId);
     const queryString = query.toString();
     return queryString ? url + '?' + queryString : url;
+  }
+
+  function navigateToCollabs() {
+    const serverId = activeServerId();
+    if (!serverId) {
+      if (window.showToast) window.showToast('Select a server in Chat first', 'info');
+      return;
+    }
+    window.location.href = collabsUrl();
   }
 
   function install() {
@@ -35,11 +65,11 @@
       item.setAttribute('role', 'button');
       item.tabIndex = 0;
       item.innerHTML = '<span class="nav-icon">🤝</span><span>Collabs</span>';
-      item.addEventListener('click', () => { window.location.href = collabsUrl(); });
+      item.addEventListener('click', navigateToCollabs);
       item.addEventListener('keydown', event => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
-          window.location.href = collabsUrl();
+          navigateToCollabs();
         }
       });
       if (drafts?.parentNode) drafts.parentNode.insertBefore(item, drafts.nextSibling);
@@ -49,7 +79,7 @@
     // If an older toolbar/button still calls the legacy hub, route it to the server-wide Collabs page.
     const oldOpen = window.openCollabHub;
     if (typeof oldOpen === 'function' && !oldOpen.__dedicatedCollabs) {
-      const replacement = function () { window.location.href = collabsUrl(); };
+      const replacement = function () { navigateToCollabs(); };
       replacement.__dedicatedCollabs = true;
       window.openCollabHub = replacement;
     }
