@@ -2,6 +2,8 @@
  * Ecollab chat functional overrides.
  * Loaded last so feature actions cannot fall back to design-only placeholders.
  */
+
+
 (function () {
   'use strict';
 
@@ -12,17 +14,17 @@
     if (typeof window.showToast === 'function') window.showToast(message, type);
   }
 
-  function esc(value) {
-    return String(value ?? '').replace(/[&<>"']/g, c => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    }[c]));
-  }
+function esc(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[c]));
+}
 
-  // Shared by the collaboration-hub IIFE below.
-  window.ecollabBase = base;
-  window.ecollabCsrf = csrf;
-  window.ecollabEsc = esc;
-
+window.ECOLLAB_ESC = esc;
   async function jsonPost(path, payload) {
     const res = await fetch(base() + path, {
       method: 'POST',
@@ -168,13 +170,18 @@
 (function configureChatCollaborationHub(){
   'use strict';
 
-  const base = window.ecollabBase || (() => window.ECOLLAB?.baseUrl || '');
-  const csrf = window.ecollabCsrf || (() => window.ECOLLAB?.csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || '');
-  const esc = window.ecollabEsc || (value => String(value ?? '').replace(/[&<>"']/g, c => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  }[c]));
+    const base = window.ecollabBase || (() => window.ECOLLAB?.baseUrl || '');
+    const csrf = window.ecollabCsrf || (() => window.ECOLLAB?.csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || '');
+    const esc = window.ecollabEsc || (value => String(value ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[c])));
 
   const privilegedRoles = new Set(['facilitator', 'moderator', 'admin', 'super_admin']);
+
   const role = String(window.ECOLLAB?.role || 'student').toLowerCase();
   const isPrivileged = privilegedRoles.has(role);
   const memberTools = new Set(['notes', 'documents']);
@@ -384,6 +391,8 @@
   function initialise() {
     if (!ensureDocumentsUI()) return;
     filterTabs();
+    // Non-facilitators always start in Notes, keeping the collaboration
+    // surface focused on shared notes and documents.
     if (!isPrivileged) {
       const panel = collabPanel();
       if (panel) panel.querySelectorAll('.collab-tab-btn').forEach(btn => {
@@ -394,4 +403,5 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialise, { once: true });
   else initialise();
+
 })();
