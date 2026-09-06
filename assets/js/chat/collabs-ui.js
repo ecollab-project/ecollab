@@ -9,8 +9,13 @@
   function collabsUrl() {
     const params = new URLSearchParams(window.location.search);
     const channelId = params.get('channel_id');
-    const url = baseUrl() + '/modules/collaboration/coworkspaces.php';
-    return channelId ? url + '?channel_id=' + encodeURIComponent(channelId) : url;
+    const serverId = params.get('server_id') || params.get('guild_id');
+    const url = baseUrl() + '/modules/collaboration/server-coworkspaces.php';
+    const query = new URLSearchParams();
+    if (serverId) query.set('server_id', serverId);
+    if (channelId) query.set('channel_id', channelId);
+    const queryString = query.toString();
+    return queryString ? url + '?' + queryString : url;
   }
 
   function install() {
@@ -41,7 +46,7 @@
       else nav.appendChild(item);
     }
 
-    // If an older toolbar/button still calls the legacy hub, route it to Collabs.
+    // If an older toolbar/button still calls the legacy hub, route it to the server-wide Collabs page.
     const oldOpen = window.openCollabHub;
     if (typeof oldOpen === 'function' && !oldOpen.__dedicatedCollabs) {
       const replacement = function () { window.location.href = collabsUrl(); };
