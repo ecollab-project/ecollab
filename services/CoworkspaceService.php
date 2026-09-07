@@ -23,6 +23,25 @@ final class CoworkspaceService
         }
 
         if ($requireAccess) {
+            $serverId = (int)($workspace['server_id'] ?? 0);
+            if ($serverId < 1) {
+                throw new RuntimeException('Coworkspace is not linked to a server.', 500);
+            }
+
+            $serverStmt = $db->prepare(
+                'SELECT 1
+                 FROM server_members sm
+                 INNER JOIN servers s ON s.id = sm.server_id
+                 WHERE sm.server_id = :sid
+                   AND sm.user_id = :uid
+                   AND s.status = "active"
+                 LIMIT 1'
+            );
+            $serverStmt->execute([':sid' => $serverId, ':uid' => $userId]);
+            if (!$serverStmt->fetchColumn()) {
+                throw new RuntimeException('You are not a member of this server.', 403);
+            }
+
             $role = (string)($workspace['member_role'] ?? '');
             $isMember = $role !== '';
             $isHost = (int)$workspace['host_id'] === $userId;
@@ -36,17 +55,56 @@ final class CoworkspaceService
         return $workspace;
     }
 
+    public static function assertServerMember(PDO $db, int $serverId, int $userId): void
+    {
+        if ($serverId < 1) {
+            throw new RuntimeException('A server is required.', 400);
+        }
+
+        $stmt = $db->prepare(
+            'SELECT 1
+             FROM server_members sm
+             INNER JOIN servers s ON s.id = sm.server_id
+             WHERE sm.server_id = :sid
+               AND sm.user_id = :uid
+               AND s.status = "active"
+             LIMIT 1'
+        );
+        $stmt->execute([':sid' => $serverId, ':uid' => $userId]);
+        if (!$stmt->fetchColumn()) {
+            throw new RuntimeException('You are not a member of this server.', 403);
+        }
+    }
+
+    /** @deprecated Channel membership is no longer a Coworkspace authorization boundary. */
     public static function assertChannelMember(PDO $db, int $channelId, int $userId): void
     {
-        $stmt = $db->prepare('SELECT 1 FROM channel_members WHERE channel_id = :cid AND user_id = :uid LIMIT 1');
-        $stmt->execute([':cid' => $channelId, ':uid' => $userId]);
-        if (!$stmt->fetchColumn()) {
-            throw new RuntimeException('You are not a member of this channel.', 403);
+        $stmt = $db->prepare('SELECT server_id FROM channels WHERE id = :cid LIMIT 1');
+        $stmt->execute([':cid' => $channelId]);
+        $serverId = (int)($stmt->fetchColumn() ?: 0);
+        if ($serverId < 1) {
+            throw new RuntimeException('Channel not found.', 404);
         }
+        self::assertServerMember($db, $serverId, $userId);
     }
 
     public static function canJoin(PDO $db, array $workspace, int $userId): bool
     {
+        $serverId = (int)($workspace['server_id'] ?? 0);
+        if ($serverId < 1) return false;
+
+        $serverStmt = $db->prepare(
+            'SELECT 1
+             FROM server_members sm
+             INNER JOIN servers s ON s.id = sm.server_id
+             WHERE sm.server_id = :sid
+               AND sm.user_id = :uid
+               AND s.status = "active"
+             LIMIT 1'
+        );
+        $serverStmt->execute([':sid' => $serverId, ':uid' => $userId]);
+        if (!$serverStmt->fetchColumn()) return false;
+
         $stmt = $db->prepare('SELECT role FROM collab_workspace_members WHERE workspace_id = :wid AND user_id = :uid LIMIT 1');
         $stmt->execute([':wid' => (int)$workspace['id'], ':uid' => $userId]);
         if ($stmt->fetchColumn() !== false) return true;
