@@ -44,6 +44,10 @@ function requireServerMember(PDO $db, int $serverId, int $userId): array
 /**
  * Ensure every active server has one default server-wide Coworkspace.
  * Existing workspaces are never duplicated or modified.
+ *
+ * The unique active-server constraint is the final concurrency guard. If
+ * another request wins the race between the existence check and INSERT,
+ * this request rolls back and re-fetches that winner's workspace.
  */
 function ensureServerCoworkspace(PDO $db, array $server, int $userId): array
 {
@@ -80,8 +84,9 @@ function ensureServerCoworkspace(PDO $db, array $server, int $userId): array
 
     $db->beginTransaction();
     try {
-        // Re-check inside the transaction so concurrent first visits do not
-        // create duplicate default Coworkspaces for the same server.
+        // FOR UPDATE is useful when an active row already exists, but it
+        // cannot lock a row that does not exist. The database UNIQUE key on
+        // active_server_id is therefore the actual race-condition guard.
         $check = $db->prepare(
             'SELECT id
              FROM collab_workspaces
@@ -121,6 +126,30 @@ function ensureServerCoworkspace(PDO $db, array $server, int $userId): array
         return ['id' => $workspaceId, 'created' => true];
     } catch (Throwable $e) {
         if ($db->inTransaction()) $db->rollBack();
+
+        // Two concurrent first visits can both observe no row. The unique
+        // active-server constraint makes exactly one INSERT win. The loser
+        // must reuse the winning workspace instead of returning a 500 error.
+        $isDuplicate = $e instanceof PDOException
+            && $e->getCode() === '23000'
+            && isset($e->errorInfo[1])
+            && (int)$e->errorInfo[1] === 1062;
+
+        if ($isDuplicate) {
+            $winner = $db->prepare(
+                'SELECT id
+                 FROM collab_workspaces
+                 WHERE server_id = :sid AND archived = 0
+                 ORDER BY id ASC
+                 LIMIT 1'
+            );
+            $winner->execute([':sid' => $serverId]);
+            $winnerId = (int)($winner->fetchColumn() ?: 0);
+            if ($winnerId > 0) {
+                return ['id' => $winnerId, 'created' => false];
+            }
+        }
+
         throw $e;
     }
 }
