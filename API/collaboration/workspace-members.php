@@ -30,17 +30,21 @@ $action = (string)($input['action'] ?? 'list');
 if ($workspaceId < 1) memberJsonFail('A Coworkspace is required.');
 
 try {
+    // Coworkspace authorization is server-wide. The service verifies both
+    // server membership and Coworkspace access before any member operation.
     $workspace = CoworkspaceService::get($db, $workspaceId, $uid);
+    $serverId = (int)$workspace['server_id'];
 
     if ($action === 'list') {
         $stmt = $db->prepare(
             'SELECT u.id, u.username, u.full_name, m.role, m.joined_at
              FROM collab_workspace_members m
              INNER JOIN users u ON u.id = m.user_id
+             INNER JOIN server_members sm ON sm.user_id = m.user_id AND sm.server_id = :sid
              WHERE m.workspace_id = :wid
              ORDER BY FIELD(m.role,"host","editor","member","viewer"), u.full_name, u.username'
         );
-        $stmt->execute([':wid' => $workspaceId]);
+        $stmt->execute([':sid' => $serverId, ':wid' => $workspaceId]);
         echo json_encode(['success' => true, 'members' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
         exit;
     }
@@ -54,9 +58,17 @@ try {
         $targetId = (int)($input['user_id'] ?? 0);
         $targetRole = (string)($input['role'] ?? 'member');
         if ($targetId < 1 || !in_array($targetRole, ['editor','member','viewer'], true)) memberJsonFail('Invalid member or role.');
-        $channel = $db->prepare('SELECT 1 FROM channel_members WHERE channel_id=:cid AND user_id=:uid LIMIT 1');
-        $channel->execute([':cid' => (int)$workspace['channel_id'], ':uid' => $targetId]);
-        if (!$channel->fetchColumn()) memberJsonFail('The invited user must belong to the workspace channel.', 403);
+
+        $serverMember = $db->prepare(
+            'SELECT 1
+             FROM server_members sm
+             INNER JOIN servers s ON s.id = sm.server_id
+             WHERE sm.server_id = :sid AND sm.user_id = :uid AND s.status = "active"
+             LIMIT 1'
+        );
+        $serverMember->execute([':sid' => $serverId, ':uid' => $targetId]);
+        if (!$serverMember->fetchColumn()) memberJsonFail('The invited user must belong to this server.', 403);
+
         $stmt = $db->prepare(
             'INSERT INTO collab_workspace_members (workspace_id,user_id,role) VALUES (:wid,:uid,:role)
              ON DUPLICATE KEY UPDATE role = VALUES(role)'
@@ -95,10 +107,11 @@ try {
             'SELECT r.id, r.user_id, u.username, u.full_name, r.status, r.created_at
              FROM collab_workspace_access_requests r
              INNER JOIN users u ON u.id=r.user_id
+             INNER JOIN server_members sm ON sm.user_id=r.user_id AND sm.server_id=:sid
              WHERE r.workspace_id=:wid AND r.status="pending"
              ORDER BY r.created_at ASC'
         );
-        $stmt->execute([':wid' => $workspaceId]);
+        $stmt->execute([':sid' => $serverId, ':wid' => $workspaceId]);
         echo json_encode(['success' => true, 'requests' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
         exit;
     }
@@ -107,10 +120,18 @@ try {
         CoworkspaceService::requireHost($db, $workspaceId, $uid);
         $targetId = (int)($input['user_id'] ?? 0);
         if ($targetId < 1) memberJsonFail('A user is required.');
+
         if ($action === 'approve_request') {
-            $channel = $db->prepare('SELECT 1 FROM channel_members WHERE channel_id=:cid AND user_id=:uid LIMIT 1');
-            $channel->execute([':cid' => (int)$workspace['channel_id'], ':uid' => $targetId]);
-            if (!$channel->fetchColumn()) memberJsonFail('The requester is no longer a channel member.', 403);
+            $serverMember = $db->prepare(
+                'SELECT 1
+                 FROM server_members sm
+                 INNER JOIN servers s ON s.id = sm.server_id
+                 WHERE sm.server_id=:sid AND sm.user_id=:uid AND s.status="active"
+                 LIMIT 1'
+            );
+            $serverMember->execute([':sid' => $serverId, ':uid' => $targetId]);
+            if (!$serverMember->fetchColumn()) memberJsonFail('The requester is no longer a server member.', 403);
+
             $db->beginTransaction();
             $member = $db->prepare('INSERT INTO collab_workspace_members (workspace_id,user_id,role) VALUES (:wid,:uid,"member") ON DUPLICATE KEY UPDATE role=role');
             $member->execute([':wid' => $workspaceId, ':uid' => $targetId]);
