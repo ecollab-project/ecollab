@@ -81,41 +81,180 @@ try {
 ?>
 <!doctype html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title><?= htmlspecialchars((string)$document['title'], ENT_QUOTES, 'UTF-8') ?> – Collabs</title>
-<style>
-html,body{height:100%;margin:0;background:#0f1117;color:#f5f7fb;font-family:Inter,system-ui,sans-serif}body{display:flex;flex-direction:column}.bar{height:52px;display:flex;align-items:center;gap:14px;padding:0 16px;background:#171a23;border-bottom:1px solid #292e3b}.back{color:#cbd3e0;text-decoration:none}.title{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.presence{margin-left:auto;color:#aeb8ca;font-size:13px}.editor{flex:1;min-height:0}
-</style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title><?= htmlspecialchars((string)$document['title'], ENT_QUOTES, 'UTF-8') ?> – Collabs</title>
+    <style>
+        html,
+        body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            background: #0f1117;
+            color: #f5f7fb;
+            font-family: Inter, system-ui, sans-serif;
+            overflow: hidden;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bar {
+            height: 52px;
+            min-height: 52px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 0 16px;
+            background: #171a23;
+            border-bottom: 1px solid #292e3b;
+        }
+
+        .back {
+            color: #cbd3e0;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .title {
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 0;
+        }
+
+        .presence {
+            margin-left: auto;
+            color: #aeb8ca;
+            font-size: 13px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .editor {
+            flex: 1;
+            min-height: 0;
+            min-width: 0;
+            width: 100%;
+            height: calc(100vh - 52px);
+            overflow: hidden;
+        }
+
+        @media (max-width: 768px) {
+            .bar {
+                height: 48px;
+                min-height: 48px;
+                padding: 0 10px;
+                gap: 8px;
+            }
+
+            .back {
+                font-size: 14px;
+            }
+
+            .title {
+                font-size: 14px;
+            }
+
+            .presence {
+                font-size: 11px;
+            }
+
+            .editor {
+                height: calc(100dvh - 48px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .bar {
+                padding: 0 8px;
+            }
+
+            .presence {
+                max-width: 90px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+    </style>
 </head>
+
 <body>
-<header class="bar">
-  <a class="back" href="<?= htmlspecialchars(BASE_URL . '/modules/collaboration/server-coworkspaces.php?server_id=' . (int)$workspace['server_id'], ENT_QUOTES, 'UTF-8') ?>">← Collabs</a>
-  <span class="title">📄 <?= htmlspecialchars((string)$document['title'], ENT_QUOTES, 'UTF-8') ?></span>
-  <span id="presence" class="presence">Checking collaborators…</span>
-</header>
-<div id="onlyoffice-editor" class="editor"></div>
-<script src="<?= htmlspecialchars($documentServer, ENT_QUOTES, 'UTF-8') ?>/web-apps/apps/api/documents/api.js"></script>
-<script>
-const OO_CONFIG = <?= json_encode($config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
-const PRESENCE_API = <?= json_encode(BASE_URL . '/API/collaboration/document-presence.php') ?>;
-const DOC_ID = <?= $documentId ?>;
-const CSRF = <?= json_encode(AuthMiddleware::csrfToken()) ?>;
-let editor;
-function updatePresence(){
-  fetch(PRESENCE_API+'?document_id='+DOC_ID,{credentials:'same-origin'})
-    .then(r=>r.json()).then(d=>{
-      const p=d.presence||[]; const editing=p.filter(x=>x.mode==='editing').length; const viewing=p.length-editing;
-      document.getElementById('presence').textContent=p.length?(editing+' editing · '+viewing+' viewing'):'Only you';
-    }).catch(()=>{});
-}
-function heartbeat(){
-  fetch(PRESENCE_API,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':CSRF},body:JSON.stringify({document_id:DOC_ID,mode:OO_CONFIG.document.permissions.edit?'editing':'viewing',csrf_token:CSRF})}).then(()=>updatePresence()).catch(()=>{});
-}
-if(window.DocsAPI){ editor=new DocsAPI.DocEditor('onlyoffice-editor',OO_CONFIG); }
-else { document.getElementById('onlyoffice-editor').textContent='ONLYOFFICE editor could not be loaded.'; }
-heartbeat(); setInterval(heartbeat,20000); setInterval(updatePresence,10000); window.addEventListener('beforeunload',()=>{});
-</script>
+    <header class="bar">
+        <a class="back" href="<?= htmlspecialchars(BASE_URL . '/modules/collaboration/server-coworkspaces.php?server_id=' . (int)$workspace['server_id'], ENT_QUOTES, 'UTF-8') ?>">← Collabs</a>
+        <span class="title">📄 <?= htmlspecialchars((string)$document['title'], ENT_QUOTES, 'UTF-8') ?></span>
+        <span id="presence" class="presence">Checking collaborators…</span>
+    </header>
+    <div id="onlyoffice-editor" class="editor"></div>
+    <script src="<?= htmlspecialchars($documentServer, ENT_QUOTES, 'UTF-8') ?>/web-apps/apps/api/documents/api.js"></script>
+    <script>
+        const OO_CONFIG = <?= json_encode($config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+        const PRESENCE_API = <?= json_encode(BASE_URL . '/API/collaboration/document-presence.php') ?>;
+        const DOC_ID = <?= $documentId ?>;
+        const CSRF = <?= json_encode(AuthMiddleware::csrfToken()) ?>;
+        let editor;
+
+        function updatePresence() {
+            fetch(PRESENCE_API + '?document_id=' + DOC_ID, {
+                    credentials: 'same-origin'
+                })
+                .then(r => r.json()).then(d => {
+                    const p = d.presence || [];
+                    const editing = p.filter(x => x.mode === 'editing').length;
+                    const viewing = p.length - editing;
+                    document.getElementById('presence').textContent = p.length ? (editing + ' editing · ' + viewing + ' viewing') : 'Only you';
+                }).catch(() => {});
+        }
+
+        function heartbeat() {
+            fetch(PRESENCE_API, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': CSRF
+                },
+                body: JSON.stringify({
+                    document_id: DOC_ID,
+                    mode: OO_CONFIG.document.permissions.edit ? 'editing' : 'viewing',
+                    csrf_token: CSRF
+                })
+            }).then(() => updatePresence()).catch(() => {});
+        }
+
+        function isMobileDevice() {
+            return window.matchMedia('(max-width: 768px)').matches ||
+                /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+        }
+
+        function initializeOnlyOffice() {
+            if (!window.DocsAPI) {
+                document.getElementById('onlyoffice-editor').textContent =
+                    'ONLYOFFICE editor could not be loaded.';
+                return;
+            }
+
+            OO_CONFIG.type = isMobileDevice() ? 'mobile' : 'desktop';
+
+            editor = new DocsAPI.DocEditor(
+                'onlyoffice-editor',
+                OO_CONFIG
+            );
+        }
+
+        initializeOnlyOffice();
+        heartbeat();
+        setInterval(heartbeat, 20000);
+        setInterval(updatePresence, 10000);
+        window.addEventListener('beforeunload', () => {});
+    </script>
 </body>
+
 </html>

@@ -72,7 +72,22 @@ try {
     $stmt->execute([':did' => $documentId, ':uid' => $uid, ':mode' => $mode]);
 
     echo json_encode(['success' => true, 'document_id' => $documentId, 'mode' => $mode]);
-} catch (Throwable $e) {
-    $status = (int)$e->getCode();
-    presenceFail($e->getMessage(), ($status >= 400 && $status < 600) ? $status : 500);
+}  catch (Throwable $e) {
+    error_log(
+        '[document-presence] ' .
+        get_class($e) . ': ' .
+        $e->getMessage() .
+        ' in ' . $e->getFile() .
+        ':' . $e->getLine()
+    );
+
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage(),
+        'type' => get_class($e),
+        'file' => basename($e->getFile()),
+        'line' => $e->getLine(),
+    ]);
+    exit;
 }

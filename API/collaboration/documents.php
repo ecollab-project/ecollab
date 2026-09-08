@@ -121,7 +121,11 @@ try {
     AuthMiddleware::verifyCsrf();
     $title = trim((string)($data['title'] ?? 'Untitled Document'));
     $type = strtolower(trim((string)($data['type'] ?? 'docx')));
-    $title = trim(substr(preg_replace('/[\\\/\:\*\?"\<\>\|]+/', ' ', $title) ?: 'Untitled Document', 0, 220));
+    $title = trim(substr(
+    preg_replace('~[\\\\/:*?"<>|]+~', ' ', $title) ?: 'Untitled Document',
+    0,
+    220
+));
     if ($title === '') $title = 'Untitled Document';
     if (!in_array($type, ['docx','xlsx','pptx'], true)) jsonFail('Supported formats are DOCX, XLSX and PPTX.');
     $role = (string)($workspace['member_role'] ?? '');
@@ -130,8 +134,24 @@ try {
     if (!is_dir($storageDir) && !mkdir($storageDir,0750,true) && !is_dir($storageDir)) jsonFail('Document storage is unavailable.',500);
     $key = bin2hex(random_bytes(24)); $ext='.' . $type; $fileName=$title.$ext; $storageName=$key.$ext; $path=$storageDir.DIRECTORY_SEPARATOR.$storageName;
     if (!class_exists('ZipArchive') || !createOoxmlTemplate($type,$path)) { @unlink($path); jsonFail('Could not create the document.',500); }
-    $stmt=$db->prepare('INSERT INTO collab_documents (channel_id,workspace_id,title,file_name,file_type,storage_path,document_key,created_by,updated_by) VALUES (:cid,:wid,:title,:name,:type,:path,:key,:uid,:uid)');
-    $stmt->execute([':cid'=>(int)$workspace['channel_id'],':wid'=>$wid,':title'=>$title,':name'=>$fileName,':type'=>$type,':path'=>'uploads/collab-docs/'.$storageName,':key'=>$key,':uid'=>$uid]);
+    $stmt = $db->prepare(
+    'INSERT INTO collab_documents
+    (channel_id, workspace_id, title, file_name, file_type, storage_path, document_key, created_by, updated_by)
+    VALUES
+    (:cid, :wid, :title, :name, :type, :path, :key, :created_by, :updated_by)'
+);
+
+$stmt->execute([
+    ':cid' => (int)$workspace['channel_id'],
+    ':wid' => $wid,
+    ':title' => $title,
+    ':name' => $fileName,
+    ':type' => $type,
+    ':path' => 'uploads/collab-docs/' . $storageName,
+    ':key' => $key,
+    ':created_by' => $uid,
+    ':updated_by' => $uid
+]);
     $id=(int)$db->lastInsertId();
     echo json_encode(['success'=>true,'document'=>['id'=>$id,'title'=>$title,'file_name'=>$fileName,'file_type'=>$type,'workspace_id'=>$wid,'open_url'=>BASE_URL.'/modules/collaboration/document.php?id='.$id.'&workspace_id='.$wid]]);
 } catch (Throwable $e) {
