@@ -47,11 +47,12 @@ try {
              VALUES (:sid, :uid, \'approved\', \'editor\', NOW())
              ON DUPLICATE KEY UPDATE
                 status = \'approved\',
-                role = IF(role = \'editor\', \'editor\', \'editor\'),
                 joined_at = NOW()'
         );
         $stmt->execute([':sid' => $sessionId, ':uid' => $uid]);
-        $role = 'editor';
+        $roleStmt = $db->prepare('SELECT role FROM coding_session_participants WHERE session_id = :sid AND user_id = :uid LIMIT 1');
+        $roleStmt->execute([':sid' => $sessionId, ':uid' => $uid]);
+        $role = (string)($roleStmt->fetchColumn() ?: 'editor');
     }
 
     echo json_encode([
