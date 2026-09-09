@@ -2,11 +2,15 @@
 -- Ecollab Coding Buddy — isolated coding-session membership.
 -- Membership is intentionally independent from channels,
 -- collaboration rooms, projects, and workspaces.
+--
+-- IMPORTANT: users.id is BIGINT UNSIGNED, so every user foreign
+-- key below must match it exactly. INT UNSIGNED causes MySQL
+-- errno 150 (foreign key constraint incorrectly formed).
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS coding_sessions (
     id                 BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    owner_id           INT UNSIGNED    NOT NULL,
+    owner_id           BIGINT UNSIGNED NOT NULL,
     created_at         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     invite_token       VARCHAR(128)    NULL,
     invite_expires_at  DATETIME        NULL,
@@ -22,7 +26,7 @@ CREATE TABLE IF NOT EXISTS coding_sessions (
 
 CREATE TABLE IF NOT EXISTS coding_session_participants (
     session_id  BIGINT UNSIGNED NOT NULL,
-    user_id     INT UNSIGNED    NOT NULL,
+    user_id     BIGINT UNSIGNED NOT NULL,
     status      ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
     role        ENUM('editor','viewer') NOT NULL DEFAULT 'viewer',
     joined_at   DATETIME NULL,
