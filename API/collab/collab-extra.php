@@ -495,9 +495,10 @@ function extra_resources(PDO $db, int $uid, string $uname, int $cid, string $act
                 $params[':t'] = $type;
             }
             if ($search) {
-                $where .= ' AND (r.title LIKE :s OR r.tags LIKE :s2)';
-                $params[':s'] = "%$search%";
-                $params[':s2'] = "%$search%";
+                $escapedSearch = str_replace(['\\\\', '%', '_'], ['\\\\\\\\', '\\\\%', '\\\\_'], $search);
+                $where .= " AND (r.title LIKE :s ESCAPE '\\\\' OR r.tags LIKE :s2 ESCAPE '\\\\')";
+                $params[':s'] = "%$escapedSearch%";
+                $params[':s2'] = "%$escapedSearch%";
             }
             $s = $db->prepare("SELECT r.*,u.username adder,
                 (SELECT COUNT(*) FROM collab_resource_votes WHERE resource_id=r.id) vote_count,
