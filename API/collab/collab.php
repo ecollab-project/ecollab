@@ -260,7 +260,7 @@ function collab_notes(PDO $db, int $uid, string $username, int $cid, string $act
             $version = (int)($body['version'] ?? 0);
 
             $note = $ensureNote();
-            if ($note && (int)$note['version'] > $version && $version > 0) {
+            if ($note && (int)$note['version'] !== $version) {
                 json_fail('Version conflict — reload the document', 409);
             }
             if ($note) {
@@ -546,6 +546,11 @@ function collab_tasks(PDO $db, int $uid, string $username, int $cid, string $act
             $taskId = (int)($body['task_id'] ?? 0);
             if (!$taskId) json_fail('task_id required');
             $allowed = ['title', 'description', 'priority', 'due_date', 'assignee_id', 'done'];
+            if (array_key_exists('priority', $body) && !in_array($body['priority'], ['low', 'medium', 'high', 'urgent'], true)) {
+                json_fail('Invalid priority', 400);
+            }
+            if (array_key_exists('title', $body)) $body['title'] = mb_substr((string)$body['title'], 0, 300);
+            if (array_key_exists('description', $body)) $body['description'] = mb_substr((string)$body['description'], 0, 2000);
             $sets = [];
             $params = [':tid' => $taskId];
             foreach ($allowed as $f) {
@@ -588,7 +593,8 @@ function collab_tasks(PDO $db, int $uid, string $username, int $cid, string $act
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// CODE SANDBOX
+// CODE SNIPPET — per-channel collaboration snippet (separate from Coding Buddy sessions)
+// Coding Buddy uses independent coding_sessions membership and code_* WebSocket events.
 // ════════════════════════════════════════════════════════════════════════════
 function collab_code(PDO $db, int $uid, string $username, int $cid, string $action, array $body, string $method): never
 {
@@ -618,7 +624,7 @@ function collab_code(PDO $db, int $uid, string $username, int $cid, string $acti
                 $db->prepare("UPDATE collab_snippets SET title=:t,language=:l,code=:c,version=version+1,updated_by=:uid WHERE id=:id")
                     ->execute([':t' => $title, ':l' => $lang, ':c' => $code, ':uid' => $uid, ':id' => $existing['id']]);
                 $snipId = (int)$existing['id'];
-                $newVer = $version + 1;
+                $newVer = (int)$existing['version'] + 1;
             } else {
                 $db->prepare("INSERT INTO collab_snippets (channel_id,title,language,code,version,created_by,updated_by) VALUES(:cid,:t,:l,:c,1,:created_by,:updated_by)")
                     ->execute([':cid' => $cid, ':t' => $title, ':l' => $lang, ':c' => $code, ':created_by' => $uid, ':updated_by' => $uid]);
@@ -692,7 +698,11 @@ function collab_timer(PDO $db, int $uid, string $username, int $cid, string $act
     $ensure = $db->prepare("INSERT IGNORE INTO collab_timers (channel_id) VALUES(:cid)");
     $ensure->execute([':cid' => $cid]);
 
-    $fetch = fn() => $db->query("SELECT * FROM collab_timers WHERE channel_id=$cid LIMIT 1")->fetch();
+    $fetchStmt = $db->prepare("SELECT * FROM collab_timers WHERE channel_id=:cid LIMIT 1");
+    $fetch = function () use ($fetchStmt, $cid) {
+        $fetchStmt->execute([':cid' => $cid]);
+        return $fetchStmt->fetch();
+    };
 
     match ($action) {
 
@@ -965,6 +975,15 @@ function collab_calendar(PDO $db, int $uid, string $username, int $cid, string $
             if (!$event) json_fail('Event not found', 404);
             if ((int)$event['created_by'] !== $uid) json_fail('Only the creator can edit this event', 403);
             $allowed = ['title', 'description', 'type', 'color', 'start_time', 'end_time', 'all_day', 'recurring'];
+            if (array_key_exists('title', $body)) {
+                $body['title'] = mb_substr(trim((string)$body['title']), 0, 200);
+                if ($body['title'] === '') json_fail('title required', 400);
+            }
+            if (array_key_exists('description', $body)) $body['description'] = mb_substr((string)$body['description'], 0, 1000);
+            $types = ['study', 'deadline', 'meeting', 'exam', 'social', 'other'];
+            if (array_key_exists('type', $body) && !in_array($body['type'], $types, true)) json_fail('Invalid event type', 400);
+            if (array_key_exists('recurring', $body) && !in_array($body['recurring'], ['none', 'daily', 'weekly', 'monthly'], true)) json_fail('Invalid recurrence', 400);
+            if (array_key_exists('color', $body) && !preg_match('/^#[0-9a-fA-F]{6}$/', (string)$body['color'])) json_fail('Invalid color', 400);
             $sets = [];
             $params = [':eid' => $eid];
             foreach ($allowed as $f) {
