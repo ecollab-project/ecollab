@@ -37,6 +37,7 @@ function joinVoice(channelSlug, el, channelId) {
   // Mark sidebar item
   document.querySelectorAll('.voice-channel').forEach(v => v.classList.remove('connected'));
   if (el) el.classList.add('connected');
+  if (typeof _bumpSidebarVcCount === 'function') _bumpSidebarVcCount(channelId, 1);
 
   vcActive = true;
   vcMinimized = false;
@@ -444,6 +445,7 @@ function disconnectVoice() {
   }
 
   document.querySelectorAll('.voice-channel').forEach(v => v.classList.remove('connected'));
+  if (typeof _bumpSidebarVcCount === 'function') _bumpSidebarVcCount(vcChannelId, -1);
   _updateConnectedBar(false);
   _stopVAD();
 
@@ -547,7 +549,7 @@ function _moveUserCardOnMute(isMuted) {
       let vid = card.querySelector('.vc-cam-preview');
       if (!vid) {
         vid = document.createElement('video');
-        vid.className = 'vc-cam-preview';
+        vid.className = 'vc-cam-preview vc-mirror';
         vid.autoplay = true;
         vid.muted = true;
         vid.playsInline = true;
@@ -593,7 +595,7 @@ function _moveUserCardOnMute(isMuted) {
       let vid = card.querySelector('.vc-cam-preview');
       if (!vid) {
         vid = document.createElement('video');
-        vid.className = 'vc-cam-preview';
+        vid.className = 'vc-cam-preview vc-mirror';
         vid.autoplay = true;
         vid.muted = true;
         vid.playsInline = true;
@@ -618,6 +620,19 @@ function toggleVcDeafen() {
   vcDeafened = !vcDeafened;
   const btn = document.getElementById('vcDeafBtn');
   if (btn) btn.classList.toggle('deafened', vcDeafened);
+
+  // Mute/unmute every currently-playing remote participant's audio.
+  // (_attachRemoteAudio already applies vcDeafened for people who join
+  // AFTER this toggle — this loop covers everyone already in the call.)
+  document.querySelectorAll('audio[id^="remote-audio-"]').forEach(a => {
+    a.muted = vcDeafened;
+  });
+
+  // Deafening also mutes your own mic (you can't hear yourself either) —
+  // matches standard voice-app behavior. Undeafening does not auto-unmute.
+  if (vcDeafened && !vcMicMuted) {
+    toggleVcMic();
+  }
   if (localStream) {
     localStream.getAudioTracks().forEach(t => { if (!vcMicMuted) t.enabled = !vcDeafened; });
   }
@@ -948,7 +963,7 @@ async function toggleCamera() {
         let vid = card.querySelector('.vc-cam-preview');
         if (!vid) {
           vid = document.createElement('video');
-          vid.className = 'vc-cam-preview';
+          vid.className = 'vc-cam-preview vc-mirror';
           vid.autoplay = true;
           vid.muted = true;
           vid.playsInline = true;
@@ -1653,3 +1668,90 @@ window.openAudioSettings = openAudioSettings;
     if (typeof window[name] === 'function') window['__real_' + name] = window[name];
   });
 })();
+/* ══════════════════════════════════════════════════════════════
+   VOICE CHANNEL INVITE — was fully static markup before this fix,
+   no search handler, no list, no send logic. Real implementation.
+   ══════════════════════════════════════════════════════════════ */
+
+let _vcInviteMembers = [];
+
+async function openVcInviteModal() {
+  openModal('vcInviteModal');
+  const listEl = document.getElementById('vcInviteList');
+  const searchEl = document.getElementById('vcInviteSearch');
+  if (searchEl) searchEl.value = '';
+  listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">Loading…</div>';
+
+  const serverId = window.ECOLLAB?.currentServerId
+    || parseInt(document.querySelector('.workspace-icon.active')?.dataset?.serverId || '0') || 0;
+  const channelId = window.ECOLLAB?.currentChannelId || window.__currentChannelId || 0;
+  if (!serverId || !channelId) {
+    listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">Join a voice channel first.</div>';
+    return;
+  }
+
+  try {
+    const base = window.ECOLLAB?.baseUrl || '';
+    const res = await fetch(`${base}/API/server/members.php?action=list&server_id=${serverId}`, { credentials: 'same-origin' });
+    const d = await res.json();
+    const inVoice = new Set(Array.from(document.querySelectorAll('.vc-speaker-card[data-user-id],.vc-listener-card[data-user-id]')).map(el => parseInt(el.dataset.userId)));
+    const myId = window.ECOLLAB?.userId || 0;
+
+    _vcInviteMembers = (d.members || []).filter(m => m.id != myId && !inVoice.has(parseInt(m.id)));
+    _vcInviteMembers._channelId = channelId;
+    _renderVcInviteList(_vcInviteMembers);
+  } catch (e) {
+    listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">Failed to load members.</div>';
+  }
+}
+
+function _renderVcInviteList(members) {
+  const listEl = document.getElementById('vcInviteList');
+  if (!listEl) return;
+  if (!members.length) {
+    listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">Everyone here is already in voice.</div>';
+    return;
+  }
+  listEl.innerHTML = members.map(m => {
+    const name = m.full_name || m.username;
+    return `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;">
+        ${typeof _avatar === 'function' ? _avatar(name, m.avatar_color_gradient, 30) : ''}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${escHtml(name)}</div>
+          <div style="font-size:11px;color:${m.is_online == 1 ? '#22c55e' : 'var(--text-muted)'};">${m.is_online == 1 ? 'Online' : 'Offline'}</div>
+        </div>
+        <button onclick="_sendVoiceInvite(${m.id}, this)" ${m.is_online != 1 ? 'disabled title="User is offline"' : ''}
+          style="padding:5px 12px;border-radius:6px;background:${m.is_online == 1 ? 'var(--accent-purple)' : 'var(--bg-tertiary)'};border:none;color:${m.is_online == 1 ? '#fff' : 'var(--text-muted)'};font-size:12px;font-weight:600;cursor:${m.is_online == 1 ? 'pointer' : 'not-allowed'};font-family:inherit;">
+          Invite
+        </button>
+      </div>`;
+  }).join('');
+}
+
+function _filterVcInviteList(query) {
+  const q = query.trim().toLowerCase();
+  if (!q) { _renderVcInviteList(_vcInviteMembers); return; }
+  _renderVcInviteList(_vcInviteMembers.filter(m =>
+    (m.full_name || '').toLowerCase().includes(q) || (m.username || '').toLowerCase().includes(q)
+  ));
+}
+
+function _sendVoiceInvite(userId, btn) {
+  const channelId = _vcInviteMembers._channelId;
+  if (!channelId || !window.wsSend) { showToast('Not connected', 'error'); return; }
+  const ok = window.wsSend({ type: 'voice_invite', target_user_id: userId, channel_id: channelId });
+  if (ok !== false) {
+    if (btn) { btn.textContent = 'Invited ✓'; btn.disabled = true; btn.style.opacity = '0.6'; }
+    showToast('🔊 Voice invite sent', 'success');
+  }
+}
+
+window._onVoiceInvite = function(data) {
+  const name = data.from?.fullName || 'Someone';
+  showToast(`🔊 ${escHtml(name)} invited you to join #${escHtml(data.channel_name)} — click Voice Channels in the sidebar to join`, 'info');
+};
+
+window.openVcInviteModal = openVcInviteModal;
+window._filterVcInviteList = _filterVcInviteList;
+window._sendVoiceInvite = _sendVoiceInvite;

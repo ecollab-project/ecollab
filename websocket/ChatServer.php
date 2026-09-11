@@ -156,8 +156,11 @@ class ChatServer implements MessageComponentInterface
             'connection_request' => $this->handleConnectionRequest($from, $data, $meta),
             'dm_message' => $this->handleDmMessage($from, $data, $meta),
             'dm_typing' => $this->handleDmTyping($from, $data, $meta),
+            'dm_group_message' => $this->handleDmGroupMessage($from, $data, $meta),
+            'dm_group_typing' => $this->handleDmGroupTyping($from, $data, $meta),
             'notify_conn_req' => $this->handleNotifyConnReq($from, $data, $meta),
             'notify_conn_accepted' => $this->handleNotifyConnAccepted($from, $data, $meta),
+            'voice_invite' => $this->handleVoiceInvite($from, $data, $meta),
             default => null,
         };
     }
@@ -694,9 +697,11 @@ class ChatServer implements MessageComponentInterface
     }
     private function handleDmMessage(ConnectionInterface $from, array $data, array $meta): void { DmHandler::handleDmMessage($from, $data, $meta, $this->userConns, $this->db); }
     private function handleDmTyping(ConnectionInterface $from, array $data, array $meta): void { DmHandler::handleDmTyping($from, $data, $meta, $this->userConns, $this->db); }
+    private function handleDmGroupMessage(ConnectionInterface $from, array $data, array $meta): void { DmHandler::handleDmGroupMessage($from, $data, $meta, $this->userConns, $this->db); }
+    private function handleDmGroupTyping(ConnectionInterface $from, array $data, array $meta): void { DmHandler::handleDmGroupTyping($from, $data, $meta, $this->userConns, $this->db); }
     private function handleNotifyConnReq(ConnectionInterface $from, array $data, array $meta): void { DmHandler::handleNotifyConnReq($from, $data, $meta, $this->userConns, $this->db); }
     private function handleNotifyConnAccepted(ConnectionInterface $from, array $data, array $meta): void { DmHandler::handleNotifyConnAccepted($from, $data, $meta, $this->userConns, $this->db); }
-    private function handleNoteRelay(ConnectionInterface $from, array $data, array $meta): void
+    private function handleVoiceInvite(ConnectionInterface $from, array $data, array $meta): void { DmHandler::handleVoiceInvite($from, $data, $meta, $this->userConns, $this->db); }    private function handleNoteRelay(ConnectionInterface $from, array $data, array $meta): void
     {
         $channelId = (int)($data['channel_id'] ?? $meta['channel_id'] ?? 0); if (!$channelId) return;
         foreach ($this->channelSubs[$channelId] ?? [] as $conn) { if ($conn === $from) continue; try { $conn->send(json_encode($data)); } catch (\Exception) {} }

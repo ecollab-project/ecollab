@@ -168,6 +168,11 @@ function handleSocketMessage(data) {
       handlePresenceUpdate(data);
       break;
 
+    // ── Voice channel invite ──
+    case 'voice_invite':
+      if (window._onVoiceInvite) window._onVoiceInvite(data);
+      break;
+
     // ── Channel events ──
     case 'channel_created':
       handleChannelCreated(data.channel);
@@ -558,8 +563,18 @@ function handleVoiceJoin(data) {
     }
   }
 
+  _bumpSidebarVcCount(data.channel_id, 1);
+
   if (typeof showToast === 'function')
     showToast(`🔊 ${data.user?.full_name || data.user?.username || 'Someone'} joined voice`, 'info');
+}
+
+function _bumpSidebarVcCount(channelId, delta) {
+  if (!channelId) return;
+  const badge = document.querySelector(`.voice-channel[data-channel-id="${channelId}"] .vc-count`);
+  if (!badge) return;
+  const next = Math.max(0, (parseInt(badge.textContent, 10) || 0) + delta);
+  badge.textContent = next;
 }
 
 function handleVoiceLeave(data) {
@@ -589,6 +604,8 @@ function handleVoiceLeave(data) {
   const speaking  = document.querySelectorAll('#vcSpeakingGrid  .vc-speaker-card').length;
   const listening = document.querySelectorAll('#vcListeningGrid .vc-listener-card').length;
   if (window.updateVcCounts) window.updateVcCounts(speaking, listening);
+
+  _bumpSidebarVcCount(data.channel_id, -1);
 
   // Stop remote audio
   const audio = document.getElementById(`remote-audio-${uid}`);

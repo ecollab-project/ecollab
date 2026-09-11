@@ -55,6 +55,8 @@ const DM = {
   activeConvId: null,
   activePartnerId: null,
   activePartnerName: '',
+  groups: [],               // [{id, name, display_name, members, last_message, ...}]
+  activeGroupId: null,
   typingTimers: {},         // conversation_id => clearTimeout handle
 };
 
@@ -86,6 +88,8 @@ function _hookWebSocket() {
       switch (data.type) {
         case 'dm_message':          _onWsDmMessage(data);       break;
         case 'dm_typing':           _onWsDmTyping(data);        break;
+        case 'dm_group_message':    _onWsDmGroupMessage(data);  break;
+        case 'dm_group_typing':     _onWsDmGroupTyping(data);   break;
         case 'connection_request':  _onWsConnRequest(data);     break;
         case 'connection_accepted': _onWsConnAccepted(data);    break;
         case 'notification':        _onWsNotification(data);    break;
@@ -159,6 +163,46 @@ function _onWsDmTyping(data) {
   } else {
     indicator.style.display = 'none';
     clearTimeout(DM.typingTimers[data.conversation_id]);
+  }
+}
+
+function _onWsDmGroupMessage(data) {
+  const groupId = data.group_id;
+
+  const grp = DM.groups.find(g => g.id == groupId);
+  if (grp) {
+    grp.last_message = data.body;
+    grp.last_msg_at  = data.created_at;
+    if (DM.activeGroupId != groupId) {
+      grp.unread_count = (parseInt(grp.unread_count) || 0) + 1;
+    }
+    _renderGroupList();
+  } else {
+    loadDmList();
+  }
+
+  if (DM.activeGroupId == groupId) {
+    _appendDmMessage(data);
+  } else {
+    const name = data.sender_name || 'Someone';
+    showToast(`💬 ${name} (${grp ? grp.display_name : 'Group'}): ${String(data.body || '').slice(0, 60)}`, 'info');
+  }
+}
+
+function _onWsDmGroupTyping(data) {
+  if (DM.activeGroupId != data.group_id) return;
+  const indicator = document.getElementById('dmTypingIndicator');
+  if (!indicator) return;
+
+  const key = 'group_' + data.group_id;
+  if (data.is_typing) {
+    indicator.style.display = 'flex';
+    indicator.textContent   = `${_esc(data.sender_name)} is typing…`;
+    clearTimeout(DM.typingTimers[key]);
+    DM.typingTimers[key] = setTimeout(() => { indicator.style.display = 'none'; }, 3000);
+  } else {
+    indicator.style.display = 'none';
+    clearTimeout(DM.typingTimers[key]);
   }
 }
 
@@ -332,6 +376,39 @@ async function loadDmList() {
       _renderDmList();
     }
   } catch (_) {}
+  try {
+    const gdata = await apiFetch(BASE() + '/API/dm/groups.php?action=list');
+    if (gdata.groups) {
+      DM.groups = gdata.groups;
+      _renderGroupList();
+    }
+  } catch (_) {}
+}
+
+function _renderGroupList() {
+  const container = document.getElementById('groupList');
+  if (!container) return;
+
+  if (!DM.groups.length) {
+    container.innerHTML = `<div style="padding:8px 16px;font-size:12px;color:var(--text-muted);">No group messages yet</div>`;
+    return;
+  }
+
+  container.innerHTML = DM.groups.map(g => {
+    const isActive = DM.activeGroupId === g.id;
+    const members = g.members || [];
+    const preview = g.last_message ? String(g.last_message).slice(0, 40) : 'No messages yet';
+    return `
+      <div class="channel-item dm-item ${isActive ? 'active' : ''}"
+           data-group-id="${g.id}"
+           onclick="openGroupConversation(${g.id})">
+        <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#ec4899);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;">${members.length}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(g.display_name)}</div>
+          <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(preview)}</div>
+        </div>
+      </div>`;
+  }).join('');
 }
 
 function _renderDmList() {
@@ -368,12 +445,17 @@ function _renderDmList() {
 // ═══════════════════════════════════════════════════════════════
 
 window.openNewDMModal = function() {
+  _dmPickerSelected = {};
   _ensureDmSearchModal();
   document.getElementById('dmSearchModal').style.display = 'flex';
   setTimeout(() => document.getElementById('dmSearchModal').classList.add('open'), 10);
   document.getElementById('dmSearchInput')?.focus();
   _loadDmSearchResults('');
+  _renderDmPickerFooter();
 };
+window.openNewGroupModal = window.openNewDMModal;
+
+let _dmPickerSelected = {}; // id => {id, name, gradient, username}
 
 function _ensureDmSearchModal() {
   if (document.getElementById('dmSearchModal')) return;
@@ -384,15 +466,17 @@ function _ensureDmSearchModal() {
   modal.innerHTML = `
     <div class="modal" style="max-width:440px;width:100%;max-height:80vh;">
       <div class="modal-header">
-        <span style="font-size:16px;font-weight:800;">💬 New Direct Message</span>
+        <span style="font-size:16px;font-weight:800;">💬 New Message</span>
         <button class="modal-close" onclick="closeDmSearchModal()">×</button>
       </div>
       <div style="padding:12px 16px;">
-        <input id="dmSearchInput" type="text" placeholder="Search by name or username…"
+        <input id="dmSearchInput" type="text" placeholder="Search your connections…"
           style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text-primary);font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;"
           oninput="_loadDmSearchResults(this.value)" />
       </div>
-      <div id="dmSearchResults" style="overflow-y:auto;max-height:340px;padding:0 8px 12px;"></div>
+      <div id="dmPickerChips" style="display:none;padding:0 16px 10px;gap:6px;flex-wrap:wrap;"></div>
+      <div id="dmSearchResults" style="overflow-y:auto;max-height:300px;padding:0 8px 12px;"></div>
+      <div id="dmPickerFooter" style="padding:10px 16px;border-top:1px solid var(--border);display:none;"></div>
     </div>`;
   document.body.appendChild(modal);
 }
@@ -402,7 +486,66 @@ window.closeDmSearchModal = function() {
   if (!modal) return;
   modal.classList.remove('open');
   setTimeout(() => { modal.style.display = ''; }, 200);
+  _dmPickerSelected = {};
 };
+
+function _togglePickerUser(u) {
+  const name = u.full_name || u.fullName || u.name || u.username || 'User';
+  if (_dmPickerSelected[u.id]) {
+    delete _dmPickerSelected[u.id];
+  } else {
+    _dmPickerSelected[u.id] = { id: u.id, name, gradient: u.avatar_color_gradient || u.gradient || '', username: u.username || '' };
+  }
+  _renderDmPickerFooter();
+  const row = document.getElementById(`dmPickerRow_${u.id}`);
+  if (row) row.style.background = _dmPickerSelected[u.id] ? 'var(--bg-tertiary)' : '';
+}
+
+function _renderDmPickerFooter() {
+  const chips = document.getElementById('dmPickerChips');
+  const footer = document.getElementById('dmPickerFooter');
+  const selected = Object.values(_dmPickerSelected);
+  if (!chips || !footer) return;
+
+  if (selected.length === 0) {
+    chips.style.display = 'none';
+    footer.style.display = 'none';
+    return;
+  }
+
+  chips.style.display = 'flex';
+  chips.innerHTML = selected.map(s => `
+    <span style="display:inline-flex;align-items:center;gap:4px;background:rgba(168,85,247,0.12);color:#c084fc;border-radius:12px;padding:3px 8px 3px 4px;font-size:11px;">
+      ${_avatar(s.name, s.gradient, 16)}${_esc(s.name)}
+      <span onclick="_togglePickerUser({id:${s.id}})" style="cursor:pointer;margin-left:2px;">×</span>
+    </span>`).join('');
+
+  footer.style.display = 'block';
+  if (selected.length === 1) {
+    footer.innerHTML = `<button onclick="openDmConversation(${selected[0].id},'${_esc(selected[0].name)}','${_esc(selected[0].gradient)}');closeDmSearchModal();" style="width:100%;padding:9px;border-radius:8px;background:var(--accent-purple);border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Message ${_esc(selected[0].name)}</button>`;
+  } else {
+    footer.innerHTML = `<button onclick="_createGroupFromPicker()" style="width:100%;padding:9px;border-radius:8px;background:var(--accent-purple);border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Create Group (${selected.length} people)</button>`;
+  }
+}
+
+async function _createGroupFromPicker() {
+  const ids = Object.keys(_dmPickerSelected).map(Number);
+  if (ids.length < 2) return;
+  try {
+    const data = await apiFetch(BASE() + '/API/dm/groups.php?action=create', {
+      method: 'POST',
+      body: JSON.stringify({ member_ids: ids }),
+    });
+    if (data.group_id) {
+      closeDmSearchModal();
+      await loadDmList();
+      openGroupConversation(data.group_id);
+      if (window.showToast) showToast('Group created!', 'success');
+    }
+  } catch (err) {
+    if (window.showToast) showToast(err.message || 'Could not create group', 'error');
+  }
+}
 
 let _dmSearchTimer;
 async function _loadDmSearchResults(query) {
@@ -413,33 +556,34 @@ async function _loadDmSearchResults(query) {
     container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">Searching…</div>';
 
     try {
-      // Reuse existing get-matches or search endpoint; fall back to friends list
-      const url = query.trim()
-        ? BASE() + '/API/chat/get-matches.php?q=' + encodeURIComponent(query)
-        : BASE() + '/API/chat/get-matches.php';
+      const url = BASE() + '/API/friendship/list.php' + (query.trim() ? '?q=' + encodeURIComponent(query) : '');
       const data = await apiFetch(url);
-      const matches = data.matches || data.users || [];
+      const friends = data.friends || [];
 
-      if (matches.length === 0) {
-        container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">No users found</div>';
+      if (friends.length === 0) {
+        container.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">
+          ${query.trim() ? 'No matching connections' : 'No connections yet — add friends to start messaging them.'}
+        </div>`;
         return;
       }
 
-      container.innerHTML = matches.map(u => {
-        const name = u.full_name || u.fullName || u.name || u.username || 'User';
+      container.innerHTML = friends.map(u => {
+        const name = u.full_name || u.username || 'User';
+        const isSelected = !!_dmPickerSelected[u.id];
         return `
-          <div onclick="openDmConversation(${u.id},'${_esc(name)}','${_esc(u.avatar_color_gradient || u.gradient || '')}');closeDmSearchModal();"
-               style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;transition:background 0.1s;"
-               onmouseover="this.style.background='var(--bg-tertiary)'" onmouseout="this.style.background=''">
-            ${_avatar(name, u.avatar_color_gradient || u.gradient, 34)}
-            <div>
+          <div id="dmPickerRow_${u.id}" onclick='_togglePickerUser(${JSON.stringify(u).replace(/'/g, "&#39;")})'
+               style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;transition:background 0.1s;background:${isSelected ? 'var(--bg-tertiary)' : ''}"
+               onmouseover="this.style.background='var(--bg-tertiary)'" onmouseout="this.style.background='${isSelected ? 'var(--bg-tertiary)' : ''}'">
+            ${_avatar(name, u.avatar_color_gradient, 34)}
+            <div style="flex:1;">
               <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${_esc(name)}</div>
-              <div style="font-size:11px;color:var(--text-muted);">@${_esc(u.username || '')}</div>
+              <div style="font-size:11px;color:var(--text-muted);">@${_esc(u.username || '')} ${u.is_online == 1 ? '· <span style=\"color:#22c55e;\">online</span>' : ''}</div>
             </div>
+            ${isSelected ? '<span style="color:#a855f7;font-size:16px;">✓</span>' : ''}
           </div>`;
       }).join('');
     } catch (_) {
-      container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">Failed to load users</div>';
+      container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">Failed to load connections</div>';
     }
   }, 250);
 }
@@ -452,6 +596,7 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
   partnerId    = parseInt(partnerId);
   partnerName  = partnerName || 'User';
 
+  DM.activeGroupId     = null;
   DM.activePartnerId   = partnerId;
   DM.activePartnerName = partnerName;
 
@@ -477,6 +622,35 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
     // Clear unread from list
     const conv = DM.conversations.find(c => c.conversation_id === DM.activeConvId);
     if (conv) { conv.unread_count = 0; _renderDmList(); }
+
+    _renderDmMessages(data.messages || []);
+  } catch (err) {
+    msgArea.innerHTML = `<div style="text-align:center;padding:20px;color:#f87171;font-size:13px;">Failed to load: ${_esc(err.message)}</div>`;
+  }
+};
+
+window.openGroupConversation = async function(groupId) {
+  groupId = parseInt(groupId);
+  DM.activeConvId    = null;
+  DM.activePartnerId = null;
+  DM.activeGroupId   = groupId;
+
+  _ensureDmPanel();
+
+  const panel = document.getElementById('dmConversationPanel');
+  panel.style.display = 'flex';
+  setTimeout(() => panel.classList.add('open'), 10);
+
+  const msgArea = document.getElementById('dmMessagesArea');
+  msgArea.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">Loading…</div>';
+
+  try {
+    const data = await apiFetch(BASE() + `/API/dm/group-message.php?group_id=${groupId}`);
+    const displayName = data.group?.name || (DM.groups.find(g => g.id === groupId)?.display_name) || 'Group';
+
+    document.getElementById('dmPanelTitle').innerHTML = `
+      <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#ec4899);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;">${(data.members || []).length}</div>
+      <span style="font-size:15px;font-weight:700;">${_esc(displayName)}</span>`;
 
     _renderDmMessages(data.messages || []);
   } catch (err) {
@@ -577,7 +751,7 @@ window.sendDmMessage = async function() {
   const input = document.getElementById('dmInputField');
   if (!input) return;
   const text = input.value.trim();
-  if (!text || !DM.activeConvId) return;
+  if (!text || (!DM.activeConvId && !DM.activeGroupId)) return;
 
   input.value    = '';
   input.disabled = true;
@@ -594,6 +768,19 @@ window.sendDmMessage = async function() {
   _appendDmMessage(optimistic);
 
   try {
+    if (DM.activeGroupId) {
+      const data = await apiFetch(BASE() + '/API/dm/group-message.php', {
+        method: 'POST',
+        body: JSON.stringify({ group_id: DM.activeGroupId, body: text }),
+      });
+      _wsSend({ type: 'dm_group_message', group_id: DM.activeGroupId, message_id: data.message_id, body: text, created_at: new Date().toISOString() });
+      const grp = DM.groups.find(g => g.id === DM.activeGroupId);
+      if (grp) { grp.last_message = text.slice(0, 120); grp.last_msg_at = new Date().toISOString(); _renderGroupList(); }
+      input.disabled = false;
+      input.focus();
+      return;
+    }
+
     const data = await apiFetch(BASE() + '/API/dm/send-message.php', {
       method: 'POST',
       body: JSON.stringify({ conversation_id: DM.activeConvId, body: text }),

@@ -490,6 +490,7 @@ function buildMessageElement(msg) {
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
       </button>
       <button class="msg-action-btn ${msg.is_pinned ? 'pin-active' : ''}" title="${msg.is_pinned ? 'Unpin Message' : 'Pin Message'}" onclick="msgPin(this,'${escHtml(msg.username)}','${escHtml((msg.content || '').substring(0, 60))}', ${msg.id})">📌</button>
+      <button class="msg-action-btn" title="Bookmark" onclick="msgBookmark(this, ${msg.id})">🔖</button>
       <button class="msg-action-btn" title="More Options" onclick="showMsgMenu(event,this,'${escHtml(msg.username)}', ${msg.id}, ${isMe ? 'true' : 'false'})">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
       </button>
@@ -863,6 +864,20 @@ async function msgPin(btn, author, text, msgId) {
     });
   } catch (e) {
     showToast('📌 ' + (e?.message || 'Could not pin message'), 'info');
+  }
+}
+
+async function msgBookmark(btn, msgId) {
+  if (!msgId) return;
+  try {
+    const data = await apiFetch(`${API_BASE}/bookmark-message.php`, {
+      method: 'POST',
+      body: JSON.stringify({ message_id: msgId }),
+    });
+    btn?.classList.toggle('bookmark-active', !!data.bookmarked);
+    showToast(data.bookmarked ? '🔖 Bookmarked' : '🔖 Removed bookmark', 'success');
+  } catch (e) {
+    showToast('🔖 ' + (e?.message || 'Could not bookmark message'), 'info');
   }
 }
 
@@ -1576,6 +1591,7 @@ window.handleKeyDown = handleKeyDown;
 window.msgReply = msgReply;
 window.cancelReply = cancelReply;
 window.msgPin = msgPin;
+window.msgBookmark = msgBookmark;
 window.showMsgMenu = showMsgMenu;
 window.startEditMsg = startEditMsg;
 window.saveEditMsg = saveEditMsg;

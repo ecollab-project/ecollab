@@ -29,17 +29,16 @@ try {
             $items[] = ['server'=>$r['server'],'channel'=>$r['channel'],'time'=>date('g:i A',strtotime($r['created_at'])),'author'=>$r['author'],'letter'=>strtoupper(($r['full_name']?:$r['author'])[0]),'text'=>$r['content'],'grad'=>$r['grad']??'#3b82f6,#6366f1'];
         }
     } elseif ($view === 'bookmarks') {
-        // bookmarks via message_reads or a dedicated table - show pinned messages for now
         $stmt = $db->prepare("
             SELECT m.id, m.content, m.created_at, u.username AS author, u.full_name,
                    u.avatar_color_gradient AS grad, c.name AS channel, s.name AS server
-            FROM messages m
+            FROM message_bookmarks mb
+            JOIN messages m ON m.id = mb.message_id
             JOIN users u ON u.id = m.sender_id
             JOIN channels c ON c.id = m.channel_id
             JOIN servers s ON s.id = c.server_id
-            JOIN server_members sm ON sm.server_id = s.id AND sm.user_id = :uid
-            WHERE m.is_pinned = 1 AND m.is_deleted = 0
-            ORDER BY m.created_at DESC LIMIT 20
+            WHERE mb.user_id = :uid AND m.is_deleted = 0
+            ORDER BY mb.created_at DESC LIMIT 20
         ");
         $stmt->execute([':uid'=>$uid]);
         $rows = $stmt->fetchAll();

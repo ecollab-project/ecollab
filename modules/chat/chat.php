@@ -91,7 +91,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
   <!-- LEFT SIDEBAR -->
   <div class="sidebar-left" id="sidebarLeft">
-    <div class="sidebar-workspace-header" id="wsHeader" onclick="openUserSettings()">
+    <div class="sidebar-workspace-header" id="wsHeader" onclick="openServerManager()" title="Server settings">
       <div class="ws-icon" id="wsIcon"><?= htmlspecialchars($firstServer['icon_emoji'] ?? '⭐') ?></div>
       <div class="ws-name" id="wsName"><?= htmlspecialchars($firstServer['name'] ?? 'Ecollab') ?></div>
       <div class="ws-chevron">▾</div>
@@ -227,6 +227,14 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           <span class="sidebar-section-add" onclick="openNewDMModal()">+</span>
         </div>
         <div id="dmList"></div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-header">
+          <span class="sidebar-section-title">Group Messages</span>
+          <span class="sidebar-section-add" onclick="openNewGroupModal()">+</span>
+        </div>
+        <div id="groupList"></div>
       </div>
     </div>
 
@@ -551,7 +559,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           </svg>
           <span id="vcMemberCount">0</span>
         </div>
-        <button class="vc-invite-btn" onclick="openModal('vcInviteModal')">
+        <button class="vc-invite-btn" onclick="openVcInviteModal()">
           <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
             <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
           </svg>
@@ -1598,9 +1606,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <button class="modal-close" onclick="closeModal('vcInviteModal')">×</button>
       </div>
       <div class="modal-body">
-        <input type="text" placeholder="Search members..." style="width:100%;padding:10px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:13px;box-sizing:border-box;outline:none;">
+        <input id="vcInviteSearch" type="text" placeholder="Search members..." oninput="_filterVcInviteList(this.value)" style="width:100%;padding:10px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:13px;box-sizing:border-box;outline:none;">
         <div id="vcInviteList" style="margin-top:12px;display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;">
-          <div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">No members to invite</div>
+          <div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">Loading…</div>
         </div>
       </div>
       <div class="modal-footer">

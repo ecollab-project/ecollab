@@ -2157,6 +2157,10 @@ body {
   color: var(--accent-yellow);
 }
 
+.msg-action-btn.bookmark-active {
+  color: #a855f7;
+}
+
 /* Tooltip on action buttons */
 .msg-action-btn::after {
   content: attr(title);
@@ -5515,6 +5519,64 @@ input[type=range].vc-range::-webkit-slider-thumb {
   display: none;
 }
 
+/* ── Compact PiP layout ──────────────────────────────────────────────────
+   The full-size view has 9 control buttons across 3 groups plus a room-info
+   hero block (icon/title/subtitle/tags). None of that fits a 340×220 box —
+   previously nothing here hid or resized it, producing an overlapping mess.
+   Keep only what a PiP actually needs: mic / leave / deafen, plus enough of
+   the header to identify the channel. */
+
+.voice-channel-view.vc-minimized .vc-room-info,
+.voice-channel-view.vc-minimized .vc-section-header,
+.voice-channel-view.vc-minimized .vc-room-sub,
+.voice-channel-view.vc-minimized .vc-tags,
+.voice-channel-view.vc-minimized .vc-stat-badge span,
+.voice-channel-view.vc-minimized .vc-invite-btn {
+  display: none;
+}
+
+.voice-channel-view.vc-minimized .vc-body {
+  padding: 6px 8px;
+  overflow-y: auto;
+}
+
+.voice-channel-view.vc-minimized .vc-controls-bar {
+  padding: 6px 8px;
+  gap: 4px;
+}
+
+/* Hide the two side groups (screen share/camera/whiteboard, and mic-test/
+   noise-cancel/audio-settings) — keep only the center mute/leave/deafen
+   group, which is what a PiP is actually for. */
+.voice-channel-view.vc-minimized .vc-controls-bar > .vc-bar-grp:not(.center) {
+  display: none;
+}
+
+.voice-channel-view.vc-minimized .vc-controls-bar > .vc-bar-grp.center {
+  width: 100%;
+  justify-content: center;
+  gap: 10px;
+}
+
+.voice-channel-view.vc-minimized .vc-btn-lg {
+  width: 38px;
+  height: 38px;
+}
+
+.voice-channel-view.vc-minimized .vc-btn-lg svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Tooltips overlaying an already-tiny box just add to the crowding */
+.voice-channel-view.vc-minimized .vc-ctrl-tooltip {
+  display: none;
+}
+
+.voice-channel-view.vc-minimized .vc-header-right {
+  gap: 4px;
+}
+
 @keyframes vcSlideIn {
   from {
     opacity: 0;
@@ -5893,6 +5955,13 @@ input[type=range].vc-range::-webkit-slider-thumb {
   background: #000;
   display: block;
   z-index: 0;
+}
+
+/* Mirror only your own camera preview (matches how every mirror/video app
+   shows your own feed) — never applied to remote participants' video, so
+   what others see of you is not flipped. */
+.vc-cam-preview.vc-mirror {
+  transform: scaleX(-1);
 }
 
 /* Card becomes a positioned container; inner elements float above the video */
