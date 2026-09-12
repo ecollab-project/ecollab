@@ -108,7 +108,7 @@ function initActChart2(){if(a2)return;a2=true;const ctx=document.getElementById(
 function initInsChart(){if(iC)return;iC=true;const ctx=document.getElementById('insChart');if(!ctx)return;ctx._c=new Chart(ctx,{type:'bar',data:{labels:['CS 305','CS 201','CS 210','CS 410','CS 101'],datasets:[{data:[7.2,4.1,3.5,2.8,1.0],backgroundColor:['rgba(233,30,140,0.7)','rgba(124,58,237,0.7)','rgba(37,99,235,0.7)','rgba(22,163,74,0.7)','rgba(217,119,6,0.7)'],borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},border:{display:false}},y:{grid:{color:'rgba(255,255,255,0.04)'},border:{display:false}}}}});}
 
 // ═══ TOAST ═══
-function toast(msg,type='info',icon='ℹ️'){const c=document.getElementById('tc');const t=document.createElement('div');t.className='toast '+type;t.innerHTML=`<span class="tic">${icon}</span><span class="tmsg">${msg}</span><span class="tcl" onclick="this.parentElement.remove()">✕</span>`;c.appendChild(t);setTimeout(()=>{t.style.transition='all .3s';t.style.opacity='0';t.style.transform='translateX(50px)';setTimeout(()=>t.remove(),300);},3500);}
+function toast(msg,type='info',icon='ℹ️'){const c=document.getElementById('tc');if(!c)return;const t=document.createElement('div');t.className='toast '+type;t.innerHTML=`<span class="tic">${icon}</span><span class="tmsg">${msg}</span><span class="tcl" onclick="this.parentElement.remove()">✕</span>`;c.appendChild(t);setTimeout(()=>{t.style.transition='all .3s';t.style.opacity='0';t.style.transform='translateX(50px)';setTimeout(()=>t.remove(),300);},3500);}
 
 // ═══ INIT ═══
 window.addEventListener('load',()=>setTimeout(initActChart,100));
@@ -122,3 +122,121 @@ function doLogout(){
     .catch(()=>{ window.location.href=(window.ECOLLAB_BASE||'')+'/modules/auth/login.php'; });
 }
 function goToChat(){ window.location.href=(window.ECOLLAB_BASE||'')+'/modules/chat/chat.php'; }
+
+// ═══ LIVE DASHBOARD INTEGRATION ═══
+const dashboardLive={loading:false,timer:null,lastUpdated:null};
+
+function dashboardLiveUrl(){
+  const base=(window.ECOLLAB_BASE||'').replace(/\/$/,'');
+  return base+'/API/dashboard/live.php?_='+Date.now();
+}
+
+function setDashboardLiveStatus(text,ok=true){
+  let el=document.getElementById('dashboardLiveStatus');
+  if(!el){
+    const host=document.querySelector('.dash-header');
+    if(!host)return;
+    el=document.createElement('div');
+    el.id='dashboardLiveStatus';
+    el.style.cssText='margin-top:8px;font-size:10px;color:#64748b;display:flex;align-items:center;gap:6px;';
+    host.appendChild(el);
+  }
+  el.innerHTML=`<span style="width:7px;height:7px;border-radius:50%;background:${ok?'#22c55e':'#f59e0b'};display:inline-block"></span>${text}`;
+}
+
+function updateStudentLiveStats(data){
+  const cards=document.querySelectorAll('.stats-row .stat-card .sc-val');
+  if(cards[0]&&Array.isArray(data.courses))cards[0].textContent=String(data.courses.length);
+  if(cards[1]&&data.total_sessions!==undefined)cards[1].textContent=String(data.total_sessions);
+  if(cards[2]&&data.hours_studied!==undefined)cards[2].textContent=Number(data.hours_studied).toFixed(1);
+  if(cards[3]&&data.achievement_count!==undefined)cards[3].textContent=String(data.achievement_count);
+
+  const badge=document.getElementById('nbadge');
+  const sideBadge=document.getElementById('sideNB');
+  const unread=Math.max(0,Number(data.unread_notifications||0));
+  [badge,sideBadge].forEach(el=>{
+    if(!el)return;
+    el.textContent=String(unread);
+    el.style.display=unread?'':'none';
+  });
+
+  if(Array.isArray(data.activity_chart)&&data.activity_chart.length===7){
+    ['actChart','actChart2'].forEach(id=>{
+      const canvas=document.getElementById(id);
+      if(canvas&&canvas._c){canvas._c.data.datasets[0].data=data.activity_chart.map(Number);canvas._c.update('none');}
+    });
+  }
+}
+
+function renderLiveServers(servers){
+  const list=document.getElementById('serverList');
+  if(!list||!Array.isArray(servers)||!servers.length)return;
+  list.innerHTML='';
+  servers.forEach(s=>{
+    const row=document.createElement('div');
+    row.className='server-row';
+    row.dataset.cat=String(s.tags||'cs');
+    row.addEventListener('click',()=>openModal('serverDetailModal',String(s.name||'')));
+
+    const av=document.createElement('div');av.className='srv-av';av.textContent=String(s.icon_emoji||'🤖');
+    const body=document.createElement('div');body.className='srv-body';
+    const name=document.createElement('div');name.className='srv-name';name.textContent=String(s.name||'');
+    const desc=document.createElement('div');desc.className='srv-desc';desc.textContent=String(s.description||'');
+    const tags=document.createElement('div');tags.className='srv-tags';
+    String(s.tag_labels||'').split(',').map(x=>x.trim()).filter(Boolean).forEach(t=>{const tag=document.createElement('span');tag.className='srv-tag';tag.textContent=t;tags.appendChild(tag);});
+    body.append(name,desc,tags);
+
+    const right=document.createElement('div');right.className='srv-right';
+    const count=document.createElement('div');count.className='srv-count';count.textContent=Number(s.member_count||0).toLocaleString();const countLabel=document.createElement('span');countLabel.textContent='members';count.appendChild(countLabel);
+    const online=document.createElement('div');online.className='srv-online';online.textContent=String(Number(s.online_count||0))+' online';
+    const btn=document.createElement('button');btn.className='btn-join';btn.textContent='Join';btn.addEventListener('click',e=>{e.stopPropagation();joinServer(btn,String(s.name||''));});
+    right.append(count,online,btn);row.append(av,body,right);list.appendChild(row);
+  });
+}
+
+function renderLiveNotes(notes){
+  const list=document.getElementById('notesList');
+  if(!list||!Array.isArray(notes))return;
+  list.querySelectorAll('.note-card[data-live-note]').forEach(el=>el.remove());
+  notes.forEach(n=>{
+    const card=document.createElement('div');card.className='note-card';card.dataset.liveNote='1';
+    card.addEventListener('click',()=>openModal('viewNoteModal',String(n.title||'')));
+    const title=document.createElement('div');title.className='note-title';title.textContent=String(n.title||'Untitled');
+    const preview=document.createElement('div');preview.className='note-preview';preview.textContent=String(n.content||'');
+    const meta=document.createElement('div');meta.className='note-meta';meta.innerHTML=`<span>${String(n.updated_label||'')}</span><span>${String(n.course_code||'')}</span>`;
+    card.append(title,preview,meta);list.prepend(card);
+  });
+}
+
+async function refreshStudentDashboardLive(){
+  if(dashboardLive.loading)return;
+  dashboardLive.loading=true;
+  try{
+    const response=await fetch(dashboardLiveUrl(),{method:'GET',credentials:'same-origin',cache:'no-store',headers:{'Accept':'application/json'}});
+    if(response.status===401||response.status===403){setDashboardLiveStatus('Session refresh required',false);return;}
+    if(!response.ok)throw new Error('HTTP '+response.status);
+    const payload=await response.json();
+    if(!payload.success||payload.role!=='student')throw new Error(payload.error||'Invalid dashboard response');
+    const data=payload.data||{};
+    updateStudentLiveStats(data);
+    renderLiveServers(data.recommended_servers);
+    renderLiveNotes(data.notes);
+    dashboardLive.lastUpdated=payload.generated_at||new Date().toISOString();
+    const time=new Date(dashboardLive.lastUpdated);
+    setDashboardLiveStatus('Live • updated '+time.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}),true);
+  }catch(error){
+    console.error('[dashboard/live]',error);
+    setDashboardLiveStatus('Live refresh unavailable • showing last loaded data',false);
+  }finally{
+    dashboardLive.loading=false;
+  }
+}
+
+function startStudentDashboardLive(){
+  refreshStudentDashboardLive();
+  if(dashboardLive.timer)clearInterval(dashboardLive.timer);
+  dashboardLive.timer=setInterval(refreshStudentDashboardLive,30000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshStudentDashboardLive();});
+}
+
+window.addEventListener('load',startStudentDashboardLive);
