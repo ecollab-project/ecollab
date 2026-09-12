@@ -54,10 +54,9 @@ try {
     if (!$existingRole) {
         $insert = $db->prepare("INSERT INTO server_members (server_id,user_id,server_role) VALUES (:sid,:uid,'member')");
         $insert->execute([':sid' => $serverId, ':uid' => $user['id']]);
-        $db->prepare('UPDATE servers SET member_count=(SELECT COUNT(*) FROM server_members WHERE server_id=:sid) WHERE id=:sid2')
-            ->execute([':sid' => $serverId, ':sid2' => $serverId]);
+        $db->prepare('UPDATE servers SET member_count=member_count+1 WHERE id=:sid')
+            ->execute([':sid' => $serverId]);
 
-        // Joining a server is a dashboard/chat-visible event.
         $notif = $db->prepare("INSERT INTO notifications (recipient_id,actor_id,type,title,body,link_url,icon,is_read)
             VALUES (:uid,:uid2,'server_join','Joined server',:body,:link,'🟢',1)");
         $notif->execute([
