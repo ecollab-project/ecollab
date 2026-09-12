@@ -65,8 +65,13 @@ if (!$check->fetch()) {
 $db->prepare("UPDATE users SET is_online=1, last_active_at=NOW() WHERE id=:id")
    ->execute([':id' => $userId]);
 
-// Fetch online users (active in last 2 minutes counts as online)
-// Also get users who are in a voice channel
+// Fetch online/recently-active users (active in last 10 minutes).
+// is_online alone is NOT used to qualify someone as active — that flag only
+// gets reset to 0 on an explicit logout or a clean WebSocket disconnect
+// event, so it can get stuck at 1 forever (a dropped connection, a crashed
+// browser, or a seed/dummy account that never had a real session to trigger
+// either reset path). last_active_at is refreshed by real heartbeats and is
+// the only reliable recency signal.
 $stmt = $db->prepare("
     SELECT
         u.id,
@@ -80,18 +85,18 @@ $stmt = $db->prepare("
         c.name AS voice_channel_name,
         CASE
             WHEN u.voice_channel_id IS NOT NULL THEN 'voice'
-            WHEN u.is_online = 1 AND u.last_active_at >= DATE_SUB(NOW(), INTERVAL 2 MINUTE) THEN 'study'
-            WHEN u.is_online = 1 OR u.last_active_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE) THEN 'idle'
+            WHEN u.last_active_at >= DATE_SUB(NOW(), INTERVAL 2 MINUTE) THEN 'study'
+            WHEN u.last_active_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE) THEN 'idle'
             ELSE 'offline'
         END AS status
     FROM users u
     JOIN server_members sm ON sm.user_id = u.id AND sm.server_id = :sid
     LEFT JOIN channels c ON c.id = u.voice_channel_id
-    WHERE (u.is_online = 1 OR u.last_active_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE))
+    WHERE u.last_active_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE)
     ORDER BY
         FIELD(CASE
             WHEN u.voice_channel_id IS NOT NULL THEN 'voice'
-            WHEN u.is_online = 1 AND u.last_active_at >= DATE_SUB(NOW(), INTERVAL 2 MINUTE) THEN 'study'
+            WHEN u.last_active_at >= DATE_SUB(NOW(), INTERVAL 2 MINUTE) THEN 'study'
             ELSE 'idle'
         END, 'voice','study','idle'),
         u.full_name ASC

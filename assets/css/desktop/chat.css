@@ -2107,6 +2107,35 @@ body {
   pointer-events: all;
 }
 
+/* ── Compact Mode ────────────────────────────────────────────────────────
+   Was a switch that saved correctly but had no visual effect anywhere.
+   Reduces spacing/sizing across the message list and sidebar. */
+html.compact-mode .message-group {
+  gap: 8px;
+  margin-bottom: 0;
+  padding: 2px 8px 2px 4px;
+}
+
+html.compact-mode .msg-avatar,
+html.compact-mode .message-group .avatar {
+  width: 28px;
+  height: 28px;
+}
+
+html.compact-mode .msg-content {
+  font-size: 13.5px;
+  line-height: 1.35;
+}
+
+html.compact-mode .channel-item,
+html.compact-mode .dm-item {
+  padding: 4px 8px;
+}
+
+html.compact-mode .sidebar-section-header {
+  padding: 4px 8px;
+}
+
 .message-group.pinned-msg-highlight {
   background: rgba(245, 158, 11, 0.06);
   border-left: 3px solid var(--accent-yellow);

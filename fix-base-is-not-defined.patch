@@ -1,0 +1,35 @@
+From aee4c1afaae1274f1f1fc2e0280456bfc1159989 Mon Sep 17 00:00:00 2001
+From: Claude <claude@anthropic.com>
+Date: Sun, 6 Sep 2026 08:42:50 +0000
+Subject: [PATCH] fix: add missing closing paren in
+ configureChatCollaborationHub esc() fallback
+
+The esc() fallback arrow function inside configureChatCollaborationHub
+was missing a closing parenthesis, causing a JS syntax error that broke
+the entire functionality-overrides.js file (the script that wires up
+the Documents tab/pane in the Collaboration Tools panel). This
+manifested at runtime as 'base is not defined' when opening the
+Documents tab, since none of the file's top-level declarations
+(including the base/csrf helpers) could execute.
+
+Fixed by closing the outer wrapper paren: }[c]))) instead of }[c]));
+---
+ assets/js/chat/functionality-overrides.js | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/assets/js/chat/functionality-overrides.js b/assets/js/chat/functionality-overrides.js
+index 800022b..9200ed4 100644
+--- a/assets/js/chat/functionality-overrides.js
++++ b/assets/js/chat/functionality-overrides.js
+@@ -172,7 +172,7 @@
+   const csrf = window.ecollabCsrf || (() => window.ECOLLAB?.csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || '');
+   const esc = window.ecollabEsc || (value => String(value ?? '').replace(/[&<>"']/g, c => ({
+     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+-  }[c]));
++  }[c])));
+ 
+   const privilegedRoles = new Set(['facilitator', 'moderator', 'admin', 'super_admin']);
+   const role = String(window.ECOLLAB?.role || 'student').toLowerCase();
+-- 
+2.43.0
+

@@ -21,6 +21,7 @@ $csrf = AuthMiddleware::csrfToken();
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Ecollab Whiteboard</title>
     <meta name="csrf-token" content="<?= htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8') ?>">
+    <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js" defer></script>
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/whiteboard.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/whiteboard-mobile.css">
     <style>

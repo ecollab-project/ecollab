@@ -184,6 +184,7 @@ try {
             }
         }
     </style>
+    <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js" defer></script>
 </head>
 
 <body>

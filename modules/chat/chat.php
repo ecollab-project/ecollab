@@ -44,6 +44,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ecollab — Chat</title>
   <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken) ?>">
+  <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js" defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/whiteboard.css">
@@ -659,7 +660,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           </svg>
           <span class="vc-ctrl-tooltip">Mic Test</span>
         </div>
-        <div class="vc-ctrl-btn" onclick="openModal('vcNoiseCancelModal')" title="Noise Cancellation">
+        <div class="vc-ctrl-btn" onclick="openNoiseCancelModal()" title="Noise Cancellation">
           <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
             <path d="M4.5 11h-2C2.5 6.31 6.31 2.5 11 2.5v2C7.41 4.5 4.5 7.41 4.5 11zm17 0h-2c0-5.24-4.26-9.5-9.5-9.5v-2c6.35 0 11.5 5.15 11.5 11.5zM12 22c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm6.5-2.5c0 3.59-2.91 6.5-6.5 6.5s-6.5-2.91-6.5-6.5H7c0 2.76 2.24 5 5 5s5-2.24 5-5h1.5z" />
           </svg>

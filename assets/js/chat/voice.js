@@ -79,10 +79,11 @@ function joinVoice(channelSlug, el, channelId) {
 async function _acquireMic() {
   try {
     const preferredInput = window._vcPreferredInput || '';
+    const noiseSuppression = (localStorage.getItem('ec_noise_mode') || 'standard') !== 'off';
     const constraints = {
       audio: preferredInput
-        ? { deviceId: { ideal: preferredInput }, echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-        : { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+        ? { deviceId: { ideal: preferredInput }, echoCancellation: true, noiseSuppression, autoGainControl: true }
+        : { echoCancellation: true, noiseSuppression, autoGainControl: true }
     };
 
     localStream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -662,14 +663,44 @@ function openWhiteboard() {
 }
 
 // ── Noise / Audio settings helpers ────────────────────────────────────────
+let _selectedNoiseMode = localStorage.getItem('ec_noise_mode') || 'standard';
+
+function openNoiseCancelModal() {
+  openModal('vcNoiseCancelModal');
+  document.querySelectorAll('.noise-option').forEach(o => {
+    const isActive = o.getAttribute('onclick')?.includes(`'${_selectedNoiseMode}'`);
+    o.classList.toggle('active', !!isActive);
+  });
+}
+
 function selectNoiseMode(el, mode) {
   document.querySelectorAll('.noise-option').forEach(o => o.classList.remove('active'));
   el.classList.add('active');
+  _selectedNoiseMode = mode;
 }
+
 function saveNoiseMode() {
-  const active = document.querySelector('.noise-option.active');
-  const mode = active?.querySelector('.no-name')?.textContent || 'Standard';
-  showToast('🎙️ Noise cancellation: ' + mode, 'success');
+  const mode = _selectedNoiseMode;
+  localStorage.setItem('ec_noise_mode', mode);
+
+  // Web platform only exposes a boolean noiseSuppression constraint — there's
+  // no standardized "aggressive vs standard" intensity level browsers expose.
+  // 'off' genuinely disables it; 'standard' and 'aggressive' both enable the
+  // browser's real built-in suppression (there's no stronger mode to enable).
+  const suppress = mode !== 'off';
+
+  if (localStream) {
+    localStream.getAudioTracks().forEach(t => {
+      if (typeof t.applyConstraints === 'function') {
+        t.applyConstraints({ noiseSuppression: suppress }).catch(err =>
+          console.warn('[voice] noiseSuppression constraint not supported on this track:', err)
+        );
+      }
+    });
+  }
+
+  const label = mode === 'off' ? 'Off' : mode === 'aggressive' ? 'Aggressive' : 'Standard';
+  showToast('🎙️ Noise cancellation: ' + label, 'success');
   closeModal('vcNoiseCancelModal');
 }
 
