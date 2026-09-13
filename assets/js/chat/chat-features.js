@@ -687,8 +687,16 @@ function filterMembersModal(val) {
 const _allMatches = []; // populated from API on load
 
 function openFullMatchesModal() {
-  _populateFullMatches('all');
-  if (window.openModal) openModal('matchesModal');
+  // Previously opened a separate, simpler "matchesModal" that duplicated
+  // most of what peerMatchingModal already does (browse matches, connect).
+  // Consolidated onto the one real implementation instead of maintaining
+  // two competing UIs for the same feature.
+  if (window.openPeerMatchingModal) {
+    openPeerMatchingModal();
+  } else if (window.openModal) {
+    _populateFullMatches('all');
+    openModal('matchesModal');
+  }
 }
 
 function _populateFullMatches(filter) {

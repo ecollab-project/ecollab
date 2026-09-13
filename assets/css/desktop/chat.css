@@ -766,6 +766,14 @@ body {
   color: #ef4444;
 }
 
+/* DM call panel mic/camera buttons — same red "off" treatment, its own
+   rule since these buttons aren't .vc-ctrl-btn (that's the voice-channel
+   control bar, this is the DM call overlay). */
+#dmCallOverlay button.muted-state {
+  background: rgba(239, 68, 68, 0.25) !important;
+  color: #ef4444 !important;
+}
+
 .vc-ctrl-btn.green-state {
   background: rgba(34, 197, 94, 0.14);
   border-color: rgba(34, 197, 94, 0.35);

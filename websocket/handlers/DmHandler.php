@@ -118,6 +118,83 @@ class DmHandler
         try { $userConns[$targetId]->send($payload); } catch (\Throwable) {}
     }
 
+    public static function handleDmCallSignal(ConnectionInterface $from, array $data, array $meta, array $userConns, PDO $db, string $type): void {
+        $callerId = (int)$meta['user_id'];
+        $targetId = (int)($data['target_user_id'] ?? 0);
+        $groupId  = (int)($data['group_id'] ?? 0);
+        $logId    = (int)($data['log_id'] ?? 0);
+        if (!$targetId || $targetId === $callerId || !isset($userConns[$targetId])) return;
+
+        // Verify a real relationship exists before relaying any signal — a
+        // DM conversation with the target, or shared group membership. Same
+        // discipline as handleDmMessage: never trust the client's claim
+        // that these two people are actually allowed to reach each other.
+        if ($groupId) {
+            $chk = $db->prepare('SELECT 1 FROM dm_group_members WHERE group_id=:gid AND user_id=:caller
+                                  AND EXISTS(SELECT 1 FROM dm_group_members WHERE group_id=:gid2 AND user_id=:target)');
+            $chk->execute([':gid' => $groupId, ':caller' => $callerId, ':gid2' => $groupId, ':target' => $targetId]);
+        } else {
+            $chk = $db->prepare('SELECT 1 FROM dm_conversations WHERE
+                (user_a=:a1 AND user_b=:b1) OR (user_a=:a2 AND user_b=:b2)');
+            $chk->execute([':a1' => min($callerId,$targetId), ':b1' => max($callerId,$targetId), ':a2' => min($callerId,$targetId), ':b2' => max($callerId,$targetId)]);
+        }
+        if (!$chk->fetchColumn()) return;
+
+        // Call history logging — kept in the same handler as the signal
+        // itself rather than a separate HTTP round trip, so the log always
+        // reflects exactly what was actually relayed.
+        if ($type === 'dm_call_offer') {
+            $ins = $db->prepare('INSERT INTO dm_call_history (caller_id, callee_id, group_id, is_video, status)
+                                  VALUES (:caller, :callee, :gid, :video, "ringing")');
+            $ins->execute([
+                ':caller' => $callerId,
+                ':callee' => $groupId ? null : $targetId,
+                ':gid'    => $groupId ?: null,
+                ':video'  => (int)(bool)($data['is_video'] ?? false),
+            ]);
+            $logId = (int)$db->lastInsertId();
+        } elseif ($logId) {
+            if ($type === 'dm_call_answer') {
+                $db->prepare('UPDATE dm_call_history SET status="answered", answered_at=NOW() WHERE id=:id')
+                    ->execute([':id' => $logId]);
+            } elseif ($type === 'dm_call_decline') {
+                $db->prepare('UPDATE dm_call_history SET status="declined", ended_at=NOW() WHERE id=:id AND status="ringing"')
+                    ->execute([':id' => $logId]);
+            } elseif ($type === 'dm_call_end') {
+                $db->prepare("
+                    UPDATE dm_call_history
+                    SET status = IF(status = 'answered', 'ended', 'missed'),
+                        ended_at = NOW(),
+                        duration_seconds = IF(status = 'answered', TIMESTAMPDIFF(SECOND, answered_at, NOW()), NULL)
+                    WHERE id = :id AND status IN ('ringing','answered')
+                ")->execute([':id' => $logId]);
+            }
+        }
+
+        $payload = json_encode([
+            'type'          => $type,
+            'from_user_id'  => $callerId,
+            'from_username' => $meta['full_name'] ?? $meta['username'],
+            'from_gradient' => $meta['gradient'] ?? '',
+            'group_id'      => $groupId ?: null,
+            'log_id'        => $logId ?: null,
+            'is_video'      => (bool)($data['is_video'] ?? false),
+            'sdp'           => $data['sdp'] ?? null,
+            'candidate'     => $data['candidate'] ?? null,
+        ]);
+        foreach ($userConns[$targetId] as $conn) {
+            try { $conn->send($payload); } catch (\Throwable) {}
+        }
+
+        // Echo the log id back to the caller too, so both sides can
+        // reference it in later signals (answer/decline/end) without a
+        // separate round trip.
+        if ($type === 'dm_call_offer') {
+            $echo = json_encode(['type' => 'dm_call_offer_sent', 'log_id' => $logId]);
+            try { $from->send($echo); } catch (\Throwable) {}
+        }
+    }
+
     private static function conversationPeer(PDO $db,int $conversationId,int $userId,int $peerId): bool {
         $stmt=$db->prepare('SELECT 1 FROM dm_conversations WHERE id=:cid AND ((user_a=:uid_a AND user_b=:peer_a) OR (user_b=:uid_b AND user_a=:peer_b)) LIMIT 1');
         $stmt->execute([':cid'=>$conversationId,':uid_a'=>$userId,':peer_a'=>$peerId,':uid_b'=>$userId,':peer_b'=>$peerId]); return (bool)$stmt->fetchColumn();

@@ -161,6 +161,11 @@ class ChatServer implements MessageComponentInterface
             'notify_conn_req' => $this->handleNotifyConnReq($from, $data, $meta),
             'notify_conn_accepted' => $this->handleNotifyConnAccepted($from, $data, $meta),
             'voice_invite' => $this->handleVoiceInvite($from, $data, $meta),
+            'dm_call_offer' => $this->handleDmCallSignal($from, $data, $meta, 'dm_call_offer'),
+            'dm_call_answer' => $this->handleDmCallSignal($from, $data, $meta, 'dm_call_answer'),
+            'dm_call_candidate' => $this->handleDmCallSignal($from, $data, $meta, 'dm_call_candidate'),
+            'dm_call_end' => $this->handleDmCallSignal($from, $data, $meta, 'dm_call_end'),
+            'dm_call_decline' => $this->handleDmCallSignal($from, $data, $meta, 'dm_call_decline'),
             default => null,
         };
     }
@@ -642,16 +647,68 @@ class ChatServer implements MessageComponentInterface
         $payload = json_encode(['type' => 'presence', 'user_id' => $meta['user_id'], 'online' => true, 'muted' => (bool)($data['muted'] ?? false)]);
         if ($channelId) $this->broadcastToChannel($channelId, $payload, $from);
     }
+    // DM-group voice sessions use a synthetic channel_id in this range so
+    // they can reuse the exact same in-memory voiceRooms/mesh signaling as
+    // real server voice channels, with no corresponding row in `channels`
+    // at all. users.voice_channel_id has a real FK to channels(id), so that
+    // column is deliberately left untouched for this range — Active Now
+    // won't show a "which DM voice call" badge for it, but the mesh audio,
+    // live participant list, and everything else works identically.
+    const DM_GROUP_VOICE_ID_OFFSET = 2000000000;
+
     private function handleJoinVoice(ConnectionInterface $from, array $data, array &$meta): void
     {
         $channelId = (int)($data['channel_id'] ?? 0); if (!$channelId) return;
+        $uid = (int)$meta['user_id'];
+        $isDmGroupVoice = $channelId >= self::DM_GROUP_VOICE_ID_OFFSET;
+
+        if ($isDmGroupVoice) {
+            $groupId = $channelId - self::DM_GROUP_VOICE_ID_OFFSET;
+            $mem = $this->db->prepare('SELECT 1 FROM dm_group_members WHERE group_id = :gid AND user_id = :uid');
+            $mem->execute([':gid' => $groupId, ':uid' => $uid]);
+            if (!$mem->fetchColumn()) return; // not a member of this group — reject silently, same as any unauthorized action
+        } else {
+            // Real server voice channel — this previously had NO authorization
+            // check at all: any authenticated user could pass any channel_id
+            // and join that channel's presence/mesh signaling regardless of
+            // server membership. Verify the channel is real, is a voice
+            // channel, and the caller actually belongs to that server.
+            $chk = $this->db->prepare("
+                SELECT 1 FROM channels c
+                JOIN server_members sm ON sm.server_id = c.server_id AND sm.user_id = :uid
+                WHERE c.id = :cid AND c.type = 'voice'
+            ");
+            $chk->execute([':uid' => $uid, ':cid' => $channelId]);
+            if (!$chk->fetchColumn()) return;
+        }
+
         $stmt = $this->db->prepare("SELECT id, username, full_name, avatar_color_gradient, role FROM users WHERE id = :id");
         $stmt->execute([':id' => $meta['user_id']]); $user = $stmt->fetch() ?: [];
-        $uid = (int)$meta['user_id']; $meta['voice_channel_id'] = $channelId;
+        $meta['voice_channel_id'] = $channelId;
         foreach ($this->voiceRooms as &$participants) $participants = array_filter($participants, fn($p) => $p['user_id'] !== $uid); unset($participants);
         $existingParticipants = array_values($this->voiceRooms[$channelId] ?? []); $this->voiceRooms[$channelId] ??= [];
         $this->voiceRooms[$channelId][] = ['user_id' => $uid, 'username' => $meta['username'], 'full_name' => $user['full_name'] ?? $meta['username'], 'avatar_color_gradient' => $user['avatar_color_gradient'] ?? '#3b82f6,#6366f1', 'role' => $user['role'] ?? 'student', 'resourceId' => $from->resourceId];
-        try { $this->db->prepare("UPDATE users SET voice_channel_id=:cid WHERE id=:id")->execute([':cid' => $channelId, ':id' => $uid]); } catch (\Exception) {}
+        if (!$isDmGroupVoice) {
+            try { $this->db->prepare("UPDATE users SET voice_channel_id=:cid WHERE id=:id")->execute([':cid' => $channelId, ':id' => $uid]); } catch (\Exception) {}
+        } elseif (empty($existingParticipants)) {
+            // First person to join this DM group's voice session — let every
+            // other member know a call is live so they can join if they want,
+            // rather than requiring them to be individually invited.
+            $groupId = $channelId - self::DM_GROUP_VOICE_ID_OFFSET;
+            $others = $this->db->prepare('SELECT user_id FROM dm_group_members WHERE group_id = :gid AND user_id != :uid');
+            $others->execute([':gid' => $groupId, ':uid' => $uid]);
+            $startPayload = json_encode([
+                'type'          => 'dm_group_voice_start',
+                'group_id'      => $groupId,
+                'channel_id'    => $channelId,
+                'started_by'    => $user['full_name'] ?? $meta['username'],
+            ]);
+            foreach ($others->fetchAll(PDO::FETCH_COLUMN) as $memberId) {
+                foreach ($this->userConns[(int)$memberId] ?? [] as $conn) {
+                    try { $conn->send($startPayload); } catch (\Exception) {}
+                }
+            }
+        }
         $payload = json_encode(['type' => 'voice_join', 'user' => $user, 'channel_id' => $channelId]); $already = [];
         foreach ($existingParticipants as $p) foreach ($this->userConns[(int)$p['user_id']] ?? [] as $peerConn) { try { $peerConn->send($payload); $already[$peerConn->resourceId] = true; } catch (\Exception) {} }
         foreach ($this->clients as $client) { if ($client === $from) continue; $rid = $client->resourceId; if (empty($this->connMeta[$rid]['authed']) || isset($already[$rid])) continue; try { $client->send($payload); } catch (\Exception) {} }
@@ -661,8 +718,12 @@ class ChatServer implements MessageComponentInterface
     private function handleLeaveVoice(ConnectionInterface $from, array $data, array &$meta): void
     {
         $uid = (int)$meta['user_id']; $channelId = (int)($meta['voice_channel_id'] ?? 0); $remaining = [];
+        $isDmGroupVoice = $channelId >= self::DM_GROUP_VOICE_ID_OFFSET;
         if ($channelId && isset($this->voiceRooms[$channelId])) { $this->voiceRooms[$channelId] = array_values(array_filter($this->voiceRooms[$channelId], fn($p) => $p['user_id'] !== $uid)); $remaining = $this->voiceRooms[$channelId]; if (empty($this->voiceRooms[$channelId])) unset($this->voiceRooms[$channelId]); }
-        $meta['voice_channel_id'] = null; try { $this->db->prepare("UPDATE users SET voice_channel_id=NULL WHERE id=:id")->execute([':id' => $uid]); } catch (\Exception) {}
+        $meta['voice_channel_id'] = null;
+        if (!$isDmGroupVoice) {
+            try { $this->db->prepare("UPDATE users SET voice_channel_id=NULL WHERE id=:id")->execute([':id' => $uid]); } catch (\Exception) {}
+        }
         $payload = json_encode(['type' => 'voice_leave', 'user_id' => $uid, 'username' => $meta['username'], 'channel_id' => $channelId]);
         foreach ($remaining as $p) foreach ($this->userConns[(int)$p['user_id']] ?? [] as $peerConn) try { $peerConn->send($payload); } catch (\Exception) {}
         $this->broadcastToAll($payload, $from);
@@ -701,7 +762,8 @@ class ChatServer implements MessageComponentInterface
     private function handleDmGroupTyping(ConnectionInterface $from, array $data, array $meta): void { DmHandler::handleDmGroupTyping($from, $data, $meta, $this->userConns, $this->db); }
     private function handleNotifyConnReq(ConnectionInterface $from, array $data, array $meta): void { DmHandler::handleNotifyConnReq($from, $data, $meta, $this->userConns, $this->db); }
     private function handleNotifyConnAccepted(ConnectionInterface $from, array $data, array $meta): void { DmHandler::handleNotifyConnAccepted($from, $data, $meta, $this->userConns, $this->db); }
-    private function handleVoiceInvite(ConnectionInterface $from, array $data, array $meta): void { DmHandler::handleVoiceInvite($from, $data, $meta, $this->userConns, $this->db); }    private function handleNoteRelay(ConnectionInterface $from, array $data, array $meta): void
+    private function handleVoiceInvite(ConnectionInterface $from, array $data, array $meta): void { DmHandler::handleVoiceInvite($from, $data, $meta, $this->userConns, $this->db); }
+    private function handleDmCallSignal(ConnectionInterface $from, array $data, array $meta, string $type): void { DmHandler::handleDmCallSignal($from, $data, $meta, $this->userConns, $this->db, $type); }    private function handleNoteRelay(ConnectionInterface $from, array $data, array $meta): void
     {
         $channelId = (int)($data['channel_id'] ?? $meta['channel_id'] ?? 0); if (!$channelId) return;
         foreach ($this->channelSubs[$channelId] ?? [] as $conn) { if ($conn === $from) continue; try { $conn->send(json_encode($data)); } catch (\Exception) {} }

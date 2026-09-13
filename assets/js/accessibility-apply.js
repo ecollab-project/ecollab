@@ -27,6 +27,10 @@
         (settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: light)').matches);
       html.dataset.theme = light ? 'light' : 'dark';
     }
+
+    // Cached globally so other scripts (notification triggers, etc.) don't
+    // need a second round-trip to know the user's current preferences.
+    window._userSettings = settings;
   }
 
   function run() {

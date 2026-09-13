@@ -92,7 +92,9 @@ $stmt = $db->prepare("
     FROM users u
     JOIN server_members sm ON sm.user_id = u.id AND sm.server_id = :sid
     LEFT JOIN channels c ON c.id = u.voice_channel_id
+    LEFT JOIN user_settings us ON us.user_id = u.id
     WHERE u.last_active_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE)
+      AND (us.activity_status IS NULL OR us.activity_status = 1 OR u.id = :self)
     ORDER BY
         FIELD(CASE
             WHEN u.voice_channel_id IS NOT NULL THEN 'voice'
@@ -102,7 +104,7 @@ $stmt = $db->prepare("
         u.full_name ASC
     LIMIT 100
 ");
-$stmt->execute([':sid' => $serverId]);
+$stmt->execute([':sid' => $serverId, ':self' => $userId]);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $users = [];

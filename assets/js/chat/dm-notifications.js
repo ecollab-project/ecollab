@@ -136,6 +136,12 @@ function _onWsDmMessage(data) {
     showToast(`💬 ${name}: ${String(data.body || '').slice(0, 60)}`, 'info');
   }
 
+  // Don't notify yourself about your own message (this event fires for
+  // both sender and recipient)
+  if (typeof showDesktopNotification === 'function' && data.sender_id != ME_ID()) {
+    showDesktopNotification('notification_messages', data.sender_name || 'New message', String(data.body || '').slice(0, 100));
+  }
+
   // Add notification badge
   if (data.sender_id !== ME_ID()) {
     _addInlineNotification({
@@ -186,6 +192,13 @@ function _onWsDmGroupMessage(data) {
   } else {
     const name = data.sender_name || 'Someone';
     showToast(`💬 ${name} (${grp ? grp.display_name : 'Group'}): ${String(data.body || '').slice(0, 60)}`, 'info');
+  }
+
+  // Don't notify yourself about your own message (this event fires for
+  // every group member, including the sender)
+  if (typeof showDesktopNotification === 'function' && data.sender_id != ME_ID()) {
+    const groupName = grp ? grp.display_name : 'Group';
+    showDesktopNotification('notification_messages', `${data.sender_name || 'Someone'} (${groupName})`, String(data.body || '').slice(0, 100));
   }
 }
 
@@ -608,8 +621,12 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
 
   // Header
   document.getElementById('dmPanelTitle').innerHTML = `
-    ${_avatar(partnerName, partnerGradient, 30)}
-    <span style="font-size:15px;font-weight:700;">${_esc(partnerName)}</span>`;
+    <span onclick="openMiniProfile(event,'${_esc(partnerName)}','','${_esc(partnerGradient || '')}','${_esc((partnerName[0]||'?').toUpperCase())}',${partnerId})" style="display:flex;align-items:center;gap:8px;cursor:pointer;min-width:0;flex:1;">
+      ${_avatar(partnerName, partnerGradient, 30)}
+      <span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(partnerName)}</span>
+    </span>
+    <button onclick="startDmCall(false)" title="Voice call" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;flex-shrink:0;">📞</button>
+    <button onclick="startDmCall(true)" title="Video call" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;flex-shrink:0;">🎥</button>`;
 
   // Load messages
   const msgArea = document.getElementById('dmMessagesArea');
@@ -649,8 +666,11 @@ window.openGroupConversation = async function(groupId) {
     const displayName = data.group?.name || (DM.groups.find(g => g.id === groupId)?.display_name) || 'Group';
 
     document.getElementById('dmPanelTitle').innerHTML = `
-      <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#ec4899);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;">${(data.members || []).length}</div>
-      <span style="font-size:15px;font-weight:700;">${_esc(displayName)}</span>`;
+      <span style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">
+        <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#ec4899);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;">${(data.members || []).length}</div>
+        <span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(displayName)}</span>
+      </span>
+      <button onclick="window.startDmGroupVoice(${groupId}, '${_esc(displayName).replace(/'/g, "\\'")}')" title="Start voice call — anyone in the group can join" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;flex-shrink:0;">📞</button>`;
 
     _renderDmMessages(data.messages || []);
   } catch (err) {

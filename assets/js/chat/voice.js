@@ -33,7 +33,7 @@ const ICE_SERVERS = [
 
 // ── Join voice channel ─────────────────────────────────────────────────────
 // Does NOT hide chatMain — voice floats on top as an overlay.
-function joinVoice(channelSlug, el, channelId) {
+function joinVoice(channelSlug, el, channelId, roomNameOverride) {
   // Mark sidebar item
   document.querySelectorAll('.voice-channel').forEach(v => v.classList.remove('connected'));
   if (el) el.classList.add('connected');
@@ -42,7 +42,7 @@ function joinVoice(channelSlug, el, channelId) {
   vcActive = true;
   vcMinimized = false;
   vcChannelId = channelId;
-  vcRoomName = el?.textContent?.trim()?.replace(/\d+/g, '').trim() || 'Voice Channel';
+  vcRoomName = roomNameOverride || el?.textContent?.trim()?.replace(/\d+/g, '').trim() || 'Voice Channel';
 
   // Show the floating panel (full-screen by default)
   const vcView = document.getElementById('voiceChannelView');
@@ -72,6 +72,45 @@ function joinVoice(channelSlug, el, channelId) {
   });
 
   showToast('🔊 Joined ' + vcRoomName, 'success');
+}
+
+// ── DM group voice — reuses the exact same mesh/UI as a real voice channel,
+// just with a synthetic channel_id (see DM_GROUP_VOICE_ID_OFFSET server-side)
+// so no real `channels` row is needed. Everyone in the group can join or
+// ignore it — it's not a ring-everyone-at-once call like 1:1 DM calling.
+const DM_GROUP_VOICE_ID_OFFSET = 2000000000;
+
+function startDmGroupVoice(groupId, groupName) {
+  if (vcActive) { showToast('Already in a voice channel', 'info'); return; }
+  const channelId = DM_GROUP_VOICE_ID_OFFSET + parseInt(groupId);
+  joinVoice('dm-group-' + groupId, null, channelId, groupName || 'Group Voice Call');
+}
+window.startDmGroupVoice = startDmGroupVoice;
+
+window._onDmGroupVoiceStart = function (data) {
+  if (vcActive) return; // already in a call, don't prompt over it
+  const groupName = (typeof DM !== 'undefined' && DM.groups?.find(g => g.id == data.group_id)?.display_name) || 'a group';
+  showToast(`🔊 ${escHtml(data.started_by)} started a voice call in ${escHtml(groupName)}`, 'info');
+
+  // If that group's DM is the one currently open, show a persistent join banner
+  if (typeof DM !== 'undefined' && DM.activeGroupId == data.group_id) {
+    _showDmGroupVoiceBanner(data.group_id, data.started_by, groupName);
+  }
+};
+
+function _showDmGroupVoiceBanner(groupId, startedBy, groupName) {
+  const header = document.querySelector('#dmConversationPanel');
+  if (!header || document.getElementById('dmGroupVoiceBanner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'dmGroupVoiceBanner';
+  banner.style.cssText = 'padding:8px 14px;background:rgba(34,197,94,0.1);border-bottom:1px solid rgba(34,197,94,0.25);display:flex;align-items:center;gap:8px;font-size:12px;color:#4ade80;flex-shrink:0;';
+  banner.innerHTML = `
+    <span>🔊 ${escHtml(startedBy)} started a voice call</span>
+    <button onclick="startDmGroupVoice(${groupId}, '${escHtml(groupName).replace(/'/g, "\\'")}'); this.closest('#dmGroupVoiceBanner').remove();"
+      style="margin-left:auto;padding:4px 12px;border-radius:6px;background:#22c55e;border:none;color:#fff;font-size:11px;font-weight:700;cursor:pointer;">Join</button>
+    <button onclick="this.closest('#dmGroupVoiceBanner').remove();" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;">×</button>`;
+  const messagesArea = document.getElementById('dmMessagesArea');
+  if (messagesArea) messagesArea.parentNode.insertBefore(banner, messagesArea);
 }
 
 // ── Acquire microphone + enumerate devices ────────────────────────────────

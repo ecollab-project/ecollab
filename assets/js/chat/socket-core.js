@@ -173,6 +173,31 @@ function handleSocketMessage(data) {
       if (window._onVoiceInvite) window._onVoiceInvite(data);
       break;
 
+    // ── DM group voice (reuses the real voice-channel mesh) ──
+    case 'dm_group_voice_start':
+      if (window._onDmGroupVoiceStart) window._onDmGroupVoiceStart(data);
+      break;
+
+    // ── DM voice/video call signaling ──
+    case 'dm_call_offer':
+      if (window._onDmCallOffer) window._onDmCallOffer(data);
+      break;
+    case 'dm_call_offer_sent':
+      if (window._onDmCallOfferSent) window._onDmCallOfferSent(data);
+      break;
+    case 'dm_call_answer':
+      if (window._onDmCallAnswer) window._onDmCallAnswer(data);
+      break;
+    case 'dm_call_candidate':
+      if (window._onDmCallCandidate) window._onDmCallCandidate(data);
+      break;
+    case 'dm_call_decline':
+      if (window._onDmCallDecline) window._onDmCallDecline(data);
+      break;
+    case 'dm_call_end':
+      if (window._onDmCallEnd) window._onDmCallEnd(data);
+      break;
+
     // ── Channel events ──
     case 'channel_created':
       handleChannelCreated(data.channel);
@@ -510,12 +535,47 @@ function handleThreadReply(data) {
   }
 }
 
+// ── Notification preferences (desktop + sound) ─────────────────────────────
+// Every notification_* setting previously saved correctly but had nothing
+// anywhere that actually checked it — no desktop notification, no sound, for
+// messages or mentions. This is the first real consumer of those settings.
+let _notifAudio = null;
+
+function _notifEnabled(kind) {
+  const s = window._userSettings;
+  if (!s) return true; // settings not loaded yet — default to notifying
+  if (s.notification_desktop === 0) return false; // master switch off
+  if (kind && s[kind] === 0) return false;
+  return true;
+}
+
+function showDesktopNotification(kind, title, body) {
+  if (!_notifEnabled(kind)) return;
+
+  if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+    try {
+      const n = new Notification(title, { body, silent: true });
+      n.onclick = () => { window.focus(); n.close(); };
+    } catch (e) { /* ignore unsupported/blocked notifications */ }
+  }
+
+  if (_notifEnabled('notification_sound')) {
+    try {
+      if (!_notifAudio) _notifAudio = new Audio((window.ECOLLAB?.baseUrl || '') + '/assets/sounds/notification.mp3');
+      _notifAudio.currentTime = 0;
+      _notifAudio.play().catch(() => {}); // browsers block autoplay until first user interaction
+    } catch (e) { /* ignore */ }
+  }
+}
+window.showDesktopNotification = showDesktopNotification;
+
 // ── Mentions ─────────────────────────────────────────────────────────────────
 function handleMentionEvent(data) {
   if (!data.entry) return;
   _storeMention(data.entry);
   if (typeof showToast === 'function')
     showToast(`💬 You were mentioned in #${data.entry.channel || 'a channel'}`, 'info');
+  showDesktopNotification('notification_mentions', 'You were mentioned', `in #${data.entry.channel || 'a channel'}`);
 }
 
 function _storeMention(entry) {
