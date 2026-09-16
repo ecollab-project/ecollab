@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-// Session wrapper for Coworkspace whiteboards. The existing canvas remains the
-// rendering engine, while this wrapper injects session-specific persistence
-// without duplicating the large whiteboard UI.
+// Coworkspace whiteboard session wrapper. The canvas is still rendered by the
+// existing whiteboard UI, but this page binds it to one persistent session.
 $workspaceId = (int)($_GET['workspace_id'] ?? 0);
 $whiteboardId = (int)($_GET['whiteboard_id'] ?? 0);
 $channelId = (int)($_GET['channel_id'] ?? 0);
@@ -19,6 +18,7 @@ $html = ob_get_clean();
 
 $script = '<script>\n'
     . 'window.ECOLLAB=window.ECOLLAB||{};'
+    . 'window.ECOLLAB.whiteboardStandalone=true;'
     . 'window.ECOLLAB.whiteboardId=' . $whiteboardId . ';'
     . 'window.ECOLLAB.workspaceId=' . $workspaceId . ';'
     . 'window.ECOLLAB.currentChannelId=' . $channelId . ';'
@@ -35,9 +35,12 @@ $script = '<script>\n'
     . 'if(method!=="GET"){opts.body=JSON.stringify({...body,workspace_id:wid,whiteboard_id:id,csrf_token:csrf});}'
     . 'return fetch(url,opts).then(async r=>{const d=await r.json().catch(()=>({error:"Invalid server response"}));if(!r.ok||!d.success)throw Error(d.error||"Whiteboard request failed");return action==="state"?{whiteboard:{state_json:d.whiteboard.state,locked:false,is_host:true}}:d;});'
     . '};'
+    . 'if(typeof wbState!=="undefined"){wbState.channelId=' . $channelId . ';wbState.sessionId=' . $whiteboardId . ';}'
+    . 'const originalSend=wbSend;'
+    . 'wbSend=function(payload){payload=Object.assign({},payload,{whiteboard_id:' . $whiteboardId . '});return originalSend(payload);};'
     . 'window.wbSaveVersion=async function(){'
-    . 'const state={paths:window.wbState?.paths||[],savedAt:new Date().toISOString()};'
-    . 'await window.wbApi("save",{state},"POST");window.wbState&&(window.wbState.dirty=false);document.getElementById("wbSaveLabel")&&(document.getElementById("wbSaveLabel").textContent="Saved just now");'
+    . 'const state={paths:typeof wbState!=="undefined"?wbState.paths:[],savedAt:new Date().toISOString()};'
+    . 'await window.wbApi("save",{state},"POST");if(typeof wbState!=="undefined")wbState.dirty=false;document.getElementById("wbSaveLabel")&&(document.getElementById("wbSaveLabel").textContent="Saved just now");'
     . '};'
     . 'window.wbLoadVersions=async function(){const el=document.getElementById("wbVersionList");if(el)el.innerHTML="<div class=\\"wb-version-row\\">Session snapshots are stored automatically.</div>";};'
     . 'window.wbRestoreVersion=async function(){window.showToast?.("Version restore is not available for Coworkspace sessions yet.","info");};'
