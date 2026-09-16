@@ -1,0 +1,17 @@
+<?php
+
+declare(strict_types=1);
+require_once dirname(__DIR__,2).'/config.php';
+require_once ROOT_PATH.'/database/config/db.php';
+require_once ROOT_PATH.'/security/middleware/AuthMiddleware.php';
+require_once ROOT_PATH.'/services/CoworkspaceService.php';
+AuthMiddleware::startSession();
+$user=AuthMiddleware::requireAuth();$db=Database::getInstance();$uid=(int)$user['id'];$token=trim((string)($_GET['token']??''));
+if($token===''){http_response_code(400);exit('Invitation token is required.');}
+try{
+ $s=$db->prepare('SELECT * FROM collab_resource_invites WHERE token_hash=:h AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at>CURRENT_TIMESTAMP) LIMIT 1');$s->execute([':h'=>hash('sha256',$token)]);$invite=$s->fetch(PDO::FETCH_ASSOC);if(!$invite)throw new RuntimeException('This invitation is invalid, revoked, or expired.',404);
+ $workspace=CoworkspaceService::get($db,(int)$invite['workspace_id'],$uid,false);CoworkspaceService::assertServerMember($db,(int)$workspace['server_id'],$uid);
+ $table=$invite['resource_type']==='document'?'collab_documents':'collab_whiteboards';$s=$db->prepare("SELECT id,title FROM {$table} WHERE id=:id AND workspace_id=:wid LIMIT 1");$s->execute([':id'=>(int)$invite['resource_id'],':wid'=>(int)$invite['workspace_id']]);if(!$s->fetch(PDO::FETCH_ASSOC))throw new RuntimeException('The shared resource no longer exists.',404);
+ $s=$db->prepare('INSERT INTO collab_resource_permissions(resource_type,resource_id,workspace_id,user_id,permission,granted_by) VALUES(:t,:rid,:wid,:uid,:p,:by) ON DUPLICATE KEY UPDATE permission=IF(permission="edit" OR VALUES(permission)="view",permission,VALUES(permission)),updated_at=CURRENT_TIMESTAMP');$s->execute([':t'=>$invite['resource_type'],':rid'=>(int)$invite['resource_id'],':wid'=>(int)$invite['workspace_id'],':uid'=>$uid,':p'=>$invite['permission'],':by'=>(int)$invite['created_by']]);
+ $base=BASE_URL.'/modules/collaboration/server-coworkspaces.php?server_id='.(int)$workspace['server_id'];header('Location: '.$base);exit;
+}catch(Throwable $e){$status=(int)$e->getCode();http_response_code(($status>=400&&$status<600)?$status:500);exit(htmlspecialchars($e->getMessage(),ENT_QUOTES,'UTF-8'));}
