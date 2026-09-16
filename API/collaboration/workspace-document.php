@@ -35,6 +35,31 @@ try {
         docLinkFail('Document linking is disabled for this Coworkspace.', 403);
     }
 
+    // A document may already belong to another (possibly private) Coworkspace.
+    // The caller must have access to that source workspace before it can be
+    // reassigned. Checking only the target workspace would allow a user with
+    // create rights in Workspace B to pull a document out of private Workspace A.
+    $sourceStmt = $db->prepare(
+        'SELECT d.workspace_id, c.server_id
+         FROM collab_documents d
+         INNER JOIN channels c ON c.id = d.channel_id
+         WHERE d.id = :did
+         LIMIT 1'
+    );
+    $sourceStmt->execute([':did' => $documentId]);
+    $source = $sourceStmt->fetch(PDO::FETCH_ASSOC);
+    if (!$source) docLinkFail('Document not found.', 404);
+    if ((int)$source['server_id'] !== (int)$workspace['server_id']) {
+        docLinkFail('Document not found in this server.', 404);
+    }
+
+    $sourceWorkspaceId = (int)($source['workspace_id'] ?? 0);
+    if ($sourceWorkspaceId > 0 && $sourceWorkspaceId !== $workspaceId) {
+        // This enforces membership/visibility rules on the current source
+        // workspace, including private Coworkspaces.
+        CoworkspaceService::get($db, $sourceWorkspaceId, $uid);
+    }
+
     $stmt = $db->prepare(
         'UPDATE collab_documents d
          INNER JOIN channels c ON c.id = d.channel_id
