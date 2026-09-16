@@ -27,13 +27,11 @@ if (!$convId || $text === '' || mb_strlen($text) > 4000) {
 
 try {
     $db = Database::getInstance();
-
-    // Verify this user is part of the conversation.
-    $check = $db->prepare("
-        SELECT id, user_a, user_b FROM dm_conversations
-        WHERE id = :cid AND (user_a = :me OR user_b = :me2)
-        LIMIT 1
-    ");
+    $check = $db->prepare(
+        "SELECT id, user_a, user_b FROM dm_conversations
+         WHERE id = :cid AND (user_a = :me OR user_b = :me2)
+         LIMIT 1"
+    );
     $check->execute([':cid' => $convId, ':me' => $me['id'], ':me2' => $me['id']]);
     $conv = $check->fetch(PDO::FETCH_ASSOC);
 
@@ -43,9 +41,6 @@ try {
         exit;
     }
 
-    // The message itself is the core operation and must not be rolled back
-    // because an optional read/notification table is missing on an older local
-    // database.
     $ins = $db->prepare(
         "INSERT INTO dm_messages (conversation_id, sender_id, body) VALUES (:cid, :uid, :body)"
     );
@@ -56,8 +51,6 @@ try {
         "UPDATE dm_conversations SET last_message = :body, last_msg_at = NOW() WHERE id = :cid"
     )->execute([':body' => mb_substr($text, 0, 120), ':cid' => $convId]);
 
-    // Read cursor is supplementary. Older installations may not have the
-    // dm_reads table or its current key yet; that must not make sending fail.
     try {
         $db->prepare(
             "INSERT INTO dm_reads (user_id, conversation_id, last_read_at)
@@ -68,19 +61,24 @@ try {
         error_log('[dm/send-message] read cursor update skipped: ' . $e->getMessage());
     }
 
-    $recipientId = ($conv['user_a'] == $me['id']) ? (int)$conv['user_b'] : (int)$conv['user_a'];
+    $recipientId = ((int)$conv['user_a'] === (int)$me['id'])
+        ? (int)$conv['user_b']
+        : (int)$conv['user_a'];
 
-    // Notifications are supplementary. Older databases may have a legacy
-    // notifications schema; sending the DM must still succeed in that case.
     try {
+        // Notifications use the core schema from 002_core_schema.sql:
+        // recipient_id, actor_id, type, title, body, link_url, icon, is_read.
         $db->prepare(
-            "INSERT INTO notifications (user_id, type, title, body, ref_id)
-             VALUES (:uid, 'dm', :title, :body2, :ref)"
+            "INSERT INTO notifications
+                (recipient_id, actor_id, type, title, body, link_url, icon, is_read)
+             VALUES
+                (:recipient, :actor, 'message', :title, :body2, :link, '💬', 0)"
         )->execute([
-            ':uid'   => $recipientId,
-            ':title' => ($me['full_name'] ?: $me['username']) . ' sent you a message',
-            ':body2' => mb_substr($text, 0, 120),
-            ':ref'   => $msgId,
+            ':recipient' => $recipientId,
+            ':actor'     => (int)$me['id'],
+            ':title'     => ($me['full_name'] ?: $me['username']) . ' sent you a message',
+            ':body2'     => mb_substr($text, 0, 500),
+            ':link'      => BASE_URL . '/modules/chat/chat.php?dm=' . $convId,
         ]);
     } catch (Throwable $e) {
         error_log('[dm/send-message] notification insert skipped: ' . $e->getMessage());
@@ -94,7 +92,6 @@ try {
         'created_at'   => date('Y-m-d H:i:s'),
         'recipient_id' => $recipientId,
     ]);
-
 } catch (Throwable $e) {
     error_log('[dm/send-message] ' . $e->getMessage());
     http_response_code(500);
