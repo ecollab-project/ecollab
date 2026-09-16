@@ -8,6 +8,11 @@
 -- Migration 008 historically created a conflicting user_id/ref_id schema.
 -- This migration safely normalizes installations that ended up with that
 -- legacy shape without changing already-correct databases.
+--
+-- IMPORTANT: Guarded dynamic statements use DO 0 instead of SELECT 1.
+-- SELECT 1 leaves a result set behind when executed through PDO, which
+-- causes MySQL/MariaDB error 2014 when the migration runner prepares the
+-- next statement on the same connection.
 -- ============================================================
 
 SET @notif_has_user_id = (
@@ -22,7 +27,7 @@ SET @notif_has_recipient_id = (
 SET @notif_sql = IF(
     @notif_has_user_id = 1 AND @notif_has_recipient_id = 0,
     'ALTER TABLE notifications CHANGE COLUMN user_id recipient_id BIGINT UNSIGNED NOT NULL',
-    'SELECT 1'
+    'DO 0'
 );
 PREPARE notif_stmt FROM @notif_sql;
 EXECUTE notif_stmt;
@@ -40,7 +45,7 @@ SET @notif_has_recipient_id = (
 SET @notif_sql = IF(
     @notif_has_user_id = 1 AND @notif_has_recipient_id = 1,
     'ALTER TABLE notifications DROP COLUMN user_id',
-    'SELECT 1'
+    'DO 0'
 );
 PREPARE notif_stmt FROM @notif_sql;
 EXECUTE notif_stmt;
@@ -53,7 +58,7 @@ SET @notif_has_actor = (
 SET @notif_sql = IF(
     @notif_has_actor = 0,
     'ALTER TABLE notifications ADD COLUMN actor_id BIGINT UNSIGNED NULL AFTER recipient_id',
-    'SELECT 1'
+    'DO 0'
 );
 PREPARE notif_stmt FROM @notif_sql;
 EXECUTE notif_stmt;
@@ -66,7 +71,7 @@ SET @notif_has_link = (
 SET @notif_sql = IF(
     @notif_has_link = 0,
     'ALTER TABLE notifications ADD COLUMN link_url VARCHAR(255) NULL AFTER body',
-    'SELECT 1'
+    'DO 0'
 );
 PREPARE notif_stmt FROM @notif_sql;
 EXECUTE notif_stmt;
@@ -79,7 +84,7 @@ SET @notif_has_icon = (
 SET @notif_sql = IF(
     @notif_has_icon = 0,
     'ALTER TABLE notifications ADD COLUMN icon VARCHAR(10) NOT NULL DEFAULT ''🔔'' AFTER link_url',
-    'SELECT 1'
+    'DO 0'
 );
 PREPARE notif_stmt FROM @notif_sql;
 EXECUTE notif_stmt;
@@ -92,7 +97,7 @@ SET @notif_has_read_at = (
 SET @notif_sql = IF(
     @notif_has_read_at = 0,
     'ALTER TABLE notifications ADD COLUMN read_at DATETIME NULL AFTER created_at',
-    'SELECT 1'
+    'DO 0'
 );
 PREPARE notif_stmt FROM @notif_sql;
 EXECUTE notif_stmt;
