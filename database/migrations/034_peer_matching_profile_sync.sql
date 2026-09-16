@@ -7,7 +7,6 @@
 -- user_hobbies only.
 -- ============================================================
 
--- Backfill existing users first.
 INSERT IGNORE INTO pm_user_interests (user_id, interest_id)
 SELECT ui.user_id, pit.id
 FROM user_interests ui
@@ -21,8 +20,6 @@ INNER JOIN pm_hobby_tags pht
   ON LOWER(TRIM(uh.hobby)) = LOWER(TRIM(pht.name))
   OR LOWER(REPLACE(TRIM(uh.hobby), ' ', '-')) = LOWER(pht.slug);
 
--- Create simple single-statement triggers dynamically so this migration is
--- safe to run on MySQL, where CREATE TRIGGER does not support IF NOT EXISTS.
 SET @trg_sql = IF(
     (SELECT COUNT(*) FROM information_schema.TRIGGERS
      WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = 'ecollab_user_interests_pm_ai') = 0,
@@ -56,7 +53,7 @@ DEALLOCATE PREPARE trg_stmt;
 SET @trg_sql = IF(
     (SELECT COUNT(*) FROM information_schema.TRIGGERS
      WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = 'ecollab_user_hobbies_pm_ad') = 0,
-    'CREATE TRIGGER ecollab_user_hobbies_pm_ad AFTER DELETE ON user_hobbies FOR EACH ROW DELETE FROM pm_user_hobbies WHERE user_id = OLD.user_id AND hobby_id IN (SELECT pht.id FROM pm_hobby_tags pht WHERE LOWER(TRIM(OLD.hobby)) = LOWER(TRIM(pht.name)) OR LOWER(REPLACE(TRIM(OLD.hobby), '' '', ''-'')) = LOWER(pht.slug)',
+    'CREATE TRIGGER ecollab_user_hobbies_pm_ad AFTER DELETE ON user_hobbies FOR EACH ROW DELETE FROM pm_user_hobbies WHERE user_id = OLD.user_id AND hobby_id IN (SELECT pht.id FROM pm_hobby_tags pht WHERE LOWER(TRIM(OLD.hobby)) = LOWER(TRIM(pht.name)) OR LOWER(REPLACE(TRIM(OLD.hobby), '' '', ''-'')) = LOWER(pht.slug))',
     'SELECT 1'
 );
 PREPARE trg_stmt FROM @trg_sql;
