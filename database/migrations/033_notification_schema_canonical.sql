@@ -98,15 +98,5 @@ PREPARE notif_stmt FROM @notif_sql;
 EXECUTE notif_stmt;
 DEALLOCATE PREPARE notif_stmt;
 
-SET @notif_has_ref_id = (
-    SELECT COUNT(*) FROM information_schema.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'notifications' AND COLUMN_NAME = 'ref_id'
-);
-SET @notif_sql = IF(
-    @notif_has_ref_id = 1,
-    'ALTER TABLE notifications DROP COLUMN ref_id',
-    'SELECT 1'
-);
-PREPARE notif_stmt FROM @notif_sql;
-EXECUTE notif_stmt;
-DEALLOCATE PREPARE notif_stmt;
+-- Keep legacy ref_id when it exists. The canonical API no longer depends on it,
+-- but dropping it would destroy historical notification reference data.
