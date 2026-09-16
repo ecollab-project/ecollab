@@ -33,8 +33,20 @@ try {
             $body = json_decode(file_get_contents('php://input'), true) ?? [];
             $targetId = (int)($body['user_id'] ?? 0);
             $serverId = (int)($body['server_id'] ?? 0);
-            if (!$targetId || !$serverId) { http_response_code(400); echo json_encode(['success'=>false,'error'=>'user_id and server_id required']); break; }
+            $channelId = (int)($body['channel_id'] ?? 0);
+            $username = trim((string)($body['username'] ?? ''));
             $db = Database::getInstance();
+            if (!$serverId && $channelId) {
+                $ctx = $db->prepare('SELECT server_id FROM channels WHERE id=:cid LIMIT 1');
+                $ctx->execute([':cid'=>$channelId]);
+                $serverId = (int)($ctx->fetchColumn() ?: 0);
+            }
+            if (!$targetId && $username !== '' && $serverId) {
+                $lookup = $db->prepare('SELECT u.id FROM users u INNER JOIN server_members sm ON sm.user_id=u.id AND sm.server_id=:sid WHERE u.username=:username LIMIT 1');
+                $lookup->execute([':sid'=>$serverId, ':username'=>$username]);
+                $targetId = (int)($lookup->fetchColumn() ?: 0);
+            }
+            if (!$targetId || !$serverId) { http_response_code(400); echo json_encode(['success'=>false,'error'=>'member and server context are required']); break; }
             $chk = $db->prepare("SELECT server_role FROM server_members WHERE server_id=:sid AND user_id=:uid");
             $chk->execute([':sid'=>$serverId, ':uid'=>$user['id']]);
             $role = (string)$chk->fetchColumn();
@@ -48,6 +60,8 @@ try {
                 http_response_code(403); echo json_encode(['success'=>false,'error'=>'Cannot remove a member of equal or higher rank.']); break;
             }
             $db->prepare("DELETE FROM server_members WHERE server_id=:sid AND user_id=:uid")->execute([':sid'=>$serverId, ':uid'=>$targetId]);
+            $db->prepare("UPDATE servers SET member_count=(SELECT COUNT(*) FROM server_members WHERE server_id=:sid) WHERE id=:sid2")
+                ->execute([':sid'=>$serverId, ':sid2'=>$serverId]);
             echo json_encode(['success'=>true]);
             break;
 
@@ -72,6 +86,7 @@ try {
             $messageId = (int)($body['message_id'] ?? 0);
             $action2 = $body['resolution'] ?? 'dismissed';
             if (!$messageId) { http_response_code(400); echo json_encode(['success'=>false,'error'=>'message_id required']); break; }
+            if (!in_array($action2, ['removed','dismissed'], true)) { http_response_code(400); echo json_encode(['success'=>false,'error'=>'Invalid resolution']); break; }
             $db = Database::getInstance();
             $msgStmt = $db->prepare("SELECT channel_id FROM messages WHERE id=:id LIMIT 1");
             $msgStmt->execute([':id'=>$messageId]);
