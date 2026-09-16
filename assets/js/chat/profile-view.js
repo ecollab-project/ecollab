@@ -106,10 +106,34 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
 
-/* Settings entry point: the workspace/profile menu should open the full
- * Discord-style Ecollab settings screen rather than a placeholder modal. */
 (function(){
   'use strict';
   const base=()=>window.ECOLLAB?.baseUrl||'';
   window.openUserSettings=function(){window.location.href=base()+'/modules/chat/settings.php';};
+})();
+
+// Final DM routing guard: legacy Thread/private-message UI must never be used
+// for profile or mini-profile messaging. Reuse the single DM component.
+(function(){
+  function routeToExistingDm(userId,name,gradient){
+    const id=Number(userId||0);
+    if(!id)return;
+    try{ window.closeMiniProfile?.(); }catch(_){ }
+    try{ window.switchView?.('home',document.querySelector('.sidebar-nav-item')); }catch(_){ }
+    if(typeof window.openDmConversation==='function'){
+      return window.openDmConversation(id,name||'User',gradient||'');
+    }
+    window.showToast?.('Chat DM is not ready yet.','info');
+  }
+  window.openThreadDM=function(userId,displayName){
+    const grad=window._miniProfileGradient||'';
+    return routeToExistingDm(userId,displayName,grad);
+  };
+  window.openThreadDMFromMiniProfile=function(){
+    const mp=document.getElementById('miniProfile');
+    const id=Number(window._miniProfileUserId||mp?.dataset?.userId||0);
+    const name=document.getElementById('mpName')?.textContent||window._miniProfileUsername||'User';
+    const grad=window._miniProfileGradient||'';
+    return routeToExistingDm(id,name,grad);
+  };
 })();
