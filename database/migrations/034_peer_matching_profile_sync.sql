@@ -20,42 +20,47 @@ INNER JOIN pm_hobby_tags pht
   ON LOWER(TRIM(uh.hobby)) = LOWER(TRIM(pht.name))
   OR LOWER(REPLACE(TRIM(uh.hobby), ' ', '-')) = LOWER(pht.slug);
 
-SET @trg_sql = IF(
-    (SELECT COUNT(*) FROM information_schema.TRIGGERS
-     WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = 'ecollab_user_interests_pm_ai') = 0,
-    'CREATE TRIGGER ecollab_user_interests_pm_ai AFTER INSERT ON user_interests FOR EACH ROW INSERT IGNORE INTO pm_user_interests (user_id, interest_id) SELECT NEW.user_id, pit.id FROM interest_tags it INNER JOIN pm_interest_tags pit ON pit.slug = it.slug WHERE it.id = NEW.interest_tag_id',
-    'SELECT 1'
-);
-PREPARE trg_stmt FROM @trg_sql;
-EXECUTE trg_stmt;
-DEALLOCATE PREPARE trg_stmt;
+-- MySQL 8.0.29+ supports CREATE TRIGGER IF NOT EXISTS. Each trigger body is
+-- deliberately a single statement so the migration runner needs no custom
+-- DELIMITER handling.
+CREATE TRIGGER IF NOT EXISTS ecollab_user_interests_pm_ai
+AFTER INSERT ON user_interests
+FOR EACH ROW
+INSERT IGNORE INTO pm_user_interests (user_id, interest_id)
+SELECT NEW.user_id, pit.id
+FROM interest_tags it
+INNER JOIN pm_interest_tags pit ON pit.slug = it.slug
+WHERE it.id = NEW.interest_tag_id;
 
-SET @trg_sql = IF(
-    (SELECT COUNT(*) FROM information_schema.TRIGGERS
-     WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = 'ecollab_user_interests_pm_ad') = 0,
-    'CREATE TRIGGER ecollab_user_interests_pm_ad AFTER DELETE ON user_interests FOR EACH ROW DELETE FROM pm_user_interests WHERE user_id = OLD.user_id AND interest_id IN (SELECT pit.id FROM pm_interest_tags pit INNER JOIN interest_tags it ON it.slug = pit.slug WHERE it.id = OLD.interest_tag_id)',
-    'SELECT 1'
-);
-PREPARE trg_stmt FROM @trg_sql;
-EXECUTE trg_stmt;
-DEALLOCATE PREPARE trg_stmt;
+CREATE TRIGGER IF NOT EXISTS ecollab_user_interests_pm_ad
+AFTER DELETE ON user_interests
+FOR EACH ROW
+DELETE FROM pm_user_interests
+WHERE user_id = OLD.user_id
+  AND interest_id IN (
+      SELECT pit.id
+      FROM pm_interest_tags pit
+      INNER JOIN interest_tags it ON it.slug = pit.slug
+      WHERE it.id = OLD.interest_tag_id
+  );
 
-SET @trg_sql = IF(
-    (SELECT COUNT(*) FROM information_schema.TRIGGERS
-     WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = 'ecollab_user_hobbies_pm_ai') = 0,
-    'CREATE TRIGGER ecollab_user_hobbies_pm_ai AFTER INSERT ON user_hobbies FOR EACH ROW INSERT IGNORE INTO pm_user_hobbies (user_id, hobby_id) SELECT NEW.user_id, pht.id FROM pm_hobby_tags pht WHERE LOWER(TRIM(NEW.hobby)) = LOWER(TRIM(pht.name)) OR LOWER(REPLACE(TRIM(NEW.hobby), '' '', ''-'')) = LOWER(pht.slug)',
-    'SELECT 1'
-);
-PREPARE trg_stmt FROM @trg_sql;
-EXECUTE trg_stmt;
-DEALLOCATE PREPARE trg_stmt;
+CREATE TRIGGER IF NOT EXISTS ecollab_user_hobbies_pm_ai
+AFTER INSERT ON user_hobbies
+FOR EACH ROW
+INSERT IGNORE INTO pm_user_hobbies (user_id, hobby_id)
+SELECT NEW.user_id, pht.id
+FROM pm_hobby_tags pht
+WHERE LOWER(TRIM(NEW.hobby)) = LOWER(TRIM(pht.name))
+   OR LOWER(REPLACE(TRIM(NEW.hobby), ' ', '-')) = LOWER(pht.slug);
 
-SET @trg_sql = IF(
-    (SELECT COUNT(*) FROM information_schema.TRIGGERS
-     WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = 'ecollab_user_hobbies_pm_ad') = 0,
-    'CREATE TRIGGER ecollab_user_hobbies_pm_ad AFTER DELETE ON user_hobbies FOR EACH ROW DELETE FROM pm_user_hobbies WHERE user_id = OLD.user_id AND hobby_id IN (SELECT pht.id FROM pm_hobby_tags pht WHERE LOWER(TRIM(OLD.hobby)) = LOWER(TRIM(pht.name)) OR LOWER(REPLACE(TRIM(OLD.hobby), '' '', ''-'')) = LOWER(pht.slug))',
-    'SELECT 1'
-);
-PREPARE trg_stmt FROM @trg_sql;
-EXECUTE trg_stmt;
-DEALLOCATE PREPARE trg_stmt;
+CREATE TRIGGER IF NOT EXISTS ecollab_user_hobbies_pm_ad
+AFTER DELETE ON user_hobbies
+FOR EACH ROW
+DELETE FROM pm_user_hobbies
+WHERE user_id = OLD.user_id
+  AND hobby_id IN (
+      SELECT pht.id
+      FROM pm_hobby_tags pht
+      WHERE LOWER(TRIM(OLD.hobby)) = LOWER(TRIM(pht.name))
+         OR LOWER(REPLACE(TRIM(OLD.hobby), ' ', '-')) = LOWER(pht.slug)
+  );
