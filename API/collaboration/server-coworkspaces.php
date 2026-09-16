@@ -29,7 +29,7 @@ function serverCoworkspaceInput(): array
 function requireServerMember(PDO $db, int $serverId, int $userId): array
 {
     $stmt = $db->prepare(
-        'SELECT s.id, s.name, s.type, s.status, sm.server_role
+        'SELECT s.id, s.owner_id, s.name, s.type, s.status, sm.server_role
          FROM servers s
          INNER JOIN server_members sm ON sm.server_id = s.id AND sm.user_id = :uid
          WHERE s.id = :sid AND s.status = "active"
@@ -45,13 +45,17 @@ function requireServerMember(PDO $db, int $serverId, int $userId): array
  * Ensure every active server has one default server-wide Coworkspace.
  * Existing workspaces are never duplicated or modified.
  *
- * The unique active-server constraint is the final concurrency guard. If
- * another request wins the race between the existence check and INSERT,
- * this request rolls back and re-fetches that winner's workspace.
+ * The server owner is always the host of the automatically-created default
+ * Coworkspace. A normal first visitor must never become the host merely by
+ * opening the Collabs page.
  */
-function ensureServerCoworkspace(PDO $db, array $server, int $userId): array
+function ensureServerCoworkspace(PDO $db, array $server): array
 {
     $serverId = (int)$server['id'];
+    $ownerId = (int)($server['owner_id'] ?? 0);
+    if ($ownerId < 1) {
+        throw new RuntimeException('This server has no valid owner.', 500);
+    }
 
     $stmt = $db->prepare(
         'SELECT w.id
@@ -84,9 +88,6 @@ function ensureServerCoworkspace(PDO $db, array $server, int $userId): array
 
     $db->beginTransaction();
     try {
-        // FOR UPDATE is useful when an active row already exists, but it
-        // cannot lock a row that does not exist. The database UNIQUE key on
-        // active_server_id is therefore the actual race-condition guard.
         $check = $db->prepare(
             'SELECT id
              FROM collab_workspaces
@@ -112,7 +113,7 @@ function ensureServerCoworkspace(PDO $db, array $server, int $userId): array
             ':cid' => $channelId,
             ':sid' => $serverId,
             ':name' => $name,
-            ':uid' => $userId,
+            ':uid' => $ownerId,
         ]);
         $workspaceId = (int)$db->lastInsertId();
 
@@ -120,16 +121,13 @@ function ensureServerCoworkspace(PDO $db, array $server, int $userId): array
             'INSERT INTO collab_workspace_members (workspace_id, user_id, role)
              VALUES (:wid, :uid, "host")'
         );
-        $member->execute([':wid' => $workspaceId, ':uid' => $userId]);
+        $member->execute([':wid' => $workspaceId, ':uid' => $ownerId]);
 
         $db->commit();
         return ['id' => $workspaceId, 'created' => true];
     } catch (Throwable $e) {
         if ($db->inTransaction()) $db->rollBack();
 
-        // Two concurrent first visits can both observe no row. The unique
-        // active-server constraint makes exactly one INSERT win. The loser
-        // must reuse the winning workspace instead of returning a 500 error.
         $isDuplicate = $e instanceof PDOException
             && $e->getCode() === '23000'
             && isset($e->errorInfo[1])
@@ -177,12 +175,15 @@ try {
     $server = requireServerMember($db, $serverId, $uid);
 
     if ($method === 'GET') {
-        // A server member entering Collabs automatically gets the server's
-        // persistent Coworkspace. The currently selected Chat server is the
-        // only server context needed; channels are not authorization scopes.
-        ensureServerCoworkspace($db, $server, $uid);
+        ensureServerCoworkspace($db, $server);
 
         if ($workspaceId > 0) {
+            // A direct workspace lookup must enforce the same private/public
+            // access rules as every other Coworkspace endpoint.
+            $accessible = CoworkspaceService::get($db, $workspaceId, $uid);
+            if ((int)$accessible['server_id'] !== $serverId) {
+                serverCoworkspaceFail('Coworkspace not found in this server.', 404);
+            }
             $stmt = $db->prepare(
                 'SELECT w.id,w.server_id,w.channel_id,w.name,w.visibility,w.host_id,
                         w.allow_create_documents,w.allow_edit_documents,w.allow_whiteboard,w.allow_member_invites,
@@ -201,6 +202,8 @@ try {
             exit;
         }
 
+        // Public workspaces are visible to server members. Private workspaces
+        // are listed only to their explicit members or host.
         $stmt = $db->prepare(
             'SELECT w.id,w.server_id,w.channel_id,w.name,w.visibility,w.host_id,
                     w.allow_create_documents,w.allow_edit_documents,w.allow_whiteboard,w.allow_member_invites,
@@ -210,9 +213,18 @@ try {
              FROM collab_workspaces w
              LEFT JOIN collab_workspace_members m ON m.workspace_id=w.id AND m.user_id=:uid_member
              WHERE w.server_id=:sid AND w.archived=0
+               AND (w.visibility="public" OR w.host_id=:uid_private
+                    OR EXISTS (SELECT 1 FROM collab_workspace_members pm
+                               WHERE pm.workspace_id=w.id AND pm.user_id=:uid_access))
              ORDER BY w.updated_at DESC'
         );
-        $stmt->execute([':uid_host'=>$uid,':uid_member'=>$uid,':sid'=>$serverId]);
+        $stmt->execute([
+            ':uid_host'=>$uid,
+            ':uid_member'=>$uid,
+            ':sid'=>$serverId,
+            ':uid_private'=>$uid,
+            ':uid_access'=>$uid,
+        ]);
         echo json_encode(['success'=>true,'server'=>$server,'workspaces'=>$stmt->fetchAll(PDO::FETCH_ASSOC)]);
         exit;
     }
