@@ -19,14 +19,14 @@ try {
     switch ($action) {
         case 'notifications':
             $db = Database::getInstance();
-            $stmt = $db->prepare("SELECT id,title,message,is_read,icon,CASE WHEN created_at >= DATE_SUB(NOW(),INTERVAL 1 HOUR) THEN CONCAT(TIMESTAMPDIFF(MINUTE,created_at,NOW()),'m ago') WHEN created_at >= DATE_SUB(NOW(),INTERVAL 24 HOUR) THEN CONCAT(TIMESTAMPDIFF(HOUR,created_at,NOW()),'h ago') ELSE CONCAT(TIMESTAMPDIFF(DAY,created_at,NOW()),'d ago') END AS time_ago FROM notifications WHERE user_id=:uid ORDER BY created_at DESC LIMIT 10");
+            $stmt = $db->prepare("SELECT id,title,body AS message,is_read,icon,link_url,CASE WHEN created_at >= DATE_SUB(NOW(),INTERVAL 1 HOUR) THEN CONCAT(TIMESTAMPDIFF(MINUTE,created_at,NOW()),'m ago') WHEN created_at >= DATE_SUB(NOW(),INTERVAL 24 HOUR) THEN CONCAT(TIMESTAMPDIFF(HOUR,created_at,NOW()),'h ago') ELSE CONCAT(TIMESTAMPDIFF(DAY,created_at,NOW()),'d ago') END AS time_ago FROM notifications WHERE recipient_id=:uid ORDER BY created_at DESC LIMIT 10");
             $stmt->execute([':uid'=>$user['id']]); echo json_encode(['success'=>true,'notifications'=>$stmt->fetchAll()]); break;
         case 'mark_notif_read':
             CSRF::verify(); $body=json_decode(file_get_contents('php://input'),true)??[]; $id=(int)($body['id']??0);
-            if ($id) { $db=Database::getInstance(); $db->prepare("UPDATE notifications SET is_read=1 WHERE id=:id AND user_id=:uid")->execute([':id'=>$id,':uid'=>$user['id']]); }
+            if ($id) { $db=Database::getInstance(); $db->prepare("UPDATE notifications SET is_read=1,read_at=COALESCE(read_at,NOW()) WHERE id=:id AND recipient_id=:uid")->execute([':id'=>$id,':uid'=>$user['id']]); }
             echo json_encode(['success'=>true]); break;
         case 'mark_all_read':
-            CSRF::verify(); $db=Database::getInstance(); $db->prepare("UPDATE notifications SET is_read=1 WHERE user_id=:uid")->execute([':uid'=>$user['id']]); echo json_encode(['success'=>true]); break;
+            CSRF::verify(); $db=Database::getInstance(); $db->prepare("UPDATE notifications SET is_read=1,read_at=COALESCE(read_at,NOW()) WHERE recipient_id=:uid")->execute([':uid'=>$user['id']]); echo json_encode(['success'=>true]); break;
         case 'join_server':
             CSRF::verify(); $body=json_decode(file_get_contents('php://input'),true)??[]; $serverId=(int)($body['server_id']??0);
             if (!$serverId) { http_response_code(400); echo json_encode(['success'=>false,'error'=>'server_id required']); break; }
