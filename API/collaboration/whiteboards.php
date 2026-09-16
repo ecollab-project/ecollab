@@ -1,142 +1,19 @@
 <?php
 
 declare(strict_types=1);
-
-require_once dirname(__DIR__, 2) . '/config.php';
-require_once ROOT_PATH . '/database/config/db.php';
-require_once ROOT_PATH . '/security/middleware/AuthMiddleware.php';
-require_once ROOT_PATH . '/services/CoworkspaceService.php';
-
-AuthMiddleware::startSession();
-$user = AuthMiddleware::requireAuth(true);
-header('Content-Type: application/json; charset=utf-8');
-$db = Database::getInstance();
-$uid = (int)$user['id'];
-
-function wbJson(array $data, int $status = 200): never
-{
-    http_response_code($status);
-    echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    exit;
-}
-
-function wbInput(): array
-{
-    $raw = json_decode(file_get_contents('php://input'), true);
-    return is_array($raw) ? $raw : $_POST;
-}
-
-function wbWorkspace(PDO $db, int $uid, int $workspaceId): array
-{
-    if ($workspaceId < 1) wbJson(['success' => false, 'error' => 'Coworkspace is required.'], 400);
-    try {
-        return CoworkspaceService::get($db, $workspaceId, $uid);
-    } catch (Throwable $e) {
-        $code = (int)$e->getCode();
-        wbJson(['success' => false, 'error' => $code >= 400 && $code < 600 ? $e->getMessage() : 'Coworkspace not found.'], $code >= 400 && $code < 600 ? $code : 404);
-    }
-}
-
-function wbCanEdit(array $workspace, int $uid): bool
-{
-    $role = (string)($workspace['member_role'] ?? '');
-    return (int)($workspace['allow_whiteboard'] ?? 0) === 1
-        && in_array($role, ['host', 'editor', 'member'], true);
-}
-
-try {
-    $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
-    $data = $method === 'GET' ? $_GET : wbInput();
-    $workspaceId = (int)($data['workspace_id'] ?? 0);
-    $workspace = wbWorkspace($db, $uid, $workspaceId);
-
-    if ((int)($workspace['allow_whiteboard'] ?? 0) !== 1) {
-        wbJson(['success' => false, 'error' => 'Whiteboard access is disabled for this Coworkspace.'], 403);
-    }
-
-    if ($method === 'GET') {
-        $whiteboardId = (int)($data['whiteboard_id'] ?? 0);
-        if ($whiteboardId > 0) {
-            $stmt = $db->prepare(
-                'SELECT id,workspace_id,title,description,state_json,created_by,updated_by,created_at,updated_at
-                 FROM collab_whiteboards WHERE id=:id AND workspace_id=:wid LIMIT 1'
-            );
-            $stmt->execute([':id' => $whiteboardId, ':wid' => $workspaceId]);
-            $board = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$board) wbJson(['success' => false, 'error' => 'Whiteboard not found.'], 404);
-            $board['state'] = json_decode((string)$board['state_json'], true) ?: ['paths' => [], 'text' => []];
-            unset($board['state_json']);
-            wbJson(['success' => true, 'whiteboard' => $board]);
-        }
-
-        $stmt = $db->prepare(
-            'SELECT w.id,w.workspace_id,w.title,w.description,w.created_by,w.updated_by,w.created_at,w.updated_at,
-                    COALESCE(NULLIF(u.full_name,""),u.username,"Unknown") AS creator_name
-             FROM collab_whiteboards w
-             LEFT JOIN users u ON u.id=w.created_by
-             WHERE w.workspace_id=:wid ORDER BY w.updated_at DESC,w.id DESC'
-        );
-        $stmt->execute([':wid' => $workspaceId]);
-        wbJson(['success' => true, 'workspace_id' => $workspaceId, 'whiteboards' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
-    }
-
-    if ($method !== 'POST' && $method !== 'DELETE') wbJson(['success' => false, 'error' => 'Method not allowed.'], 405);
-    AuthMiddleware::verifyCsrf();
-
-    $whiteboardId = (int)($data['whiteboard_id'] ?? 0);
-    $action = strtolower(trim((string)($data['action'] ?? ($method === 'DELETE' ? 'delete' : 'save'))));
-    $role = (string)($workspace['member_role'] ?? '');
-    $isHost = $role === 'host' || (int)($workspace['host_id'] ?? 0) === $uid;
-
-    if ($action === 'create') {
-        if (!wbCanEdit($workspace, $uid)) wbJson(['success' => false, 'error' => 'You do not have permission to create whiteboards.'], 403);
-        $title = trim((string)($data['title'] ?? 'Untitled Whiteboard'));
-        $description = trim((string)($data['description'] ?? ''));
-        $title = mb_substr($title !== '' ? $title : 'Untitled Whiteboard', 0, 200);
-        $description = mb_substr($description, 0, 500);
-        $initialState = json_encode(['paths' => [], 'text' => [], 'objects' => []], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
-        $stmt = $db->prepare(
-            'INSERT INTO collab_whiteboards(workspace_id,title,description,state_json,created_by,updated_by)
-             VALUES(:wid,:title,:description,:state,:uid,:uid2)'
-        );
-        $stmt->execute([':wid' => $workspaceId, ':title' => $title, ':description' => $description ?: null, ':state' => $initialState, ':uid' => $uid, ':uid2' => $uid]);
-        $id = (int)$db->lastInsertId();
-        wbJson(['success' => true, 'whiteboard' => ['id' => $id, 'workspace_id' => $workspaceId, 'title' => $title, 'description' => $description, 'created_by' => $uid]]);
-    }
-
-    if ($whiteboardId < 1) wbJson(['success' => false, 'error' => 'Whiteboard is required.'], 400);
-
-    $check = $db->prepare('SELECT id,title FROM collab_whiteboards WHERE id=:id AND workspace_id=:wid LIMIT 1');
-    $check->execute([':id' => $whiteboardId, ':wid' => $workspaceId]);
-    $existing = $check->fetch(PDO::FETCH_ASSOC);
-    if (!$existing) wbJson(['success' => false, 'error' => 'Whiteboard not found.'], 404);
-
-    if ($action === 'delete') {
-        if (!$isHost) wbJson(['success' => false, 'error' => 'Only the Coworkspace host can delete a whiteboard.'], 403);
-        $stmt = $db->prepare('DELETE FROM collab_whiteboards WHERE id=:id AND workspace_id=:wid');
-        $stmt->execute([':id' => $whiteboardId, ':wid' => $workspaceId]);
-        wbJson(['success' => true, 'deleted' => $whiteboardId]);
-    }
-
-    if ($action === 'rename') {
-        if (!$isHost && !wbCanEdit($workspace, $uid)) wbJson(['success' => false, 'error' => 'You do not have permission to rename this whiteboard.'], 403);
-        $title = mb_substr(trim((string)($data['title'] ?? '')), 0, 200);
-        if ($title === '') wbJson(['success' => false, 'error' => 'A whiteboard title is required.'], 400);
-        $description = mb_substr(trim((string)($data['description'] ?? '')), 0, 500);
-        $stmt = $db->prepare('UPDATE collab_whiteboards SET title=:title,description=:description,updated_by=:uid WHERE id=:id AND workspace_id=:wid');
-        $stmt->execute([':title' => $title, ':description' => $description ?: null, ':uid' => $uid, ':id' => $whiteboardId, ':wid' => $workspaceId]);
-        wbJson(['success' => true, 'whiteboard' => ['id' => $whiteboardId, 'title' => $title, 'description' => $description]]);
-    }
-
-    if (!wbCanEdit($workspace, $uid)) wbJson(['success' => false, 'error' => 'You do not have permission to edit this whiteboard.'], 403);
-    $state = $data['state'] ?? null;
-    if (!is_array($state)) wbJson(['success' => false, 'error' => 'Invalid whiteboard state.'], 400);
-    $json = json_encode($state, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
-    if (strlen($json) > 10 * 1024 * 1024) wbJson(['success' => false, 'error' => 'Whiteboard state is too large.'], 413);
-    $stmt = $db->prepare('UPDATE collab_whiteboards SET state_json=:state,updated_by=:uid,updated_at=CURRENT_TIMESTAMP WHERE id=:id AND workspace_id=:wid');
-    $stmt->execute([':state' => $json, ':uid' => $uid, ':id' => $whiteboardId, ':wid' => $workspaceId]);
-    wbJson(['success' => true, 'whiteboard_id' => $whiteboardId, 'updated_at' => date('Y-m-d H:i:s')]);
-} catch (Throwable $e) {
-    error_log('[collaboration/whiteboards] ' . $e->getMessage());
-    wbJson(['success' => false, 'error' => 'Unable to process whiteboard request.'], 500);
-}
+require_once dirname(__DIR__,2).'/config.php';require_once ROOT_PATH.'/database/config/db.php';require_once ROOT_PATH.'/security/middleware/AuthMiddleware.php';require_once ROOT_PATH.'/services/CoworkspaceService.php';
+AuthMiddleware::startSession();$user=AuthMiddleware::requireAuth(true);header('Content-Type: application/json; charset=utf-8');$db=Database::getInstance();$uid=(int)$user['id'];
+function wbJson(array $data,int $status=200):never{http_response_code($status);echo json_encode($data,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);exit;}
+function wbInput():array{$raw=json_decode(file_get_contents('php://input'),true);return is_array($raw)?$raw:$_POST;}
+function wbWorkspace(PDO $db,int $uid,int $workspaceId):array{if($workspaceId<1)wbJson(['success'=>false,'error'=>'Coworkspace is required.'],400);try{return CoworkspaceService::get($db,$workspaceId,$uid);}catch(Throwable $e){$code=(int)$e->getCode();wbJson(['success'=>false,'error'=>$code>=400&&$code<600?$e->getMessage():'Coworkspace not found.'],$code>=400&&$code<600?$code:404);}}
+function wbCanEdit(array $workspace):bool{$role=(string)($workspace['member_role']??'');return (int)($workspace['allow_whiteboard']??0)===1&&in_array($role,['host','editor','member'],true);}
+function wbAccess(PDO $db,array $workspace,int $uid,int $id):array{$s=$db->prepare('SELECT id,workspace_id,title,visibility,created_by FROM collab_whiteboards WHERE id=:id AND workspace_id=:wid LIMIT 1');$s->execute([':id'=>$id,':wid'=>(int)$workspace['id']]);$b=$s->fetch(PDO::FETCH_ASSOC);if(!$b)wbJson(['success'=>false,'error'=>'Whiteboard not found.'],404);$owner=(int)$b['created_by']===$uid||(int)$workspace['host_id']===$uid;$s=$db->prepare('SELECT permission FROM collab_resource_permissions WHERE resource_type="whiteboard" AND resource_id=:rid AND user_id=:uid LIMIT 1');$s->execute([':rid'=>$id,':uid'=>$uid]);$p=$s->fetchColumn();if(!$owner&&$b['visibility']==='private'&&$p===false)wbJson(['success'=>false,'error'=>'This private whiteboard has not been shared with you.'],403);return [$b,$owner,$p===false?null:(string)$p];}
+try{$method=strtoupper($_SERVER['REQUEST_METHOD']??'GET');$data=$method==='GET'?$_GET:wbInput();$wid=(int)($data['workspace_id']??0);$workspace=wbWorkspace($db,$uid,$wid);if((int)($workspace['allow_whiteboard']??0)!==1)wbJson(['success'=>false,'error'=>'Whiteboard access is disabled for this Coworkspace.'],403);
+ if($method==='GET'){$bid=(int)($data['whiteboard_id']??0);if($bid>0){[$board,$owner,$perm]=wbAccess($db,$workspace,$uid,$bid);$board['state']=json_decode((string)$db->query('SELECT state_json FROM collab_whiteboards WHERE id='.(int)$bid)->fetchColumn(),true)?:['paths'=>[],'text'=>[]];$board['can_edit']=$owner||$perm==='edit'||($board['visibility']==='public'&&in_array((string)$workspace['member_role'],['host','editor','member'],true));$board['can_manage']=$owner;wbJson(['success'=>true,'whiteboard'=>$board]);}$vf=strtolower(trim((string)($data['visibility']??'all')));$where='w.workspace_id=:wid';$params=[':wid'=>$wid];if(in_array($vf,['public','private'],true)){$where.=' AND w.visibility=:v';$params[':v']=$vf;}$s=$db->prepare('SELECT w.id,w.workspace_id,w.title,w.description,w.visibility,w.created_by,w.updated_by,w.created_at,w.updated_at,COALESCE(NULLIF(u.full_name,""),u.username,"Unknown") creator_name FROM collab_whiteboards w LEFT JOIN users u ON u.id=w.created_by WHERE '.$where.' ORDER BY w.updated_at DESC,w.id DESC');$s->execute($params);$boards=[];foreach($s->fetchAll(PDO::FETCH_ASSOC) as $b){[$x,$owner,$perm]=wbAccess($db,$workspace,$uid,(int)$b['id']);$b['can_edit']=$owner||$perm==='edit'||($b['visibility']==='public'&&in_array((string)$workspace['member_role'],['host','editor','member'],true));$b['can_manage']=$owner;$boards[]=$b;}wbJson(['success'=>true,'workspace_id'=>$wid,'whiteboards'=>$boards]);}
+ if($method!=='POST'&&$method!=='DELETE')wbJson(['success'=>false,'error'=>'Method not allowed.'],405);AuthMiddleware::verifyCsrf();$bid=(int)($data['whiteboard_id']??0);$action=strtolower(trim((string)($data['action']??($method==='DELETE'?'delete':'save'))));$role=(string)($workspace['member_role']??'');$isHost=$role==='host'||(int)($workspace['host_id']??0)===$uid;
+ if($action==='create'){if(!wbCanEdit($workspace))wbJson(['success'=>false,'error'=>'You do not have permission to create whiteboards.'],403);$title=mb_substr(trim((string)($data['title']??'Untitled Whiteboard')),0,200);$description=mb_substr(trim((string)($data['description']??'')),0,500);$visibility=strtolower((string)($data['visibility']??'public'));if(!in_array($visibility,['public','private'],true))wbJson(['success'=>false,'error'=>'Visibility must be public or private.'],400);if($title==='')$title='Untitled Whiteboard';$state=json_encode(['paths'=>[],'text'=>[],'objects'=>[]],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);$s=$db->prepare('INSERT INTO collab_whiteboards(workspace_id,title,description,visibility,state_json,created_by,updated_by) VALUES(:wid,:title,:description,:v,:state,:uid,:uid2)');$s->execute([':wid'=>$wid,':title'=>$title,':description'=>$description?:null,':v'=>$visibility,':state'=>$state,':uid'=>$uid,':uid2'=>$uid]);$id=(int)$db->lastInsertId();$p=$db->prepare('INSERT INTO collab_resource_permissions(resource_type,resource_id,workspace_id,user_id,permission,granted_by) VALUES("whiteboard",:rid,:wid,:uid,"edit",:uid)');$p->execute([':rid'=>$id,':wid'=>$wid,':uid'=>$uid]);wbJson(['success'=>true,'whiteboard'=>['id'=>$id,'workspace_id'=>$wid,'title'=>$title,'description'=>$description,'visibility'=>$visibility,'created_by'=>$uid]]);}
+ if($bid<1)wbJson(['success'=>false,'error'=>'Whiteboard is required.'],400);[$existing,$owner,$perm]=wbAccess($db,$workspace,$uid,$bid);
+ if($action==='delete'){if(!$isHost&&!$owner)wbJson(['success'=>false,'error'=>'Only the Coworkspace host or whiteboard owner can delete it.'],403);$s=$db->prepare('DELETE FROM collab_whiteboards WHERE id=:id AND workspace_id=:wid');$s->execute([':id'=>$bid,':wid'=>$wid]);$db->prepare('DELETE FROM collab_resource_permissions WHERE resource_type="whiteboard" AND resource_id=:id')->execute([':id'=>$bid]);wbJson(['success'=>true,'deleted'=>$bid]);}
+ if($action==='rename'){if(!$owner)wbJson(['success'=>false,'error'=>'Only the whiteboard owner can rename it.'],403);$title=mb_substr(trim((string)($data['title']??'')),0,200);if($title==='')wbJson(['success'=>false,'error'=>'A whiteboard title is required.'],400);$desc=mb_substr(trim((string)($data['description']??'')),0,500);$s=$db->prepare('UPDATE collab_whiteboards SET title=:title,description=:description,updated_by=:uid WHERE id=:id AND workspace_id=:wid');$s->execute([':title'=>$title,':description'=>$desc?:null,':uid'=>$uid,':id'=>$bid,':wid'=>$wid]);wbJson(['success'=>true]);}
+ if(!$owner&&$perm!=='edit'&&$existing['visibility']==='private')wbJson(['success'=>false,'error'=>'You have view-only access to this private whiteboard.'],403);if(!wbCanEdit($workspace))wbJson(['success'=>false,'error'=>'You do not have permission to edit this whiteboard.'],403);$state=$data['state']??null;if(!is_array($state))wbJson(['success'=>false,'error'=>'Invalid whiteboard state.'],400);$json=json_encode($state,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);if(strlen($json)>10*1024*1024)wbJson(['success'=>false,'error'=>'Whiteboard state is too large.'],413);$s=$db->prepare('UPDATE collab_whiteboards SET state_json=:state,updated_by=:uid,updated_at=CURRENT_TIMESTAMP WHERE id=:id AND workspace_id=:wid');$s->execute([':state'=>$json,':uid'=>$uid,':id'=>$bid,':wid'=>$wid]);wbJson(['success'=>true,'whiteboard_id'=>$bid,'updated_at'=>date('Y-m-d H:i:s')]);
+}catch(Throwable $e){error_log('[collaboration/whiteboards] '.$e->getMessage());wbJson(['success'=>false,'error'=>'Unable to process whiteboard request.'],500);}
