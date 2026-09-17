@@ -49,8 +49,6 @@ try {
     $outcome = $service->login($identifier, $password, $remember);
 
     if ($outcome['success']) {
-        $limiter->clear('login', $ip);
-
         // Password was accepted, but the authenticated session is intentionally
         // not created until the OTP endpoint completes the 2FA step.
         if (!empty($outcome['otp_required'])) {
@@ -67,6 +65,8 @@ try {
             exit;
         }
 
+        // Only clear the password-login limiter after the full authentication flow.
+        $limiter->clear('login', $ip);
         CSRF::regenerate();
 
         $role     = $outcome['role'];
