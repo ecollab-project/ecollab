@@ -19,12 +19,19 @@ if ($workspaceId < 1 || $whiteboardId < 1 || $channelId < 1) {
     exit('A Coworkspace whiteboard session is required.');
 }
 
-$stmt = $db->prepare('SELECT id,title,description FROM collab_whiteboards WHERE id=:id AND workspace_id=:wid LIMIT 1');
+$stmt = $db->prepare('SELECT id,title,description,server_id,channel_id FROM collab_whiteboards wb INNER JOIN collab_workspaces cw ON cw.id=wb.workspace_id WHERE wb.id=:id AND wb.workspace_id=:wid LIMIT 1');
 $stmt->execute([':id' => $whiteboardId, ':wid' => $workspaceId]);
 $board = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$board) {
     http_response_code(404);
     exit('Whiteboard session not found.');
+}
+
+$serverId = (int)$board['server_id'];
+$workspaceChannelId = (int)$board['channel_id'];
+if ($serverId < 1 || $workspaceChannelId < 1 || $workspaceChannelId !== $channelId) {
+    http_response_code(400);
+    exit('Invalid Coworkspace navigation context.');
 }
 
 $stmt = $db->prepare('SELECT id FROM channels WHERE id=:cid LIMIT 1');
@@ -64,7 +71,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0b0f1a}
 <body>
 <div id="wbOverlay" class="wb-visible">
   <div class="wb-hdr">
-    <a class="wb-page-back" href="<?= BASE_URL ?>/modules/collaboration/whiteboards.php?workspace_id=<?= $workspaceId ?>">← Whiteboards</a>
+    <a class="wb-page-back" href="<?= BASE_URL ?>/modules/collaboration/whiteboards.php?server_id=<?= $serverId ?>&channel_id=<?= $channelId ?>&workspace_id=<?= $workspaceId ?>">← Whiteboards</a>
     <div class="wb-hdr-logo">&#9997;</div>
     <div class="wb-hdr-titles">
       <div class="wb-hdr-title" id="wbBoardName"><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></div>
@@ -117,6 +124,7 @@ window.ECOLLAB={
   csrfToken:<?= json_encode($csrf) ?>,
   userId:<?= (int)$user['id'] ?>,
   username:<?= json_encode($user['username']) ?>,
+  currentServerId:<?= $serverId ?>,
   currentChannelId:<?= $channelId ?>,
   workspaceId:<?= $workspaceId ?>,
   whiteboardId:<?= $whiteboardId ?>,
@@ -124,6 +132,7 @@ window.ECOLLAB={
   whiteboardSessionMode:true
 };
 window.__USER__={id:<?= (int)$user['id'] ?>,username:<?= json_encode($user['username']) ?>,role:<?= json_encode($user['role']) ?>};
+window.__currentServerId=<?= $serverId ?>;
 window.__currentChannelId=<?= $channelId ?>;
 window.__currentWhiteboardId=<?= $whiteboardId ?>;
 window.__currentWorkspaceId=<?= $workspaceId ?>;
@@ -151,7 +160,7 @@ function showToast(message){const el=document.getElementById('wbSessionStatus');
   function localState(){return {paths:wbState.paths||[],objects:wbState.objects?Object.keys(wbState.objects).map(k=>{const e=wbState.objects[k];return {id:k,x:parseFloat(e.style.left)||0,y:parseFloat(e.style.top)||0,text:e.textContent||''};}):[],savedAt:new Date().toISOString()};}
 
   window.wbApi=function(action,body={},method='GET'){
-    if(action==='state') return request('GET').then(d=>({whiteboard:{state_json:d.whiteboard.state,locked:false,is_host:<?= ((int)$board['id'] > 0 && (int)$board['id'] === $whiteboardId && (int)$board['id'] === (int)$board['id']) ? 'true':'false' ?>}}));
+    if(action==='state') return request('GET').then(d=>({whiteboard:{state_json:d.whiteboard.state,locked:false,is_host:true}}));
     if(action==='save') return request('POST',{action:'save',state:body.state||localState()});
     return Promise.resolve({versions:[]});
   };
@@ -233,7 +242,7 @@ function showToast(message){const el=document.getElementById('wbSessionStatus');
     if(wbState.open)saveNow();
     wbState.open=false;
     if(polling)clearInterval(polling);
-    location.href=<?= json_encode(BASE_URL . '/modules/collaboration/whiteboards.php?workspace_id=' . $workspaceId) ?>;
+    location.href=<?= json_encode(BASE_URL . '/modules/collaboration/server-coworkspaces.php?server_id=' . $serverId . '&channel_id=' . $channelId) ?>;
   };
 
   document.addEventListener('DOMContentLoaded',function(){openWhiteboard();});
