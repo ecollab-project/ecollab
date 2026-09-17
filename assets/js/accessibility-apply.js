@@ -22,7 +22,6 @@
 
   function injectResourceAccessStyles() {
     if (document.getElementById('ecollab-resource-access-ui')) return;
-
     const style = document.createElement('style');
     style.id = 'ecollab-resource-access-ui';
     style.textContent = `
@@ -45,55 +44,18 @@
     document.head.appendChild(style);
   }
 
-  function injectServerVisibilityUI() {
-    if (document.getElementById('ecollab-server-visibility-ui')) return;
-
-    const modal = document.getElementById('addServerModal');
-    if (!modal) return;
-    const form = modal.querySelector('form');
-    if (!form) return;
-    const nameInput = form.querySelector('input[name="name"]');
-    if (!nameInput) return;
-
-    let hiddenType = form.querySelector('input[name="type"]');
-    if (!hiddenType) {
-      hiddenType = document.createElement('input');
-      hiddenType.type = 'hidden';
-      hiddenType.name = 'type';
-      hiddenType.value = 'public';
-      form.appendChild(hiddenType);
-    }
-
-    const wrap = document.createElement('div');
-    wrap.id = 'ecollab-server-visibility-ui';
-    wrap.style.cssText = 'margin:14px 0 4px;padding:12px;border:1px solid #2d3748;border-radius:10px;background:#10141d;';
-    wrap.innerHTML = `
-      <div style="font:600 13px/18px Inter,system-ui,sans-serif;color:#e5e7eb;margin-bottom:4px;">Server visibility</div>
-      <div style="font:400 12px/17px Inter,system-ui,sans-serif;color:#94a3b8;margin-bottom:10px;">Choose who can discover and enter this server.</div>
-      <select id="ecollab-server-visibility" aria-label="Server visibility" style="width:100%;height:36px;padding:0 10px;border:1px solid #3a4354;border-radius:8px;background:#171d29;color:#e5e7eb;color-scheme:dark;font:600 12px/34px Inter,system-ui,sans-serif;">
-        <option value="public">Public — discoverable and joinable normally</option>
-        <option value="private">Private — hidden from public recommendations</option>
-      </select>
-    `;
-
-    nameInput.parentElement?.after(wrap);
-    if (!wrap.isConnected) form.insertBefore(wrap, nameInput.nextSibling);
-
-    const select = wrap.querySelector('#ecollab-server-visibility');
-    select.addEventListener('change', () => { hiddenType.value = select.value; });
-    form.addEventListener('submit', () => { hiddenType.value = select.value; }, true);
-  }
-
-  function watchForServerModal() {
-    injectServerVisibilityUI();
-    if (window.__ecollabServerVisibilityObserver) return;
-    window.__ecollabServerVisibilityObserver = new MutationObserver(() => injectServerVisibilityUI());
-    window.__ecollabServerVisibilityObserver.observe(document.body, { childList:true, subtree:true });
+  function loadServerVisibilityControls() {
+    if (document.getElementById('ecollab-server-visibility-script')) return;
+    const script = document.createElement('script');
+    script.id = 'ecollab-server-visibility-script';
+    script.defer = true;
+    script.src = (window.ECOLLAB?.baseUrl || '') + '/assets/js/chat/server-visibility.js?v=1';
+    document.head.appendChild(script);
   }
 
   function run() {
     injectResourceAccessStyles();
-    watchForServerModal();
+    loadServerVisibilityControls();
     const base = window.ECOLLAB?.baseUrl || window.BASE_URL || '';
     fetch(base + '/API/profile/settings.php', { credentials:'same-origin' })
       .then(r => r.ok ? r.json() : null)
