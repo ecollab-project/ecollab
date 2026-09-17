@@ -71,7 +71,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0b0f1a}
 <body>
 <div id="wbOverlay" class="wb-visible">
   <div class="wb-hdr">
-    <a class="wb-page-back" href="<?= BASE_URL ?>/modules/collaboration/whiteboards.php?server_id=<?= $serverId ?>&channel_id=<?= $channelId ?>&workspace_id=<?= $workspaceId ?>">← Whiteboards</a>
+    <a class="wb-page-back" href="<?= BASE_URL ?>/modules/collaboration/server-coworkspaces.php?server_id=<?= $serverId ?>&channel_id=<?= $channelId ?>">← Server Coworkspace</a>
     <div class="wb-hdr-logo">&#9997;</div>
     <div class="wb-hdr-titles">
       <div class="wb-hdr-title" id="wbBoardName"><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></div>
