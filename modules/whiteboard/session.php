@@ -19,7 +19,7 @@ if ($workspaceId < 1 || $whiteboardId < 1 || $channelId < 1) {
     exit('A Coworkspace whiteboard session is required.');
 }
 
-$stmt = $db->prepare('SELECT wb.id AS id, wb.title, wb.description, cw.server_id, cw.channel_id FROM collab_whiteboards wb INNER JOIN collab_workspaces cw ON cw.id=wb.workspace_id WHERE wb.id=:id AND wb.workspace_id=:wid LIMIT 1');
+$stmt = $db->prepare('SELECT wb.id AS id, wb.title, wb.description, wb.visibility, wb.public_permission, wb.created_by, cw.server_id, cw.channel_id, cw.host_id FROM collab_whiteboards wb INNER JOIN collab_workspaces cw ON cw.id=wb.workspace_id WHERE wb.id=:id AND wb.workspace_id=:wid LIMIT 1');
 $stmt->execute([':id' => $whiteboardId, ':wid' => $workspaceId]);
 $board = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$board) {
@@ -39,6 +39,19 @@ $stmt->execute([':cid' => $channelId]);
 if (!$stmt->fetchColumn()) {
     http_response_code(404);
     exit('Coworkspace channel not found.');
+}
+
+$isOwner = (int)$board['created_by'] === (int)$user['id'] || (int)$board['host_id'] === (int)$user['id'];
+$stmt = $db->prepare('SELECT permission FROM collab_resource_permissions WHERE resource_type="whiteboard" AND resource_id=:rid AND user_id=:uid LIMIT 1');
+$stmt->execute([':rid' => $whiteboardId, ':uid' => (int)$user['id']]);
+$explicitPermission = $stmt->fetchColumn();
+$publicPermission = strtolower((string)($board['public_permission'] ?? 'view'));
+if (!in_array($publicPermission, ['view','comment','edit'], true)) $publicPermission = 'view';
+$accessPermission = $isOwner ? 'edit' : ($explicitPermission !== false ? strtolower((string)$explicitPermission) : ($board['visibility'] === 'public' ? $publicPermission : 'view'));
+if (!in_array($accessPermission, ['view','comment','edit'], true)) $accessPermission = 'view';
+if (!$isOwner && $board['visibility'] === 'private' && $explicitPermission === false) {
+    http_response_code(403);
+    exit('This private whiteboard has not been shared with you.');
 }
 
 $csrf = AuthMiddleware::csrfToken();
@@ -66,9 +79,12 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0b0f1a}
 .wb-page-btn{height:30px;padding:0 10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#e2e8f0;border-radius:7px;cursor:pointer;font-size:11px}
 .wb-locked #wbCanvas{cursor:not-allowed!important}
 .wb-lock-label{font-size:11px;color:#fbbf24;margin-right:5px}
+.wb-permission-label{font-size:10px;color:#94a3b8;padding:4px 8px;border:1px solid rgba(255,255,255,.1);border-radius:999px;margin-right:8px}
+.wb-access-view .wb-tbtn:not([data-tool="cursor"]),.wb-access-comment .wb-tbtn:not([data-tool="cursor"]):not([data-tool="sticky"]){opacity:.35;pointer-events:none}
+.wb-access-view #wbCanvas{cursor:default!important}
 </style>
 </head>
-<body>
+<body class="wb-access-<?= htmlspecialchars($accessPermission, ENT_QUOTES, 'UTF-8') ?>">
 <div id="wbOverlay" class="wb-visible">
   <div class="wb-hdr">
     <a class="wb-page-back" href="<?= BASE_URL ?>/modules/collaboration/server-coworkspaces.php?server_id=<?= $serverId ?>&channel_id=<?= $channelId ?>">← Server Coworkspace</a>
@@ -84,9 +100,10 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0b0f1a}
     </div>
     <div class="wb-hdr-right">
       <span id="wbLockLabel" class="wb-lock-label"></span>
+      <span class="wb-permission-label"><?= strtoupper(htmlspecialchars($accessPermission, ENT_QUOTES, 'UTF-8')) ?> ACCESS</span>
       <span class="wb-session-badge">Session #<?= $whiteboardId ?></span>
       <div class="wb-av-stack" id="wbAvStack"></div>
-      <button class="wb-page-btn" onclick="wbSaveSessionNow()">Save</button>
+      <?php if ($accessPermission !== 'view'): ?><button class="wb-page-btn" onclick="wbSaveSessionNow()">Save</button><?php endif; ?>
     </div>
   </div>
   <div class="wb-body">
@@ -97,7 +114,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0b0f1a}
       <button class="wb-tbtn" data-tool="eraser" data-tip="Eraser" onclick="wbPickTool(this)">&#9003;</button>
       <div class="wb-tsep"></div>
       <button class="wb-tbtn" data-tool="text" data-tip="Text" onclick="wbPickTool(this)">T</button>
-      <button class="wb-tbtn" data-tool="sticky" data-tip="Sticky note" onclick="wbPickTool(this)">&#9632;</button>
+      <button class="wb-tbtn" data-tool="sticky" data-tip="Comment / Sticky note" onclick="wbPickTool(this)">&#9632;</button>
       <button class="wb-tbtn" data-tool="arrow" data-tip="Arrow" onclick="wbPickTool(this)">&#8594;</button>
     </div>
     <div class="wb-canvas-wrap" id="wbCanvasWrap">
@@ -129,7 +146,9 @@ window.ECOLLAB={
   workspaceId:<?= $workspaceId ?>,
   whiteboardId:<?= $whiteboardId ?>,
   whiteboardStandalone:true,
-  whiteboardSessionMode:true
+  whiteboardSessionMode:true,
+  whiteboardPermission:<?= json_encode($accessPermission) ?>,
+  whiteboardIsOwner:<?= $isOwner?'true':'false' ?>
 };
 window.__USER__={id:<?= (int)$user['id'] ?>,username:<?= json_encode($user['username']) ?>,role:<?= json_encode($user['role']) ?>};
 window.__currentServerId=<?= $serverId ?>;
@@ -142,7 +161,7 @@ function showToast(message){const el=document.getElementById('wbSessionStatus');
 <script>
 (function(){
   const API=<?= json_encode(BASE_URL . '/API/collaboration/whiteboards.php') ?>;
-  const WID=<?= $workspaceId ?>, BID=<?= $whiteboardId ?>;
+  const WID=<?= $workspaceId ?>, BID=<?= $whiteboardId ?>, PERM=<?= json_encode($accessPermission) ?>, IS_OWNER=<?= $isOwner?'true':'false' ?>;
   let lastUpdated='';
   let saveTimer=null;
   let polling=null;
@@ -160,13 +179,20 @@ function showToast(message){const el=document.getElementById('wbSessionStatus');
   function localState(){return {paths:wbState.paths||[],objects:wbState.objects?Object.keys(wbState.objects).map(k=>{const e=wbState.objects[k];return {id:k,x:parseFloat(e.style.left)||0,y:parseFloat(e.style.top)||0,text:e.textContent||''};}):[],savedAt:new Date().toISOString()};}
 
   window.wbApi=function(action,body={},method='GET'){
-    if(action==='state') return request('GET').then(d=>({whiteboard:{state_json:d.whiteboard.state,locked:false,is_host:true}}));
+    if(action==='state') return request('GET').then(d=>({whiteboard:{state_json:JSON.stringify(d.whiteboard.state||{paths:[],objects:[]}),state:d.whiteboard.state||{paths:[],objects:[]},locked:false,is_host:IS_OWNER,access_permission:d.whiteboard.access_permission||PERM}}));
     if(action==='save') return request('POST',{action:'save',state:body.state||localState()});
     return Promise.resolve({versions:[]});
   };
 
+  function configurePermissionUi(){
+    const root=document.body;root.classList.remove('wb-access-view','wb-access-comment','wb-access-edit');root.classList.add('wb-access-'+PERM);
+    document.querySelectorAll('.wb-tbtn').forEach(btn=>{const tool=btn.dataset.tool;const allowed=PERM==='edit'||(PERM==='comment'&&(tool==='cursor'||tool==='sticky'))||(PERM==='view'&&tool==='cursor');btn.disabled=!allowed;});
+    if(PERM==='comment')showToast('Comment access: use Sticky notes to leave annotations.');
+    if(PERM==='view')showToast('View-only access.');
+  }
+
   async function saveNow(){
-    if(!wbState.open)return;
+    if(!wbState.open||PERM==='view')return;
     try{
       const state=localState();
       const d=await request('POST',{action:'save',state});
@@ -187,12 +213,10 @@ function showToast(message){const el=document.getElementById('wbSessionStatus');
   window.wbSend=function(payload){
     if(payload && payload.type==='wb_cursor')return;
     if(payload && payload.op){
-      if(payload.op==='stroke_end'||payload.op==='sticky_add'||payload.op==='sticky_move'||payload.op==='sticky_text'||payload.op==='text_add'||payload.op==='text_move'||payload.op==='text_edit'||payload.op==='clear'||payload.op==='undo'){
-        clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,250);
-      }
+      if(PERM!=='view'&&(payload.op==='stroke_end'||payload.op==='sticky_add'||payload.op==='sticky_move'||payload.op==='sticky_text'||payload.op==='text_add'||payload.op==='text_move'||payload.op==='text_edit'||payload.op==='clear'||payload.op==='undo')){clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,250);}
       return;
     }
-    if(payload && payload.type==='wb_state_save'){clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,50);return;}
+    if(payload && payload.type==='wb_state_save'&&PERM!=='view'){clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,50);return;}
     if(originalSend && !window.ECOLLAB.whiteboardSessionMode)originalSend(payload);
   };
 
@@ -204,12 +228,14 @@ function showToast(message){const el=document.getElementById('wbSessionStatus');
       wbState.paths=Array.isArray(state.paths)?state.paths:[];
       wbState.objects={};
       wbState.dirty=false;
+      wbState.isOwner=IS_OWNER;
       document.getElementById('wbBoardName').textContent=d.whiteboard.title||<?= json_encode($title) ?>;
-      document.getElementById('wbSaveLabel').textContent='Saved just now';
+      document.getElementById('wbSaveLabel').textContent=PERM==='view'?'View only':'Saved just now';
       wbInitCanvas();
       wbState.open=true;
       wbUpdateMemberList();
       wbApplyFullState(JSON.stringify(state));
+      configurePermissionUi();
       if(polling)clearInterval(polling);
       polling=setInterval(syncRemote,2000);
       showToast('Session #'+BID+' ready');
@@ -239,7 +265,7 @@ function showToast(message){const el=document.getElementById('wbSessionStatus');
   };
 
   window.closeWhiteboard=function(){
-    if(wbState.open)saveNow();
+    if(wbState.open&&PERM!=='view')saveNow();
     wbState.open=false;
     if(polling)clearInterval(polling);
     location.href=<?= json_encode(BASE_URL . '/modules/collaboration/server-coworkspaces.php?server_id=' . $serverId . '&channel_id=' . $channelId) ?>;
