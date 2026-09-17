@@ -131,21 +131,65 @@ class OtpService {
         $body = $this->buildEmailBody($toName, $otp, $expiryMin, $action);
 
         if (APP_DEBUG) {
-            // Never send emails in dev — just return the code
             error_log("[OtpService] DEV OTP for {$toEmail} ({$action}): {$otp}");
             return ['success' => true, 'otp_debug' => $otp];
         }
 
-        $headers = implode("\r\n", [
-            'From: ' . MAIL_FROM_NAME . ' <' . MAIL_FROM . '>',
-            'Reply-To: ' . MAIL_FROM,
-            'Content-Type: text/html; charset=UTF-8',
-            'MIME-Version: 1.0',
-            'X-Mailer: Ecollab/1.0',
+        // Hostinger Mail API is the transactional mail transport for production.
+        // The API token is intentionally read from .env and never committed.
+        if (MAIL_API_KEY === '' || MAILBOX_RESOURCE_ID === '') {
+            error_log('[OtpService] Hostinger Mail API is not configured.');
+            return ['success' => false, 'error' => 'Mail service is not configured.'];
+        }
+
+        $payload = json_encode([
+            'to'      => [$toEmail],
+            'subject' => $subject,
+            'text'    => strip_tags(str_replace(['</p>', '<br>', '<br/>', '<br />'], ["\\n", "\\n", "\\n", "\\n"], $body)),
+            'html'    => $body,
+        ], JSON_UNESCAPED_SLASHES);
+
+        if ($payload === false) {
+            error_log('[OtpService] Failed to encode Hostinger Mail API payload.');
+            return ['success' => false, 'error' => 'Unable to prepare email.'];
+        }
+
+        $ch = curl_init(rtrim(MAIL_API_URL, '/') . '/api/v1/mailboxes/' . rawurlencode(MAILBOX_RESOURCE_ID) . '/send');
+        if ($ch === false) {
+            return ['success' => false, 'error' => 'Unable to initialize mail service.'];
+        }
+
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER     => [
+                'Authorization: Bearer ' . MAIL_API_KEY,
+                'Content-Type: application/json',
+                'Accept: application/json',
+            ],
+            CURLOPT_POSTFIELDS     => $payload,
+            CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_TIMEOUT        => 20,
         ]);
 
-        $sent = @mail($toEmail, $subject, $body, $headers);
-        return ['success' => $sent];
+        $response = curl_exec($ch);
+        $curlError = curl_error($ch);
+        $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($response === false || $curlError !== '') {
+            error_log('[OtpService] Hostinger Mail API transport error: ' . $curlError);
+            return ['success' => false, 'error' => 'Email service is temporarily unavailable.'];
+        }
+
+        // Hostinger documents 204 for a successfully sent message.
+        if ($status < 200 || $status >= 300) {
+            $safeResponse = substr((string)$response, 0, 500);
+            error_log("[OtpService] Hostinger Mail API HTTP {$status}: {$safeResponse}");
+            return ['success' => false, 'error' => 'Email service rejected the message.'];
+        }
+
+        return ['success' => true];
     }
 
     // ═══════════════════════════════════════════════════════════════
