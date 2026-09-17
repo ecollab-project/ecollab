@@ -1,18 +1,7 @@
 /**
  * accessibility-apply.js
  *
- * The settings page previously applied reduce-motion / high-contrast classes
- * to <html> using logic defined inline in its own <script> tag — nothing
- * else in the app ever ran that logic, so the effect only ever showed up
- * on the settings page itself and vanished the moment you navigated away.
- *
- * This is the same logic, extracted so every page can run it. Include this
- * script on any authenticated page (after the CSRF meta tag is present) and
- * it will fetch the user's real settings and apply them immediately.
- *
- * Also newly applies `compact_mode`, which previously saved correctly but
- * had no corresponding CSS/class anywhere — see the .compact-mode rules
- * added alongside this file.
+ * Shared accessibility/settings bootstrap used by authenticated pages.
  */
 (function () {
   function applyClasses(settings) {
@@ -28,101 +17,171 @@
       html.dataset.theme = light ? 'light' : 'dark';
     }
 
-    // Cached globally so other scripts (notification triggers, etc.) don't
-    // need a second round-trip to know the user's current preferences.
     window._userSettings = settings;
   }
 
   function injectResourceAccessStyles() {
     if (document.getElementById('ecollab-resource-access-ui')) return;
+
     const style = document.createElement('style');
     style.id = 'ecollab-resource-access-ui';
     style.textContent = `
-      #accessModal .perm-row,
-      #accessModal .invite {
+      /* Resource access rows: keep the existing controls, only restyle them. */
+      #accessModal .perm-row {
+        display: flex;
         align-items: center;
+        gap: 10px;
+        min-height: 48px;
+        padding: 8px 0;
+        border-bottom: 1px solid #292e3b;
       }
-      #accessModal .perm-row select,
+
+      #accessModal .perm-row > span:first-child {
+        flex: 1;
+        min-width: 0;
+        color: #e2e8f0;
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      /* Edit / View / Comment permission button */
+      #accessModal .perm-row select {
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        box-sizing: border-box;
+        width: 82px;
+        min-width: 82px;
+        height: 34px;
+        padding: 0 27px 0 10px;
+        border: 1px solid #3a4354 !important;
+        border-radius: 8px !important;
+        background-color: #10141d !important;
+        background-image:
+          linear-gradient(45deg, transparent 50%, #94a3b8 50%),
+          linear-gradient(135deg, #94a3b8 50%, transparent 50%) !important;
+        background-position:
+          calc(100% - 13px) 14px,
+          calc(100% - 8px) 14px !important;
+        background-size: 5px 5px, 5px 5px !important;
+        background-repeat: no-repeat !important;
+        color: #e5e7eb !important;
+        color-scheme: dark;
+        font: 600 12px/32px Inter, system-ui, sans-serif !important;
+        cursor: pointer;
+        outline: none;
+      }
+
+      #accessModal .perm-row select:hover {
+        background-color: #171e2b !important;
+        border-color: #58667d !important;
+      }
+
+      #accessModal .perm-row select:focus-visible {
+        border-color: #7c8ba3 !important;
+        box-shadow: 0 0 0 2px rgba(124, 139, 163, .18) !important;
+      }
+
+      #accessModal .perm-row select option {
+        background: #10141d;
+        color: #e5e7eb;
+      }
+
+      /* Remove button — keep the existing Remove action, just make it fit the UI. */
+      #accessModal .perm-row .btn.danger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        width: 76px;
+        min-width: 76px;
+        height: 34px;
+        min-height: 34px;
+        padding: 0 12px !important;
+        border: 1px solid rgba(248, 113, 113, .38) !important;
+        border-radius: 8px !important;
+        background: rgba(127, 29, 29, .14) !important;
+        color: #fca5a5 !important;
+        font: 600 12px/32px Inter, system-ui, sans-serif !important;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background .15s ease, border-color .15s ease, color .15s ease;
+      }
+
+      #accessModal .perm-row .btn.danger:hover {
+        background: rgba(127, 29, 29, .30) !important;
+        border-color: rgba(248, 113, 113, .68) !important;
+        color: #fecaca !important;
+      }
+
+      #accessModal .perm-row .btn.danger:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(248, 113, 113, .16);
+      }
+
+      /* Grant / Generate controls remain present and use the same visual language. */
+      #accessModal .invite {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      #accessModal .invite #userSearch {
+        flex: 1;
+        min-width: 0;
+      }
+
+      #accessModal .invite .btn,
+      #accessModal .perm-row .btn:not(.danger) {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 36px;
+        padding: 0 13px !important;
+        border: 1px solid #3a4354 !important;
+        border-radius: 8px !important;
+        background: #171d29 !important;
+        color: #e5e7eb !important;
+        font: 600 12px/34px Inter, system-ui, sans-serif !important;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+
+      #accessModal .invite .btn:hover,
+      #accessModal .perm-row .btn:not(.danger):hover {
+        background: #202838 !important;
+        border-color: #58667d !important;
+      }
+
       #accessModal #grantPermission,
       #accessModal #invitePermission {
         appearance: none;
         -webkit-appearance: none;
+        box-sizing: border-box;
         min-height: 36px;
         padding: 0 32px 0 11px;
         border: 1px solid #3a4354;
         border-radius: 8px;
         background-color: #10141d;
         color: #e5e7eb;
-        font: 600 12px Inter, system-ui, sans-serif;
-        line-height: 34px;
+        color-scheme: dark;
+        font: 600 12px/34px Inter, system-ui, sans-serif;
         cursor: pointer;
-        background-image: linear-gradient(45deg, transparent 50%, #94a3b8 50%), linear-gradient(135deg, #94a3b8 50%, transparent 50%);
-        background-position: calc(100% - 14px) 15px, calc(100% - 9px) 15px;
-        background-size: 5px 5px, 5px 5px;
-        background-repeat: no-repeat;
       }
-      #accessModal .perm-row select:hover,
-      #accessModal #grantPermission:hover,
-      #accessModal #invitePermission:hover {
-        border-color: #58667d;
-        background-color: #151b27;
-      }
-      #accessModal .perm-row select:focus,
-      #accessModal #grantPermission:focus,
-      #accessModal #invitePermission:focus {
-        outline: none;
-        border-color: #7c8ba3;
-        box-shadow: 0 0 0 2px rgba(124, 139, 163, .16);
-      }
-      #accessModal .perm-row .btn,
-      #accessModal .invite .btn {
-        min-height: 36px;
-        border: 1px solid #3a4354;
-        border-radius: 8px;
-        background: #171d29;
-        color: #e5e7eb;
-        font: 600 12px Inter, system-ui, sans-serif;
-        padding: 0 13px;
-        white-space: nowrap;
-      }
-      #accessModal .perm-row .btn:hover,
-      #accessModal .invite .btn:hover {
-        background: #202838;
-        border-color: #58667d;
-      }
-      #accessModal .perm-row .btn.danger {
-        border-color: rgba(248, 113, 113, .38);
-        background: rgba(127, 29, 29, .12);
-        color: #fca5a5;
-      }
-      #accessModal .perm-row .btn.danger:hover {
-        background: rgba(127, 29, 29, .25);
-        border-color: rgba(248, 113, 113, .65);
-        color: #fecaca;
-      }
-      #accessModal .invite {
-        display: flex;
-        gap: 8px;
-      }
-      #accessModal .invite #userSearch {
-        flex: 1;
-        min-width: 0;
-      }
+
       @media (max-width: 560px) {
         #accessModal .perm-row {
           flex-wrap: wrap;
         }
-        #accessModal .perm-row span:first-child {
+
+        #accessModal .perm-row > span:first-child {
           flex-basis: 100%;
         }
+
         #accessModal .perm-row select {
           flex: 1;
-        }
-        #accessModal .invite {
-          flex-wrap: wrap;
-        }
-        #accessModal .invite #userSearch {
-          flex-basis: 100%;
+          width: auto;
+          min-width: 0;
         }
       }
     `;
@@ -132,13 +191,11 @@
   function run() {
     injectResourceAccessStyles();
     const base = window.ECOLLAB?.baseUrl || window.BASE_URL || '';
-    // Read-only GET request — no CSRF token needed. Fails silently (caught
-    // below) on pages where the user isn't authenticated, so this script is
-    // safe to include on any page without checking for page-specific markup.
+
     fetch(base + '/API/profile/settings.php', { credentials: 'same-origin' })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d && d.settings) applyClasses(d.settings); })
-      .catch(() => {}); // fail silently — page renders with defaults
+      .catch(() => {});
   }
 
   if (document.readyState === 'loading') {
