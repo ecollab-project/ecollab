@@ -44,6 +44,35 @@
     document.head.appendChild(style);
   }
 
+  // channel-visibility.js used a MutationObserver that called refreshChannelSymbols().
+  // Adding the symbols itself creates childList mutations, which caused the observer
+  // to call itself repeatedly and could lock the chat UI/main thread. Wrap only that
+  // specific observer so mutations caused by its own decorative badges are ignored.
+  function guardChannelVisibilityObserver() {
+    if (window.__ecollabChannelVisibilityObserverGuarded || typeof window.MutationObserver !== 'function') return;
+    const NativeMutationObserver = window.MutationObserver;
+    window.MutationObserver = function (callback) {
+      const source = String(callback || '');
+      if (!source.includes('refreshChannelSymbols') || !source.includes('installManageButton')) {
+        return new NativeMutationObserver(callback);
+      }
+
+      return new NativeMutationObserver(function (records, observer) {
+        const relevant = records.some(record => {
+          if (record.type !== 'childList' || !record.addedNodes?.length) return false;
+          return Array.from(record.addedNodes).some(node => {
+            if (node.nodeType !== Node.ELEMENT_NODE) return true;
+            if (node.classList?.contains('channel-visibility-symbol')) return false;
+            return !node.querySelector?.('.channel-visibility-symbol');
+          });
+        });
+        if (relevant) callback(records, observer);
+      });
+    };
+    window.MutationObserver.prototype = NativeMutationObserver.prototype;
+    window.__ecollabChannelVisibilityObserverGuarded = true;
+  }
+
   function loadScript(id, src) {
     if (document.getElementById(id)) return;
     const script = document.createElement('script');
@@ -55,6 +84,7 @@
 
   function run() {
     injectResourceAccessStyles();
+    guardChannelVisibilityObserver();
     const base = window.ECOLLAB?.baseUrl || '';
     loadScript('ecollab-server-visibility-script', `${base}/assets/js/chat/server-visibility.js?v=1`);
     loadScript('ecollab-server-access-guard-script', `${base}/assets/js/chat/server-access-guard.js?v=1`);
