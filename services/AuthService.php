@@ -431,6 +431,19 @@ class AuthService {
     public function verifyOtp(int $userId, string $otp, string $action = 'reset_password'): array {
         if (session_status() === PHP_SESSION_NONE) session_start();
 
+        // The existing verify-otp endpoint is shared with forgot-password.
+        // When a pending login exists for this session, bind this verification
+        // to the login 2FA action without trusting a client-supplied action.
+        $pendingUserId = (int)($_SESSION['pending_login_user_id'] ?? 0);
+        $pendingExpires = (int)($_SESSION['pending_login_expires'] ?? 0);
+        if ($action === 'reset_password'
+            && $pendingUserId > 0
+            && $pendingUserId === $userId
+            && $pendingExpires >= time()
+        ) {
+            $action = '2fa';
+        }
+
         if ($action === '2fa') {
             $pendingUserId = (int)($_SESSION['pending_login_user_id'] ?? 0);
             $pendingExpires = (int)($_SESSION['pending_login_expires'] ?? 0);
