@@ -1,4 +1,4 @@
-/* Server visibility controls for Chat workspace creation. */
+/* Server visibility controls for Chat workspace creation and visibility symbols. */
 (function () {
   'use strict';
 
@@ -9,6 +9,66 @@
     return String(value ?? '').replace(/[&<>"']/g, c => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     }[c]));
+  }
+
+  function installVisibilitySymbols() {
+    if (window.__ecollabServerVisibilitySymbols) return;
+    window.__ecollabServerVisibilitySymbols = true;
+
+    const apply = servers => {
+      const byId = new Map((servers || []).map(server => [String(server.id), server]));
+      document.querySelectorAll('.workspace-icon[data-server-id]').forEach(icon => {
+        const server = byId.get(String(icon.dataset.serverId));
+        if (!server) return;
+        const type = String(server.type || 'public').toLowerCase();
+        const privateServer = type === 'private';
+        icon.dataset.serverVisibility = type;
+        icon.classList.toggle('server-private', privateServer);
+        icon.classList.toggle('server-public', !privateServer);
+
+        let badge = icon.querySelector('.server-visibility-symbol');
+        if (!badge) {
+          badge = document.createElement('span');
+          badge.className = 'server-visibility-symbol';
+          badge.setAttribute('aria-hidden', 'true');
+          icon.appendChild(badge);
+        }
+        badge.textContent = privateServer ? '🔒' : '🌐';
+        badge.title = privateServer ? 'Private server' : 'Public server';
+        icon.title = `${server.name || 'Server'} · ${privateServer ? 'Private' : 'Public'}`;
+      });
+    };
+
+    const load = async () => {
+      try {
+        const response = await fetch(`${BASE()}/API/server/access.php`, {
+          credentials: 'same-origin',
+          cache: 'no-store',
+          headers: {'Accept': 'application/json'}
+        });
+        const data = await response.json().catch(() => ({}));
+        if (response.ok && data.success) apply(data.servers || []);
+      } catch (_) { /* symbols are decorative; keep normal workspace UI */ }
+    };
+
+    const style = document.createElement('style');
+    style.id = 'serverVisibilitySymbolStyles';
+    style.textContent = `
+      .workspace-icon[data-server-id]{position:relative}
+      .server-visibility-symbol{position:absolute;right:-2px;bottom:-2px;display:flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:#0b1020;border:1px solid rgba(255,255,255,.18);font-size:9px;line-height:1;box-shadow:0 2px 7px rgba(0,0,0,.35);pointer-events:none;z-index:3}
+      .workspace-icon.server-private .server-visibility-symbol{background:#172033}
+      .workspace-icon.server-public .server-visibility-symbol{background:#111827}
+    `;
+    document.head.appendChild(style);
+
+    load();
+    const observer = new MutationObserver(() => apply(window.__ecollabServerVisibilityList || []));
+    observer.observe(document.body, {childList:true, subtree:true});
+    load().then(() => {
+      // Cache the list for icons inserted later by Chat's server/channel renderer.
+      fetch(`${BASE()}/API/server/access.php`, {credentials:'same-origin', cache:'no-store', headers:{'Accept':'application/json'}})
+        .then(r => r.json()).then(data => { if (data.success) { window.__ecollabServerVisibilityList = data.servers || []; apply(window.__ecollabServerVisibilityList); } }).catch(() => {});
+    });
   }
 
   function modal() {
@@ -43,7 +103,7 @@
             <label class="svc-option selected" data-value="public">
               <input type="radio" name="svcVisibility" value="public" checked>
               <span class="svc-radio"></span>
-              <span><strong>Public</strong><small>Appears in public recommendations and keeps the normal public join flow.</small></span>
+              <span><strong>Public 🌐</strong><small>Appears in public recommendations and keeps the normal public join flow.</small></span>
             </label>
             <label class="svc-option" data-value="private">
               <input type="radio" name="svcVisibility" value="private">
@@ -151,6 +211,8 @@
       event.stopImmediatePropagation();
       open();
     }, true);
+
+    installVisibilitySymbols();
     return true;
   }
 
