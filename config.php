@@ -145,6 +145,9 @@ define('MAIL_USER',      env('MAIL_USER',      ''));
 define('MAIL_PASS',      env('MAIL_PASS',      ''));
 define('MAIL_FROM',      env('MAIL_FROM',      'noreply@ecollab.io'));
 define('MAIL_FROM_NAME', env('MAIL_FROM_NAME', 'Ecollab'));
+define('MAIL_API_URL', env('MAIL_API_URL', 'https://api.mail.hostinger.com'));
+define('MAIL_API_KEY', env('MAIL_API_KEY', ''));
+define('MAILBOX_RESOURCE_ID', env('MAILBOX_RESOURCE_ID', ''));
 
 // ── WebSocket ─────────────────────────────────────────────────────────────────
 define('WS_HOST', env('WS_HOST', '0.0.0.0'));
