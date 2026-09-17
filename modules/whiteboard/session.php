@@ -166,7 +166,8 @@ window.__currentWhiteboardId=<?= $whiteboardId ?>;
 window.__currentWorkspaceId=<?= $workspaceId ?>;
 function showToast(message){const el=document.getElementById('wbSessionStatus');if(el)el.textContent=message;}
 </script>
-<script src="<?= BASE_URL ?>/assets/js/chat/whiteboard.js"></script>
+<script src="<?= BASE_URL ?>/assets/js/chat/socket-core.js?v=wsfix7"></script>
+<script src="<?= BASE_URL ?>/assets/js/chat/whiteboard.js?v=wsfix7"></script>
 <script>
 (function(){
   const API=<?= json_encode(BASE_URL . '/API/collaboration/whiteboards.php') ?>;
@@ -220,13 +221,26 @@ function showToast(message){const el=document.getElementById('wbSessionStatus');
 
   const originalSend=window.wbSend;
   window.wbSend=function(payload){
-    if(payload && payload.type==='wb_cursor')return;
-    if(payload && payload.op){
-      if(PERM!=='view'&&(payload.op==='stroke_end'||payload.op==='sticky_add'||payload.op==='sticky_move'||payload.op==='sticky_text'||payload.op==='text_add'||payload.op==='text_move'||payload.op==='text_edit'||payload.op==='clear'||payload.op==='undo')){clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,250);}
-      return;
+    if(!payload)return false;
+    if(payload.op && PERM!=='view'&&(
+      payload.op==='stroke_end'||
+      payload.op==='sticky_add'||
+      payload.op==='sticky_move'||
+      payload.op==='sticky_text'||
+      payload.op==='text_add'||
+      payload.op==='text_move'||
+      payload.op==='text_edit'||
+      payload.op==='clear'||
+      payload.op==='undo'
+    )){
+      clearTimeout(saveTimer);
+      saveTimer=setTimeout(saveNow,250);
     }
-    if(payload && payload.type==='wb_state_save'&&PERM!=='view'){clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,50);return;}
-    if(originalSend && !window.ECOLLAB.whiteboardSessionMode)originalSend(payload);
+    if(payload.type==='wb_state_save'&&PERM!=='view'){
+      clearTimeout(saveTimer);
+      saveTimer=setTimeout(saveNow,50);
+    }
+    return originalSend ? originalSend(payload) : false;
   };
 
   async function loadInitial(){

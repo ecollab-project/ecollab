@@ -137,6 +137,10 @@ function handleSocketMessage(data) {
           channel_id: window.ECOLLAB.currentChannelId,
         }));
       }
+      // Rejoin an open whiteboard after WebSocket authentication.
+      if (typeof window.wbRejoinRoom === 'function') {
+        setTimeout(() => window.wbRejoinRoom(), 50);
+      }
       break;
 
     // ── Messages ──

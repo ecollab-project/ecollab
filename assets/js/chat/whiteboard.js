@@ -130,6 +130,14 @@ function wbSend(payload) {
 // ══════════════════════════════════════════════════════════
 //  Open / close
 // ══════════════════════════════════════════════════════════
+window.wbRejoinRoom = function(){
+  if (!wbState.open || !wbState.channelId) return false;
+  return wbSend({
+    type: 'wb_join',
+    channel_id: wbState.channelId
+  });
+};
+
 function openWhiteboard(boardName, sessionOwnerId, channelId) {
   // Chat's legacy launcher passes (boardName, channelId).
   if (channelId === undefined && Number.isInteger(Number(sessionOwnerId))) {
