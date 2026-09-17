@@ -58,6 +58,7 @@
     const base = window.ECOLLAB?.baseUrl || '';
     loadScript('ecollab-server-visibility-script', `${base}/assets/js/chat/server-visibility.js?v=1`);
     loadScript('ecollab-server-access-guard-script', `${base}/assets/js/chat/server-access-guard.js?v=1`);
+    loadScript('ecollab-channel-visibility-script', `${base}/assets/js/chat/channel-visibility.js?v=1`);
 
     fetch(base + '/API/profile/settings.php', {credentials:'same-origin'})
       .then(r => r.ok ? r.json() : null)
