@@ -1,0 +1,11 @@
+.git
+.github
+.env
+.env.*
+!.env.example
+composer/cache
+node_modules
+vendor
+storage/logs
+*.log
+.DS_Store
