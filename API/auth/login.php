@@ -58,6 +58,7 @@ try {
                 'success'      => true,
                 'otp_required' => true,
                 'message'      => 'A verification code has been sent to your email.',
+                'user_id'      => (int)$outcome['user']['id'],
             ];
             if (APP_DEBUG && isset($outcome['otp_debug'])) {
                 $response['otp_debug'] = $outcome['otp_debug'];
