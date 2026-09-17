@@ -50,6 +50,22 @@ try {
 
     if ($outcome['success']) {
         $limiter->clear('login', $ip);
+
+        // Password was accepted, but the authenticated session is intentionally
+        // not created until the OTP endpoint completes the 2FA step.
+        if (!empty($outcome['otp_required'])) {
+            $response = [
+                'success'      => true,
+                'otp_required' => true,
+                'message'      => 'A verification code has been sent to your email.',
+            ];
+            if (APP_DEBUG && isset($outcome['otp_debug'])) {
+                $response['otp_debug'] = $outcome['otp_debug'];
+            }
+            echo json_encode($response);
+            exit;
+        }
+
         CSRF::regenerate();
 
         $role     = $outcome['role'];
