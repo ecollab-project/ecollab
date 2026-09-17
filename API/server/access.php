@@ -18,9 +18,31 @@ function serverAccessJson(array $data, int $status = 200): never
 
 try {
     $serverId = (int)($_GET['server_id'] ?? $_POST['server_id'] ?? 0);
-    if ($serverId < 1) serverAccessJson(['success' => false, 'error' => 'Server ID required.'], 400);
-
     $db = Database::getInstance();
+
+    // Workspace UI uses this mode to label every server the current user can see.
+    if ($serverId < 1) {
+        $stmt = $db->prepare(
+            'SELECT s.id, s.name, s.type, s.status, s.owner_id
+             FROM servers s
+             INNER JOIN server_members sm ON sm.server_id = s.id
+             WHERE sm.user_id = :uid AND s.status = \'active\'
+             ORDER BY s.id ASC'
+        );
+        $stmt->execute([':uid' => (int)$user['id']]);
+        serverAccessJson([
+            'success' => true,
+            'servers' => array_map(static function (array $server): array {
+                return [
+                    'id' => (int)$server['id'],
+                    'name' => $server['name'],
+                    'type' => $server['type'],
+                    'owner_id' => (int)$server['owner_id'],
+                ];
+            }, $stmt->fetchAll(PDO::FETCH_ASSOC)),
+        ]);
+    }
+
     $stmt = $db->prepare('SELECT id, name, type, status, owner_id FROM servers WHERE id = :id LIMIT 1');
     $stmt->execute([':id' => $serverId]);
     $server = $stmt->fetch(PDO::FETCH_ASSOC);
