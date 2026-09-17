@@ -27,7 +27,6 @@ if (!$workspace) {
     exit('You do not have access to this Coworkspace.');
 }
 
-
 $stmt = $db->prepare('SELECT wb.id AS id, wb.title, wb.description, wb.visibility, wb.public_permission, wb.created_by, cw.server_id, cw.channel_id, cw.host_id FROM collab_whiteboards wb INNER JOIN collab_workspaces cw ON cw.id=wb.workspace_id WHERE wb.id=:id AND wb.workspace_id=:wid LIMIT 1');
 $stmt->execute([':id' => $whiteboardId, ':wid' => $workspaceId]);
 $board = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -280,6 +279,7 @@ function showToast(message){const el=document.getElementById('wbSessionStatus');
 
   window.openWhiteboard=function(){
     wbState.boardName=<?= json_encode($title) ?>;
+    wbState.whiteboardId=BID;
     wbState.sessionId=BID;
     wbState.channelId=<?= $channelId ?>;
     wbState.open=true;
