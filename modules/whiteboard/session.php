@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once ROOT_PATH . '/database/config/db.php';
 require_once ROOT_PATH . '/security/middleware/AuthMiddleware.php';
+require_once ROOT_PATH . '/services/CoworkspaceService.php';
 
 AuthMiddleware::startSession();
 $user = AuthMiddleware::requireAuth();
@@ -18,6 +19,14 @@ if ($workspaceId < 1 || $whiteboardId < 1 || $channelId < 1) {
     http_response_code(400);
     exit('A Coworkspace whiteboard session is required.');
 }
+
+$uid = (int)$user['id'];
+$workspace = CoworkspaceService::get($db, $workspaceId, $uid);
+if (!$workspace) {
+    http_response_code(403);
+    exit('You do not have access to this Coworkspace.');
+}
+
 
 $stmt = $db->prepare('SELECT wb.id AS id, wb.title, wb.description, wb.visibility, wb.public_permission, wb.created_by, cw.server_id, cw.channel_id, cw.host_id FROM collab_whiteboards wb INNER JOIN collab_workspaces cw ON cw.id=wb.workspace_id WHERE wb.id=:id AND wb.workspace_id=:wid LIMIT 1');
 $stmt->execute([':id' => $whiteboardId, ':wid' => $workspaceId]);
