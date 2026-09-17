@@ -142,6 +142,11 @@ class OtpService {
             return ['success' => false, 'error' => 'Mail service is not configured.'];
         }
 
+        if (!function_exists('curl_init')) {
+            error_log('[OtpService] PHP cURL extension is not available.');
+            return ['success' => false, 'error' => 'Mail service is unavailable on this server.'];
+        }
+
         $payload = json_encode([
             'to'      => [$toEmail],
             'subject' => $subject,
