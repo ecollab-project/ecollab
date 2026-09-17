@@ -37,12 +37,18 @@
       const channelId = Number(data.channel?.id || 0);
       const selected = isPrivate ? Array.from(window._privateChannelSelectedUsers || new Set()) : [];
       if (isPrivate && channelId && selected.length) {
-        await Promise.all(selected.map(userId => fetch(`${base()}/API/chat/channel-members.php`, {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf() },
-          body: JSON.stringify({ action: 'add', channel_id: channelId, user_id: Number(userId) }),
-        })));
+        for (const userId of selected) {
+          const memberResponse = await fetch(`${base()}/API/chat/channel-members.php`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf() },
+            body: JSON.stringify({ action: 'add', channel_id: channelId, user_id: Number(userId) }),
+          });
+          const memberData = await memberResponse.json().catch(() => ({}));
+          if (!memberResponse.ok || memberData.success === false) {
+            throw new Error(memberData.error || 'Channel created, but a selected member could not be granted access.');
+          }
+        }
       }
 
       window._privateChannelSelectedUsers = new Set();
@@ -52,7 +58,9 @@
       if (typeof window.loadServerChannels === 'function') {
         window.loadServerChannels(serverId);
       } else {
-        location.reload();
+        const target = new URL(window.location.href);
+        target.search = `?server_id=${encodeURIComponent(serverId)}${channelId ? `&channel_id=${encodeURIComponent(channelId)}` : ''}`;
+        window.location.href = target.toString();
       }
     } catch (error) {
       window.showToast?.(error.message || 'Failed to create channel', 'info');
