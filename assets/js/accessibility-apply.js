@@ -188,8 +188,60 @@
     document.head.appendChild(style);
   }
 
+  function injectServerVisibilityUI() {
+    if (document.getElementById('ecollab-server-visibility-ui')) return;
+
+    const modal = document.getElementById('addServerModal');
+    if (!modal) return;
+
+    const form = modal.querySelector('form');
+    if (!form) return;
+
+    const nameInput = form.querySelector('input[name="name"]');
+    if (!nameInput) return;
+
+    const hiddenType = form.querySelector('input[name="type"]') || document.createElement('input');
+    hiddenType.type = 'hidden';
+    hiddenType.name = 'type';
+    hiddenType.value = 'public';
+    if (!hiddenType.parentNode) form.appendChild(hiddenType);
+
+    const wrap = document.createElement('div');
+    wrap.id = 'ecollab-server-visibility-ui';
+    wrap.style.cssText = 'margin:14px 0 4px;padding:12px;border:1px solid #2d3748;border-radius:10px;background:#10141d;';
+    wrap.innerHTML = `
+      <div style="font:600 13px/18px Inter,system-ui,sans-serif;color:#e5e7eb;margin-bottom:4px;">Server visibility</div>
+      <div style="font:400 12px/17px Inter,system-ui,sans-serif;color:#94a3b8;margin-bottom:10px;">Choose who can discover and enter this server.</div>
+      <select id="ecollab-server-visibility" aria-label="Server visibility" style="width:100%;height:36px;padding:0 10px;border:1px solid #3a4354;border-radius:8px;background:#171d29;color:#e5e7eb;color-scheme:dark;font:600 12px/34px Inter,system-ui,sans-serif;">
+        <option value="public">Public — discoverable and joinable normally</option>
+        <option value="private">Private — hidden from public recommendations</option>
+      </select>
+    `;
+
+    nameInput.closest('label, .form-group, .field, div')?.after(wrap) || form.insertBefore(wrap, nameInput.nextSibling);
+
+    const select = wrap.querySelector('#ecollab-server-visibility');
+    select.addEventListener('change', () => {
+      hiddenType.value = select.value;
+    });
+
+    form.addEventListener('submit', () => {
+      hiddenType.value = select.value;
+    }, true);
+  }
+
+  function watchForServerModal() {
+    injectServerVisibilityUI();
+    if (document.getElementById('ecollab-server-visibility-observer')) return;
+
+    const observer = new MutationObserver(() => injectServerVisibilityUI());
+    observer.observe(document.body, { childList: true, subtree: true });
+    observer._ecollabMarker = true;
+  }
+
   function run() {
     injectResourceAccessStyles();
+    watchForServerModal();
     const base = window.ECOLLAB?.baseUrl || window.BASE_URL || '';
 
     fetch(base + '/API/profile/settings.php', { credentials: 'same-origin' })
