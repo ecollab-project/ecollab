@@ -18,7 +18,6 @@ class ChannelService
      */
     public function getChannelsForUser(int $serverId, int $userId): array
     {
-        // Ensure channel_seen table exists (created by mark-channel-seen.php on first use)
         try {
             $this->db->exec("
                 CREATE TABLE IF NOT EXISTS channel_seen (
@@ -32,7 +31,6 @@ class ChannelService
             // Non-fatal — will just show all channels without new-badge
         }
 
-        // Admins/mods bypass server_members requirement
         $roleStmt = $this->db->prepare("SELECT role FROM users WHERE id = :uid LIMIT 1");
         $roleStmt->execute([':uid' => $userId]);
         $role = $roleStmt->fetchColumn() ?: 'student';
@@ -67,10 +65,15 @@ class ChannelService
                 JOIN server_members sm ON sm.server_id = c.server_id AND sm.user_id = :uid2
                 LEFT JOIN channel_seen cs ON cs.channel_id = c.id AND cs.user_id = :uid4
                 WHERE c.server_id = :server_id
-                  AND (c.is_private = 0 OR EXISTS (
-                      SELECT 1 FROM channel_members cm
-                      WHERE cm.channel_id = c.id AND cm.user_id = :uid3
-                  ))
+                  AND (
+                      c.is_private = 0
+                      OR EXISTS (
+                          SELECT 1 FROM channel_members cm
+                          WHERE cm.channel_id = c.id AND cm.user_id = :uid3
+                      )
+                      OR sm.server_role IN ('owner','admin','moderator')
+                      OR c.created_by = :uid5
+                  )
                 ORDER BY c.position ASC, c.created_at ASC
             ");
             $stmt->execute([
@@ -78,6 +81,7 @@ class ChannelService
                 ':uid2'      => $userId,
                 ':uid3'      => $userId,
                 ':uid4'      => $userId,
+                ':uid5'      => $userId,
                 ':server_id' => $serverId,
             ]);
         }
@@ -85,7 +89,7 @@ class ChannelService
     }
 
     /**
-     * Get a single channel by ID, verifying access.
+     * Get a single channel by ID, verifying server membership.
      */
     public function getChannel(int $channelId, int $userId): ?array
     {
@@ -106,7 +110,6 @@ class ChannelService
      */
     public function createChannel(int $serverId, int $userId, array $data): array
     {
-        // Check permissions
         $stmt = $this->db->prepare("
             SELECT server_role FROM server_members
             WHERE server_id = :sid AND user_id = :uid
@@ -122,19 +125,20 @@ class ChannelService
             throw new InvalidArgumentException('Channel name is required', 400);
         }
         $baseSlug = strtolower(trim(preg_replace('/[^a-z0-9]+/i', '-', $name), '-'));
-        // Ensure slug is unique within this server
-        $slug = $baseSlug;
+        if ($baseSlug === '') $baseSlug = 'channel';
+        $slug = substr($baseSlug, 0, 60);
         $suffix = 2;
         while (true) {
             $chkStmt = $this->db->prepare("SELECT 1 FROM channels WHERE server_id = :sid AND slug = :slug LIMIT 1");
             $chkStmt->execute([':sid' => $serverId, ':slug' => $slug]);
             if (!$chkStmt->fetchColumn()) break;
-            $slug = $baseSlug . '-' . $suffix++;
+            $tail = '-' . $suffix++;
+            $slug = substr($baseSlug, 0, max(1, 60 - strlen($tail))) . $tail;
         }
         $type = in_array($data['type'] ?? 'text', ['text', 'voice', 'announcement', 'whiteboard', 'study_room'], true)
             ? $data['type'] : 'text';
+        $isPrivate = !empty($data['is_private']) ? 1 : 0;
 
-        // Get next position
         $posStmt = $this->db->prepare("SELECT COALESCE(MAX(position),0)+1 AS pos FROM channels WHERE server_id=:sid");
         $posStmt->execute([':sid' => $serverId]);
         $pos = (int)$posStmt->fetchColumn();
@@ -150,10 +154,17 @@ class ChannelService
             ':type' => $type,
             ':desc' => trim($data['description'] ?? ''),
             ':pos'  => $pos,
-            ':priv' => (int)($data['is_private'] ?? 0),
+            ':priv' => $isPrivate,
             ':uid'  => $userId,
         ]);
         $id = (int)$this->db->lastInsertId();
+
+        if ($isPrivate) {
+            // The creator is always a member of their own private channel.
+            $this->db->prepare('INSERT IGNORE INTO channel_members(channel_id, user_id) VALUES(?, ?)')
+                ->execute([$id, $userId]);
+        }
+
         return $this->getChannel($id, $userId) ?? [];
     }
 
@@ -162,7 +173,6 @@ class ChannelService
      */
     public function getServersForUser(int $userId): array
     {
-        // Check if user is admin/mod — they can see all active servers
         $roleStmt = $this->db->prepare("SELECT role FROM users WHERE id = :uid LIMIT 1");
         $roleStmt->execute([':uid' => $userId]);
         $role = $roleStmt->fetchColumn() ?: 'student';
