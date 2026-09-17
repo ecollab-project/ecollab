@@ -1,0 +1,72 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecollab-web
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      WS_HOST: 0.0.0.0
+      WS_PORT: 8080
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    networks:
+      - ecollab
+
+  websocket:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecollab-websocket
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      WS_HOST: 0.0.0.0
+      WS_PORT: 8080
+    command: ["php", "websocket/bin/server.php", "--host=0.0.0.0", "--port=8080"]
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    networks:
+      - ecollab
+
+  db:
+    image: mariadb:11.4
+    container_name: ecollab-db
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASS}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASS}
+    volumes:
+      - ecollab_db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - ecollab
+
+volumes:
+  ecollab_db:
+
+networks:
+  ecollab:
+    driver: bridge
