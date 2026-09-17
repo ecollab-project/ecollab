@@ -506,7 +506,18 @@ class AuthService {
                 ['user_id' => $userId, 'role' => $user['role'], 'mfa' => true],
                 'success', AuditLogger::RISK_LOW);
 
-            return ['success' => true, 'role' => $user['role'], 'user' => $user];
+            $redirect = match (true) {
+                in_array($user['role'], ['admin', 'super_admin', 'moderator'], true) => BASE_URL . '/modules/admin/dashboard.php',
+                $user['role'] === 'facilitator' => BASE_URL . '/modules/facilitator/dashboard.php',
+                default => BASE_URL . '/modules/chat/chat.php',
+            };
+
+            return [
+                'success' => true,
+                'role' => $user['role'],
+                'user' => $user,
+                'redirect' => $redirect,
+            ];
         }
 
         // Forgot-password OTPs issue a short-lived reset token.
