@@ -252,8 +252,105 @@ class ChatServer implements MessageComponentInterface
     private function handleTyping(ConnectionInterface $from,array $data,array $meta):void{$channelId=(int)($data['channel_id']??$meta['channel_id']??0);if(!$channelId)return;$this->broadcastToChannel($channelId,json_encode(['type'=>'typing','channel_id'=>$channelId,'user_id'=>$meta['user_id'],'username'=>$meta['username'],'typing'=>(bool)($data['typing']??false)]),$from);}
     private function handlePresence(ConnectionInterface $from,array $data,array $meta):void{$channelId=(int)($meta['channel_id']??0);$payload=json_encode(['type'=>'presence','user_id'=>$meta['user_id'],'online'=>true,'muted'=>(bool)($data['muted']??false)]);if($channelId)$this->broadcastToChannel($channelId,$payload,$from);}
     const DM_GROUP_VOICE_ID_OFFSET=2000000000;
-    private function handleJoinVoice(ConnectionInterface $from,array $data,array &$meta):void{$channelId=(int)($data['channel_id']??0);if(!$channelId)return;$uid=(int)$meta['user_id'];$isDm=$channelId>=self::DM_GROUP_VOICE_ID_OFFSET;if($isDm){$gid=$channelId-self::DM_GROUP_VOICE_ID_OFFSET;$mem=$this->db->prepare('SELECT 1 FROM dm_group_members WHERE group_id=:gid AND user_id=:uid');$mem->execute([':gid'=>$gid,':uid'=>$uid]);if(!$mem->fetchColumn())return;}else{$chk=$this->db->prepare("SELECT 1 FROM channels c JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid WHERE c.id=:cid AND c.type='voice'");$chk->execute([':uid'=>$uid,':cid'=>$channelId]);if(!$chk->fetchColumn())return;}$stmt=$this->db->prepare('SELECT id,username,full_name,avatar_color_gradient,role FROM users WHERE id=:id');$stmt->execute([':id'=>$uid]);$user=$stmt->fetch()?:[];$meta['voice_channel_id']=$channelId;foreach($this->voiceRooms as &$participants)$participants=array_filter($participants,fn($p)=>$p['user_id']!==$uid);unset($participants);$existing=array_values($this->voiceRooms[$channelId]??[]);$this->voiceRooms[$channelId]??=[];$this->voiceRooms[$channelId][]=['user_id'=>$uid,'username'=>$meta['username'],'full_name'=>$user['full_name']??$meta['username'],'avatar_color_gradient'=>$user['avatar_color_gradient']??'#3b82f6,#6366f1','role'=>$user['role']??'student','resourceId'=>$from->resourceId];if(!$isDm){try{$this->db->prepare("UPDATE users SET voice_channel_id=:cid WHERE id=:id")->execute([':cid'=>$channelId,':id'=>$uid]);}catch(\Exception){}}$payload=json_encode(['type'=>'voice_join','user'=>$user,'channel_id'=>$channelId]);$already=[];foreach($existing as $p)foreach($this->userConns[(int)$p['user_id']]??[] as $peerConn){try{$peerConn->send($payload);$already[$peerConn->resourceId]=true;}catch(\Exception){}}foreach($this->clients as $client){if($client===$from)continue;$rid=$client->resourceId;if(empty($this->connMeta[$rid]['authed'])||isset($already[$rid]))continue;try{$client->send($payload);}catch(\Exception){}}$peers=array_values(array_map(fn($p)=>['user_id'=>$p['user_id'],'username'=>$p['username'],'full_name'=>$p['full_name']??$p['username'],'avatar_color_gradient'=>$p['avatar_color_gradient']??'#3b82f6,#6366f1','role'=>$p['role']??'student','muted'=>$p['muted']??false],$existing));$from->send(json_encode(['type'=>'voice_peers','peers'=>$peers,'channel_id'=>$channelId]));}
-    private function handleLeaveVoice(ConnectionInterface $from,array $data,array &$meta):void{$uid=(int)$meta['user_id'];$channelId=(int)($meta['voice_channel_id']??0);$remaining=[];$isDm=$channelId>=self::DM_GROUP_VOICE_ID_OFFSET;if($channelId&&isset($this->voiceRooms[$channelId])){$this->voiceRooms[$channelId]=array_values(array_filter($this->voiceRooms[$channelId],fn($p)=>$p['user_id']!==$uid));$remaining=$this->voiceRooms[$channelId];if(empty($this->voiceRooms[$channelId]))unset($this->voiceRooms[$channelId]);}$meta['voice_channel_id']=null;if(!$isDm){try{$this->db->prepare("UPDATE users SET voice_channel_id=NULL WHERE id=:id")->execute([':id'=>$uid]);}catch(\Exception){}}$payload=json_encode(['type'=>'voice_leave','user_id'=>$uid,'username'=>$meta['username'],'channel_id'=>$channelId]);foreach($remaining as $p)foreach($this->userConns[(int)$p['user_id']]??[] as $peerConn)try{$peerConn->send($payload);}catch(\Exception){}$this->broadcastToAll($payload,$from);}
+    private function handleJoinVoice(ConnectionInterface $from,array $data,array &$meta):void
+    {
+        $channelId=(int)($data['channel_id']??0);
+        if(!$channelId)return;
+        $uid=(int)$meta['user_id'];
+        $isDm=$channelId>=self::DM_GROUP_VOICE_ID_OFFSET;
+
+        if($isDm){
+            $gid=$channelId-self::DM_GROUP_VOICE_ID_OFFSET;
+            $mem=$this->db->prepare('SELECT 1 FROM dm_group_members WHERE group_id=:gid AND user_id=:uid');
+            $mem->execute([':gid'=>$gid,':uid'=>$uid]);
+            if(!$mem->fetchColumn())return;
+        }else{
+            $chk=$this->db->prepare("SELECT 1 FROM channels c JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid WHERE c.id=:cid AND c.type='voice'");
+            $chk->execute([':uid'=>$uid,':cid'=>$channelId]);
+            if(!$chk->fetchColumn())return;
+        }
+
+        $stmt=$this->db->prepare('SELECT id,username,full_name,avatar_color_gradient,role FROM users WHERE id=:id');
+        $stmt->execute([':id'=>$uid]);
+        $user=$stmt->fetch()?:[];
+
+        // A connection can only belong to one voice room. Remove it from any
+        // previous room, but notify only that room's participants.
+        foreach($this->voiceRooms as $oldId=>&$participants){
+            $wasIn=array_filter($participants,fn($p)=>$p['user_id']===$uid);
+            if(!empty($wasIn)){
+                $participants=array_values(array_filter($participants,fn($p)=>$p['user_id']!==$uid));
+                $leave=json_encode(['type'=>'voice_leave','user_id'=>$uid,'username'=>$meta['username'],'channel_id'=>(int)$oldId]);
+                foreach($participants as $p){
+                    foreach($this->userConns[(int)$p['user_id']]??[] as $peerConn){
+                        try{$peerConn->send($leave);}catch(\Exception){}
+                    }
+                }
+            }
+        }
+        unset($participants);
+
+        $meta['voice_channel_id']=$channelId;
+        $existing=array_values($this->voiceRooms[$channelId]??[]);
+        $this->voiceRooms[$channelId]??=[];
+        $this->voiceRooms[$channelId][]=[
+            'user_id'=>$uid,
+            'username'=>$meta['username'],
+            'full_name'=>$user['full_name']??$meta['username'],
+            'avatar_color_gradient'=>$user['avatar_color_gradient']??'#3b82f6,#6366f1',
+            'role'=>$user['role']??'student',
+            'resourceId'=>$from->resourceId
+        ];
+
+        if(!$isDm){
+            try{$this->db->prepare("UPDATE users SET voice_channel_id=:cid WHERE id=:id")->execute([':cid'=>$channelId,':id'=>$uid]);}catch(\Exception){}
+        }
+
+        $payload=json_encode(['type'=>'voice_join','user'=>$user,'channel_id'=>$channelId]);
+        // CRITICAL: voice events are scoped strictly to this room.
+        foreach($existing as $p){
+            foreach($this->userConns[(int)$p['user_id']]??[] as $peerConn){
+                try{$peerConn->send($payload);}catch(\Exception){}
+            }
+        }
+
+        $peers=array_values(array_map(fn($p)=>[
+            'user_id'=>$p['user_id'],
+            'username'=>$p['username'],
+            'full_name'=>$p['full_name']??$p['username'],
+            'avatar_color_gradient'=>$p['avatar_color_gradient']??'#3b82f6,#6366f1',
+            'role'=>$p['role']??'student',
+            'muted'=>$p['muted']??false
+        ],$existing));
+        $from->send(json_encode(['type'=>'voice_peers','peers'=>$peers,'channel_id'=>$channelId]));
+    }
+
+    private function handleLeaveVoice(ConnectionInterface $from,array $data,array &$meta):void
+    {
+        $uid=(int)$meta['user_id'];
+        $channelId=(int)($meta['voice_channel_id']??0);
+        $remaining=[];
+        $isDm=$channelId>=self::DM_GROUP_VOICE_ID_OFFSET;
+
+        if($channelId&&isset($this->voiceRooms[$channelId])){
+            $this->voiceRooms[$channelId]=array_values(array_filter($this->voiceRooms[$channelId],fn($p)=>$p['user_id']!==$uid));
+            $remaining=$this->voiceRooms[$channelId];
+            if(empty($this->voiceRooms[$channelId]))unset($this->voiceRooms[$channelId]);
+        }
+
+        $meta['voice_channel_id']=null;
+        if(!$isDm){
+            try{$this->db->prepare("UPDATE users SET voice_channel_id=NULL WHERE id=:id")->execute([':id'=>$uid]);}catch(\Exception){}
+        }
+
+        $payload=json_encode(['type'=>'voice_leave','user_id'=>$uid,'username'=>$meta['username'],'channel_id'=>$channelId]);
+        foreach($remaining as $p){
+            foreach($this->userConns[(int)$p['user_id']]??[] as $peerConn){
+                try{$peerConn->send($payload);}catch(\Exception){}
+            }
+        }
+    }
+
     private function handleWebRtcSignal(ConnectionInterface $from,array $data,array $meta,string $type):void{$target=(int)($data['target_user_id']??0);$vc=(int)($meta['voice_channel_id']??0);$peer=false;foreach($this->voiceRooms[$vc]??[] as $p)if((int)$p['user_id']===$target){$peer=true;break;}if(!$target||!$peer||empty($this->userConns[$target])){$from->send(json_encode(['type'=>'error','message'=>'Peer not connected']));return;}$payload=json_encode(['type'=>$type,'from_user_id'=>$meta['user_id'],'from_username'=>$meta['username'],'sdp'=>$data['sdp']??null,'candidate'=>$data['candidate']??null,'is_screen_offer'=>$data['is_screen_offer']??false]);foreach($this->userConns[$target] as $peerConn)try{$peerConn->send($payload);}catch(\Exception $e){error_log('[WS] WebRTC relay error: '.$e->getMessage());}}
     private function handleScreenShareNotify(ConnectionInterface $from,array $data,array $meta):void{$uid=(int)$meta['user_id'];$cid=(int)($meta['voice_channel_id']??$meta['channel_id']??0);$payload=json_encode(['type'=>'screen_share_notify','user_id'=>$uid,'username'=>$meta['username'],'active'=>(bool)($data['active']??false),'channel_id'=>$cid]);foreach($this->voiceRooms[$cid]??[] as $p){$pid=(int)$p['user_id'];if($pid===$uid)continue;foreach($this->userConns[$pid]??[] as $conn)try{$conn->send($payload);}catch(\Exception){}}}
     private function handleDeletedBroadcast(ConnectionInterface $from,array $data,array $meta):void{$cid=(int)($meta['channel_id']??0);$mid=(int)($data['message_id']??0);if(!$cid||!$mid)return;$this->broadcastToChannel($cid,json_encode(['type'=>'message_deleted','message_id'=>$mid]),$from);}
