@@ -216,13 +216,7 @@ $stats = $dashData['stats'] ?? [
 ?>
             <div class="log-item"><div class="log-dot <?= $dotColor ?>"></div><div class="log-time"><?= htmlspecialchars($log['timestamp'] ?? '') ?></div><div class="log-msg"><?= htmlspecialchars($log['message'] ?? '') ?></div></div>
 <?php endforeach; ?>
-<?php if (empty($dashData['system_logs'])): ?>
-            <div class="log-item"><div class="log-dot green"></div><div class="log-time">2025-05-19 14:32:21</div><div class="log-msg">John_Doe logged in</div></div>
-            <div class="log-item"><div class="log-dot green"></div><div class="log-time">2025-05-19 14:15:10</div><div class="log-msg">New user registered: Sara_Kim</div></div>
-            <div class="log-item"><div class="log-dot yellow"></div><div class="log-time">2025-05-19 13:45:33</div><div class="log-msg">Report submitted in #general</div></div>
-            <div class="log-item"><div class="log-dot blue"></div><div class="log-time">2025-05-19 13:20:05</div><div class="log-msg">System backup completed</div></div>
-            <div class="log-item"><div class="log-dot blue"></div><div class="log-time">2025-05-19 12:10:42</div><div class="log-msg">System cleanup completed</div></div>
-<?php endif; ?>
+<div class="dashboard-empty-state">No system log entries available.</div>
           </div>
         </div>
       </div>
@@ -290,12 +284,9 @@ $stats = $dashData['stats'] ?? [
             <td><div class="action-btns"><button class="btn-view" onclick="openUserProfile('<?= $uN ?>','<?= htmlspecialchars($uI) ?>','<?= htmlspecialchars($uG) ?>','<?= $uR ?>','<?= $uC ?>','<?= $uS?'Active':'Offline' ?>','<?= $uJ ?>')">View</button><button class="btn-sm btn-outline" onclick="openModal('muteModal','<?= $uN ?>')">Mute</button><button class="btn-sm" style="background:rgba(245,158,11,0.15);color:var(--yellow)" onclick="openModal('kickModal','<?= $uN ?>')">Kick</button><button class="btn-deny" onclick="openModal('banModal','<?= $uN ?>')">Ban</button></div></td>
           </tr>
 <?php endforeach; ?>
-<?php if (empty($dashData['all_users'])): ?>
-          <tr><td><div class="user-cell"><div class="u-avatar" style="background:linear-gradient(135deg,#ff4fd8,#7c5cff)">F</div><div><div class="u-name-main">Fatima_Student</div><div class="u-handle">@fatima.student</div></div></div></td><td><span class="pill" style="background:rgba(34,197,94,0.12);color:var(--green)">Student</span></td><td>Computer Science</td><td><span class="pill active"><span class="pill-dot"></span>Active</span></td><td style="color:var(--muted)">Jan 12, 2025</td><td><div class="action-btns"><button class="btn-view" onclick="openUserProfile('Fatima_Student','F','#ff4fd8,#7c5cff','Student','Computer Science','Active','Jan 12 2025')">View</button><button class="btn-sm btn-outline" onclick="openModal('muteModal','Fatima_Student')">Mute</button><button class="btn-sm" style="background:rgba(245,158,11,0.15);color:var(--yellow)" onclick="openModal('kickModal','Fatima_Student')">Kick</button><button class="btn-deny" onclick="openModal('banModal','Fatima_Student')">Ban</button></div></td></tr>
-          <tr><td><div class="user-cell"><div class="u-avatar" style="background:linear-gradient(135deg,#ef4444,#dc2626)">A</div><div><div class="u-name-main">Adam_Smith</div><div class="u-handle">@adam.smith</div></div></div></td><td><span class="pill" style="background:rgba(245,158,11,0.12);color:var(--yellow)">Facilitator</span></td><td>Computer Science</td><td><span class="pill active"><span class="pill-dot"></span>Active</span></td><td style="color:var(--muted)">Dec 20, 2024</td><td><div class="action-btns"><button class="btn-view" onclick="openUserProfile('Adam_Smith','A','#ef4444,#dc2626','Facilitator','Computer Science','Active','Dec 20 2024')">View</button><button class="btn-sm btn-outline" onclick="openModal('editRoleModal','Adam_Smith')">Edit Role</button><button class="btn-deny" onclick="openModal('banModal','Adam_Smith')">Ban</button></div></td></tr>
-<?php endif; ?>
+<tr><td colspan="6" class="dashboard-empty-state">No users found.</td></tr>
         </tbody></table></div>
-        <div class="pagination"><div class="page-info">Showing 1–<?= min(10,count($dashData['all_users']??[])?:6) ?> of <?= number_format((int)($stats['total_users']??1248)) ?> users</div><div class="page-btns"><button class="page-btn">‹</button><button class="page-btn active">1</button><button class="page-btn" onclick="showToast('Page 2','info','📄')">2</button><button class="page-btn" onclick="showToast('Page 3','info','📄')">3</button><button class="page-btn">…</button><button class="page-btn">›</button></div></div>
+        <div class="pagination"><div class="page-info">Showing 1–<?= min(10,count($dashData['all_users']??[])?:6) ?> of <?= number_format((int)($stats['total_users'] ?? 0)) ?> users</div><div class="page-btns"><button class="page-btn">‹</button><button class="page-btn active">1</button><button class="page-btn" onclick="showToast('Page 2','info','📄')">2</button><button class="page-btn" onclick="showToast('Page 3','info','📄')">3</button><button class="page-btn">…</button><button class="page-btn">›</button></div></div>
       </div>
     </div>
 
@@ -360,10 +351,7 @@ $stats = $dashData['stats'] ?? [
 <?php foreach ($dashData['servers'] ?? [] as $srv): $sI=htmlspecialchars($srv['icon_emoji']??'🖥'); $sN=htmlspecialchars($srv['name']??''); $sC=(int)($srv['member_count']??0); ?>
         <div class="server-item"><div class="srv-icon" style="background:rgba(255,79,216,0.15)"><?= $sI ?></div><div class="srv-name"><?= $sN ?></div><div class="srv-count">👥 <?= number_format($sC) ?> members</div><div class="srv-status-dot"></div><div class="action-btns" style="margin-left:12px"><button class="btn-view" onclick="openModal('serverDetailModal','<?= $sN ?>')">Manage</button><button class="btn-sm btn-outline" onclick="openModal('serverPermsModal','<?= $sN ?>')">Permissions</button><button class="btn-deny" onclick="openModal('deleteServerModal','<?= $sN ?>')">Delete</button></div></div>
 <?php endforeach; ?>
-<?php if (empty($dashData['servers'])): ?>
-        <div class="server-item"><div class="srv-icon" style="background:rgba(255,79,216,0.15)">🖥</div><div class="srv-name">Main Campus Server</div><div class="srv-count">👥 892 members</div><div class="srv-status-dot"></div><div class="action-btns" style="margin-left:12px"><button class="btn-view" onclick="openModal('serverDetailModal','Main Campus Server')">Manage</button><button class="btn-sm btn-outline">Permissions</button><button class="btn-deny" onclick="openModal('deleteServerModal','Main Campus Server')">Delete</button></div></div>
-        <div class="server-item"><div class="srv-icon" style="background:rgba(0,212,255,0.15)">🖥</div><div class="srv-name">CS Department</div><div class="srv-count">👥 456 members</div><div class="srv-status-dot"></div><div class="action-btns" style="margin-left:12px"><button class="btn-view" onclick="openModal('serverDetailModal','CS Department')">Manage</button><button class="btn-sm btn-outline">Permissions</button><button class="btn-deny" onclick="openModal('deleteServerModal','CS Department')">Delete</button></div></div>
-<?php endif; ?>
+<div class="dashboard-empty-state">No active servers found.</div>
       </div></div>
     </div>
 
