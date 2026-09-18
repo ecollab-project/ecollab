@@ -56,6 +56,12 @@ function wbGetWs() {
 //  WebSocket message handler — called by chat.js dispatcher
 // ══════════════════════════════════════════════════════════
 function wbHandleWsMessage(msg) {
+  // Whiteboard events are room-scoped. Ignore stale events from another
+  // channel/board so a cursor or stroke can never bleed into this canvas.
+  if (wbState.channelId && msg.channel_id != null &&
+      Number(msg.channel_id) !== Number(wbState.channelId)) return;
+  if (wbState.whiteboardId != null && msg.whiteboard_id != null &&
+      Number(msg.whiteboard_id) !== Number(wbState.whiteboardId)) return;
   switch (msg.type) {
 
     case 'wb_joined':
@@ -155,6 +161,7 @@ function openWhiteboard(boardName, sessionOwnerId, channelId) {
   wbState.boardName  = boardName || 'Whiteboard Session';
   wbState.sessionId  = sessionOwnerId || null;
   wbState.channelId  = channelId || window.__currentChannelId || null;
+  wbState.whiteboardId = null;
   wbState.dirty = false;
 
   const me           = wbGetCurrentUser();
@@ -468,11 +475,18 @@ function wbApplyRemoteOp(msg) {
 // ══════════════════════════════════════════════════════════
 
 function wbUpdateRemoteCursor(msg) {
-  if (!wbState.open) return;
+  if (!wbState.open || !wbState.channelId) return;
+  if (msg.channel_id != null && Number(msg.channel_id) !== Number(wbState.channelId)) return;
+  if (wbState.whiteboardId != null && msg.whiteboard_id != null &&
+      Number(msg.whiteboard_id) !== Number(wbState.whiteboardId)) return;
+
   const wrap = document.getElementById('wbCanvasWrap');
   if (!wrap) return;
 
-  const uid = msg.user_id;
+  const uid = Number(msg.user_id || 0);
+  const x = Number(msg.x);
+  const y = Number(msg.y);
+  if (!uid || uid === Number(wbGetCurrentUser().id) || !Number.isFinite(x) || !Number.isFinite(y)) return;
   if (!wbState.remoteCursors[uid]) {
     // Create cursor element
     const el = document.createElement('div');
@@ -496,8 +510,8 @@ function wbUpdateRemoteCursor(msg) {
   }
 
   const c = wbState.remoteCursors[uid];
-  c.el.style.left = (msg.x - 4) + 'px';
-  c.el.style.top  = (msg.y - 4) + 'px';
+  c.el.style.left = (x - 4) + 'px';
+  c.el.style.top  = (y - 4) + 'px';
 
   // Fade out after 4 s of inactivity
   clearTimeout(c._timeout);
