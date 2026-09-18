@@ -156,7 +156,7 @@
     window.__real_switchView=window.switchView;
   }
 
-  function restoreThreadView(){if(localStorage.getItem('ecollab.threads.navView')!=='threads')return;const nav=document.querySelector('.sidebar-nav-item[onclick*="threads"]')||document.querySelector('[data-view="threads"]');window.switchView?.('threads',nav);const savedThread=Number(localStorage.getItem('ecollab.threads.activeThread')||0);if(savedThread>0)setTimeout(()=>window.openThreadDetail?.(savedThread),250);}
+  function restoreThreadView(){const globalView=localStorage.getItem('ecollab.chat.activeView');if(localStorage.getItem('ecollab.threads.navView')!=='threads'||(globalView&&globalView!=='threads'))return;const nav=document.querySelector('.sidebar-nav-item[onclick*="threads"]')||document.querySelector('[data-view="threads"]');window.switchView?.('threads',nav);const savedThread=Number(localStorage.getItem('ecollab.threads.activeThread')||0);if(savedThread>0)setTimeout(()=>window.openThreadDetail?.(savedThread),250);}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installSwitch,{once:true});else installSwitch();
   window.addEventListener('load',()=>{installSwitch();setTimeout(restoreThreadView,120);},{once:true});
 })();
