@@ -1535,12 +1535,62 @@ function profileCardConnect() {
 // ═══════════════════════════════════════════════════════
 // NOTIFICATIONS
 // ═══════════════════════════════════════════════════════
+async function loadChatNotifications() {
+  const list = document.getElementById('notifList');
+  const badge = document.getElementById('notifBadge');
+  if (!list) return;
+  try {
+    const base = window.ECOLLAB?.baseUrl || '';
+    const res = await fetch(base + '/API/notifications/get.php', { credentials: 'same-origin' });
+    const data = await res.json();
+    if (!data.success) return;
+    if (badge) {
+      badge.textContent = data.unread_count || '';
+      badge.style.display = data.unread_count > 0 ? '' : 'none';
+    }
+    const items = Array.isArray(data.notifications) ? data.notifications.slice(0, 12) : [];
+    list.innerHTML = items.length ? items.map(n => {
+      const link = n.link_url || '';
+      const safeLink = String(link).replace(/"/g, '&quot;');
+      const title = String(n.title || 'Notification').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const body = String(n.body || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const time = n.created_at ? new Date(n.created_at).toLocaleString() : '';
+      return '<div class="notif-item ' + (!n.is_read ? 'unread' : '') + '" data-notif-id="' + (n.id || '') + '" data-link="' + safeLink + '" onclick="openChatNotification(this)">' +
+        (!n.is_read ? '<div class="notif-dot"></div>' : '') +
+        '<div class="notif-content"><div class="notif-text"><strong>' + title + '</strong>' + (body ? ' — ' + body : '') + '</div><div class="notif-time">' + time + '</div></div></div>';
+    }).join('') : '<div class="notif-item"><div class="notif-content"><div class="notif-text">No notifications</div></div></div>';
+  } catch (e) {
+    console.warn('[notifications] load failed', e);
+  }
+}
+
+async function openChatNotification(el) {
+  if (!el) return;
+  const id = parseInt(el.dataset.notifId || '0', 10);
+  const link = el.dataset.link || '';
+  if (id) {
+    fetch((window.ECOLLAB?.baseUrl || '') + '/API/notifications/mark-read.php', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ids:[id]})
+    }).catch(() => {});
+  }
+  if (link) {
+    try {
+      const url = new URL(link, window.location.origin);
+      if (url.origin === window.location.origin) { window.location.href = url.href; return; }
+    } catch (e) {}
+  }
+}
+
 function toggleNotifications() {
   const dd = document.getElementById('notifDropdown');
   if (!dd) return;
   const isOpen = dd.classList.contains('open') || dd.style.display === 'block';
   dd.classList.toggle('open', !isOpen);
   dd.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) loadChatNotifications();
 }
 
 function closeNotifications() {
