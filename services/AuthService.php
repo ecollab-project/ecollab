@@ -362,22 +362,45 @@ class AuthService {
 
             $this->db->commit();
 
-            // Write session for the new user
-            $newUser = [
-                'id'                   => $userId,
-                'username'             => $username,
-                'email'                => $email,
-                'full_name'            => $fullName,
-                'role'                 => 'student',
-                'status'               => 'active',
-                'avatar_color_gradient'=> $gradient,
-            ];
-            $this->writeSession($newUser);
+            // Email verification is completed before an authenticated session
+            // is created. The account and onboarding data are already committed,
+            // so a mail delivery failure leaves a recoverable pending account.
+            if (session_status() === PHP_SESSION_NONE) session_start();
 
-            return ['success' => true, 'user_id' => $userId, 'username' => $username, 'role' => 'student'];
+            $otp = $this->otpService->generate($userId, 'verify_email');
+            $_SESSION['pending_signup_user_id'] = $userId;
+            $_SESSION['pending_signup_expires'] = time() + OTP_EXPIRY;
+
+            $deliverResult = $this->otpService->deliver(
+                $email,
+                $fullName,
+                $otp,
+                'verify_email'
+            );
+
+            $result = [
+                'success'             => true,
+                'otp_required'        => true,
+                'verification_pending'=> true,
+                'user_id'             => $userId,
+                'username'            => $username,
+                'role'                => 'student',
+                'mail_sent'           => $deliverResult['success'],
+                'mail_error'          => $deliverResult['success']
+                    ? null
+                    : ($deliverResult['error'] ?? 'Unable to send the verification code.'),
+            ];
+
+            if (APP_DEBUG && isset($deliverResult['otp_debug'])) {
+                $result['otp_debug'] = $deliverResult['otp_debug'];
+            }
+
+            return $result;
 
         } catch (\Throwable $e) {
-            $this->db->rollBack();
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             error_log('[AuthService::register] ' . $e->getMessage());
             return ['success' => false, 'error' => 'Registration failed. Please try again.'];
         }
@@ -442,6 +465,32 @@ class AuthService {
             && $pendingExpires >= time()
         ) {
             $action = '2fa';
+        }
+
+        // Signup email verification is also bound to the server-side pending
+        // signup session. Never trust a client-supplied user ID for this flow.
+        $pendingSignupUserId = (int)($_SESSION['pending_signup_user_id'] ?? 0);
+        $pendingSignupExpires = (int)($_SESSION['pending_signup_expires'] ?? 0);
+
+        if ($action === 'reset_password'
+            && $pendingSignupUserId > 0
+            && $pendingSignupUserId === $userId
+            && $pendingSignupExpires >= time()
+        ) {
+            $action = 'verify_email';
+        }
+
+        if ($action === 'verify_email') {
+            if ($pendingSignupUserId <= 0
+                || $pendingSignupUserId !== $userId
+                || $pendingSignupExpires < time()
+            ) {
+                unset(
+                    $_SESSION['pending_signup_user_id'],
+                    $_SESSION['pending_signup_expires']
+                );
+                return ['success' => false, 'error' => 'Email verification expired. Please register again.'];
+            }
         }
 
         if ($action === '2fa') {
@@ -517,6 +566,57 @@ class AuthService {
                 'role' => $user['role'],
                 'user' => $user,
                 'redirect' => $redirect,
+            ];
+        }
+
+        if ($action === 'verify_email') {
+            $cols = SchemaVersion::selectColumns('users',
+                required: [
+                    'u.id', 'u.username', 'u.email', 'u.full_name',
+                    'u.role', 'u.status', 'u.email_verified', 'u.avatar_color_gradient',
+                ],
+                optional: [
+                    'plan_id' => 'u.plan_id',
+                ]
+            );
+
+            $stmt = $this->db->prepare("
+                SELECT $cols
+                FROM users u
+                WHERE u.id = :id
+                  AND u.deleted_at IS NULL
+                LIMIT 1
+            ");
+            $stmt->execute([':id' => $userId]);
+            $user = $stmt->fetch();
+
+            if (!$user || in_array($user['status'], ['banned', 'suspended', 'deactivated'], true)) {
+                return ['success' => false, 'error' => 'This account is no longer available.'];
+            }
+
+            $this->db->prepare("
+                UPDATE users
+                   SET email_verified = 1,
+                       status = 'active',
+                       is_online = 1,
+                       last_seen_at = NOW(),
+                       updated_at = NOW()
+                 WHERE id = :id
+            ")->execute([':id' => $userId]);
+
+            $this->completeAuthenticatedLogin($user, false);
+
+            unset(
+                $_SESSION['pending_signup_user_id'],
+                $_SESSION['pending_signup_expires']
+            );
+
+            return [
+                'success'    => true,
+                'verified'   => true,
+                'role'       => $user['role'],
+                'user'       => $user,
+                'redirect'   => BASE_URL . '/modules/onboarding/server-discovery.php',
             ];
         }
 
