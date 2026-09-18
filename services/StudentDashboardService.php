@@ -49,6 +49,7 @@ class StudentDashboardService
             'chat_recent' => $this->getRecentChat($userId),
             'membership' => $this->membershipService->getMembershipSummary($userId),
             'channels_entered' => count($this->getStudentCourses($userId)),
+            'activity_progression' => $this->getActivityProgression($userId),
         ];
     }
 
@@ -91,6 +92,26 @@ class StudentDashboardService
         } catch (Throwable) {
             return [];
         }
+    }
+
+
+    private function getActivityProgression(int $userId): array
+    {
+        $channels = count($this->getStudentCourses($userId));
+        $sessions = $this->getTotalSessions($userId);
+        $hours = $this->getHoursStudied($userId);
+        $messages = $this->getMessagesSent($userId);
+        $xp = ($channels * 100) + ($sessions * 25) + ((int)floor($hours * 10)) + ($messages * 2);
+        $level = max(1, (int)floor($xp / 500) + 1);
+        $currentFloor = ($level - 1) * 500;
+        $nextXp = $level * 500;
+        $progress = $nextXp > $currentFloor ? (int)round((($xp - $currentFloor) / ($nextXp - $currentFloor)) * 100) : 100;
+        $unlockMap = [2 => 'Advanced Whiteboard', 3 => 'Coding Buddy', 5 => 'AI Study Tools', 10 => 'Mentor Workspace'];
+        $unlocks = [];
+        foreach ($unlockMap as $requiredLevel => $name) {
+            $unlocks[] = ['required_level'=>$requiredLevel,'name'=>$name,'unlocked'=>$level >= $requiredLevel];
+        }
+        return ['level'=>$level,'xp'=>$xp,'next_level_xp'=>$nextXp,'progress_percent'=>max(0,min(100,$progress)),'unlocks'=>$unlocks];
     }
 
     private function getUpcomingSessions(int $userId): array
