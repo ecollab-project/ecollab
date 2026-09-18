@@ -34,24 +34,37 @@ try {
     $template = in_array($body['template'] ?? '', ['study-group', 'research', 'gaming', 'custom']) ? $body['template'] : 'custom';
     $emojis = ['study-group' => '📚', 'research' => '🔬', 'gaming' => '🎮', 'custom' => '⚙️'];
     $db = Database::getInstance();
-    $ins = $db->prepare("INSERT INTO servers (owner_id, name, slug, category, icon_emoji, type, created_at, updated_at) VALUES (:uid,:name,:slug,:cat,:emoji,:type,NOW(),NOW())");
-    $ins->execute([
-        ':uid' => $user['id'],
-        ':name' => $name,
-        ':slug' => $slug,
-        ':cat' => $template,
-        ':emoji' => $emojis[$template] ?? '⚙️',
-        ':type' => $type,
-    ]);
-    $serverId = (int)$db->lastInsertId();
 
-    // Add owner as member
-    $db->prepare("INSERT INTO server_members (server_id, user_id, server_role, joined_at) VALUES (:sid,:uid,'owner',NOW())")->execute([':sid' => $serverId, ':uid' => $user['id']]);
+    // Server creation is atomic: a failure in membership or default-channel
+    // creation must not leave a partially-created server behind.
+    $db->beginTransaction();
+    try {
+        $ins = $db->prepare("INSERT INTO servers (owner_id, name, slug, category, icon_emoji, type, created_at, updated_at) VALUES (:uid,:name,:slug,:cat,:emoji,:type,NOW(),NOW())");
+        $ins->execute([
+            ':uid' => $user['id'],
+            ':name' => $name,
+            ':slug' => $slug,
+            ':cat' => $template,
+            ':emoji' => $emojis[$template] ?? '⚙️',
+            ':type' => $type,
+        ]);
+        $serverId = (int)$db->lastInsertId();
 
-    // Create default channels
-    $db->prepare("INSERT INTO channels (server_id,name,slug,type,position,created_by) VALUES (:sid,'general','general','text',1,:uid)")->execute([':sid' => $serverId, ':uid' => $user['id']]);
-    $db->prepare("INSERT INTO channels (server_id,name,slug,type,position,created_by) VALUES (:sid,'general-voice','general-voice','voice',2,:uid)")->execute([':sid' => $serverId, ':uid' => $user['id']]);
-    $db->prepare("INSERT INTO channels (server_id,name,slug,type,position,created_by) VALUES (:sid,'whiteboard','whiteboard','whiteboard',3,:uid)")->execute([':sid' => $serverId, ':uid' => $user['id']]);
+        // Add owner as member
+        $db->prepare("INSERT INTO server_members (server_id, user_id, server_role, joined_at) VALUES (:sid,:uid,'owner',NOW())")->execute([':sid' => $serverId, ':uid' => $user['id']]);
+
+        // Create default channels
+        $db->prepare("INSERT INTO channels (server_id,name,slug,type,position,created_by) VALUES (:sid,'general','general','text',1,:uid)")->execute([':sid' => $serverId, ':uid' => $user['id']]);
+        $db->prepare("INSERT INTO channels (server_id,name,slug,type,position,created_by) VALUES (:sid,'general-voice','general-voice','voice',2,:uid)")->execute([':sid' => $serverId, ':uid' => $user['id']]);
+        $db->prepare("INSERT INTO channels (server_id,name,slug,type,position,created_by) VALUES (:sid,'whiteboard','whiteboard','whiteboard',3,:uid)")->execute([':sid' => $serverId, ':uid' => $user['id']]);
+
+        $db->commit();
+    } catch (Throwable $e) {
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
+        throw $e;
+    }
 
     echo json_encode([
         'success' => true,
