@@ -5,6 +5,7 @@
   const SERVER_KEY = 'ecollab.chat.activeServerId';
   const CHANNEL_KEY = 'ecollab.chat.activeChannelId';
   const VOICE_KEY = 'ecollab.chat.activeVoiceChannelId';
+  const THREAD_VIEW_KEY = 'ecollab.threads.navView';
 
   const NAV_VIEWS = new Set(['home', 'mentions', 'bookmarks', 'threads', 'drafts']);
 
@@ -28,115 +29,72 @@
     }) || null;
   }
 
-  function findServerIcon(serverId) {
-    return Array.from(document.querySelectorAll('.workspace-icon')).find(el =>
-      String(el.dataset.serverId || '') === String(serverId)
-    ) || null;
+  function captureNavigation(event) {
+    const target = event.target && event.target.closest
+      ? event.target.closest('.sidebar-nav-item')
+      : null;
+    if (!target) return;
+
+    const handler = target.getAttribute('onclick') || '';
+    const match = handler.match(/switchView\s*\(\s*['"]([^'"]+)['"]/);
+    const view = target.dataset.view || (match && match[1]);
+    if (!view || !NAV_VIEWS.has(view)) return;
+
+    save(VIEW_KEY, view);
+
+    // threads-v2 has its own legacy restore key. Keep it synchronized so
+    // leaving Threads cannot cause a later load handler to force Threads back.
+    if (view === 'threads') save(THREAD_VIEW_KEY, 'threads');
+    else {
+      try { localStorage.removeItem(THREAD_VIEW_KEY); } catch (_) {}
+      try { localStorage.removeItem('ecollab.threads.activeThread'); } catch (_) {}
+    }
   }
 
-  function findChannel(channelId) {
-    return Array.from(document.querySelectorAll('.channel-item')).find(el =>
-      String(el.dataset.channelId || '') === String(channelId)
-    ) || null;
-  }
+  function captureWorkspaceAndChannel(event) {
+    const target = event.target && event.target.closest ? event.target.closest('.workspace-icon, .channel-item, .voice-channel') : null;
+    if (!target) return;
 
-  function findVoiceChannel(channelId) {
-    return Array.from(document.querySelectorAll('.voice-channel')).find(el =>
-      String(el.dataset.channelId || '') === String(channelId)
-    ) || null;
-  }
-
-  function install() {
-    // switchView() is defined by chat-features.js. This file is loaded last
-    // so we can wrap the final implementation instead of racing another script.
-    if (typeof window.switchView !== 'function') return false;
-
-    if (!window.__ecollabNavPersistenceInstalled) {
-      const originalSwitchView = window.switchView;
-      window.switchView = function (viewName, el) {
-        save(VIEW_KEY, viewName || 'home');
-        return originalSwitchView.apply(this, arguments);
-      };
-      window.__ecollabNavPersistenceInstalled = true;
+    if (target.matches('.workspace-icon') && target.dataset.serverId) {
+      save(SERVER_KEY, target.dataset.serverId);
+      return;
     }
-
-    if (typeof window.switchChannel === 'function' && !window.__ecollabChannelPersistenceInstalled) {
-      const originalSwitchChannel = window.switchChannel;
-      window.switchChannel = function (el, channelId) {
-        save(CHANNEL_KEY, channelId);
-        return originalSwitchChannel.apply(this, arguments);
-      };
-      window.__ecollabChannelPersistenceInstalled = true;
+    if (target.matches('.channel-item') && target.dataset.channelId) {
+      save(CHANNEL_KEY, target.dataset.channelId);
+      return;
     }
-
-    if (typeof window.switchWorkspace === 'function' && !window.__ecollabWorkspacePersistenceInstalled) {
-      const originalSwitchWorkspace = window.switchWorkspace;
-      window.switchWorkspace = function (wsIdx, serverId) {
-        save(SERVER_KEY, serverId);
-        return originalSwitchWorkspace.apply(this, arguments);
-      };
-      window.__ecollabWorkspacePersistenceInstalled = true;
+    if (target.matches('.voice-channel') && target.dataset.channelId) {
+      save(VOICE_KEY, target.dataset.channelId);
     }
-
-    if (typeof window.joinVoice === 'function' && !window.__ecollabVoicePersistenceInstalled) {
-      const originalJoinVoice = window.joinVoice;
-      window.joinVoice = function (slug, el, channelId) {
-        save(VOICE_KEY, channelId);
-        return originalJoinVoice.apply(this, arguments);
-      };
-      window.__ecollabVoicePersistenceInstalled = true;
-    }
-
-    return true;
   }
 
   function restore() {
-    if (!install()) return;
-
-    const savedServer = get(SERVER_KEY);
-    const savedChannel = get(CHANNEL_KEY);
     const savedView = get(VIEW_KEY);
 
-    // Restore server first. loadServerChannels() is async, so channel restore
-    // is retried after the server/channel DOM has had time to populate.
-    if (savedServer && typeof window.switchWorkspace === 'function') {
-      const icon = findServerIcon(savedServer);
-      if (icon) {
-        const icons = Array.from(document.querySelectorAll('.workspace-icon'));
-        window.switchWorkspace(icons.indexOf(icon), Number(savedServer));
+    // The global chat view is authoritative. Do not let the old Threads-only
+    // restore state override Home, Mentions, Bookmarks, or Drafts.
+    if (savedView && NAV_VIEWS.has(savedView)) {
+      if (savedView !== 'threads') {
+        try { localStorage.removeItem(THREAD_VIEW_KEY); } catch (_) {}
+        try { localStorage.removeItem('ecollab.threads.activeThread'); } catch (_) {}
       }
-    }
 
-    if (savedChannel) {
-      let tries = 0;
-      const restoreChannel = () => {
-        const channel = findChannel(savedChannel);
-        if (channel && typeof window.switchChannel === 'function') {
-          window.switchChannel(channel, Number(savedChannel));
-          return true;
-        }
-        if (++tries < 30) {
-          setTimeout(restoreChannel, 150);
-        }
-        return false;
-      };
-      restoreChannel();
-    }
-
-    if (savedView && NAV_VIEWS.has(savedView) && typeof window.switchView === 'function') {
       const item = findNavItem(savedView);
-      window.switchView(savedView, item);
+      if (item && !item.classList.contains('active')) item.click();
     }
 
-    // Voice calls are deliberately not auto-joined after F5. Browsers may
-    // require a fresh media permission/user gesture. The selected voice
-    // channel remains saved for future restoration/UI work.
+    // Restore only the selected server/channel state. Voice is intentionally
+    // not auto-joined after F5 because getUserMedia may require user gesture.
   }
 
-  // Run after all deferred Chat scripts and DOM initialization have settled.
+  // Event delegation works for dynamically-created navigation elements and does
+  // not depend on switchView/switchChannel being defined when this script loads.
+  document.addEventListener('click', captureNavigation, true);
+  document.addEventListener('click', captureWorkspaceAndChannel, true);
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => setTimeout(restore, 0), { once: true });
+    document.addEventListener('DOMContentLoaded', () => setTimeout(restore, 250), { once: true });
   } else {
-    setTimeout(restore, 0);
+    setTimeout(restore, 250);
   }
 })();
