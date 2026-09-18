@@ -523,7 +523,6 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
         <div class="chat-input-actions">
           <div class="input-spacer"></div>
-          <button class="find-partner-btn" onclick="openFullMatchesModal()">🔍 Find Study Partner</button>
           <button class="ai-assist-btn" id="aiAssistBtn" onclick="generateAIReply()">✨ AI Assist <span class="ai-assist-chevron">▾</span></button>
           <button class="send-btn" onclick="sendMessage()">Send</button>
         </div>
