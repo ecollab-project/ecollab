@@ -333,6 +333,8 @@ async function switchChannel(el, channelId) {
       document.getElementById('channelDesc').textContent = ch.description || '';
       document.getElementById('chatInputField').placeholder = `Message #${ch.name}`;
       document.getElementById('mobChannelName').textContent = ch.name;
+      const dashboardLink = document.getElementById('channelDashboardLink');
+      if (dashboardLink) dashboardLink.style.display = String(ch.name || '').trim().toLowerCase() === 's1.election' ? 'inline-block' : 'none';
 
       // Show/hide manage button for private channels
       const manageBtn = document.getElementById('manageChannelBtn');
