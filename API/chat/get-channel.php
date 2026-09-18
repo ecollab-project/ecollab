@@ -29,8 +29,24 @@ try {
         exit;
     }
 
-    $members = $service->getOnlineMembers((int)$channel['server_id']);
-    $service->markRead((int)$channelId, $user['id']);
+    // Resolve access before exposing member/activity data.
+    $roleStmt = $db->prepare("SELECT server_role FROM server_members WHERE server_id = :sid AND user_id = :uid LIMIT 1");
+    $roleStmt->execute([':sid' => $channel['server_id'], ':uid' => $user['id']]);
+    $serverRole = $roleStmt->fetchColumn();
+    $canManage = in_array($serverRole, ['owner', 'admin', 'moderator'], true)
+        || (int)($channel['created_by'] ?? 0) === (int)$user['id'];
+
+    $hasAccess = true;
+    if ($channel['is_private']) {
+        $accStmt = $db->prepare("SELECT 1 FROM channel_members WHERE channel_id = :cid AND user_id = :uid LIMIT 1");
+        $accStmt->execute([':cid' => $channelId, ':uid' => $user['id']]);
+        $hasAccess = (bool)$accStmt->fetchColumn() || $canManage;
+    }
+
+    $members = $hasAccess ? $service->getOnlineMembers((int)$channel['server_id']) : [];
+    if ($hasAccess) {
+        $service->markRead((int)$channelId, $user['id']);
+    }
 
     // Auto-create access requests table if needed
     $db->exec("
@@ -46,19 +62,7 @@ try {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     ");
 
-    // Determine if user can manage the channel and if they have access
-    $roleStmt = $db->prepare("SELECT server_role FROM server_members WHERE server_id = :sid AND user_id = :uid LIMIT 1");
-    $roleStmt->execute([':sid' => $channel['server_id'], ':uid' => $user['id']]);
-    $serverRole = $roleStmt->fetchColumn();
-    $canManage = in_array($serverRole, ['owner', 'admin', 'moderator'])
-        || (int)($channel['created_by'] ?? 0) === (int)$user['id'];
-
-    $hasAccess = true;
-    if ($channel['is_private']) {
-        $accStmt = $db->prepare("SELECT 1 FROM channel_members WHERE channel_id = :cid AND user_id = :uid LIMIT 1");
-        $accStmt->execute([':cid' => $channelId, ':uid' => $user['id']]);
-        $hasAccess = (bool)$accStmt->fetchColumn() || $canManage;
-    }
+    // Access state was resolved before loading channel content.
 
     // Check for pending request status
     $requestStatus = null;
