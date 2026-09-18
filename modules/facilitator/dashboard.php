@@ -29,7 +29,7 @@ $name     = htmlspecialchars($user['full_name'] ?: $user['username']);
 $hour     = (int)date('G');
 $greeting = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
 
-$stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'messages_today' => 156, 'study_sessions' => 12];
+$stats = $dashData['stats'] ?? ['total_members' => 0, 'active_today' => 0, 'messages_today' => 0, 'study_sessions' => 0];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -132,15 +132,15 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
               <div class="sc-label">Total Members</div>
               <div class="sc-icon">👥</div>
             </div>
-            <div class="sc-val"><?= (int)($stats['total_members'] ?? 72) ?></div>
-            <div class="sc-sub">+4 this week</div>
+            <div class="sc-val"><?= (int)($stats['total_members'] ?? 0) ?></div>
+            <div class="sc-sub">Current member count</div>
           </div>
           <div class="stat-card sc2" onclick="openModal('activeModal')">
             <div class="sc-top">
               <div class="sc-label">Active Today</div>
               <div class="sc-icon">⚡</div>
             </div>
-            <div class="sc-val"><?= (int)($stats['active_today'] ?? 38) ?></div>
+            <div class="sc-val"><?= (int)($stats['active_today'] ?? 0) ?></div>
             <div class="sc-sub"><?= round((int)($stats['active_today'] ?? 38) / max(1, (int)($stats['total_members'] ?? 72)) * 100, 1) ?>% of members</div>
           </div>
           <div class="stat-card sc3" onclick="openModal('messagesModal')">
@@ -148,16 +148,16 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
               <div class="sc-label">Messages Today</div>
               <div class="sc-icon">💬</div>
             </div>
-            <div class="sc-val"><?= (int)($stats['messages_today'] ?? 156) ?></div>
-            <div class="sc-sub">+23% from yesterday</div>
+            <div class="sc-val"><?= (int)($stats['messages_today'] ?? 0) ?></div>
+            <div class="sc-sub">Recorded today</div>
           </div>
           <div class="stat-card sc4" onclick="showPage('sessions')">
             <div class="sc-top">
               <div class="sc-label">Study Sessions</div>
               <div class="sc-icon">🕐</div>
             </div>
-            <div class="sc-val"><?= (int)($stats['study_sessions'] ?? 12) ?></div>
-            <div class="sc-sub">+3 this week</div>
+            <div class="sc-val"><?= (int)($stats['study_sessions'] ?? 0) ?></div>
+            <div class="sc-sub">Recorded sessions</div>
           </div>
         </div>
 
