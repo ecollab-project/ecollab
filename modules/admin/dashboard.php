@@ -558,17 +558,17 @@ $stats = $dashData['stats'] ?? [
 <script>
 var ADMIN_DATA = <?= json_encode([
   'stats'       => $stats,
-  'sessData'    => $dashData['sessions_chart'] ?? [42, 38, 55, 47, 61, 52, 47],
-  'engData'     => $dashData['engagement_chart'] ?? [320, 280, 410, 390, 440, 360, 312],
-  'dauData'     => $dashData['dau_chart'] ?? [820, 760, 890, 930, 870, 950, 892],
+  'sessData'    => $dashData['sessions_chart'] ?? [],
+  'engData'     => $dashData['engagement_chart'] ?? [],
+  'dauData'     => $dashData['dau_chart'] ?? [],
   'userId'      => $user['id'],
   'csrfToken'   => $csrfToken,
-  'aiAccuracy'  => (float)($stats['ai_accuracy'] ?? 98.7),
+  'aiAccuracy'  => (float)($stats['ai_accuracy'] ?? 0),
 ], JSON_HEX_TAG) ?>;
 // Defaults
-if(!ADMIN_DATA.sessData.length) ADMIN_DATA.sessData = [42,38,55,47,61,52,47];
-if(!ADMIN_DATA.engData.length)  ADMIN_DATA.engData  = [320,280,410,390,440,360,312];
-if(!ADMIN_DATA.dauData.length)  ADMIN_DATA.dauData  = [820,760,890,930,870,950,892];
+ADMIN_DATA.sessData = Array.isArray(ADMIN_DATA.sessData) ? ADMIN_DATA.sessData : [];
+ADMIN_DATA.engData = Array.isArray(ADMIN_DATA.engData) ? ADMIN_DATA.engData : [];
+ADMIN_DATA.dauData = Array.isArray(ADMIN_DATA.dauData) ? ADMIN_DATA.dauData : [];
 </script>
 <script src="<?= BASE_URL ?>/assets/js/admin/dashboard.js" defer></script>
 
