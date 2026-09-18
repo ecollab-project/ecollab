@@ -70,6 +70,8 @@ try {
             'verification_pending' => (bool)($outcome['verification_pending'] ?? false),
             'mail_sent'            => (bool)($outcome['mail_sent'] ?? false),
             'mail_error'           => $outcome['mail_error'] ?? null,
+            'verified'             => (bool)($outcome['verified'] ?? false),
+            'redirect'             => $outcome['redirect'] ?? null,
             'username'             => $outcome['username'],
             'user_id'              => $outcome['user_id'],
             'otp_debug'            => $outcome['otp_debug'] ?? null,

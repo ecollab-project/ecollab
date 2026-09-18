@@ -163,6 +163,97 @@ class AuthService {
     }
 
     // ═══════════════════════════════════════════════════════════════
+    // PRE-SIGNUP EMAIL VERIFICATION
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Send an email verification OTP before the user advances past signup step 1.
+     * No user row is created until the full signup form is submitted.
+     */
+    public function sendPreSignupEmailOtp(string $email, string $fullName): array {
+        $email = trim(strtolower($email));
+        $fullName = trim($fullName);
+
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return ['success' => false, 'error' => 'Please enter a valid email address.'];
+        }
+        if ($fullName === '') {
+            return ['success' => false, 'error' => 'Please enter your full name.'];
+        }
+
+        // Do not allow an already-registered address to start a new signup.
+        $stmt = $this->db->prepare("SELECT id, email_verified FROM users WHERE email = :email LIMIT 1");
+        $stmt->execute([':email' => $email]);
+        if ($stmt->fetch()) {
+            return ['success' => false, 'error' => 'An account with that email already exists.'];
+        }
+
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        $otp = str_pad((string)random_int(0, 999999), OTP_LENGTH, '0', STR_PAD_LEFT);
+
+        $_SESSION['pending_signup_email'] = $email;
+        $_SESSION['pending_signup_email_hash'] = password_hash($otp, PASSWORD_BCRYPT, ['cost' => 10]);
+        $_SESSION['pending_signup_email_expires'] = time() + OTP_EXPIRY;
+        $_SESSION['pending_signup_email_verified'] = false;
+
+        $deliverResult = $this->otpService->deliver($email, $fullName, $otp, 'verify_email');
+
+        if (!$deliverResult['success']) {
+            unset(
+                $_SESSION['pending_signup_email_hash'],
+                $_SESSION['pending_signup_email_expires'],
+                $_SESSION['pending_signup_email_verified']
+            );
+            return [
+                'success' => false,
+                'error' => $deliverResult['error'] ?? 'Unable to send the verification code.'
+            ];
+        }
+
+        $result = [
+            'success' => true,
+            'otp_required' => true,
+            'mail_sent' => true,
+            'email' => $email,
+        ];
+
+        if (APP_DEBUG && isset($deliverResult['otp_debug'])) {
+            $result['otp_debug'] = $deliverResult['otp_debug'];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Verify the pre-signup email OTP and bind the verified email to this session.
+     */
+    public function verifyPreSignupEmailOtp(string $email, string $otp): array {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        $email = trim(strtolower($email));
+        $pendingEmail = (string)($_SESSION['pending_signup_email'] ?? '');
+        $expires = (int)($_SESSION['pending_signup_email_expires'] ?? 0);
+        $hash = (string)($_SESSION['pending_signup_email_hash'] ?? '');
+
+        if ($pendingEmail === '' || !hash_equals($pendingEmail, $email) || $expires < time() || $hash === '') {
+            return ['success' => false, 'error' => 'Email verification expired. Please request a new code.'];
+        }
+
+        if (!password_verify(trim($otp), $hash)) {
+            return ['success' => false, 'error' => 'Incorrect code. Please try again.'];
+        }
+
+        $_SESSION['pending_signup_email_verified'] = true;
+        unset(
+            $_SESSION['pending_signup_email_hash'],
+            $_SESSION['pending_signup_email_expires']
+        );
+
+        return ['success' => true, 'verified' => true, 'email' => $email];
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     // SIGNUP (3-step registration)
     // ═══════════════════════════════════════════════════════════════
 
@@ -188,6 +279,12 @@ class AuthService {
         if (!$terms)            return ['success' => false, 'error' => 'You must agree to the Terms & Privacy Policy.'];
         if ($course === '')     return ['success' => false, 'error' => 'Please select your course.', 'field' => 'course'];
         if ($year < 1 || $year > 4) return ['success' => false, 'error' => 'Please select a valid year level.', 'field' => 'year_level'];
+
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $verifiedEmail = strtolower(trim((string)($_SESSION['pending_signup_email'] ?? '')));
+        if (empty($_SESSION['pending_signup_email_verified']) || $verifiedEmail !== $email) {
+            return ['success' => false, 'error' => 'Please verify your email address before creating your account.', 'field' => 'email'];
+        }
 
         // Check for duplicate email
         $dup = $this->db->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
@@ -242,7 +339,7 @@ class AuthService {
             $ins = $this->db->prepare("
                 INSERT INTO users (institution_id, username, email, password_hash,
                                    full_name, avatar_color_gradient, role, status, email_verified, created_at, updated_at)
-                VALUES (:inst, :uname, :email, :hash, :name, :grad, 'student', 'active', 0, NOW(), NOW())
+                VALUES (:inst, :uname, :email, :hash, :name, :grad, 'student', 'active', 1, NOW(), NOW())
             ");
             $ins->execute([
                 ':inst'  => $instId,
@@ -362,40 +459,39 @@ class AuthService {
 
             $this->db->commit();
 
-            // Email verification is completed before an authenticated session
-            // is created. The account and onboarding data are already committed,
-            // so a mail delivery failure leaves a recoverable pending account.
+            // The email was verified before the account was created, so this
+            // account is marked verified immediately and can be authenticated.
             if (session_status() === PHP_SESSION_NONE) session_start();
 
-            $otp = $this->otpService->generate($userId, 'verify_email');
-            $_SESSION['pending_signup_user_id'] = $userId;
-            $_SESSION['pending_signup_expires'] = time() + OTP_EXPIRY;
-
-            $deliverResult = $this->otpService->deliver(
-                $email,
-                $fullName,
-                $otp,
-                'verify_email'
-            );
-
-            $result = [
-                'success'             => true,
-                'otp_required'        => true,
-                'verification_pending'=> true,
-                'user_id'             => $userId,
-                'username'            => $username,
-                'role'                => 'student',
-                'mail_sent'           => $deliverResult['success'],
-                'mail_error'          => $deliverResult['success']
-                    ? null
-                    : ($deliverResult['error'] ?? 'Unable to send the verification code.'),
+            $newUser = [
+                'id' => $userId,
+                'username' => $username,
+                'email' => $email,
+                'full_name' => $fullName,
+                'role' => 'student',
+                'status' => 'active',
+                'avatar_color_gradient' => $gradient,
+                'plan_id' => null,
             ];
 
-            if (APP_DEBUG && isset($deliverResult['otp_debug'])) {
-                $result['otp_debug'] = $deliverResult['otp_debug'];
-            }
+            $this->completeAuthenticatedLogin($newUser, false);
 
-            return $result;
+            unset(
+                $_SESSION['pending_signup_email'],
+                $_SESSION['pending_signup_email_verified'],
+                $_SESSION['pending_signup_email_hash'],
+                $_SESSION['pending_signup_email_expires']
+            );
+
+            return [
+                'success' => true,
+                'verified' => true,
+                'otp_required' => false,
+                'user_id' => $userId,
+                'username' => $username,
+                'role' => 'student',
+                'redirect' => BASE_URL . '/modules/onboarding/server-discovery.php',
+            ];
 
         } catch (\Throwable $e) {
             if ($this->db->inTransaction()) {

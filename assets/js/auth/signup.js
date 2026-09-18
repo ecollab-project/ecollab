@@ -209,8 +209,55 @@ function showStep(n) {
   currentStep = n;
 }
 
-function nextStep(from) {
-  if (validate(from)) showStep(from + 1);
+async function nextStep(from) {
+  if (!validate(from)) return;
+
+  if (from === 1) {
+    await requestPreSignupEmailVerification();
+    return;
+  }
+
+  showStep(from + 1);
+}
+
+async function requestPreSignupEmailVerification() {
+  const email = document.getElementById('email')?.value.trim() || '';
+  const fullName = document.getElementById('fullName')?.value.trim() || '';
+
+  const btn = document.querySelector('#panel1 .signup-btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Sending code…';
+  }
+
+  try {
+    const res = await fetch('../../API/auth/send-signup-email-otp.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': getCsrf(),
+        'Accept': 'application/json',
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({ email, full_name: fullName }),
+    });
+
+    const data = await res.json();
+
+    if (data.success && data.otp_required) {
+      showEmailVerification(data);
+      return;
+    }
+
+    showErr(1, data.error || 'Unable to send the verification code.');
+  } catch {
+    showErr(1, 'Could not reach the email verification service. Please try again.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Next →';
+    }
+  }
 }
 
 function goBack() {
@@ -551,10 +598,10 @@ function showEmailVerification(data = {}) {
   if (error) error.textContent = '';
   if (input) {
     input.value = '';
-    input.focus();
   }
 
   modal.style.display = 'flex';
+  if (input) input.focus();
   startVerificationCountdown();
 }
 
@@ -587,6 +634,7 @@ async function verifySignupOtp() {
   const error = document.getElementById('signupOtpError');
   const button = document.getElementById('signupVerifyBtn');
   const otp = (input?.value || '').replace(/\D/g, '');
+  const email = document.getElementById('email')?.value.trim() || '';
 
   if (otp.length !== 6) {
     if (error) error.textContent = 'Enter the 6-digit verification code.';
@@ -601,19 +649,24 @@ async function verifySignupOtp() {
   if (error) error.textContent = '';
 
   try {
-    const res = await fetch('../../API/auth/verify-otp.php', {
+    const res = await fetch('../../API/auth/verify-signup-email-otp.php', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-CSRF-Token': getCsrf(),
+        'Accept': 'application/json',
       },
-      body: JSON.stringify({ otp }),
+      credentials: 'same-origin',
+      body: JSON.stringify({ email, otp }),
     });
     const data = await res.json();
 
     if (data.success && data.verified) {
       if (button) button.textContent = '✓ Verified';
-      window.location.href = data.redirect || '../../modules/onboarding/server-discovery.php';
+      const modal = document.getElementById('emailVerificationModal');
+      if (modal) modal.style.display = 'none';
+      startVerificationCountdown(0);
+      showStep(2);
       return;
     }
 
@@ -637,14 +690,19 @@ async function resendSignupOtp() {
   resend.disabled = true;
   resend.textContent = 'Sending…';
 
+  const email = document.getElementById('email')?.value.trim() || '';
+  const fullName = document.getElementById('fullName')?.value.trim() || '';
+
   try {
-    const res = await fetch('../../API/auth/resend-signup-otp.php', {
+    const res = await fetch('../../API/auth/send-signup-email-otp.php', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-CSRF-Token': getCsrf(),
+        'Accept': 'application/json',
       },
-      body: JSON.stringify({}),
+      credentials: 'same-origin',
+      body: JSON.stringify({ email, full_name: fullName }),
     });
     const data = await res.json();
 
