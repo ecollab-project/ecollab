@@ -15,7 +15,6 @@ if (file_exists($envFile)) {
         if (str_starts_with(trim($line), '#') || !str_contains($line, '=')) continue;
         [$key, $val] = array_map('trim', explode('=', $line, 2));
         $val = trim($val, "\"'");
-        // An already-set real environment variable takes precedence over .env.
         if (!array_key_exists($key, $_ENV) && getenv($key) === false) {
             $_ENV[$key] = $val;
             putenv("$key=$val");
@@ -47,22 +46,11 @@ function guessAppUrl(): string
     return $scheme . '://' . $host;
 }
 
-/**
- * Resolve the application URL for the current runtime.
- *
- * On XAMPP/local Apache, the actual folder is authoritative. This prevents a
- * stale APP_URL from an older checkout (for example /ecollab_sample5/ecollab)
- * from breaking every CSS/JS asset and every authentication redirect.
- * Production hosts continue to use the configured APP_URL.
- */
 function resolveAppUrl(): string
 {
     $configured = trim((string)env('APP_URL', ''));
     $rootDir = realpath(__DIR__) ?: '';
 
-    // CLI has no HTTP_HOST, so detect the Windows XAMPP htdocs layout directly.
-    // This also makes `php -r ...` diagnostics report the same URL the browser
-    // should use, instead of returning a stale APP_URL from an older checkout.
     if (PHP_OS_FAMILY === 'Windows' && preg_match('~^[A-Za-z]:[\\\\/]xampp[\\\\/]htdocs(?:[\\\\/]|$)~i', $rootDir)) {
         $htdocs = realpath(dirname($rootDir)) ?: '';
         if ($htdocs !== '' && str_starts_with(strtolower($rootDir), strtolower($htdocs . DIRECTORY_SEPARATOR))) {
@@ -96,13 +84,11 @@ function isLocalRuntime(): bool
             || str_ends_with($host, '.local');
     }
 
-    // CLI commands run without HTTP_HOST. Treat the Windows XAMPP checkout as local.
     $rootDir = realpath(__DIR__) ?: '';
     return PHP_OS_FAMILY === 'Windows'
         && preg_match('~^[A-Za-z]:[\\\\/]xampp[\\\\/]htdocs(?:[\\\\/]|$)~i', $rootDir) === 1;
 }
 
-// ── Application ─────────────────────────────────────────────────────────────
 define('APP_NAME',    env('APP_NAME',    'Ecollab'));
 define('APP_ENV',     env('APP_ENV',     'production'));
 define('APP_URL',     resolveAppUrl());
@@ -139,15 +125,10 @@ define('OTP_EXPIRY', (int)env('OTP_EXPIRY', 600));
 define('OTP_LENGTH', (int)env('OTP_LENGTH', 6));
 
 // ── Mail ──────────────────────────────────────────────────────────────────────
-define('MAIL_HOST',      env('MAIL_HOST',      'localhost'));
-define('MAIL_PORT',      (int)env('MAIL_PORT', 587));
-define('MAIL_USER',      env('MAIL_USER',      ''));
-define('MAIL_PASS',      env('MAIL_PASS',      ''));
-define('MAIL_FROM',      env('MAIL_FROM',      'noreply@ecollab.io'));
-define('MAIL_FROM_NAME', env('MAIL_FROM_NAME', 'Ecollab'));
-define('MAIL_API_URL', env('MAIL_API_URL', 'https://api.mail.hostinger.com'));
-define('MAIL_API_KEY', env('MAIL_API_KEY', ''));
-define('MAILBOX_RESOURCE_ID', env('MAILBOX_RESOURCE_ID', ''));
+define('BREVO_API_URL',      env('BREVO_API_URL',      'https://api.brevo.com'));
+define('BREVO_API_KEY',      env('BREVO_API_KEY',      ''));
+define('BREVO_SENDER_EMAIL', env('BREVO_SENDER_EMAIL', ''));
+define('BREVO_SENDER_NAME',  env('BREVO_SENDER_NAME',  'Ecollab'));
 
 // ── WebSocket ─────────────────────────────────────────────────────────────────
 define('WS_HOST', env('WS_HOST', '0.0.0.0'));
@@ -172,9 +153,6 @@ if (APP_DEBUG) {
     ini_set('error_log', ROOT_PATH . '/logs/php-errors.log');
 }
 
-// ── OAuth / SSO ───────────────────────────────────────────────────────────────
-// Localhost always follows the active XAMPP path. This avoids stale callback
-// URLs copied from previous local project folders.
 $googleRedirectUri = isLocalRuntime()
     ? APP_URL . '/API/auth/oauth-callback.php?provider=google'
     : env('GOOGLE_REDIRECT_URI', APP_URL . '/API/auth/oauth-callback.php?provider=google');
