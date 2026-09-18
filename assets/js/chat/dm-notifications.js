@@ -299,7 +299,7 @@ function _renderNotifDropdown() {
   }
 
   list.innerHTML = NOTIF.items.map(n => `
-    <div class="notif-item ${n.is_read ? '' : 'unread'}" data-notif-id="${n.id}" onclick="_handleNotifClick(${n.id},'${_esc(n.type)}',${n.ref_id || 0})" style="cursor:pointer;">
+    <div class="notif-item ${n.is_read ? '' : 'unread'}" data-notif-id="${n.id}" data-link-url="${_esc(n.link_url || '')}" onclick="_handleNotifClick(${n.id},'${_esc(n.type)}',${n.ref_id || 0},this)" style="cursor:pointer;">
       <div class="notif-dot" style="${n.is_read ? 'opacity:0' : ''}"></div>
       <div style="display:flex;align-items:flex-start;gap:10px;flex:1;">
         <div style="font-size:18px;flex-shrink:0;margin-top:1px;">${_notifIcon(n.type)}</div>
@@ -312,7 +312,7 @@ function _renderNotifDropdown() {
     </div>`).join('');
 }
 
-window._handleNotifClick = function(notifId, type, refId) {
+window._handleNotifClick = function(notifId, type, refId, element) {
   // Mark this notification read
   const notif = NOTIF.items.find(n => n.id === notifId);
   if (notif && !notif.is_read) {
@@ -327,9 +327,15 @@ window._handleNotifClick = function(notifId, type, refId) {
     }).catch(() => {});
   }
 
-  // Navigate
+  // Navigate to the exact notification target when the server supplied one.
+  const linkUrl = element?.dataset?.linkUrl || '';
+  if (linkUrl) {
+    window.location.href = linkUrl.startsWith('http') ? linkUrl : (BASE() + (linkUrl.startsWith('/') ? linkUrl : '/' + linkUrl));
+    return;
+  }
+
+  // Fallback for legacy DM notifications that predate link_url.
   if (type === 'dm' || type === 'dm_message') {
-    // Close dropdown, open DM panel — refId is message_id, we need conv
     const conv = DM.conversations.find(c => c.unread_count > 0);
     if (conv) openDmConversation(conv.partner_id, conv.partner_name, conv.partner_gradient);
   }
