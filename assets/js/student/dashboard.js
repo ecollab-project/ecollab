@@ -51,7 +51,20 @@ function closeAllDD(){document.getElementById('ndrop').classList.remove('show');
 document.addEventListener('click',e=>{if(!e.target.closest('#nBtn'))document.getElementById('ndrop').classList.remove('show');if(!e.target.closest('#pchip'))document.getElementById('pdrop').classList.remove('show');if(!e.target.closest('#swrap'))hideSD();});
 
 // ═══ NOTIFICATIONS ═══
-function handleNotif(el,msg){el.classList.remove('unread');const d=el.querySelector('.ndd');if(d)d.remove();updateNB();if(el.dataset.chatLink)goToChat();else toast(msg,'info','🔔');}
+function handleNotif(el,msg){
+  if(!el)return;
+  el.classList.remove('unread');
+  const d=el.querySelector('.ndd');if(d)d.remove();
+  updateNB();
+  const link=el.dataset.link||el.dataset.chatLink;
+  if(link){
+    try{
+      const url=new URL(link,window.location.origin);
+      if(url.origin===window.location.origin){window.location.href=url.href;return;}
+    }catch(e){}
+  }
+  toast(msg,'info','🔔');
+}
 function clearNotifs(){document.querySelectorAll('.ndi').forEach(i=>{i.classList.remove('unread');const d=i.querySelector('.ndd');if(d)d.remove();});document.getElementById('nbadge').style.display='none';const s=document.getElementById('sideNB');if(s)s.style.display='none';toast('All notifications read','success','✓');}
 function updateNB(){const c=document.querySelectorAll('.ndi.unread').length;const b=document.getElementById('nbadge');const sb=document.getElementById('sideNB');if(c===0){b.style.display='none';if(sb)sb.style.display='none';}else{b.textContent=c;b.style.display='';if(sb){sb.textContent=c;sb.style.display='';}}}
 
