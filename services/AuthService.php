@@ -339,7 +339,7 @@ class AuthService {
             $ins = $this->db->prepare("
                 INSERT INTO users (institution_id, username, email, password_hash,
                                    full_name, avatar_color_gradient, role, status, email_verified, created_at, updated_at)
-                VALUES (:inst, :uname, :email, :hash, :name, :grad, 'student', 'active', 0, NOW(), NOW())
+                VALUES (:inst, :uname, :email, :hash, :name, :grad, 'student', 'active', 1, NOW(), NOW())
             ");
             $ins->execute([
                 ':inst'  => $instId,
@@ -459,40 +459,39 @@ class AuthService {
 
             $this->db->commit();
 
-            // Email verification is completed before an authenticated session
-            // is created. The account and onboarding data are already committed,
-            // so a mail delivery failure leaves a recoverable pending account.
+            // The email was verified before the account was created, so this
+            // account is marked verified immediately and can be authenticated.
             if (session_status() === PHP_SESSION_NONE) session_start();
 
-            $otp = $this->otpService->generate($userId, 'verify_email');
-            $_SESSION['pending_signup_user_id'] = $userId;
-            $_SESSION['pending_signup_expires'] = time() + OTP_EXPIRY;
-
-            $deliverResult = $this->otpService->deliver(
-                $email,
-                $fullName,
-                $otp,
-                'verify_email'
-            );
-
-            $result = [
-                'success'             => true,
-                'otp_required'        => true,
-                'verification_pending'=> true,
-                'user_id'             => $userId,
-                'username'            => $username,
-                'role'                => 'student',
-                'mail_sent'           => $deliverResult['success'],
-                'mail_error'          => $deliverResult['success']
-                    ? null
-                    : ($deliverResult['error'] ?? 'Unable to send the verification code.'),
+            $newUser = [
+                'id' => $userId,
+                'username' => $username,
+                'email' => $email,
+                'full_name' => $fullName,
+                'role' => 'student',
+                'status' => 'active',
+                'avatar_color_gradient' => $gradient,
+                'plan_id' => null,
             ];
 
-            if (APP_DEBUG && isset($deliverResult['otp_debug'])) {
-                $result['otp_debug'] = $deliverResult['otp_debug'];
-            }
+            $this->completeAuthenticatedLogin($newUser, false);
 
-            return $result;
+            unset(
+                $_SESSION['pending_signup_email'],
+                $_SESSION['pending_signup_email_verified'],
+                $_SESSION['pending_signup_email_hash'],
+                $_SESSION['pending_signup_email_expires']
+            );
+
+            return [
+                'success' => true,
+                'verified' => true,
+                'otp_required' => false,
+                'user_id' => $userId,
+                'username' => $username,
+                'role' => 'student',
+                'redirect' => BASE_URL . '/modules/onboarding/server-discovery.php',
+            ];
 
         } catch (\Throwable $e) {
             if ($this->db->inTransaction()) {
