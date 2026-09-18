@@ -111,14 +111,14 @@ function installDetailHooks(){
   if(typeof window.openThreadDetail!=='function'||window.__threadsEnhDetailInstalled)return false;
   const originalDetail=window.openThreadDetail; window.__threadsEnhDetailInstalled=true;
   window.openThreadDetail=async function(id){
-    clearInterval(detailPoll); await initialDetail(id);
+    localStorage.setItem('ecollab.threads.activeThread',String(id)); clearInterval(detailPoll); await initialDetail(id);
     detailPoll=setInterval(async()=>{
       if(!document.getElementById('threadsV2DetailModal')?.classList.contains('open')||detailBusy||!activeDetailId)return;
       detailBusy=true; try{const d=await fetchDetailData(activeDetailId);renderReplies(d.replies||[],d.attachments||[]);}catch(e){} finally{detailBusy=false;}
     },1000);
   };
   const oldClose=window.closeThreadDetail;
-  window.closeThreadDetail=function(){clearInterval(detailPoll);detailPoll=null;activeDetailId=0;parentReply=0;oldClose?.();};
+  window.closeThreadDetail=function(){clearInterval(detailPoll);detailPoll=null;activeDetailId=0;parentReply=0;localStorage.removeItem('ecollab.threads.activeThread');oldClose?.();};
   return true;
 }
 function installReplyDelegation(){
