@@ -76,8 +76,15 @@ function attachmentRows(PDO $db, int $threadId): array {
 function validThreadAttachments(array $items): array {
     $out=[];
     foreach ($items as $item) {
+        $path=trim((string)($item['path'] ?? ''));
         $url=trim((string)($item['url'] ?? ''));
-        if ($url==='' || !preg_match('#^'.preg_quote(rtrim(BASE_URL,'/'),'#').'/uploads/threads/[A-Za-z0-9._/-]+$#',$url)) continue;
+        if ($path !== '' && preg_match('#^/uploads/threads/[A-Za-z0-9._/-]+$#',$path)) {
+            $url=rtrim(BASE_URL,'/').$path;
+        } elseif ($url !== '' && preg_match('#^'.preg_quote(rtrim(BASE_URL,'/'),'#').'/uploads/threads/[A-Za-z0-9._/-]+$#',$url)) {
+            $path=parse_url($url,PHP_URL_PATH) ?: '';
+        } else {
+            continue;
+        }
         $mime=(string)($item['mime_type'] ?? '');
         if (!in_array($mime,['image/jpeg','image/png','image/gif','image/webp'],true)) continue;
         $out[]=['url'=>$url,'file_name'=>mb_substr(trim((string)($item['file_name'] ?? 'image')),0,255),'mime_type'=>$mime,'file_size'=>max(0,(int)($item['file_size'] ?? 0))];
