@@ -209,56 +209,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
                   </div>
                 </div>
               <?php endforeach; ?>
-              <?php if (empty($dashData['recommended_servers'])): ?>
-                <div class="server-row" data-cat="ai cs" onclick="openModal('serverDetailModal','AI & Machine Learning Hub')">
-                  <div class="srv-av" style="background:rgba(233,30,140,.15)">🤖</div>
-                  <div class="srv-body">
-                    <div class="srv-name">AI & Machine Learning Hub</div>
-                    <div class="srv-desc">Discuss AI concepts, share resources, and build projects together.</div>
-                    <div class="srv-tags"><span class="srv-tag">AI</span><span class="srv-tag">Machine Learning</span></div>
-                  </div>
-                  <div class="srv-right">
-                    <div class="srv-count">2.1K<span>members</span></div>
-                    <div class="srv-online">168 online</div><button class="btn-join" onclick="event.stopPropagation();joinServer(this,'AI Hub')">Join</button>
-                  </div>
-                </div>
-                <div class="server-row" data-cat="cs prog" onclick="openModal('serverDetailModal','DSA & Problem Solvers')">
-                  <div class="srv-av" style="background:rgba(6,182,212,.15)">💻</div>
-                  <div class="srv-body">
-                    <div class="srv-name">DSA & Problem Solvers</div>
-                    <div class="srv-desc">Practice data structures, algorithms, and problem solving.</div>
-                    <div class="srv-tags"><span class="srv-tag">DSA</span><span class="srv-tag">Algorithms</span></div>
-                  </div>
-                  <div class="srv-right">
-                    <div class="srv-count">1.8K<span>members</span></div>
-                    <div class="srv-online">142 online</div><button class="btn-join" onclick="event.stopPropagation();joinServer(this,'DSA')">Join</button>
-                  </div>
-                </div>
-                <div class="server-row" data-cat="web prog" onclick="openModal('serverDetailModal','Web Dev Community')">
-                  <div class="srv-av" style="background:rgba(22,163,74,.15)">🌐</div>
-                  <div class="srv-body">
-                    <div class="srv-name">Web Dev Community</div>
-                    <div class="srv-desc">HTML, CSS, JS and modern frameworks discussions.</div>
-                    <div class="srv-tags"><span class="srv-tag">Web Dev</span><span class="srv-tag">Frontend</span></div>
-                  </div>
-                  <div class="srv-right">
-                    <div class="srv-count">3.4K<span>members</span></div>
-                    <div class="srv-online">215 online</div><button class="btn-join" onclick="event.stopPropagation();joinServer(this,'Web Dev')">Join</button>
-                  </div>
-                </div>
-                <div class="server-row" data-cat="cs" onclick="openModal('serverDetailModal','Study Buddies Worldwide')">
-                  <div class="srv-av" style="background:rgba(217,119,6,.15)">👫</div>
-                  <div class="srv-body">
-                    <div class="srv-name">Study Buddies Worldwide</div>
-                    <div class="srv-desc">Find study partners and stay motivated together!</div>
-                    <div class="srv-tags"><span class="srv-tag">Study Group</span></div>
-                  </div>
-                  <div class="srv-right">
-                    <div class="srv-count">1.2K<span>members</span></div>
-                    <div class="srv-online">93 online</div><button class="btn-join" onclick="event.stopPropagation();joinServer(this,'Study Buddies')">Join</button>
-                  </div>
-                </div>
-              <?php endif; ?>
+              <div class="dashboard-empty-state">No recommended servers available yet.</div>
             </div>
             <div class="explore-more" onclick="showPage('discover')"><span>Explore More Servers</span><span>›</span></div>
           </div>
@@ -291,30 +242,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
                     <div class="cr-arr">›</div>
                   </div>
                 <?php endforeach; ?>
-                <?php if (empty($dashData['courses'])): ?>
-                  <div class="course-row" onclick="openModal('courseDetailModal','CS 305 - Neural Networks')">
-                    <div class="cr-left">
-                      <div class="cr-name"><span class="course-clr" style="background:var(--pink)"></span>CS 305 - Neural Networks</div>
-                      <div class="cr-bar-bg">
-                        <div class="cr-bar-fill" style="width:78%;background:linear-gradient(90deg,var(--pink),var(--purple))"></div>
-                      </div>
-                      <div class="cr-next">Next: Backpropagation Basics · May 24</div>
-                    </div>
-                    <div class="cr-pct" style="color:var(--pink)">78%</div>
-                    <div class="cr-arr">›</div>
-                  </div>
-                  <div class="course-row" onclick="openModal('courseDetailModal','CS 201 - Data Structures')">
-                    <div class="cr-left">
-                      <div class="cr-name"><span class="course-clr" style="background:#a78bfa"></span>CS 201 - Data Structures</div>
-                      <div class="cr-bar-bg">
-                        <div class="cr-bar-fill" style="width:65%;background:linear-gradient(90deg,var(--purple),var(--indigo))"></div>
-                      </div>
-                      <div class="cr-next">Next: Trees and Graphs · May 26</div>
-                    </div>
-                    <div class="cr-pct" style="color:#a78bfa">65%</div>
-                    <div class="cr-arr">›</div>
-                  </div>
-                <?php endif; ?>
+                <div class="dashboard-empty-state">No courses found for your account yet.</div>
               </div>
             </div>
 
@@ -342,24 +270,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
                   <button class="fr-btn" onclick="event.stopPropagation();openModal('dmModal','<?= $fName ?>')">Message</button>
                 </div>
               <?php endforeach; ?>
-              <?php if (empty($dashData['friends_online'])): ?>
-                <div class="friend-row" onclick="openModal('profileModal','Fatima_Student')">
-                  <div class="fr-av" style="background:linear-gradient(135deg,#ff4fd8,#7c3aed)">F<div class="fr-status st-green"></div>
-                  </div>
-                  <div class="fr-body">
-                    <div class="fr-name">Fatima_Student</div>
-                    <div class="fr-act" style="color:var(--green)">● Studying CS 305</div>
-                  </div><button class="fr-btn" onclick="event.stopPropagation();openModal('dmModal','Fatima_Student')">Message</button>
-                </div>
-                <div class="friend-row" onclick="openModal('profileModal','Alex Chen')">
-                  <div class="fr-av" style="background:linear-gradient(135deg,#2563eb,#06b6d4)">A<div class="fr-status st-green"></div>
-                  </div>
-                  <div class="fr-body">
-                    <div class="fr-name">Alex Chen</div>
-                    <div class="fr-act" style="color:var(--green)">● In CS 201 Study Room</div>
-                  </div><button class="fr-btn" onclick="event.stopPropagation();openModal('dmModal','Alex Chen')">Message</button>
-                </div>
-              <?php endif; ?>
+              <div class="dashboard-empty-state">No friends are online right now.</div>
             </div>
 
             <!-- MY SERVERS & CHANNELS -->
@@ -982,7 +893,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
           </div>
           <div class="ins-card">
             <div class="ins-label">Hours This Week</div>
-            <div class="ins-val" style="color:var(--green)"><?= number_format((float)($dashData['hours_studied'] ?? 18.6), 1) ?>h</div>
+            <div class="ins-val" style="color:var(--green)"><?= number_format((float)($dashData['hours_studied'] ?? 0), 1) ?>h</div>
           </div>
           <div class="ins-card">
             <div class="ins-label">Study Streak</div>
@@ -1739,7 +1650,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
     var DASH_DATA = <?= json_encode([
                       'activityData'   => $dashData['activity_chart'] ?? [2, 3.5, 2.5, 3.5, 6.4, 1.8, 0.8],
                       'courseLabels'   => array_map(fn($c) => $c['course_code'] ?? 'Course', $dashData['courses'] ?? []),
-                      'courseHours'    => array_map(fn($c) => (float)($c['hours_spent'] ?? rand(1, 8)), $dashData['courses'] ?? []),
+                      'courseHours'    => array_map(fn($c) => (float)($c['hours_spent'] ?? 0), $dashData['courses'] ?? []),
                       'notifCount'     => $dashData['unread_notifications'] ?? 3,
                       'userId'         => $user['id'],
                       'csrfToken'      => $csrfToken,
