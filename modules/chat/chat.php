@@ -56,6 +56,68 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     #wbOverlay {
       display: none !important;
     }
+
+    /* Add-server modal: keep the creation form compact, aligned, and usable
+       on both desktop and small screens. */
+    #addServerModal .modal-md {
+      width: min(560px, calc(100vw - 32px));
+      max-width: 560px;
+      max-height: calc(100vh - 32px);
+      overflow: hidden;
+    }
+    #addServerModal .modal-body {
+      max-height: calc(100vh - 110px);
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
+    #addServerForm {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    #addServerForm > div:first-child {
+      margin-bottom: 14px !important;
+    }
+    #addServerForm #serverFormEmoji {
+      font-size: 32px !important;
+      line-height: 1;
+      margin-bottom: 0 !important;
+    }
+    #addServerForm input[type="text"] {
+      box-sizing: border-box;
+    }
+    #addServerForm #serverVisibilityOptions {
+      gap: 10px !important;
+      margin-bottom: 10px !important;
+    }
+    #addServerForm #serverVisibilityOptions button {
+      min-height: 72px;
+      box-sizing: border-box;
+    }
+    #addServerForm #serverVisibilityHelp {
+      line-height: 1.45;
+      margin-bottom: 12px !important;
+    }
+    #addServerForm > div:last-child {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    #addServerForm > div:last-child button {
+      margin-right: 0 !important;
+    }
+    @media (max-width: 520px) {
+      #addServerModal .modal-md {
+        width: calc(100vw - 20px);
+      }
+      #addServerForm #serverVisibilityOptions {
+        grid-template-columns: 1fr !important;
+      }
+      #addServerForm #serverVisibilityOptions button {
+        min-height: 62px;
+      }
+    }
   </style>
 </head>
 
