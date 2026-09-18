@@ -64,7 +64,7 @@
     const el=document.getElementById('publicServerRecommendations'); if(!el)return;
     el.innerHTML='<div style="text-align:center;color:var(--text-muted);font-size:11px;padding:12px;">Loading…</div>';
     try{
-      const d=await get('/API/server/public.php','list');
+      const d=await get('/API/server/public.php',{action:'list'});
       if(!d.servers?.length){el.innerHTML='<div style="text-align:center;color:var(--text-muted);font-size:11px;padding:12px;">No public servers available yet.</div>';return;}
       el.innerHTML=d.servers.map(s=>`<div style="display:flex;align-items:center;gap:9px;padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;">
         <div style="font-size:20px;">${esc(s.icon_emoji||'🌐')}</div>
