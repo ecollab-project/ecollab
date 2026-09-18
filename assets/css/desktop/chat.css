@@ -4113,7 +4113,8 @@ html.compact-mode .sidebar-section-header {
 /* TOAST */
 .toast-container {
   position: fixed;
-  bottom: 20px;
+  top: 20px;
+  bottom: auto;
   left: 50%;
   transform: translateX(-50%);
   z-index: 2000;
