@@ -131,7 +131,23 @@
 
   const oldOpen=window.openAddChannelModal;
   window.openAddChannelModal=function(defaultType='text'){
-    if(typeof oldOpen==='function')oldOpen(defaultType);
+    const type=['text','voice','whiteboard'].includes(defaultType)?defaultType:'text';
+    if(typeof oldOpen==='function')oldOpen(type);
+
+    // Each sidebar section has its own + button, so the creation modal should
+    // be locked to that channel type instead of asking the user to choose again.
+    const modal=document.getElementById('addChannelModal');
+    if(modal){
+      modal.querySelectorAll('.channel-type-opt').forEach(opt=>{
+        opt.style.display=opt.dataset.type===type?'block':'none';
+        opt.style.pointerEvents='none';
+      });
+      const labels={text:'Create Text Channel',voice:'Create Voice Channel',whiteboard:'Create Whiteboard Channel'};
+      const title=modal.querySelector('.modal-header span');
+      if(title)title.textContent=labels[type]||'Create Channel';
+      const typeLabel=modal.querySelector('.modal-body label');
+      if(typeLabel)typeLabel.textContent='Channel Type';
+    }
     window.selectChannelVisibility('public');
   };
 
