@@ -3417,6 +3417,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <div id="pmCompatModal"></div>
 
   <script src="<?= BASE_URL ?>/assets/js/chat/functionality-overrides.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/threads-enhancements.js?v=1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/collabs-ui.js" defer></script>
 </body>
 
