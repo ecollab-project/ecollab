@@ -130,16 +130,16 @@ function installReplyDelegation(){
     if(e.target.closest?.('#tv2PostReplyBtn')){e.preventDefault();window.threadPostReply(activeDetailId);}
   });
 }
-let feedPoll=null,originalLoadFeed=null;
+let feedPoll=null,originalLoadFeed=null,feedScope='all';
 function installFeedPolling(){
   if(typeof window.loadThreadsV2!=='function'||window.__threadsEnhFeedInstalled)return false;
   originalLoadFeed=window.loadThreadsV2; window.__threadsEnhFeedInstalled=true;
-  window.loadThreadsV2=function(scope){return originalLoadFeed(scope);};
+  window.loadThreadsV2=function(scope='all'){feedScope=scope;return originalLoadFeed(scope);};
   clearInterval(feedPoll);
   feedPoll=setInterval(async()=>{
     const view=document.getElementById('threadsV2View');
     if(!view||view.offsetParent===null||document.getElementById('threadsV2DetailModal')?.classList.contains('open'))return;
-    try{await originalLoadFeed(window._threadCreateScope==='public'?'all':undefined);}catch(e){}
+    try{await originalLoadFeed(feedScope);}catch(e){}
   },1000);
   return true;
 }
