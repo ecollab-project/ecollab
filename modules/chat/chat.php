@@ -815,7 +815,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </div>
 
   <!-- TOAST CONTAINER -->
-  <div id="toastContainer" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;pointer-events:none;"></div>
+  <div id="toastContainer" style="position:fixed;top:20px;bottom:auto;left:50%;transform:translateX(-50%);z-index:10001;display:flex;flex-direction:column;gap:8px;pointer-events:none;"></div>
 
   <!-- CONNECTION REQUEST NOTIFICATION CONTAINER -->
   <!-- Incoming requests appear here as banners (bottom-right) -->
