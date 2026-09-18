@@ -1229,7 +1229,7 @@ function renderMembersPanel(members) {
           <div class="online-dot ${m.is_online ? '' : 'offline'}"></div>
         </div>
         <div class="member-info">
-          <div class="member-name">${escHtml(m.nickname || m.username)}${m.server_role === 'owner' ? ' <span class="member-badge">👑</span>' : ''}</div>
+          <div class="member-name">${escHtml(m.full_name || m.nickname || m.username)}${m.server_role === 'owner' ? ' <span class="member-badge">👑</span>' : ''}</div>
           <div class="member-sub" style="color:${m.is_online ? 'var(--accent-green)' : 'var(--text-muted)'};font-size:10px;">${m.is_online ? 'Online' : 'Offline'}</div>
         </div>
         <div class="member-status ${online}">● ${m.is_online ? 'Online' : ''}</div>
