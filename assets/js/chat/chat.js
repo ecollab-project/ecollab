@@ -423,6 +423,39 @@ function renderMessages(messages, prepend = false) {
   }
 }
 
+function renderChannelDashboardLink() {
+  const area = document.getElementById('messagesArea');
+  if (!area) return;
+
+  area.querySelector('#channelDashboardLink')?.remove();
+
+  const meta = window._currentChannelMeta;
+  if (!meta || String(meta.name || '').trim().toLowerCase() !== 's1.election') return;
+
+  const link = document.createElement('a');
+  link.id = 'channelDashboardLink';
+  link.href = (window.ECOLLAB?.baseUrl || '') + '/modules/student/dashboard.php';
+  link.target = '_self';
+  link.style.cssText = [
+    'display:flex',
+    'align-items:center',
+    'gap:10px',
+    'margin:10px 12px 6px',
+    'padding:11px 14px',
+    'border:1px solid rgba(168,85,247,.28)',
+    'border-radius:10px',
+    'background:linear-gradient(135deg,rgba(168,85,247,.12),rgba(236,72,153,.08))',
+    'color:var(--text-primary)',
+    'text-decoration:none',
+    'font-size:12px',
+    'font-weight:700',
+    'position:relative',
+    'z-index:2'
+  ].join(';');
+  link.innerHTML = '<span style="font-size:18px;">📊</span><span style="flex:1;">Open Student Dashboard<div style="font-size:10px;font-weight:500;color:var(--text-muted);margin-top:2px;">Pinned for #s1.election</div></span><span style="color:#c084fc;">→</span>';
+  area.prepend(link);
+}
+
 function buildMessageElement(msg) {
   const div = document.createElement('div');
   div.className = 'message-group' + (msg.is_pinned ? ' pinned-msg-highlight' : '');
@@ -431,7 +464,8 @@ function buildMessageElement(msg) {
 
   const grad = msg.avatar_color_gradient || '#3b82f6,#6366f1';
   const [c1, c2] = grad.split(',');
-  const init = (msg.full_name || msg.username || '?').charAt(0).toUpperCase();
+  const displayName = msg.full_name || msg.username || '?';
+  const init = displayName.charAt(0).toUpperCase();
   const isMe = parseInt(msg.sender_id) === parseInt(window.ECOLLAB?.userId);
   const time = formatTime(msg.created_at);
   const edited = msg.is_edited ? '<span class="edited-tag" style="font-size:10px;color:var(--text-muted);margin-left:4px;">(edited)</span>' : '';
@@ -486,12 +520,12 @@ function buildMessageElement(msg) {
   div.innerHTML = `
     <div class="msg-action-bar">
       <button class="msg-action-btn" title="Add Reaction" onclick="showEmojiForMsgBar(event,this)">😊</button>
-      <button class="msg-action-btn" title="Reply" onclick="msgReply(this,'${escHtml(msg.username)}', ${msg.id}, '${escHtml((msg.content || '').substring(0, 60))}')">
+      <button class="msg-action-btn" title="Reply" onclick="msgReply(this,'${escHtml(displayName)}', ${msg.id}, '${escHtml((msg.content || '').substring(0, 60))}')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
       </button>
-      <button class="msg-action-btn ${msg.is_pinned ? 'pin-active' : ''}" title="${msg.is_pinned ? 'Unpin Message' : 'Pin Message'}" onclick="msgPin(this,'${escHtml(msg.username)}','${escHtml((msg.content || '').substring(0, 60))}', ${msg.id})">📌</button>
+      <button class="msg-action-btn ${msg.is_pinned ? 'pin-active' : ''}" title="${msg.is_pinned ? 'Unpin Message' : 'Pin Message'}" onclick="msgPin(this,'${escHtml(displayName)}','${escHtml((msg.content || '').substring(0, 60))}', ${msg.id})">📌</button>
       <button class="msg-action-btn" title="Bookmark" onclick="msgBookmark(this, ${msg.id})">🔖</button>
-      <button class="msg-action-btn" title="More Options" onclick="showMsgMenu(event,this,'${escHtml(msg.username)}', ${msg.id}, ${isMe ? 'true' : 'false'})">
+      <button class="msg-action-btn" title="More Options" onclick="showMsgMenu(event,this,'${escHtml(displayName)}', ${msg.id}, ${isMe ? 'true' : 'false'})">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
       </button>
     </div>
@@ -503,7 +537,7 @@ function buildMessageElement(msg) {
     </div>
     <div class="msg-content">
       <div class="msg-header">
-        <span class="msg-username ${roleClass}" onclick="openMiniProfile(event, '${escHtml(msg.full_name || msg.username)}', '${escHtml(msg.role || 'Student')}', '', '${init}', ${msg.sender_id || 0})">${escHtml(msg.username)}</span>
+        <span class="msg-username ${roleClass}" onclick="openMiniProfile(event, '${escHtml(displayName)}', '${escHtml(msg.role || 'Student')}', '', '${init}', ${msg.sender_id || 0})">${escHtml(displayName)}</span>
         ${msg.role === 'facilitator' ? '<span class="msg-badge">FACULTY</span>' : ''}
         ${msg.is_verified ? '<span style="color:#a855f7;font-size:12px;" title="Verified">✓</span>' : ''}
         <span class="msg-timestamp">${time}</span>
@@ -1227,7 +1261,7 @@ function renderMembersPanel(members) {
           <div class="online-dot ${m.is_online ? '' : 'offline'}"></div>
         </div>
         <div class="member-info">
-          <div class="member-name">${escHtml(m.nickname || m.username)}${m.server_role === 'owner' ? ' <span class="member-badge">👑</span>' : ''}</div>
+          <div class="member-name">${escHtml(m.full_name || m.nickname || m.username)}${m.server_role === 'owner' ? ' <span class="member-badge">👑</span>' : ''}</div>
           <div class="member-sub" style="color:${m.is_online ? 'var(--accent-green)' : 'var(--text-muted)'};font-size:10px;">${m.is_online ? 'Online' : 'Offline'}</div>
         </div>
         <div class="member-status ${online}">● ${m.is_online ? 'Online' : ''}</div>
