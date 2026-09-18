@@ -29,7 +29,7 @@ $firstName    = explode(' ', trim($user['full_name'] ?: $user['username']))[0];
 
 $hour         = (int)date('G');
 $greeting     = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
-$unreadCount  = $dashData['unread_notifications'] ?? 3;
+$unreadCount  = $dashData['unread_notifications'] ?? 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -146,7 +146,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
               <div class="sc-label">Study Sessions</div>
               <div class="sc-icon">📖</div>
             </div>
-            <div class="sc-val"><?= $dashData['total_sessions'] ?? 24 ?></div>
+            <div class="sc-val"><?= $dashData['total_sessions'] ?? 0 ?></div>
             <div class="sc-ch">+8 this week</div>
           </div>
           <div class="stat-card c3" onclick="openModal('hoursModal')">
@@ -154,16 +154,16 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
               <div class="sc-label">Hours Studied</div>
               <div class="sc-icon">📈</div>
             </div>
-            <div class="sc-val"><?= number_format((float)($dashData['hours_studied'] ?? 18.6), 1) ?></div>
-            <div class="sc-ch">+4.2 this week</div>
+            <div class="sc-val"><?= number_format((float)($dashData['hours_studied'] ?? 0), 1) ?></div>
+            <div class="sc-ch">Data from your study activity</div>
           </div>
           <div class="stat-card c4" onclick="showPage('achievements')">
             <div class="sc-top">
               <div class="sc-label">Achievements</div>
               <div class="sc-icon">🏆</div>
             </div>
-            <div class="sc-val"><?= $dashData['achievement_count'] ?? 12 ?></div>
-            <div class="sc-ch">+2 new badges</div>
+            <div class="sc-val"><?= $dashData['achievement_count'] ?? 0 ?></div>
+            <div class="sc-ch">Earned achievements</div>
           </div>
         </div>
 
@@ -274,7 +274,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
                 $courseColors = ['var(--pink)', '#a78bfa', '#60a5fa', 'var(--green)', 'var(--yellow)'];
                 $courseGrads  = ['linear-gradient(90deg,var(--pink),var(--purple))', 'linear-gradient(90deg,var(--purple),var(--indigo))', 'linear-gradient(90deg,var(--blue),var(--cyan))', 'linear-gradient(90deg,var(--green),var(--teal))', 'linear-gradient(90deg,var(--yellow),var(--orange))'];
                 foreach (array_slice($dashData['courses'] ?? [], 0, 5) as $ci => $course):
-                  $pct  = (int)($course['progress_percentage'] ?? rand(40, 90));
+                  $pct  = (int)($course['progress_percentage'] ?? 0);
                   $clr  = $courseColors[$ci % count($courseColors)];
                   $grad = $courseGrads[$ci % count($courseGrads)];
                   $name = htmlspecialchars(($course['course_code'] ?? '') . ' - ' . ($course['name'] ?? 'Course'));
