@@ -241,8 +241,8 @@ class AuthService {
             // Insert user
             $ins = $this->db->prepare("
                 INSERT INTO users (institution_id, username, email, password_hash,
-                                   full_name, avatar_color_gradient, role, status, created_at, updated_at)
-                VALUES (:inst, :uname, :email, :hash, :name, :grad, 'student', 'active', NOW(), NOW())
+                                   full_name, avatar_color_gradient, role, status, email_verified, created_at, updated_at)
+                VALUES (:inst, :uname, :email, :hash, :name, :grad, 'student', 'active', 0, NOW(), NOW())
             ");
             $ins->execute([
                 ':inst'  => $instId,
