@@ -25,6 +25,8 @@ class StudentDashboardService
 
     public function getStudentDashboardData(int $userId): array
     {
+        $membership = $this->membershipService->getMembershipSummary($userId);
+
         return [
             'courses' => $this->getStudentCourses($userId),
             'upcoming_sessions' => $this->getUpcomingSessions($userId),
@@ -47,7 +49,84 @@ class StudentDashboardService
             'messages_sent' => $this->getMessagesSent($userId),
             'chat_unread' => $this->getChatUnreadCount($userId),
             'chat_recent' => $this->getRecentChat($userId),
-            'membership' => $this->membershipService->getMembershipSummary($userId),
+            'membership' => $membership,
+            'activity_progression' => $this->getActivityProgression($userId, $membership),
+        ];
+    }
+
+    /**
+     * Activity progression is a lightweight, database-derived leveling system.
+     * XP comes only from existing Ecollab activity, so no new activity table is
+     * required. Unlocks are returned to the UI and can be enforced by feature
+     * endpoints without changing the student's existing records.
+     */
+    private function getActivityProgression(int $userId, array $membership): array
+    {
+        $messages = $this->getMessagesSent($userId);
+        $sessions = $this->getTotalSessions($userId);
+        $hours = $this->getHoursStudied($userId);
+        $streak = $this->getStudyStreak($userId);
+        $achievements = $this->getAchievementCount($userId);
+        $channels = (int)($membership['channels_joined_count'] ?? 0);
+
+        $xp = ($messages * 2)
+            + ($sessions * 25)
+            + ((int)floor($hours) * 50)
+            + ($streak * 10)
+            + ($channels * 15)
+            + ($achievements * 40);
+
+        $levels = [
+            1 => 0,
+            2 => 250,
+            3 => 600,
+            4 => 1200,
+            5 => 2000,
+            6 => 3200,
+            7 => 5000,
+            8 => 7500,
+            9 => 10500,
+            10 => 14500,
+        ];
+
+        $level = 1;
+        foreach ($levels as $candidate => $threshold) {
+            if ($xp >= $threshold) $level = $candidate;
+        }
+
+        $unlocksByLevel = [
+            1 => ['Basic chat and channel participation'],
+            2 => ['Create study goals'],
+            3 => ['Collaborative whiteboard creation'],
+            4 => ['Document creation'],
+            5 => ['Study-room creation'],
+            6 => ['Advanced AI study tools'],
+            7 => ['Advanced collaboration tools'],
+            8 => ['Mentor / facilitator request tools'],
+            9 => ['Community leadership tools'],
+            10 => ['Ecollab power-user tools'],
+        ];
+
+        $nextLevel = $level < 10 ? $level + 1 : null;
+        $nextXp = $nextLevel !== null ? $levels[$nextLevel] : $levels[10];
+        $currentThreshold = $levels[$level];
+        $progress = $nextLevel !== null
+            ? (int)round(min(100, (($xp - $currentThreshold) / max(1, $nextXp - $currentThreshold)) * 100))
+            : 100;
+
+        $unlocks = [];
+        for ($i = 1; $i <= $level; $i++) {
+            foreach ($unlocksByLevel[$i] ?? [] as $unlock) $unlocks[] = $unlock;
+        }
+
+        return [
+            'level' => $level,
+            'xp' => $xp,
+            'next_level' => $nextLevel,
+            'next_level_xp' => $nextLevel !== null ? $nextXp : null,
+            'progress_percent' => $progress,
+            'unlocks' => $unlocks,
+            'next_unlock' => $nextLevel !== null ? ($unlocksByLevel[$nextLevel][0] ?? null) : null,
         ];
     }
 
