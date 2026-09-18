@@ -1272,6 +1272,7 @@ function _createPeerConnection(remoteUserId, remoteUsername) {
       window.chatSocket.send(JSON.stringify({
         type: 'webrtc_candidate',
         target_user_id: remoteUserId,
+        channel_id: vcChannelId,
         candidate: candidate,
       }));
     }
@@ -1495,6 +1496,7 @@ async function _initiateWebRtcOffer(remoteUserId, remoteUsername) {
       window.chatSocket.send(JSON.stringify({
         type: 'webrtc_offer',
         target_user_id: remoteUserId,
+        channel_id: vcChannelId,
         sdp: pc.localDescription,
       }));
     }
@@ -1527,6 +1529,7 @@ async function _handleWebRtcOffer(fromUserId, fromUsername, sdp, isScreenOffer) 
       window.chatSocket.send(JSON.stringify({
         type: 'webrtc_answer',
         target_user_id: fromUserId,
+        channel_id: vcChannelId,
         sdp: pc.localDescription,
       }));
     }
@@ -1584,6 +1587,64 @@ async function _handleWebRtcCandidate(fromUserId, candidate) {
     console.error('[WebRTC] ICE candidate error:', err);
   }
 }
+
+// ── Voice-room event handlers ─────────────────────────────────────────────
+function handleVoiceJoin(data) {
+  if (!vcActive || vcChannelId == null || Number(data.channel_id) !== Number(vcChannelId)) return;
+  const user = data.user || {};
+  const userId = Number(user.id || data.user_id || 0);
+  if (!userId || userId === Number(window.ECOLLAB?.userId || 0)) return;
+
+  const existing = document.querySelector(
+    `.vc-speaker-card[data-user-id="${userId}"], .vc-listener-card[data-user-id="${userId}"]`
+  );
+  if (!existing) {
+    addVcParticipant({
+      id: userId,
+      full_name: user.full_name || user.username,
+      username: user.username,
+      role: user.role || 'Student',
+      avatar_color_gradient: user.avatar_color_gradient || '#3b82f6,#6366f1',
+      muted: !!user.muted,
+    }, !user.muted);
+  }
+
+  setTimeout(() => {
+    if (vcActive && Number(vcChannelId) === Number(data.channel_id)) {
+      _initiateWebRtcOffer(userId, user.username);
+    }
+  }, 100);
+}
+
+function handleVoiceLeave(data) {
+  if (vcChannelId == null || Number(data.channel_id) !== Number(vcChannelId)) return;
+  const userId = Number(data.user_id || 0);
+  if (!userId) return;
+
+  const pc = peerConnections[userId];
+  if (pc) { try { pc.close(); } catch {} }
+  delete peerConnections[userId];
+  delete remoteStreams[userId];
+  delete iceCandidateQueues[userId];
+
+  document.querySelectorAll(
+    `.vc-speaker-card[data-user-id="${userId}"], .vc-listener-card[data-user-id="${userId}"]`
+  ).forEach(el => el.remove());
+
+  const audio = document.getElementById(`remote-audio-${userId}`);
+  if (audio) audio.remove();
+
+  if (typeof window._hideRemoteScreenShareSection === 'function') {
+    window._hideRemoteScreenShareSection(userId);
+  }
+
+  const speaking = document.querySelectorAll('.vc-speaker-card').length;
+  const listening = document.querySelectorAll('.vc-listener-card').length;
+  updateVcCounts(speaking, listening);
+}
+
+window.handleVoiceJoin = handleVoiceJoin;
+window.handleVoiceLeave = handleVoiceLeave;
 
 // ── Handle voice_peers from server (list of existing participants) ─────────
 function handleVoicePeers(data) {
