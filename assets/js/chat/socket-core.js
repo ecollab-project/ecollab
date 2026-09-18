@@ -137,6 +137,14 @@ function handleSocketMessage(data) {
           channel_id: window.ECOLLAB.currentChannelId,
         }));
       }
+      // Restore the voice-room membership after a WS reconnect.
+      // The server intentionally keeps voice rooms in memory per socket.
+      if (window.vcChannelId != null && window.vcActive !== false) {
+        chatSocket.send(JSON.stringify({
+          type: 'join_voice',
+          channel_id: Number(window.vcChannelId),
+        }));
+      }
       // Rejoin an open whiteboard after WebSocket authentication.
       if (typeof window.wbRejoinRoom === 'function') {
         setTimeout(() => window.wbRejoinRoom(), 50);
