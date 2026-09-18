@@ -59,6 +59,60 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
     /* Add-server modal: keep the creation form compact, aligned, and usable
        on both desktop and small screens. */
+    /* Create-channel modal: keep all three channel types inside the card
+       and prevent long descriptions from overflowing the modal width. */
+    #addChannelModal > .modal {
+      width: min(560px, calc(100vw - 32px)) !important;
+      max-width: 560px !important;
+      max-height: calc(100vh - 32px);
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    #addChannelModal .modal-body {
+      box-sizing: border-box;
+      max-height: calc(100vh - 125px);
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    #addChannelModal .channel-type-opt {
+      min-width: 0 !important;
+      width: auto;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    #addChannelModal .channel-type-opt > div {
+      overflow-wrap: anywhere;
+      word-break: normal;
+      line-height: 1.35;
+    }
+    #addChannelModal .channel-type-opt > div:first-child {
+      white-space: nowrap;
+    }
+    #addChannelModal #channelVisibilityOptions {
+      min-width: 0;
+    }
+    #addChannelModal #channelVisibilityOptions button {
+      min-width: 0;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    #addChannelModal #channelVisibilityOptions button div {
+      overflow-wrap: anywhere;
+      line-height: 1.35;
+    }
+    #addChannelModal .modal-footer {
+      box-sizing: border-box;
+      flex-shrink: 0;
+    }
+    @media (max-width: 600px) {
+      #addChannelModal > .modal {
+        width: calc(100vw - 20px) !important;
+      }
+      #addChannelModal .channel-type-opt {
+        padding: 10px !important;
+      }
+    }
+
     #addServerModal .modal-md {
       width: min(560px, calc(100vw - 32px));
       max-width: 560px;
