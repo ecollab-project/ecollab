@@ -64,7 +64,6 @@ try {
     $outcome = $service->register($data);
 
     if ($outcome['success']) {
-        CSRF::regenerate();
         echo json_encode([
             'success'              => true,
             'otp_required'         => (bool)($outcome['otp_required'] ?? false),
