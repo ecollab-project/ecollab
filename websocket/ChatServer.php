@@ -187,7 +187,13 @@ class ChatServer implements MessageComponentInterface
         $stmt = $this->db->prepare("SELECT u.id,u.username,u.status,u.full_name,u.avatar_color_gradient FROM ws_tokens wt JOIN users u ON u.id=wt.user_id WHERE wt.token_hash=:hash AND wt.expires_at>NOW() AND u.deleted_at IS NULL LIMIT 1");
         $stmt->execute([':hash'=>$hash]); $user=$stmt->fetch(); $stmt->closeCursor();
         if (!$user) { $conn->send(json_encode(['type'=>'error','message'=>'Invalid or expired auth token'])); return; }
-        if ($user['status']!=='active') { $conn->send(json_encode(['type'=>'error','message'=>'Account is not active'])); return; }
+        // `users.status` is also used by the application for presence (`offline`),
+        // so an authenticated user is not limited to the literal `active` value.
+        // Only account-blocking states must prevent WebSocket authentication.
+        if (in_array($user['status'], ['banned', 'suspended', 'deactivated'], true)) {
+            $conn->send(json_encode(['type'=>'error','message'=>'Account is not active']));
+            return;
+        }
         $userId=(int)$user['id']; $username=$user['username'];
         $meta['user_id']=$userId; $meta['username']=$username; $meta['full_name']=$user['full_name']??$username; $meta['gradient']=$user['avatar_color_gradient']??''; $meta['authed']=true;
         $this->userConns[$userId][]=$conn; $this->setUserOnline($userId,true); $this->broadcastPresence($userId,true,$username);
