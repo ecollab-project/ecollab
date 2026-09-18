@@ -38,6 +38,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard – <?= APP_NAME ?></title>
+  <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/assets/ecollab-favicon.svg">
   <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -69,8 +70,6 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
               📚 <?= htmlspecialchars(($c['course_code'] ?? '') . ' — ' . ($c['name'] ?? '')) ?>
             </div>
           <?php endforeach; ?>
-          <div class="sd-cat">People</div>
-          <div class="sd-row" onclick="openModal('findBuddiesModal')">👫 Find Study Buddies</div>
         </div>
       </div>
       <div class="hdr-right">
@@ -136,11 +135,11 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
         <div class="stats-row">
           <div class="stat-card c1" onclick="showPage('courses')">
             <div class="sc-top">
-              <div class="sc-label">Courses Enrolled</div>
-              <div class="sc-icon">👥</div>
+              <div class="sc-label">Channels Entered</div>
+              <div class="sc-icon">#</div>
             </div>
-            <div class="sc-val"><?= count($dashData['courses'] ?? []) ?: 5 ?></div>
-            <div class="sc-ch">+1 this month</div>
+            <div class="sc-val"><?= (int)($dashData['channels_entered'] ?? count($dashData['courses'] ?? [])) ?></div>
+            <div class="sc-ch">Active learning spaces</div>
           </div>
           <div class="stat-card c2" onclick="openModal('sessionsModal')">
             <div class="sc-top">
@@ -606,11 +605,23 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
       <div class="page-section" id="page-courses">
         <div class="page-title-row">
           <div>
-            <div class="page-title">My Courses</div>
-            <div class="page-sub">Track enrolled courses and progress.</div>
-          </div><button class="btn-primary" onclick="openModal('enrollModal')">+ Enroll Course</button>
+            <div class="page-title">Activity Progression</div>
+            <div class="page-sub">Earn XP through real activity and unlock higher-level collaboration tools.</div>
+          </div>
         </div>
-        <div class="g2">
+        <?php $progression = $dashData['activity_progression'] ?? ['level'=>1,'xp'=>0,'next_level_xp'=>500,'progress_percent'=>0,'unlocks'=>[]]; ?>
+        <div class="card" id="activityProgressionCard" style="margin-bottom:18px;">
+          <div class="ch"><div><div class="ct">Level <?= (int)$progression['level'] ?></div><div style="font-size:11px;color:var(--muted2);margin-top:3px;"><?= (int)$progression['xp'] ?> XP / <?= (int)$progression['next_level_xp'] ?> XP</div></div><span style="font-weight:800;color:var(--accent-purple);"><?= (int)$progression['progress_percent'] ?>%</span></div>
+          <div class="prog-bar" style="margin-top:12px;"><div class="prog-fill2" style="width:<?= (int)$progression['progress_percent'] ?>%;background:linear-gradient(90deg,#7c3aed,#e91e8c);"></div></div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;">
+            <?php foreach ($progression['unlocks'] ?? [] as $unlock): ?>
+              <span style="font-size:10px;font-weight:700;padding:6px 9px;border-radius:999px;border:1px solid <?= $unlock['unlocked'] ? 'rgba(34,197,94,.35)' : 'rgba(255,255,255,.1)' ?>;color:<?= $unlock['unlocked'] ? '#86efac' : 'var(--muted2)' ?>;background:<?= $unlock['unlocked'] ? 'rgba(34,197,94,.08)' : 'rgba(255,255,255,.03)' ?>;">
+                <?= $unlock['unlocked'] ? '✓' : '🔒' ?> <?= htmlspecialchars($unlock['name']) ?> · Lv <?= (int)$unlock['required_level'] ?>
+              </span>
+            <?php endforeach; ?>
+          </div>
+        </div>
+        <div class="g2" style="display:none;">
           <?php foreach ($dashData['courses'] ?? [] as $ci => $course):
             $pct  = (int)($course['progress_percentage'] ?? 65);
             $name = htmlspecialchars(($course['course_code'] ?? '') . ' — ' . ($course['name'] ?? ''));
