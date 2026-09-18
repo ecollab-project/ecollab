@@ -1603,6 +1603,10 @@ function markAllRead(event) {
   document.querySelectorAll('.notif-dot').forEach(d => d.classList.add('read'));
   const badge = document.getElementById('notifBadge');
   if (badge) badge.style.display = 'none';
+  fetch((window.ECOLLAB?.baseUrl || '') + '/API/notifications/mark-read.php', {
+    method: 'POST', credentials: 'same-origin',
+    headers: {'Content-Type':'application/json'}, body: JSON.stringify({})
+  }).catch(() => {});
   if (window.showToast) showToast('✓ All notifications marked as read', 'info');
 }
 
