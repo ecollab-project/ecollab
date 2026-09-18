@@ -7,6 +7,7 @@
   window._privateChannelSelectedUsers = new Set();
 
   const base=()=>window.ECOLLAB?.baseUrl||'';
+  const esc=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const csrf=()=>window.ECOLLAB?.csrfToken||document.querySelector('meta[name="csrf-token"]')?.content||'';
   async function req(path,action,body){
     const res=await fetch(base()+path+'?action='+encodeURIComponent(action),{
