@@ -505,7 +505,7 @@ function buildMessageElement(msg) {
     </div>
     <div class="msg-content">
       <div class="msg-header">
-        <span class="msg-username ${roleClass}" onclick="openMiniProfile(event, '${escHtml(msg.full_name || msg.username)}', '${escHtml(msg.role || 'Student')}', '', '${init}', ${msg.sender_id || 0})">${escHtml(msg.username)}</span>
+        <span class="msg-username ${roleClass}" onclick="openMiniProfile(event, '${escHtml(msg.full_name || msg.username)}', '${escHtml(msg.role || 'Student')}', '', '${init}', ${msg.sender_id || 0})">${escHtml(msg.full_name || msg.username)}</span>
         ${msg.role === 'facilitator' ? '<span class="msg-badge">FACULTY</span>' : ''}
         ${msg.is_verified ? '<span style="color:#a855f7;font-size:12px;" title="Verified">✓</span>' : ''}
         <span class="msg-timestamp">${time}</span>
