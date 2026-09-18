@@ -172,7 +172,9 @@ try {
         $sql = threadBaseSelect() . ' WHERE ' . implode(' AND ', $conditions) . ' ORDER BY t.is_pinned DESC, t.created_at DESC LIMIT ' . $limit;
         $s = $db->prepare($sql);
         $s->execute($params);
-        threadJson(['threads' => $s->fetchAll(PDO::FETCH_ASSOC), 'scope' => $scope, 'server_id' => $serverId, 'channel_id' => $channelId]);
+        $threads=$s->fetchAll(PDO::FETCH_ASSOC);
+        foreach($threads as &$thread){$thread['attachments']=attachmentRows($db,(int)$thread['id']);}unset($thread);
+        threadJson(['threads'=>$threads, 'scope'=>$scope, 'server_id'=>$serverId, 'channel_id'=>$channelId]);
     }
 
     if ($method !== 'POST') threadJson(['error' => 'Method not allowed'], 405);
