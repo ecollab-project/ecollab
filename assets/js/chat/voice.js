@@ -78,13 +78,15 @@ function joinVoice(channelSlug, el, channelId, roomNameOverride) {
 
   // Acquire mic first, then notify server (order matters for WebRTC)
   _acquireMic().then(() => {
-    // Notify via WebSocket — server will send back voice_peers list
-    if (window.chatSocket && window.chatSocket.readyState === WebSocket.OPEN) {
-      window.chatSocket.send(JSON.stringify({
+    // Notify via the authenticated WebSocket path. OPEN only means the
+    // transport is connected; the socket may still be unauthenticated.
+    // wsSend() checks both OPEN state and successful WS authentication.
+    if (typeof window.wsSend === 'function') {
+      window.wsSend({
         type: 'join_voice',
         channel_id: channelId,
         channel_slug: channelSlug,
-      }));
+      });
     }
     // Also update via HTTP so active-now sees it immediately
     _reportVoiceStatus('join', channelId);
