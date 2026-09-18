@@ -1478,20 +1478,31 @@ if (typeof switchView !== 'undefined') window.switchView = switchView;
 
 // ── Open whiteboard channel ──
 function openWhiteboardChannel(channelId, channelName) {
-  // Highlight the wb channel item
   document.querySelectorAll('.wb-channel-item').forEach(el => el.classList.remove('active'));
-  const el = document.querySelector(`.wb-channel-item[data-channel-id="${channelId}"]`);
+  const el = document.querySelector('.wb-channel-item[data-channel-id="' + channelId + '"]');
   if (el) el.classList.add('active');
 
-  // Update header
-  const nameEl = document.getElementById('channelName');
-  if (nameEl) nameEl.textContent = channelName;
-  const topicEl = document.getElementById('channelTopic');
-  if (topicEl) topicEl.textContent = 'Collaborative whiteboard';
-
-  // Whiteboards have their own workspace so refresh/recovery and saved versions
-  // are not tied to the chat panel lifecycle.
-  window.location.href = `${window.ECOLLAB?.baseUrl || ''}/modules/whiteboard/index.php?channel_id=${encodeURIComponent(channelId)}`;
+  let overlay = document.getElementById('wbIframeOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'wbIframeOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:1200;background:#070b14;display:flex;flex-direction:column;';
+    overlay.innerHTML =
+      '<div style="height:42px;display:flex;align-items:center;gap:10px;padding:0 12px;background:#0d1320;border-bottom:1px solid rgba(255,255,255,.1);">' +
+      '<strong id="wbIframeTitle" style="font-size:13px;color:#e2e8f0;flex:1;"></strong>' +
+      '<button id="wbIframeNewTab" type="button" style="padding:6px 10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#cbd5e1;border-radius:6px;cursor:pointer;">Open tab</button>' +
+      '<button id="wbIframeClose" type="button" style="padding:6px 10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#fff;border-radius:6px;cursor:pointer;">Close</button>' +
+      '</div><iframe id="wbIframe" title="Ecollab Whiteboard" style="width:100%;height:calc(100% - 42px);border:0;background:#0b0f1a;"></iframe>';
+    document.body.appendChild(overlay);
+    document.getElementById('wbIframeClose').onclick = () => overlay.remove();
+    document.getElementById('wbIframeNewTab').onclick = () => {
+      const frame = document.getElementById('wbIframe');
+      if (frame?.src) window.open(frame.src, '_blank', 'noopener');
+    };
+  }
+  const url=(window.ECOLLAB?.baseUrl || '') + '/modules/whiteboard/index.php?channel_id=' + encodeURIComponent(channelId);
+  document.getElementById('wbIframeTitle').textContent = channelName || 'Whiteboard';
+  document.getElementById('wbIframe').src = url;
 }
 window.openWhiteboardChannel = openWhiteboardChannel;
 
