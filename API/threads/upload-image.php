@@ -22,7 +22,7 @@ try {
     if(!is_dir($dir) && !mkdir($dir,0750,true)) throw new RuntimeException('Upload directory creation failed',500);
     $name=date('Ymd_His').'_'.bin2hex(random_bytes(8)).'.'.$allowed[$mime];
     if(!move_uploaded_file($file['tmp_name'],$dir.$name)) throw new RuntimeException('Failed to save image',500);
-    echo json_encode(['success'=>true,'url'=>BASE_URL.'/uploads/threads/'.$name,'file_name'=>basename($file['name']),'mime_type'=>$mime,'file_size'=>(int)$file['size']]);
+    echo json_encode(['success'=>true,'url'=>BASE_URL.'/uploads/threads/'.$name,'path'=>'/uploads/threads/'.$name,'file_name'=>basename($file['name']),'mime_type'=>$mime,'file_size'=>(int)$file['size']]);
 } catch(RuntimeException $e) {
     $code=($e->getCode()>=400&&$e->getCode()<600)?$e->getCode():500; http_response_code($code); echo json_encode(['success'=>false,'error'=>$e->getMessage()]);
 } catch(Throwable $e) { http_response_code(500); echo json_encode(['success'=>false,'error'=>'Image upload failed']); }
