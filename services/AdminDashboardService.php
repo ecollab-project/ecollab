@@ -72,7 +72,7 @@ class AdminDashboardService
                         FROM channels
                         WHERE is_locked = 0) AS active_channels,
 
-                    98.7 AS ai_accuracy,
+                    NULL AS ai_accuracy,
 
                     (SELECT COUNT(*)
                         FROM notifications
