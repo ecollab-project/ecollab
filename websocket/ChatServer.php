@@ -160,7 +160,7 @@ class ChatServer implements MessageComponentInterface
                         $participants = array_values(array_filter($participants, fn($p) => $p['user_id'] !== $uid));
                         $leavePayload = json_encode(['type'=>'voice_leave','user_id'=>$uid,'username'=>$username,'channel_id'=>$vcId]);
                         foreach ($participants as $p) foreach ($this->userConns[(int)$p['user_id']] ?? [] as $peerConn) try { $peerConn->send($leavePayload); } catch (\Exception) {}
-                        $this->broadcastToAll($leavePayload, $conn);
+                        // Voice leave is already sent only to remaining participants in that room.
                         if (empty($participants)) unset($this->voiceRooms[$vcId]);
                     }
                 }
