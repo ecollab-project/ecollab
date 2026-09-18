@@ -17,7 +17,7 @@ function inviteUrl(string $token):string{return rtrim((string)BASE_URL,'/').'/mo
 try{
  $method=strtoupper($_SERVER['REQUEST_METHOD']??'GET'); $action=(string)($_GET['action']??''); $body=$method==='POST'?(json_decode(file_get_contents('php://input'),true)?:$_POST):$_GET; if($method==='POST')AuthMiddleware::verifyCsrf();
  if($action==='create'){
-  $serverId=(int)($body['server_id']??0); if(!$serverId||!serverRole($db,$serverId,(int)$me['id']))inviteJson(['error'=>'Server membership required'],403);
+  $serverId=(int)($body['server_id']??0); $role=$serverId?serverRole($db,$serverId,(int)$me['id']):null; if(!$serverId||!canManageServerInvite($role))inviteJson(['error'=>'Insufficient permissions'],403);
   $maxUses=isset($body['max_uses'])?max(0,min(100000,(int)$body['max_uses'])):0; $expiresHours=isset($body['expires_hours'])?max(0,min(8760,(int)$body['expires_hours'])):24; $expiresAt=$expiresHours>0?date('Y-m-d H:i:s',time()+$expiresHours*3600):null;
   $db->prepare('UPDATE server_invites SET expires_at=NOW() WHERE server_id=? AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at>NOW())')->execute([$serverId]);
   $token=rtrim(strtr(base64_encode(random_bytes(24)),'+/','-_'),'=');$hash=hash('sha256',$token);$stmt=$db->prepare('INSERT INTO server_invites(server_id,created_by,token_hash,max_uses,expires_at) VALUES(?,?,?,?,?)');$stmt->execute([$serverId,$me['id'],$hash,$maxUses,$expiresAt]);inviteJson(['invite'=>['id'=>(int)$db->lastInsertId(),'server_id'=>$serverId,'max_uses'=>$maxUses,'expires_at'=>$expiresAt,'invite_url'=>inviteUrl($token)]]);
