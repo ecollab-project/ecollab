@@ -46,7 +46,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken) ?>">
   <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js" defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat.css">
+  <link rel="icon" type="image/png" href="<?= BASE_URL ?>/assets/img/ecollab-favicon.png">  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/whiteboard.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/whiteboard-mobile.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/collab-tools.css">
@@ -270,7 +270,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       </div>
       <div style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-          <?= htmlspecialchars($user['username']) ?>
+          <?= htmlspecialchars($user['full_name'] ?: $user['username']) ?>
         </div>
         <div style="font-size:11px;color:var(--accent-green);">● Online</div>
       </div>
