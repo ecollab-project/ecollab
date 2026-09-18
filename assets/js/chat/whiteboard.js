@@ -140,7 +140,8 @@ window.wbRejoinRoom = function(){
   if (!wbState.open || !wbState.channelId) return false;
   return wbSend({
     type: 'wb_join',
-    channel_id: wbState.channelId
+    channel_id: wbState.channelId,
+    ...(wbState.whiteboardId ? { whiteboard_id: wbState.whiteboardId } : {})
   });
 };
 
@@ -246,6 +247,7 @@ function _wbDoClose(saveState = true) {
   wbState.paths = [];
   wbState.objects = {};
   wbState.channelId = null;
+  wbState.whiteboardId = null;
 
   document.getElementById('wbOverlay').classList.remove('wb-visible');
   wbState.open = false;
@@ -316,6 +318,7 @@ function openWhiteboardFromVoice() {
 // ══════════════════════════════════════════════════════════
 
 function wbOnJoined(msg) {
+  wbState.whiteboardId = msg.whiteboard_id != null ? Number(msg.whiteboard_id) : null;
   // Apply persisted state from server
   if (msg.state_json) {
     wbApplyFullState(msg.state_json);
