@@ -204,7 +204,6 @@ $stats = $dashData['stats'] ?? [
       <div class="card">
         <div class="card-header"><div class="card-title">Moderation Queue</div><button class="text-link" onclick="showPage('moderation')">View All</button></div>
         <div class="mod-grid"><div class="dashboard-empty-state">No moderation items are currently available.</div></div>
-        </div>
       </div>
 
       <div class="grid-2">
