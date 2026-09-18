@@ -576,7 +576,7 @@ $stats = $dashData['stats'] ?? ['total_members' => 0, 'active_today' => 0, 'mess
                         </div>
                       </div>
                     </td>
-                    <td><?= (int)($a['messages'] ?? 0) ?> <span class="delta pos">+<?= rand(5, 15) ?>%</span></td>
+                    <td><?= (int)($a['messages'] ?? 0) ?></td>
                     <td><?= (int)($a['sessions'] ?? 0) ?> <span class="delta neu">-</span></td>
                     <td><?= (int)($a['wb_edits'] ?? 0) ?></td>
                     <td><?= (int)($a['files_uploaded'] ?? 0) ?></td>
