@@ -26,14 +26,14 @@ $initials = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 2));
 $name     = htmlspecialchars($user['full_name'] ?: $user['username']);
 
 $stats = $dashData['stats'] ?? [
-    'total_users'        => 1248,
-    'active_students'    => 892,
-    'sessions_today'     => 47,
-    'messages_today'     => 312,
-    'servers_count'      => 3,
-    'active_channels'    => 24,
-    'ai_accuracy'        => 98.7,
-    'reports_pending'    => 8,
+    'total_users'        => 0,
+    'active_students'    => 0,
+    'sessions_today'     => 0,
+    'messages_today'     => 0,
+    'servers_count'      => 0,
+    'active_channels'    => 0,
+    'ai_accuracy'        => null,
+    'reports_pending'    => 0,
 ];
 ?>
 <!DOCTYPE html>
@@ -68,13 +68,11 @@ $stats = $dashData['stats'] ?? [
       <div class="notif-wrap" id="nWrap">
         <button class="tb-btn" id="nBtn" onclick="toggleNotif()">
           🔔
-          <span class="n-badge" id="nBadge"><?= (int)($stats['reports_pending'] ?? 8) ?></span>
+          <span class="n-badge" id="nBadge"><?= (int)($stats['reports_pending'] ?? 0) ?></span>
         </button>
         <div class="n-drop" id="nDrop">
           <div class="n-head"><span>Notifications</span><span class="n-clear" onclick="clearNotifs()">Mark all read</span></div>
-          <div class="n-item unread" onclick="showPage('reports');closeNotif()"><div class="n-dot"></div><div class="n-ico" style="background:rgba(239,68,68,0.15)">🚩</div><div><div class="n-msg">New report: Flagged message in #general</div><div class="n-time">2h ago</div></div></div>
-          <div class="n-item unread" onclick="showPage('users');closeNotif()"><div class="n-dot"></div><div class="n-ico" style="background:rgba(34,197,94,0.15)">👥</div><div><div class="n-msg">New user registered: Sara_Kim</div><div class="n-time">3h ago</div></div></div>
-          <div class="n-item" onclick="showPage('syshealth');closeNotif()"><div class="n-ico" style="background:rgba(245,158,11,0.15)">⚠</div><div><div class="n-msg">High memory usage detected (67%)</div><div class="n-time">4h ago</div></div></div>
+          <div class="dashboard-empty-state">No new notifications.</div>
         </div>
       </div>
       <div class="prof-wrap" id="pWrap">
@@ -106,23 +104,23 @@ $stats = $dashData['stats'] ?? [
       <div class="stats-grid">
         <div class="stat-card pink" onclick="showPage('users')">
           <div class="stat-header"><div class="stat-label">Total Users</div><div class="stat-icon">👥</div></div>
-          <div class="stat-value"><?= number_format((int)($stats['total_users']??1248)) ?></div>
-          <div class="stat-change">▲ +12.5% from last month</div>
+          <div class="stat-value"><?= number_format((int)($stats['total_users'] ?? 0)) ?></div>
+          <div class="stat-change">Live platform count</div>
         </div>
         <div class="stat-card blue" onclick="showPage('users')">
           <div class="stat-header"><div class="stat-label">Active Students</div><div class="stat-icon">🎓</div></div>
-          <div class="stat-value"><?= number_format((int)($stats['active_students']??892)) ?></div>
-          <div class="stat-change">▲ +8.3% from last month</div>
+          <div class="stat-value"><?= number_format((int)($stats['active_students'] ?? 0)) ?></div>
+          <div class="stat-change">Live platform count</div>
         </div>
         <div class="stat-card green" onclick="openModal('studySessionsModal')">
           <div class="stat-header"><div class="stat-label">Study Sessions Today</div><div class="stat-icon">📚</div></div>
-          <div class="stat-value"><?= (int)($stats['sessions_today']??47) ?></div>
-          <div class="stat-change">▲ +15.2% from yesterday</div>
+          <div class="stat-value"><?= (int)($stats['sessions_today'] ?? 0) ?></div>
+          <div class="stat-change">Recorded today</div>
         </div>
         <div class="stat-card purple" onclick="openModal('messagesTodayModal')">
           <div class="stat-header"><div class="stat-label">Messages Today</div><div class="stat-icon">💬</div></div>
-          <div class="stat-value"><?= number_format((int)($stats['messages_today']??312)) ?></div>
-          <div class="stat-change">▲ +10.7% from yesterday</div>
+          <div class="stat-value"><?= number_format((int)($stats['messages_today'] ?? 0)) ?></div>
+          <div class="stat-change">Recorded today</div>
         </div>
       </div>
 
@@ -153,12 +151,7 @@ $stats = $dashData['stats'] ?? [
                 <td><div class="action-btns"><button class="btn-view" onclick="openUserProfile('<?= $ruN ?>','<?= htmlspecialchars($ruI) ?>','<?= htmlspecialchars($ruG) ?>','<?= $ruR ?>','<?= $ruC ?>','Active','<?= $ruJ ?>')">View</button><button class="btn-more" onclick="openContextMenu(event,'<?= $ruN ?>')">More ▾</button></div></td>
               </tr>
 <?php endforeach; ?>
-<?php if (empty($dashData['recent_users'])): ?>
-              <tr><td><div class="user-cell"><div class="u-avatar" style="background:linear-gradient(135deg,#ff4fd8,#7c5cff)">F</div><div><div class="u-name-main">Fatima_Student</div><div class="u-handle">@fatima.student</div></div></div></td><td>Student</td><td>Computer Science</td><td><span class="pill active"><span class="pill-dot"></span>Active</span></td><td style="color:var(--muted)">2h ago</td><td><div class="action-btns"><button class="btn-view" onclick="openUserProfile('Fatima_Student','F','#ff4fd8,#7c5cff','Student','Computer Science','Active','Jan 12 2025')">View</button><button class="btn-more" onclick="openContextMenu(event,'Fatima_Student')">More ▾</button></div></td></tr>
-              <tr><td><div class="user-cell"><div class="u-avatar" style="background:linear-gradient(135deg,#3b82f6,#00d4ff)">J</div><div><div class="u-name-main">John_Doe</div><div class="u-handle">@john.doe</div></div></div></td><td>Student</td><td>Computer Science</td><td><span class="pill active"><span class="pill-dot"></span>Active</span></td><td style="color:var(--muted)">3h ago</td><td><div class="action-btns"><button class="btn-view" onclick="openUserProfile('John_Doe','J','#3b82f6,#00d4ff','Student','Computer Science','Active','Jan 15 2025')">View</button><button class="btn-more" onclick="openContextMenu(event,'John_Doe')">More ▾</button></div></td></tr>
-              <tr><td><div class="user-cell"><div class="u-avatar" style="background:linear-gradient(135deg,#22c55e,#16a34a)">S</div><div><div class="u-name-main">Sara_Kim</div><div class="u-handle">@sara.kim</div></div></div></td><td>Student</td><td>Information Tech</td><td><span class="pill active"><span class="pill-dot"></span>Active</span></td><td style="color:var(--muted)">5h ago</td><td><div class="action-btns"><button class="btn-view" onclick="openUserProfile('Sara_Kim','S','#22c55e,#16a34a','Student','Information Tech','Active','Feb 3 2025')">View</button><button class="btn-more" onclick="openContextMenu(event,'Sara_Kim')">More ▾</button></div></td></tr>
-              <tr><td><div class="user-cell"><div class="u-avatar" style="background:linear-gradient(135deg,#ef4444,#dc2626)">A</div><div><div class="u-name-main">Adam_Smith</div><div class="u-handle">@adam.smith</div></div></div></td><td>Facilitator</td><td>Computer Science</td><td><span class="pill active"><span class="pill-dot"></span>Active</span></td><td style="color:var(--muted)">1d ago</td><td><div class="action-btns"><button class="btn-view" onclick="openUserProfile('Adam_Smith','A','#ef4444,#dc2626','Facilitator','Computer Science','Active','Dec 20 2024')">View</button><button class="btn-sm btn-outline" onclick="openModal('editRoleModal','Adam_Smith')">Edit Role</button></div></td></tr>
-<?php endif; ?>
+<tr><td colspan="6" class="dashboard-empty-state">No recent users found.</td></tr>
             </tbody>
           </table>
         </div>
