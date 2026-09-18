@@ -189,10 +189,10 @@ $stats = $dashData['stats'] ?? [
         <div class="card">
           <div class="card-header"><div class="card-title">Active Rooms</div><button class="text-link" onclick="showPage('channels')">View All</button></div>
           <div class="active-rooms-list">
-            <div class="active-room-item" onclick="openModal('roomDetailModal')" style="cursor:pointer"><div class="room-avatar-placeholder" style="background:rgba(0,212,255,0.15)">🤖</div><span class="ar-name">Study Room 5</span><span class="ar-count">👥 18</span></div>
-            <div class="active-room-item" onclick="openModal('roomDetailModal')" style="cursor:pointer"><div class="room-avatar-placeholder" style="background:rgba(124,92,255,0.15)">🧪</div><span class="ar-name">AI Lab 1</span><span class="ar-count">👥 12</span></div>
-            <div class="active-room-item" onclick="openModal('roomDetailModal')" style="cursor:pointer"><div class="room-avatar-placeholder" style="background:rgba(34,197,94,0.15)">🔬</div><span class="ar-name">AI Lab 2</span><span class="ar-count">👥 9</span></div>
-            <div class="active-room-item" onclick="openModal('roomDetailModal')" style="cursor:pointer"><div class="room-avatar-placeholder" style="background:rgba(239,68,68,0.15)">📝</div><span class="ar-name">Thesis Group</span><span class="ar-count">👥 15</span></div>
+<?php foreach (array_slice($dashData['study_rooms'] ?? [], 0, 5) as $room): ?>
+            <div class="active-room-item" onclick="openModal('roomDetailModal','<?= htmlspecialchars($room['name'] ?? '') ?>')" style="cursor:pointer"><div class="room-avatar-placeholder" style="background:rgba(0,212,255,0.15)">#</div><span class="ar-name"><?= htmlspecialchars($room['name'] ?? '') ?></span><span class="ar-count">👥 <?= (int)($room['active_members'] ?? 0) ?></span></div>
+<?php endforeach; ?>
+<?php if (empty($dashData['study_rooms'])): ?><div class="dashboard-empty-state">No active rooms.</div><?php endif; ?>
           </div>
         </div>
         <div class="card">
@@ -203,11 +203,7 @@ $stats = $dashData['stats'] ?? [
 
       <div class="card">
         <div class="card-header"><div class="card-title">Moderation Queue</div><button class="text-link" onclick="showPage('moderation')">View All</button></div>
-        <div class="mod-grid">
-          <div class="mod-item"><div class="mod-header"><div class="mod-icon red">🚫</div><div><div class="mod-text">Flagged: "Check this out 🍄 spam"</div><div class="mod-sub">Reported by Sara_Kim</div></div></div><div class="mod-actions"><button class="btn-approve" onclick="moderateAction('approve','spam message','Sara_Kim')">Approve</button><button class="btn-deny" onclick="moderateAction('deny','spam message','Sara_Kim')">Deny</button></div></div>
-          <div class="mod-item"><div class="mod-header"><div class="mod-icon blue">🤖</div><div><div class="mod-text">Pending: AI Match Request</div><div class="mod-sub">Fatima_Student & John_Doe</div></div></div><div class="mod-actions"><button class="btn-pink" onclick="openModal('aiMatchModal')">View</button></div></div>
-          <div class="mod-item"><div class="mod-header"><div class="mod-icon red">💬</div><div><div class="mod-text">Flagged: "Click here to win..."</div><div class="mod-sub">Reported by John_Doe</div></div></div><div class="mod-actions"><button class="btn-approve" onclick="moderateAction('approve','phishing','John_Doe')">Approve</button><button class="btn-deny" onclick="moderateAction('deny','phishing','John_Doe')">Deny</button></div></div>
-          <div class="mod-item"><div class="mod-header"><div class="mod-icon yellow">⚠</div><div><div class="mod-text">Reported Content: Study Room 2</div><div class="mod-sub"></div></div></div><div class="mod-actions"><button class="btn-pink" onclick="openModal('reportDetailModal')">View</button></div></div>
+        <div class="mod-grid"><div class="dashboard-empty-state">No moderation items are currently available.</div></div>
         </div>
       </div>
 
@@ -215,10 +211,8 @@ $stats = $dashData['stats'] ?? [
         <div class="card">
           <div class="card-header"><div class="card-title">AI System Health</div></div>
           <div class="health-body">
-            <div class="health-metric"><div class="health-label">Matching Accuracy</div><div class="health-value" style="color:var(--green)"><?= number_format((float)($stats['ai_accuracy']??98.7),1) ?>%</div><div class="health-change">▲ +2.1% from last week</div></div>
-            <canvas id="ringChart" width="70" height="70"></canvas>
-            <div class="health-metric"><div class="health-label">Avg Response Time</div><div class="health-value">1.2s</div><div class="health-change neg">▼ -0.3s</div></div>
-            <div class="health-metric"><div class="health-label">System Uptime</div><div class="health-value" style="color:var(--green)">99.9%</div><div class="health-change">▲ +0.1%</div></div>
+            <div class="health-metric"><div class="health-label">Matching Accuracy</div><div class="health-value" style="color:var(--green)"><?= number_format((float)($stats['ai_accuracy'] ?? 0),1) ?>%</div><div class="health-change">From recorded system data</div></div>
+            <div class="dashboard-empty-state">Additional AI health metrics are not available from the current backend data source.</div>
           </div>
           <button class="btn-details" onclick="showPage('syshealth')">View Details</button>
         </div>
