@@ -43,6 +43,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ecollab — Chat</title>
+  <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/assets/ecollab-favicon.svg">
   <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken) ?>">
   <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js" defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
@@ -310,6 +311,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <div>
           <div style="font-size:15px;font-weight:700;color:var(--text-primary);line-height:1.2;" id="channelTitle">Select a channel</div>
           <div class="channel-desc" id="channelDesc" style="font-size:12px;color:var(--text-muted);"></div>
+          <a id="channelDashboardLink" href="<?= BASE_URL ?>/modules/student/dashboard.php" style="display:none;font-size:11px;color:#c084fc;text-decoration:none;font-weight:700;margin-top:3px;" title="Open dashboard">↗ Dashboard</a>
         </div>
       </div>
       <div class="header-sep"></div>
@@ -332,9 +334,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <button class="collab-open-btn" onclick="openCollabHub()" title="Collaboration Tools">
           🤝 <span>Collab</span>
         </button>
-        <button class="collab-open-btn" onclick="openPeerMatchingModal()" title="Find Study Partners" style="background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.25);color:#60a5fa;">
-          🔍 <span>Match</span>
-        </button>
+        
         <button class="header-icon-btn header-members" onclick="openMembersPanel()" title="Members">
           <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
             <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
