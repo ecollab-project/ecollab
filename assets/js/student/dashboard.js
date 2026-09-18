@@ -56,6 +56,8 @@ function handleNotif(el,msg){
   el.classList.remove('unread');
   const d=el.querySelector('.ndd');if(d)d.remove();
   updateNB();
+  const notifId=parseInt(el.dataset.notifId||'0',10);
+  if(notifId){fetch((window.ECOLLAB_BASE||'')+'/API/notifications/mark-read.php',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:[notifId]})}).catch(()=>{});}
   const link=el.dataset.link||el.dataset.chatLink;
   if(link){
     try{
