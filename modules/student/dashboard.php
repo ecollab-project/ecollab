@@ -81,7 +81,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
               <div class="ndclear" onclick="clearNotifs()">Mark all read</div>
             </div>
             <?php foreach (array_slice($dashData['notifications'] ?? [], 0, 4) as $notif): ?>
-              <div class="ndi <?= $notif['is_read'] ? '' : 'unread' ?>" onclick="handleNotif(this,'<?= htmlspecialchars($notif['title'] ?? '') ?>')">
+              <div class="ndi <?= $notif['is_read'] ? '' : 'unread' ?>" data-link="<?= htmlspecialchars($notif['link_url'] ?? '', ENT_QUOTES, 'UTF-8') ?>" onclick="handleNotif(this,'<?= htmlspecialchars($notif['title'] ?? '') ?>')">
                 <?php if (!$notif['is_read']): ?><div class="ndd"></div><?php endif; ?>
                 <div class="ndico" style="background:rgba(233,30,140,.15)"><?= htmlspecialchars($notif['icon'] ?? '🔔') ?></div>
                 <div>
