@@ -48,6 +48,7 @@ class StudentDashboardService
             'chat_unread' => $this->getChatUnreadCount($userId),
             'chat_recent' => $this->getRecentChat($userId),
             'membership' => $this->membershipService->getMembershipSummary($userId),
+            'channels_entered' => count($this->getStudentCourses($userId)),
         ];
     }
 
