@@ -46,11 +46,12 @@ if (!$result['allowed']) {
 
 try {
     $service = new AuthService();
-    $outcome = $service->login($identifier, $password, $remember);
+    $outcome = $service->login($identifier, $password, $remember, false);
 
     if ($outcome['success']) {
-        // Password was accepted, but the authenticated session is intentionally
-        // not created until the OTP endpoint completes the 2FA step.
+        // Password was accepted and the authenticated session is created immediately.
+        // Signup email verification is handled once during registration; normal
+        // password login does not repeat that verification step.
         if (!empty($outcome['otp_required'])) {
             $response = [
                 'success'      => true,
