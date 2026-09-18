@@ -203,9 +203,6 @@ function showStep(n) {
   if (labelEl) labelEl.textContent = STEP_LABELS[n - 1];
   if (counterEl) counterEl.textContent = `Step ${n} of ${TOTAL_STEPS}`;
 
-  // Show OTP row after email is entered on step 1
-  if (n === 1) updateOtpVisibility();
-
   currentStep = n;
 }
 
@@ -741,9 +738,6 @@ function closeEmailVerification() {
 document.addEventListener('DOMContentLoaded', () => {
   showStep(1);
   renderHobbyBuilder();
-
-  // OTP visibility on email input
-  document.getElementById('email')?.addEventListener('input', updateOtpVisibility);
 
   // Focus highlight
   document.querySelectorAll('.input-row input, .input-row select').forEach(el => {
