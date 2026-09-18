@@ -227,30 +227,50 @@ function handleSocketMessage(data) {
 
     // ── Voice ──
     case 'voice_join':
-      handleVoiceJoin(data);
+      // Never render a participant from another voice room.
+      if (window.vcChannelId != null && Number(data.channel_id) === Number(window.vcChannelId) &&
+          typeof window.handleVoiceJoin === 'function') {
+        window.handleVoiceJoin(data);
+      }
       break;
     case 'voice_leave':
-      handleVoiceLeave(data);
+      // Never remove a participant from the active room because of a stale event.
+      if (window.vcChannelId != null && Number(data.channel_id) === Number(window.vcChannelId) &&
+          typeof window.handleVoiceLeave === 'function') {
+        window.handleVoiceLeave(data);
+      }
       break;
     case 'voice_peers':
-      if (window.handleVoicePeers) window.handleVoicePeers(data);
+      if (window.vcChannelId != null && Number(data.channel_id) === Number(window.vcChannelId) &&
+          typeof window.handleVoicePeers === 'function') {
+        window.handleVoicePeers(data);
+      }
       break;
 
     // ── WebRTC signaling ──
     case 'screen_share_notify':
-      handleScreenShareNotify(data);
+      if (window.vcChannelId != null && Number(data.channel_id) === Number(window.vcChannelId) &&
+          typeof window.handleScreenShareNotify === 'function') {
+        window.handleScreenShareNotify(data);
+      }
       break;
     case 'webrtc_offer':
-      if (window._handleWebRtcOffer)
+      if (window.vcChannelId != null && Number(data.channel_id) === Number(window.vcChannelId) &&
+          typeof window._handleWebRtcOffer === 'function') {
         window._handleWebRtcOffer(data.from_user_id, data.from_username, data.sdp, !!data.is_screen_offer);
+      }
       break;
     case 'webrtc_answer':
-      if (window._handleWebRtcAnswer)
+      if (window.vcChannelId != null && Number(data.channel_id) === Number(window.vcChannelId) &&
+          typeof window._handleWebRtcAnswer === 'function') {
         window._handleWebRtcAnswer(data.from_user_id, data.sdp);
+      }
       break;
     case 'webrtc_candidate':
-      if (window._handleWebRtcCandidate)
+      if (window.vcChannelId != null && Number(data.channel_id) === Number(window.vcChannelId) &&
+          typeof window._handleWebRtcCandidate === 'function') {
         window._handleWebRtcCandidate(data.from_user_id, data.candidate);
+      }
       break;
 
     // ── Whiteboard ──
