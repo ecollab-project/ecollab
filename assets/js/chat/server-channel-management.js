@@ -258,17 +258,76 @@
     try{if(serverToken){const d=await request('/API/server/invite.php','join',{},'POST',{invite_code:serverToken});toast(`Joined ${d.name}`,'success');}if(channelToken){const d=await request('/API/chat/channel-invite.php','join',{},'POST',{invite_code:channelToken});toast(`Joined #${d.channel_name}`,'success');}['invite','channel_invite'].forEach(k=>url.searchParams.delete(k));history.replaceState({},'',url.toString());setTimeout(()=>location.reload(),350);}catch(e){toast(e.message,'error');}
   }
 
-  function headerActions(){
-    const ws=document.getElementById('wsHeader');
-    if(ws&&!document.getElementById('scmServerBtns')){
-      const box=document.createElement('div');box.id='scmServerBtns';box.className='scm-top-actions';
-      box.innerHTML='<button class="scm-mini-btn" title="Invite to server">🔗</button><button class="scm-mini-btn" title="Add members to server">👥</button>';
-      box.children[0].onclick=e=>{e.stopPropagation();openServerManager('Invite');};
-      box.children[1].onclick=e=>{e.stopPropagation();openServerManager('Add Members');};
-      ws.appendChild(box);
+  let serverManageRole = null;
+  let serverManageId = 0;
+  let serverManageRequest = null;
+
+  async function loadServerManagePermission(){
+    const sid = serverId();
+    if(!sid){
+      serverManageRole = null;
+      serverManageId = 0;
+      return null;
     }
+
+    if(serverManageId === sid && serverManageRole !== null) return serverManageRole;
+    if(serverManageRequest) return serverManageRequest;
+
+    serverManageRequest = request('/API/server/access.php','', {server_id:sid})
+      .then(data => {
+        serverManageId = sid;
+        serverManageRole = data?.server_role || null;
+        return serverManageRole;
+      })
+      .catch(() => {
+        serverManageId = sid;
+        serverManageRole = null;
+        return null;
+      })
+      .finally(() => {
+        serverManageRequest = null;
+      });
+
+    return serverManageRequest;
+  }
+
+  function canManageServer(role){
+    return ['owner','admin','moderator'].includes(String(role || '').toLowerCase());
+  }
+
+  async function headerActions(){
+    const sid = serverId();
+    const role = await loadServerManagePermission();
+
+    const ws = document.getElementById('wsHeader');
+    let box = document.getElementById('scmServerBtns');
+
+    if(ws && canManageServer(role)){
+      if(!box){
+        box=document.createElement('div');
+        box.id='scmServerBtns';
+        box.className='scm-top-actions';
+        box.innerHTML='<button class="scm-mini-btn" title="Invite to server">🔗</button><button class="scm-mini-btn" title="Add members to server">👥</button>';
+        box.children[0].onclick=e=>{e.stopPropagation();openServerManager('Invite');};
+        box.children[1].onclick=e=>{e.stopPropagation();openServerManager('Add Members');};
+        ws.appendChild(box);
+      }
+    }else if(box){
+      box.remove();
+    }
+
     const header=document.querySelector('.chat-header>div:last-child');
-    if(header&&!document.getElementById('scmChannelInviteBtn')){const b=document.createElement('button');b.id='scmChannelInviteBtn';b.className='header-icon-btn';b.title='Channel Invite';b.textContent='🔗';b.onclick=()=>openChannelManager('Invite');const memberBtn=document.querySelector('.header-members');if(memberBtn)header.insertBefore(b,memberBtn);else header.appendChild(b);}
+    if(header&&!document.getElementById('scmChannelInviteBtn')){
+      const b=document.createElement('button');
+      b.id='scmChannelInviteBtn';
+      b.className='header-icon-btn';
+      b.title='Channel Invite';
+      b.textContent='🔗';
+      b.onclick=()=>openChannelManager('Invite');
+      const memberBtn=document.querySelector('.header-members');
+      if(memberBtn)header.insertBefore(b,memberBtn);
+      else header.appendChild(b);
+    }
   }
 
   function boot(){

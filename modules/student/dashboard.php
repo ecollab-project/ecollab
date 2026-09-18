@@ -42,7 +42,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/student-dashboard.css">
+  <link rel="icon" type="image/png" href="<?= BASE_URL ?>/assets/img/ecollab-favicon.png">  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/student-dashboard.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/dashboard-mobile.css">
   <script>
     window.ECOLLAB_BASE = <?= json_encode(BASE_URL) ?>;
@@ -134,13 +134,14 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
 
         <!-- STAT CARDS -->
         <div class="stats-row">
-          <div class="stat-card c1" onclick="showPage('courses')">
+          <?php $progression = $dashData['activity_progression'] ?? ['level'=>1,'xp'=>0,'progress_percent'=>0,'next_unlock'=>null,'next_level'=>null]; ?>
+          <div class="stat-card c1" onclick="showPage('discover')">
             <div class="sc-top">
-              <div class="sc-label">Courses Enrolled</div>
-              <div class="sc-icon">👥</div>
+              <div class="sc-label">Channels Entered</div>
+              <div class="sc-icon">#</div>
             </div>
-            <div class="sc-val"><?= count($dashData['courses'] ?? []) ?: 5 ?></div>
-            <div class="sc-ch">+1 this month</div>
+            <div class="sc-val"><?= (int)($dashData['membership']['channels_joined_count'] ?? 0) ?></div>
+            <div class="sc-ch">Keep exploring</div>
           </div>
           <div class="stat-card c2" onclick="openModal('sessionsModal')">
             <div class="sc-top">
@@ -268,54 +269,35 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
           <div>
             <div class="sc-card" style="margin-bottom:12px">
               <div class="sch">
-                <div class="sct">Your Courses</div><button class="view-all" onclick="showPage('courses')">View All</button>
+                <div class="sct">Activity Progression</div>
+                <button class="view-all" onclick="showPage('insights')">My Progress</button>
               </div>
-              <div>
-                <?php
-                $courseColors = ['var(--pink)', '#a78bfa', '#60a5fa', 'var(--green)', 'var(--yellow)'];
-                $courseGrads  = ['linear-gradient(90deg,var(--pink),var(--purple))', 'linear-gradient(90deg,var(--purple),var(--indigo))', 'linear-gradient(90deg,var(--blue),var(--cyan))', 'linear-gradient(90deg,var(--green),var(--teal))', 'linear-gradient(90deg,var(--yellow),var(--orange))'];
-                foreach (array_slice($dashData['courses'] ?? [], 0, 5) as $ci => $course):
-                  $pct  = (int)($course['progress_percentage'] ?? rand(40, 90));
-                  $clr  = $courseColors[$ci % count($courseColors)];
-                  $grad = $courseGrads[$ci % count($courseGrads)];
-                  $name = htmlspecialchars(($course['course_code'] ?? '') . ' - ' . ($course['name'] ?? 'Course'));
-                ?>
-                  <div class="course-row" onclick="openModal('courseDetailModal','<?= $name ?>')">
-                    <div class="cr-left">
-                      <div class="cr-name"><span class="course-clr" style="background:<?= $clr ?>"></span><?= $name ?></div>
-                      <div class="cr-bar-bg">
-                        <div class="cr-bar-fill" style="width:<?= $pct ?>%;background:<?= $grad ?>"></div>
-                      </div>
-                      <div class="cr-next">Next: <?= htmlspecialchars($course['next_topic'] ?? 'Upcoming lesson') ?></div>
-                    </div>
-                    <div class="cr-pct" style="color:<?= $clr ?>"><?= $pct ?>%</div>
-                    <div class="cr-arr">›</div>
+              <div style="padding:4px 15px 16px;">
+                <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;">
+                  <div>
+                    <div style="font-size:11px;color:var(--muted2);text-transform:uppercase;letter-spacing:.08em;">Current Level</div>
+                    <div style="font-size:30px;font-weight:900;color:var(--pink);line-height:1.1;">Level <?= (int)($progression['level'] ?? 1) ?></div>
                   </div>
-                <?php endforeach; ?>
-                <?php if (empty($dashData['courses'])): ?>
-                  <div class="course-row" onclick="openModal('courseDetailModal','CS 305 - Neural Networks')">
-                    <div class="cr-left">
-                      <div class="cr-name"><span class="course-clr" style="background:var(--pink)"></span>CS 305 - Neural Networks</div>
-                      <div class="cr-bar-bg">
-                        <div class="cr-bar-fill" style="width:78%;background:linear-gradient(90deg,var(--pink),var(--purple))"></div>
-                      </div>
-                      <div class="cr-next">Next: Backpropagation Basics · May 24</div>
-                    </div>
-                    <div class="cr-pct" style="color:var(--pink)">78%</div>
-                    <div class="cr-arr">›</div>
+                  <div style="text-align:right;font-size:12px;color:var(--muted2);">
+                    <strong style="color:var(--text);"><?= number_format((int)($progression['xp'] ?? 0)) ?> XP</strong><br>
+                    <?php if (!empty($progression['next_level'])): ?>
+                      <?= number_format((int)($progression['next_level_xp'] ?? 0)) ?> XP to Level <?= (int)$progression['next_level'] ?>
+                    <?php else: ?>
+                      Max level reached
+                    <?php endif; ?>
                   </div>
-                  <div class="course-row" onclick="openModal('courseDetailModal','CS 201 - Data Structures')">
-                    <div class="cr-left">
-                      <div class="cr-name"><span class="course-clr" style="background:#a78bfa"></span>CS 201 - Data Structures</div>
-                      <div class="cr-bar-bg">
-                        <div class="cr-bar-fill" style="width:65%;background:linear-gradient(90deg,var(--purple),var(--indigo))"></div>
-                      </div>
-                      <div class="cr-next">Next: Trees and Graphs · May 26</div>
-                    </div>
-                    <div class="cr-pct" style="color:#a78bfa">65%</div>
-                    <div class="cr-arr">›</div>
-                  </div>
-                <?php endif; ?>
+                </div>
+                <div class="cr-bar-bg" style="margin-top:12px;">
+                  <div class="cr-bar-fill" style="width:<?= (int)($progression['progress_percent'] ?? 0) ?>%;background:linear-gradient(90deg,var(--pink),var(--purple));"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;gap:8px;margin-top:7px;font-size:10px;color:var(--muted2);">
+                  <span>Activity-based progression</span>
+                  <span><?= (int)($progression['progress_percent'] ?? 0) ?>%</span>
+                </div>
+                <div style="margin-top:12px;padding:9px 10px;border:1px solid rgba(168,85,247,.18);background:rgba(168,85,247,.07);border-radius:8px;font-size:11px;color:var(--text-secondary);">
+                  🔓 Next unlock:
+                  <strong style="color:#c084fc;"><?= htmlspecialchars((string)($progression['next_unlock'] ?? 'All current tools unlocked')) ?></strong>
+                </div>
               </div>
             </div>
 

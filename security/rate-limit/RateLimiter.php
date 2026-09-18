@@ -120,7 +120,7 @@ class RateLimiter {
         $this->db->exec("
             CREATE TABLE IF NOT EXISTS rate_limit_log (
                 id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                lookup_key VARCHAR(80)     NOT NULL,
+                lookup_key VARCHAR(128)     NOT NULL,
                 created_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (id),
                 KEY idx_lookup_key (lookup_key),

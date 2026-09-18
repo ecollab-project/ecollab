@@ -43,7 +43,12 @@ function wbPickColor(idx) { return WB_COLORS[idx % WB_COLORS.length]; }
 // ── Current user ─────────────────────────────────────────
 function wbGetCurrentUser() {
   const u = window.__USER__ || {};
-  return { id: u.id || 0, name: u.username || u.name || 'You', role: u.role || '' };
+  const e = window.ECOLLAB || {};
+  return {
+    id: u.id || e.userId || 0,
+    name: u.fullName || u.username || e.fullName || e.username || u.name || 'You',
+    role: u.role || e.role || ''
+  };
 }
 
 // ── WebSocket access (shared with main chat.js) ───────────
@@ -146,7 +151,9 @@ function openWhiteboard(boardName, sessionOwnerId, channelId) {
   }
   const targetChannelId = channelId || window.ECOLLAB?.currentChannelId || window.__currentChannelId;
   if (targetChannelId && !window.ECOLLAB?.whiteboardStandalone) {
-    window.location.href = `${window.ECOLLAB?.baseUrl || ''}/modules/whiteboard/index.php?channel_id=${encodeURIComponent(targetChannelId)}`;
+    const url = `${window.ECOLLAB?.baseUrl || ''}/modules/whiteboard/index.php?channel_id=${encodeURIComponent(targetChannelId)}`;
+    const win = window.open(url, '_blank', 'noopener,noreferrer');
+    if (!win) showToast('📋 Allow pop-ups to keep your voice call connected while opening the whiteboard', 'info');
     return;
   }
   const overlay = document.getElementById('wbOverlay');
@@ -621,7 +628,9 @@ function wbDown(e, ctx, canvas) {
   wbState.dirty = true;
   const pos = wbPos(e, canvas);
   if (wbState.tool === 'pen' || wbState.tool === 'highlight' || wbState.tool === 'arrow') {
-    const pathId = `${wbGetCurrentUser().id}_${Date.now()}_${wbState._pathSeq++}`;
+    const me = wbGetCurrentUser();
+    const randomPart = (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') ? globalThis.crypto.randomUUID() : Math.random().toString(36).slice(2);
+    const pathId = `${me.id}_${Date.now()}_${wbState._pathSeq++}_${randomPart}`;
     const color = wbState.tool === 'highlight'
       ? wbState.color + '55'
       : wbState.color;

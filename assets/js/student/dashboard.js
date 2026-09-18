@@ -77,9 +77,54 @@ function saveNote(){const t=document.getElementById('noteTitle').value;if(!t){to
 function sendMsg(){goToChat();}
 
 // ═══ AI ═══
-const aiR={'Summarize Neural Networks Ch.5':'**Chapter 5 — CNNs**\n\nKey concepts:\n• Convolutional layers detect local features\n• Pooling layers reduce dimensionality\n• Filters/kernels learn feature detectors\n• Popular architectures: LeNet → VGG → ResNet\n\nWant me to quiz you on this?','Quiz me on DSA':'**DSA Quiz — Q1/5**\n\nTime complexity of merge sort (worst case)?\n\nA) O(n)\nB) O(n log n) ✓\nC) O(n²)\nD) O(log n)\n\nType A, B, C, or D!','Create my study plan for this week':'**Your Study Plan for This Week**\n\n📅 Mon–Tue: CS 305 Chapter 6 CNNs (2h/day)\n📅 Wed: CS 201 Trees & Graphs (1.5h)\n📅 Thu: CS 210 Normalization (2h)\n📅 Fri: Review + Quizzes (1h)\n📅 Sat: AI Chatbot Project (3h)\n📅 Sun: Rest & light review\n\nTotal: ~14h — on track for your 20h goal!'};
-function sendAI(){const inp=document.getElementById('aiInput');const msg=inp.value.trim();if(!msg)return;appendAI('You',msg,'ai-msg me','ai-label me');inp.value='';const r=aiR[msg]||'Great question! Based on your current servers and activity, I suggest opening the relevant server in Chat and using the connected study resources.';setTimeout(()=>appendAI('AI Assistant',r,'ai-msg ai','ai-label ai'),600);}
-function aiQP(p){document.getElementById('aiInput').value=p;sendAI();}
+let aiSessionId = null;
+
+async function ensureAiSession() {
+  if (aiSessionId) return aiSessionId;
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+  const res = await fetch((window.ECOLLAB_BASE || '') + '/API/ai/sessions.php', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+    body: JSON.stringify({ title: 'Dashboard AI Assistant', csrf_token: csrf })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.success || !data.session?.id) {
+    throw new Error(data.error || 'AI session could not be created.');
+  }
+  aiSessionId = Number(data.session.id);
+  return aiSessionId;
+}
+
+async function sendAI() {
+  const inp = document.getElementById('aiInput');
+  const msg = inp?.value.trim();
+  if (!msg) return;
+
+  appendAI('You', msg, 'ai-msg me', 'ai-label me');
+  inp.value = '';
+  appendAI('AI Assistant', 'Thinking…', 'ai-msg ai ai-loading', 'ai-label ai');
+
+  try {
+    const sessionId = await ensureAiSession();
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const res = await fetch((window.ECOLLAB_BASE || '') + '/API/ai/message.php', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+      body: JSON.stringify({ session_id: sessionId, prompt: msg, csrf_token: csrf })
+    });
+    const data = await res.json().catch(() => ({}));
+    document.querySelector('#aiLog .ai-loading')?.remove();
+    if (!res.ok || !data.success) throw new Error(data.error || 'AI request failed.');
+    appendAI('AI Assistant', data.message?.content || 'The AI returned no message.', 'ai-msg ai', 'ai-label ai');
+  } catch (error) {
+    document.querySelector('#aiLog .ai-loading')?.remove();
+    appendAI('AI Assistant', '⚠ ' + (error.message || 'AI assistant unavailable.'), 'ai-msg ai', 'ai-label ai');
+  }
+}
+
+function aiQP(p){const input=document.getElementById('aiInput');if(input){input.value=p;sendAI();}}
 function appendAI(who,text,bc,lc){const log=document.getElementById('aiLog');if(!log)return;const d=document.createElement('div');d.innerHTML=`<div class="${lc}">${who}</div><div class="${bc}">${text}</div>`;log.appendChild(d);log.scrollTop=log.scrollHeight;}
 
 // ═══ CALENDAR ═══
