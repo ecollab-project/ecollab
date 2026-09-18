@@ -598,10 +598,10 @@ function showEmailVerification(data = {}) {
   if (error) error.textContent = '';
   if (input) {
     input.value = '';
-    input.focus();
   }
 
   modal.style.display = 'flex';
+  if (input) input.focus();
   startVerificationCountdown();
 }
 
