@@ -42,7 +42,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/student-dashboard.css">
+  <link rel="icon" type="image/png" href="<?= BASE_URL ?>/assets/img/ecollab-favicon.png">  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/student-dashboard.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/dashboard-mobile.css">
   <script>
     window.ECOLLAB_BASE = <?= json_encode(BASE_URL) ?>;
