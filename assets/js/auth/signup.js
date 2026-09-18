@@ -302,56 +302,6 @@ function toggleEye(fieldId, iconId) {
     : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
 }
 
-// ── OTP (email verification) ───────────────────────────────────────────────
-function updateOtpVisibility() {
-  const email   = document.getElementById('email')?.value.trim() || '';
-  const wrap    = document.getElementById('otpWrap');
-  const divider = document.getElementById('otpDivider');
-  const show    = email.length >= 3;
-  if (wrap)    wrap.style.display    = show ? '' : 'none';
-  if (divider) divider.style.display = show ? '' : 'none';
-}
-
-async function sendOtp() {
-  const email  = document.getElementById('email')?.value.trim() || '';
-  const btn    = document.getElementById('otpSendBtn');
-  const hint   = document.getElementById('otpHint');
-
-  if (!email) { showErr(1, 'Please enter your email first.'); return; }
-
-  if (btn) { btn.textContent = 'Sending…'; btn.disabled = true; }
-
-  // In dev mode (APP_DEBUG) the OTP is returned in the response for inspection
-  try {
-    const res  = await fetch('../../API/auth/send-otp.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrf() },
-      body: JSON.stringify({ email }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      if (hint) hint.textContent = data.otp_debug
-        ? `DEV: code is ${data.otp_debug}`
-        : 'Code sent! Check your inbox.';
-      // Countdown
-      let secs = 60;
-      const timer = setInterval(() => {
-        if (btn) btn.textContent = `Resend (${--secs}s)`;
-        if (secs <= 0) {
-          clearInterval(timer);
-          if (btn) { btn.textContent = 'Resend'; btn.disabled = false; }
-        }
-      }, 1000);
-    } else {
-      if (hint) hint.textContent = data.error || 'Failed to send code.';
-      if (btn) { btn.textContent = 'Send Code'; btn.disabled = false; }
-    }
-  } catch {
-    if (hint) hint.textContent = 'Network error. Try again.';
-    if (btn) { btn.textContent = 'Send Code'; btn.disabled = false; }
-  }
-}
-
 // ── Hobby Builder ──────────────────────────────────────────────────────────
 function renderHobbyBuilder() {
   const grid = document.getElementById('hobbyMainGrid');
@@ -557,7 +507,9 @@ async function doSignup() {
       body: JSON.stringify(payload),
     });
     const data = await res.json();
-    if (data.success) {
+    if (data.success && data.otp_required) {
+      showEmailVerification(data);
+    } else if (data.success) {
       const btn = document.getElementById('submitBtn');
       if (btn) {
         btn.textContent = '✓ Account Created!';
@@ -573,6 +525,157 @@ async function doSignup() {
   } catch {
     showErr(5, 'Network error. Please try again.');
     setLoading(false);
+  }
+}
+
+// ── Signup email verification ──────────────────────────────────────────────
+let verificationTimer = null;
+let verificationBusy = false;
+
+function showEmailVerification(data = {}) {
+  const modal = document.getElementById('emailVerificationModal');
+  const input = document.getElementById('signupOtpInput');
+  const error = document.getElementById('signupOtpError');
+  const hint = document.getElementById('signupOtpHint');
+
+  if (!modal) return;
+
+  const devCode = data.otp_debug || '';
+  if (hint) {
+    hint.textContent = devCode
+      ? `DEV: code is ${devCode}`
+      : data.mail_sent
+        ? 'A 6-digit code was sent to your email.'
+        : (data.mail_error || 'We could not send the code yet. Use Resend Code to try again.');
+  }
+  if (error) error.textContent = '';
+  if (input) {
+    input.value = '';
+    input.focus();
+  }
+
+  modal.style.display = 'flex';
+  startVerificationCountdown();
+}
+
+function startVerificationCountdown(seconds = 60) {
+  const resend = document.getElementById('signupResendBtn');
+  if (!resend) return;
+
+  if (verificationTimer) clearInterval(verificationTimer);
+  let remaining = seconds;
+  resend.disabled = true;
+  resend.textContent = `Resend Code (${remaining}s)`;
+
+  verificationTimer = setInterval(() => {
+    remaining -= 1;
+    if (remaining <= 0) {
+      clearInterval(verificationTimer);
+      verificationTimer = null;
+      resend.disabled = false;
+      resend.textContent = 'Resend Code';
+    } else {
+      resend.textContent = `Resend Code (${remaining}s)`;
+    }
+  }, 1000);
+}
+
+async function verifySignupOtp() {
+  if (verificationBusy) return;
+
+  const input = document.getElementById('signupOtpInput');
+  const error = document.getElementById('signupOtpError');
+  const button = document.getElementById('signupVerifyBtn');
+  const otp = (input?.value || '').replace(/\D/g, '');
+
+  if (otp.length !== 6) {
+    if (error) error.textContent = 'Enter the 6-digit verification code.';
+    return;
+  }
+
+  verificationBusy = true;
+  if (button) {
+    button.disabled = true;
+    button.textContent = 'Verifying…';
+  }
+  if (error) error.textContent = '';
+
+  try {
+    const res = await fetch('../../API/auth/verify-otp.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': getCsrf(),
+      },
+      body: JSON.stringify({ otp }),
+    });
+    const data = await res.json();
+
+    if (data.success && data.verified) {
+      if (button) button.textContent = '✓ Verified';
+      window.location.href = data.redirect || '../../modules/onboarding/server-discovery.php';
+      return;
+    }
+
+    if (error) error.textContent = data.error || 'Verification failed. Please try again.';
+  } catch {
+    if (error) error.textContent = 'Network error. Please try again.';
+  } finally {
+    verificationBusy = false;
+    if (button && button.textContent !== '✓ Verified') {
+      button.disabled = false;
+      button.textContent = 'Verify Email';
+    }
+  }
+}
+
+async function resendSignupOtp() {
+  const resend = document.getElementById('signupResendBtn');
+  const hint = document.getElementById('signupOtpHint');
+  if (!resend || resend.disabled) return;
+
+  resend.disabled = true;
+  resend.textContent = 'Sending…';
+
+  try {
+    const res = await fetch('../../API/auth/resend-signup-otp.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': getCsrf(),
+      },
+      body: JSON.stringify({}),
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      const devCode = data.otp_debug || '';
+      if (hint) {
+        hint.textContent = devCode
+          ? `DEV: code is ${devCode}`
+          : 'A new verification code was sent to your email.';
+      }
+      startVerificationCountdown();
+    } else {
+      if (hint) hint.textContent = data.error || 'Unable to resend the code.';
+      resend.disabled = false;
+      resend.textContent = 'Resend Code';
+    }
+  } catch {
+    if (hint) hint.textContent = 'Network error. Please try again.';
+    resend.disabled = false;
+    resend.textContent = 'Resend Code';
+  }
+}
+
+function closeEmailVerification() {
+  // Deliberately do not destroy the pending signup state. The account remains
+  // unverified until the code is accepted; closing only returns to the form.
+  const modal = document.getElementById('emailVerificationModal');
+  if (modal) modal.style.display = 'none';
+  if (verificationTimer) {
+    clearInterval(verificationTimer);
+    verificationTimer = null;
   }
 }
 
@@ -643,7 +746,9 @@ window.doSignup         = doSignup;
 window.toggleEye        = toggleEye;
 window.updateStrength   = updateStrength;
 window.toggleTag        = toggleTag;
-window.sendOtp          = sendOtp;
+window.verifySignupOtp  = verifySignupOtp;
+window.resendSignupOtp  = resendSignupOtp;
+window.closeEmailVerification = closeEmailVerification;
 window.toggleHobbyCard  = toggleHobbyCard;
 window.selectGenre      = selectGenre;
 window.selectTitle      = selectTitle;

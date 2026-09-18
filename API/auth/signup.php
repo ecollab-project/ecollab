@@ -64,11 +64,15 @@ try {
     $outcome = $service->register($data);
 
     if ($outcome['success']) {
-        CSRF::regenerate();
         echo json_encode([
-            'success'  => true,
-            'redirect' => BASE_URL . '/modules/onboarding/server-discovery.php',
-            'username' => $outcome['username'],
+            'success'              => true,
+            'otp_required'         => (bool)($outcome['otp_required'] ?? false),
+            'verification_pending' => (bool)($outcome['verification_pending'] ?? false),
+            'mail_sent'            => (bool)($outcome['mail_sent'] ?? false),
+            'mail_error'           => $outcome['mail_error'] ?? null,
+            'username'             => $outcome['username'],
+            'user_id'              => $outcome['user_id'],
+            'otp_debug'            => $outcome['otp_debug'] ?? null,
         ]);
     } else {
         http_response_code(422);

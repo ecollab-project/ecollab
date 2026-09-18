@@ -65,10 +65,8 @@ AuthMiddleware::redirectIfAuthed();
           <div class="form-box">
             <div class="input-wrap"><div class="input-row"><input type="text" id="fullName" placeholder="Full Name" autocomplete="name"></div></div>
             <div class="field-divider"></div>
-            <div class="input-wrap"><div class="input-row"><input type="text" id="email" placeholder="Email / Student ID" autocomplete="off" inputmode="email"><span class="input-suffix">@fatima.edu.ph</span></div></div>
+            <div class="input-wrap"><div class="input-row"><input type="email" id="email" placeholder="Email address" autocomplete="email" inputmode="email"></div></div>
             <div class="field-divider"></div>
-            <div class="input-wrap" id="otpWrap" style="display:none;"><div class="input-row otp-row"><input type="text" id="otpInput" placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric" autocomplete="one-time-code"><button class="otp-send-btn" id="otpSendBtn" onclick="sendOtp()" type="button">Send Code</button></div><p class="otp-hint" id="otpHint"></p></div>
-            <div class="field-divider" id="otpDivider" style="display:none;"></div>
             <div class="input-wrap"><div class="input-row"><input type="password" id="password" placeholder="Password" oninput="updateStrength(this.value)" autocomplete="new-password"><button class="eye-btn" onclick="toggleEye('password','eyePass')" type="button" aria-label="Toggle password"><svg id="eyePass" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg></button></div></div>
             <div class="strength-wrap"><div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div></div>
             <div class="input-wrap"><div class="input-row"><input type="password" id="confirmPass" placeholder="Confirm Password" autocomplete="new-password"><button class="eye-btn" onclick="toggleEye('confirmPass','eyeConf')" type="button" aria-label="Toggle confirm password"><svg id="eyeConf" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg></button></div></div>
@@ -126,6 +124,20 @@ AuthMiddleware::redirectIfAuthed();
         <div id="ssoButtons">
           <a href="<?= BASE_URL ?>/API/auth/oauth-init.php?provider=google" class="social-btn"><svg class="g-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg><span>Continue with Google</span></a>
           <a href="<?= BASE_URL ?>/API/auth/oauth-init.php?provider=microsoft" class="social-btn"><div class="ms-icon"><span style="background:#F25022;"></span><span style="background:#7FBA00;"></span><span style="background:#00A4EF;"></span><span style="background:#FFB900;"></span></div><div class="s-text"><span>Continue with Microsoft</span><span class="s-sub">University SSO</span></div></a>
+        </div>
+
+        <div id="emailVerificationModal" role="dialog" aria-modal="true" aria-labelledby="emailVerificationTitle" style="display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;padding:20px;background:rgba(3,2,8,.78);backdrop-filter:blur(10px);">
+          <div style="width:min(440px,100%);background:#0f0c1a;border:1px solid rgba(255,45,117,.28);border-radius:20px;padding:30px;box-shadow:0 20px 80px rgba(0,0,0,.55);">
+            <div style="font-size:28px;margin-bottom:8px;">✉️</div>
+            <h2 id="emailVerificationTitle" style="margin:0 0 8px;color:#fff;font-family:Poppins,Arial,sans-serif;font-size:22px;">Verify your email</h2>
+            <p style="margin:0 0 20px;color:#B0B0C0;font:14px/1.6 Inter,Arial,sans-serif;">We sent a 6-digit verification code to the email address you entered. Verify it to finish creating your account.</p>
+            <input id="signupOtpInput" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000" aria-label="6-digit email verification code" style="width:100%;box-sizing:border-box;padding:15px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:#07040F;color:#fff;text-align:center;font:700 24px/1 Inter,Arial,sans-serif;letter-spacing:8px;outline:none;">
+            <p id="signupOtpError" role="alert" style="min-height:20px;margin:9px 0 0;color:#ff6b8f;font:13px/1.4 Inter,Arial,sans-serif;"></p>
+            <p id="signupOtpHint" style="min-height:20px;margin:0 0 18px;color:#8f8fa5;font:12px/1.4 Inter,Arial,sans-serif;text-align:center;"></p>
+            <button id="signupVerifyBtn" type="button" onclick="verifySignupOtp()" style="width:100%;padding:13px;border:0;border-radius:12px;background:linear-gradient(135deg,#FF2D75,#9F3BFF);color:#fff;font:700 14px Inter,Arial,sans-serif;cursor:pointer;">Verify Email</button>
+            <button id="signupResendBtn" type="button" onclick="resendSignupOtp()" style="width:100%;margin-top:9px;padding:11px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:transparent;color:#fff;font:600 13px Inter,Arial,sans-serif;cursor:pointer;">Resend Code</button>
+            <button type="button" onclick="closeEmailVerification()" style="display:block;margin:14px auto 0;border:0;background:none;color:#77778a;font:12px Inter,Arial,sans-serif;cursor:pointer;">Close</button>
+          </div>
         </div>
 
         <div class="login-text">Already have an account? <a href="login.php">Login</a></div>
