@@ -749,15 +749,15 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);display:block;margin-bottom:6px;">Description (optional)</label>
           <input type="text" id="newChannelDesc" placeholder="What's this channel about?" style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text-primary);outline:none;font-family:'Inter',sans-serif;">
         </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg-tertiary);border-radius:8px;border:1px solid var(--border);">
-          <div>
-            <div style="font-size:13px;font-weight:600;color:var(--text-primary);">Private Channel</div>
-            <div style="font-size:11px;color:var(--text-muted);">Only selected members can access</div>
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);display:block;margin-bottom:7px;">Channel Visibility</label>
+          <div id="channelVisibilityOptions" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <button type="button" data-channel-visibility="public" onclick="selectChannelVisibility('public')" style="text-align:left;padding:10px;border:1px solid rgba(168,85,247,.5);background:rgba(168,85,247,.1);border-radius:8px;color:var(--text-primary);cursor:pointer;"><div style="font-size:12px;font-weight:800;">🌐 Public</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Everyone in this server can access it.</div></button>
+            <button type="button" data-channel-visibility="private" onclick="selectChannelVisibility('private')" style="text-align:left;padding:10px;border:1px solid var(--border);background:var(--bg-tertiary);border-radius:8px;color:var(--text-primary);cursor:pointer;"><div style="font-size:12px;font-weight:800;">🔒 Private</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Only selected server members can access it.</div></button>
           </div>
-          <div class="toggle-switch" id="privateChannelToggle" onclick="this.classList.toggle('on');togglePrivateMembersSection()">
-            <div class="toggle-thumb"></div>
-          </div>
+          <div id="channelVisibilityHelp" style="font-size:10px;color:var(--text-muted);margin-top:6px;">Public channels are visible to every member of this server.</div>
         </div>
+        <div id="privateChannelToggle" style="display:none;"></div>
         <!-- Private channel member selector (shown only when private is ON) -->
         <div id="privateMembersSection" style="display:none;margin-top:2px;">
           <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:8px;">Select Members with Access</div>
@@ -1030,6 +1030,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-extra.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/peer-matching.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/server-channel-management.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/server-discovery.js?v=privacy1" defer></script>
 
 
   <!-- ── VOICE CHANNEL MODALS ─────────────────────────────────────────────── -->
@@ -1293,6 +1294,10 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
               <div style="font-size:13px;font-weight:600;color:var(--text-primary);">Research Lab</div>
             </div>
           </div>
+          <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div><div style="font-size:13px;font-weight:700;color:var(--text-primary);">🌐 Recommended Public Servers</div><div style="font-size:10px;color:var(--text-muted);">Public communities you can join immediately.</div></div><button type="button" onclick="loadPublicServerRecommendations()" style="background:none;border:none;color:#c084fc;font-size:11px;font-weight:700;cursor:pointer;">Refresh</button></div>
+            <div id="publicServerRecommendations"><div style="text-align:center;color:var(--text-muted);font-size:11px;padding:12px;">Loading…</div></div>
+          </div>
           <div style="text-align:center;margin-top:14px;">
             <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:8px;">Have an invite?</div>
             <div style="display:flex;gap:8px;">
@@ -1309,6 +1314,12 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           <input type="text" id="newServerName" placeholder="My Server" style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:14px;color:var(--text-primary);outline:none;font-family:'Inter',sans-serif;margin-bottom:14px;">
           <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);display:block;margin-bottom:6px;">Description</label>
           <input type="text" id="newServerDesc" placeholder="What's this server about?" style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:14px;color:var(--text-primary);outline:none;font-family:'Inter',sans-serif;margin-bottom:14px;">
+          <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);display:block;margin-bottom:7px;">Server Visibility</label>
+          <div id="serverVisibilityOptions" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+            <button type="button" data-server-visibility="public" onclick="selectServerVisibility('public')" style="text-align:left;padding:11px;border:1px solid rgba(168,85,247,.5);background:rgba(168,85,247,.1);border-radius:9px;color:var(--text-primary);cursor:pointer;"><div style="font-size:13px;font-weight:800;">🌐 Public</div><div style="font-size:10px;color:var(--text-muted);margin-top:3px;">Recommendations + anyone can join.</div></button>
+            <button type="button" data-server-visibility="private" onclick="selectServerVisibility('private')" style="text-align:left;padding:11px;border:1px solid var(--border);background:var(--bg-tertiary);border-radius:9px;color:var(--text-primary);cursor:pointer;"><div style="font-size:13px;font-weight:800;">🔒 Private</div><div style="font-size:10px;color:var(--text-muted);margin-top:3px;">Invite link or direct addition by server management.</div></button>
+          </div>
+          <div id="serverVisibilityHelp" style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">Public servers appear in recommendations and can be joined directly.</div>
           <div>
             <button class="cancel-btn" onclick="backToServerChoices()" style="margin-right:8px;">← Back</button>
             <button class="save-btn" onclick="createServer()">Create Server ✨</button>
