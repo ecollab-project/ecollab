@@ -34,6 +34,25 @@ const ICE_SERVERS = [
 // ── Join voice channel ─────────────────────────────────────────────────────
 // Does NOT hide chatMain — voice floats on top as an overlay.
 function joinVoice(channelSlug, el, channelId, roomNameOverride) {
+  // Switching rooms must tear down the previous WebRTC mesh first.
+  // Otherwise an already-established peer connection can keep carrying
+  // audio/video after the server has moved this user to the new room.
+  if (vcActive && vcChannelId != null && Number(vcChannelId) !== Number(channelId)) {
+    const oldChannelId = vcChannelId;
+    if (window.chatSocket && window.chatSocket.readyState === WebSocket.OPEN) {
+      window.chatSocket.send(JSON.stringify({ type: 'leave_voice', channel_id: oldChannelId }));
+    }
+    Object.values(peerConnections).forEach(pc => { try { pc.close(); } catch {} });
+    Object.keys(peerConnections).forEach(uid => {
+      const audio = document.getElementById(`remote-audio-${uid}`);
+      if (audio) audio.remove();
+    });
+    peerConnections = {};
+    remoteStreams = {};
+    iceCandidateQueues = {};
+    document.querySelectorAll('.vc-speaker-card:not([data-user-id="' + (window.ECOLLAB?.userId || 0) + '"]), .vc-listener-card:not([data-user-id="' + (window.ECOLLAB?.userId || 0) + '"])').forEach(el => el.remove());
+  }
+
   // Mark sidebar item
   document.querySelectorAll('.voice-channel').forEach(v => v.classList.remove('connected'));
   if (el) el.classList.add('connected');
