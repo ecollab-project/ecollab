@@ -881,7 +881,60 @@ window._notifyDraftChange = function () {
   }
 };
 
+function _restoreChatNavView() {
+  let saved = null;
+  try {
+    saved = localStorage.getItem(ECOLLAB_CHAT_NAV_STATE_KEY);
+  } catch (_) {}
+
+  if (!saved || saved === 'home') {
+    if (saved === 'home') _saveChatNavView('home');
+    return;
+  }
+
+  // Restore only a real Chat navigation view. This prevents stale values
+  // from older builds or unrelated localStorage entries from creating a
+  // broken overlay.
+  if (!_navViewConfigs[saved]) return;
+
+  const navItem = _findChatNavItem(saved);
+  switchView(saved, navItem);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _restoreChatNavView, { once: true });
+} else {
+  _restoreChatNavView();
+}
+
+const ECOLLAB_CHAT_NAV_STATE_KEY = 'ecollab.chat.activeView';
+
+function _saveChatNavView(viewName) {
+  const view = String(viewName || '').trim();
+  if (!view) return;
+  try {
+    localStorage.setItem(ECOLLAB_CHAT_NAV_STATE_KEY, view);
+  } catch (_) {}
+}
+
+function _findChatNavItem(viewName) {
+  const wanted = String(viewName || '').trim();
+  if (!wanted) return null;
+
+  const explicit = Array.from(document.querySelectorAll('.sidebar-nav-item')).find(item =>
+    item.dataset.view === wanted
+  );
+  if (explicit) return explicit;
+
+  return Array.from(document.querySelectorAll('.sidebar-nav-item')).find(item => {
+    const handler = item.getAttribute('onclick') || '';
+    return handler.includes(`switchView('${wanted}'`) ||
+      handler.includes(`switchView("${wanted}"`);
+  }) || null;
+}
+
 function switchView(viewName, el) {
+  _saveChatNavView(viewName);
   document.querySelectorAll('.sidebar-nav-item').forEach(n => n.classList.remove('active'));
   if (el) el.classList.add('active');
   _currentView = viewName;
