@@ -66,6 +66,38 @@ function canPostToScope(PDO $db, string $scope, int $serverId, int $channelId, i
     return [true, null];
 }
 
+
+function attachmentRows(PDO $db, int $threadId): array {
+    $s=$db->prepare('SELECT id, thread_id, reply_id, file_url, file_name, mime_type, file_size, created_by, created_at FROM thread_attachments WHERE thread_id=? ORDER BY id ASC');
+    $s->execute([$threadId]);
+    return $s->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function validThreadAttachments(array $items): array {
+    $out=[];
+    foreach ($items as $item) {
+        $path=trim((string)($item['path'] ?? ''));
+        $url=trim((string)($item['url'] ?? ''));
+        if ($path !== '' && preg_match('#^/uploads/threads/[A-Za-z0-9._/-]+$#',$path)) {
+            $url=rtrim(BASE_URL,'/').$path;
+        } elseif ($url !== '' && preg_match('#^'.preg_quote(rtrim(BASE_URL,'/'),'#').'/uploads/threads/[A-Za-z0-9._/-]+$#',$url)) {
+            $path=parse_url($url,PHP_URL_PATH) ?: '';
+        } else {
+            continue;
+        }
+        $mime=(string)($item['mime_type'] ?? '');
+        if (!in_array($mime,['image/jpeg','image/png','image/gif','image/webp'],true)) continue;
+        $out[]=['url'=>$url,'file_name'=>mb_substr(trim((string)($item['file_name'] ?? 'image')),0,255),'mime_type'=>$mime,'file_size'=>max(0,(int)($item['file_size'] ?? 0))];
+    }
+    return $out;
+}
+
+function saveThreadAttachments(PDO $db, int $threadId, ?int $replyId, array $items, int $uid): void {
+    foreach (validThreadAttachments($items) as $a) {
+        $s=$db->prepare('INSERT INTO thread_attachments(thread_id,reply_id,file_url,file_name,mime_type,file_size,created_by) VALUES(?,?,?,?,?,?,?)');
+        $s->execute([$threadId,$replyId,$a['url'],$a['file_name'],$a['mime_type'],$a['file_size'],$uid]);
+    }
+}
 function threadBaseSelect(): string {
     return "
         SELECT
@@ -104,7 +136,7 @@ try {
             $r = $db->prepare("SELECT r.id, r.thread_id, r.parent_reply_id, r.created_by, r.body, r.created_at, u.username AS author_username, u.full_name AS author_name, COALESCE(u.avatar_color_gradient,'#a855f7,#ec4899') AS author_gradient, COALESCE((SELECT SUM(v.vote) FROM thread_reply_votes v WHERE v.reply_id=r.id),0) AS score, COALESCE((SELECT vote FROM thread_reply_votes mv WHERE mv.reply_id=r.id AND mv.user_id=:uid LIMIT 1),0) AS my_vote FROM thread_replies r JOIN users u ON u.id=r.created_by WHERE r.thread_id=:tid AND r.is_deleted=0 ORDER BY r.created_at ASC");
             $r->execute([':uid' => $me['id'], ':tid' => $id]);
 
-            threadJson(['thread' => $thread, 'replies' => $r->fetchAll(PDO::FETCH_ASSOC)]);
+            threadJson(['thread' => $thread, 'replies' => $r->fetchAll(PDO::FETCH_ASSOC), 'attachments' => attachmentRows($db, $id)]);
         }
 
         $scope = (string)($_GET['scope'] ?? 'all');
@@ -147,7 +179,9 @@ try {
         $sql = threadBaseSelect() . ' WHERE ' . implode(' AND ', $conditions) . ' ORDER BY t.is_pinned DESC, t.created_at DESC LIMIT ' . $limit;
         $s = $db->prepare($sql);
         $s->execute($params);
-        threadJson(['threads' => $s->fetchAll(PDO::FETCH_ASSOC), 'scope' => $scope, 'server_id' => $serverId, 'channel_id' => $channelId]);
+        $threads=$s->fetchAll(PDO::FETCH_ASSOC);
+        foreach($threads as &$thread){$thread['attachments']=attachmentRows($db,(int)$thread['id']);}unset($thread);
+        threadJson(['threads'=>$threads, 'scope'=>$scope, 'server_id'=>$serverId, 'channel_id'=>$channelId]);
     }
 
     if ($method !== 'POST') threadJson(['error' => 'Method not allowed'], 405);
@@ -163,7 +197,7 @@ try {
         $serverId = (int)($body['server_id'] ?? 0);
         $channelId = (int)($body['channel_id'] ?? 0);
         if ($title === '' || mb_strlen($title) > 180) threadJson(['error' => 'Title is required and must be 180 characters or less'], 400);
-        if ($content === '') threadJson(['error' => 'Thread body is required'], 400);
+        if ($content === '' && empty($body['attachments'])) threadJson(['error' => 'Add text, an image, or both'], 400);
         [$allowed, $reason] = canPostToScope($db, $scope, $serverId, $channelId, $uid);
         if (!$allowed) threadJson(['error' => $reason], 403);
         if ($scope === 'public') { $serverId = null; $channelId = null; }
@@ -171,14 +205,16 @@ try {
 
         $s = $db->prepare('INSERT INTO threads(title,body,scope,server_id,channel_id,created_by) VALUES(?,?,?,?,?,?)');
         $s->execute([$title, $content, $scope, $serverId ?: null, $channelId ?: null, $uid]);
-        threadJson(['thread_id' => (int)$db->lastInsertId(), 'message' => 'Thread created'], 201);
+        $threadId=(int)$db->lastInsertId();
+        saveThreadAttachments($db,$threadId,null,is_array($body['attachments'] ?? null)?$body['attachments']:[],$uid);
+        threadJson(['thread_id'=>$threadId,'message'=>'Thread created'], 201);
     }
 
     if ($action === 'reply') {
         $threadId = (int)($body['thread_id'] ?? 0);
         $content = trim((string)($body['body'] ?? ''));
         $parentId = (int)($body['parent_reply_id'] ?? 0);
-        if (!$threadId || $content === '') threadJson(['error' => 'thread_id and body are required'], 400);
+        if (!$threadId || ($content === '' && empty($body['attachments']))) threadJson(['error' => 'Add text, an image, or both'], 400);
         $s = $db->prepare('SELECT * FROM threads WHERE id=? AND is_deleted=0 LIMIT 1');
         $s->execute([$threadId]);
         $thread = $s->fetch(PDO::FETCH_ASSOC);
@@ -191,8 +227,10 @@ try {
         }
         $s = $db->prepare('INSERT INTO thread_replies(thread_id,parent_reply_id,created_by,body) VALUES(?,?,?,?)');
         $s->execute([$threadId, $parentId ?: null, $uid, $content]);
+        $replyId=(int)$db->lastInsertId();
+        saveThreadAttachments($db,$threadId,$replyId,is_array($body['attachments'] ?? null)?$body['attachments']:[],$uid);
         $db->prepare('UPDATE threads SET updated_at=NOW() WHERE id=?')->execute([$threadId]);
-        threadJson(['reply_id' => (int)$db->lastInsertId(), 'message' => 'Reply posted'], 201);
+        threadJson(['reply_id'=>$replyId,'message'=>'Reply posted'], 201);
     }
 
     if ($action === 'vote') {

@@ -65,9 +65,36 @@ function switchTab(btn,cid){const m=btn.closest('.md')||btn.closest('.page-secti
 function createAnnouncement(){const t=document.getElementById('annTitle').value;const b=document.getElementById('annBody').value;if(!t||!b){toast('Please fill title and message','error','❌');return;}closeModal('createAnnModal');const list=document.getElementById('annList');const d=document.createElement('div');d.className='ann-item';d.innerHTML=`<div class="ann-title">📌 ${t}</div><div class="ann-body">${b}</div><div class="ann-meta">Prof. Reyes · Just now</div><div class="ri-actions"><button class="btn-sm btn-outline" onclick="openModal('editAnnModal','${t}')">Edit</button><button class="btn-sm" style="background:rgba(220,38,38,.1);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="this.closest('.ann-item').remove();toast('Announcement deleted','success','🗑')">Delete</button></div>`;list.insertBefore(d,list.firstChild);document.getElementById('annTitle').value='';document.getElementById('annBody').value='';toast('Announcement posted!','success','📢');}
 function deleteAnn(btn){if(!confirm('Delete this announcement?'))return;btn.closest('.ann-item').remove();toast('Announcement deleted','success','🗑');}
 function startSession(){const t=document.getElementById('sessTitle').value;if(!t){toast('Enter a session title','error','❌');return;}closeModal('startSessionModal');toast('Study session "'+t+'" started!','success','🎓');document.getElementById('sessTitle').value='';}
-function doKick(){closeModal('kickModal');toast('Member kicked from channel','success','👢');}
-function doUpload(){closeModal('uploadResourceModal');toast('Resource uploaded!','success','✅');}
-function resolveReport(btn, action){btn.closest('.report-item').style.opacity='.4';toast('Report '+action,'success','✅');}
+async function doKick(){
+  const name=(document.getElementById('kickName')?.textContent||'').trim();
+  const csrf=document.querySelector('meta[name="csrf-token"]')?.content||FAC_DATA?.csrfToken||'';
+  const channelId=Number(FAC_DATA?.channelId||0);
+  if(!name||!channelId){toast('Member context is missing; refresh the dashboard.','error','❌');return;}
+  try{
+    const r=await fetch((window.ECOLLAB_BASE||'')+'/API/facilitator/dashboard-data.php?action=kick_member',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({channel_id:channelId,username:name,csrf_token:csrf})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d.success)throw new Error(d.error||'Unable to remove member');
+    closeModal('kickModal');toast('Member removed from the server','success','👢');
+  }catch(e){toast(e.message,'error','❌');}
+}
+function doUpload(){
+  closeModal('uploadResourceModal');
+  toast('Use Collaboration to upload a resource so it is stored and associated with the server.','info','📁');
+  window.location.href=(window.ECOLLAB_BASE||'')+'/modules/collaboration/coworkspaces.php';
+}
+async function resolveReport(btn, action){
+  const item=btn?.closest('.report-item');
+  const messageId=Number(item?.dataset?.messageId||0);
+  if(!messageId){toast('This report has no message ID attached; it cannot be resolved safely.','error','❌');return;}
+  const csrf=document.querySelector('meta[name="csrf-token"]')?.content||FAC_DATA?.csrfToken||'';
+  const resolution=(action==='removed'||action==='dismissed')?action:'dismissed';
+  try{
+    const r=await fetch((window.ECOLLAB_BASE||'')+'/API/facilitator/dashboard-data.php?action=resolve_report',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({message_id:messageId,resolution,csrf_token:csrf})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d.success)throw new Error(d.error||'Unable to resolve report');
+    item.style.opacity='.4';toast('Report '+resolution,'success','✅');
+  }catch(e){toast(e.message,'error','❌');}
+}
 function setAnnType(btn){document.querySelectorAll('.ann-type-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
 function sendFacMsg(){const inp=document.getElementById('msgInput');const msg=inp.value.trim();if(!msg)return;const feed=document.getElementById('msgFeed');const d=document.createElement('div');d.style.display='flex';d.style.gap='8px';d.innerHTML=`<div class="ract-av" style="background:linear-gradient(135deg,#e91e8c,#7c3aed);font-size:9px;font-weight:700">PR</div><div><div style="font-size:10px;font-weight:700;color:var(--pink);margin-bottom:2px">Prof. Reyes (You) · Just now</div><div style="background:rgba(233,30,140,.1);border-radius:0 9px 9px 9px;padding:8px 11px;font-size:12px;line-height:1.5">${msg}</div></div>`;feed.appendChild(d);inp.value='';feed.scrollTop=feed.scrollHeight;}
 function doLogout(){closeModal('logoutModal');toast('Signing out...','info','🚪');setTimeout(()=>{document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:14px;background:#070b14;color:#f1f5f9;font-family:Plus Jakarta Sans,sans-serif"><div style="font-size:30px">🔷</div><div style="font-size:22px;font-weight:800">Ecollab</div><div style="color:#94a3b8;font-size:13px">You have been signed out.</div><button onclick="location.reload()" style="margin-top:10px;padding:9px 22px;background:linear-gradient(135deg,#e91e8c,#7c3aed);border:none;border-radius:9px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Sign In Again</button></div>';},1000);}
@@ -162,9 +189,6 @@ function switchChannel(channelIdOrName, serverId){
   if (typeof channelIdOrName === 'number' || /^\d+$/.test(String(channelIdOrName))) {
     params.set('channel_id', channelIdOrName);
   } else {
-    // Legacy: only a channel name was provided — chat module will
-    // fall back to its default (first) channel, but we still pass
-    // the name so it can be matched/highlighted if found.
     params.set('channel_name', channelIdOrName);
   }
   window.location.href = `${base}/modules/chat/chat.php?${params.toString()}`;

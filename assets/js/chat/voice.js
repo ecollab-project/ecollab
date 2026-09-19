@@ -33,15 +33,35 @@ const ICE_SERVERS = [
 
 // ── Join voice channel ─────────────────────────────────────────────────────
 // Does NOT hide chatMain — voice floats on top as an overlay.
-function joinVoice(channelSlug, el, channelId) {
+function joinVoice(channelSlug, el, channelId, roomNameOverride) {
+  // Switching rooms must tear down the previous WebRTC mesh first.
+  // Otherwise an already-established peer connection can keep carrying
+  // audio/video after the server has moved this user to the new room.
+  if (vcActive && vcChannelId != null && Number(vcChannelId) !== Number(channelId)) {
+    const oldChannelId = vcChannelId;
+    if (window.chatSocket && window.chatSocket.readyState === WebSocket.OPEN) {
+      window.chatSocket.send(JSON.stringify({ type: 'leave_voice', channel_id: oldChannelId }));
+    }
+    Object.values(peerConnections).forEach(pc => { try { pc.close(); } catch {} });
+    Object.keys(peerConnections).forEach(uid => {
+      const audio = document.getElementById(`remote-audio-${uid}`);
+      if (audio) audio.remove();
+    });
+    peerConnections = {};
+    remoteStreams = {};
+    iceCandidateQueues = {};
+    document.querySelectorAll('.vc-speaker-card:not([data-user-id="' + (window.ECOLLAB?.userId || 0) + '"]), .vc-listener-card:not([data-user-id="' + (window.ECOLLAB?.userId || 0) + '"])').forEach(el => el.remove());
+  }
+
   // Mark sidebar item
   document.querySelectorAll('.voice-channel').forEach(v => v.classList.remove('connected'));
   if (el) el.classList.add('connected');
+  if (typeof _bumpSidebarVcCount === 'function') _bumpSidebarVcCount(channelId, 1);
 
   vcActive = true;
   vcMinimized = false;
   vcChannelId = channelId;
-  vcRoomName = el?.textContent?.trim()?.replace(/\d+/g, '').trim() || 'Voice Channel';
+  vcRoomName = roomNameOverride || el?.textContent?.trim()?.replace(/\d+/g, '').trim() || 'Voice Channel';
 
   // Show the floating panel (full-screen by default)
   const vcView = document.getElementById('voiceChannelView');
@@ -58,13 +78,15 @@ function joinVoice(channelSlug, el, channelId) {
 
   // Acquire mic first, then notify server (order matters for WebRTC)
   _acquireMic().then(() => {
-    // Notify via WebSocket — server will send back voice_peers list
-    if (window.chatSocket && window.chatSocket.readyState === WebSocket.OPEN) {
-      window.chatSocket.send(JSON.stringify({
+    // Notify via the authenticated WebSocket path. OPEN only means the
+    // transport is connected; the socket may still be unauthenticated.
+    // wsSend() checks both OPEN state and successful WS authentication.
+    if (typeof window.wsSend === 'function') {
+      window.wsSend({
         type: 'join_voice',
         channel_id: channelId,
         channel_slug: channelSlug,
-      }));
+      });
     }
     // Also update via HTTP so active-now sees it immediately
     _reportVoiceStatus('join', channelId);
@@ -73,15 +95,55 @@ function joinVoice(channelSlug, el, channelId) {
   showToast('🔊 Joined ' + vcRoomName, 'success');
 }
 
+// ── DM group voice — reuses the exact same mesh/UI as a real voice channel,
+// just with a synthetic channel_id (see DM_GROUP_VOICE_ID_OFFSET server-side)
+// so no real `channels` row is needed. Everyone in the group can join or
+// ignore it — it's not a ring-everyone-at-once call like 1:1 DM calling.
+const DM_GROUP_VOICE_ID_OFFSET = 2000000000;
+
+function startDmGroupVoice(groupId, groupName) {
+  if (vcActive) { showToast('Already in a voice channel', 'info'); return; }
+  const channelId = DM_GROUP_VOICE_ID_OFFSET + parseInt(groupId);
+  joinVoice('dm-group-' + groupId, null, channelId, groupName || 'Group Voice Call');
+}
+window.startDmGroupVoice = startDmGroupVoice;
+
+window._onDmGroupVoiceStart = function (data) {
+  if (vcActive) return; // already in a call, don't prompt over it
+  const groupName = (typeof DM !== 'undefined' && DM.groups?.find(g => g.id == data.group_id)?.display_name) || 'a group';
+  showToast(`🔊 ${escHtml(data.started_by)} started a voice call in ${escHtml(groupName)}`, 'info');
+
+  // If that group's DM is the one currently open, show a persistent join banner
+  if (typeof DM !== 'undefined' && DM.activeGroupId == data.group_id) {
+    _showDmGroupVoiceBanner(data.group_id, data.started_by, groupName);
+  }
+};
+
+function _showDmGroupVoiceBanner(groupId, startedBy, groupName) {
+  const header = document.querySelector('#dmConversationPanel');
+  if (!header || document.getElementById('dmGroupVoiceBanner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'dmGroupVoiceBanner';
+  banner.style.cssText = 'padding:8px 14px;background:rgba(34,197,94,0.1);border-bottom:1px solid rgba(34,197,94,0.25);display:flex;align-items:center;gap:8px;font-size:12px;color:#4ade80;flex-shrink:0;';
+  banner.innerHTML = `
+    <span>🔊 ${escHtml(startedBy)} started a voice call</span>
+    <button onclick="startDmGroupVoice(${groupId}, '${escHtml(groupName).replace(/'/g, "\\'")}'); this.closest('#dmGroupVoiceBanner').remove();"
+      style="margin-left:auto;padding:4px 12px;border-radius:6px;background:#22c55e;border:none;color:#fff;font-size:11px;font-weight:700;cursor:pointer;">Join</button>
+    <button onclick="this.closest('#dmGroupVoiceBanner').remove();" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;">×</button>`;
+  const messagesArea = document.getElementById('dmMessagesArea');
+  if (messagesArea) messagesArea.parentNode.insertBefore(banner, messagesArea);
+}
+
 // ── Acquire microphone + enumerate devices ────────────────────────────────
 // Works with built-in mics, USB mics, virtual mic apps (WO Mic, VB-Cable etc.)
 async function _acquireMic() {
   try {
     const preferredInput = window._vcPreferredInput || '';
+    const noiseSuppression = (localStorage.getItem('ec_noise_mode') || 'standard') !== 'off';
     const constraints = {
       audio: preferredInput
-        ? { deviceId: { ideal: preferredInput }, echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-        : { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+        ? { deviceId: { ideal: preferredInput }, echoCancellation: true, noiseSuppression, autoGainControl: true }
+        : { echoCancellation: true, noiseSuppression, autoGainControl: true }
     };
 
     localStream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -444,6 +506,7 @@ function disconnectVoice() {
   }
 
   document.querySelectorAll('.voice-channel').forEach(v => v.classList.remove('connected'));
+  if (typeof _bumpSidebarVcCount === 'function') _bumpSidebarVcCount(vcChannelId, -1);
   _updateConnectedBar(false);
   _stopVAD();
 
@@ -547,7 +610,7 @@ function _moveUserCardOnMute(isMuted) {
       let vid = card.querySelector('.vc-cam-preview');
       if (!vid) {
         vid = document.createElement('video');
-        vid.className = 'vc-cam-preview';
+        vid.className = 'vc-cam-preview vc-mirror';
         vid.autoplay = true;
         vid.muted = true;
         vid.playsInline = true;
@@ -593,7 +656,7 @@ function _moveUserCardOnMute(isMuted) {
       let vid = card.querySelector('.vc-cam-preview');
       if (!vid) {
         vid = document.createElement('video');
-        vid.className = 'vc-cam-preview';
+        vid.className = 'vc-cam-preview vc-mirror';
         vid.autoplay = true;
         vid.muted = true;
         vid.playsInline = true;
@@ -618,6 +681,19 @@ function toggleVcDeafen() {
   vcDeafened = !vcDeafened;
   const btn = document.getElementById('vcDeafBtn');
   if (btn) btn.classList.toggle('deafened', vcDeafened);
+
+  // Mute/unmute every currently-playing remote participant's audio.
+  // (_attachRemoteAudio already applies vcDeafened for people who join
+  // AFTER this toggle — this loop covers everyone already in the call.)
+  document.querySelectorAll('audio[id^="remote-audio-"]').forEach(a => {
+    a.muted = vcDeafened;
+  });
+
+  // Deafening also mutes your own mic (you can't hear yourself either) —
+  // matches standard voice-app behavior. Undeafening does not auto-unmute.
+  if (vcDeafened && !vcMicMuted) {
+    toggleVcMic();
+  }
   if (localStream) {
     localStream.getAudioTracks().forEach(t => { if (!vcMicMuted) t.enabled = !vcDeafened; });
   }
@@ -638,20 +714,53 @@ function selectScreenQuality(btn, quality) {
 
 // ── Whiteboard ────────────────────────────────────────────────────────────
 function openWhiteboard() {
-  if (!vcMinimized) toggleVcMinimize();
-  if (window.openWhiteboardView) window.openWhiteboardView();
-  else showToast('📋 Whiteboard feature requires a whiteboard channel', 'info');
+  const channelId = window.ECOLLAB?.currentChannelId || window.__currentChannelId;
+  if (!channelId) {
+    showToast('📋 Select a channel before opening the whiteboard', 'info');
+    return;
+  }
+  window.location.href = `${window.ECOLLAB?.baseUrl || ''}/modules/whiteboard/index.php?channel_id=${encodeURIComponent(channelId)}`;
 }
 
 // ── Noise / Audio settings helpers ────────────────────────────────────────
+let _selectedNoiseMode = localStorage.getItem('ec_noise_mode') || 'standard';
+
+function openNoiseCancelModal() {
+  openModal('vcNoiseCancelModal');
+  document.querySelectorAll('.noise-option').forEach(o => {
+    const isActive = o.getAttribute('onclick')?.includes(`'${_selectedNoiseMode}'`);
+    o.classList.toggle('active', !!isActive);
+  });
+}
+
 function selectNoiseMode(el, mode) {
   document.querySelectorAll('.noise-option').forEach(o => o.classList.remove('active'));
   el.classList.add('active');
+  _selectedNoiseMode = mode;
 }
+
 function saveNoiseMode() {
-  const active = document.querySelector('.noise-option.active');
-  const mode = active?.querySelector('.no-name')?.textContent || 'Standard';
-  showToast('🎙️ Noise cancellation: ' + mode, 'success');
+  const mode = _selectedNoiseMode;
+  localStorage.setItem('ec_noise_mode', mode);
+
+  // Web platform only exposes a boolean noiseSuppression constraint — there's
+  // no standardized "aggressive vs standard" intensity level browsers expose.
+  // 'off' genuinely disables it; 'standard' and 'aggressive' both enable the
+  // browser's real built-in suppression (there's no stronger mode to enable).
+  const suppress = mode !== 'off';
+
+  if (localStream) {
+    localStream.getAudioTracks().forEach(t => {
+      if (typeof t.applyConstraints === 'function') {
+        t.applyConstraints({ noiseSuppression: suppress }).catch(err =>
+          console.warn('[voice] noiseSuppression constraint not supported on this track:', err)
+        );
+      }
+    });
+  }
+
+  const label = mode === 'off' ? 'Off' : mode === 'aggressive' ? 'Aggressive' : 'Standard';
+  showToast('🎙️ Noise cancellation: ' + label, 'success');
   closeModal('vcNoiseCancelModal');
 }
 
@@ -945,7 +1054,7 @@ async function toggleCamera() {
         let vid = card.querySelector('.vc-cam-preview');
         if (!vid) {
           vid = document.createElement('video');
-          vid.className = 'vc-cam-preview';
+          vid.className = 'vc-cam-preview vc-mirror';
           vid.autoplay = true;
           vid.muted = true;
           vid.playsInline = true;
@@ -1184,6 +1293,7 @@ function _createPeerConnection(remoteUserId, remoteUsername) {
       window.chatSocket.send(JSON.stringify({
         type: 'webrtc_candidate',
         target_user_id: remoteUserId,
+        channel_id: vcChannelId,
         candidate: candidate,
       }));
     }
@@ -1407,6 +1517,7 @@ async function _initiateWebRtcOffer(remoteUserId, remoteUsername) {
       window.chatSocket.send(JSON.stringify({
         type: 'webrtc_offer',
         target_user_id: remoteUserId,
+        channel_id: vcChannelId,
         sdp: pc.localDescription,
       }));
     }
@@ -1439,6 +1550,7 @@ async function _handleWebRtcOffer(fromUserId, fromUsername, sdp, isScreenOffer) 
       window.chatSocket.send(JSON.stringify({
         type: 'webrtc_answer',
         target_user_id: fromUserId,
+        channel_id: vcChannelId,
         sdp: pc.localDescription,
       }));
     }
@@ -1496,6 +1608,64 @@ async function _handleWebRtcCandidate(fromUserId, candidate) {
     console.error('[WebRTC] ICE candidate error:', err);
   }
 }
+
+// ── Voice-room event handlers ─────────────────────────────────────────────
+function handleVoiceJoin(data) {
+  if (!vcActive || vcChannelId == null || Number(data.channel_id) !== Number(vcChannelId)) return;
+  const user = data.user || {};
+  const userId = Number(user.id || data.user_id || 0);
+  if (!userId || userId === Number(window.ECOLLAB?.userId || 0)) return;
+
+  const existing = document.querySelector(
+    `.vc-speaker-card[data-user-id="${userId}"], .vc-listener-card[data-user-id="${userId}"]`
+  );
+  if (!existing) {
+    addVcParticipant({
+      id: userId,
+      full_name: user.full_name || user.username,
+      username: user.username,
+      role: user.role || 'Student',
+      avatar_color_gradient: user.avatar_color_gradient || '#3b82f6,#6366f1',
+      muted: !!user.muted,
+    }, !user.muted);
+  }
+
+  setTimeout(() => {
+    if (vcActive && Number(vcChannelId) === Number(data.channel_id)) {
+      _initiateWebRtcOffer(userId, user.username);
+    }
+  }, 100);
+}
+
+function handleVoiceLeave(data) {
+  if (vcChannelId == null || Number(data.channel_id) !== Number(vcChannelId)) return;
+  const userId = Number(data.user_id || 0);
+  if (!userId) return;
+
+  const pc = peerConnections[userId];
+  if (pc) { try { pc.close(); } catch {} }
+  delete peerConnections[userId];
+  delete remoteStreams[userId];
+  delete iceCandidateQueues[userId];
+
+  document.querySelectorAll(
+    `.vc-speaker-card[data-user-id="${userId}"], .vc-listener-card[data-user-id="${userId}"]`
+  ).forEach(el => el.remove());
+
+  const audio = document.getElementById(`remote-audio-${userId}`);
+  if (audio) audio.remove();
+
+  if (typeof window._hideRemoteScreenShareSection === 'function') {
+    window._hideRemoteScreenShareSection(userId);
+  }
+
+  const speaking = document.querySelectorAll('.vc-speaker-card').length;
+  const listening = document.querySelectorAll('.vc-listener-card').length;
+  updateVcCounts(speaking, listening);
+}
+
+window.handleVoiceJoin = handleVoiceJoin;
+window.handleVoiceLeave = handleVoiceLeave;
 
 // ── Handle voice_peers from server (list of existing participants) ─────────
 function handleVoicePeers(data) {
@@ -1650,3 +1820,90 @@ window.openAudioSettings = openAudioSettings;
     if (typeof window[name] === 'function') window['__real_' + name] = window[name];
   });
 })();
+/* ══════════════════════════════════════════════════════════════
+   VOICE CHANNEL INVITE — was fully static markup before this fix,
+   no search handler, no list, no send logic. Real implementation.
+   ══════════════════════════════════════════════════════════════ */
+
+let _vcInviteMembers = [];
+
+async function openVcInviteModal() {
+  openModal('vcInviteModal');
+  const listEl = document.getElementById('vcInviteList');
+  const searchEl = document.getElementById('vcInviteSearch');
+  if (searchEl) searchEl.value = '';
+  listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">Loading…</div>';
+
+  const serverId = window.ECOLLAB?.currentServerId
+    || parseInt(document.querySelector('.workspace-icon.active')?.dataset?.serverId || '0') || 0;
+  const channelId = window.ECOLLAB?.currentChannelId || window.__currentChannelId || 0;
+  if (!serverId || !channelId) {
+    listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">Join a voice channel first.</div>';
+    return;
+  }
+
+  try {
+    const base = window.ECOLLAB?.baseUrl || '';
+    const res = await fetch(`${base}/API/server/members.php?action=list&server_id=${serverId}`, { credentials: 'same-origin' });
+    const d = await res.json();
+    const inVoice = new Set(Array.from(document.querySelectorAll('.vc-speaker-card[data-user-id],.vc-listener-card[data-user-id]')).map(el => parseInt(el.dataset.userId)));
+    const myId = window.ECOLLAB?.userId || 0;
+
+    _vcInviteMembers = (d.members || []).filter(m => m.id != myId && !inVoice.has(parseInt(m.id)));
+    _vcInviteMembers._channelId = channelId;
+    _renderVcInviteList(_vcInviteMembers);
+  } catch (e) {
+    listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">Failed to load members.</div>';
+  }
+}
+
+function _renderVcInviteList(members) {
+  const listEl = document.getElementById('vcInviteList');
+  if (!listEl) return;
+  if (!members.length) {
+    listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">Everyone here is already in voice.</div>';
+    return;
+  }
+  listEl.innerHTML = members.map(m => {
+    const name = m.full_name || m.username;
+    return `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;">
+        ${typeof _avatar === 'function' ? _avatar(name, m.avatar_color_gradient, 30) : ''}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${escHtml(name)}</div>
+          <div style="font-size:11px;color:${m.is_online == 1 ? '#22c55e' : 'var(--text-muted)'};">${m.is_online == 1 ? 'Online' : 'Offline'}</div>
+        </div>
+        <button onclick="_sendVoiceInvite(${m.id}, this)" ${m.is_online != 1 ? 'disabled title="User is offline"' : ''}
+          style="padding:5px 12px;border-radius:6px;background:${m.is_online == 1 ? 'var(--accent-purple)' : 'var(--bg-tertiary)'};border:none;color:${m.is_online == 1 ? '#fff' : 'var(--text-muted)'};font-size:12px;font-weight:600;cursor:${m.is_online == 1 ? 'pointer' : 'not-allowed'};font-family:inherit;">
+          Invite
+        </button>
+      </div>`;
+  }).join('');
+}
+
+function _filterVcInviteList(query) {
+  const q = query.trim().toLowerCase();
+  if (!q) { _renderVcInviteList(_vcInviteMembers); return; }
+  _renderVcInviteList(_vcInviteMembers.filter(m =>
+    (m.full_name || '').toLowerCase().includes(q) || (m.username || '').toLowerCase().includes(q)
+  ));
+}
+
+function _sendVoiceInvite(userId, btn) {
+  const channelId = _vcInviteMembers._channelId;
+  if (!channelId || !window.wsSend) { showToast('Not connected', 'error'); return; }
+  const ok = window.wsSend({ type: 'voice_invite', target_user_id: userId, channel_id: channelId });
+  if (ok !== false) {
+    if (btn) { btn.textContent = 'Invited ✓'; btn.disabled = true; btn.style.opacity = '0.6'; }
+    showToast('🔊 Voice invite sent', 'success');
+  }
+}
+
+window._onVoiceInvite = function(data) {
+  const name = data.from?.fullName || 'Someone';
+  showToast(`🔊 ${escHtml(name)} invited you to join #${escHtml(data.channel_name)} — click Voice Channels in the sidebar to join`, 'info');
+};
+
+window.openVcInviteModal = openVcInviteModal;
+window._filterVcInviteList = _filterVcInviteList;
+window._sendVoiceInvite = _sendVoiceInvite;

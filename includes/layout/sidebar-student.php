@@ -52,6 +52,7 @@ function navItem(string $page, string $icon, string $label, $badge, string $acti
   <div class="nav-section-title">Collaboration</div>
   <div class="nav-pad" style="padding-top:0">
     <?php foreach ($navCollab as [$id,$ic,$lbl,$bdg]): echo navItem($id,$ic,$lbl,$bdg,$activePage); endforeach; ?>
+    <div class="nav-item" onclick="window.location.href='<?= BASE_URL ?>/modules/collaboration/index.php'"><span class="nav-ic">🧩</span>Collaboration Hub</div>
   </div>
 
   <div class="nav-section-title">Analytics</div>

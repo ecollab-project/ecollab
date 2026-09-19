@@ -49,10 +49,10 @@ try {
     $friendStatus = $friend->fetchColumn();
     $friend->closeCursor();
 
-    // user_settings uses allow_dm (not direct_messages).
+    // user_settings uses direct_messages (added by the settings-page migration).
     // A missing settings row means the platform default is to allow DMs.
     $pref = $db->prepare(
-        'SELECT allow_dm FROM user_settings WHERE user_id = :id LIMIT 1'
+        'SELECT direct_messages FROM user_settings WHERE user_id = :id LIMIT 1'
     );
     $pref->execute([':id' => $partnerId]);
     $allow = $pref->fetchColumn();

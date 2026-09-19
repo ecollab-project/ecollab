@@ -121,6 +121,13 @@ const OT = (() => {
         continue;
       }
 
+      // Preserve inserts from the second operation after the first op ends.
+      if (bComp?.insert !== undefined) {
+        push(result, { insert: bComp.insert });
+        nextB();
+        continue;
+      }
+
       if (aComp === undefined || bComp === undefined) break;
 
       if (aComp.retain !== undefined && bComp.retain !== undefined) {

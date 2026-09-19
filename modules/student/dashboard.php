@@ -29,7 +29,7 @@ $firstName    = explode(' ', trim($user['full_name'] ?: $user['username']))[0];
 
 $hour         = (int)date('G');
 $greeting     = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
-$unreadCount  = $dashData['unread_notifications'] ?? 3;
+$unreadCount  = $dashData['unread_notifications'] ?? 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -38,6 +38,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard – <?= APP_NAME ?></title>
+  <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/assets/ecollab-favicon.svg">
   <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -69,8 +70,6 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
               📚 <?= htmlspecialchars(($c['course_code'] ?? '') . ' — ' . ($c['name'] ?? '')) ?>
             </div>
           <?php endforeach; ?>
-          <div class="sd-cat">People</div>
-          <div class="sd-row" onclick="openModal('findBuddiesModal')">👫 Find Study Buddies</div>
         </div>
       </div>
       <div class="hdr-right">
@@ -82,7 +81,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
               <div class="ndclear" onclick="clearNotifs()">Mark all read</div>
             </div>
             <?php foreach (array_slice($dashData['notifications'] ?? [], 0, 4) as $notif): ?>
-              <div class="ndi <?= $notif['is_read'] ? '' : 'unread' ?>" onclick="handleNotif(this,'<?= htmlspecialchars($notif['title'] ?? '') ?>')">
+              <div class="ndi <?= $notif['is_read'] ? '' : 'unread' ?>" data-notif-id="<?= (int)($notif['id'] ?? 0) ?>" data-link="<?= htmlspecialchars($notif['link_url'] ?? '', ENT_QUOTES, 'UTF-8') ?>" onclick="handleNotif(this,'<?= htmlspecialchars($notif['title'] ?? '') ?>')">
                 <?php if (!$notif['is_read']): ?><div class="ndd"></div><?php endif; ?>
                 <div class="ndico" style="background:rgba(233,30,140,.15)"><?= htmlspecialchars($notif['icon'] ?? '🔔') ?></div>
                 <div>
@@ -136,18 +135,18 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
         <div class="stats-row">
           <div class="stat-card c1" onclick="showPage('courses')">
             <div class="sc-top">
-              <div class="sc-label">Courses Enrolled</div>
-              <div class="sc-icon">👥</div>
+              <div class="sc-label">Channels Entered</div>
+              <div class="sc-icon">#</div>
             </div>
-            <div class="sc-val"><?= count($dashData['courses'] ?? []) ?: 5 ?></div>
-            <div class="sc-ch">+1 this month</div>
+            <div class="sc-val"><?= (int)($dashData['channels_entered'] ?? count($dashData['courses'] ?? [])) ?></div>
+            <div class="sc-ch">Active learning spaces</div>
           </div>
           <div class="stat-card c2" onclick="openModal('sessionsModal')">
             <div class="sc-top">
               <div class="sc-label">Study Sessions</div>
               <div class="sc-icon">📖</div>
             </div>
-            <div class="sc-val"><?= $dashData['total_sessions'] ?? 24 ?></div>
+            <div class="sc-val"><?= $dashData['total_sessions'] ?? 0 ?></div>
             <div class="sc-ch">+8 this week</div>
           </div>
           <div class="stat-card c3" onclick="openModal('hoursModal')">
@@ -155,16 +154,16 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
               <div class="sc-label">Hours Studied</div>
               <div class="sc-icon">📈</div>
             </div>
-            <div class="sc-val"><?= number_format((float)($dashData['hours_studied'] ?? 18.6), 1) ?></div>
-            <div class="sc-ch">+4.2 this week</div>
+            <div class="sc-val"><?= number_format((float)($dashData['hours_studied'] ?? 0), 1) ?></div>
+            <div class="sc-ch">Data from your study activity</div>
           </div>
           <div class="stat-card c4" onclick="showPage('achievements')">
             <div class="sc-top">
               <div class="sc-label">Achievements</div>
               <div class="sc-icon">🏆</div>
             </div>
-            <div class="sc-val"><?= $dashData['achievement_count'] ?? 12 ?></div>
-            <div class="sc-ch">+2 new badges</div>
+            <div class="sc-val"><?= $dashData['achievement_count'] ?? 0 ?></div>
+            <div class="sc-ch">Earned achievements</div>
           </div>
         </div>
 
@@ -210,56 +209,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
                   </div>
                 </div>
               <?php endforeach; ?>
-              <?php if (empty($dashData['recommended_servers'])): ?>
-                <div class="server-row" data-cat="ai cs" onclick="openModal('serverDetailModal','AI & Machine Learning Hub')">
-                  <div class="srv-av" style="background:rgba(233,30,140,.15)">🤖</div>
-                  <div class="srv-body">
-                    <div class="srv-name">AI & Machine Learning Hub</div>
-                    <div class="srv-desc">Discuss AI concepts, share resources, and build projects together.</div>
-                    <div class="srv-tags"><span class="srv-tag">AI</span><span class="srv-tag">Machine Learning</span></div>
-                  </div>
-                  <div class="srv-right">
-                    <div class="srv-count">2.1K<span>members</span></div>
-                    <div class="srv-online">168 online</div><button class="btn-join" onclick="event.stopPropagation();joinServer(this,'AI Hub')">Join</button>
-                  </div>
-                </div>
-                <div class="server-row" data-cat="cs prog" onclick="openModal('serverDetailModal','DSA & Problem Solvers')">
-                  <div class="srv-av" style="background:rgba(6,182,212,.15)">💻</div>
-                  <div class="srv-body">
-                    <div class="srv-name">DSA & Problem Solvers</div>
-                    <div class="srv-desc">Practice data structures, algorithms, and problem solving.</div>
-                    <div class="srv-tags"><span class="srv-tag">DSA</span><span class="srv-tag">Algorithms</span></div>
-                  </div>
-                  <div class="srv-right">
-                    <div class="srv-count">1.8K<span>members</span></div>
-                    <div class="srv-online">142 online</div><button class="btn-join" onclick="event.stopPropagation();joinServer(this,'DSA')">Join</button>
-                  </div>
-                </div>
-                <div class="server-row" data-cat="web prog" onclick="openModal('serverDetailModal','Web Dev Community')">
-                  <div class="srv-av" style="background:rgba(22,163,74,.15)">🌐</div>
-                  <div class="srv-body">
-                    <div class="srv-name">Web Dev Community</div>
-                    <div class="srv-desc">HTML, CSS, JS and modern frameworks discussions.</div>
-                    <div class="srv-tags"><span class="srv-tag">Web Dev</span><span class="srv-tag">Frontend</span></div>
-                  </div>
-                  <div class="srv-right">
-                    <div class="srv-count">3.4K<span>members</span></div>
-                    <div class="srv-online">215 online</div><button class="btn-join" onclick="event.stopPropagation();joinServer(this,'Web Dev')">Join</button>
-                  </div>
-                </div>
-                <div class="server-row" data-cat="cs" onclick="openModal('serverDetailModal','Study Buddies Worldwide')">
-                  <div class="srv-av" style="background:rgba(217,119,6,.15)">👫</div>
-                  <div class="srv-body">
-                    <div class="srv-name">Study Buddies Worldwide</div>
-                    <div class="srv-desc">Find study partners and stay motivated together!</div>
-                    <div class="srv-tags"><span class="srv-tag">Study Group</span></div>
-                  </div>
-                  <div class="srv-right">
-                    <div class="srv-count">1.2K<span>members</span></div>
-                    <div class="srv-online">93 online</div><button class="btn-join" onclick="event.stopPropagation();joinServer(this,'Study Buddies')">Join</button>
-                  </div>
-                </div>
-              <?php endif; ?>
+              <div class="dashboard-empty-state">No recommended servers available yet.</div>
             </div>
             <div class="explore-more" onclick="showPage('discover')"><span>Explore More Servers</span><span>›</span></div>
           </div>
@@ -275,7 +225,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
                 $courseColors = ['var(--pink)', '#a78bfa', '#60a5fa', 'var(--green)', 'var(--yellow)'];
                 $courseGrads  = ['linear-gradient(90deg,var(--pink),var(--purple))', 'linear-gradient(90deg,var(--purple),var(--indigo))', 'linear-gradient(90deg,var(--blue),var(--cyan))', 'linear-gradient(90deg,var(--green),var(--teal))', 'linear-gradient(90deg,var(--yellow),var(--orange))'];
                 foreach (array_slice($dashData['courses'] ?? [], 0, 5) as $ci => $course):
-                  $pct  = (int)($course['progress_percentage'] ?? rand(40, 90));
+                  $pct  = (int)($course['progress_percentage'] ?? 0);
                   $clr  = $courseColors[$ci % count($courseColors)];
                   $grad = $courseGrads[$ci % count($courseGrads)];
                   $name = htmlspecialchars(($course['course_code'] ?? '') . ' - ' . ($course['name'] ?? 'Course'));
@@ -292,30 +242,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
                     <div class="cr-arr">›</div>
                   </div>
                 <?php endforeach; ?>
-                <?php if (empty($dashData['courses'])): ?>
-                  <div class="course-row" onclick="openModal('courseDetailModal','CS 305 - Neural Networks')">
-                    <div class="cr-left">
-                      <div class="cr-name"><span class="course-clr" style="background:var(--pink)"></span>CS 305 - Neural Networks</div>
-                      <div class="cr-bar-bg">
-                        <div class="cr-bar-fill" style="width:78%;background:linear-gradient(90deg,var(--pink),var(--purple))"></div>
-                      </div>
-                      <div class="cr-next">Next: Backpropagation Basics · May 24</div>
-                    </div>
-                    <div class="cr-pct" style="color:var(--pink)">78%</div>
-                    <div class="cr-arr">›</div>
-                  </div>
-                  <div class="course-row" onclick="openModal('courseDetailModal','CS 201 - Data Structures')">
-                    <div class="cr-left">
-                      <div class="cr-name"><span class="course-clr" style="background:#a78bfa"></span>CS 201 - Data Structures</div>
-                      <div class="cr-bar-bg">
-                        <div class="cr-bar-fill" style="width:65%;background:linear-gradient(90deg,var(--purple),var(--indigo))"></div>
-                      </div>
-                      <div class="cr-next">Next: Trees and Graphs · May 26</div>
-                    </div>
-                    <div class="cr-pct" style="color:#a78bfa">65%</div>
-                    <div class="cr-arr">›</div>
-                  </div>
-                <?php endif; ?>
+                <div class="dashboard-empty-state">No courses found for your account yet.</div>
               </div>
             </div>
 
@@ -343,24 +270,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
                   <button class="fr-btn" onclick="event.stopPropagation();openModal('dmModal','<?= $fName ?>')">Message</button>
                 </div>
               <?php endforeach; ?>
-              <?php if (empty($dashData['friends_online'])): ?>
-                <div class="friend-row" onclick="openModal('profileModal','Fatima_Student')">
-                  <div class="fr-av" style="background:linear-gradient(135deg,#ff4fd8,#7c3aed)">F<div class="fr-status st-green"></div>
-                  </div>
-                  <div class="fr-body">
-                    <div class="fr-name">Fatima_Student</div>
-                    <div class="fr-act" style="color:var(--green)">● Studying CS 305</div>
-                  </div><button class="fr-btn" onclick="event.stopPropagation();openModal('dmModal','Fatima_Student')">Message</button>
-                </div>
-                <div class="friend-row" onclick="openModal('profileModal','Alex Chen')">
-                  <div class="fr-av" style="background:linear-gradient(135deg,#2563eb,#06b6d4)">A<div class="fr-status st-green"></div>
-                  </div>
-                  <div class="fr-body">
-                    <div class="fr-name">Alex Chen</div>
-                    <div class="fr-act" style="color:var(--green)">● In CS 201 Study Room</div>
-                  </div><button class="fr-btn" onclick="event.stopPropagation();openModal('dmModal','Alex Chen')">Message</button>
-                </div>
-              <?php endif; ?>
+              <div class="dashboard-empty-state">No friends are online right now.</div>
             </div>
 
             <!-- MY SERVERS & CHANNELS -->
@@ -606,11 +516,23 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
       <div class="page-section" id="page-courses">
         <div class="page-title-row">
           <div>
-            <div class="page-title">My Courses</div>
-            <div class="page-sub">Track enrolled courses and progress.</div>
-          </div><button class="btn-primary" onclick="openModal('enrollModal')">+ Enroll Course</button>
+            <div class="page-title">Activity Progression</div>
+            <div class="page-sub">Earn XP through real activity and unlock higher-level collaboration tools.</div>
+          </div>
         </div>
-        <div class="g2">
+        <?php $progression = $dashData['activity_progression'] ?? ['level'=>1,'xp'=>0,'next_level_xp'=>500,'progress_percent'=>0,'unlocks'=>[]]; ?>
+        <div class="card" id="activityProgressionCard" style="margin-bottom:18px;">
+          <div class="ch"><div><div class="ct">Level <?= (int)$progression['level'] ?></div><div style="font-size:11px;color:var(--muted2);margin-top:3px;"><?= (int)$progression['xp'] ?> XP / <?= (int)$progression['next_level_xp'] ?> XP</div></div><span style="font-weight:800;color:var(--accent-purple);"><?= (int)$progression['progress_percent'] ?>%</span></div>
+          <div class="prog-bar" style="margin-top:12px;"><div class="prog-fill2" style="width:<?= (int)$progression['progress_percent'] ?>%;background:linear-gradient(90deg,#7c3aed,#e91e8c);"></div></div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;">
+            <?php foreach ($progression['unlocks'] ?? [] as $unlock): ?>
+              <span style="font-size:10px;font-weight:700;padding:6px 9px;border-radius:999px;border:1px solid <?= $unlock['unlocked'] ? 'rgba(34,197,94,.35)' : 'rgba(255,255,255,.1)' ?>;color:<?= $unlock['unlocked'] ? '#86efac' : 'var(--muted2)' ?>;background:<?= $unlock['unlocked'] ? 'rgba(34,197,94,.08)' : 'rgba(255,255,255,.03)' ?>;">
+                <?= $unlock['unlocked'] ? '✓' : '🔒' ?> <?= htmlspecialchars($unlock['name']) ?> · Lv <?= (int)$unlock['required_level'] ?>
+              </span>
+            <?php endforeach; ?>
+          </div>
+        </div>
+        <div class="g2" style="display:none;">
           <?php foreach ($dashData['courses'] ?? [] as $ci => $course):
             $pct  = (int)($course['progress_percentage'] ?? 65);
             $name = htmlspecialchars(($course['course_code'] ?? '') . ' — ' . ($course['name'] ?? ''));
@@ -971,7 +893,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
           </div>
           <div class="ins-card">
             <div class="ins-label">Hours This Week</div>
-            <div class="ins-val" style="color:var(--green)"><?= number_format((float)($dashData['hours_studied'] ?? 18.6), 1) ?>h</div>
+            <div class="ins-val" style="color:var(--green)"><?= number_format((float)($dashData['hours_studied'] ?? 0), 1) ?>h</div>
           </div>
           <div class="ins-card">
             <div class="ins-label">Study Streak</div>
@@ -1728,7 +1650,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 3;
     var DASH_DATA = <?= json_encode([
                       'activityData'   => $dashData['activity_chart'] ?? [2, 3.5, 2.5, 3.5, 6.4, 1.8, 0.8],
                       'courseLabels'   => array_map(fn($c) => $c['course_code'] ?? 'Course', $dashData['courses'] ?? []),
-                      'courseHours'    => array_map(fn($c) => (float)($c['hours_spent'] ?? rand(1, 8)), $dashData['courses'] ?? []),
+                      'courseHours'    => array_map(fn($c) => (float)($c['hours_spent'] ?? 0), $dashData['courses'] ?? []),
                       'notifCount'     => $dashData['unread_notifications'] ?? 3,
                       'userId'         => $user['id'],
                       'csrfToken'      => $csrfToken,

@@ -36,6 +36,10 @@ if (!defined('BASE_URL')) {
 
     <!-- CSRF meta tag for JS -->
     <meta name="csrf-token" content="<?= htmlspecialchars(\CSRF::token(), ENT_QUOTES, 'UTF-8') ?>">
+
+    <!-- Applies saved appearance/accessibility settings site-wide, not just
+         on the settings page itself -->
+    <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js" defer></script>
 </head>
 
 <body class="<?= htmlspecialchars($bodyClass, ENT_QUOTES, 'UTF-8') ?>">

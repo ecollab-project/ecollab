@@ -60,7 +60,130 @@ function togglePassword() {
   }
 }
 
-// ── Login form submit ────────────────────────────────────────────────────────
+// ── Login + OTP verification ──────────────────────────────────────────────
+let pendingLoginUserId = 0;
+let otpExpiresAt = 0;
+let otpTimer = null;
+
+function showOtpModal(userId, debugOtp = '') {
+  pendingLoginUserId = Number(userId) || 0;
+  if (!pendingLoginUserId) {
+    showAlert('Unable to start login verification. Please try again.');
+    setLoading(false);
+    return;
+  }
+
+  const modal = document.getElementById('loginOtpModal');
+  const input = document.getElementById('loginOtp');
+  const debug = document.getElementById('otpDebug');
+
+  document.getElementById('email')?.setAttribute('disabled', 'disabled');
+  document.getElementById('password')?.setAttribute('disabled', 'disabled');
+  document.getElementById('loginBtn')?.setAttribute('disabled', 'disabled');
+
+  if (debugOtp && debug) {
+    debug.hidden = false;
+    debug.textContent = 'DEV OTP: ' + debugOtp;
+  } else if (debug) {
+    debug.hidden = true;
+    debug.textContent = '';
+  }
+
+  otpExpiresAt = Date.now() + (10 * 60 * 1000);
+  updateOtpCountdown();
+  clearInterval(otpTimer);
+  otpTimer = setInterval(updateOtpCountdown, 1000);
+
+  modal.hidden = false;
+  modal.setAttribute('aria-hidden', 'false');
+  input.value = '';
+  setTimeout(() => input.focus(), 50);
+}
+
+function hideOtpModal() {
+  const modal = document.getElementById('loginOtpModal');
+  if (modal) {
+    modal.hidden = true;
+    modal.setAttribute('aria-hidden', 'true');
+  }
+  clearInterval(otpTimer);
+  otpTimer = null;
+  pendingLoginUserId = 0;
+
+  document.getElementById('email')?.removeAttribute('disabled');
+  document.getElementById('password')?.removeAttribute('disabled');
+  setLoading(false);
+}
+
+function updateOtpCountdown() {
+  const el = document.getElementById('otpCountdown');
+  if (!el) return;
+  const seconds = Math.max(0, Math.ceil((otpExpiresAt - Date.now()) / 1000));
+  const min = Math.floor(seconds / 60);
+  const sec = String(seconds % 60).padStart(2, '0');
+  el.textContent = seconds > 0
+    ? `Code expires in ${min}:${sec}`
+    : 'Code expired. Please log in again.';
+  if (seconds === 0) clearInterval(otpTimer);
+}
+
+async function verifyLoginOtp() {
+  clearAlert();
+  const otp = document.getElementById('loginOtp')?.value.replace(/\D/g, '') || '';
+
+  if (!pendingLoginUserId) {
+    showAlert('Your login verification session is missing. Please log in again.');
+    hideOtpModal();
+    return;
+  }
+  if (otp.length !== 6) {
+    showAlert('Enter the 6-digit verification code.');
+    return;
+  }
+  if (Date.now() >= otpExpiresAt) {
+    showAlert('The verification code has expired. Please log in again.');
+    return;
+  }
+
+  const btn = document.getElementById('verifyOtpBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spinner"></span>Verifying…';
+  }
+
+  try {
+    const res = await fetch('../../API/auth/verify-otp.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': getCsrf(),
+      },
+      body: JSON.stringify({
+        user_id: pendingLoginUserId,
+        otp,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      showAlert('Verification successful! Redirecting…', 'success');
+      clearInterval(otpTimer);
+      window.location.href = data.redirect || '/';
+      return;
+    }
+
+    showAlert(data.error || 'Incorrect verification code.');
+  } catch {
+    showAlert('Network error. Please try again.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Verify & Login';
+    }
+  }
+}
+
 async function handleLogin() {
   clearAlert();
   const identifier = document.getElementById('email')?.value.trim() || '';
@@ -82,13 +205,21 @@ async function handleLogin() {
     });
 
     const data = await res.json();
+
+    if (data.success && data.otp_required) {
+      showAlert(data.message || 'Verification code sent.', 'success');
+      showOtpModal(data.user_id, data.otp_debug || '');
+      return;
+    }
+
     if (data.success) {
       showAlert('Login successful! Redirecting…', 'success');
       setTimeout(() => { window.location.href = data.redirect || '/'; }, 700);
-    } else {
-      showAlert(data.error || 'Login failed. Please try again.');
-      setLoading(false);
+      return;
     }
+
+    showAlert(data.error || 'Login failed. Please try again.');
+    setLoading(false);
   } catch {
     showAlert('Network error. Please try again.');
     setLoading(false);
@@ -110,6 +241,16 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelector('.forgot')?.addEventListener('click', e => {
     e.preventDefault();
     window.location.href = 'forgot-password.php';
+  });
+
+  document.getElementById('verifyOtpBtn')?.addEventListener('click', verifyLoginOtp);
+  document.getElementById('otpBackBtn')?.addEventListener('click', () => window.location.reload());
+  document.getElementById('otpBackLink')?.addEventListener('click', () => window.location.reload());
+  document.getElementById('loginOtp')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') verifyLoginOtp();
+  });
+  document.getElementById('loginOtp')?.addEventListener('input', e => {
+    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6);
   });
 
   initParticles();
@@ -178,3 +319,4 @@ function initParticles() {
 // Expose globally for onclick attributes
 window.handleLogin = handleLogin;
 window.togglePassword = togglePassword;
+window.verifyLoginOtp = verifyLoginOtp;

@@ -29,7 +29,7 @@ $name     = htmlspecialchars($user['full_name'] ?: $user['username']);
 $hour     = (int)date('G');
 $greeting = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
 
-$stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'messages_today' => 156, 'study_sessions' => 12];
+$stats = $dashData['stats'] ?? ['total_members' => 0, 'active_today' => 0, 'messages_today' => 0, 'study_sessions' => 0];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -132,32 +132,32 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
               <div class="sc-label">Total Members</div>
               <div class="sc-icon">👥</div>
             </div>
-            <div class="sc-val"><?= (int)($stats['total_members'] ?? 72) ?></div>
-            <div class="sc-sub">+4 this week</div>
+            <div class="sc-val"><?= (int)($stats['total_members'] ?? 0) ?></div>
+            <div class="sc-sub">Current member count</div>
           </div>
           <div class="stat-card sc2" onclick="openModal('activeModal')">
             <div class="sc-top">
               <div class="sc-label">Active Today</div>
               <div class="sc-icon">⚡</div>
             </div>
-            <div class="sc-val"><?= (int)($stats['active_today'] ?? 38) ?></div>
-            <div class="sc-sub"><?= round((int)($stats['active_today'] ?? 38) / max(1, (int)($stats['total_members'] ?? 72)) * 100, 1) ?>% of members</div>
+            <div class="sc-val"><?= (int)($stats['active_today'] ?? 0) ?></div>
+            <div class="sc-sub"><?= round((int)($stats['active_today'] ?? 0) / max(1, (int)($stats['total_members'] ?? 0)) * 100, 1) ?>% of members</div>
           </div>
           <div class="stat-card sc3" onclick="openModal('messagesModal')">
             <div class="sc-top">
               <div class="sc-label">Messages Today</div>
               <div class="sc-icon">💬</div>
             </div>
-            <div class="sc-val"><?= (int)($stats['messages_today'] ?? 156) ?></div>
-            <div class="sc-sub">+23% from yesterday</div>
+            <div class="sc-val"><?= (int)($stats['messages_today'] ?? 0) ?></div>
+            <div class="sc-sub">Recorded today</div>
           </div>
           <div class="stat-card sc4" onclick="showPage('sessions')">
             <div class="sc-top">
               <div class="sc-label">Study Sessions</div>
               <div class="sc-icon">🕐</div>
             </div>
-            <div class="sc-val"><?= (int)($stats['study_sessions'] ?? 12) ?></div>
-            <div class="sc-sub">+3 this week</div>
+            <div class="sc-val"><?= (int)($stats['study_sessions'] ?? 0) ?></div>
+            <div class="sc-sub">Recorded sessions</div>
           </div>
         </div>
 
@@ -212,7 +212,7 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
                           </div>
                         </div>
                       </td>
-                      <td><?= (int)($a['messages'] ?? 0) ?> <span class="delta pos">+<?= rand(5, 15) ?>%</span></td>
+                      <td><?= (int)($a['messages'] ?? 0) ?></td>
                       <td><?= (int)($a['sessions'] ?? 0) ?></td>
                       <td><?= (int)($a['wb_edits'] ?? 0) ?></td>
                       <td><?= (int)($a['files_uploaded'] ?? 0) ?></td>
@@ -220,59 +220,7 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
                       <td><span class="status-pill <?= $statusClass ?>"><?= $statusLabel ?></span></td>
                     </tr>
                   <?php endforeach; ?>
-                  <?php if (empty($dashData['activity'])): ?>
-                    <tr onclick="openModal('memberDetailModal','Fatima_Student')">
-                      <td>
-                        <div class="user-cell">
-                          <div class="u-av" style="background:linear-gradient(135deg,#e91e8c,#7c3aed)">F</div>
-                          <div>
-                            <div class="u-name">Fatima_Student</div>
-                            <div class="u-handle">@fatima.student</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>42 <span class="delta pos">+12%</span></td>
-                      <td>3</td>
-                      <td>8</td>
-                      <td>4</td>
-                      <td style="color:var(--muted2)">10m ago</td>
-                      <td><span class="status-pill sp-va">Very Active</span></td>
-                    </tr>
-                    <tr onclick="openModal('memberDetailModal','John_Doe')">
-                      <td>
-                        <div class="user-cell">
-                          <div class="u-av" style="background:linear-gradient(135deg,#2563eb,#06b6d4)">J</div>
-                          <div>
-                            <div class="u-name">John_Doe</div>
-                            <div class="u-handle">@john.doe</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>35 <span class="delta pos">+8%</span></td>
-                      <td>2</td>
-                      <td>5</td>
-                      <td>2</td>
-                      <td style="color:var(--muted2)">25m ago</td>
-                      <td><span class="status-pill sp-va">Very Active</span></td>
-                    </tr>
-                    <tr onclick="openModal('memberDetailModal','Alex_Chen')">
-                      <td>
-                        <div class="user-cell">
-                          <div class="u-av" style="background:linear-gradient(135deg,#16a34a,#0d9488)">A</div>
-                          <div>
-                            <div class="u-name">Alex Chen</div>
-                            <div class="u-handle">@alex.chen</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>28 <span class="delta pos">+15%</span></td>
-                      <td>4</td>
-                      <td>7</td>
-                      <td>3</td>
-                      <td style="color:var(--muted2)">1h ago</td>
-                      <td><span class="status-pill sp-a">Active</span></td>
-                    </tr>
-                  <?php endif; ?>
+                  <tr><td colspan="7" class="dashboard-empty-state">No member activity recorded yet.</td></tr>
                 </tbody>
               </table>
             </div>
@@ -350,28 +298,7 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
                   <div class="ract-time"><?= htmlspecialchars($act['time_ago'] ?? '') ?></div>
                 </div>
               <?php endforeach; ?>
-              <?php if (empty($dashData['recent_activity'])): ?>
-                <div class="ract-row">
-                  <div class="ract-av" style="background:linear-gradient(135deg,#e91e8c,#7c3aed)">F</div>
-                  <div class="ract-msg" style="flex:1">Fatima_Student posted in <span class="ract-link">#general</span></div>
-                  <div class="ract-time">10m ago</div>
-                </div>
-                <div class="ract-row">
-                  <div class="ract-av" style="background:linear-gradient(135deg,#16a34a,#0d9488)">A</div>
-                  <div class="ract-msg" style="flex:1">Alex Chen edited whiteboard</div>
-                  <div class="ract-time">25m ago</div>
-                </div>
-                <div class="ract-row">
-                  <div class="ract-av" style="background:linear-gradient(135deg,#d97706,#ea580c)">M</div>
-                  <div class="ract-msg" style="flex:1">Mia Wong joined study room</div>
-                  <div class="ract-time">1h ago</div>
-                </div>
-                <div class="ract-row">
-                  <div class="ract-av" style="background:linear-gradient(135deg,#2563eb,#06b6d4)">J</div>
-                  <div class="ract-msg" style="flex:1">John_Doe uploaded <span class="ract-link">lecture_notes_ch5.pdf</span></div>
-                  <div class="ract-time">2h ago</div>
-                </div>
-              <?php endif; ?>
+              <div class="dashboard-empty-state">No recent activity recorded yet.</div>
             </div>
           </div>
         </div>
@@ -649,7 +576,7 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
                         </div>
                       </div>
                     </td>
-                    <td><?= (int)($a['messages'] ?? 0) ?> <span class="delta pos">+<?= rand(5, 15) ?>%</span></td>
+                    <td><?= (int)($a['messages'] ?? 0) ?></td>
                     <td><?= (int)($a['sessions'] ?? 0) ?> <span class="delta neu">-</span></td>
                     <td><?= (int)($a['wb_edits'] ?? 0) ?></td>
                     <td><?= (int)($a['files_uploaded'] ?? 0) ?></td>
@@ -865,7 +792,7 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
                 </div>
                 <div class="ig-item">
                   <div class="ig-label">Avg Messages/Day</div>
-                  <div class="ig-val"><?= round((int)($stats['messages_today'] ?? 156) / 1, 1) ?></div>
+                  <div class="ig-val"><?= round((int)($stats['messages_today'] ?? 0) / 1, 1) ?></div>
                 </div>
                 <div class="ig-item">
                   <div class="ig-label">Active Members</div>
@@ -873,7 +800,7 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
                 </div>
                 <div class="ig-item">
                   <div class="ig-label">Retention Rate</div>
-                  <div class="ig-val" style="color:var(--green)">91%</div>
+                  <div class="ig-val" style="color:var(--muted2)">N/A</div>
                 </div>
               </div>
             </div>

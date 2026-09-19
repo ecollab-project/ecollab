@@ -69,15 +69,30 @@
       const actions=document.getElementById('ecProfileActions');const me=Number(window.ECOLLAB?.userId||0);actions.innerHTML='';
       if(Number(p.id)===me){actions.innerHTML=`<button class="ec-pbtn primary" id="ecDashboardBtn">🏠 Dashboard</button><button class="ec-pbtn secondary" id="ecEditProfileBtn">✎ Edit Profile</button>`;document.getElementById('ecDashboardBtn').onclick=()=>{if(typeof window.goToDashboard==='function')window.goToDashboard();else window.location.href=base()+'/modules/student/dashboard.php';};document.getElementById('ecEditProfileBtn').onclick=()=>{close();window.openUserSettings?.();};}
       else{
-        const msg=document.createElement('button');msg.className='ec-pbtn primary';msg.textContent='💬 Message';msg.onclick=()=>openDM(p.id,p.full_name||p.username);actions.appendChild(msg);
+        const msg=document.createElement('button');msg.className='ec-pbtn primary';msg.textContent='💬 Message';msg.onclick=()=>openDM(p.id,p.full_name||p.username,p.avatar_color_gradient||'');actions.appendChild(msg);
         const conn=document.createElement('button');conn.className='ec-pbtn secondary';conn.id='ecConnectBtn';conn.textContent=p.connection_status==='accepted'?'Connected ✓':p.connection_status==='pending'?'⏳ Pending…':'＋ Connect';conn.disabled=p.connection_status==='accepted'||p.connection_status==='pending';if(!conn.disabled)conn.onclick=async()=>{try{const r=await json(`${base()}/API/friendship/send-request.php`,{method:'POST',body:JSON.stringify({addressee_id:Number(p.id)})});conn.textContent=r.status==='accepted'?'Connected ✓':'⏳ Pending…';conn.disabled=true;window.showToast?.(r.status==='accepted'?'Already connected':'Connection request sent!','success');}catch(e){window.showToast?.(e.message||'Could not connect','info');}};actions.appendChild(conn);
       }
     }catch(e){document.getElementById('ecProfileName').textContent='Profile unavailable';document.getElementById('ecProfileBio').textContent=e.message||'Could not load profile.';}
   }
-  async function openDM(id,name){
-    try{const d=await json(`${base()}/API/dm/open-conversation.php?partner_id=${Number(id)}`);close();if(typeof window.openDMConversation==='function')window.openDMConversation(d);else if(typeof window.openThreadDM==='function')window.openThreadDM(Number(id),name);else window.showToast?.('Conversation opened.','success');}
-    catch(e){window.showToast?.(e.message||'Could not open conversation','info');}
+
+  // Route the profile Message button into the existing Chat DM UI.
+  // Do not open the legacy Thread/private-message panel or create a second DM UI.
+  async function openDM(id,name,gradient){
+    close();
+    try{
+      if(typeof window.switchView==='function'){
+        window.switchView('home',document.querySelector('.sidebar-nav-item'));
+      }
+      if(typeof window.openDmConversation==='function'){
+        await window.openDmConversation(Number(id),name,gradient||'');
+        return;
+      }
+      window.showToast?.('Chat DM is not ready yet.','info');
+    }catch(e){
+      window.showToast?.(e.message||'Could not open conversation','info');
+    }
   }
+
   function install(){
     window.openFullProfileCard=target=>{const t=target||window._miniProfileUserId||window._miniProfileUsername;return open(t);};
     window.__real_openFullProfileCard=window.openFullProfileCard;
@@ -91,10 +106,34 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
 
-/* Settings entry point: the workspace/profile menu should open the full
- * Discord-style Ecollab settings screen rather than a placeholder modal. */
 (function(){
   'use strict';
   const base=()=>window.ECOLLAB?.baseUrl||'';
   window.openUserSettings=function(){window.location.href=base()+'/modules/chat/settings.php';};
+})();
+
+// Final DM routing guard: legacy Thread/private-message UI must never be used
+// for profile or mini-profile messaging. Reuse the single DM component.
+(function(){
+  function routeToExistingDm(userId,name,gradient){
+    const id=Number(userId||0);
+    if(!id)return;
+    try{ window.closeMiniProfile?.(); }catch(_){ }
+    try{ window.switchView?.('home',document.querySelector('.sidebar-nav-item')); }catch(_){ }
+    if(typeof window.openDmConversation==='function'){
+      return window.openDmConversation(id,name||'User',gradient||'');
+    }
+    window.showToast?.('Chat DM is not ready yet.','info');
+  }
+  window.openThreadDM=function(userId,displayName){
+    const grad=window._miniProfileGradient||'';
+    return routeToExistingDm(userId,displayName,grad);
+  };
+  window.openThreadDMFromMiniProfile=function(){
+    const mp=document.getElementById('miniProfile');
+    const id=Number(window._miniProfileUserId||mp?.dataset?.userId||0);
+    const name=document.getElementById('mpName')?.textContent||window._miniProfileUsername||'User';
+    const grad=window._miniProfileGradient||'';
+    return routeToExistingDm(id,name,grad);
+  };
 })();

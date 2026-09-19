@@ -333,6 +333,8 @@ async function switchChannel(el, channelId) {
       document.getElementById('channelDesc').textContent = ch.description || '';
       document.getElementById('chatInputField').placeholder = `Message #${ch.name}`;
       document.getElementById('mobChannelName').textContent = ch.name;
+      const dashboardLink = document.getElementById('channelDashboardLink');
+      if (dashboardLink) dashboardLink.style.display = String(ch.name || '').trim().toLowerCase() === 's1.election' ? 'inline-block' : 'none';
 
       // Show/hide manage button for private channels
       const manageBtn = document.getElementById('manageChannelBtn');
@@ -490,6 +492,7 @@ function buildMessageElement(msg) {
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
       </button>
       <button class="msg-action-btn ${msg.is_pinned ? 'pin-active' : ''}" title="${msg.is_pinned ? 'Unpin Message' : 'Pin Message'}" onclick="msgPin(this,'${escHtml(msg.username)}','${escHtml((msg.content || '').substring(0, 60))}', ${msg.id})">📌</button>
+      <button class="msg-action-btn" title="Bookmark" onclick="msgBookmark(this, ${msg.id})">🔖</button>
       <button class="msg-action-btn" title="More Options" onclick="showMsgMenu(event,this,'${escHtml(msg.username)}', ${msg.id}, ${isMe ? 'true' : 'false'})">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
       </button>
@@ -502,7 +505,7 @@ function buildMessageElement(msg) {
     </div>
     <div class="msg-content">
       <div class="msg-header">
-        <span class="msg-username ${roleClass}" onclick="openMiniProfile(event, '${escHtml(msg.full_name || msg.username)}', '${escHtml(msg.role || 'Student')}', '', '${init}', ${msg.sender_id || 0})">${escHtml(msg.username)}</span>
+        <span class="msg-username ${roleClass}" onclick="openMiniProfile(event, '${escHtml(msg.full_name || msg.username)}', '${escHtml(msg.role || 'Student')}', '', '${init}', ${msg.sender_id || 0})">${escHtml(msg.full_name || msg.username)}</span>
         ${msg.role === 'facilitator' ? '<span class="msg-badge">FACULTY</span>' : ''}
         ${msg.is_verified ? '<span style="color:#a855f7;font-size:12px;" title="Verified">✓</span>' : ''}
         <span class="msg-timestamp">${time}</span>
@@ -866,6 +869,20 @@ async function msgPin(btn, author, text, msgId) {
   }
 }
 
+async function msgBookmark(btn, msgId) {
+  if (!msgId) return;
+  try {
+    const data = await apiFetch(`${API_BASE}/bookmark-message.php`, {
+      method: 'POST',
+      body: JSON.stringify({ message_id: msgId }),
+    });
+    btn?.classList.toggle('bookmark-active', !!data.bookmarked);
+    showToast(data.bookmarked ? '🔖 Bookmarked' : '🔖 Removed bookmark', 'success');
+  } catch (e) {
+    showToast('🔖 ' + (e?.message || 'Could not bookmark message'), 'info');
+  }
+}
+
 // ── Message context menu ──
 function showMsgMenu(event, btn, author, msgId, isMe) {
   event.stopPropagation();
@@ -1212,7 +1229,7 @@ function renderMembersPanel(members) {
           <div class="online-dot ${m.is_online ? '' : 'offline'}"></div>
         </div>
         <div class="member-info">
-          <div class="member-name">${escHtml(m.nickname || m.username)}${m.server_role === 'owner' ? ' <span class="member-badge">👑</span>' : ''}</div>
+          <div class="member-name">${escHtml(m.full_name || m.nickname || m.username)}${m.server_role === 'owner' ? ' <span class="member-badge">👑</span>' : ''}</div>
           <div class="member-sub" style="color:${m.is_online ? 'var(--accent-green)' : 'var(--text-muted)'};font-size:10px;">${m.is_online ? 'Online' : 'Offline'}</div>
         </div>
         <div class="member-status ${online}">● ${m.is_online ? 'Online' : ''}</div>
@@ -1461,19 +1478,31 @@ if (typeof switchView !== 'undefined') window.switchView = switchView;
 
 // ── Open whiteboard channel ──
 function openWhiteboardChannel(channelId, channelName) {
-  // Highlight the wb channel item
   document.querySelectorAll('.wb-channel-item').forEach(el => el.classList.remove('active'));
-  const el = document.querySelector(`.wb-channel-item[data-channel-id="${channelId}"]`);
+  const el = document.querySelector('.wb-channel-item[data-channel-id="' + channelId + '"]');
   if (el) el.classList.add('active');
 
-  // Update header
-  const nameEl = document.getElementById('channelName');
-  if (nameEl) nameEl.textContent = channelName;
-  const topicEl = document.getElementById('channelTopic');
-  if (topicEl) topicEl.textContent = 'Collaborative whiteboard';
-
-  // Open the whiteboard view
-  if (window.openWhiteboard) window.openWhiteboard(channelName, channelId);
+  let overlay = document.getElementById('wbIframeOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'wbIframeOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:1200;background:#070b14;display:flex;flex-direction:column;';
+    overlay.innerHTML =
+      '<div style="height:42px;display:flex;align-items:center;gap:10px;padding:0 12px;background:#0d1320;border-bottom:1px solid rgba(255,255,255,.1);">' +
+      '<strong id="wbIframeTitle" style="font-size:13px;color:#e2e8f0;flex:1;"></strong>' +
+      '<button id="wbIframeNewTab" type="button" style="padding:6px 10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#cbd5e1;border-radius:6px;cursor:pointer;">Open tab</button>' +
+      '<button id="wbIframeClose" type="button" style="padding:6px 10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#fff;border-radius:6px;cursor:pointer;">Close</button>' +
+      '</div><iframe id="wbIframe" title="Ecollab Whiteboard" style="width:100%;height:calc(100% - 42px);border:0;background:#0b0f1a;"></iframe>';
+    document.body.appendChild(overlay);
+    document.getElementById('wbIframeClose').onclick = () => overlay.remove();
+    document.getElementById('wbIframeNewTab').onclick = () => {
+      const frame = document.getElementById('wbIframe');
+      if (frame?.src) window.open(frame.src, '_blank', 'noopener');
+    };
+  }
+  const url=(window.ECOLLAB?.baseUrl || '') + '/modules/whiteboard/index.php?channel_id=' + encodeURIComponent(channelId);
+  document.getElementById('wbIframeTitle').textContent = channelName || 'Whiteboard';
+  document.getElementById('wbIframe').src = url;
 }
 window.openWhiteboardChannel = openWhiteboardChannel;
 
@@ -1575,6 +1604,7 @@ window.handleKeyDown = handleKeyDown;
 window.msgReply = msgReply;
 window.cancelReply = cancelReply;
 window.msgPin = msgPin;
+window.msgBookmark = msgBookmark;
 window.showMsgMenu = showMsgMenu;
 window.startEditMsg = startEditMsg;
 window.saveEditMsg = saveEditMsg;

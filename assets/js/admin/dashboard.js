@@ -533,13 +533,27 @@ function addLogEntry(color, msg) {
 // ═══ CHARTS ═══
 function initSessionsChart() {
   const ctx = document.getElementById('sessionsChart');
-  if (!ctx || ctx._c) return;
-  ctx._c = new Chart(ctx, { type:'line', data:{ labels:['May 13','May 14','May 15','May 16','May 17','May 18','May 19'], datasets:[{ data:[40,55,48,70,85,95,110], borderColor:'#ff4fd8', backgroundColor:'rgba(255,79,216,0.1)', borderWidth:2, fill:true, tension:0.4, pointBackgroundColor:'#ff4fd8', pointRadius:3 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{color:'rgba(255,255,255,0.05)'},border:{display:false}}, y:{grid:{color:'rgba(255,255,255,0.05)'},border:{display:false},min:0,max:120,ticks:{stepSize:20}} } } });
+  if (!ctx) return;
+  const data = Array.isArray(window.ADMIN_DATA?.sessData) ? window.ADMIN_DATA.sessData : [];
+  const labels = data.map((_, i) => 'Day ' + (i + 1));
+  if (!data.length) {
+    const wrap = ctx.parentElement;
+    if (wrap) wrap.innerHTML = '<div class="dashboard-empty-state">No session data available.</div>';
+    return;
+  }
+  ctx._c = new Chart(ctx, { type:'line', data:{ labels, datasets:[{ data, borderColor:'#ff4fd8', backgroundColor:'rgba(255,79,216,0.1)', borderWidth:2, fill:true, tension:0.4, pointBackgroundColor:'#ff4fd8', pointRadius:3 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{color:'rgba(255,255,255,0.05)'},border:{display:false}}, y:{grid:{color:'rgba(255,255,255,0.05)'},border:{display:false},min:0}} } });
 }
 function initEngagementChart() {
   const ctx = document.getElementById('engagementChart');
-  if (!ctx || ctx._c) return;
-  ctx._c = new Chart(ctx, { type:'bar', data:{ labels:['#ai-study','#proj-help','#general','#resources','#thesis','#random'], datasets:[{ label:'Messages', data:[220,180,200,140,160,190], backgroundColor:'rgba(255,79,216,0.7)', borderRadius:4 },{ label:'Active Users', data:[100,120,130,90,110,80], backgroundColor:'rgba(59,130,246,0.7)', borderRadius:4 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{display:false},border:{display:false}}, y:{grid:{color:'rgba(255,255,255,0.05)'},border:{display:false},min:0,max:250} } } });
+  if (!ctx) return;
+  const data = Array.isArray(window.ADMIN_DATA?.engData) ? window.ADMIN_DATA.engData : [];
+  const labels = data.map((_, i) => 'Day ' + (i + 1));
+  if (!data.length) {
+    const wrap = ctx.parentElement;
+    if (wrap) wrap.innerHTML = '<div class="dashboard-empty-state">No engagement data available.</div>';
+    return;
+  }
+  ctx._c = new Chart(ctx, { type:'bar', data:{ labels, datasets:[{ label:'Messages', data, backgroundColor:'rgba(255,79,216,0.7)', borderRadius:4 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{display:false},border:{display:false}}, y:{grid:{color:'rgba(255,255,255,0.05)'},border:{display:false},min:0} } } });
 }
 function initRingChart() {
   const canvas = document.getElementById('ringChart');

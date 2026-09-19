@@ -46,9 +46,27 @@ if (!$result['allowed']) {
 
 try {
     $service = new AuthService();
-    $outcome = $service->login($identifier, $password, $remember);
+    $outcome = $service->login($identifier, $password, $remember, false);
 
     if ($outcome['success']) {
+        // Password was accepted and the authenticated session is created immediately.
+        // Signup email verification is handled once during registration; normal
+        // password login does not repeat that verification step.
+        if (!empty($outcome['otp_required'])) {
+            $response = [
+                'success'      => true,
+                'otp_required' => true,
+                'message'      => 'A verification code has been sent to your email.',
+                'user_id'      => (int)$outcome['user']['id'],
+            ];
+            if (APP_DEBUG && isset($outcome['otp_debug'])) {
+                $response['otp_debug'] = $outcome['otp_debug'];
+            }
+            echo json_encode($response);
+            exit;
+        }
+
+        // Only clear the password-login limiter after the full authentication flow.
         $limiter->clear('login', $ip);
         CSRF::regenerate();
 

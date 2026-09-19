@@ -31,7 +31,7 @@ class AuthService {
      * Authenticate a user by email/student_id + password.
      * On success, writes session variables.
      */
-    public function login(string $identifier, string $password, bool $remember = false): array {
+    public function login(string $identifier, string $password, bool $remember = false, bool $requireOtp = true): array {
         $identifier = trim($identifier);
         if ($identifier === '' || $password === '') {
             return ['success' => false, 'error' => 'Email and password are required.'];
@@ -104,44 +104,153 @@ class AuthService {
             return ['success' => false, 'error' => $msg];
         }
 
-        // ── Successful login ─────────────────────────────────────────────
+        // ── Password accepted ──────────────────────────────────────────────
         $lockout->recordSuccess($identifier);
 
-        // Rehash if cost changed
+        // Rehash if cost changed.
         if (password_needs_rehash($user['password_hash'], PASSWORD_BCRYPT, ['cost' => BCRYPT_COST])) {
             $newHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => BCRYPT_COST]);
             $this->db->prepare("UPDATE users SET password_hash=:h WHERE id=:id")
                 ->execute([':h' => $newHash, ':id' => $user['id']]);
         }
 
-        // Update status and last seen
-        $this->db->prepare("UPDATE users SET status='active', is_online=1, last_seen_at=NOW() WHERE id=:id")
-            ->execute([':id' => $user['id']]);
+        // Do not authenticate the PHP session until the second factor succeeds.
+        // The pending-login state is intentionally stored server-side.
+        if ($requireOtp) {
+            if (session_status() === PHP_SESSION_NONE) session_start();
 
-        // Write session
-        $this->writeSession($user);
+            $otp = $this->otpService->generate((int)$user['id'], '2fa');
+            $deliverResult = $this->otpService->deliver(
+                (string)$user['email'],
+                (string)$user['full_name'],
+                $otp,
+                '2fa'
+            );
 
-        // Encrypt and store PII on first/updated login
-        FieldEncryption::storePii((int)$user['id'], [
-            'email'     => $user['email'],
-            'full_name' => $user['full_name'],
-        ]);
+            if (!$deliverResult['success']) {
+                unset(
+                    $_SESSION['pending_login_user_id'],
+                    $_SESSION['pending_login_remember'],
+                    $_SESSION['pending_login_expires']
+                );
+                return [
+                    'success' => false,
+                    'error'   => $deliverResult['error'] ?? 'Unable to send the login verification code.'
+                ];
+            }
 
-        // Remember me cookie
-        if ($remember) {
-            $this->setRememberToken((int)$user['id']);
+            $_SESSION['pending_login_user_id'] = (int)$user['id'];
+            $_SESSION['pending_login_remember'] = $remember;
+            $_SESSION['pending_login_expires'] = time() + OTP_EXPIRY;
+
+            $result = [
+                'success'      => true,
+                'otp_required' => true,
+                'user'         => $user,
+                'role'          => $user['role'],
+            ];
+
+            if (APP_DEBUG && isset($deliverResult['otp_debug'])) {
+                $result['otp_debug'] = $deliverResult['otp_debug'];
+            }
+
+            return $result;
         }
 
-        // Write the avatar_color_gradient alias key so chat module can read it
-        if (!isset($_SESSION['avatar_color_gradient'])) {
-            $_SESSION['avatar_color_gradient'] = $_SESSION['avatar_gradient'] ?? '#a855f7,#ec4899';
-        }
-
-        AuditLogger::log(AuditLogger::LOGIN_SUCCESS,
-            ['user_id' => $user['id'], 'role' => $user['role']],
-            'success', AuditLogger::RISK_LOW);
-
+        // Legacy/internal callers can explicitly bypass the OTP gate.
+        $this->completeAuthenticatedLogin($user, $remember);
         return ['success' => true, 'user' => $user, 'role' => $user['role']];
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PRE-SIGNUP EMAIL VERIFICATION
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Send an email verification OTP before the user advances past signup step 1.
+     * No user row is created until the full signup form is submitted.
+     */
+    public function sendPreSignupEmailOtp(string $email, string $fullName): array {
+        $email = trim(strtolower($email));
+        $fullName = trim($fullName);
+
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return ['success' => false, 'error' => 'Please enter a valid email address.'];
+        }
+        if ($fullName === '') {
+            return ['success' => false, 'error' => 'Please enter your full name.'];
+        }
+
+        // Do not allow an already-registered address to start a new signup.
+        $stmt = $this->db->prepare("SELECT id, email_verified FROM users WHERE email = :email LIMIT 1");
+        $stmt->execute([':email' => $email]);
+        if ($stmt->fetch()) {
+            return ['success' => false, 'error' => 'An account with that email already exists.'];
+        }
+
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        $otp = str_pad((string)random_int(0, 999999), OTP_LENGTH, '0', STR_PAD_LEFT);
+
+        $_SESSION['pending_signup_email'] = $email;
+        $_SESSION['pending_signup_email_hash'] = password_hash($otp, PASSWORD_BCRYPT, ['cost' => 10]);
+        $_SESSION['pending_signup_email_expires'] = time() + OTP_EXPIRY;
+        $_SESSION['pending_signup_email_verified'] = false;
+
+        $deliverResult = $this->otpService->deliver($email, $fullName, $otp, 'verify_email');
+
+        if (!$deliverResult['success']) {
+            unset(
+                $_SESSION['pending_signup_email_hash'],
+                $_SESSION['pending_signup_email_expires'],
+                $_SESSION['pending_signup_email_verified']
+            );
+            return [
+                'success' => false,
+                'error' => $deliverResult['error'] ?? 'Unable to send the verification code.'
+            ];
+        }
+
+        $result = [
+            'success' => true,
+            'otp_required' => true,
+            'mail_sent' => true,
+            'email' => $email,
+        ];
+
+        if (APP_DEBUG && isset($deliverResult['otp_debug'])) {
+            $result['otp_debug'] = $deliverResult['otp_debug'];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Verify the pre-signup email OTP and bind the verified email to this session.
+     */
+    public function verifyPreSignupEmailOtp(string $email, string $otp): array {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        $email = trim(strtolower($email));
+        $pendingEmail = (string)($_SESSION['pending_signup_email'] ?? '');
+        $expires = (int)($_SESSION['pending_signup_email_expires'] ?? 0);
+        $hash = (string)($_SESSION['pending_signup_email_hash'] ?? '');
+
+        if ($pendingEmail === '' || !hash_equals($pendingEmail, $email) || $expires < time() || $hash === '') {
+            return ['success' => false, 'error' => 'Email verification expired. Please request a new code.'];
+        }
+
+        if (!password_verify(trim($otp), $hash)) {
+            return ['success' => false, 'error' => 'Incorrect code. Please try again.'];
+        }
+
+        $_SESSION['pending_signup_email_verified'] = true;
+        unset(
+            $_SESSION['pending_signup_email_hash'],
+            $_SESSION['pending_signup_email_expires']
+        );
+
+        return ['success' => true, 'verified' => true, 'email' => $email];
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -170,6 +279,12 @@ class AuthService {
         if (!$terms)            return ['success' => false, 'error' => 'You must agree to the Terms & Privacy Policy.'];
         if ($course === '')     return ['success' => false, 'error' => 'Please select your course.', 'field' => 'course'];
         if ($year < 1 || $year > 4) return ['success' => false, 'error' => 'Please select a valid year level.', 'field' => 'year_level'];
+
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $verifiedEmail = strtolower(trim((string)($_SESSION['pending_signup_email'] ?? '')));
+        if (empty($_SESSION['pending_signup_email_verified']) || $verifiedEmail !== $email) {
+            return ['success' => false, 'error' => 'Please verify your email address before creating your account.', 'field' => 'email'];
+        }
 
         // Check for duplicate email
         $dup = $this->db->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
@@ -223,8 +338,8 @@ class AuthService {
             // Insert user
             $ins = $this->db->prepare("
                 INSERT INTO users (institution_id, username, email, password_hash,
-                                   full_name, avatar_color_gradient, role, status, created_at, updated_at)
-                VALUES (:inst, :uname, :email, :hash, :name, :grad, 'student', 'active', NOW(), NOW())
+                                   full_name, avatar_color_gradient, role, status, email_verified, created_at, updated_at)
+                VALUES (:inst, :uname, :email, :hash, :name, :grad, 'student', 'active', 1, NOW(), NOW())
             ");
             $ins->execute([
                 ':inst'  => $instId,
@@ -344,22 +459,44 @@ class AuthService {
 
             $this->db->commit();
 
-            // Write session for the new user
-            $newUser = [
-                'id'                   => $userId,
-                'username'             => $username,
-                'email'                => $email,
-                'full_name'            => $fullName,
-                'role'                 => 'student',
-                'status'               => 'active',
-                'avatar_color_gradient'=> $gradient,
-            ];
-            $this->writeSession($newUser);
+            // The email was verified before the account was created, so this
+            // account is marked verified immediately and can be authenticated.
+            if (session_status() === PHP_SESSION_NONE) session_start();
 
-            return ['success' => true, 'user_id' => $userId, 'username' => $username, 'role' => 'student'];
+            $newUser = [
+                'id' => $userId,
+                'username' => $username,
+                'email' => $email,
+                'full_name' => $fullName,
+                'role' => 'student',
+                'status' => 'active',
+                'avatar_color_gradient' => $gradient,
+                'plan_id' => null,
+            ];
+
+            $this->completeAuthenticatedLogin($newUser, false);
+
+            unset(
+                $_SESSION['pending_signup_email'],
+                $_SESSION['pending_signup_email_verified'],
+                $_SESSION['pending_signup_email_hash'],
+                $_SESSION['pending_signup_email_expires']
+            );
+
+            return [
+                'success' => true,
+                'verified' => true,
+                'otp_required' => false,
+                'user_id' => $userId,
+                'username' => $username,
+                'role' => 'student',
+                'redirect' => BASE_URL . '/modules/onboarding/server-discovery.php',
+            ];
 
         } catch (\Throwable $e) {
-            $this->db->rollBack();
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             error_log('[AuthService::register] ' . $e->getMessage());
             return ['success' => false, 'error' => 'Registration failed. Please try again.'];
         }
@@ -411,13 +548,175 @@ class AuthService {
     // ═══════════════════════════════════════════════════════════════
 
     public function verifyOtp(int $userId, string $otp, string $action = 'reset_password'): array {
-        // Delegate verification to OtpService
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        // The existing verify-otp endpoint is shared with forgot-password.
+        // When a pending login exists for this session, bind this verification
+        // to the login 2FA action without trusting a client-supplied action.
+        $pendingUserId = (int)($_SESSION['pending_login_user_id'] ?? 0);
+        $pendingExpires = (int)($_SESSION['pending_login_expires'] ?? 0);
+        if ($action === 'reset_password'
+            && $pendingUserId > 0
+            && $pendingUserId === $userId
+            && $pendingExpires >= time()
+        ) {
+            $action = '2fa';
+        }
+
+        // Signup email verification is also bound to the server-side pending
+        // signup session. Never trust a client-supplied user ID for this flow.
+        $pendingSignupUserId = (int)($_SESSION['pending_signup_user_id'] ?? 0);
+        $pendingSignupExpires = (int)($_SESSION['pending_signup_expires'] ?? 0);
+
+        if ($action === 'reset_password'
+            && $pendingSignupUserId > 0
+            && $pendingSignupUserId === $userId
+            && $pendingSignupExpires >= time()
+        ) {
+            $action = 'verify_email';
+        }
+
+        if ($action === 'verify_email') {
+            if ($pendingSignupUserId <= 0
+                || $pendingSignupUserId !== $userId
+                || $pendingSignupExpires < time()
+            ) {
+                unset(
+                    $_SESSION['pending_signup_user_id'],
+                    $_SESSION['pending_signup_expires']
+                );
+                return ['success' => false, 'error' => 'Email verification expired. Please register again.'];
+            }
+        }
+
+        if ($action === '2fa') {
+            $pendingUserId = (int)($_SESSION['pending_login_user_id'] ?? 0);
+            $pendingExpires = (int)($_SESSION['pending_login_expires'] ?? 0);
+
+            if ($pendingUserId <= 0 || $pendingUserId !== $userId || $pendingExpires < time()) {
+                unset(
+                    $_SESSION['pending_login_user_id'],
+                    $_SESSION['pending_login_remember'],
+                    $_SESSION['pending_login_expires']
+                );
+                return ['success' => false, 'error' => 'Login verification expired. Please sign in again.'];
+            }
+        }
+
+        // Delegate verification to OtpService.
         $result = $this->otpService->verify($userId, $otp, $action);
         if (!$result['success']) {
             return $result;
         }
 
-        // Issue a short-lived reset token (stored in session)
+        if ($action === '2fa') {
+            $cols = SchemaVersion::selectColumns('users',
+                required: [
+                    'u.id', 'u.username', 'u.email', 'u.full_name',
+                    'u.role', 'u.status', 'u.avatar_color_gradient',
+                ],
+                optional: [
+                    'plan_id' => 'u.plan_id',
+                ]
+            );
+
+            $stmt = $this->db->prepare("
+                SELECT $cols
+                FROM users u
+                WHERE u.id = :id
+                  AND u.deleted_at IS NULL
+                LIMIT 1
+            ");
+            $stmt->execute([':id' => $userId]);
+            $user = $stmt->fetch();
+
+            if (!$user || in_array($user['status'], ['banned', 'suspended', 'deactivated'], true)) {
+                return ['success' => false, 'error' => 'This account is no longer available.'];
+            }
+
+            $remember = !empty($_SESSION['pending_login_remember']);
+
+            $this->db->prepare("UPDATE users SET status='active', is_online=1, last_seen_at=NOW() WHERE id=:id")
+                ->execute([':id' => $userId]);
+
+            $this->completeAuthenticatedLogin($user, $remember);
+
+            unset(
+                $_SESSION['pending_login_user_id'],
+                $_SESSION['pending_login_remember'],
+                $_SESSION['pending_login_expires']
+            );
+
+            AuditLogger::log(AuditLogger::LOGIN_SUCCESS,
+                ['user_id' => $userId, 'role' => $user['role'], 'mfa' => true],
+                'success', AuditLogger::RISK_LOW);
+
+            $redirect = match (true) {
+                in_array($user['role'], ['admin', 'super_admin', 'moderator'], true) => BASE_URL . '/modules/admin/dashboard.php',
+                $user['role'] === 'facilitator' => BASE_URL . '/modules/facilitator/dashboard.php',
+                default => BASE_URL . '/modules/chat/chat.php',
+            };
+
+            return [
+                'success' => true,
+                'role' => $user['role'],
+                'user' => $user,
+                'redirect' => $redirect,
+            ];
+        }
+
+        if ($action === 'verify_email') {
+            $cols = SchemaVersion::selectColumns('users',
+                required: [
+                    'u.id', 'u.username', 'u.email', 'u.full_name',
+                    'u.role', 'u.status', 'u.email_verified', 'u.avatar_color_gradient',
+                ],
+                optional: [
+                    'plan_id' => 'u.plan_id',
+                ]
+            );
+
+            $stmt = $this->db->prepare("
+                SELECT $cols
+                FROM users u
+                WHERE u.id = :id
+                  AND u.deleted_at IS NULL
+                LIMIT 1
+            ");
+            $stmt->execute([':id' => $userId]);
+            $user = $stmt->fetch();
+
+            if (!$user || in_array($user['status'], ['banned', 'suspended', 'deactivated'], true)) {
+                return ['success' => false, 'error' => 'This account is no longer available.'];
+            }
+
+            $this->db->prepare("
+                UPDATE users
+                   SET email_verified = 1,
+                       status = 'active',
+                       is_online = 1,
+                       last_seen_at = NOW(),
+                       updated_at = NOW()
+                 WHERE id = :id
+            ")->execute([':id' => $userId]);
+
+            $this->completeAuthenticatedLogin($user, false);
+
+            unset(
+                $_SESSION['pending_signup_user_id'],
+                $_SESSION['pending_signup_expires']
+            );
+
+            return [
+                'success'    => true,
+                'verified'   => true,
+                'role'       => $user['role'],
+                'user'       => $user,
+                'redirect'   => BASE_URL . '/modules/onboarding/server-discovery.php',
+            ];
+        }
+
+        // Forgot-password OTPs issue a short-lived reset token.
         $resetToken = bin2hex(random_bytes(32));
         $_SESSION['pwd_reset_token']   = $resetToken;
         $_SESSION['pwd_reset_user_id'] = $userId;
@@ -541,6 +840,24 @@ class AuthService {
         // Sync the CSRF token key used by chat (AuthMiddleware::csrfToken())
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+    }
+
+    private function completeAuthenticatedLogin(array $user, bool $remember): void {
+        // This is the only path that creates an authenticated session after password+OTP.
+        $this->writeSession($user);
+
+        FieldEncryption::storePii((int)$user['id'], [
+            'email'     => $user['email'],
+            'full_name' => $user['full_name'],
+        ]);
+
+        if ($remember) {
+            $this->setRememberToken((int)$user['id']);
+        }
+
+        if (!isset($_SESSION['avatar_color_gradient'])) {
+            $_SESSION['avatar_color_gradient'] = $_SESSION['avatar_gradient'] ?? '#a855f7,#ec4899';
         }
     }
 

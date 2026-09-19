@@ -87,8 +87,7 @@ $resetSuccess = ($_GET['reset'] ?? '') === '1';
           <!-- Email / Student ID -->
           <div class="input-wrap">
             <div class="input-row">
-              <input type="text" id="email" placeholder="Email / Student ID" autocomplete="username" inputmode="email" />
-              <span class="input-suffix">@fatima.edu.ph</span>
+              <input type="text" id="email" placeholder="Email / Student ID" autocomplete="username" />
             </div>
           </div>
 
@@ -165,6 +164,38 @@ $resetSuccess = ($_GET['reset'] ?? '') === '1';
     </div>
   </div>
 
+  <!-- Login OTP challenge -->
+  <div id="loginOtpModal" class="otp-modal" hidden aria-hidden="true">
+    <div class="otp-card" role="dialog" aria-modal="true" aria-labelledby="otpTitle">
+      <button type="button" class="otp-close" id="otpBackBtn" aria-label="Back to login">×</button>
+      <div class="otp-icon">✉️</div>
+      <h2 id="otpTitle">Check your email</h2>
+      <p class="otp-subtitle">We sent a 6-digit verification code to your account. Enter it below to finish signing in.</p>
+      <div class="otp-input-row">
+        <input id="loginOtp" type="text" inputmode="numeric" autocomplete="one-time-code"
+               maxlength="6" placeholder="000000" aria-label="6-digit verification code">
+      </div>
+      <div id="otpCountdown" class="otp-countdown">Code expires in 10:00</div>
+      <button type="button" class="login-btn" id="verifyOtpBtn">Verify &amp; Login</button>
+      <button type="button" class="otp-back-link" id="otpBackLink">Use another account</button>
+      <div id="otpDebug" class="otp-debug" hidden></div>
+    </div>
+  </div>
+
+  <style>
+    .otp-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(7,4,15,.82);backdrop-filter:blur(10px)}
+    .otp-modal[hidden]{display:none}
+    .otp-card{position:relative;width:min(440px,100%);padding:34px 30px;border:1px solid rgba(255,45,117,.28);border-radius:22px;background:#0f0c1a;box-shadow:0 24px 80px rgba(0,0,0,.5);text-align:center}
+    .otp-close{position:absolute;top:12px;right:16px;border:0;background:transparent;color:#aaa;font-size:28px;cursor:pointer}
+    .otp-icon{font-size:38px;margin-bottom:10px}
+    .otp-card h2{margin:0 0 8px;color:#fff;font-family:Poppins,Arial,sans-serif}
+    .otp-subtitle{margin:0 auto 22px;max-width:340px;color:#aaa;line-height:1.6;font-size:14px}
+    .otp-input-row input{width:100%;box-sizing:border-box;padding:16px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:#090711;color:#fff;text-align:center;font-size:28px;letter-spacing:8px;font-family:monospace;outline:none}
+    .otp-input-row input:focus{border-color:rgba(255,45,117,.65)}
+    .otp-countdown{margin:12px 0 18px;color:#888;font-size:12px}
+    .otp-back-link{margin-top:14px;border:0;background:transparent;color:#aaa;cursor:pointer;text-decoration:underline}
+    .otp-debug{margin-top:14px;padding:10px;border-radius:8px;background:rgba(245,158,11,.1);color:#fbbf24;font-size:12px}
+  </style>
   <script src="<?= BASE_URL ?>/assets/js/auth/login.js" defer></script>
 </body>
 

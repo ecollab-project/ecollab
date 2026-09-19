@@ -15,6 +15,14 @@ try {
     $db = Database::getInstance();
     $uid = (int)$user['id'];
 
+    $prefStmt = $db->prepare('SELECT ai_matching FROM user_settings WHERE user_id = :id LIMIT 1');
+    $prefStmt->execute([':id' => $uid]);
+    $aiMatching = $prefStmt->fetchColumn();
+    if ($aiMatching !== false && (int)$aiMatching === 0) {
+        echo json_encode(['success' => true, 'matches' => [], 'ai_matching_disabled' => true]);
+        exit;
+    }
+
     $stmt = $db->prepare("
         SELECT DISTINCT
             u.id, u.username, u.full_name, u.role,
@@ -83,10 +91,6 @@ try {
     $service = new PeerMatchingService();
     $currentProfile = $loadProfile($uid, $prefsStmt, $subjectsStmt, $interestsStmt, $hobbiesStmt);
 
-    // A match should be based on real peer-profile data. Previously, users
-    // with completely empty profiles could receive 13% because the study
-    // preference scorer returned a neutral 50/100 value for missing data.
-    // That made every unconfigured account look like a real match.
     $currentProfileReady = !empty($currentProfile['subjects'])
         || !empty($currentProfile['interests'])
         || !empty($currentProfile['hobbies']);
@@ -98,9 +102,6 @@ try {
             $candidateId = (int)$candidate['id'];
             $candidateProfile = $loadProfile($candidateId, $prefsStmt, $subjectsStmt, $interestsStmt, $hobbiesStmt);
 
-            // Do not advertise users who have not configured any matcher
-            // dimensions yet. They cannot produce a meaningful compatibility
-            // score and were the source of the misleading 13% cards.
             $candidateReady = !empty($candidateProfile['subjects'])
                 || !empty($candidateProfile['interests'])
                 || !empty($candidateProfile['hobbies']);

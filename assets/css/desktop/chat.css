@@ -766,6 +766,14 @@ body {
   color: #ef4444;
 }
 
+/* DM call panel mic/camera buttons — same red "off" treatment, its own
+   rule since these buttons aren't .vc-ctrl-btn (that's the voice-channel
+   control bar, this is the DM call overlay). */
+#dmCallOverlay button.muted-state {
+  background: rgba(239, 68, 68, 0.25) !important;
+  color: #ef4444 !important;
+}
+
 .vc-ctrl-btn.green-state {
   background: rgba(34, 197, 94, 0.14);
   border-color: rgba(34, 197, 94, 0.35);
@@ -2107,6 +2115,35 @@ body {
   pointer-events: all;
 }
 
+/* ── Compact Mode ────────────────────────────────────────────────────────
+   Was a switch that saved correctly but had no visual effect anywhere.
+   Reduces spacing/sizing across the message list and sidebar. */
+html.compact-mode .message-group {
+  gap: 8px;
+  margin-bottom: 0;
+  padding: 2px 8px 2px 4px;
+}
+
+html.compact-mode .msg-avatar,
+html.compact-mode .message-group .avatar {
+  width: 28px;
+  height: 28px;
+}
+
+html.compact-mode .msg-content {
+  font-size: 13.5px;
+  line-height: 1.35;
+}
+
+html.compact-mode .channel-item,
+html.compact-mode .dm-item {
+  padding: 4px 8px;
+}
+
+html.compact-mode .sidebar-section-header {
+  padding: 4px 8px;
+}
+
 .message-group.pinned-msg-highlight {
   background: rgba(245, 158, 11, 0.06);
   border-left: 3px solid var(--accent-yellow);
@@ -2155,6 +2192,10 @@ body {
 
 .msg-action-btn.pin-active {
   color: var(--accent-yellow);
+}
+
+.msg-action-btn.bookmark-active {
+  color: #a855f7;
 }
 
 /* Tooltip on action buttons */
@@ -4072,7 +4113,8 @@ body {
 /* TOAST */
 .toast-container {
   position: fixed;
-  bottom: 20px;
+  top: 20px;
+  bottom: auto;
   left: 50%;
   transform: translateX(-50%);
   z-index: 2000;
@@ -5515,6 +5557,64 @@ input[type=range].vc-range::-webkit-slider-thumb {
   display: none;
 }
 
+/* ── Compact PiP layout ──────────────────────────────────────────────────
+   The full-size view has 9 control buttons across 3 groups plus a room-info
+   hero block (icon/title/subtitle/tags). None of that fits a 340×220 box —
+   previously nothing here hid or resized it, producing an overlapping mess.
+   Keep only what a PiP actually needs: mic / leave / deafen, plus enough of
+   the header to identify the channel. */
+
+.voice-channel-view.vc-minimized .vc-room-info,
+.voice-channel-view.vc-minimized .vc-section-header,
+.voice-channel-view.vc-minimized .vc-room-sub,
+.voice-channel-view.vc-minimized .vc-tags,
+.voice-channel-view.vc-minimized .vc-stat-badge span,
+.voice-channel-view.vc-minimized .vc-invite-btn {
+  display: none;
+}
+
+.voice-channel-view.vc-minimized .vc-body {
+  padding: 6px 8px;
+  overflow-y: auto;
+}
+
+.voice-channel-view.vc-minimized .vc-controls-bar {
+  padding: 6px 8px;
+  gap: 4px;
+}
+
+/* Hide the two side groups (screen share/camera/whiteboard, and mic-test/
+   noise-cancel/audio-settings) — keep only the center mute/leave/deafen
+   group, which is what a PiP is actually for. */
+.voice-channel-view.vc-minimized .vc-controls-bar > .vc-bar-grp:not(.center) {
+  display: none;
+}
+
+.voice-channel-view.vc-minimized .vc-controls-bar > .vc-bar-grp.center {
+  width: 100%;
+  justify-content: center;
+  gap: 10px;
+}
+
+.voice-channel-view.vc-minimized .vc-btn-lg {
+  width: 38px;
+  height: 38px;
+}
+
+.voice-channel-view.vc-minimized .vc-btn-lg svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Tooltips overlaying an already-tiny box just add to the crowding */
+.voice-channel-view.vc-minimized .vc-ctrl-tooltip {
+  display: none;
+}
+
+.voice-channel-view.vc-minimized .vc-header-right {
+  gap: 4px;
+}
+
 @keyframes vcSlideIn {
   from {
     opacity: 0;
@@ -5893,6 +5993,13 @@ input[type=range].vc-range::-webkit-slider-thumb {
   background: #000;
   display: block;
   z-index: 0;
+}
+
+/* Mirror only your own camera preview (matches how every mirror/video app
+   shows your own feed) — never applied to remote participants' video, so
+   what others see of you is not flipped. */
+.vc-cam-preview.vc-mirror {
+  transform: scaleX(-1);
 }
 
 /* Card becomes a positioned container; inner elements float above the video */

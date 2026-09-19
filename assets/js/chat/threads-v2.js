@@ -90,14 +90,33 @@
 
   function threadCard(t){
     const g=gradient(t.author_gradient), init=authorName(t).charAt(0).toUpperCase();
-    return `<article class="tv2-card"><div class="tv2-meta"><span class="tv2-scope ${scopeClass(t.scope)}">${scopeLabel(t.scope)}</span><span>by <span class="tv2-author">${esc(authorName(t))}</span></span><span>· ${relTime(t.created_at)}</span>${t.server_name?`<span>· ${esc(t.server_name)}</span>`:''}${t.channel_name?`<span>· #${esc(t.channel_name)}</span>`:''}</div><h3>${esc(t.title)}</h3><p>${esc(t.body)}</p><div class="tv2-actions"><button class="tv2-vote ${Number(t.my_vote)===1?'active':''}" onclick="voteThreadV2('thread',${t.id},${Number(t.my_vote)===1?0:1})">▲ ${Number(t.score)||0}</button><button class="tv2-vote ${Number(t.my_vote)===-1?'active':''}" onclick="voteThreadV2('thread',${t.id},${Number(t.my_vote)===-1?0:-1})">▼</button><span class="tv2-replies">💬 ${Number(t.reply_count)||0} replies</span><button class="tv2-open" onclick="openThreadDetail(${t.id})">Open discussion →</button></div></article>`;
+    return `<article class="tv2-card" data-thread-id="${Number(t.id)}"><div class="tv2-meta"><span class="tv2-scope ${scopeClass(t.scope)}">${scopeLabel(t.scope)}</span><span>by <span class="tv2-author">${esc(authorName(t))}</span></span><span>· ${relTime(t.created_at)}</span>${t.server_name?`<span>· ${esc(t.server_name)}</span>`:''}${t.channel_name?`<span>· #${esc(t.channel_name)}</span>`:''}</div><h3>${esc(t.title)}</h3><p>${esc(t.body)}</p><div class="tv2-actions"><button class="tv2-vote ${Number(t.my_vote)===1?'active':''}" onclick="voteThreadV2('thread',${t.id},${Number(t.my_vote)===1?0:1})">▲ ${Number(t.score)||0}</button><button class="tv2-vote ${Number(t.my_vote)===-1?'active':''}" onclick="voteThreadV2('thread',${t.id},${Number(t.my_vote)===-1?0:-1})">▼</button><span class="tv2-replies">💬 ${Number(t.reply_count)||0} replies</span><button class="tv2-open" onclick="openThreadDetail(${t.id})">Open discussion →</button></div></article>`;
   }
 
+  let feedLoaded=false, feedSignatures=new Map();
+  function threadSignature(t){return JSON.stringify([t.id,t.title,t.body,t.scope,t.created_at,t.updated_at,t.reply_count,t.score,t.my_vote,t.server_name,t.channel_name]);}
+  function reconcileFeed(threads){
+    const body=document.getElementById('tv2Feed'); if(!body)return;
+    const list=Array.isArray(threads)?threads:[];
+    if(!list.length){if(!body.querySelector('.tv2-empty'))body.innerHTML='<div class="tv2-empty"><strong>No discussions yet</strong>Start the first discussion for this scope.</div>';feedSignatures.clear();feedLoaded=true;return;}
+    const wasNearTop=body.scrollTop<40, oldScrollHeight=body.scrollHeight, oldScrollTop=body.scrollTop;
+    const existing=new Map(Array.from(body.querySelectorAll('[data-thread-id]')).map(el=>[String(el.dataset.threadId),el]));
+    const nextIds=new Set();
+    for(const t of list){const id=String(t.id);nextIds.add(id);const sig=threadSignature(t);let el=existing.get(id);
+      if(!el){const temp=document.createElement('div');temp.innerHTML=threadCard(t);el=temp.firstElementChild;}
+      else if(feedSignatures.get(id)!==sig){const temp=document.createElement('div');temp.innerHTML=threadCard(t);const replacement=temp.firstElementChild;el.replaceWith(replacement);el=replacement;}
+      body.appendChild(el);feedSignatures.set(id,sig);
+    }
+    Array.from(body.querySelectorAll('[data-thread-id]')).forEach(el=>{if(!nextIds.has(String(el.dataset.threadId)))el.remove();});
+    body.querySelector('.tv2-empty')?.remove();feedSignatures.forEach((_,id)=>{if(!nextIds.has(id))feedSignatures.delete(id);});feedLoaded=true;
+    if(!wasNearTop)body.scrollTop=Math.max(0,body.scrollTop+(body.scrollHeight-oldScrollHeight));else body.scrollTop=oldScrollTop;
+  }
   async function loadFeed(scope='all'){
-    activeScope=scope; const body=document.getElementById('tv2Feed'); if(!body)return; body.innerHTML='<div class="tv2-empty">Loading discussions…</div>';
-    const sid=Number(window.ECOLLAB?.currentServerId||0), cid=Number(window.ECOLLAB?.currentChannelId||0);
-    try{const d=await request(`${api}?scope=${encodeURIComponent(scope)}&server_id=${sid}&channel_id=${cid}&limit=50`);body.innerHTML=d.threads?.length?d.threads.map(threadCard).join(''):'<div class="tv2-empty"><strong>No discussions yet</strong>Start the first discussion for this scope.</div>';}
-    catch(e){body.innerHTML=`<div class="tv2-empty"><strong>Could not load discussions</strong>${esc(e.message)}</div>`;}
+    activeScope=scope;const body=document.getElementById('tv2Feed');if(!body)return;
+    if(!feedLoaded||!body.querySelector('[data-thread-id]'))body.innerHTML='<div class="tv2-empty">Loading discussions…</div>';
+    const sid=Number(window.ECOLLAB?.currentServerId||0),cid=Number(window.ECOLLAB?.currentChannelId||0);
+    try{const d=await request(api+'?scope='+encodeURIComponent(scope)+'&server_id='+sid+'&channel_id='+cid+'&limit=50');reconcileFeed(d.threads||[]);}
+    catch(e){if(!feedLoaded)body.innerHTML='<div class="tv2-empty"><strong>Could not load discussions</strong>'+esc(e.message)+'</div>';}
   }
   window.loadThreadsV2=loadFeed;
 
@@ -107,26 +126,26 @@
     ensureStyles();ensureModal();
     const overlay=document.getElementById('navViewOverlay'); if(!overlay)return;
     overlay.innerHTML=`<div id="threadsV2View"><div class="tv2-head"><div style="font-size:22px">💬</div><div><div class="tv2-title">Discussions</div><div class="tv2-sub">Reddit-style topics for Ecollab — public, server-wide, or channel-wide.</div></div><button class="tv2-btn primary" style="margin-left:auto" onclick="openThreadCreateModal()">+ Start Discussion</button></div><div class="tv2-tabs"><button class="tv2-tab active" data-scope="all" onclick="setThreadScope('all',this)">All visible</button><button class="tv2-tab" data-scope="public" onclick="setThreadScope('public',this)">🌐 Public</button><button class="tv2-tab" data-scope="server" onclick="setThreadScope('server',this)">⭐ This Server</button><button class="tv2-tab" data-scope="channel" onclick="setThreadScope('channel',this)">🔒 This Channel</button></div><div class="tv2-body"><div id="tv2Feed" class="tv2-feed"></div></div></div>`;
-    loadFeed(activeScope);
+    const savedScope=localStorage.getItem('ecollab.threads.scope')||activeScope||'all';activeScope=savedScope;document.querySelectorAll('.tv2-tab').forEach(x=>x.classList.toggle('active',x.dataset.scope===savedScope));feedLoaded=false;feedSignatures.clear();loadFeed(savedScope);
   }
-  window.setThreadScope=function(scope,el){document.querySelectorAll('.tv2-tab').forEach(x=>x.classList.remove('active'));el?.classList.add('active');loadFeed(scope);};
+  window.setThreadScope=function(scope,el){document.querySelectorAll('.tv2-tab').forEach(x=>x.classList.remove('active'));el?.classList.add('active');feedLoaded=false;feedSignatures.clear();localStorage.setItem('ecollab.threads.scope',scope);loadFeed(scope);};
 
   window.openThreadDetail=async function(id){
-    ensureStyles();ensureModal();activeThreadId=id;const body=document.getElementById('tv2DetailBody');const modal=document.getElementById('threadsV2DetailModal');if(!body||!modal)return;modal.classList.add('open');body.innerHTML='<div class="tv2-empty">Loading discussion…</div>';
+    ensureStyles();ensureModal();activeThreadId=id;localStorage.setItem('ecollab.threads.activeThread',String(id));const body=document.getElementById('tv2DetailBody');const modal=document.getElementById('threadsV2DetailModal');if(!body||!modal)return;modal.classList.add('open');body.innerHTML='<div class="tv2-empty">Loading discussion…</div>';
     try{const d=await request(`${api}?action=get&id=${id}`);const t=d.thread;document.getElementById('tv2DetailTitle').textContent=t.title;body.innerHTML=`<div class="tv2-detail"><div class="tv2-meta"><span class="tv2-scope">${scopeLabel(t.scope)}</span><span>by <b>${esc(authorName(t))}</b> · ${relTime(t.created_at)}</span></div><h2 style="font-size:19px;color:var(--text-primary);margin:0 0 8px">${esc(t.title)}</h2><p style="font-size:13px;line-height:1.65;color:var(--text-secondary);white-space:pre-wrap">${esc(t.body)}</p><div class="tv2-actions" style="margin:14px 0"><button class="tv2-vote ${Number(t.my_vote)===1?'active':''}" onclick="voteDetailV2('thread',${t.id},${Number(t.my_vote)===1?0:1})">▲ ${Number(t.score)||0}</button><button class="tv2-vote ${Number(t.my_vote)===-1?'active':''}" onclick="voteDetailV2('thread',${t.id},${Number(t.my_vote)===-1?0:-1})">▼</button><span class="tv2-replies">${d.replies?.length||0} replies</span></div><div id="tv2Replies">${(d.replies||[]).map(replyCard).join('')||'<div class="tv2-empty" style="padding:30px 0">No replies yet. Be the first to give an opinion.</div>'}</div><div style="margin-top:14px"><textarea id="tv2ReplyInput" class="tv2-field" placeholder="Share your opinion…"></textarea><button class="tv2-btn primary" onclick="replyThreadV2(${t.id})">Post Reply</button></div></div>`;}
     catch(e){body.innerHTML=`<div class="tv2-empty"><strong>Could not open discussion</strong>${esc(e.message)}</div>`;}
   };
   function replyCard(r){const g=gradient(r.author_gradient),init=authorName(r).charAt(0).toUpperCase();return `<div class="tv2-reply"><div class="tv2-avatar" style="background:linear-gradient(135deg,${g})">${init}</div><div class="tv2-reply-body"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px"><b style="color:var(--text-primary)">${esc(authorName(r))}</b> · ${relTime(r.created_at)}</div><div class="tv2-reply-text">${esc(r.body)}</div><div class="tv2-reply-actions"><button class="tv2-vote ${Number(r.my_vote)===1?'active':''}" onclick="voteDetailV2('reply',${r.id},${Number(r.my_vote)===1?0:1})">▲ ${Number(r.score)||0}</button><button class="tv2-vote ${Number(r.my_vote)===-1?'active':''}" onclick="voteDetailV2('reply',${r.id},${Number(r.my_vote)===-1?0:-1})">▼</button></div></div></div>`;}
   window.voteDetailV2=async function(target,id,vote){try{await request(api,{method:'POST',body:JSON.stringify({action:'vote',target,id,vote})});openThreadDetail(activeThreadId);}catch(e){toast(e.message,'error');}};
   window.replyThreadV2=async function(id){const input=document.getElementById('tv2ReplyInput'),body=input?.value.trim();if(!body)return;try{await request(api,{method:'POST',body:JSON.stringify({action:'reply',thread_id:id,body})});input.value='';openThreadDetail(id);}catch(e){toast(e.message,'error');}};
-  window.closeThreadDetail=function(){document.getElementById('threadsV2DetailModal')?.classList.remove('open');activeThreadId=0;};
+  window.closeThreadDetail=function(){document.getElementById('threadsV2DetailModal')?.classList.remove('open');activeThreadId=0;localStorage.removeItem('ecollab.threads.activeThread');};
 
   function installSwitch(){
     if(initialized)return; initialized=true;
     originalSwitchView=window.switchView;
     window.switchView=function(viewName,el){
       if(viewName==='threads'){
-        document.querySelectorAll('.sidebar-nav-item').forEach(n=>n.classList.remove('active'));el?.classList.add('active');window._currentNavView='threads';
+        document.querySelectorAll('.sidebar-nav-item').forEach(n=>n.classList.remove('active'));el?.classList.add('active');window._currentNavView='threads';localStorage.setItem('ecollab.threads.navView','threads');
         const chatMain=document.querySelector('.chat-main');let overlay=document.getElementById('navViewOverlay');
         if(chatMain)chatMain.style.display='none';
         if(!overlay){overlay=document.createElement('div');overlay.id='navViewOverlay';overlay.style.cssText='flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--bg-primary);';chatMain?.parentNode.insertBefore(overlay,chatMain.nextSibling);}else overlay.style.display='flex';
@@ -137,6 +156,7 @@
     window.__real_switchView=window.switchView;
   }
 
+  function restoreThreadView(){const globalView=localStorage.getItem('ecollab.chat.activeView');if(localStorage.getItem('ecollab.threads.navView')!=='threads'||(globalView&&globalView!=='threads'))return;const nav=document.querySelector('.sidebar-nav-item[onclick*="threads"]')||document.querySelector('[data-view="threads"]');window.switchView?.('threads',nav);const savedThread=Number(localStorage.getItem('ecollab.threads.activeThread')||0);if(savedThread>0)setTimeout(()=>window.openThreadDetail?.(savedThread),250);}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installSwitch,{once:true});else installSwitch();
-  window.addEventListener('load',installSwitch,{once:true});
+  window.addEventListener('load',()=>{installSwitch();setTimeout(restoreThreadView,120);},{once:true});
 })();

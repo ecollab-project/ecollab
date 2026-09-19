@@ -87,6 +87,14 @@
         return;
       }
 
+      // Email verification is a required step for new password accounts.
+      // Do not redirect after registration until the OTP has been verified.
+      if (data.otp_required && typeof showEmailVerification === 'function') {
+        showEmailVerification(data);
+        if (typeof setLoading === 'function') setLoading(false);
+        return;
+      }
+
       const btn = document.getElementById('submitBtn');
       if (btn) {
         btn.textContent = '✓ Account Created!';

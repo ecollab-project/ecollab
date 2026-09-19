@@ -26,14 +26,14 @@ $initials = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 2));
 $name     = htmlspecialchars($user['full_name'] ?: $user['username']);
 
 $stats = $dashData['stats'] ?? [
-    'total_users'        => 1248,
-    'active_students'    => 892,
-    'sessions_today'     => 47,
-    'messages_today'     => 312,
-    'servers_count'      => 3,
-    'active_channels'    => 24,
-    'ai_accuracy'        => 98.7,
-    'reports_pending'    => 8,
+    'total_users'        => 0,
+    'active_students'    => 0,
+    'sessions_today'     => 0,
+    'messages_today'     => 0,
+    'servers_count'      => 0,
+    'active_channels'    => 0,
+    'ai_accuracy'        => null,
+    'reports_pending'    => 0,
 ];
 ?>
 <!DOCTYPE html>
@@ -68,13 +68,11 @@ $stats = $dashData['stats'] ?? [
       <div class="notif-wrap" id="nWrap">
         <button class="tb-btn" id="nBtn" onclick="toggleNotif()">
           🔔
-          <span class="n-badge" id="nBadge"><?= (int)($stats['reports_pending'] ?? 8) ?></span>
+          <span class="n-badge" id="nBadge"><?= (int)($stats['reports_pending'] ?? 0) ?></span>
         </button>
         <div class="n-drop" id="nDrop">
           <div class="n-head"><span>Notifications</span><span class="n-clear" onclick="clearNotifs()">Mark all read</span></div>
-          <div class="n-item unread" onclick="showPage('reports');closeNotif()"><div class="n-dot"></div><div class="n-ico" style="background:rgba(239,68,68,0.15)">🚩</div><div><div class="n-msg">New report: Flagged message in #general</div><div class="n-time">2h ago</div></div></div>
-          <div class="n-item unread" onclick="showPage('users');closeNotif()"><div class="n-dot"></div><div class="n-ico" style="background:rgba(34,197,94,0.15)">👥</div><div><div class="n-msg">New user registered: Sara_Kim</div><div class="n-time">3h ago</div></div></div>
-          <div class="n-item" onclick="showPage('syshealth');closeNotif()"><div class="n-ico" style="background:rgba(245,158,11,0.15)">⚠</div><div><div class="n-msg">High memory usage detected (67%)</div><div class="n-time">4h ago</div></div></div>
+          <div class="dashboard-empty-state">No new notifications.</div>
         </div>
       </div>
       <div class="prof-wrap" id="pWrap">
@@ -106,23 +104,23 @@ $stats = $dashData['stats'] ?? [
       <div class="stats-grid">
         <div class="stat-card pink" onclick="showPage('users')">
           <div class="stat-header"><div class="stat-label">Total Users</div><div class="stat-icon">👥</div></div>
-          <div class="stat-value"><?= number_format((int)($stats['total_users']??1248)) ?></div>
-          <div class="stat-change">▲ +12.5% from last month</div>
+          <div class="stat-value"><?= number_format((int)($stats['total_users'] ?? 0)) ?></div>
+          <div class="stat-change">Live platform count</div>
         </div>
         <div class="stat-card blue" onclick="showPage('users')">
           <div class="stat-header"><div class="stat-label">Active Students</div><div class="stat-icon">🎓</div></div>
-          <div class="stat-value"><?= number_format((int)($stats['active_students']??892)) ?></div>
-          <div class="stat-change">▲ +8.3% from last month</div>
+          <div class="stat-value"><?= number_format((int)($stats['active_students'] ?? 0)) ?></div>
+          <div class="stat-change">Live platform count</div>
         </div>
         <div class="stat-card green" onclick="openModal('studySessionsModal')">
           <div class="stat-header"><div class="stat-label">Study Sessions Today</div><div class="stat-icon">📚</div></div>
-          <div class="stat-value"><?= (int)($stats['sessions_today']??47) ?></div>
-          <div class="stat-change">▲ +15.2% from yesterday</div>
+          <div class="stat-value"><?= (int)($stats['sessions_today'] ?? 0) ?></div>
+          <div class="stat-change">Recorded today</div>
         </div>
         <div class="stat-card purple" onclick="openModal('messagesTodayModal')">
           <div class="stat-header"><div class="stat-label">Messages Today</div><div class="stat-icon">💬</div></div>
-          <div class="stat-value"><?= number_format((int)($stats['messages_today']??312)) ?></div>
-          <div class="stat-change">▲ +10.7% from yesterday</div>
+          <div class="stat-value"><?= number_format((int)($stats['messages_today'] ?? 0)) ?></div>
+          <div class="stat-change">Recorded today</div>
         </div>
       </div>
 
@@ -153,12 +151,7 @@ $stats = $dashData['stats'] ?? [
                 <td><div class="action-btns"><button class="btn-view" onclick="openUserProfile('<?= $ruN ?>','<?= htmlspecialchars($ruI) ?>','<?= htmlspecialchars($ruG) ?>','<?= $ruR ?>','<?= $ruC ?>','Active','<?= $ruJ ?>')">View</button><button class="btn-more" onclick="openContextMenu(event,'<?= $ruN ?>')">More ▾</button></div></td>
               </tr>
 <?php endforeach; ?>
-<?php if (empty($dashData['recent_users'])): ?>
-              <tr><td><div class="user-cell"><div class="u-avatar" style="background:linear-gradient(135deg,#ff4fd8,#7c5cff)">F</div><div><div class="u-name-main">Fatima_Student</div><div class="u-handle">@fatima.student</div></div></div></td><td>Student</td><td>Computer Science</td><td><span class="pill active"><span class="pill-dot"></span>Active</span></td><td style="color:var(--muted)">2h ago</td><td><div class="action-btns"><button class="btn-view" onclick="openUserProfile('Fatima_Student','F','#ff4fd8,#7c5cff','Student','Computer Science','Active','Jan 12 2025')">View</button><button class="btn-more" onclick="openContextMenu(event,'Fatima_Student')">More ▾</button></div></td></tr>
-              <tr><td><div class="user-cell"><div class="u-avatar" style="background:linear-gradient(135deg,#3b82f6,#00d4ff)">J</div><div><div class="u-name-main">John_Doe</div><div class="u-handle">@john.doe</div></div></div></td><td>Student</td><td>Computer Science</td><td><span class="pill active"><span class="pill-dot"></span>Active</span></td><td style="color:var(--muted)">3h ago</td><td><div class="action-btns"><button class="btn-view" onclick="openUserProfile('John_Doe','J','#3b82f6,#00d4ff','Student','Computer Science','Active','Jan 15 2025')">View</button><button class="btn-more" onclick="openContextMenu(event,'John_Doe')">More ▾</button></div></td></tr>
-              <tr><td><div class="user-cell"><div class="u-avatar" style="background:linear-gradient(135deg,#22c55e,#16a34a)">S</div><div><div class="u-name-main">Sara_Kim</div><div class="u-handle">@sara.kim</div></div></div></td><td>Student</td><td>Information Tech</td><td><span class="pill active"><span class="pill-dot"></span>Active</span></td><td style="color:var(--muted)">5h ago</td><td><div class="action-btns"><button class="btn-view" onclick="openUserProfile('Sara_Kim','S','#22c55e,#16a34a','Student','Information Tech','Active','Feb 3 2025')">View</button><button class="btn-more" onclick="openContextMenu(event,'Sara_Kim')">More ▾</button></div></td></tr>
-              <tr><td><div class="user-cell"><div class="u-avatar" style="background:linear-gradient(135deg,#ef4444,#dc2626)">A</div><div><div class="u-name-main">Adam_Smith</div><div class="u-handle">@adam.smith</div></div></div></td><td>Facilitator</td><td>Computer Science</td><td><span class="pill active"><span class="pill-dot"></span>Active</span></td><td style="color:var(--muted)">1d ago</td><td><div class="action-btns"><button class="btn-view" onclick="openUserProfile('Adam_Smith','A','#ef4444,#dc2626','Facilitator','Computer Science','Active','Dec 20 2024')">View</button><button class="btn-sm btn-outline" onclick="openModal('editRoleModal','Adam_Smith')">Edit Role</button></div></td></tr>
-<?php endif; ?>
+<tr><td colspan="6" class="dashboard-empty-state">No recent users found.</td></tr>
             </tbody>
           </table>
         </div>
@@ -189,10 +182,10 @@ $stats = $dashData['stats'] ?? [
         <div class="card">
           <div class="card-header"><div class="card-title">Active Rooms</div><button class="text-link" onclick="showPage('channels')">View All</button></div>
           <div class="active-rooms-list">
-            <div class="active-room-item" onclick="openModal('roomDetailModal')" style="cursor:pointer"><div class="room-avatar-placeholder" style="background:rgba(0,212,255,0.15)">🤖</div><span class="ar-name">Study Room 5</span><span class="ar-count">👥 18</span></div>
-            <div class="active-room-item" onclick="openModal('roomDetailModal')" style="cursor:pointer"><div class="room-avatar-placeholder" style="background:rgba(124,92,255,0.15)">🧪</div><span class="ar-name">AI Lab 1</span><span class="ar-count">👥 12</span></div>
-            <div class="active-room-item" onclick="openModal('roomDetailModal')" style="cursor:pointer"><div class="room-avatar-placeholder" style="background:rgba(34,197,94,0.15)">🔬</div><span class="ar-name">AI Lab 2</span><span class="ar-count">👥 9</span></div>
-            <div class="active-room-item" onclick="openModal('roomDetailModal')" style="cursor:pointer"><div class="room-avatar-placeholder" style="background:rgba(239,68,68,0.15)">📝</div><span class="ar-name">Thesis Group</span><span class="ar-count">👥 15</span></div>
+<?php foreach (array_slice($dashData['study_rooms'] ?? [], 0, 5) as $room): ?>
+            <div class="active-room-item" onclick="openModal('roomDetailModal','<?= htmlspecialchars($room['name'] ?? '') ?>')" style="cursor:pointer"><div class="room-avatar-placeholder" style="background:rgba(0,212,255,0.15)">#</div><span class="ar-name"><?= htmlspecialchars($room['name'] ?? '') ?></span><span class="ar-count">👥 <?= (int)($room['active_members'] ?? 0) ?></span></div>
+<?php endforeach; ?>
+<?php if (empty($dashData['study_rooms'])): ?><div class="dashboard-empty-state">No active rooms.</div><?php endif; ?>
           </div>
         </div>
         <div class="card">
@@ -203,22 +196,15 @@ $stats = $dashData['stats'] ?? [
 
       <div class="card">
         <div class="card-header"><div class="card-title">Moderation Queue</div><button class="text-link" onclick="showPage('moderation')">View All</button></div>
-        <div class="mod-grid">
-          <div class="mod-item"><div class="mod-header"><div class="mod-icon red">🚫</div><div><div class="mod-text">Flagged: "Check this out 🍄 spam"</div><div class="mod-sub">Reported by Sara_Kim</div></div></div><div class="mod-actions"><button class="btn-approve" onclick="moderateAction('approve','spam message','Sara_Kim')">Approve</button><button class="btn-deny" onclick="moderateAction('deny','spam message','Sara_Kim')">Deny</button></div></div>
-          <div class="mod-item"><div class="mod-header"><div class="mod-icon blue">🤖</div><div><div class="mod-text">Pending: AI Match Request</div><div class="mod-sub">Fatima_Student & John_Doe</div></div></div><div class="mod-actions"><button class="btn-pink" onclick="openModal('aiMatchModal')">View</button></div></div>
-          <div class="mod-item"><div class="mod-header"><div class="mod-icon red">💬</div><div><div class="mod-text">Flagged: "Click here to win..."</div><div class="mod-sub">Reported by John_Doe</div></div></div><div class="mod-actions"><button class="btn-approve" onclick="moderateAction('approve','phishing','John_Doe')">Approve</button><button class="btn-deny" onclick="moderateAction('deny','phishing','John_Doe')">Deny</button></div></div>
-          <div class="mod-item"><div class="mod-header"><div class="mod-icon yellow">⚠</div><div><div class="mod-text">Reported Content: Study Room 2</div><div class="mod-sub"></div></div></div><div class="mod-actions"><button class="btn-pink" onclick="openModal('reportDetailModal')">View</button></div></div>
-        </div>
+        <div class="mod-grid"><div class="dashboard-empty-state">No moderation items are currently available.</div></div>
       </div>
 
       <div class="grid-2">
         <div class="card">
           <div class="card-header"><div class="card-title">AI System Health</div></div>
           <div class="health-body">
-            <div class="health-metric"><div class="health-label">Matching Accuracy</div><div class="health-value" style="color:var(--green)"><?= number_format((float)($stats['ai_accuracy']??98.7),1) ?>%</div><div class="health-change">▲ +2.1% from last week</div></div>
-            <canvas id="ringChart" width="70" height="70"></canvas>
-            <div class="health-metric"><div class="health-label">Avg Response Time</div><div class="health-value">1.2s</div><div class="health-change neg">▼ -0.3s</div></div>
-            <div class="health-metric"><div class="health-label">System Uptime</div><div class="health-value" style="color:var(--green)">99.9%</div><div class="health-change">▲ +0.1%</div></div>
+            <div class="health-metric"><div class="health-label">Matching Accuracy</div><div class="health-value" style="color:var(--green)"><?= number_format((float)($stats['ai_accuracy'] ?? 0),1) ?>%</div><div class="health-change">From recorded system data</div></div>
+            <div class="dashboard-empty-state">Additional AI health metrics are not available from the current backend data source.</div>
           </div>
           <button class="btn-details" onclick="showPage('syshealth')">View Details</button>
         </div>
@@ -230,13 +216,7 @@ $stats = $dashData['stats'] ?? [
 ?>
             <div class="log-item"><div class="log-dot <?= $dotColor ?>"></div><div class="log-time"><?= htmlspecialchars($log['timestamp'] ?? '') ?></div><div class="log-msg"><?= htmlspecialchars($log['message'] ?? '') ?></div></div>
 <?php endforeach; ?>
-<?php if (empty($dashData['system_logs'])): ?>
-            <div class="log-item"><div class="log-dot green"></div><div class="log-time">2025-05-19 14:32:21</div><div class="log-msg">John_Doe logged in</div></div>
-            <div class="log-item"><div class="log-dot green"></div><div class="log-time">2025-05-19 14:15:10</div><div class="log-msg">New user registered: Sara_Kim</div></div>
-            <div class="log-item"><div class="log-dot yellow"></div><div class="log-time">2025-05-19 13:45:33</div><div class="log-msg">Report submitted in #general</div></div>
-            <div class="log-item"><div class="log-dot blue"></div><div class="log-time">2025-05-19 13:20:05</div><div class="log-msg">System backup completed</div></div>
-            <div class="log-item"><div class="log-dot blue"></div><div class="log-time">2025-05-19 12:10:42</div><div class="log-msg">System cleanup completed</div></div>
-<?php endif; ?>
+<div class="dashboard-empty-state">No system log entries available.</div>
           </div>
         </div>
       </div>
@@ -304,12 +284,9 @@ $stats = $dashData['stats'] ?? [
             <td><div class="action-btns"><button class="btn-view" onclick="openUserProfile('<?= $uN ?>','<?= htmlspecialchars($uI) ?>','<?= htmlspecialchars($uG) ?>','<?= $uR ?>','<?= $uC ?>','<?= $uS?'Active':'Offline' ?>','<?= $uJ ?>')">View</button><button class="btn-sm btn-outline" onclick="openModal('muteModal','<?= $uN ?>')">Mute</button><button class="btn-sm" style="background:rgba(245,158,11,0.15);color:var(--yellow)" onclick="openModal('kickModal','<?= $uN ?>')">Kick</button><button class="btn-deny" onclick="openModal('banModal','<?= $uN ?>')">Ban</button></div></td>
           </tr>
 <?php endforeach; ?>
-<?php if (empty($dashData['all_users'])): ?>
-          <tr><td><div class="user-cell"><div class="u-avatar" style="background:linear-gradient(135deg,#ff4fd8,#7c5cff)">F</div><div><div class="u-name-main">Fatima_Student</div><div class="u-handle">@fatima.student</div></div></div></td><td><span class="pill" style="background:rgba(34,197,94,0.12);color:var(--green)">Student</span></td><td>Computer Science</td><td><span class="pill active"><span class="pill-dot"></span>Active</span></td><td style="color:var(--muted)">Jan 12, 2025</td><td><div class="action-btns"><button class="btn-view" onclick="openUserProfile('Fatima_Student','F','#ff4fd8,#7c5cff','Student','Computer Science','Active','Jan 12 2025')">View</button><button class="btn-sm btn-outline" onclick="openModal('muteModal','Fatima_Student')">Mute</button><button class="btn-sm" style="background:rgba(245,158,11,0.15);color:var(--yellow)" onclick="openModal('kickModal','Fatima_Student')">Kick</button><button class="btn-deny" onclick="openModal('banModal','Fatima_Student')">Ban</button></div></td></tr>
-          <tr><td><div class="user-cell"><div class="u-avatar" style="background:linear-gradient(135deg,#ef4444,#dc2626)">A</div><div><div class="u-name-main">Adam_Smith</div><div class="u-handle">@adam.smith</div></div></div></td><td><span class="pill" style="background:rgba(245,158,11,0.12);color:var(--yellow)">Facilitator</span></td><td>Computer Science</td><td><span class="pill active"><span class="pill-dot"></span>Active</span></td><td style="color:var(--muted)">Dec 20, 2024</td><td><div class="action-btns"><button class="btn-view" onclick="openUserProfile('Adam_Smith','A','#ef4444,#dc2626','Facilitator','Computer Science','Active','Dec 20 2024')">View</button><button class="btn-sm btn-outline" onclick="openModal('editRoleModal','Adam_Smith')">Edit Role</button><button class="btn-deny" onclick="openModal('banModal','Adam_Smith')">Ban</button></div></td></tr>
-<?php endif; ?>
+<tr><td colspan="6" class="dashboard-empty-state">No users found.</td></tr>
         </tbody></table></div>
-        <div class="pagination"><div class="page-info">Showing 1–<?= min(10,count($dashData['all_users']??[])?:6) ?> of <?= number_format((int)($stats['total_users']??1248)) ?> users</div><div class="page-btns"><button class="page-btn">‹</button><button class="page-btn active">1</button><button class="page-btn" onclick="showToast('Page 2','info','📄')">2</button><button class="page-btn" onclick="showToast('Page 3','info','📄')">3</button><button class="page-btn">…</button><button class="page-btn">›</button></div></div>
+        <div class="pagination"><div class="page-info">Showing 1–<?= min(10,count($dashData['all_users']??[])?:6) ?> of <?= number_format((int)($stats['total_users'] ?? 0)) ?> users</div><div class="page-btns"><button class="page-btn">‹</button><button class="page-btn active">1</button><button class="page-btn" onclick="showToast('Page 2','info','📄')">2</button><button class="page-btn" onclick="showToast('Page 3','info','📄')">3</button><button class="page-btn">…</button><button class="page-btn">›</button></div></div>
       </div>
     </div>
 
@@ -317,7 +294,7 @@ $stats = $dashData['stats'] ?? [
     <div class="page-section" id="page-roles">
       <div class="page-title-row"><div><div class="page-title">Roles & Permissions</div></div><button class="btn-primary" onclick="openModal('createRoleModal')">+ Create Role</button></div>
       <div class="card"><div class="roles-grid">
-        <div class="role-card"><div class="role-card-icon" style="background:rgba(34,197,94,0.15)">🎓</div><div class="role-card-name">Student</div><div class="role-card-count"><?= number_format((int)($stats['active_students']??892)) ?> members</div><div class="role-card-perms"><span class="perm-tag granted">Read Messages</span><span class="perm-tag granted">Send Messages</span><span class="perm-tag granted">Join Rooms</span><span class="perm-tag">Manage Rooms</span></div><div style="display:flex;gap:6px"><button class="btn-sm btn-outline" onclick="openModal('editPermsModal','Student')">Edit Permissions</button></div></div>
+        <div class="role-card"><div class="role-card-icon" style="background:rgba(34,197,94,0.15)">🎓</div><div class="role-card-name">Student</div><div class="role-card-count"><?= number_format((int)($stats['active_students'] ?? 0)) ?> members</div><div class="role-card-perms"><span class="perm-tag granted">Read Messages</span><span class="perm-tag granted">Send Messages</span><span class="perm-tag granted">Join Rooms</span><span class="perm-tag">Manage Rooms</span></div><div style="display:flex;gap:6px"><button class="btn-sm btn-outline" onclick="openModal('editPermsModal','Student')">Edit Permissions</button></div></div>
         <div class="role-card"><div class="role-card-icon" style="background:rgba(245,158,11,0.15)">📚</div><div class="role-card-name">Facilitator</div><div class="role-card-count">148 members</div><div class="role-card-perms"><span class="perm-tag granted">All Student</span><span class="perm-tag granted">Manage Rooms</span><span class="perm-tag granted">Pin Messages</span><span class="perm-tag granted">Mute Users</span></div><div style="display:flex;gap:6px"><button class="btn-sm btn-outline" onclick="openModal('editPermsModal','Facilitator')">Edit Permissions</button></div></div>
         <div class="role-card"><div class="role-card-icon" style="background:rgba(0,212,255,0.15)">🛡</div><div class="role-card-name">Moderator</div><div class="role-card-count">24 members</div><div class="role-card-perms"><span class="perm-tag granted">All Facilitator</span><span class="perm-tag granted">Kick Users</span><span class="perm-tag granted">Ban Users</span><span class="perm-tag granted">Manage Reports</span></div><div style="display:flex;gap:6px"><button class="btn-sm btn-outline" onclick="openModal('editPermsModal','Moderator')">Edit Permissions</button></div></div>
         <div class="role-card"><div class="role-card-icon" style="background:rgba(255,79,216,0.15)">👑</div><div class="role-card-name">Admin</div><div class="role-card-count">6 members</div><div class="role-card-perms"><span class="perm-tag granted">All Permissions</span><span class="perm-tag granted">Manage Roles</span><span class="perm-tag granted">System Access</span><span class="perm-tag granted">Delete Servers</span></div><div style="display:flex;gap:6px"><button class="btn-sm btn-outline" onclick="openModal('editPermsModal','Admin')">Edit Permissions</button><button class="btn-sm" style="background:rgba(239,68,68,0.1);color:var(--red);border:none;opacity:0.4;cursor:not-allowed">Protected</button></div></div>
@@ -345,7 +322,7 @@ $stats = $dashData['stats'] ?? [
     <div class="page-section" id="page-aimatching">
       <div class="page-title-row"><div><div class="page-title">AI Matching</div></div><button class="btn-primary" onclick="openModal('aiConfigModal')">⚙ Configure Rules</button></div>
       <div class="card"><div class="card-header"><div class="card-title">Matching Statistics</div><button class="btn-sm btn-outline" onclick="showToast('Refreshing...','info','🔄')">🔄 Refresh</button></div>
-        <div class="matching-stats"><div class="ms-card"><div class="ms-label">Matching Accuracy</div><div class="ms-val" style="color:var(--green)"><?= number_format((float)($stats['ai_accuracy']??98.7),1) ?>%</div></div><div class="ms-card"><div class="ms-label">Matches Today</div><div class="ms-val" style="color:var(--blue)">234</div></div><div class="ms-card"><div class="ms-label">Active Study Groups</div><div class="ms-val" style="color:#a78bfa"><?= (int)($stats['sessions_today']??47) ?></div></div></div>
+        <div class="matching-stats"><div class="ms-card"><div class="ms-label">Matching Accuracy</div><div class="ms-val" style="color:var(--green)"><?= ($stats['ai_accuracy'] === null ? 'N/A' : number_format((float)$stats['ai_accuracy'],1)) ?>%</div></div><div class="ms-card"><div class="ms-label">Matches Today</div><div class="ms-val" style="color:var(--muted2)">N/A</div></div><div class="ms-card"><div class="ms-label">Active Study Groups</div><div class="ms-val" style="color:#a78bfa"><?= (int)($stats['sessions_today'] ?? 0) ?></div></div></div>
         <div class="chart-wrap" style="height:200px"><canvas id="matchingChart"></canvas></div>
       </div>
       <div class="card"><div class="card-header"><div class="card-title">Pending Match Requests</div></div><div class="table-wrap"><table><thead><tr><th>Students</th><th>Compatibility</th><th>Tags</th><th>Actions</th></tr></thead><tbody>
@@ -374,10 +351,7 @@ $stats = $dashData['stats'] ?? [
 <?php foreach ($dashData['servers'] ?? [] as $srv): $sI=htmlspecialchars($srv['icon_emoji']??'🖥'); $sN=htmlspecialchars($srv['name']??''); $sC=(int)($srv['member_count']??0); ?>
         <div class="server-item"><div class="srv-icon" style="background:rgba(255,79,216,0.15)"><?= $sI ?></div><div class="srv-name"><?= $sN ?></div><div class="srv-count">👥 <?= number_format($sC) ?> members</div><div class="srv-status-dot"></div><div class="action-btns" style="margin-left:12px"><button class="btn-view" onclick="openModal('serverDetailModal','<?= $sN ?>')">Manage</button><button class="btn-sm btn-outline" onclick="openModal('serverPermsModal','<?= $sN ?>')">Permissions</button><button class="btn-deny" onclick="openModal('deleteServerModal','<?= $sN ?>')">Delete</button></div></div>
 <?php endforeach; ?>
-<?php if (empty($dashData['servers'])): ?>
-        <div class="server-item"><div class="srv-icon" style="background:rgba(255,79,216,0.15)">🖥</div><div class="srv-name">Main Campus Server</div><div class="srv-count">👥 892 members</div><div class="srv-status-dot"></div><div class="action-btns" style="margin-left:12px"><button class="btn-view" onclick="openModal('serverDetailModal','Main Campus Server')">Manage</button><button class="btn-sm btn-outline">Permissions</button><button class="btn-deny" onclick="openModal('deleteServerModal','Main Campus Server')">Delete</button></div></div>
-        <div class="server-item"><div class="srv-icon" style="background:rgba(0,212,255,0.15)">🖥</div><div class="srv-name">CS Department</div><div class="srv-count">👥 456 members</div><div class="srv-status-dot"></div><div class="action-btns" style="margin-left:12px"><button class="btn-view" onclick="openModal('serverDetailModal','CS Department')">Manage</button><button class="btn-sm btn-outline">Permissions</button><button class="btn-deny" onclick="openModal('deleteServerModal','CS Department')">Delete</button></div></div>
-<?php endif; ?>
+<div class="dashboard-empty-state">No active servers found.</div>
       </div></div>
     </div>
 
@@ -385,7 +359,7 @@ $stats = $dashData['stats'] ?? [
     <div class="page-section" id="page-channels">
       <div class="page-title-row"><div><div class="page-title">Channels</div></div><button class="btn-primary" onclick="openModal('createChannelModal')">+ Create Channel</button></div>
       <div class="card"><div class="card-header"><div class="card-title">All Channels</div></div><div id="channelsList">
-        <div class="channel-item"><div class="ch-type-icon">#</div><span class="ch-name">#general</span><span class="ch-badge">Text</span><span style="color:var(--muted);font-size:11px;margin-left:auto;margin-right:12px"><?= number_format((int)($stats['total_users']??892)) ?> members</span><div class="action-btns"><button class="btn-view" onclick="openModal('editChannelModal','#general')">Edit</button><button class="btn-sm btn-outline">Permissions</button><button class="btn-deny" onclick="openModal('deleteChannelModal','#general')">Delete</button></div></div>
+        <div class="channel-item"><div class="ch-type-icon">#</div><span class="ch-name">#general</span><span class="ch-badge">Text</span><span style="color:var(--muted);font-size:11px;margin-left:auto;margin-right:12px"><?= number_format((int)($stats['total_users'] ?? 0)) ?> members</span><div class="action-btns"><button class="btn-view" onclick="openModal('editChannelModal','#general')">Edit</button><button class="btn-sm btn-outline">Permissions</button><button class="btn-deny" onclick="openModal('deleteChannelModal','#general')">Delete</button></div></div>
         <div class="channel-item"><div class="ch-type-icon">#</div><span class="ch-name">#announcements</span><span class="ch-badge">Text</span><span style="color:var(--muted);font-size:11px;margin-left:auto;margin-right:12px"><?= number_format((int)($stats['total_users']??892)) ?> members</span><div class="action-btns"><button class="btn-view" onclick="openModal('editChannelModal','#announcements')">Edit</button><button class="btn-sm btn-outline">Permissions</button><button class="btn-deny" onclick="openModal('deleteChannelModal','#announcements')">Delete</button></div></div>
         <div class="channel-item"><div class="ch-type-icon">🔊</div><span class="ch-name">Voice Room 1</span><span class="ch-badge">Voice</span><span style="color:var(--muted);font-size:11px;margin-left:auto;margin-right:12px">12 active</span><div class="action-btns"><button class="btn-view" onclick="openModal('editChannelModal','Voice Room 1')">Edit</button><button class="btn-sm btn-outline">Permissions</button><button class="btn-deny" onclick="openModal('deleteChannelModal','Voice Room 1')">Delete</button></div></div>
         <div class="channel-item"><div class="ch-type-icon">🎨</div><span class="ch-name">Whiteboard Studio</span><span class="ch-badge">Whiteboard</span><span style="color:var(--muted);font-size:11px;margin-left:auto;margin-right:12px">8 active</span><div class="action-btns"><button class="btn-view" onclick="openModal('editChannelModal','Whiteboard Studio')">Edit</button><button class="btn-sm btn-outline">Permissions</button><button class="btn-deny" onclick="openModal('deleteChannelModal','Whiteboard Studio')">Delete</button></div></div>
@@ -454,8 +428,8 @@ $stats = $dashData['stats'] ?? [
         <div class="health-monitors">
           <div class="hm-card"><div class="hm-label">CPU Usage</div><div class="hm-value yellow" id="cpuVal">42%</div><div class="hm-bar"><div class="hm-fill" id="cpuBar" style="width:42%;background:linear-gradient(90deg,var(--yellow),var(--red))"></div></div></div>
           <div class="hm-card"><div class="hm-label">Memory Usage</div><div class="hm-value yellow" id="memVal">67%</div><div class="hm-bar"><div class="hm-fill" id="memBar" style="width:67%;background:linear-gradient(90deg,var(--blue),var(--purple))"></div></div></div>
-          <div class="hm-card"><div class="hm-label">Server Uptime</div><div class="hm-value green">99.9%</div><div class="hm-bar"><div class="hm-fill" style="width:99.9%;background:linear-gradient(90deg,var(--green),var(--blue))"></div></div></div>
-          <div class="hm-card"><div class="hm-label">Avg Response</div><div class="hm-value blue">1.2s</div><div class="hm-bar"><div class="hm-fill" style="width:30%;background:linear-gradient(90deg,var(--green),var(--blue))"></div></div></div>
+          <div class="hm-card"><div class="hm-label">Server Uptime</div><div class="hm-value">N/A</div><div class="hm-bar"></div></div>
+          <div class="hm-card"><div class="hm-label">Avg Response</div><div class="hm-value">N/A</div><div class="hm-bar"></div></div>
           <div class="hm-card"><div class="hm-label">Error Rate</div><div class="hm-value green">0.02%</div><div class="hm-bar"><div class="hm-fill" style="width:2%;background:var(--green)"></div></div></div>
         </div>
       </div>
@@ -548,7 +522,7 @@ $stats = $dashData['stats'] ?? [
 <div class="modal-overlay" id="modActionDetailModal"><div class="modal modal-sm"><div class="modal-header"><div class="modal-title">Moderation Detail</div><button class="modal-close" onclick="closeModal('modActionDetailModal')">✕</button></div><div class="modal-body"><p style="color:var(--muted);font-size:12.5px">Full moderation action details.</p></div><div class="modal-footer"><button class="btn-secondary" onclick="closeModal('modActionDetailModal')">Close</button></div></div></div>
 <div class="modal-overlay" id="changePasswordModal"><div class="modal modal-sm"><div class="modal-header"><div class="modal-title">Change Password</div><button class="modal-close" onclick="closeModal('changePasswordModal')">✕</button></div><div class="modal-body"><div class="form-group"><label class="form-label">Current Password</label><input class="form-input" type="password"></div><div class="form-group"><label class="form-label">New Password</label><input class="form-input" type="password"></div><div class="form-group"><label class="form-label">Confirm New Password</label><input class="form-input" type="password"></div></div><div class="modal-footer"><button class="btn-secondary" onclick="closeModal('changePasswordModal')">Cancel</button><button class="btn-primary" onclick="closeModal('changePasswordModal');showToast('Password updated!','success','🔒')">Save</button></div></div></div>
 <div class="modal-overlay" id="studySessionsModal"><div class="modal modal-sm"><div class="modal-header"><div class="modal-title">Study Sessions Today</div><button class="modal-close" onclick="closeModal('studySessionsModal')">✕</button></div><div class="modal-body"><div style="text-align:center;font-size:52px;font-weight:800;color:var(--green)"><?= (int)($stats['sessions_today']??47) ?></div><div style="text-align:center;color:var(--muted);font-size:12px">Active sessions today across all servers</div></div><div class="modal-footer"><button class="btn-secondary" onclick="closeModal('studySessionsModal')">Close</button></div></div></div>
-<div class="modal-overlay" id="messagesTodayModal"><div class="modal modal-sm"><div class="modal-header"><div class="modal-title">Messages Today</div><button class="modal-close" onclick="closeModal('messagesTodayModal')">✕</button></div><div class="modal-body"><div style="text-align:center;font-size:52px;font-weight:800;color:#a78bfa"><?= number_format((int)($stats['messages_today']??312)) ?></div><div style="text-align:center;color:var(--muted);font-size:12px">Total messages sent across all channels</div></div><div class="modal-footer"><button class="btn-secondary" onclick="closeModal('messagesTodayModal')">Close</button></div></div></div>
+<div class="modal-overlay" id="messagesTodayModal"><div class="modal modal-sm"><div class="modal-header"><div class="modal-title">Messages Today</div><button class="modal-close" onclick="closeModal('messagesTodayModal')">✕</button></div><div class="modal-body"><div style="text-align:center;font-size:52px;font-weight:800;color:#a78bfa"><?= number_format((int)($stats['messages_today'] ?? 0)) ?></div><div style="text-align:center;color:var(--muted);font-size:12px">Total messages sent across all channels</div></div><div class="modal-footer"><button class="btn-secondary" onclick="closeModal('messagesTodayModal')">Close</button></div></div></div>
 <div class="modal-overlay" id="roomDetailModal"><div class="modal modal-sm"><div class="modal-header"><div class="modal-title">Room Detail</div><button class="modal-close" onclick="closeModal('roomDetailModal')">✕</button></div><div class="modal-body"><p style="color:var(--muted);font-size:12.5px">Active room details and management options.</p></div><div class="modal-footer"><button class="btn-secondary" onclick="closeModal('roomDetailModal')">Close</button><button class="btn-primary" onclick="closeModal('roomDetailModal');showToast('Joined room!','success','✅')">Join Room</button></div></div></div>
 <div class="modal-overlay" id="joinRoomModal"><div class="modal modal-sm"><div class="modal-header"><div class="modal-title">Join Room</div><button class="modal-close" onclick="closeModal('joinRoomModal')">✕</button></div><div class="modal-body"><div class="form-group"><label class="form-label">Room Code</label><input class="form-input" placeholder="Enter room code..."></div></div><div class="modal-footer"><button class="btn-secondary" onclick="closeModal('joinRoomModal')">Cancel</button><button class="btn-primary" onclick="closeModal('joinRoomModal');showToast('Joined!','success','✅')">Join</button></div></div></div>
 <div class="modal-overlay" id="clearLogsModal"><div class="modal modal-sm"><div class="modal-header"><div class="modal-title">Clear Logs</div><button class="modal-close" onclick="closeModal('clearLogsModal')">✕</button></div><div class="modal-body"><div class="modal-icon mi-yellow">⚠</div><div style="font-size:14px;font-weight:700">Clear all error logs?</div></div><div class="modal-footer"><button class="btn-secondary" onclick="closeModal('clearLogsModal')">Cancel</button><button class="btn-danger" onclick="closeModal('clearLogsModal');showToast('Logs cleared','success','✅')">Clear</button></div></div></div>
@@ -558,17 +532,17 @@ $stats = $dashData['stats'] ?? [
 <script>
 var ADMIN_DATA = <?= json_encode([
   'stats'       => $stats,
-  'sessData'    => $dashData['sessions_chart'] ?? [42, 38, 55, 47, 61, 52, 47],
-  'engData'     => $dashData['engagement_chart'] ?? [320, 280, 410, 390, 440, 360, 312],
-  'dauData'     => $dashData['dau_chart'] ?? [820, 760, 890, 930, 870, 950, 892],
+  'sessData'    => $dashData['sessions_chart'] ?? [],
+  'engData'     => $dashData['engagement_chart'] ?? [],
+  'dauData'     => $dashData['dau_chart'] ?? [],
   'userId'      => $user['id'],
   'csrfToken'   => $csrfToken,
-  'aiAccuracy'  => (float)($stats['ai_accuracy'] ?? 98.7),
+  'aiAccuracy'  => (float)($stats['ai_accuracy'] ?? 0),
 ], JSON_HEX_TAG) ?>;
 // Defaults
-if(!ADMIN_DATA.sessData.length) ADMIN_DATA.sessData = [42,38,55,47,61,52,47];
-if(!ADMIN_DATA.engData.length)  ADMIN_DATA.engData  = [320,280,410,390,440,360,312];
-if(!ADMIN_DATA.dauData.length)  ADMIN_DATA.dauData  = [820,760,890,930,870,950,892];
+ADMIN_DATA.sessData = Array.isArray(ADMIN_DATA.sessData) ? ADMIN_DATA.sessData : [];
+ADMIN_DATA.engData = Array.isArray(ADMIN_DATA.engData) ? ADMIN_DATA.engData : [];
+ADMIN_DATA.dauData = Array.isArray(ADMIN_DATA.dauData) ? ADMIN_DATA.dauData : [];
 </script>
 <script src="<?= BASE_URL ?>/assets/js/admin/dashboard.js" defer></script>
 
