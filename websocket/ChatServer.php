@@ -26,6 +26,25 @@ class ChatServer implements MessageComponentInterface
     private int $codePersistEverySeconds = 10;
     private int $codeMaxStateBytes = 1048576;
 
+    /**
+     * Keep the long-running WebSocket database connection healthy.
+     * Reconnect and update dependent handlers if MySQL closes it.
+     */
+    public function keepDatabaseAlive(): void
+    {
+        try {
+            $this->db->query('SELECT 1');
+        } catch (\Throwable $e) {
+            $this->db = Database::reconnect();
+
+            if (isset($this->wbHandler)) {
+                $this->wbHandler->setDatabase($this->db);
+            }
+
+            echo "[WS] Database connection refreshed\n";
+        }
+    }
+
     public function __construct()
     {
         $this->clients = new \SplObjectStorage();

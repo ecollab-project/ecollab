@@ -22,6 +22,15 @@ class WhiteboardHandler
 
     public function __construct(){ $this->db=Database::getInstance(); }
 
+    /**
+     * Replace the database connection after automatic reconnection.
+     */
+    public function setDatabase(PDO $db): void
+    {
+        $this->db = $db;
+    }
+
+
     private function roomKey(int $channelId, ?int $whiteboardId): string
     {
         return $whiteboardId !== null ? "wb:{$whiteboardId}" : "ch:{$channelId}";
