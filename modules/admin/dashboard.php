@@ -151,7 +151,9 @@ $stats = $dashData['stats'] ?? [
                 <td><div class="action-btns"><button class="btn-view" onclick="openUserProfile('<?= $ruN ?>','<?= htmlspecialchars($ruI) ?>','<?= htmlspecialchars($ruG) ?>','<?= $ruR ?>','<?= $ruC ?>','Active','<?= $ruJ ?>')">View</button><button class="btn-more" onclick="openContextMenu(event,'<?= $ruN ?>')">More ▾</button></div></td>
               </tr>
 <?php endforeach; ?>
+<?php if (empty($dashData['recent_users'])): ?>
 <tr><td colspan="6" class="dashboard-empty-state">No recent users found.</td></tr>
+<?php endif; ?>
             </tbody>
           </table>
         </div>
@@ -166,9 +168,7 @@ $stats = $dashData['stats'] ?? [
             <div class="room-item"><span class="room-hash">#</span><span class="room-name"><?= htmlspecialchars($room['name'] ?? '') ?></span><span class="room-count"><?= (int)($room['active_members'] ?? 0) ?>/<?= (int)($room['max_members'] ?? 25) ?></span><button class="btn-join" onclick="joinRoom('<?= htmlspecialchars($room['name'] ?? '') ?>')">Join</button></div>
 <?php endforeach; ?>
 <?php if (empty($dashData['study_rooms'])): ?>
-            <div class="room-item"><span class="room-hash">#</span><span class="room-name">toastDEV#zWw9Rm</span><span class="room-count">12/25</span><button class="btn-join" onclick="joinRoom('toastDEV#zWw9Rm')">Join</button></div>
-            <div class="room-item"><span class="room-hash">#</span><span class="room-name">Data-Structures-Discuss</span><span class="room-count">15/30</span><button class="btn-join" onclick="joinRoom('Data-Structures-Discuss')">Join</button></div>
-            <div class="room-item"><span class="room-hash">#</span><span class="room-name">AI Study Group</span><span class="room-count">10/20</span><button class="btn-join" onclick="joinRoom('AI Study Group')">Join</button></div>
+            <div class="dashboard-empty-state">No active study rooms.</div>
 <?php endif; ?>
           </div>
         </div>
@@ -203,7 +203,11 @@ $stats = $dashData['stats'] ?? [
         <div class="card">
           <div class="card-header"><div class="card-title">AI System Health</div></div>
           <div class="health-body">
-            <div class="health-metric"><div class="health-label">Matching Accuracy</div><div class="health-value" style="color:var(--green)"><?= number_format((float)($stats['ai_accuracy'] ?? 0),1) ?>%</div><div class="health-change">From recorded system data</div></div>
+            <div class="health-metric"><div class="health-label">Matching Accuracy</div><div class="health-value" style="color:var(--green)"><?= (($stats['ai_accuracy'] ?? null) === null
+    ? 'N/A'
+    : number_format((float)$stats['ai_accuracy'], 1) . '%') ?></div><div class="health-change"><?= (($stats['ai_accuracy'] ?? null) === null)
+    ? 'No evaluated matching results recorded yet'
+    : 'From recorded system data' ?></div></div>
             <div class="dashboard-empty-state">Additional AI health metrics are not available from the current backend data source.</div>
           </div>
           <button class="btn-details" onclick="showPage('syshealth')">View Details</button>
@@ -216,7 +220,9 @@ $stats = $dashData['stats'] ?? [
 ?>
             <div class="log-item"><div class="log-dot <?= $dotColor ?>"></div><div class="log-time"><?= htmlspecialchars($log['timestamp'] ?? '') ?></div><div class="log-msg"><?= htmlspecialchars($log['message'] ?? '') ?></div></div>
 <?php endforeach; ?>
+<?php if (empty($dashData['system_logs'])): ?>
 <div class="dashboard-empty-state">No system log entries available.</div>
+<?php endif; ?>
           </div>
         </div>
       </div>
