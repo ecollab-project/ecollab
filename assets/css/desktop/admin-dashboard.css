@@ -502,3 +502,289 @@ td{padding:10px 16px;font-size:12px;vertical-align:middle}
 @media (max-width: 1100px){
   .main-grid,.grid-2{grid-template-columns:1fr !important;}
 }
+
+/* ==========================================================================
+   Ecollab Admin Shared Layout Repair
+   Fixes desktop width, topbar alignment, dropdown positioning, and overflow.
+   ========================================================================== */
+
+/* Root application sizing */
+html,
+body {
+  width: 100%;
+  min-width: 0;
+}
+
+body {
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* Sidebar remains fixed while the application content fills the viewport */
+.sidebar {
+  flex: 0 0 240px;
+  width: 240px;
+  min-width: 240px;
+  max-width: 240px;
+}
+
+/* Main content must consume all remaining horizontal space */
+.main-content {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Full-width topbar with independent left and right regions */
+.topbar {
+  width: 100%;
+  min-width: 0;
+  flex: 0 0 56px;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 100;
+}
+
+.tb-left {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tb-search {
+  width: min(100%, 420px);
+  min-width: 0;
+  max-width: 420px;
+}
+
+.tb-search input {
+  min-width: 0;
+}
+
+.tb-right {
+  flex: 0 0 auto;
+  min-width: max-content;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Profile and notification controls must not stretch or overlap */
+.notif-wrap,
+.prof-wrap {
+  position: relative;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 0;
+  overflow: visible;
+}
+
+.prof-wrap {
+  display: block;
+}
+
+.tb-prof {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  max-width: 220px;
+  padding: 4px 8px;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.tb-prof > div:not(.av-sm) {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tb-prof .pn,
+.tb-prof .pr {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Dropdowns stay attached to their respective controls */
+.n-drop,
+.p-drop {
+  position: absolute;
+  top: calc(100% + 8px);
+  z-index: 1000;
+  max-width: min(360px, calc(100vw - 24px));
+  box-sizing: border-box;
+}
+
+.n-drop {
+  right: 0;
+  width: 320px;
+}
+
+.p-drop {
+  right: 0;
+  width: 220px;
+}
+
+.n-head,
+.p-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.n-head > *,
+.p-head > * {
+  min-width: 0;
+}
+
+.n-clear {
+  white-space: nowrap;
+}
+
+/* Main page area uses all available width and scrolls independently */
+.page-content {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  padding: 20px 24px 32px;
+}
+
+/* Prevent cards and grids from imposing an intrinsic width */
+.page-section,
+.stats-grid,
+.grid-2,
+.analytics-grid,
+.card,
+.card-header,
+.table-wrap,
+.rooms-list,
+.active-rooms-list {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.stats-grid {
+  width: 100%;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.grid-2,
+.analytics-grid {
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.card {
+  overflow: hidden;
+}
+
+.card-header {
+  gap: 12px;
+}
+
+.card-header > * {
+  min-width: 0;
+}
+
+.card-header .text-link,
+.card-header button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* Tables scroll inside their cards instead of expanding the page */
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.table-wrap table {
+  width: 100%;
+  min-width: 720px;
+}
+
+/* Responsive desktop/tablet behavior */
+@media (max-width: 1200px) {
+  .page-content {
+    padding: 18px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid-2,
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tb-search {
+    max-width: 320px;
+  }
+}
+
+@media (max-width: 760px) {
+  .sidebar {
+    flex-basis: 240px;
+    width: 240px;
+    min-width: 240px;
+  }
+
+  .topbar {
+    flex-basis: 56px;
+    padding: 10px 14px;
+  }
+
+  .tb-search {
+    display: none;
+  }
+
+  .tb-right {
+    margin-left: auto;
+  }
+
+  .tb-prof {
+    max-width: 180px;
+  }
+
+  .page-content {
+    padding: 14px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tb-prof {
+    max-width: 150px;
+  }
+
+  .n-drop,
+  .p-drop {
+    position: fixed;
+    right: 12px;
+    top: 64px;
+    width: min(320px, calc(100vw - 24px));
+  }
+}
+
