@@ -140,6 +140,6 @@ try {
     echo json_encode([
         'error' => 'Server error',
         'code' => 'FRIEND_REQUEST_FAILED',
-        'detail' => defined('APP_ENV') && APP_ENV === 'development' ? $e->getMessage() : null,
+        'detail' => $e->getMessage(),
     ]);
 }
