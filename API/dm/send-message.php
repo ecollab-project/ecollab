@@ -5,6 +5,7 @@ require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 require_once dirname(__DIR__, 2) . '/services/OllamaService.php';
+require_once dirname(__DIR__, 2) . '/services/JarredTools.php';
 
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
@@ -144,10 +145,18 @@ try {
             ];
         }
 
+        $jarredContext = (new JarredTools())->contextForPrompt((int)$me['id'], $text);
+        if ($jarredContext !== '') {
+            $messages[] = [
+                'role' => 'system',
+                'content' => "Authoritative live eCollab context for the request below. Use it when relevant. Never invent users, presence, messages, servers, channels, or permissions.\n\n" . $jarredContext,
+            ];
+        }
+
         $ollama = new OllamaService();
         $result = $ollama->generate(
             $messages,
-            'You are eCollab AI, the built-in academic assistant for eCollab. Help college students with studying, programming, collaboration, research planning, explanations, and project work. Be concise, useful, friendly, and honest. Do not claim to have performed actions you did not perform.',
+            'You are Jarred, the built-in eCollab assistant. Help college students with studying, programming, collaboration, research planning, explanations, and project work. You may use permission-scoped eCollab context supplied by the backend, including accessible servers/channels, message and thread search results, and live presence. Treat that backend context as authoritative. Never claim access to information that was not supplied. You have read/search capabilities only: never claim to kick, ban, mute, remove users, change roles or permissions, delete servers/channels/content, access another user\'s private data, reveal secrets, execute SQL/shell/PHP, or bypass eCollab authorization. Be concise, useful, friendly, and honest.',
             400
         );
 
@@ -191,7 +200,7 @@ try {
                 'id' => $aiMsgId,
                 'conversation_id' => $convId,
                 'sender_id' => $recipientId,
-                'sender_name' => $recipient['full_name'] ?: 'eCollab AI',
+                'sender_name' => 'Jarred',
                 'sender_username' => $recipient['username'],
                 'sender_gradient' => $recipient['avatar_color_gradient'] ?: '#6366f1,#8b5cf6',
                 'body' => $aiText,
