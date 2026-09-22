@@ -2490,6 +2490,19 @@ function _threadScopeBadge(t) {
   return `<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:rgba(168,85,247,0.12);color:#c084fc;">🌐 Public</span>`;
 }
 
+function _renderThreadImages(attachments, replyId = null) {
+  if (!Array.isArray(attachments) || !attachments.length) return '';
+  const images = attachments.filter(a => {
+    const belongs = replyId === null ? !a.reply_id : parseInt(a.reply_id) === parseInt(replyId);
+    return belongs && String(a.mime_type || '').startsWith('image/') && a.file_url;
+  });
+  if (!images.length) return '';
+  return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:8px 0 10px;">${images.map(a => `
+    <a href="${_esc(a.file_url)}" target="_blank" rel="noopener" onclick="event.stopPropagation();" style="display:block;overflow:hidden;border-radius:9px;border:1px solid var(--border);background:var(--bg-secondary);">
+      <img src="${_esc(a.file_url)}" alt="${_esc(a.file_name || 'Thread image')}" loading="lazy" style="display:block;width:100%;max-height:320px;object-fit:cover;">
+    </a>`).join('')}</div>`;
+}
+
 function _renderThreadList() {
   if (!_threadMessages.length) return _nvEmpty('No threads yet — start the first one.');
   return _threadMessages.map(t => {
@@ -2514,7 +2527,7 @@ function _renderThreadList() {
             <span style="font-size:11px;color:var(--text-muted);margin-left:auto;">${_relTime(t.created_at)}</span>
           </div>
           <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">${_esc(t.title)}</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">${_esc(bodyPreview)}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">${_esc(bodyPreview)}</div>\n          ${_renderThreadImages(t.attachments)}
           <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);">
             <div style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;">${init}</div>
             <span>${_esc(t.author_name || t.author_username)}</span>
@@ -2618,7 +2631,7 @@ function _renderThreadDetailView() {
         <span style="font-size:11px;color:var(--text-muted);margin-left:auto;">${_relTime(t.created_at)}</span>
       </div>
       <div style="font-size:16px;font-weight:800;color:var(--text-primary);margin-bottom:8px;">${_esc(t.title)}</div>
-      <div style="font-size:13px;color:var(--text-secondary);white-space:pre-wrap;margin-bottom:12px;">${_esc(t.body)}</div>
+      <div style="font-size:13px;color:var(--text-secondary);white-space:pre-wrap;margin-bottom:12px;">${_esc(t.body)}</div>\n      ${_renderThreadImages(_threadDetailData.attachments)}
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;">${(t.author_name || t.author_username || '?').charAt(0).toUpperCase()}</div>
         <span style="font-size:12px;color:var(--text-muted);">${_esc(t.author_name || t.author_username)}</span>
@@ -2651,7 +2664,7 @@ function _renderThreadReplies(replies) {
           <span style="font-size:12px;font-weight:700;color:var(--text-primary);">${_esc(r.author_name || r.author_username)}</span>
           <span style="font-size:10px;color:var(--text-muted);">${_relTime(r.created_at)}</span>
         </div>
-        <div style="font-size:12px;color:var(--text-secondary);white-space:pre-wrap;">${_esc(r.body)}</div>
+        <div style="font-size:12px;color:var(--text-secondary);white-space:pre-wrap;">${_esc(r.body)}</div>\n        ${_renderThreadImages(_threadDetailData?.attachments || [], r.id)}
         <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
           <button onclick="_voteOnReply(${r.id}, ${myVote === 1 ? 0 : 1})" style="background:none;border:none;cursor:pointer;font-size:11px;color:${myVote === 1 ? '#a855f7' : 'var(--text-muted)'};">▲</button>
           <span style="font-size:11px;color:var(--text-muted);">${parseInt(r.score) || 0}</span>
