@@ -21,6 +21,11 @@
     html.classList.toggle('high-contrast', !!settings.high_contrast);
     html.classList.toggle('compact-mode', !!settings.compact_mode);
     html.classList.toggle('screen-reader-mode', !!settings.screen_reader_mode);
+    html.classList.toggle('density-compact', settings.message_density === 'compact');
+    html.classList.toggle('density-spacious', settings.message_density === 'spacious');
+    html.style.setProperty('--ec-font-scale', String((settings.font_scale || 100) / 100));
+    html.style.setProperty('--ec-sidebar-scale', String((settings.sidebar_scale || 100) / 100));
+    html.style.fontSize = (settings.font_scale || 100) + '%';
 
     if (settings.theme) {
       const light = settings.theme === 'light' ||
@@ -31,6 +36,7 @@
     // Cached globally so other scripts (notification triggers, etc.) don't
     // need a second round-trip to know the user's current preferences.
     window._userSettings = settings;
+    window.dispatchEvent(new CustomEvent('ecollab:settings-applied', { detail: settings }));
   }
 
   function run() {
