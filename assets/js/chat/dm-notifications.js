@@ -527,7 +527,7 @@ function _renderDmList() {
            onclick="openDmConversation(${c.partner_id},'${_esc(name)}','${_esc(c.partner_gradient || '')}')">
         ${_avatar(name, c.partner_gradient, 28, c.partner_avatar_url || '')}
         <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:${unread > 0 ? 700 : 500};color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(name)}</div>
+          <div style="font-size:13px;font-weight:${unread > 0 ? 700 : 500};color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(name)} ${Number(u.is_connected)===1?'<span style="font-size:9px;color:#c084fc;margin-left:5px;">CONNECTED</span>':''}</div>
           <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(preview)}</div>
         </div>
         ${unread > 0 ? `<span style="background:var(--accent-purple);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;flex-shrink:0;">${unread}</span>` : ''}
@@ -551,6 +551,7 @@ window.openNewDMModal = function() {
 window.openNewGroupModal = window.openNewDMModal;
 
 let _dmPickerSelected = {}; // id => {id, name, gradient, username}
+let _dmPickerConnectedOnly = false;
 
 function _ensureDmSearchModal() {
   if (document.getElementById('dmSearchModal')) return;
@@ -569,13 +570,14 @@ function _ensureDmSearchModal() {
           style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text-primary);font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;"
           oninput="_loadDmSearchResults(this.value)" />
       </div>
-      <div id="dmPickerChips" style="display:none;padding:0 16px 10px;gap:6px;flex-wrap:wrap;"></div>
+      <div style="padding:0 16px 10px;display:flex;gap:6px;"><button id="dmFilterAll" type="button" onclick="_setDmPickerFilter(false)" style="border:1px solid var(--border);background:var(--accent-purple);color:#fff;border-radius:999px;padding:5px 10px;font-size:11px;cursor:pointer;">All</button><button id="dmFilterConnected" type="button" onclick="_setDmPickerFilter(true)" style="border:1px solid var(--border);background:var(--bg-tertiary);color:var(--text-secondary);border-radius:999px;padding:5px 10px;font-size:11px;cursor:pointer;">Connected</button></div><div id="dmPickerChips" style="display:none;padding:0 16px 10px;gap:6px;flex-wrap:wrap;"></div>
       <div id="dmSearchResults" style="overflow-y:auto;max-height:300px;padding:0 8px 12px;"></div>
       <div id="dmPickerFooter" style="padding:10px 16px;border-top:1px solid var(--border);display:none;"></div>
     </div>`;
   document.body.appendChild(modal);
 }
 
+window._setDmPickerFilter = function(connectedOnly){_dmPickerConnectedOnly=!!connectedOnly;const a=document.getElementById('dmFilterAll'),b=document.getElementById('dmFilterConnected');if(a){a.style.background=!_dmPickerConnectedOnly?'var(--accent-purple)':'var(--bg-tertiary)';a.style.color=!_dmPickerConnectedOnly?'#fff':'var(--text-secondary)'}if(b){b.style.background=_dmPickerConnectedOnly?'var(--accent-purple)':'var(--bg-tertiary)';b.style.color=_dmPickerConnectedOnly?'#fff':'var(--text-secondary)'}_loadDmSearchResults(document.getElementById('dmSearchInput')?.value||'')};
 window.closeDmSearchModal = function() {
   const modal = document.getElementById('dmSearchModal');
   if (!modal) return;
@@ -657,7 +659,7 @@ async function _loadDmSearchResults(query) {
       if (sid) params.set('server_id', String(sid));
       const url = BASE() + '/API/dm/server-users.php' + (params.toString() ? '?' + params.toString() : '');
       const data = await apiFetch(url);
-      const friends = data.users || [];
+      const friends = (data.users || []).filter(u => !_dmPickerConnectedOnly || Number(u.is_connected) === 1);
 
       if (friends.length === 0) {
         container.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">
