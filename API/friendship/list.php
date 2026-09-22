@@ -14,7 +14,7 @@ try {
     $db = Database::getInstance();
 
     $sql = "
-        SELECT u.id, u.username, u.full_name, u.avatar_color_gradient, u.is_online
+        SELECT u.id, u.username, u.full_name, u.avatar_url, u.avatar_color_gradient, u.is_online
         FROM friendships f
         JOIN users u ON u.id = IF(f.requester_id = :uid1, f.addressee_id, f.requester_id)
         WHERE (f.requester_id = :uid2 OR f.addressee_id = :uid3)
