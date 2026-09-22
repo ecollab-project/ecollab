@@ -307,10 +307,10 @@ function _ensureVoiceQuickActions() {
   const wrap = document.createElement('div');
   wrap.className = 'vc-quick-actions';
   wrap.innerHTML = `
-    <button class="vc-quick-btn" id="vcQuickMic" onclick="toggleVcMic()" title="Mute / Unmute">🎙</button>
-    <button class="vc-quick-btn" id="vcQuickCam" onclick="toggleCamera()" title="Camera">📹</button>
-    <button class="vc-quick-btn" id="vcQuickScreen" onclick="toggleScreenShare()" title="Share Screen">🖥</button>
-    <button class="vc-quick-btn" onclick="openAudioSettings ? openAudioSettings() : openModal('vcAudioSettingsModal')" title="Voice Settings">⚙</button>`;
+    <button class="vc-icon-btn vc-quick-btn" id="vcQuickMic" onclick="toggleVcMic()" title="Mute / Unmute" aria-label="Mute or unmute"><i class="fa-solid fa-microphone"></i></button>
+    <button class="vc-icon-btn vc-quick-btn" id="vcQuickCam" onclick="toggleCamera()" title="Camera" aria-label="Toggle camera"><i class="fa-solid fa-video"></i></button>
+    <button class="vc-icon-btn vc-quick-btn" id="vcQuickScreen" onclick="toggleScreenShare()" title="Share Screen" aria-label="Share screen"><i class="fa-solid fa-display"></i></button>
+    <button class="vc-icon-btn vc-quick-btn" onclick="openAudioSettings ? openAudioSettings() : openModal('vcAudioSettingsModal')" title="Voice Settings" aria-label="Voice settings"><i class="fa-solid fa-gear"></i></button>`;
   const invite = header.querySelector('.vc-invite-btn');
   header.insertBefore(wrap, invite || header.firstChild);
 }
