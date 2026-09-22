@@ -56,11 +56,12 @@ window.createThreadV2=async function(){
 };
 
 let parentReply=0,detailPoll=null,detailBusy=false,activeDetailId=0,lastReplySignature='';
+function replyAvatar(r){const u=r.author_avatar_url||'',g=r.author_gradient||'#a855f7,#ec4899',n=(r.author_name||r.author_username||'?');const bg=u?'background-image:url(\''+esc(u)+'\');background-size:cover;background-position:center;':'background:linear-gradient(135deg,'+g+');';return '<div class="tv2-avatar" style="'+bg+'">'+(u?'':esc(n[0].toUpperCase()))+'</div>';}
 function replyTree(replies,atts,parent=0){
   const children=(replies||[]).filter(r=>Number(r.parent_reply_id||0)===Number(parent));
   return children.map(r=>{
     const imgs=(atts||[]).filter(a=>Number(a.reply_id)===Number(r.id));
-    return '<div class="tv2-reply" data-reply-id="'+Number(r.id)+'"><div class="tv2-avatar">'+esc((r.author_name||r.author_username||'?')[0].toUpperCase())+'</div><div class="tv2-reply-body"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px"><b style="color:var(--text-primary)">'+esc(r.author_name||r.author_username||'Unknown')+'</b> · '+esc(r.created_at||'')+'</div>'+(r.body?'<div class="tv2-reply-text">'+esc(r.body)+'</div>':'')+imgs.map(imageHtml).join('')+'<div class="tv2-reply-actions"><button type="button" class="tv2-reply-btn" data-reply-to="'+Number(r.id)+'">↩ Reply</button></div></div></div>'+(children.length?'<div class="tv2-reply-children">'+replyTree(replies,atts,r.id)+'</div>':'');
+    return '<div class="tv2-reply" data-reply-id="'+Number(r.id)+'">'+replyAvatar(r)+'<div class="tv2-reply-body"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px"><b style="color:var(--text-primary)">'+esc(r.author_name||r.author_username||'Unknown')+'</b> · '+esc(r.created_at||'')+'</div>'+(r.body?'<div class="tv2-reply-text">'+esc(r.body)+'</div>':'')+imgs.map(imageHtml).join('')+'<div class="tv2-reply-actions"><button type="button" class="tv2-reply-btn" data-reply-to="'+Number(r.id)+'">↩ Reply</button></div></div></div>'+(children.length?'<div class="tv2-reply-children">'+replyTree(replies,atts,r.id)+'</div>':'');
   }).join('');
 }
 function composerHtml(threadId){
