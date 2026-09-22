@@ -307,11 +307,57 @@ try {
             $json(['users'=>$users]);
 
         case 'list_requests':
-            $stmt = $db->prepare("SELECT r.*, u.username,u.full_name,u.avatar_url,u.avatar_color_gradient FROM pm_match_requests r JOIN users u ON u.id=r.requester_id WHERE r.addressee_id=? ORDER BY r.created_at DESC");
-            $stmt->execute([$uid]);
+            // Friend requests can be created from both the peer-matching modal
+            // (pm_match_requests) and profile/member Connect buttons (friendships).
+            // Return both sources so the Requests tab is the single inbox/outbox.
+            $stmt = $db->prepare("
+                SELECT r.id, r.requester_id, r.addressee_id, r.status, r.created_at,
+                       r.score, r.note, r.matched_via,
+                       u.username, u.full_name, u.avatar_url, u.avatar_color_gradient
+                FROM pm_match_requests r
+                JOIN users u ON u.id = r.requester_id
+                WHERE r.addressee_id = ?
+                UNION ALL
+                SELECT f.id, f.requester_id, f.addressee_id, f.status, f.created_at,
+                       0 AS score, NULL AS note, 'connection' AS matched_via,
+                       u.username, u.full_name, u.avatar_url, u.avatar_color_gradient
+                FROM friendships f
+                JOIN users u ON u.id = f.requester_id
+                WHERE f.addressee_id = ? AND f.status = 'pending'
+                  AND NOT EXISTS (
+                      SELECT 1 FROM pm_match_requests p
+                      WHERE p.requester_id = f.requester_id
+                        AND p.addressee_id = f.addressee_id
+                        AND p.status = 'pending'
+                  )
+                ORDER BY created_at DESC
+            ");
+            $stmt->execute([$uid, $uid]);
             $incoming = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $stmt = $db->prepare("SELECT r.*, u.username,u.full_name,u.avatar_url,u.avatar_color_gradient FROM pm_match_requests r JOIN users u ON u.id=r.addressee_id WHERE r.requester_id=? ORDER BY r.created_at DESC");
-            $stmt->execute([$uid]);
+
+            $stmt = $db->prepare("
+                SELECT r.id, r.requester_id, r.addressee_id, r.status, r.created_at,
+                       r.score, r.note, r.matched_via,
+                       u.username, u.full_name, u.avatar_url, u.avatar_color_gradient
+                FROM pm_match_requests r
+                JOIN users u ON u.id = r.addressee_id
+                WHERE r.requester_id = ?
+                UNION ALL
+                SELECT f.id, f.requester_id, f.addressee_id, f.status, f.created_at,
+                       0 AS score, NULL AS note, 'connection' AS matched_via,
+                       u.username, u.full_name, u.avatar_url, u.avatar_color_gradient
+                FROM friendships f
+                JOIN users u ON u.id = f.addressee_id
+                WHERE f.requester_id = ? AND f.status = 'pending'
+                  AND NOT EXISTS (
+                      SELECT 1 FROM pm_match_requests p
+                      WHERE p.requester_id = f.requester_id
+                        AND p.addressee_id = f.addressee_id
+                        AND p.status = 'pending'
+                  )
+                ORDER BY created_at DESC
+            ");
+            $stmt->execute([$uid, $uid]);
             $outgoing = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $json(['incoming'=>$incoming,'outgoing'=>$outgoing]);
 
