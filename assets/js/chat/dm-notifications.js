@@ -56,10 +56,12 @@ function _timeAgo(dateStr) {
   return Math.floor(diff / 86400) + 'd ago';
 }
 
-function _avatar(name, gradient, size = 34) {
+function _avatar(name, gradient, size = 34, avatarUrl = '') {
   const [c1,c2] = (gradient || '#a855f7,#ec4899').split(',');
   const init = String(name||'?').charAt(0).toUpperCase();
-  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:${Math.floor(size*0.4)}px;font-weight:800;color:#fff;flex-shrink:0;">${init}</div>`;
+  const bg = avatarUrl ? `url("&quot;${_esc(avatarUrl)}&quot;")` : `linear-gradient(135deg,${c1},${c2})`;
+  const style = avatarUrl ? `background-image:url('${_esc(avatarUrl)}');background-size:cover;background-position:center;` : `background:${bg};`;
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;${style}display:flex;align-items:center;justify-content:center;font-size:${Math.floor(size*0.4)}px;font-weight:800;color:#fff;flex-shrink:0;">${avatarUrl?'':init}</div>`;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -461,7 +463,7 @@ function _renderDmList() {
       <div class="channel-item dm-item ${isActive ? 'active' : ''}"
            data-conv-id="${c.conversation_id}"
            onclick="openDmConversation(${c.partner_id},'${_esc(name)}','${_esc(c.partner_gradient || '')}')">
-        ${_avatar(name, c.partner_gradient, 28)}
+        ${_avatar(name, c.partner_gradient, 28, c.partner_avatar_url || '')}
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:${unread > 0 ? 700 : 500};color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(name)}</div>
           <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(preview)}</div>
@@ -525,7 +527,7 @@ function _togglePickerUser(u) {
   if (_dmPickerSelected[u.id]) {
     delete _dmPickerSelected[u.id];
   } else {
-    _dmPickerSelected[u.id] = { id: u.id, name, gradient: u.avatar_color_gradient || u.gradient || '', username: u.username || '' };
+    _dmPickerSelected[u.id] = { id: u.id, name, gradient: u.avatar_color_gradient || u.gradient || '', avatar_url: u.avatar_url || '', username: u.username || '' };
   }
   _renderDmPickerFooter();
   const row = document.getElementById(`dmPickerRow_${u.id}`);
@@ -547,7 +549,7 @@ function _renderDmPickerFooter() {
   chips.style.display = 'flex';
   chips.innerHTML = selected.map(s => `
     <span style="display:inline-flex;align-items:center;gap:4px;background:rgba(168,85,247,0.12);color:#c084fc;border-radius:12px;padding:3px 8px 3px 4px;font-size:11px;">
-      ${_avatar(s.name, s.gradient, 16)}${_esc(s.name)}
+      ${_avatar(s.name, s.gradient, 16, s.avatar_url || '')}${_esc(s.name)}
       <span onclick="_togglePickerUser({id:${s.id}})" style="cursor:pointer;margin-left:2px;">×</span>
     </span>`).join('');
 
@@ -609,7 +611,7 @@ async function _loadDmSearchResults(query) {
           <div id="dmPickerRow_${u.id}" onclick='_togglePickerUser(${JSON.stringify(u).replace(/'/g, "&#39;")})'
                style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;transition:background 0.1s;background:${isSelected ? 'var(--bg-tertiary)' : ''}"
                onmouseover="this.style.background='var(--bg-tertiary)'" onmouseout="this.style.background='${isSelected ? 'var(--bg-tertiary)' : ''}'">
-            ${_avatar(name, u.avatar_color_gradient, 34)}
+            ${_avatar(name, u.avatar_color_gradient, 34, u.avatar_url || '')}
             <div style="flex:1;">
               <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${_esc(name)}</div>
               <div style="font-size:11px;color:var(--text-muted);">@${_esc(u.username || '')} ${u.is_online == 1 ? '· <span style=\"color:#22c55e;\">online</span>' : ''}</div>
@@ -627,7 +629,7 @@ async function _loadDmSearchResults(query) {
 //  DM CONVERSATION PANEL
 // ═══════════════════════════════════════════════════════════════
 
-window.openDmConversation = async function(partnerId, partnerName, partnerGradient) {
+window.openDmConversation = async function(partnerId, partnerName, partnerGradient, partnerAvatarUrl = '') {
   partnerId    = parseInt(partnerId);
   partnerName  = partnerName || 'User';
 
@@ -635,6 +637,7 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
   DM.activePartnerId   = partnerId;
   DM.activePartnerName = partnerName;
   const selectedConv = DM.conversations.find(c => Number(c.partner_id) === partnerId);
+  partnerAvatarUrl = partnerAvatarUrl || selectedConv?.partner_avatar_url || '';
   DM.activePartnerIsAI =
     selectedConv?.partner_is_system == 1 ||
     String(selectedConv?.partner_username || '').trim().toLowerCase() === 'ecollab_ai' ||
@@ -651,7 +654,7 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
   if (DM.activePartnerIsAI) {
     title.innerHTML = `
       <span style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">
-        ${_avatar('Jarred', partnerGradient || '#6366f1,#8b5cf6', 30)}
+        ${_avatar('Jarred', partnerGradient || '#6366f1,#8b5cf6', 30, partnerAvatarUrl)}
         <span style="display:flex;flex-direction:column;min-width:0;">
           <span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Jarred</span>
           <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;">🤖 AI Assistant · <span style="color:#22c55e;">● Online</span></span>
@@ -660,7 +663,7 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
   } else {
     title.innerHTML = `
       <span onclick="openMiniProfile(event,'${_esc(partnerName)}','','${_esc(partnerGradient || '')}','${_esc((partnerName[0]||'?').toUpperCase())}',${partnerId})" style="display:flex;align-items:center;gap:8px;cursor:pointer;min-width:0;flex:1;">
-        ${_avatar(partnerName, partnerGradient, 30)}
+        ${_avatar(partnerName, partnerGradient, 30, partnerAvatarUrl)}
         <span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(partnerName)}</span>
       </span>
       <button onclick="startDmCall(false)" title="Voice call" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;flex-shrink:0;">📞</button>
@@ -776,9 +779,10 @@ function _dmMessageHTML(m) {
   const isMine = m.sender_id == ME_ID();
   const name   = m.sender_name || m.sender_username || 'User';
   const grad   = m.sender_gradient || '';
+  const avatarUrl = m.sender_avatar_url || '';
   return `
     <div style="display:flex;flex-direction:${isMine ? 'row-reverse' : 'row'};align-items:flex-end;gap:8px;" data-msg-id="${m.id}">
-      ${!isMine ? _avatar(name, grad, 26) : ''}
+      ${!isMine ? _avatar(name, grad, 26, avatarUrl) : ''}
       <div style="max-width:72%;background:${isMine ? 'var(--accent-purple)' : 'var(--bg-tertiary)'};color:${isMine ? '#fff' : 'var(--text-primary)'};padding:8px 12px;border-radius:${isMine ? '12px 12px 4px 12px' : '12px 12px 12px 4px'};font-size:13px;line-height:1.5;word-break:break-word;">
         ${_esc(m.body)}
         <div style="font-size:10px;opacity:0.65;margin-top:4px;text-align:${isMine ? 'right' : 'left'};">${_timeAgo(m.created_at)}</div>
@@ -836,7 +840,8 @@ window.sendDmMessage = async function() {
     body: text,
     created_at: new Date().toISOString(),
     sender_name: window.ECOLLAB?.fullName || 'You',
-    sender_gradient: window.ECOLLAB?.gradient || '',
+    sender_gradient: window.ECOLLAB?.gradient || window.ECOLLAB?.avatarGradient || '',
+    sender_avatar_url: window.ECOLLAB?.avatarUrl || '',
   };
   _appendDmMessage(optimistic);
 
