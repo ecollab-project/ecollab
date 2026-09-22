@@ -1015,6 +1015,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       fullName: <?= json_encode($user['full_name']) ?>,
       role: <?= json_encode($user['role']) ?>,
       avatarGradient: <?= json_encode($user['avatar_color_gradient']) ?>,
+      avatarUrl: <?= json_encode($user['avatar_url'] ?? '') ?>,
       initials: <?= json_encode($initials) ?>,
       csrfToken: <?= json_encode($csrfToken) ?>,
       currentServerId: <?= (int)($firstServer['id'] ?? 0) ?>,
