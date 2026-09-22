@@ -34,7 +34,8 @@ try {
 
     $sql = "
         SELECT DISTINCT u.id, u.username, u.full_name, u.avatar_url, u.avatar_color_gradient,
-               u.is_online, COALESCE(u.is_system,0) AS is_system
+               u.is_online, COALESCE(u.is_system,0) AS is_system,
+               CASE WHEN EXISTS(SELECT 1 FROM friendships f WHERE f.status='accepted' AND ((f.requester_id=:uid3 AND f.addressee_id=u.id) OR (f.addressee_id=:uid4 AND f.requester_id=u.id))) THEN 1 ELSE 0 END AS is_connected
         FROM server_members sm_me
         JOIN server_members sm_other ON sm_other.server_id = sm_me.server_id
         JOIN users u ON u.id = sm_other.user_id
@@ -46,6 +47,8 @@ try {
           {$whereServer}
     ";
     $params[':uid2'] = $uid;
+    $params[':uid3'] = $uid;
+    $params[':uid4'] = $uid;
 
     if ($q !== '') {
         $sql .= " AND (u.username LIKE :q OR u.full_name LIKE :q2)";
