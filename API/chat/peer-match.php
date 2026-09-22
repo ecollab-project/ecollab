@@ -446,5 +446,5 @@ try {
 } catch (Throwable $e) {
     error_log('[Ecollab] peer matching endpoint: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['ok'=>false,'error'=>defined('APP_DEBUG') && APP_DEBUG ? $e->getMessage() : 'Peer matching service unavailable.']);
+    echo json_encode(['ok'=>false,'error'=>'Peer matching service unavailable.','detail'=>$e->getMessage()]);
 }
