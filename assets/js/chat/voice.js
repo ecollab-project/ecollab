@@ -75,6 +75,8 @@ function joinVoice(channelSlug, el, channelId, roomNameOverride) {
   _updateConnectedBar(true);
   renderVcUser();
   _ensureMinimizeBtn();
+  _ensureVoiceQuickActions();
+  _refreshVoiceLayout();
 
   // Acquire mic first, then notify server (order matters for WebRTC)
   _acquireMic().then(() => {
@@ -298,12 +300,47 @@ function _ensureMinimizeBtn() {
   header.insertBefore(btn, header.firstChild);
 }
 
+// ── Voice UX upgrade: persistent quick controls + focused stream PiP ────────
+function _ensureVoiceQuickActions() {
+  const header = document.querySelector('.vc-header-right');
+  if (!header || header.querySelector('.vc-quick-actions')) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'vc-quick-actions';
+  wrap.innerHTML = `
+    <button class="vc-quick-btn" id="vcQuickMic" onclick="toggleVcMic()" title="Mute / Unmute">🎙</button>
+    <button class="vc-quick-btn" id="vcQuickCam" onclick="toggleCamera()" title="Camera">📹</button>
+    <button class="vc-quick-btn" id="vcQuickScreen" onclick="toggleScreenShare()" title="Share Screen">🖥</button>
+    <button class="vc-quick-btn" onclick="openAudioSettings ? openAudioSettings() : openModal('vcAudioSettingsModal')" title="Voice Settings">⚙</button>`;
+  const invite = header.querySelector('.vc-invite-btn');
+  header.insertBefore(wrap, invite || header.firstChild);
+}
+function _syncVoiceQuickActions() {
+  document.getElementById('vcQuickMic')?.classList.toggle('danger', vcMicMuted);
+  document.getElementById('vcQuickCam')?.classList.toggle('active', vcCamOn);
+  document.getElementById('vcQuickScreen')?.classList.toggle('active', vcScreenOn);
+  const view=document.getElementById('voiceChannelView');
+  if(view){
+    view.classList.toggle('vc-has-camera',vcCamOn);
+    view.classList.toggle('vc-has-screen',vcScreenOn);
+  }
+}
+function _refreshVoiceLayout() {
+  _ensureVoiceQuickActions();
+  _syncVoiceQuickActions();
+  const view=document.getElementById('voiceChannelView');
+  if(!view) return;
+  const hasVideo=!!view.querySelector('#vcScreenGrid video, .vc-speaker-card video, .vc-camera-video, video');
+  view.classList.toggle('vc-video-active',hasVideo || vcCamOn || vcScreenOn);
+}
+window.addEventListener('resize',()=>{ if(vcActive) _refreshVoiceLayout(); });
+
 // ── Minimize / Expand panel ────────────────────────────────────────────────
 function toggleVcMinimize() {
   const vcView = document.getElementById('voiceChannelView');
   if (!vcView || !vcActive) return;
   vcMinimized = !vcMinimized;
   vcView.classList.toggle('vc-minimized', vcMinimized);
+  _refreshVoiceLayout();
   document.body.classList.toggle('vc-pip', vcMinimized);
 
   // Update minimize btn icon
