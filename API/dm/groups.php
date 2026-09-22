@@ -98,7 +98,7 @@ try {
             $ids = array_column($groups, 'id');
             $placeholders = implode(',', array_fill(0, count($ids), '?'));
             $memStmt = $db->prepare("
-                SELECT gm.group_id, u.id, u.username, u.full_name, u.avatar_color_gradient
+                SELECT gm.group_id, u.id, u.username, u.full_name, u.avatar_url, u.avatar_color_gradient
                 FROM dm_group_members gm
                 JOIN users u ON u.id = gm.user_id
                 WHERE gm.group_id IN ($placeholders)
