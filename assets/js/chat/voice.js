@@ -307,10 +307,10 @@ function _ensureVoiceQuickActions() {
   const wrap = document.createElement('div');
   wrap.className = 'vc-quick-actions';
   wrap.innerHTML = `
-    <button class="vc-icon-btn vc-quick-btn" id="vcQuickMic" onclick="toggleVcMic()" title="Mute / Unmute" aria-label="Mute or unmute"><i class="fa-solid fa-microphone"></i></button>
-    <button class="vc-icon-btn vc-quick-btn" id="vcQuickCam" onclick="toggleCamera()" title="Camera" aria-label="Toggle camera"><i class="fa-solid fa-video"></i></button>
-    <button class="vc-icon-btn vc-quick-btn" id="vcQuickScreen" onclick="toggleScreenShare()" title="Share Screen" aria-label="Share screen"><i class="fa-solid fa-display"></i></button>
-    <button class="vc-icon-btn vc-quick-btn" onclick="openAudioSettings ? openAudioSettings() : openModal('vcAudioSettingsModal')" title="Voice Settings" aria-label="Voice settings"><i class="fa-solid fa-gear"></i></button>`;
+    <button class="vc-icon-btn vc-quick-btn" id="vcQuickMic" onclick="toggleVcMic()" title="Mute / Unmute" aria-label="Mute or unmute"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21H8v2h8v-2h-3v-3.08A7 7 0 0 0 19 11h-2Z"/></svg></button>
+    <button class="vc-icon-btn vc-quick-btn" id="vcQuickCam" onclick="toggleCamera()" title="Camera" aria-label="Toggle camera"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Zm15 4 5-3v10l-5-3v-4Z"/></svg></button>
+    <button class="vc-icon-btn vc-quick-btn" id="vcQuickScreen" onclick="toggleScreenShare()" title="Share Screen" aria-label="Share screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h18a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-7v2h3v2H7v-2h3v-2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm0 2v12h18V5H3Z"/></svg></button>
+    <button class="vc-icon-btn vc-quick-btn" onclick="openAudioSettings ? openAudioSettings() : openModal('vcAudioSettingsModal')" title="Voice Settings" aria-label="Voice settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.4 2 .5 2.1c.7-.2 1.4-.2 2.1-.1L13 2h2l.8 2.1c.7.2 1.3.5 1.9.9l2-.9 1.4 1.4-.9 2c.4.6.7 1.2.9 1.9l2.1.8v2l-2.1.8c-.2.7-.5 1.3-.9 1.9l.9 2-1.4 1.4-2-.9c-.6.4-1.2.7-1.9.9L15 22h-2l-.8-2.1c-.7.1-1.4.1-2.1-.1L9.4 22h-2l-.8-2.1a9 9 0 0 1-1.9-.9l-2 .9-1.4-1.4.9-2a9 9 0 0 1-.9-1.9L0 13.8v-2l2.1-.8c.2-.7.5-1.3.9-1.9l-.9-2 1.4-1.4 2 .9c.6-.4 1.2-.7 1.9-.9L7.4 2h2ZM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/></svg></button>`;
   const invite = header.querySelector('.vc-invite-btn');
   header.insertBefore(wrap, invite || header.firstChild);
 }
