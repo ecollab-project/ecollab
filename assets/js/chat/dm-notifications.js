@@ -280,6 +280,8 @@ function _addInlineNotification(notif) {
     body:       notif.body || '',
     is_read:    0,
     created_at: notif.created_at || new Date().toISOString(),
+    ref_id:     notif.ref_id || 0,
+    link_url:   notif.link_url || '',
   });
   if (NOTIF.items.length > 30) NOTIF.items.pop();
   NOTIF.unreadCount++;
@@ -331,28 +333,88 @@ function _renderNotifDropdown() {
     </div>`).join('');
 }
 
-window._handleNotifClick = function(notifId, type, refId) {
-  // Mark this notification read
-  const notif = NOTIF.items.find(n => n.id === notifId);
+window._handleNotifClick = async function(notifId, type, refId) {
+  const notif = NOTIF.items.find(n => String(n.id) === String(notifId));
   if (notif && !notif.is_read) {
     notif.is_read = 1;
     NOTIF.unreadCount = Math.max(0, NOTIF.unreadCount - 1);
     _updateNotifBadge();
     _renderNotifDropdown();
-    // Persist to DB
     apiFetch(BASE() + '/API/notifications/mark-read.php', {
       method: 'POST',
       body: JSON.stringify({ ids: [notifId] }),
     }).catch(() => {});
   }
 
-  // Navigate
-  if (type === 'dm' || type === 'dm_message') {
-    // Close dropdown, open DM panel — refId is message_id, we need conv
-    const conv = DM.conversations.find(c => c.unread_count > 0);
-    if (conv) openDmConversation(conv.partner_id, conv.partner_name, conv.partner_gradient);
+  const dd = document.getElementById('notifDropdown');
+  if (dd) { dd.style.display = 'none'; dd.classList.remove('open'); }
+
+  const t = String(type || '').toLowerCase();
+  const link = String(notif?.link_url || '');
+
+  // Connection notifications belong to the Study Partners workflow.
+  if (t === 'connection_request' || t === 'connection_accepted' ||
+      /friend_request|connection/i.test(link)) {
+    if (typeof window.openPeerMatchingModal === 'function') {
+      window.openPeerMatchingModal();
+      if (typeof window._pmShowTab === 'function') {
+        setTimeout(() => window._pmShowTab('requests'), 60);
+      }
+    }
+    return;
   }
-  // connection_request banner already shown separately
+
+  // Thread notifications open Threads; when ref_id is a thread id, open it.
+  if (t === 'thread' || t === 'thread_reply' || t === 'thread_mention' ||
+      /thread/i.test(link)) {
+    const threadNav = [...document.querySelectorAll('[onclick]')].find(el =>
+      /switchView\(['"]threads['"]/.test(el.getAttribute('onclick') || '')
+    );
+    if (typeof window.switchView === 'function') {
+      window.switchView('threads', threadNav || null);
+    } else if (threadNav) {
+      threadNav.click();
+    }
+    if (Number(refId) > 0 && typeof window._openThreadDetail === 'function') {
+      setTimeout(() => window._openThreadDetail(Number(refId)), 120);
+    }
+    return;
+  }
+
+  // DM notifications: prefer an explicit partner/conversation encoded by the
+  // notification; otherwise resolve the referenced message against loaded DMs.
+  if (t === 'dm' || t === 'dm_message' || t === 'message' || /\/dm\b|conversation/i.test(link)) {
+    let conv = null;
+    const partnerMatch = link.match(/[?&](?:partner_id|user_id)=(\d+)/i);
+    if (partnerMatch) {
+      conv = DM.conversations.find(c => Number(c.partner_id) === Number(partnerMatch[1]));
+    }
+    if (!conv && Number(refId) > 0) {
+      conv = DM.conversations.find(c =>
+        Number(c.last_message_id || c.message_id || 0) === Number(refId)
+      );
+    }
+    if (!conv) conv = DM.conversations.find(c => (parseInt(c.unread_count) || 0) > 0);
+    if (conv) {
+      await window.openDmConversation?.(
+        Number(conv.partner_id),
+        conv.partner_name || conv.partner_username || 'User',
+        conv.partner_gradient || ''
+      );
+      return;
+    }
+    await loadDmList();
+    conv = DM.conversations.find(c => (parseInt(c.unread_count) || 0) > 0);
+    if (conv) {
+      await window.openDmConversation?.(Number(conv.partner_id), conv.partner_name || conv.partner_username || 'User', conv.partner_gradient || '');
+    }
+    return;
+  }
+
+  // Mentions/bookmarks and other notifications can use their stored internal URL.
+  if (link && link.startsWith('/')) {
+    window.location.href = BASE() + link;
+  }
 };
 
 // Poll notifications from DB on a slow cadence (backup to WebSocket)
