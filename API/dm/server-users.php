@@ -33,7 +33,7 @@ try {
     }
 
     $sql = "
-        SELECT DISTINCT u.id, u.username, u.full_name, u.avatar_color_gradient,
+        SELECT DISTINCT u.id, u.username, u.full_name, u.avatar_url, u.avatar_color_gradient,
                u.is_online, COALESCE(u.is_system,0) AS is_system
         FROM server_members sm_me
         JOIN server_members sm_other ON sm_other.server_id = sm_me.server_id
