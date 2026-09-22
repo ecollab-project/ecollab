@@ -140,6 +140,6 @@ try {
     echo json_encode([
         'error' => 'Server error',
         'code' => 'FRIEND_REQUEST_FAILED',
-        'detail' => $e->getMessage(),
+        'detail' => null,
     ]);
 }
