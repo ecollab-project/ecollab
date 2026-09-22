@@ -527,7 +527,7 @@ function _renderDmList() {
            onclick="openDmConversation(${c.partner_id},'${_esc(name)}','${_esc(c.partner_gradient || '')}')">
         ${_avatar(name, c.partner_gradient, 28, c.partner_avatar_url || '')}
         <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:${unread > 0 ? 700 : 500};color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(name)} ${Number(u.is_connected)===1?'<span style="font-size:9px;color:#c084fc;margin-left:5px;">CONNECTED</span>':''}</div>
+          <div style="font-size:13px;font-weight:${unread > 0 ? 700 : 500};color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(name)}</div>
           <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(preview)}</div>
         </div>
         ${unread > 0 ? `<span style="background:var(--accent-purple);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;flex-shrink:0;">${unread}</span>` : ''}
