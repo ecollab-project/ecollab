@@ -13,7 +13,19 @@ AuthMiddleware::verifyCsrf();
 try {
     if (empty($_FILES['image']) || !is_array($_FILES['image'])) throw new RuntimeException('No image uploaded',400);
     $file=$_FILES['image'];
-    if (($file['error'] ?? UPLOAD_ERR_NO_FILE)!==UPLOAD_ERR_OK) throw new RuntimeException('Upload failed',400);
+    $uploadError=(int)($file['error'] ?? UPLOAD_ERR_NO_FILE);
+    if ($uploadError!==UPLOAD_ERR_OK) {
+        $errors=[
+            UPLOAD_ERR_INI_SIZE=>'Image exceeds the server upload_max_filesize limit.',
+            UPLOAD_ERR_FORM_SIZE=>'Image exceeds the allowed form size.',
+            UPLOAD_ERR_PARTIAL=>'Image upload was interrupted. Please try again.',
+            UPLOAD_ERR_NO_FILE=>'No image was received.',
+            UPLOAD_ERR_NO_TMP_DIR=>'Server temporary upload directory is missing.',
+            UPLOAD_ERR_CANT_WRITE=>'Server could not write the uploaded image.',
+            UPLOAD_ERR_EXTENSION=>'A PHP extension stopped the image upload.',
+        ];
+        throw new RuntimeException($errors[$uploadError] ?? ('Image upload failed (code '.$uploadError.').'),400);
+    }
     if ((int)$file['size'] > 10*1024*1024) throw new RuntimeException('Image too large. Max 10 MB.',400);
     $finfo=new finfo(FILEINFO_MIME_TYPE); $mime=$finfo->file($file['tmp_name']);
     $allowed=['image/jpeg'=>'jpg','image/png'=>'png','image/gif'=>'gif','image/webp'=>'webp'];
