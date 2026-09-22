@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
+require_once dirname(__DIR__, 2) . '/services/OllamaService.php';
 
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
@@ -27,6 +28,7 @@ if (!$convId || $text === '' || mb_strlen($text) > 4000) {
 
 try {
     $db = Database::getInstance();
+
     $check = $db->prepare(
         "SELECT id, user_a, user_b FROM dm_conversations
          WHERE id = :cid AND (user_a = :me OR user_b = :me2)
@@ -41,57 +43,179 @@ try {
         exit;
     }
 
+    $recipientId = ((int)$conv['user_a'] === (int)$me['id'])
+        ? (int)$conv['user_b']
+        : (int)$conv['user_a'];
+
+    $recipientStmt = $db->prepare(
+        "SELECT id, username, full_name, avatar_color_gradient, is_system
+         FROM users
+         WHERE id = :id AND deleted_at IS NULL
+         LIMIT 1"
+    );
+    $recipientStmt->execute([':id' => $recipientId]);
+    $recipient = $recipientStmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$recipient) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Recipient not found']);
+        exit;
+    }
+
+    $isAiConversation =
+        (int)($recipient['is_system'] ?? 0) === 1
+        && ($recipient['username'] ?? '') === 'ecollab_ai';
+
     $ins = $db->prepare(
-        "INSERT INTO dm_messages (conversation_id, sender_id, body) VALUES (:cid, :uid, :body)"
+        "INSERT INTO dm_messages (conversation_id, sender_id, body)
+         VALUES (:cid, :uid, :body)"
     );
     $ins->execute([':cid' => $convId, ':uid' => $me['id'], ':body' => $text]);
     $msgId = (int)$db->lastInsertId();
 
+    $createdStmt = $db->prepare("SELECT created_at FROM dm_messages WHERE id = :id LIMIT 1");
+    $createdStmt->execute([':id' => $msgId]);
+    $createdAt = (string)($createdStmt->fetchColumn() ?: gmdate('Y-m-d H:i:s'));
+
     $db->prepare(
-        "UPDATE dm_conversations SET last_message = :body, last_msg_at = NOW() WHERE id = :cid"
-    )->execute([':body' => mb_substr($text, 0, 120), ':cid' => $convId]);
+        "UPDATE dm_conversations SET last_message = :body, last_msg_at = :created_at WHERE id = :cid"
+    )->execute([
+        ':body' => mb_substr($text, 0, 120),
+        ':created_at' => $createdAt,
+        ':cid' => $convId,
+    ]);
 
     try {
         $db->prepare(
             "INSERT INTO dm_reads (user_id, conversation_id, last_read_at)
-             VALUES (:uid, :cid, NOW())
-             ON DUPLICATE KEY UPDATE last_read_at = NOW()"
+             VALUES (:uid, :cid, UTC_TIMESTAMP())
+             ON DUPLICATE KEY UPDATE last_read_at = UTC_TIMESTAMP()"
         )->execute([':uid' => $me['id'], ':cid' => $convId]);
     } catch (Throwable $e) {
         error_log('[dm/send-message] read cursor update skipped: ' . $e->getMessage());
     }
 
-    $recipientId = ((int)$conv['user_a'] === (int)$me['id'])
-        ? (int)$conv['user_b']
-        : (int)$conv['user_a'];
+    if (!$isAiConversation) {
+        try {
+            $db->prepare(
+                "INSERT INTO notifications
+                    (recipient_id, actor_id, type, title, body, link_url, icon, is_read)
+                 VALUES
+                    (:recipient, :actor, 'message', :title, :body2, :link, '💬', 0)"
+            )->execute([
+                ':recipient' => $recipientId,
+                ':actor'     => (int)$me['id'],
+                ':title'     => ($me['full_name'] ?: $me['username']) . ' sent you a message',
+                ':body2'     => mb_substr($text, 0, 500),
+                ':link'      => BASE_URL . '/modules/chat/chat.php?dm=' . $convId,
+            ]);
+        } catch (Throwable $e) {
+            error_log('[dm/send-message] notification insert skipped: ' . $e->getMessage());
+        }
 
-    try {
-        // Notifications use the core schema from 002_core_schema.sql:
-        // recipient_id, actor_id, type, title, body, link_url, icon, is_read.
-        $db->prepare(
-            "INSERT INTO notifications
-                (recipient_id, actor_id, type, title, body, link_url, icon, is_read)
-             VALUES
-                (:recipient, :actor, 'message', :title, :body2, :link, '💬', 0)"
-        )->execute([
-            ':recipient' => $recipientId,
-            ':actor'     => (int)$me['id'],
-            ':title'     => ($me['full_name'] ?: $me['username']) . ' sent you a message',
-            ':body2'     => mb_substr($text, 0, 500),
-            ':link'      => BASE_URL . '/modules/chat/chat.php?dm=' . $convId,
+        echo json_encode([
+            'success'      => true,
+            'message_id'   => $msgId,
+            'sender_id'    => $me['id'],
+            'body'         => $text,
+            'created_at'   => $createdAt,
+            'recipient_id' => $recipientId,
+            'is_ai'        => false,
         ]);
-    } catch (Throwable $e) {
-        error_log('[dm/send-message] notification insert skipped: ' . $e->getMessage());
+        exit;
     }
 
-    echo json_encode([
-        'success'      => true,
-        'message_id'   => $msgId,
-        'sender_id'    => $me['id'],
-        'body'         => $text,
-        'created_at'   => date('Y-m-d H:i:s'),
-        'recipient_id' => $recipientId,
-    ]);
+    try {
+        $historyStmt = $db->prepare(
+            "SELECT m.sender_id, m.body
+             FROM dm_messages m
+             WHERE m.conversation_id = :cid AND m.is_deleted = 0
+             ORDER BY m.id DESC
+             LIMIT 12"
+        );
+        $historyStmt->execute([':cid' => $convId]);
+        $history = array_reverse($historyStmt->fetchAll(PDO::FETCH_ASSOC));
+
+        $messages = [];
+        foreach ($history as $row) {
+            $messages[] = [
+                'role' => (int)$row['sender_id'] === $recipientId ? 'assistant' : 'user',
+                'content' => (string)$row['body'],
+            ];
+        }
+
+        $ollama = new OllamaService();
+        $result = $ollama->generate(
+            $messages,
+            'You are eCollab AI, the built-in academic assistant for eCollab. Help college students with studying, programming, collaboration, research planning, explanations, and project work. Be concise, useful, friendly, and honest. Do not claim to have performed actions you did not perform.',
+            400
+        );
+
+        $aiText = trim((string)($result['text'] ?? ''));
+        if ($aiText === '') {
+            throw new RuntimeException('AI returned an empty response');
+        }
+
+        $aiInsert = $db->prepare(
+            "INSERT INTO dm_messages (conversation_id, sender_id, body)
+             VALUES (:cid, :uid, :body)"
+        );
+        $aiInsert->execute([
+            ':cid' => $convId,
+            ':uid' => $recipientId,
+            ':body' => $aiText,
+        ]);
+        $aiMsgId = (int)$db->lastInsertId();
+
+        $aiCreatedStmt = $db->prepare("SELECT created_at FROM dm_messages WHERE id = :id LIMIT 1");
+        $aiCreatedStmt->execute([':id' => $aiMsgId]);
+        $aiCreatedAt = (string)($aiCreatedStmt->fetchColumn() ?: gmdate('Y-m-d H:i:s'));
+
+        $db->prepare(
+            "UPDATE dm_conversations SET last_message = :body, last_msg_at = :created_at WHERE id = :cid"
+        )->execute([
+            ':body' => mb_substr($aiText, 0, 120),
+            ':created_at' => $aiCreatedAt,
+            ':cid' => $convId,
+        ]);
+
+        echo json_encode([
+            'success' => true,
+            'message_id' => $msgId,
+            'sender_id' => $me['id'],
+            'body' => $text,
+            'created_at' => $createdAt,
+            'recipient_id' => $recipientId,
+            'is_ai' => true,
+            'ai_message' => [
+                'id' => $aiMsgId,
+                'conversation_id' => $convId,
+                'sender_id' => $recipientId,
+                'sender_name' => $recipient['full_name'] ?: 'eCollab AI',
+                'sender_username' => $recipient['username'],
+                'sender_gradient' => $recipient['avatar_color_gradient'] ?: '#6366f1,#8b5cf6',
+                'body' => $aiText,
+                'created_at' => $aiCreatedAt,
+            ],
+            'ai_usage' => [
+                'input_tokens' => $result['input_tokens'] ?? null,
+                'output_tokens' => $result['output_tokens'] ?? null,
+                'model' => $result['model'] ?? null,
+            ],
+        ]);
+    } catch (Throwable $aiError) {
+        error_log('[dm/send-message][AI] ' . $aiError->getMessage());
+        echo json_encode([
+            'success' => true,
+            'message_id' => $msgId,
+            'sender_id' => $me['id'],
+            'body' => $text,
+            'created_at' => $createdAt,
+            'recipient_id' => $recipientId,
+            'is_ai' => true,
+            'ai_error' => 'AI is temporarily unavailable',
+        ]);
+    }
 } catch (Throwable $e) {
     error_log('[dm/send-message] ' . $e->getMessage());
     http_response_code(500);
