@@ -1028,7 +1028,10 @@ function _renderNavView(viewName, overlay) {
         <div id="threadComposer" style="display:none;margin-top:10px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:10px;padding:12px;">
           <input id="threadTitleInput" maxlength="180" placeholder="Title" style="width:100%;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text-primary);font-size:13px;font-family:inherit;margin-bottom:8px;">
           <textarea id="threadBodyInput" placeholder="What's on your mind?" rows="3" style="width:100%;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text-primary);font-size:13px;font-family:inherit;resize:vertical;margin-bottom:8px;"></textarea>
+          <input id="threadImageInput" type="file" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none" onchange="_selectThreadImage(this)">
+          <div id="threadImagePreview" style="display:none;margin-bottom:8px;"></div>
           <div style="display:flex;gap:8px;align-items:center;">
+            <button type="button" onclick="document.getElementById('threadImageInput').click()" style="padding:6px 10px;border-radius:8px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-size:12px;cursor:pointer;font-family:inherit;">🖼 Add image</button>
             <select id="threadScopeInput" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 8px;color:var(--text-secondary);font-size:12px;font-family:inherit;">
               <option value="public">🌐 Public</option>
               ${window.ECOLLAB?.currentServerId ? '<option value="server">🏠 This server</option>' : ''}
@@ -2544,6 +2547,57 @@ function _showThreadComposer() {
   if (el) { el.style.display = el.style.display === 'none' ? 'block' : 'none'; }
 }
 
+let _pendingThreadImage = null;
+
+async function _selectThreadImage(input) {
+  const file = input?.files?.[0];
+  if (!file) return;
+  if (!['image/jpeg','image/png','image/gif','image/webp'].includes(file.type)) {
+    if (window.showToast) showToast('Only JPG, PNG, GIF, and WebP images are allowed.', 'error');
+    input.value = '';
+    return;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    if (window.showToast) showToast('Image too large. Max 10 MB.', 'error');
+    input.value = '';
+    return;
+  }
+  const fd = new FormData();
+  fd.append('image', file);
+  try {
+    const base = window.ECOLLAB?.baseUrl || '';
+    const res = await fetch(`${base}/API/threads/upload-image.php`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'X-CSRF-Token': window.ECOLLAB?.csrfToken || '' },
+      body: fd,
+    });
+    const d = await res.json();
+    if (!res.ok || !d.success) throw new Error(d.error || 'Image upload failed');
+    _pendingThreadImage = d;
+    const preview = document.getElementById('threadImagePreview');
+    if (preview) {
+      preview.style.display = 'block';
+      preview.innerHTML = `<div style="position:relative;display:inline-block;max-width:100%;">
+        <img src="${_esc(d.url)}" alt="Thread image preview" style="display:block;max-width:100%;max-height:240px;border-radius:9px;border:1px solid var(--border);object-fit:cover;">
+        <button type="button" onclick="_clearThreadImage()" style="position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,.7);color:#fff;cursor:pointer;">×</button>
+      </div>`;
+    }
+  } catch (e) {
+    _pendingThreadImage = null;
+    input.value = '';
+    if (window.showToast) showToast(e.message || 'Image upload failed', 'error');
+  }
+}
+
+function _clearThreadImage() {
+  _pendingThreadImage = null;
+  const input = document.getElementById('threadImageInput');
+  if (input) input.value = '';
+  const preview = document.getElementById('threadImagePreview');
+  if (preview) { preview.innerHTML = ''; preview.style.display = 'none'; }
+}
+
 async function _submitNewThread() {
   const title = document.getElementById('threadTitleInput')?.value.trim();
   const body = document.getElementById('threadBodyInput')?.value.trim();
@@ -2560,12 +2614,14 @@ async function _submitNewThread() {
         action: 'create', title, body, scope,
         server_id: window.ECOLLAB?.currentServerId || 0,
         channel_id: window.ECOLLAB?.currentChannelId || 0,
+        attachments: _pendingThreadImage ? [_pendingThreadImage] : [],
       }),
     });
     const d = await res.json();
     if (!res.ok || d.error) { if (window.showToast) showToast(d.error || 'Could not post thread', 'error'); return; }
     document.getElementById('threadTitleInput').value = '';
     document.getElementById('threadBodyInput').value = '';
+    _clearThreadImage();
     document.getElementById('threadComposer').style.display = 'none';
     await _fetchNavViewData('threads');
     const root = document.getElementById('threadListRoot');
@@ -2716,6 +2772,8 @@ async function _voteOnReply(id, vote) {
 }
 
 window._showThreadComposer = _showThreadComposer;
+window._selectThreadImage = _selectThreadImage;
+window._clearThreadImage = _clearThreadImage;
 window._submitNewThread = _submitNewThread;
 window._voteOnThread = _voteOnThread;
 window._openThreadDetail = _openThreadDetail;
