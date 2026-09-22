@@ -404,7 +404,7 @@ try {
 
             // friendships.status uses pending/accepted/rejected.
             $friendStatus = $response === 'declined' ? 'rejected' : 'accepted';
-            $db->prepare('UPDATE friendships SET status=?, responded_at=CURRENT_TIMESTAMP WHERE id=? AND addressee_id=?')
+            $db->prepare('UPDATE friendships SET status=? WHERE id=? AND addressee_id=?')
                ->execute([$friendStatus,$reqId,$uid]);
             $json(['status'=>$response]);
 
@@ -446,5 +446,5 @@ try {
 } catch (Throwable $e) {
     error_log('[Ecollab] peer matching endpoint: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['ok'=>false,'error'=>'Peer matching service unavailable.','detail'=>$e->getMessage()]);
+    echo json_encode(['ok'=>false,'error'=>defined('APP_DEBUG') && APP_DEBUG ? $e->getMessage() : 'Peer matching service unavailable.']);
 }
