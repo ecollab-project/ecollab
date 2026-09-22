@@ -55,6 +55,7 @@ try {
 
     $stmt = $db->prepare('UPDATE users SET avatar_url = :url WHERE id = :id LIMIT 1');
     $stmt->execute([':url'=>$avatarUrl, ':id'=>$uid]);
+    $_SESSION['avatar_url'] = $avatarUrl;
 
     if ($oldUrl && str_contains($oldUrl, '/uploads/avatars/')) {
         $oldFile = $dir . '/' . basename(parse_url($oldUrl, PHP_URL_PATH) ?: '');
