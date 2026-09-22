@@ -50,7 +50,7 @@ try {
         : (int)$conv['user_a'];
 
     $recipientStmt = $db->prepare(
-        "SELECT id, username, full_name, avatar_color_gradient, is_system
+        "SELECT id, username, full_name, avatar_url, avatar_color_gradient, is_system
          FROM users
          WHERE id = :id AND deleted_at IS NULL
          LIMIT 1"
@@ -203,6 +203,7 @@ try {
                 'sender_id' => $recipientId,
                 'sender_name' => 'Jarred',
                 'sender_username' => $recipient['username'],
+                'sender_avatar_url' => $recipient['avatar_url'] ?? '',
                 'sender_gradient' => $recipient['avatar_color_gradient'] ?: '#6366f1,#8b5cf6',
                 'body' => $aiText,
                 'created_at' => $aiCreatedAt,
