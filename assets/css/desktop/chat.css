@@ -6263,3 +6263,36 @@ body.vc-active:not(.vc-pip) .sidebar-icons {
 .vc-listener-card.has-camera .lc-vol {
   display: none;
 }
+
+/* Voice header quick actions — horizontal alignment */
+.vc-header-right .vc-quick-actions{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:6px!important;
+  width:auto!important;
+  height:auto!important;
+  position:static!important;
+  margin:0!important;
+}
+.vc-header-right .vc-quick-actions .vc-quick-btn{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:34px!important;
+  height:34px!important;
+  min-width:34px!important;
+  min-height:34px!important;
+  padding:0!important;
+  margin:0!important;
+  flex:0 0 34px!important;
+  border-radius:9px!important;
+}
+.vc-header-right .vc-quick-actions .vc-quick-btn i{
+  display:block!important;
+  width:auto!important;
+  height:auto!important;
+  line-height:1!important;
+  font-size:13px!important;
+}
