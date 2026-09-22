@@ -21,6 +21,8 @@ $userService  = new UserService();
 $dashData     = $userService->getStudentDashboardData($user['id']);
 
 $grad         = $user['avatar_color_gradient'] ?? '#e91e8c,#7c3aed';
+$avatarUrl    = (string)($user['avatar_url'] ?? '');
+$avatarStyle  = $avatarUrl !== '' ? "background-image:url('" . htmlspecialchars($avatarUrl, ENT_QUOTES) . "');background-size:cover;background-position:center" : "background:linear-gradient(135deg," . htmlspecialchars($grad) . ")";
 $parts        = explode(',', $grad . ',#7c3aed');
 $c1           = trim($parts[0]);
 $c2           = trim($parts[1]);
@@ -93,7 +95,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
           </div>
         </div>
         <div class="prof-chip" id="pchip" onclick="togglePDrop()">
-          <div class="av" style="background:linear-gradient(135deg,<?= htmlspecialchars($c1) ?>,<?= htmlspecialchars($c2) ?>)"><?= htmlspecialchars($initials) ?></div>
+          <div class="av" style="<?= $avatarStyle ?>"><?= $avatarUrl === '' ? htmlspecialchars($initials) : '' ?></div>
           <div>
             <div class="pn"><?= htmlspecialchars($user['full_name'] ?: $user['username']) ?></div>
             <div class="pr">BSCS Student</div>
@@ -655,7 +657,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
               </div>
             </div>
             <div class="msg-row" style="flex-direction:row-reverse">
-              <div class="m-av" style="background:linear-gradient(135deg,<?= htmlspecialchars($c1) ?>,<?= htmlspecialchars($c2) ?>)"><?= htmlspecialchars($initials) ?></div>
+              <div class="m-av" style="<?= $avatarStyle ?>"><?= $avatarUrl === '' ? htmlspecialchars($initials) : '' ?></div>
               <div style="align-items:flex-end;display:flex;flex-direction:column">
                 <div class="m-name" style="text-align:right">You</div>
                 <div class="m-bubble mine">
@@ -1321,7 +1323,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
       </div>
       <div class="mb">
         <div style="display:flex;align-items:center;gap:11px;margin-bottom:13px">
-          <div class="av" style="width:48px;height:48px;font-size:17px;border:3px solid rgba(233,30,140,.4);background:linear-gradient(135deg,<?= htmlspecialchars($c1) ?>,<?= htmlspecialchars($c2) ?>)"><?= htmlspecialchars($initials) ?></div><button class="btn-sec" onclick="toast('Photo picker opened','info','📷')">Change Photo</button>
+          <div class="av" style="width:48px;height:48px;font-size:17px;border:3px solid rgba(233,30,140,.4);background:linear-gradient(135deg,<?= htmlspecialchars($c1) ?>,<?= htmlspecialchars($c2) ?>)"><?= $avatarUrl === '' ? htmlspecialchars($initials) : '' ?></div><button class="btn-sec" onclick="location.href='<?= BASE_URL ?>/modules/chat/settings.php?section=profile'">Change Photo</button>
         </div>
         <div class="frow">
           <div class="fg"><label class="fl">First Name</label><input class="fi" id="editFirst" value="<?= htmlspecialchars($firstName) ?>"></div>
