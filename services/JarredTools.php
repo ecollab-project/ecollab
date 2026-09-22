@@ -22,7 +22,7 @@ final class JarredTools
         $this->channels = new ChannelService();
     }
 
-    public function contextForPrompt(int $requesterId, string $prompt): string
+    public function contextForPrompt(int $requesterId, string $prompt, ?int $activeServerId = null): string
     {
         $prompt = trim($prompt);
         if ($prompt === '') return '';
@@ -30,7 +30,9 @@ final class JarredTools
         $parts = [];
 
         if (preg_match('/\b(online|who(?:\'s| is) (?:here|online)|active users?|members? online)\b/i', $prompt)) {
-            $serverId = $this->resolveServerId($requesterId, $prompt);
+            $serverId = ($activeServerId && $this->canAccessServer($requesterId, $activeServerId))
+                ? $activeServerId
+                : $this->resolveServerId($requesterId, $prompt);
             if ($serverId) {
                 $members = $this->onlineMembers($requesterId, $serverId);
                 $parts[] = "LIVE ECOLLAB PRESENCE (server_id={$serverId}):\n" .
@@ -65,7 +67,7 @@ final class JarredTools
             "SELECT u.id, u.username, u.full_name, u.role, u.is_online,
                     u.last_active_at, sm.server_role, sm.nickname
              FROM users u
-             JOIN server_members sm ON sm.sender_id = u.id
+             JOIN server_members sm ON sm.user_id = u.id
              WHERE sm.server_id = :sid
                AND u.deleted_at IS NULL
                AND COALESCE(u.is_system, 0) = 0
@@ -93,14 +95,14 @@ final class JarredTools
             JOIN users u ON u.id = m.sender_id
             JOIN channels c ON c.id = m.channel_id
             JOIN servers s ON s.id = c.server_id
-            JOIN server_members sm ON sm.server_id = c.server_id AND sm.sender_id = :uid
+            JOIN server_members sm ON sm.server_id = c.server_id AND sm.user_id = :uid
             WHERE m.is_deleted = 0
               AND m.content LIKE :q
               AND (
                     c.is_private = 0
                     OR EXISTS (
                         SELECT 1 FROM channel_members cm
-                        WHERE cm.channel_id = c.id AND cm.sender_id = :uid2
+                        WHERE cm.channel_id = c.id AND cm.user_id = :uid2
                     )
                     OR sm.server_role IN ('owner','admin','moderator')
                     OR c.created_by = :uid3
