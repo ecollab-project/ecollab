@@ -110,6 +110,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
             <div class="ditem" onclick="showPage('insights')">📊 My Progress</div>
             <div class="ditem" onclick="showPage('achievements')">🏆 Achievements</div>
             <div class="ditem" onclick="openModal('settingsModal')">⚙️ Settings</div>
+            <?php if (($user['role'] ?? 'student') === 'student'): ?><div class="ditem" onclick="openFacilitatorRequest()">🛡️ Request Facilitator Access</div><?php endif; ?>
             <div class="ditem" onclick="goToChat()">💬 Go to Chat</div>
             <div class="dsep"></div>
             <div class="ditem red" onclick="openModal('logoutModal')">🚪 Sign Out</div>
@@ -1645,6 +1646,21 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
     </div>
   </div>
 
+  <?php if (($user['role'] ?? 'student') === 'student'): ?>
+  <div class="mo" id="facilitatorRequestModal">
+    <div class="md md-sm">
+      <div class="mh"><div class="mt">Request Facilitator Access</div><div class="mx" onclick="closeModal('facilitatorRequestModal')">✕</div></div>
+      <div class="mb">
+        <div id="facReqStatus" style="margin-bottom:14px;padding:10px;border:1px solid var(--border2);border-radius:8px;color:var(--muted2);font-size:12px;">Checking request status…</div>
+        <form id="facReqForm" onsubmit="submitFacilitatorRequest(event)">
+          <div class="fg"><label class="fl">Proof / School ID <span style="color:#ef4444">*</span></label><input class="fi" id="facReqProof" name="proof" type="file" accept=".jpg,.jpeg,.png,.pdf" required><div style="font-size:10.5px;color:var(--muted2);margin-top:5px">JPG, PNG, or PDF · maximum 5 MB</div></div>
+          <div class="fg"><label class="fl">Reason</label><textarea class="fta" id="facReqReason" name="reason" placeholder="Why are you requesting facilitator access?" style="min-height:90px"></textarea></div>
+        </form>
+      </div>
+      <div class="mf"><button class="btn-sec" onclick="closeModal('facilitatorRequestModal')">Cancel</button><button class="btn-primary" id="facReqSubmit" type="submit" form="facReqForm">Submit Request</button></div>
+    </div>
+  </div>
+  <?php endif; ?>
   <div class="toast-container" id="tc"></div>
 
   <!-- Inject live data for JS -->
@@ -1672,6 +1688,9 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
   <script src="<?= BASE_URL ?>/assets/js/ai-markdown.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/ai-session.js" defer></script>
   <script>
+    async function openFacilitatorRequest(){openModal('facilitatorRequestModal');const box=document.getElementById('facReqStatus'),btn=document.getElementById('facReqSubmit');try{const r=await fetch(window.ECOLLAB_BASE+'/API/facilitator/status.php',{credentials:'same-origin'}),d=await r.json();const q=d.request;if(!q){box.textContent='No facilitator request submitted yet.';btn.disabled=false;return}box.innerHTML='<strong>Status: '+String(q.status).toUpperCase()+'</strong><br>Submitted: '+q.created_at+(q.review_note?'<br>Admin note: '+q.review_note:'');btn.disabled=q.status==='pending'||q.status==='approved';btn.textContent=q.status==='pending'?'Request Pending':q.status==='approved'?'Approved':'Submit New Request'}catch(e){box.textContent='Unable to load request status.'}}
+    async function submitFacilitatorRequest(e){e.preventDefault();const btn=document.getElementById('facReqSubmit'),fd=new FormData(e.target);btn.disabled=true;btn.textContent='Submitting…';try{const r=await fetch(window.ECOLLAB_BASE+'/API/facilitator/request.php',{method:'POST',credentials:'same-origin',headers:{'X-CSRF-Token':DASH_DATA.csrfToken},body:fd}),d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'Request failed');toast('Facilitator request submitted for admin review.','success','🛡️');await openFacilitatorRequest()}catch(err){toast(err.message||'Could not submit request.','error','⚠️');btn.disabled=false;btn.textContent='Submit Request'}}
+
     // ── Mobile sidebar ─────────────────────────────────────────────────
     (function() {
       var sidebar = document.querySelector('.sidebar');
