@@ -1434,7 +1434,7 @@ async function generateAIReply() {
 
     await window.openDmConversation(
       parseInt(ai.id),
-      ai.full_name || 'eCollab AI',
+      ai.full_name || 'Jarred',
       ai.avatar_color_gradient || '#6366f1,#8b5cf6'
     );
   } catch (err) {
