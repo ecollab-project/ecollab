@@ -137,5 +137,9 @@ try {
 } catch (Throwable $e) {
     error_log('[send-request] ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['error' => 'Server error']);
+    echo json_encode([
+        'error' => 'Server error',
+        'code' => 'FRIEND_REQUEST_FAILED',
+        'detail' => defined('APP_ENV') && APP_ENV === 'development' ? $e->getMessage() : null,
+    ]);
 }
