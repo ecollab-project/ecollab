@@ -1414,32 +1414,36 @@ function filterSidebar(query) {
 
 // ── AI Assist ──
 async function generateAIReply() {
-  const input = document.getElementById('chatInputField');
-  if (!input) return;
   const btn = document.getElementById('aiAssistBtn');
-  if (btn) { btn.textContent = '✨ Generating…'; btn.disabled = true; }
+  if (btn) {
+    btn.textContent = '✨ Opening AI…';
+    btn.disabled = true;
+  }
+
   try {
-    // Gather last 8 messages as context
-    const msgEls = document.querySelectorAll('.msg-text');
-    const context = Array.from(msgEls).slice(-8).map(el => el.textContent.trim()).filter(Boolean).join('\n');
+    const data = await apiFetch((window.ECOLLAB?.baseUrl || '') + '/API/ai/dm-account.php');
+    const ai = data.ai || data.account || data.user || data;
 
-    const data = await apiFetch(`${API_BASE}/ai-assist.php`, {
-      method: 'POST',
-      body: JSON.stringify({
-        prompt: input.value || 'Suggest a helpful reply for this study chat',
-        context,
-      }),
-    });
-
-    if (data.suggestion) {
-      input.value = data.suggestion;
-      input.focus();
-      input.dispatchEvent(new Event('input'));
+    if (!ai?.id) {
+      throw new Error('eCollab AI account is unavailable');
     }
+
+    if (typeof window.openDmConversation !== 'function') {
+      throw new Error('Direct messages are still loading');
+    }
+
+    await window.openDmConversation(
+      parseInt(ai.id),
+      ai.full_name || 'eCollab AI',
+      ai.avatar_color_gradient || '#6366f1,#8b5cf6'
+    );
   } catch (err) {
-    if (window.showToast) showToast(err.message || 'AI assist unavailable', 'info');
+    if (window.showToast) showToast(err.message || 'eCollab AI unavailable', 'info');
   } finally {
-    if (btn) { btn.innerHTML = '✨ AI Assist <span class="ai-assist-chevron">▾</span>'; btn.disabled = false; }
+    if (btn) {
+      btn.innerHTML = '✨ AI Assist <span class="ai-assist-chevron">▾</span>';
+      btn.disabled = false;
+    }
   }
 }
 
