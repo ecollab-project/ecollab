@@ -20,6 +20,8 @@ $userService = new UserService();
 $dashData    = $userService->getFacilitatorDashboardData($user['id']);
 
 $grad     = $user['avatar_color_gradient'] ?? '#e91e8c,#7c3aed';
+$avatarUrl = (string)($user['avatar_url'] ?? '');
+$avatarStyle = $avatarUrl !== '' ? "background-image:url('" . htmlspecialchars($avatarUrl, ENT_QUOTES) . "');background-size:cover;background-position:center" : "background:linear-gradient(135deg," . htmlspecialchars($grad) . ")";
 $parts    = explode(',', $grad . ',#7c3aed');
 $c1       = trim($parts[0]);
 $c2       = trim($parts[1]);
@@ -89,7 +91,7 @@ $stats = $dashData['stats'] ?? ['total_members' => 0, 'active_today' => 0, 'mess
           </div>
         </div>
         <div class="prof-chip" id="pchip" onclick="togglePDrop()">
-          <div class="av" style="background:linear-gradient(135deg,<?= htmlspecialchars($c1) ?>,<?= htmlspecialchars($c2) ?>)"><?= htmlspecialchars($initials) ?></div>
+          <div class="av" style="<?= $avatarStyle ?>"><?= $avatarUrl === '' ? htmlspecialchars($initials) : '' ?></div>
           <div>
             <div class="pn"><?= $name ?></div>
             <div class="pr">Facilitator</div>
@@ -967,7 +969,7 @@ $stats = $dashData['stats'] ?? ['total_members' => 0, 'active_today' => 0, 'mess
               </div>
             </div>
             <div style="display:flex;gap:8px">
-              <div class="ract-av" style="background:linear-gradient(135deg,<?= htmlspecialchars($c1) ?>,<?= htmlspecialchars($c2) ?>;font-size:9px"><?= htmlspecialchars($initials) ?></div>
+              <div class="ract-av" style="background:linear-gradient(135deg,<?= htmlspecialchars($c1) ?>,<?= htmlspecialchars($c2) ?>;font-size:9px"><?= $avatarUrl === '' ? htmlspecialchars($initials) : '' ?></div>
               <div>
                 <div style="font-size:10px;font-weight:700;color:var(--pink);margin-bottom:2px"><?= $name ?> (You) · 5m ago</div>
                 <div style="background:rgba(233,30,140,.1);border-radius:0 9px 9px 9px;padding:8px 11px;font-size:12px;line-height:1.5">Great initiative! Office hours are Wed 3-5 PM 📌</div>
