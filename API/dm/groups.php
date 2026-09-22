@@ -51,13 +51,21 @@ try {
         $name = trim((string)($body['name'] ?? ''));
         $name = $name !== '' ? mb_substr($name, 0, 100) : null;
 
-        // Confirm every target user actually exists and isn't deleted/banned
+        // Group members do not need to be friends, but every invited user
+        // must share at least one server with the creator.
         $placeholders = implode(',', array_fill(0, count($memberIds), '?'));
-        $check = $db->prepare("SELECT id FROM users WHERE id IN ($placeholders) AND deleted_at IS NULL AND status != 'banned'");
-        $check->execute($memberIds);
+        $check = $db->prepare("SELECT DISTINCT u.id
+            FROM users u
+            JOIN server_members target_sm ON target_sm.user_id = u.id
+            JOIN server_members my_sm ON my_sm.server_id = target_sm.server_id AND my_sm.user_id = ?
+            WHERE u.id IN ($placeholders)
+              AND u.deleted_at IS NULL
+              AND u.status NOT IN ('banned','suspended','deactivated')
+              AND COALESCE(u.is_system,0)=0");
+        $check->execute(array_merge([$uid], $memberIds));
         $validIds = array_map('intval', $check->fetchAll(PDO::FETCH_COLUMN));
         if (count($validIds) !== count($memberIds)) {
-            dmGroupFail('One or more selected users are unavailable.');
+            dmGroupFail('Every group member must share at least one server with you.');
         }
 
         $db->beginTransaction();
