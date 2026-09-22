@@ -6296,3 +6296,8 @@ body.vc-active:not(.vc-pip) .sidebar-icons {
   line-height:1!important;
   font-size:13px!important;
 }
+
+.vc-header-right .vc-quick-actions .vc-quick-btn svg{
+  width:15px!important;height:15px!important;display:block!important;
+  fill:currentColor!important;pointer-events:none!important;
+}
