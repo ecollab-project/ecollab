@@ -42,11 +42,11 @@ try {
         $memStmt->execute([':gid' => $groupId]);
         $members = $memStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $readStmt = $db->prepare(
-            'INSERT INTO dm_reads (user_id, group_id, last_read_at) VALUES (:uid, :gid, NOW())
-             ON DUPLICATE KEY UPDATE last_read_at = NOW()'
-        );
-        $readStmt->execute([':uid' => $uid, ':gid' => $groupId]);
+        // dm_reads is keyed by (user_id, conversation_id), and conversation_id
+        // is NOT NULL in the current schema. Group conversations therefore cannot
+        // be stored in dm_reads without corrupting/overwriting direct-message read
+        // state. Group read tracking will use a dedicated table in a later schema
+        // change; opening a group must not fail just because no DM read row exists.
 
         $msgs = $db->prepare(
             'SELECT dm.id, dm.sender_id, dm.body, dm.created_at,
