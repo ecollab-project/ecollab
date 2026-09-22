@@ -381,15 +381,31 @@ try {
             $reqId=(int)($body['request_id'] ?? 0);
             $response=(string)($body['response'] ?? '');
             if (!in_array($response,['accepted','declined'],true)) $fail('Invalid response.');
+
+            // Requests shown in this modal can originate from either
+            // pm_match_requests or the canonical friendships table.
             $stmt=$db->prepare('SELECT * FROM pm_match_requests WHERE id=? AND addressee_id=?');
             $stmt->execute([$reqId,$uid]);
             $req=$stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$req) $fail('Request not found.',404);
-            $db->prepare('UPDATE pm_match_requests SET status=?,responded_at=CURRENT_TIMESTAMP WHERE id=?')->execute([$response,$reqId]);
-            if ($response === 'accepted') {
-                $friend=$db->prepare("INSERT INTO friendships (requester_id,addressee_id,status) VALUES (?,?, 'accepted') ON DUPLICATE KEY UPDATE status='accepted'");
-                $friend->execute([(int)$req['requester_id'],$uid]);
+
+            if ($req) {
+                $db->prepare('UPDATE pm_match_requests SET status=?,responded_at=CURRENT_TIMESTAMP WHERE id=?')->execute([$response,$reqId]);
+                if ($response === 'accepted') {
+                    $friend=$db->prepare("INSERT INTO friendships (requester_id,addressee_id,status) VALUES (?,?, 'accepted') ON DUPLICATE KEY UPDATE status='accepted'");
+                    $friend->execute([(int)$req['requester_id'],$uid]);
+                }
+                $json(['status'=>$response]);
             }
+
+            $stmt=$db->prepare("SELECT * FROM friendships WHERE id=? AND addressee_id=? AND status='pending' LIMIT 1");
+            $stmt->execute([$reqId,$uid]);
+            $friendReq=$stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$friendReq) $fail('Request not found.',404);
+
+            // friendships.status uses pending/accepted/rejected.
+            $friendStatus = $response === 'declined' ? 'rejected' : 'accepted';
+            $db->prepare('UPDATE friendships SET status=?, responded_at=CURRENT_TIMESTAMP WHERE id=? AND addressee_id=?')
+               ->execute([$friendStatus,$reqId,$uid]);
             $json(['status'=>$response]);
 
         case 'get_compatibility':
