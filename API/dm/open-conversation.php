@@ -18,7 +18,7 @@ try {
     $db = Database::getInstance();
 
     $partnerStmt = $db->prepare(
-        'SELECT id, username, full_name, avatar_color_gradient
+        'SELECT id, username, full_name, avatar_url, avatar_color_gradient
          FROM users
          WHERE id = :id AND deleted_at IS NULL
          LIMIT 1'
@@ -96,6 +96,7 @@ try {
         'SELECT dm.id, dm.sender_id, dm.body, dm.created_at,
                 u.username AS sender_username,
                 u.full_name AS sender_name,
+                u.avatar_url AS sender_avatar_url,
                 u.avatar_color_gradient AS sender_gradient
          FROM dm_messages dm
          JOIN users u ON u.id = dm.sender_id
