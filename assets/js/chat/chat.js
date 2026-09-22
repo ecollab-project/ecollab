@@ -434,6 +434,9 @@ function buildMessageElement(msg) {
   const grad = msg.avatar_color_gradient || '#3b82f6,#6366f1';
   const [c1, c2] = grad.split(',');
   const init = (msg.full_name || msg.username || '?').charAt(0).toUpperCase();
+  const avatarUrl = msg.avatar_url || '';
+  const avatarBg = avatarUrl ? `url("${escHtml(avatarUrl)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
+  const avatarText = avatarUrl ? '' : init;
   const isMe = parseInt(msg.sender_id) === parseInt(window.ECOLLAB?.userId);
   const time = formatTime(msg.created_at);
   const edited = msg.is_edited ? '<span class="edited-tag" style="font-size:10px;color:var(--text-muted);margin-left:4px;">(edited)</span>' : '';
@@ -498,8 +501,8 @@ function buildMessageElement(msg) {
       </button>
     </div>
     <div class="msg-avatar">
-      <div class="avatar-placeholder" style="width:36px;height:36px;font-size:14px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;position:relative;flex-shrink:0;">
-        ${init}
+      <div class="avatar-placeholder" style="width:36px;height:36px;font-size:14px;border-radius:50%;background:${avatarBg};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;position:relative;flex-shrink:0;">
+        ${avatarText}
         <div class="online-dot"></div>
       </div>
     </div>
@@ -1221,11 +1224,13 @@ function renderMembersPanel(members) {
     const grad = m.avatar_color_gradient || '#3b82f6,#6366f1';
     const [c1, c2] = grad.split(',');
     const init = (m.full_name || m.username || '?').charAt(0).toUpperCase();
+    const memberAvatar = m.avatar_url ? `url("${escHtml(m.avatar_url)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
+    const memberInitial = m.avatar_url ? '' : init;
     const online = m.is_online ? 'online' : '';
     return `
       <div class="member-item" data-user-id="${m.id || m.user_id || 0}" data-user-grad="${grad}" onclick="openMiniProfile(event, '${escHtml(m.full_name || m.username)}', '${escHtml(m.role || 'Student')}', '', '${init}', ${m.id || m.user_id || 0})">
         <div class="user-avatar">
-          <div class="avatar-placeholder" style="width:28px;height:28px;font-size:11px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;">${init}</div>
+          <div class="avatar-placeholder" style="width:28px;height:28px;font-size:11px;border-radius:50%;background:${memberAvatar};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;">${memberInitial}</div>
           <div class="online-dot ${m.is_online ? '' : 'offline'}"></div>
         </div>
         <div class="member-info">
@@ -1246,6 +1251,8 @@ function renderMembersPanel(members) {
       const grad = m.avatar_color_gradient || '#3b82f6,#6366f1';
       const [c1, c2] = grad.split(',');
       const init = (m.full_name || m.username || '?').charAt(0).toUpperCase();
+      const memberAvatar = m.avatar_url ? `url("${escHtml(m.avatar_url)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
+      const memberInitial = m.avatar_url ? '' : init;
       return `
         <div class="active-user" onclick="openMiniProfile(event, '${escHtml(m.full_name || m.username)}', '${escHtml(m.role)}', '', '${init}')">
           <div class="user-avatar">
