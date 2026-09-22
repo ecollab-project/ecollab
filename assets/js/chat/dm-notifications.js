@@ -646,9 +646,9 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
   if (DM.activePartnerIsAI) {
     title.innerHTML = `
       <span style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">
-        ${_avatar('eCollab AI', partnerGradient || '#6366f1,#8b5cf6', 30)}
+        ${_avatar('Jarred', partnerGradient || '#6366f1,#8b5cf6', 30)}
         <span style="display:flex;flex-direction:column;min-width:0;">
-          <span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">eCollab AI</span>
+          <span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Jarred</span>
           <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;">🤖 AI Assistant · <span style="color:#22c55e;">● Online</span></span>
         </span>
       </span>`;
@@ -794,7 +794,7 @@ function _showAiTyping() {
   const indicator = document.getElementById('dmTypingIndicator');
   if (!indicator) return;
   indicator.style.display = 'flex';
-  indicator.innerHTML = 'eCollab AI is typing <span style="letter-spacing:2px;margin-left:4px;">•••</span>';
+  indicator.innerHTML = 'Jarred is typing <span style="letter-spacing:2px;margin-left:4px;">•••</span>';
 }
 
 function _hideAiTyping() {
@@ -853,7 +853,11 @@ window.sendDmMessage = async function() {
 
     const data = await apiFetch(BASE() + '/API/dm/send-message.php', {
       method: 'POST',
-      body: JSON.stringify({ conversation_id: DM.activeConvId, body: text }),
+      body: JSON.stringify({
+        conversation_id: DM.activeConvId,
+        body: text,
+        active_server_id: parseInt(window.ECOLLAB?.serverId || window.currentServerId || document.querySelector('[data-server-id].active')?.dataset?.serverId || 0) || null,
+      }),
     });
 
     _hideAiTyping();
@@ -886,7 +890,7 @@ window.sendDmMessage = async function() {
     }
 
     if (data.ai_error) {
-      showToast('eCollab AI could not reply: ' + data.ai_error, 'info');
+      showToast('Jarred could not reply: ' + data.ai_error, 'info');
     }
 
     // Update sidebar preview
