@@ -65,7 +65,7 @@ final class JarredTools
             "SELECT u.id, u.username, u.full_name, u.role, u.is_online,
                     u.last_active_at, sm.server_role, sm.nickname
              FROM users u
-             JOIN server_members sm ON sm.user_id = u.id
+             JOIN server_members sm ON sm.sender_id = u.id
              WHERE sm.server_id = :sid
                AND u.deleted_at IS NULL
                AND COALESCE(u.is_system, 0) = 0
@@ -84,23 +84,23 @@ final class JarredTools
         $limit = max(1, min(25, $limit));
 
         $sql = "
-            SELECT m.id, m.channel_id, m.body, m.created_at,
+            SELECT m.id, m.channel_id, m.content, m.created_at,
                    u.username, u.full_name,
                    c.name AS channel_name, c.server_id,
                    s.name AS server_name,
-                   m.parent_message_id
+                   m.parent_id
             FROM messages m
-            JOIN users u ON u.id = m.user_id
+            JOIN users u ON u.id = m.sender_id
             JOIN channels c ON c.id = m.channel_id
             JOIN servers s ON s.id = c.server_id
-            JOIN server_members sm ON sm.server_id = c.server_id AND sm.user_id = :uid
+            JOIN server_members sm ON sm.server_id = c.server_id AND sm.sender_id = :uid
             WHERE m.is_deleted = 0
-              AND m.body LIKE :q
+              AND m.content LIKE :q
               AND (
                     c.is_private = 0
                     OR EXISTS (
                         SELECT 1 FROM channel_members cm
-                        WHERE cm.channel_id = c.id AND cm.user_id = :uid2
+                        WHERE cm.channel_id = c.id AND cm.sender_id = :uid2
                     )
                     OR sm.server_role IN ('owner','admin','moderator')
                     OR c.created_by = :uid3
