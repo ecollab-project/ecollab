@@ -501,7 +501,7 @@ function _ensureDmSearchModal() {
         <button class="modal-close" onclick="closeDmSearchModal()">×</button>
       </div>
       <div style="padding:12px 16px;">
-        <input id="dmSearchInput" type="text" placeholder="Search your connections…"
+        <input id="dmSearchInput" type="text" placeholder="Search people in your servers…"
           style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text-primary);font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;"
           oninput="_loadDmSearchResults(this.value)" />
       </div>
@@ -587,13 +587,17 @@ async function _loadDmSearchResults(query) {
     container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">Searching…</div>';
 
     try {
-      const url = BASE() + '/API/friendship/list.php' + (query.trim() ? '?q=' + encodeURIComponent(query) : '');
+      const sid = parseInt(window.ECOLLAB?.currentServerId || window.ECOLLAB?.serverId || window.currentServerId || 0) || 0;
+      const params = new URLSearchParams();
+      if (query.trim()) params.set('q', query.trim());
+      if (sid) params.set('server_id', String(sid));
+      const url = BASE() + '/API/dm/server-users.php' + (params.toString() ? '?' + params.toString() : '');
       const data = await apiFetch(url);
-      const friends = data.friends || [];
+      const friends = data.users || [];
 
       if (friends.length === 0) {
         container.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">
-          ${query.trim() ? 'No matching connections' : 'No connections yet — add friends to start messaging them.'}
+          ${query.trim() ? 'No matching members in your server' : 'No other members found in your server.'}
         </div>`;
         return;
       }
@@ -614,7 +618,7 @@ async function _loadDmSearchResults(query) {
           </div>`;
       }).join('');
     } catch (_) {
-      container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">Failed to load connections</div>';
+      container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">Failed to load server members</div>';
     }
   }, 250);
 }
