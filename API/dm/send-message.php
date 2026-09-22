@@ -20,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $body   = json_decode(file_get_contents('php://input'), true) ?? [];
 $convId = (int)($body['conversation_id'] ?? 0);
 $text   = trim($body['body'] ?? '');
+$activeServerId = isset($body['active_server_id']) ? (int)$body['active_server_id'] : null;
 
 if (!$convId || $text === '' || mb_strlen($text) > 4000) {
     http_response_code(400);
@@ -145,7 +146,7 @@ try {
             ];
         }
 
-        $jarredContext = (new JarredTools())->contextForPrompt((int)$me['id'], $text);
+        $jarredContext = (new JarredTools())->contextForPrompt((int)$me['id'], $text, $activeServerId);
         if ($jarredContext !== '') {
             $messages[] = [
                 'role' => 'system',
