@@ -34,6 +34,7 @@ try {
         WHERE u.id != :uid3
           AND u.deleted_at IS NULL
           AND u.status != 'banned'
+          AND COALESCE(u.is_system, 0) = 0
           AND (f.id IS NULL OR f.status = 'rejected')
         ORDER BY u.is_online DESC, u.last_active_at DESC
         LIMIT 50
