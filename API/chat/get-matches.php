@@ -26,7 +26,7 @@ try {
     $stmt = $db->prepare("
         SELECT DISTINCT
             u.id, u.username, u.full_name, u.role,
-            u.avatar_color_gradient, u.bio, u.is_online
+            u.avatar_url, u.avatar_color_gradient, u.bio, u.is_online
         FROM users u
         LEFT JOIN friendships f
           ON (f.requester_id = :uid1 AND f.addressee_id = u.id)
@@ -149,6 +149,7 @@ try {
                 'shared_subjects' => $score['shared_subjects'],
                 'shared_interests' => $score['shared_interests'],
                 'shared_hobbies' => $score['shared_hobbies'],
+                'avatar_url' => (string)($candidate['avatar_url'] ?? ''),
                 'grad' => (string)($candidate['avatar_color_gradient'] ?? '#a855f7,#ec4899'),
             ];
         }
