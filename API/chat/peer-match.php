@@ -200,7 +200,7 @@ try {
 
             $users = $db->prepare("SELECT u.id, u.username, u.full_name, u.role, u.avatar_color_gradient, u.bio, u.is_online
                 FROM users u
-                WHERE u.id != ? AND u.deleted_at IS NULL AND u.status != 'banned'
+                WHERE u.id != ? AND u.deleted_at IS NULL AND u.status != 'banned' AND COALESCE(u.is_system, 0) = 0
                 ORDER BY u.is_online DESC, u.last_active_at DESC LIMIT 100");
             $users->execute([$uid]);
             $service = new PeerMatchingService();
@@ -286,7 +286,7 @@ try {
             $studyStyle = trim((string)($_GET['study_style'] ?? ''));
             if ($q === '' && !$subjectId && !$hobbyId && !$interestId && $studyStyle === '') $json(['users'=>[]]);
 
-            $where = ['u.id != ?', 'u.deleted_at IS NULL', "u.status != 'banned'"];
+            $where = ['u.id != ?', 'u.deleted_at IS NULL', "u.status != 'banned'", 'COALESCE(u.is_system, 0) = 0'];
             $params = [$uid];
             if ($q !== '') { $where[] = '(u.full_name LIKE ? OR u.username LIKE ? OR u.bio LIKE ?)'; $params[]="%$q%"; $params[]="%$q%"; $params[]="%$q%"; }
             if ($subjectId) { $where[] = 'EXISTS (SELECT 1 FROM pm_user_subjects ps WHERE ps.user_id=u.id AND ps.subject_id=?)'; $params[]=$subjectId; }
@@ -318,7 +318,7 @@ try {
             if ($method !== 'POST') $fail('POST required.', 405);
             $peerId = (int)($body['addressee_id'] ?? 0);
             if ($peerId <= 0 || $peerId === $uid) $fail('A valid study buddy is required.');
-            $check = $db->prepare("SELECT id FROM users WHERE id=? AND deleted_at IS NULL AND status!='banned'");
+            $check = $db->prepare("SELECT id FROM users WHERE id=? AND deleted_at IS NULL AND status!='banned' AND COALESCE(is_system, 0)=0");
             $check->execute([$peerId]);
             if (!$check->fetchColumn()) $fail('Study buddy not found.',404);
             $a=min($uid,$peerId); $b=max($uid,$peerId);
