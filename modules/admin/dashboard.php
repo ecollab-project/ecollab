@@ -19,6 +19,8 @@ $userService = new UserService();
 $dashData    = $userService->getAdminDashboardData($user['id']);
 
 $grad     = $user['avatar_color_gradient'] ?? '#e91e8c,#7c3aed';
+$avatarUrl = (string)($user['avatar_url'] ?? '');
+$avatarStyle = $avatarUrl !== '' ? "background-image:url('" . htmlspecialchars($avatarUrl, ENT_QUOTES) . "');background-size:cover;background-position:center" : "background:linear-gradient(135deg," . htmlspecialchars($grad) . ")";
 $parts    = explode(',', $grad . ',#7c3aed');
 $c1       = trim($parts[0]);
 $c2       = trim($parts[1]);
@@ -77,7 +79,7 @@ $stats = $dashData['stats'] ?? [
       </div>
       <div class="prof-wrap" id="pWrap">
         <div class="tb-prof" onclick="togglePDrop()">
-          <div class="av-sm" style="background:linear-gradient(135deg,<?= htmlspecialchars($c1) ?>,<?= htmlspecialchars($c2) ?>)"><?= htmlspecialchars($initials) ?></div>
+          <div class="av-sm" style="<?= $avatarStyle ?>"><?= $avatarUrl === '' ? htmlspecialchars($initials) : '' ?></div>
           <div><div class="pn"><?= $name ?></div><div class="pr"><?= htmlspecialchars(ucfirst(str_replace('_',' ',$user['role']??'Admin'))) ?></div></div>
           <span style="font-size:10px;color:var(--muted)">▼</span>
         </div>
