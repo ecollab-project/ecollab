@@ -834,6 +834,7 @@ class AuthService {
         $_SESSION['role']             = $user['role'];
         $_SESSION['plan_id']          = $user['plan_id'] ?? null;
         $_SESSION['avatar_gradient']  = $user['avatar_color_gradient'] ?? '#FF2D75,#9F3BFF';
+        $_SESSION['avatar_url']       = $user['avatar_url'] ?? '';
         $_SESSION['logged_in_at']     = time();
         // Alias for chat module compatibility
         $_SESSION['avatar_color_gradient'] = $user['avatar_color_gradient'] ?? '#a855f7,#ec4899';
