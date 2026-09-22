@@ -90,8 +90,8 @@
 
   function threadCard(t){
     const g=gradient(t.author_gradient), init=authorName(t).charAt(0).toUpperCase();
-    const images=(Array.isArray(t.attachments)?t.attachments:[]).filter(a=>!a.reply_id && String(a.mime_type||'').startsWith('image/') && a.file_url);
-    const media=images.length?`<div class="tv2-card-media">${images.slice(0,3).map(a=>`<img src="${esc(a.file_url)}" alt="${esc(a.file_name||'Discussion image')}" loading="lazy">`).join('')}</div>`:'';
+    const images=(Array.isArray(t.attachments)?t.attachments:[]).filter(a=>!a.reply_id && (a.file_url || a.url || a.path));
+    const media=images.length?`<div class="tv2-card-media">${images.slice(0,3).map(a=>{const src=a.file_url||a.url||a.path||'';return `<img src="${esc(src)}" alt="${esc(a.file_name||'Discussion image')}" loading="lazy" onerror="this.style.display='none'">`;}).join('')}</div>`:'';
     return `<article class="tv2-card" data-thread-id="${Number(t.id)}"><div class="tv2-meta"><span class="tv2-scope ${scopeClass(t.scope)}">${scopeLabel(t.scope)}</span><span>by <span class="tv2-author">${esc(authorName(t))}</span></span><span>· ${relTime(t.created_at)}</span>${t.server_name?`<span>· ${esc(t.server_name)}</span>`:''}${t.channel_name?`<span>· #${esc(t.channel_name)}</span>`:''}</div><h3>${esc(t.title)}</h3><p>${esc(t.body)}</p>${media}<div class="tv2-actions"><button class="tv2-vote ${Number(t.my_vote)===1?'active':''}" onclick="voteThreadV2('thread',${t.id},${Number(t.my_vote)===1?0:1})">▲ ${Number(t.score)||0}</button><button class="tv2-vote ${Number(t.my_vote)===-1?'active':''}" onclick="voteThreadV2('thread',${t.id},${Number(t.my_vote)===-1?0:-1})">▼</button><span class="tv2-replies">💬 ${Number(t.reply_count)||0} replies</span><button class="tv2-open" onclick="openThreadDetail(${t.id})">Open discussion →</button></div></article>`;
   }
 
