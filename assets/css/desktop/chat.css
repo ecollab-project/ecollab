@@ -6316,3 +6316,58 @@ body.vc-active:not(.vc-pip) .sidebar-icons {
   overflow:hidden!important;
   z-index:1200!important;
 }
+
+/* ═══ Final minimized voice layout only — compact dock under members ═══ */
+.voice-channel-view.vc-minimized{
+  right:8px!important;bottom:8px!important;
+  width:270px!important;height:184px!important;
+  display:grid!important;grid-template-rows:40px minmax(0,1fr) 48px!important;
+}
+.voice-channel-view.vc-minimized .vc-header{
+  height:40px!important;min-height:40px!important;padding:0 8px!important;
+  display:flex!important;align-items:center!important;gap:6px!important;
+}
+.voice-channel-view.vc-minimized .vc-header-icon{width:28px!important;height:28px!important;min-width:28px!important}
+.voice-channel-view.vc-minimized .vc-header-meta{min-width:0!important;flex:1!important}
+.voice-channel-view.vc-minimized .vc-header-title{font-size:12px!important;line-height:1.1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.voice-channel-view.vc-minimized .vc-header-subtitle{font-size:9px!important;line-height:1.1!important}
+.voice-channel-view.vc-minimized .vc-header-right{display:flex!important;align-items:center!important;gap:4px!important;flex:0 0 auto!important}
+.voice-channel-view.vc-minimized .vc-header-right .vc-quick-actions,
+.voice-channel-view.vc-minimized .vc-header-right .vc-invite-btn,
+.voice-channel-view.vc-minimized .vc-header-right .vc-stat-badge{display:none!important}
+.voice-channel-view.vc-minimized .vc-header-right .vc-icon-btn,
+.voice-channel-view.vc-minimized .vc-header-right .vc-minimize-btn{
+  display:flex!important;width:28px!important;height:28px!important;min-width:28px!important;padding:0!important
+}
+.voice-channel-view.vc-minimized .vc-body{
+  min-height:0!important;height:auto!important;padding:7px!important;overflow:hidden!important;
+  display:block!important;
+}
+.voice-channel-view.vc-minimized .vc-room-info,
+.voice-channel-view.vc-minimized .vc-section-header,
+.voice-channel-view.vc-minimized .vc-listening-grid{display:none!important}
+.voice-channel-view.vc-minimized .vc-speaking-grid{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:6px!important;padding:0!important;margin:0!important;height:100%!important;overflow:auto!important;
+}
+.voice-channel-view.vc-minimized .vc-speaker-card{
+  width:auto!important;min-width:0!important;max-width:none!important;
+  height:72px!important;min-height:72px!important;padding:6px!important;margin:0!important;border-radius:9px!important;
+}
+.voice-channel-view.vc-minimized .sc-av{width:32px!important;height:32px!important;min-width:32px!important}
+.voice-channel-view.vc-minimized .sc-name{font-size:9px!important;max-width:100%!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.voice-channel-view.vc-minimized .sc-role,
+.voice-channel-view.vc-minimized .sc-quality,
+.voice-channel-view.vc-minimized .sc-mic-btn{display:none!important}
+.voice-channel-view.vc-minimized .vc-controls-bar{
+  height:48px!important;min-height:48px!important;padding:0 8px!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+}
+.voice-channel-view.vc-minimized .vc-controls-bar .vc-bar-grp.left,
+.voice-channel-view.vc-minimized .vc-controls-bar .vc-bar-grp.right{display:none!important}
+.voice-channel-view.vc-minimized .vc-controls-bar .vc-bar-grp.center{
+  display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;margin:0!important;
+}
+.voice-channel-view.vc-minimized .vc-controls-bar .vc-btn-lg{
+  width:34px!important;height:34px!important;min-width:34px!important;padding:0!important;border-radius:50%!important;
+}
