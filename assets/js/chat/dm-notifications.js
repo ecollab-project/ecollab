@@ -452,7 +452,8 @@ function _renderDmList() {
 
   container.innerHTML = DM.conversations.map(c => {
     const isActive  = DM.activeConvId === c.conversation_id;
-    const name      = c.partner_name || c.partner_username || 'Unknown';
+    const isJarred  = c.partner_username === 'ecollab_ai' || c.partner_is_system == 1;
+    const name      = isJarred ? 'Jarred' : (c.partner_name || c.partner_username || 'Unknown');
     const preview   = c.last_message ? String(c.last_message).slice(0, 40) : 'No messages yet';
     const unread    = parseInt(c.unread_count) || 0;
 
@@ -520,7 +521,7 @@ window.closeDmSearchModal = function() {
 };
 
 function _togglePickerUser(u) {
-  const name = u.full_name || u.fullName || u.name || u.username || 'User';
+  const name = (u.username === 'ecollab_ai' || u.is_system == 1) ? 'Jarred' : (u.full_name || u.fullName || u.name || u.username || 'User');
   if (_dmPickerSelected[u.id]) {
     delete _dmPickerSelected[u.id];
   } else {
@@ -598,7 +599,7 @@ async function _loadDmSearchResults(query) {
       }
 
       container.innerHTML = friends.map(u => {
-        const name = u.full_name || u.username || 'User';
+        const name = (u.username === 'ecollab_ai' || u.is_system == 1) ? 'Jarred' : (u.full_name || u.username || 'User');
         const isSelected = !!_dmPickerSelected[u.id];
         return `
           <div id="dmPickerRow_${u.id}" onclick='_togglePickerUser(${JSON.stringify(u).replace(/'/g, "&#39;")})'
