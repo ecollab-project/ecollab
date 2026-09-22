@@ -25,6 +25,7 @@ try {
         FROM users u
         LEFT JOIN friendships f ON (f.requester_id=:uid1 AND f.addressee_id=u.id) OR (f.requester_id=u.id AND f.addressee_id=:uid2)
         WHERE u.id!=:uid3 AND u.deleted_at IS NULL AND u.status!='banned'
+          AND COALESCE(u.is_system, 0)=0
           AND (f.id IS NULL OR f.status='rejected')
         ORDER BY u.is_online DESC,u.last_active_at DESC LIMIT 50");
     $users->execute([':uid1'=>$uid, ':uid2'=>$uid, ':uid3'=>$uid]);
