@@ -32,12 +32,28 @@ function _esc(s) {
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
+function _parseUtcDate(dateStr) {
+  if (!dateStr) return null;
+  const raw = String(dateStr).trim();
+
+  if (/[zZ]$|[+-]\d{2}:\d{2}$/.test(raw)) {
+    const d = new Date(raw);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  const d = new Date(raw.replace(' ', 'T') + 'Z');
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 function _timeAgo(dateStr) {
-  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (diff < 60)  return 'just now';
-  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
-  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
-  return Math.floor(diff/86400) + 'd ago';
+  const date = _parseUtcDate(dateStr);
+  if (!date) return '';
+
+  const diff = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  return Math.floor(diff / 86400) + 'd ago';
 }
 
 function _avatar(name, gradient, size = 34) {
@@ -55,6 +71,7 @@ const DM = {
   activeConvId: null,
   activePartnerId: null,
   activePartnerName: '',
+  activePartnerIsAI: false,
   groups: [],               // [{id, name, display_name, members, last_message, ...}]
   activeGroupId: null,
   typingTimers: {},         // conversation_id => clearTimeout handle
@@ -612,6 +629,11 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
   DM.activeGroupId     = null;
   DM.activePartnerId   = partnerId;
   DM.activePartnerName = partnerName;
+  const selectedConv = DM.conversations.find(c => Number(c.partner_id) === partnerId);
+  DM.activePartnerIsAI =
+    selectedConv?.partner_is_system == 1 ||
+    String(selectedConv?.partner_username || '').trim().toLowerCase() === 'ecollab_ai' ||
+    String(partnerName).trim().toLowerCase() === 'ecollab ai';
 
   _ensureDmPanel();
 
@@ -620,13 +642,25 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
   setTimeout(() => panel.classList.add('open'), 10);
 
   // Header
-  document.getElementById('dmPanelTitle').innerHTML = `
-    <span onclick="openMiniProfile(event,'${_esc(partnerName)}','','${_esc(partnerGradient || '')}','${_esc((partnerName[0]||'?').toUpperCase())}',${partnerId})" style="display:flex;align-items:center;gap:8px;cursor:pointer;min-width:0;flex:1;">
-      ${_avatar(partnerName, partnerGradient, 30)}
-      <span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(partnerName)}</span>
-    </span>
-    <button onclick="startDmCall(false)" title="Voice call" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;flex-shrink:0;">📞</button>
-    <button onclick="startDmCall(true)" title="Video call" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;flex-shrink:0;">🎥</button>`;
+  const title = document.getElementById('dmPanelTitle');
+  if (DM.activePartnerIsAI) {
+    title.innerHTML = `
+      <span style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">
+        ${_avatar('eCollab AI', partnerGradient || '#6366f1,#8b5cf6', 30)}
+        <span style="display:flex;flex-direction:column;min-width:0;">
+          <span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">eCollab AI</span>
+          <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;">🤖 AI Assistant · <span style="color:#22c55e;">● Online</span></span>
+        </span>
+      </span>`;
+  } else {
+    title.innerHTML = `
+      <span onclick="openMiniProfile(event,'${_esc(partnerName)}','','${_esc(partnerGradient || '')}','${_esc((partnerName[0]||'?').toUpperCase())}',${partnerId})" style="display:flex;align-items:center;gap:8px;cursor:pointer;min-width:0;flex:1;">
+        ${_avatar(partnerName, partnerGradient, 30)}
+        <span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(partnerName)}</span>
+      </span>
+      <button onclick="startDmCall(false)" title="Voice call" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;flex-shrink:0;">📞</button>
+      <button onclick="startDmCall(true)" title="Video call" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;flex-shrink:0;">🎥</button>`;
+  }
 
   // Load messages
   const msgArea = document.getElementById('dmMessagesArea');
@@ -756,10 +790,24 @@ function _appendDmMessage(m) {
   area.scrollTop = area.scrollHeight;
 }
 
+function _showAiTyping() {
+  const indicator = document.getElementById('dmTypingIndicator');
+  if (!indicator) return;
+  indicator.style.display = 'flex';
+  indicator.innerHTML = 'eCollab AI is typing <span style="letter-spacing:2px;margin-left:4px;">•••</span>';
+}
+
+function _hideAiTyping() {
+  const indicator = document.getElementById('dmTypingIndicator');
+  if (!indicator) return;
+  indicator.style.display = 'none';
+  indicator.innerHTML = '';
+}
+
 // Typing signal debounce
 let _dmTypingTimeout;
 function _dmTypingSignal() {
-  if (!DM.activeConvId || !DM.activePartnerId) return;
+  if (!DM.activeConvId || !DM.activePartnerId || DM.activePartnerIsAI) return;
   _wsSend({ type: 'dm_typing', conversation_id: DM.activeConvId, recipient_id: DM.activePartnerId, is_typing: true });
   clearTimeout(_dmTypingTimeout);
   _dmTypingTimeout = setTimeout(() => {
@@ -801,35 +849,61 @@ window.sendDmMessage = async function() {
       return;
     }
 
+    if (DM.activePartnerIsAI) _showAiTyping();
+
     const data = await apiFetch(BASE() + '/API/dm/send-message.php', {
       method: 'POST',
       body: JSON.stringify({ conversation_id: DM.activeConvId, body: text }),
     });
 
-    // Notify recipient via WS
-    _wsSend({
-      type:            'dm_message',
-      conversation_id: DM.activeConvId,
-      message_id:      data.message_id,
-      recipient_id:    data.recipient_id,
-      body:            text,
-      created_at:      data.created_at,
-    });
+    _hideAiTyping();
 
-    // Notify server to push connection request notification if applicable
-    if (data.recipient_id) {
-      _wsSend({ type: 'notify_conn_req_check', recipient_id: data.recipient_id });
+    // Replace optimistic ID with the real DB message ID.
+    const optimisticEl = document.querySelector(`[data-msg-id="${optimistic.id}"]`);
+    if (optimisticEl && data.message_id) {
+      optimisticEl.dataset.msgId = String(data.message_id);
+    }
+
+    // Human DMs still use WebSocket. The AI reply is returned directly
+    // from send-message.php and has no WebSocket client of its own.
+    if (!data.is_ai) {
+      _wsSend({
+        type:            'dm_message',
+        conversation_id: DM.activeConvId,
+        message_id:      data.message_id,
+        recipient_id:    data.recipient_id,
+        body:            text,
+        created_at:      data.created_at,
+      });
+
+      if (data.recipient_id) {
+        _wsSend({ type: 'notify_conn_req_check', recipient_id: data.recipient_id });
+      }
+    }
+
+    if (data.is_ai && data.ai_message) {
+      _appendDmMessage(data.ai_message);
+    }
+
+    if (data.ai_error) {
+      showToast('eCollab AI could not reply: ' + data.ai_error, 'info');
     }
 
     // Update sidebar preview
     const conv = DM.conversations.find(c => c.conversation_id === DM.activeConvId);
     if (conv) {
-      conv.last_message = text.slice(0, 120);
-      conv.last_msg_at  = data.created_at;
+      if (data.is_ai && data.ai_message) {
+        conv.last_message = String(data.ai_message.body || '').slice(0, 120);
+        conv.last_msg_at  = data.ai_message.created_at || data.created_at;
+      } else {
+        conv.last_message = text.slice(0, 120);
+        conv.last_msg_at  = data.created_at;
+      }
       _renderDmList();
     }
 
   } catch (err) {
+    _hideAiTyping();
     showToast('Failed to send: ' + err.message, 'error');
     // Remove optimistic message
     document.querySelector(`[data-msg-id="${optimistic.id}"]`)?.remove();
@@ -844,8 +918,11 @@ window.closeDmPanel = function() {
   if (!panel) return;
   panel.classList.remove('open');
   setTimeout(() => { panel.style.display = 'none'; }, 250);
-  DM.activeConvId    = null;
-  DM.activePartnerId = null;
+  DM.activeConvId       = null;
+  DM.activePartnerId    = null;
+  DM.activePartnerName  = '';
+  DM.activePartnerIsAI  = false;
+  _hideAiTyping();
 };
 
 // ═══════════════════════════════════════════════════════════════
