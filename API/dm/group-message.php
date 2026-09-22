@@ -35,7 +35,7 @@ try {
         if (!$group) { http_response_code(404); echo json_encode(['error' => 'Group not found']); exit; }
 
         $memStmt = $db->prepare("
-            SELECT u.id, u.username, u.full_name, u.avatar_color_gradient
+            SELECT u.id, u.username, u.full_name, u.avatar_url, u.avatar_color_gradient
             FROM dm_group_members gm JOIN users u ON u.id = gm.user_id
             WHERE gm.group_id = :gid
         ");
@@ -51,6 +51,7 @@ try {
         $msgs = $db->prepare(
             'SELECT dm.id, dm.sender_id, dm.body, dm.created_at,
                     u.username AS sender_username, u.full_name AS sender_name,
+                    u.avatar_url AS sender_avatar_url,
                     u.avatar_color_gradient AS sender_gradient
              FROM dm_messages dm
              JOIN users u ON u.id = dm.sender_id
