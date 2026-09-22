@@ -6301,3 +6301,85 @@ body.vc-active:not(.vc-pip) .sidebar-icons {
   width:15px!important;height:15px!important;display:block!important;
   fill:currentColor!important;pointer-events:none!important;
 }
+
+/* ═══ Minimized voice dock — right sidebar only; full voice view untouched ═══ */
+.voice-channel-view.vc-minimized{
+  position:fixed!important;
+  top:auto!important;
+  left:auto!important;
+  right:8px!important;
+  bottom:12px!important;
+  width:286px!important;
+  height:196px!important;
+  max-width:calc(100vw - 16px)!important;
+  border-radius:12px!important;
+  display:grid!important;
+  grid-template-rows:42px minmax(0,1fr) 48px!important;
+  overflow:hidden!important;
+  z-index:1200!important;
+}
+.voice-channel-view.vc-minimized .vc-header{
+  height:42px!important;
+  min-height:42px!important;
+  padding:0 8px!important;
+  gap:7px!important;
+  border-radius:12px 12px 0 0!important;
+}
+.voice-channel-view.vc-minimized .vc-header-icon{
+  width:28px!important;height:28px!important;min-width:28px!important;
+}
+.voice-channel-view.vc-minimized .vc-header-meta{min-width:0!important;}
+.voice-channel-view.vc-minimized .vc-header-title{
+  font-size:12px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+.voice-channel-view.vc-minimized .vc-header-subtitle{font-size:9px!important;margin-top:2px!important;}
+.voice-channel-view.vc-minimized .vc-header-right{gap:4px!important;}
+.voice-channel-view.vc-minimized .vc-header-right .vc-quick-actions{display:none!important;}
+.voice-channel-view.vc-minimized .vc-stat-badge{
+  padding:4px 6px!important;font-size:10px!important;min-width:28px!important;justify-content:center!important;
+}
+.voice-channel-view.vc-minimized .vc-invite-btn{display:none!important;}
+.voice-channel-view.vc-minimized .vc-icon-btn,
+.voice-channel-view.vc-minimized .vc-minimize-btn{
+  width:28px!important;height:28px!important;min-width:28px!important;border-radius:7px!important;padding:0!important;
+}
+.voice-channel-view.vc-minimized .vc-body{
+  min-height:0!important;padding:8px!important;overflow:hidden!important;display:block!important;
+}
+.voice-channel-view.vc-minimized .vc-room-info,
+.voice-channel-view.vc-minimized .vc-section-header,
+.voice-channel-view.vc-minimized .vc-listening-grid{display:none!important;}
+.voice-channel-view.vc-minimized .vc-speaking-grid{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  align-content:start!important;
+  gap:6px!important;
+  padding:0!important;
+  height:100%!important;
+  overflow:auto!important;
+}
+.voice-channel-view.vc-minimized .vc-speaker-card{
+  min-width:0!important;min-height:72px!important;height:72px!important;
+  padding:7px!important;border-radius:10px!important;
+}
+.voice-channel-view.vc-minimized .sc-av{width:32px!important;height:32px!important;}
+.voice-channel-view.vc-minimized .sc-name{
+  max-width:100%!important;font-size:9px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+.voice-channel-view.vc-minimized .vc-controls-bar{
+  height:48px!important;min-height:48px!important;padding:0 8px!important;
+}
+.voice-channel-view.vc-minimized .vc-controls-bar>.vc-bar-grp:not(.center){display:none!important;}
+.voice-channel-view.vc-minimized .vc-controls-bar>.vc-bar-grp.center{
+  display:flex!important;width:100%!important;justify-content:center!important;gap:8px!important;
+}
+.voice-channel-view.vc-minimized .vc-btn-lg{
+  width:34px!important;height:34px!important;min-width:34px!important;border-radius:50%!important;
+}
+@media (min-width:1200px){
+  .voice-channel-view.vc-minimized{
+    right:8px!important;
+    bottom:12px!important;
+    width:286px!important;
+  }
+}
