@@ -28,6 +28,7 @@ try {
         exit;
     }
 
+    $ai['full_name'] = 'Jarred';
     echo json_encode(['success' => true, 'ai' => $ai]);
 } catch (Throwable $e) {
     error_log('[ai/dm-account] ' . $e->getMessage());
