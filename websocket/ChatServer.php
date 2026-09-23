@@ -166,8 +166,8 @@ class ChatServer implements MessageComponentInterface
                 }
                 unset($participants);
                 try { $this->db->prepare("UPDATE users SET voice_channel_id=NULL WHERE id=:id")->execute([':id'=>$uid]); } catch (\Exception) {}
-                $this->setUserOnline($uid, false);
-                $this->broadcastPresence($uid, false, $username);
+                $isSysAdmin=in_array((string)($meta['role']??''),['admin','super_admin'],true);
+                if(!$isSysAdmin){$this->setUserOnline($uid, false);$this->broadcastPresence($uid, false, $username);}
             }
         }
         $this->clients->detach($conn); unset($this->connMeta[$rid]);
@@ -184,7 +184,7 @@ class ChatServer implements MessageComponentInterface
         $wsToken = trim($data['ws_token'] ?? '');
         if ($wsToken === '') { $conn->send(json_encode(['type'=>'error','message'=>'Invalid auth: ws_token required'])); return; }
         $hash = hash('sha256',$wsToken);
-        $stmt = $this->db->prepare("SELECT u.id,u.username,u.status,u.full_name,u.avatar_color_gradient FROM ws_tokens wt JOIN users u ON u.id=wt.user_id WHERE wt.token_hash=:hash AND wt.expires_at>NOW() AND u.deleted_at IS NULL LIMIT 1");
+        $stmt = $this->db->prepare("SELECT u.id,u.username,u.status,u.role,u.full_name,u.avatar_color_gradient FROM ws_tokens wt JOIN users u ON u.id=wt.user_id WHERE wt.token_hash=:hash AND wt.expires_at>NOW() AND u.deleted_at IS NULL LIMIT 1");
         $stmt->execute([':hash'=>$hash]); $user=$stmt->fetch(); $stmt->closeCursor();
         if (!$user) { $conn->send(json_encode(['type'=>'error','message'=>'Invalid or expired auth token'])); return; }
         // `users.status` is also used by the application for presence (`offline`),
@@ -195,8 +195,10 @@ class ChatServer implements MessageComponentInterface
             return;
         }
         $userId=(int)$user['id']; $username=$user['username'];
-        $meta['user_id']=$userId; $meta['username']=$username; $meta['full_name']=$user['full_name']??$username; $meta['gradient']=$user['avatar_color_gradient']??''; $meta['authed']=true;
-        $this->userConns[$userId][]=$conn; $this->setUserOnline($userId,true); $this->broadcastPresence($userId,true,$username);
+        $meta['user_id']=$userId; $meta['username']=$username; $meta['full_name']=$user['full_name']??$username; $meta['gradient']=$user['avatar_color_gradient']??''; $meta['role']=$user['role']??'student'; $meta['authed']=true;
+        $this->userConns[$userId][]=$conn;
+        $isSysAdmin=in_array($meta['role'],['admin','super_admin'],true);
+        if(!$isSysAdmin){$this->setUserOnline($userId,true);$this->broadcastPresence($userId,true,$username);}
         $conn->send(json_encode(['type'=>'auth_ok','user_id'=>$userId]));
         echo "[WS] User {$username} ({$userId}) authenticated on {$conn->resourceId}\n";
     }
@@ -248,7 +250,7 @@ class ChatServer implements MessageComponentInterface
         if($channelId<=0||$userId<=0){$conn->send(json_encode(['type'=>'error','message'=>'Channel access denied']));return false;}
         try{$stmt=$this->db->prepare("SELECT c.is_private,c.is_locked,u.role,sm.user_id AS server_member_id,cm.user_id AS channel_member_id FROM channels c JOIN users u ON u.id=:uid_user AND u.deleted_at IS NULL LEFT JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid_server LEFT JOIN channel_members cm ON cm.channel_id=c.id AND cm.user_id=:uid_channel WHERE c.id=:cid AND c.type IN ('text','announcement','voice','whiteboard','study_room') LIMIT 1");$stmt->execute([':uid_user'=>$userId,':uid_server'=>$userId,':uid_channel'=>$userId,':cid'=>$channelId]);$channel=$stmt->fetch();}catch(\Throwable $e){error_log('[WS] channel authorization failed: '.$e->getMessage());$conn->send(json_encode(['type'=>'error','message'=>'Channel access denied']));return false;}
         if(!$channel){$conn->send(json_encode(['type'=>'error','message'=>'Channel access denied']));return false;}
-        $priv=in_array($channel['role'],['admin','super_admin','moderator'],true);$server=$channel['server_member_id']!==null;$private=!$channel['is_private']||$channel['channel_member_id']!==null;$usable=!$channel['is_locked']||$priv;
+        $priv=in_array($channel['role'],['admin','super_admin'],true);$server=$channel['server_member_id']!==null;$private=!$channel['is_private']||$channel['channel_member_id']!==null;$usable=!$channel['is_locked']||$priv;
         if(!$priv&&(!$server||!$private||!$usable)){$conn->send(json_encode(['type'=>'error','message'=>'Channel access denied']));return false;}return true;
     }
 
