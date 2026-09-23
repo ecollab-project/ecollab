@@ -502,3 +502,38 @@ td{padding:10px 16px;font-size:12px;vertical-align:middle}
 @media (max-width: 1100px){
   .main-grid,.grid-2{grid-template-columns:1fr !important;}
 }
+
+
+/* ═══ ADMIN SHELL LAYOUT FIX ═══
+   dashboard.php uses the newer topbar/n-drop/p-drop shell. Keep these rules
+   scoped to that shell so existing page/card styling is unchanged. */
+.main-content{flex:1;min-width:0;height:100vh;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.page-content{flex:1;min-width:0;overflow-y:auto;overflow-x:hidden;padding:22px 24px 36px}
+.topbar{position:relative;z-index:700;width:100%;min-height:56px}
+.tb-left{min-width:0}
+.tb-right{position:relative;display:flex;align-items:center;gap:10px;flex:0 0 auto}
+.notif-wrap,.prof-wrap{position:relative;display:block;flex:0 0 auto;overflow:visible}
+.tb-prof{white-space:nowrap}
+.pn{font-size:12px;font-weight:700;line-height:1.2}
+.pr{font-size:10px;color:var(--muted);line-height:1.2;margin-top:2px}
+.n-badge{position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;padding:0 4px;border-radius:9px;background:var(--red);border:2px solid var(--panel);font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.n-drop,.p-drop{position:absolute;top:calc(100% + 8px);right:0;z-index:1200;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 18px 48px rgba(0,0,0,.62);display:none;overflow:hidden}
+.n-drop.show,.p-drop.show{display:block}
+.n-drop{width:330px;max-width:calc(100vw - 32px)}
+.p-drop{width:220px}
+.n-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 14px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700}
+.n-clear{font-size:10px;color:var(--blue);font-weight:600;cursor:pointer;white-space:nowrap}
+.p-head{padding:12px 14px;border-bottom:1px solid var(--border)}
+.pdn{font-size:13px;font-weight:700}
+.pdr{font-size:10px;color:var(--muted);margin-top:2px}
+.pd-item{display:flex;align-items:center;gap:8px;padding:10px 14px;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;transition:background .12s,color .12s}
+.pd-item:hover{background:rgba(255,255,255,.05);color:var(--text)}
+.pd-item.red{color:var(--red)}
+.pd-sep{height:1px;background:var(--border)}
+.n-drop .dashboard-empty-state{margin:10px;min-height:70px}
+@media(max-width:768px){
+  .page-content{padding:16px 14px 28px}
+  .topbar{padding:0 14px}
+  .tb-search{min-width:0;width:min(52vw,300px)}
+  .tb-prof .pn,.tb-prof .pr,.tb-prof>span:last-child{display:none}
+}
