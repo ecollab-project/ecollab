@@ -35,7 +35,7 @@ class ChannelService
         $roleStmt->execute([':uid' => $userId]);
         $role = $roleStmt->fetchColumn() ?: 'student';
 
-        if (in_array($role, ['admin', 'super_admin', 'moderator'], true)) {
+        if (in_array($role, ['admin', 'super_admin'], true)) {
             $stmt = $this->db->prepare("
                 SELECT c.id, c.name, c.slug, c.type, c.description, c.position,
                        c.is_private, c.is_locked, c.member_count, c.created_at,
@@ -71,7 +71,7 @@ class ChannelService
                           SELECT 1 FROM channel_members cm
                           WHERE cm.channel_id = c.id AND cm.user_id = :uid3
                       )
-                      OR sm.server_role IN ('owner','admin','moderator')
+                      OR sm.server_role IN ('owner','admin')
                       OR c.created_by = :uid5
                   )
                 ORDER BY c.position ASC, c.created_at ASC
@@ -106,7 +106,7 @@ class ChannelService
     }
 
     /**
-     * Create a new channel in a server (owner/admin/moderator only).
+     * Create a new channel in a server (owner/admin only).
      */
     public function createChannel(int $serverId, int $userId, array $data): array
     {
@@ -116,7 +116,7 @@ class ChannelService
         ");
         $stmt->execute([':sid' => $serverId, ':uid' => $userId]);
         $member = $stmt->fetch();
-        if (!$member || !in_array($member['server_role'], ['owner', 'admin', 'moderator'], true)) {
+        if (!$member || !in_array($member['server_role'], ['owner', 'admin'], true)) {
             throw new RuntimeException('Insufficient permissions to create channels', 403);
         }
 
@@ -137,15 +137,21 @@ class ChannelService
         }
         $type = in_array($data['type'] ?? 'text', ['text', 'voice', 'announcement', 'whiteboard', 'study_room'], true)
             ? $data['type'] : 'text';
-        $isPrivate = !empty($data['is_private']) ? 1 : 0;
+        $visibility = strtolower(trim((string)($data['visibility'] ?? '')));
+        if (!in_array($visibility, ['public','private','inherit'], true)) {
+            $visibility = array_key_exists('is_private', $data)
+                ? (!empty($data['is_private']) ? 'private' : 'public')
+                : 'inherit';
+        }
+        $isPrivate = $visibility === 'private' ? 1 : 0;
 
         $posStmt = $this->db->prepare("SELECT COALESCE(MAX(position),0)+1 AS pos FROM channels WHERE server_id=:sid");
         $posStmt->execute([':sid' => $serverId]);
         $pos = (int)$posStmt->fetchColumn();
 
         $ins = $this->db->prepare("
-            INSERT INTO channels (server_id, name, slug, type, description, position, is_private, created_by)
-            VALUES (:sid, :name, :slug, :type, :desc, :pos, :priv, :uid)
+            INSERT INTO channels (server_id, name, slug, type, description, position, is_private, created_by, owner_id, visibility)
+            VALUES (:sid, :name, :slug, :type, :desc, :pos, :priv, :uid, :owner, :visibility)
         ");
         $ins->execute([
             ':sid'  => $serverId,
@@ -156,6 +162,8 @@ class ChannelService
             ':pos'  => $pos,
             ':priv' => $isPrivate,
             ':uid'  => $userId,
+            ':owner'=> $userId,
+            ':visibility'=> $visibility,
         ]);
         $id = (int)$this->db->lastInsertId();
 
@@ -177,7 +185,7 @@ class ChannelService
         $roleStmt->execute([':uid' => $userId]);
         $role = $roleStmt->fetchColumn() ?: 'student';
 
-        if (in_array($role, ['admin', 'super_admin', 'moderator'], true)) {
+        if (in_array($role, ['admin', 'super_admin'], true)) {
             $stmt = $this->db->prepare("
                 SELECT s.id, s.name, s.slug, s.icon_emoji, s.icon_url,
                        s.category, s.type, s.member_count, 'admin' AS server_role
