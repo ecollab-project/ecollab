@@ -93,15 +93,30 @@ class ChannelService
      */
     public function getChannel(int $channelId, int $userId): ?array
     {
-        $stmt = $this->db->prepare("
-            SELECT c.*, s.name AS server_name
-            FROM channels c
-            JOIN servers s ON s.id = c.server_id
-            JOIN server_members sm ON sm.server_id = c.server_id AND sm.user_id = :uid
-            WHERE c.id = :channel_id
-        ");
-        $stmt->execute([':uid' => $userId, ':channel_id' => $channelId]);
-        $row = $stmt->fetch();
+        $roleStmt = $this->db->prepare("SELECT role FROM users WHERE id=:uid LIMIT 1");
+        $roleStmt->execute([':uid'=>$userId]);
+        $role = $roleStmt->fetchColumn() ?: 'student';
+
+        if (in_array($role, ['admin','super_admin'], true)) {
+            // SysAdmin is an invisible platform member: no server_members row is required.
+            $stmt = $this->db->prepare("
+                SELECT c.*, s.name AS server_name
+                FROM channels c
+                JOIN servers s ON s.id=c.server_id
+                WHERE c.id=:channel_id AND s.status='active'
+            ");
+            $stmt->execute([':channel_id'=>$channelId]);
+        } else {
+            $stmt = $this->db->prepare("
+                SELECT c.*, s.name AS server_name
+                FROM channels c
+                JOIN servers s ON s.id=c.server_id
+                JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid
+                WHERE c.id=:channel_id
+            ");
+            $stmt->execute([':uid'=>$userId, ':channel_id'=>$channelId]);
+        }
+        $row=$stmt->fetch();
         return $row ?: null;
     }
 
@@ -219,7 +234,9 @@ class ChannelService
                    sm.server_role, sm.nickname
             FROM users u
             JOIN server_members sm ON sm.user_id = u.id AND sm.server_id = :sid
-            WHERE u.is_online = 1 AND u.status NOT IN ('banned','suspended','deactivated')
+            WHERE u.is_online = 1
+              AND u.role NOT IN ('admin','super_admin')
+              AND u.status NOT IN ('banned','suspended','deactivated')
             ORDER BY sm.server_role ASC, u.full_name ASC
         ");
         $stmt->execute([':sid' => $serverId]);
