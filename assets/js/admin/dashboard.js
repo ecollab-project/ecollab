@@ -31,21 +31,20 @@ function openModal(id, param) {
   closeAllDropdowns();
   // Set params
   if (param) {
-    if (id==='banModal') { document.getElementById('banTarget').textContent = param; }
-    if (id==='kickModal') { document.getElementById('kickTarget').textContent = param; }
-    if (id==='muteModal') { document.getElementById('muteTarget').textContent = param; }
-    if (id==='warnModal') { document.getElementById('warnTarget').textContent = param; }
+    if (id==='banModal') { const t=document.getElementById('banTarget')||document.getElementById('banUsername'); if(t)t.textContent=param; }
+    if (id==='kickModal') { const t=document.getElementById('kickTarget')||document.getElementById('kickUsername'); if(t)t.textContent=param; }
+    if (id==='muteModal') { const t=document.getElementById('muteTarget')||document.getElementById('muteUsername'); if(t)t.textContent=param; }
+    if (id==='warnModal') { const t=document.getElementById('warnTarget'); if(t)t.textContent=param; }
     if (id==='editRoleModal') { const t=document.getElementById('editRoleTarget'); if(t) t.value=param; }
     if (id==='editPermsModal') { const t=document.getElementById('editPermsRole'); if(t) t.textContent=param; }
-    if (id==='deleteRoleModal') { document.getElementById('deleteRoleTarget').textContent=param; }
-    if (id==='serverDetailModal') { document.getElementById('serverDetailTitle').textContent='Server — '+param; document.getElementById('serverDetailName').textContent=param; }
+    if (id==='deleteRoleModal') { const t=document.getElementById('deleteRoleTarget')||document.getElementById('drRole'); if(t)t.textContent=param; }
+    if (id==='serverDetailModal') { const a=document.getElementById('serverDetailTitle')||document.getElementById('sdmTitle'); const b=document.getElementById('serverDetailName'); if(a)a.textContent='Server — '+param;if(b)b.textContent=param; }
     if (id==='serverPermsModal') { }
-    if (id==='deleteServerModal') { document.getElementById('deleteServerTarget').textContent=param; }
-    if (id==='editChannelModal') { document.getElementById('editChannelName').value=param; }
+    if (id==='deleteServerModal') { const t=document.getElementById('deleteServerTarget')||document.getElementById('delSrvName');if(t)t.textContent=param; }
+    if (id==='editChannelModal') { const t=document.getElementById('editChannelName')||document.getElementById('ecInput');if(t)t.value=param;const n=document.getElementById('ecName');if(n)n.textContent=param; }
     if (id==='modActionDetailModal') {
       const types={ban:'BAN — Permanent',kick:'KICK — Session Removal',warn:'WARNING — Formal Notice',mute:'MUTE — 1 Hour'};
-      document.getElementById('modDetailTitle').textContent='Moderation — '+param.toUpperCase();
-      document.getElementById('modDetailType').textContent=types[param]||param;
+      const a=document.getElementById('modDetailTitle'),b=document.getElementById('modDetailType');if(a)a.textContent='Report — '+param.toUpperCase();if(b)b.textContent=types[param]||param;
     }
   }
   const overlay = document.getElementById(id);
@@ -75,6 +74,8 @@ function toggleNotifDrop() {
   closeAllDropdowns();
   if (!isOpen) d.classList.add('show');
 }
+function toggleNotif(){ toggleNotifDrop(); }
+function togglePDrop(){ toggleProfileDrop(); }
 function toggleProfileDrop() {
   const d = document.getElementById('profileDrop') || document.getElementById('pDrop');
   if (!d) return;
@@ -508,15 +509,18 @@ function exportData(type) {
 function issueModerationAction() { closeModal('issueBanModal'); showToast('Moderation action issued', 'success', '🔨'); }
 
 // ═══ SYSTEM HEALTH ═══
-function refreshHealth() {
-  showToast('Refreshing metrics...', 'info', '🔄');
-  const cpu = Math.floor(Math.random()*60+10);
-  const mem = Math.floor(Math.random()*50+30);
-  document.getElementById('cpuVal').textContent=cpu+'%';
-  document.getElementById('cpuBar').style.width=cpu+'%';
-  document.getElementById('memVal').textContent=mem+'%';
-  document.getElementById('memBar').style.width=mem+'%';
-  setTimeout(()=>showToast('Metrics updated', 'success', '✅'), 800);
+async function refreshHealth() {
+  showToast('Loading live VPS metrics...','info','🔄');
+  try{
+    const r=await fetch((window.ECOLLAB_BASE||'')+'/API/admin/system-health.php',{credentials:'same-origin'}),d=await r.json();
+    if(!r.ok||!d.success) throw new Error(d.error||'Health request failed');
+    const h=d.health,m=h.memory||{};
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
+    set('cpuVal',h.cpu_percent==null?'N/A':h.cpu_percent+'%'); set('memVal',m.percent==null?'N/A':m.percent+'%'); set('diskVal',h.disk_percent==null?'N/A':h.disk_percent+'%'); set('phpVal',h.php_version||'N/A');
+    const up=Number(h.uptime_seconds||0);set('uptimeVal',up?Math.floor(up/86400)+'d '+Math.floor((up%86400)/3600)+'h':'N/A');
+    const cpu=document.getElementById('cpuBar'),mem=document.getElementById('memBar');if(cpu)cpu.style.width=(h.cpu_percent||0)+'%';if(mem)mem.style.width=(m.percent||0)+'%';
+    showToast('Live VPS metrics updated','success','✅');
+  }catch(e){showToast(e.message||'Unable to read VPS metrics','error','❌');}
 }
 function clearLogs() { closeModal('clearLogsModal'); showToast('Error logs cleared', 'success', '🗑'); }
 
@@ -702,4 +706,15 @@ function openChannelPermissions(name){
 function setAnalyticsRange(days){
   showToast('Analytics range set to last '+days+' days.','info','📊');
   initAnalyticsCharts();
+}
+
+async function recommendGroup(){
+ const topic=document.getElementById('groupTopic')?.value.trim()||'',task=document.getElementById('groupTask')?.value.trim()||'',group_size=Number(document.getElementById('groupSize')?.value||4);
+ if(!topic&&!task){showToast('Enter a topic or task first.','error','⚠️');return;}
+ const btn=document.getElementById('recommendGroupBtn'),out=document.getElementById('groupRecommendationResults'),status=document.getElementById('aiModelStatus');btn.disabled=true;btn.textContent='Thinking…';status.textContent='Calling VPS local LLM…';out.innerHTML='<div class="dashboard-empty-state">Analyzing real user profiles…</div>';
+ try{const r=await fetch((window.ECOLLAB_BASE||'')+'/API/admin/group-recommendations.php',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':ADMIN_DATA.csrfToken},body:JSON.stringify({topic,task,group_size})}),d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'Recommendation failed');status.textContent=(d.model||'Local LLM')+' · '+d.candidate_count+' real candidates';out.innerHTML=d.groups.length?d.groups.map((g,i)=>'<div class="report-item"><div class="ri-icon">✨</div><div class="ri-body"><div class="ri-title">Recommended Group '+(i+1)+'</div><div class="ri-meta">'+escHtml(g.reason||'Balanced profile match')+'</div><div style="margin-top:8px">'+g.members.map(m=>'<span class="perm-tag granted" title="'+escHtml(m.fit||'')+'">'+escHtml(m.name||m.username)+' · '+escHtml(m.role)+'</span>').join(' ')+'</div></div></div>').join(''):'<div class="dashboard-empty-state">No valid group could be formed from current profiles.</div>';}catch(e){status.textContent='Local LLM unavailable';out.innerHTML='<div class="dashboard-empty-state">'+escHtml(e.message)+'</div>';}finally{btn.disabled=false;btn.textContent='✨ Recommend Group';}
+}
+async function loadReportLogs(){
+ const box=document.getElementById('modLogContainer');if(!box)return;box.innerHTML='<div class="dashboard-empty-state">Loading report logs…</div>';
+ try{const r=await fetch((window.ECOLLAB_BASE||'')+'/API/admin/dashboard-data.php?action=get_reports&status=all',{credentials:'same-origin'}),d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'Failed');box.innerHTML=(d.reports||[]).length?d.reports.map(x=>'<div class="log-entry"><div class="log-type-badge '+(x.status==='resolved'?'':'warn')+'">'+escHtml(x.status||'pending').toUpperCase()+'</div><div class="le-info"><div class="le-main">'+escHtml(x.reason||'Report')+'</div><div class="le-sub">'+escHtml(x.reporter_username||'Unknown')+' · '+escHtml(x.server_name||'Unknown server')+'</div></div><div class="le-time">'+escHtml(x.created_at||'')+'</div></div>').join(''):'<div class="dashboard-empty-state">No report logs recorded.</div>';}catch(e){box.innerHTML='<div class="dashboard-empty-state">Unable to load report logs.</div>';}
 }
