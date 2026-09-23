@@ -28,7 +28,6 @@ function aNavItem(string $page, string $icon, string $label, string $active): st
     <div class="nav-section-title">User Management</div>
     <?= aNavItem('users',      '👥', 'Users',              $activePage) ?>
     <?= aNavItem('facilitatorrequests', '🪪', 'Facilitator Requests', $activePage) ?>
-    <?= aNavItem('roles',      '🛡', 'Roles & Permissions', $activePage) ?>
     <?= aNavItem('courses',    '🔖', 'Course & Tags',       $activePage) ?>
     <?= aNavItem('aimatching', '✨', 'AI Matching',          $activePage) ?>
     <?= aNavItem('reports',    '🚩', 'Reports',              $activePage) ?>
@@ -39,7 +38,7 @@ function aNavItem(string $page, string $icon, string $label, string $active): st
     <?= aNavItem('servers',    '🖥', 'Servers',    $activePage) ?>
     <?= aNavItem('channels',   '#',  'Channels',   $activePage) ?>
     <?= aNavItem('settings',   '⚙',  'Settings',   $activePage) ?>
-    <?= aNavItem('moderation', '🔨', 'Moderation', $activePage) ?>
+    <?= aNavItem('moderation', '📋', 'Report Logs', $activePage) ?>
   </div>
 
   <div class="nav-section">
