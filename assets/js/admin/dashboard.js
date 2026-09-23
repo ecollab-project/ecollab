@@ -16,7 +16,8 @@ function showPage(id, navEl) {
       if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+id+"'")) n.classList.add('active');
     });
   }
-  document.getElementById('bcText').textContent = bc[id] || id;
+  const bcText = document.getElementById('bcText');
+  if (bcText) bcText.textContent = bc[id] || id;
   closeAllDropdowns();
   if (id==='analytics') initAnalyticsCharts();
   if (id==='aimatching') initMatchingChart();
@@ -68,25 +69,26 @@ document.addEventListener('keydown', e => {
 
 // ═══ DROPDOWNS ═══
 function toggleNotifDrop() {
-  const d = document.getElementById('notifDrop');
+  const d = document.getElementById('notifDrop') || document.getElementById('nDrop');
+  if (!d) return;
   const isOpen = d.classList.contains('show');
   closeAllDropdowns();
   if (!isOpen) d.classList.add('show');
 }
 function toggleProfileDrop() {
-  const d = document.getElementById('profileDrop');
+  const d = document.getElementById('profileDrop') || document.getElementById('pDrop');
+  if (!d) return;
   const isOpen = d.classList.contains('show');
   closeAllDropdowns();
   if (!isOpen) d.classList.add('show');
 }
 function closeAllDropdowns() {
-  document.getElementById('notifDrop').classList.remove('show');
-  document.getElementById('profileDrop').classList.remove('show');
+  [document.getElementById('notifDrop'),document.getElementById('nDrop'),document.getElementById('profileDrop'),document.getElementById('pDrop')].forEach(el=>el?.classList.remove('show'));
   hideSearchDrop();
 }
 document.addEventListener('click', e => {
-  if (!e.target.closest('#notifBtn')) document.getElementById('notifDrop').classList.remove('show');
-  if (!e.target.closest('#profileChip')) document.getElementById('profileDrop').classList.remove('show');
+  if (!e.target.closest('#notifBtn') && !e.target.closest('#nBtn') && !e.target.closest('#nWrap')) (document.getElementById('notifDrop')||document.getElementById('nDrop'))?.classList.remove('show');
+  if (!e.target.closest('#profileChip') && !e.target.closest('#pWrap')) (document.getElementById('profileDrop')||document.getElementById('pDrop'))?.classList.remove('show');
   if (!e.target.closest('#searchBar')) hideSearchDrop();
   if (!e.target.closest('#ctxMenu') && !e.target.closest('.btn-more')) closeCtx();
 });
@@ -115,11 +117,11 @@ function handleSearch(v) {
   if (v.length > 0) showSearchDrop(); else hideSearchDrop();
 }
 function showSearchDrop() {
-  if (document.getElementById('globalSearch').value.length > 0)
-    document.getElementById('searchDrop').classList.add('show');
+  const input=document.getElementById('globalSearch'), drop=document.getElementById('searchDrop');
+  if (input && drop && input.value.length > 0) drop.classList.add('show');
 }
 function hideSearchDrop() {
-  document.getElementById('searchDrop').classList.remove('show');
+  document.getElementById('searchDrop')?.classList.remove('show');
 }
 
 // ═══ CONTEXT MENU ═══
