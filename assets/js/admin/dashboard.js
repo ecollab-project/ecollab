@@ -464,9 +464,10 @@ function resolveFeedback(btn, status) {
 
 // ═══ FILTERS ═══
 function filterUsersTable(q) {
-  const rows = document.querySelectorAll('#usersTable tr');
-  rows.forEach(r => {
-    r.style.display = r.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+  const usersPage=document.getElementById('page-users');
+  if(usersPage?.classList.contains('active')) { applyUserFilters(); return; }
+  document.querySelectorAll('#recentUsersTable tr,#usersTable tr').forEach(r => {
+    r.style.display = r.textContent.toLowerCase().includes(String(q).toLowerCase()) ? '' : 'none';
   });
 }
 
@@ -491,8 +492,16 @@ function logout() {
 
 // ═══ EXPORT ═══
 function exportData(type) {
-  showToast('Exporting ' + type + ' data...', 'info', '⬇️');
-  setTimeout(()=>showToast('Export complete — download started', 'success', '✅'), 1000);
+  const base=window.ECOLLAB_BASE||'';
+  if(type==='users'||type==='all'){
+    window.location.href=base+'/API/admin/dashboard-data.php?action=export';
+    return;
+  }
+  const rows=[...document.querySelectorAll(type==='modlogs'?'#modLogContainer .log-entry':type==='logs'?'.log-list .log-item':'#page-'+type+' table tr')];
+  if(!rows.length){showToast('No '+type+' data available to export.','warning','⚠️');return;}
+  const csv=rows.filter(r=>r.offsetParent!==null).map(r=>[...r.querySelectorAll('th,td,.le-main,.le-sub,.le-time,.log-time,.log-msg')].map(x=>'"'+x.textContent.trim().replaceAll('"','""')+'"').join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='ecollab-'+type+'-'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(a.href);
 }
 
 // ═══ MODERATION ═══
@@ -666,4 +675,31 @@ async function reviewFacilitatorRequest(requestId, decision){
   }catch(err){
     showToast(err.message||'Unable to review request.','error','⚠️');
   }
+}
+
+function applyUserFilters(){
+  const q=(document.querySelector('#page-users .filter-search input')?.value||'').toLowerCase();
+  const course=(document.getElementById('userCourseFilter')?.value||'').toLowerCase();
+  const role=(document.getElementById('userRoleFilter')?.value||'').toLowerCase();
+  const status=(document.getElementById('userStatusFilter')?.value||'').toLowerCase();
+  document.querySelectorAll('#usersTable tr').forEach(row=>{
+    if(row.querySelector('.dashboard-empty-state')) return;
+    const text=row.textContent.toLowerCase();
+    const cells=row.querySelectorAll('td');
+    const rowRole=(cells[1]?.textContent||'').trim().toLowerCase();
+    const rowCourse=(cells[2]?.textContent||'').trim().toLowerCase();
+    const rowStatus=(cells[3]?.textContent||'').trim().toLowerCase();
+    row.style.display=(!q||text.includes(q))&&(!course||rowCourse.includes(course))&&(!role||rowRole===role)&&(!status||rowStatus.includes(status))?'':'none';
+  });
+}
+function openChannelPermissions(name){
+  showToast('Permission editor opened for '+name+'.','info','🔐');
+  const modal=document.getElementById('editPermsModal');
+  const label=document.getElementById('epRole');
+  if(label) label.textContent=name;
+  if(modal) openModal('editPermsModal');
+}
+function setAnalyticsRange(days){
+  showToast('Analytics range set to last '+days+' days.','info','📊');
+  initAnalyticsCharts();
 }
