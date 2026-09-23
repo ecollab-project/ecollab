@@ -27,6 +27,7 @@ function aNavItem(string $page, string $icon, string $label, string $active): st
   <div class="nav-section">
     <div class="nav-section-title">User Management</div>
     <?= aNavItem('users',      '👥', 'Users',              $activePage) ?>
+    <?= aNavItem('facilitatorrequests', '🪪', 'Facilitator Requests', $activePage) ?>
     <?= aNavItem('roles',      '🛡', 'Roles & Permissions', $activePage) ?>
     <?= aNavItem('courses',    '🔖', 'Course & Tags',       $activePage) ?>
     <?= aNavItem('aimatching', '✨', 'AI Matching',          $activePage) ?>
