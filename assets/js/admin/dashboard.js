@@ -211,7 +211,7 @@ async function loadReports(status = 'pending') {
     const res = await fetch(`${base}/API/admin/dashboard-data.php?action=get_reports&status=${status}`, { credentials: 'same-origin' });
     const data = await res.json();
     if (!data.success || !data.reports.length) {
-      container.innerHTML = '<div style="padding:30px;color:var(--muted);text-align:center;">✅ No ' + status + ' reports.</div>';
+      container.innerHTML = '<div style="padding:30px;color:var(--muted);text-align:center;">No ' + escHtml(status) + ' reports from student-owned spaces.</div>';
       return;
     }
     // Update badge
