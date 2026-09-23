@@ -35,10 +35,15 @@ function addFileInput(modalId,inputId,labelId){
 }
 let originalOpenCreate=null,originalCloseCreate=null;
 function installCreateHooks(){
-  if(typeof window.openThreadCreateModal!=='function'||window.__threadsEnhCreateInstalled)return false;
-  originalOpenCreate=window.openThreadCreateModal; originalCloseCreate=window.closeThreadCreateModal;
-  window.__threadsEnhCreateInstalled=true;
-  window.openThreadCreateModal=function(){originalOpenCreate?.();addFileInput('threadsV2CreateModal','tv2EnhCreateImages','tv2EnhCreateFiles');};
+  if(typeof window.openThreadCreateModal!=='function')return false;
+  if(!window.__threadsEnhCreateInstalled){
+    originalOpenCreate=window.openThreadCreateModal; originalCloseCreate=window.closeThreadCreateModal;
+    window.__threadsEnhCreateInstalled=true;
+    window.openThreadCreateModal=function(){originalOpenCreate?.();addFileInput('threadsV2CreateModal','tv2EnhCreateImages','tv2EnhCreateFiles');};
+  }
+  // The create modal already exists before this enhancement boots. Install the
+  // image picker immediately too, so the first post can actually include files.
+  addFileInput('threadsV2CreateModal','tv2EnhCreateImages','tv2EnhCreateFiles');
   return true;
 }
 function normalizedAttachments(items){return Array.from(items||[]).map(x=>({path:x.path||'',url:x.url||'',file_name:x.file_name||'',mime_type:x.mime_type||'',file_size:x.file_size||0}));}
