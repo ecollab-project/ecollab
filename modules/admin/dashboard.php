@@ -346,6 +346,32 @@ $stats = $dashData['stats'] ?? [
       </div>
     </div>
 
+    <!-- ══ FACILITATOR REQUESTS PAGE ══ -->
+    <div class="page-section" id="page-facilitatorrequests">
+      <div class="page-title-row">
+        <div><div class="page-title">Facilitator Requests</div><div class="page-sub">Review student requests for facilitator access and verify submitted proof.</div></div>
+        <button class="btn-sm btn-outline" onclick="loadFacilitatorRequests()">↻ Refresh</button>
+      </div>
+      <div class="card">
+        <div class="filter-bar">
+          <select class="select-filter" id="facReqStatusFilter" onchange="loadFacilitatorRequests(this.value)">
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="all">All Requests</option>
+          </select>
+          <span id="facReqCount" style="margin-left:auto;color:var(--muted);font-size:11px">Loading…</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Student</th><th>Reason</th><th>Proof / ID</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="facilitatorRequestsTable"><tr><td colspan="6" class="dashboard-empty-state">Loading facilitator requests…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- ══ SERVERS PAGE ══ -->
     <div class="page-section" id="page-servers">
       <div class="page-title-row"><div><div class="page-title">Servers</div></div><button class="btn-primary" onclick="openModal('createServerModal')">+ Create Server</button></div>
