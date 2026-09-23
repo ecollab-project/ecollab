@@ -35,9 +35,15 @@ class ChatServer implements MessageComponentInterface
         echo "[ChatServer] Started\n";
     }
 
+    private function refreshDatabase(): void
+    {
+        $this->db = Database::getLiveInstance();
+    }
+
     public function drainRelayTable(): void
     {
         try {
+            $this->refreshDatabase();
             $stmt = $this->db->query("SELECT id, channel_id, payload FROM ws_relay ORDER BY id ASC LIMIT 100");
             $rows = $stmt->fetchAll();
             if (!$rows) return;
@@ -68,6 +74,13 @@ class ChatServer implements MessageComponentInterface
 
     public function onMessage(ConnectionInterface $from, $rawMsg): void
     {
+        try {
+            $this->refreshDatabase();
+        } catch (\Throwable $e) {
+            echo "[WS] Database reconnect failed: {$e->getMessage()}\n";
+            $from->send(json_encode(['type'=>'error','message'=>'Realtime database temporarily unavailable']));
+            return;
+        }
         $rid = $from->resourceId;
         $meta = &$this->connMeta[$rid];
         $data = json_decode($rawMsg, true);
