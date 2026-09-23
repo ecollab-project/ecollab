@@ -21,6 +21,7 @@ function showPage(id, navEl) {
   if (id==='analytics') initAnalyticsCharts();
   if (id==='aimatching') initMatchingChart();
   if (id==='reports') loadReports();
+  if (id==='facilitatorrequests') loadFacilitatorRequests();
 }
 
 // ═══ MODALS ═══
@@ -594,3 +595,73 @@ function doLogout(){
     .catch(()=>{ window.location.href=(window.ECOLLAB_BASE||'')+'/modules/auth/login.php'; });
 }
 function goToChat(){ window.location.href=(window.ECOLLAB_BASE||'')+'/modules/chat/chat.php'; }
+
+
+// ═══ FACILITATOR REQUESTS ═══
+function facReqEsc(value){
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
+}
+async function loadFacilitatorRequests(status){
+  const filter=document.getElementById('facReqStatusFilter');
+  status=status || (filter ? filter.value : 'pending');
+  const tbody=document.getElementById('facilitatorRequestsTable');
+  const count=document.getElementById('facReqCount');
+  if(!tbody) return;
+  tbody.innerHTML='<tr><td colspan="6" class="dashboard-empty-state">Loading facilitator requests…</td></tr>';
+  try{
+    const res=await fetch((window.ECOLLAB_BASE||'')+'/API/admin/facilitator-requests.php?status='+encodeURIComponent(status),{credentials:'same-origin'});
+    const data=await res.json();
+    if(!res.ok || !data.success) throw new Error(data.error||'Unable to load facilitator requests.');
+    const rows=Array.isArray(data.requests)?data.requests:[];
+    if(count) count.textContent=rows.length+' request'+(rows.length===1?'':'s');
+    if(!rows.length){
+      tbody.innerHTML='<tr><td colspan="6" class="dashboard-empty-state">No '+facReqEsc(status)+' facilitator requests.</td></tr>';
+      return;
+    }
+    tbody.innerHTML=rows.map(r=>{
+      const name=facReqEsc(r.full_name||r.username||('User #'+r.user_id));
+      const username=facReqEsc(r.username||'');
+      const email=facReqEsc(r.email||'');
+      const reason=facReqEsc(r.reason||'No reason provided.');
+      const proofName=facReqEsc(r.proof_original_name||'Proof');
+      const proofPath=String(r.proof_path||'').replace(/^\/+/, '');
+      const proofUrl=proofPath ? (window.ECOLLAB_BASE||'')+'/'+proofPath.split('/').map(encodeURIComponent).join('/') : '';
+      const submitted=facReqEsc(r.created_at||'');
+      const state=facReqEsc(r.status||'pending');
+      const pending=r.status==='pending';
+      return '<tr>'+
+        '<td><div class="u-name-main">'+name+'</div><div class="u-handle">@'+username+' · '+email+'</div></td>'+
+        '<td style="max-width:320px;white-space:normal">'+reason+'</td>'+
+        '<td>'+(proofUrl?'<a class="btn-view" href="'+facReqEsc(proofUrl)+'" target="_blank" rel="noopener">View '+proofName+'</a>':'<span style="color:var(--muted)">Unavailable</span>')+'</td>'+
+        '<td style="color:var(--muted)">'+submitted+'</td>'+
+        '<td><span class="pill '+(state==='approved'?'active':'offline')+'">'+state.toUpperCase()+'</span></td>'+
+        '<td>'+(pending?'<div class="action-btns"><button class="btn-approve" onclick="reviewFacilitatorRequest('+Number(r.id)+',\'approve\')">Approve</button><button class="btn-deny" onclick="reviewFacilitatorRequest('+Number(r.id)+',\'reject\')">Reject</button></div>':(r.review_note?'<span title="'+facReqEsc(r.review_note)+'">Reviewed</span>':'Reviewed'))+'</td>'+
+      '</tr>';
+    }).join('');
+  }catch(err){
+    if(count) count.textContent='Load failed';
+    tbody.innerHTML='<tr><td colspan="6" class="dashboard-empty-state">'+facReqEsc(err.message||'Unable to load facilitator requests.')+'</td></tr>';
+  }
+}
+async function reviewFacilitatorRequest(requestId, decision){
+  let note='';
+  if(decision==='reject'){
+    note=window.prompt('Reason for rejecting this facilitator request:','') ?? '';
+    if(note===null) return;
+  }else if(!window.confirm('Approve this request and promote the student to Facilitator?')){
+    return;
+  }
+  try{
+    const res=await fetch((window.ECOLLAB_BASE||'')+'/API/admin/facilitator-requests.php',{
+      method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json','X-CSRF-Token':ADMIN_DATA.csrfToken||''},
+      body:JSON.stringify({request_id:Number(requestId),decision:decision,note:note})
+    });
+    const data=await res.json();
+    if(!res.ok || !data.success) throw new Error(data.error||'Unable to review request.');
+    showToast(decision==='approve'?'Student promoted to Facilitator.':'Facilitator request rejected.','success',decision==='approve'?'✅':'🛡️');
+    await loadFacilitatorRequests();
+  }catch(err){
+    showToast(err.message||'Unable to review request.','error','⚠️');
+  }
+}
