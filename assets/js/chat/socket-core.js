@@ -20,6 +20,7 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 const typingUsers          = new Set();
 let _authed                = false;
 let _wsToken               = null;        // server-issued token, fetched before connect
+let _socketAuthenticated    = false;
 
 // ── Token fetch + connect entry point ────────────────────────────────────────
 async function connectWebSocket() {
@@ -57,6 +58,7 @@ function initWebSocket() {
       socketReconnectDelay    = 2000;
       socketReconnectAttempts = 0;
       _authed                 = false;
+      _socketAuthenticated    = false;
 
       // Authenticate this exact socket; a reconnect may have replaced the global.
       socket.send(JSON.stringify({ type: 'auth', ws_token: _wsToken }));
@@ -73,7 +75,18 @@ function initWebSocket() {
       if (chatSocket !== socket) return;
       chatSocket = null;
       _authed = false;
-      console.info(`[WS] Closed (code ${event.code})`);
+      console.info(`[WS] Closed (code ${event.code}${event.reason ? ', reason: ' + event.reason : ''})`);
+
+      // Code 1000 is a deliberate normal close. Reconnecting forever on a
+      // deliberate close created a tight loop and consumed fresh auth tokens.
+      if (event.code === 1000) {
+        if (!_socketAuthenticated) {
+          console.warn('[WS] Connection closed normally before authentication; polling fallback enabled.');
+          startPollingFallback();
+        }
+        return;
+      }
+
       if (event.code === 1006 && socketReconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
         console.info('[WS] Server unreachable — switching to polling mode');
         startPollingFallback();
@@ -129,6 +142,7 @@ function handleSocketMessage(data) {
     // ── Auth ──
     case 'auth_ok':
       _authed = true;
+      _socketAuthenticated = true;
       console.log('[WS] Authenticated as user', data.user_id);
       // Join current channel if any
       if (window.ECOLLAB?.currentChannelId) {
