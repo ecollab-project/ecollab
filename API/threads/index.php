@@ -16,7 +16,18 @@ function threadJson(array $data, int $status = 200): never {
     exit;
 }
 
+function platformRole(PDO $db, int $userId): string {
+    $s = $db->prepare('SELECT role FROM users WHERE id = ? LIMIT 1');
+    $s->execute([$userId]);
+    return (string)($s->fetchColumn() ?: 'student');
+}
+
+function isSysAdmin(PDO $db, int $userId): bool {
+    return in_array(platformRole($db, $userId), ['admin', 'super_admin'], true);
+}
+
 function serverRole(PDO $db, int $serverId, int $userId): ?string {
+    if (isSysAdmin($db, $userId)) return 'sysadmin';
     $s = $db->prepare('SELECT server_role FROM server_members WHERE server_id = ? AND user_id = ? LIMIT 1');
     $s->execute([$serverId, $userId]);
     $role = $s->fetchColumn();
@@ -24,6 +35,11 @@ function serverRole(PDO $db, int $serverId, int $userId): ?string {
 }
 
 function isServerMember(PDO $db, int $serverId, int $userId): bool {
+    if (isSysAdmin($db, $userId)) {
+        $s = $db->prepare("SELECT 1 FROM servers WHERE id = ? AND status = 'active' LIMIT 1");
+        $s->execute([$serverId]);
+        return (bool)$s->fetchColumn();
+    }
     return serverRole($db, $serverId, $userId) !== null;
 }
 
@@ -34,11 +50,12 @@ function channelRow(PDO $db, int $channelId): ?array {
 }
 
 function canAccessChannel(PDO $db, array $channel, int $userId): bool {
+    if (isSysAdmin($db, $userId)) return true;
     $sid = (int)$channel['server_id'];
     $role = serverRole($db, $sid, $userId);
     if ($role === null) return false;
     if ((int)$channel['is_private'] !== 1) return true;
-    if ((int)$channel['created_by'] === $userId || in_array($role, ['owner', 'admin', 'moderator'], true)) return true;
+    if ((int)$channel['created_by'] === $userId || in_array($role, ['owner', 'admin'], true)) return true;
     $s = $db->prepare('SELECT 1 FROM channel_members WHERE channel_id = ? AND user_id = ? LIMIT 1');
     $s->execute([(int)$channel['id'], $userId]);
     return (bool)$s->fetchColumn();
