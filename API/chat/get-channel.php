@@ -30,17 +30,23 @@ try {
     }
 
     // Resolve access before exposing member/activity data.
-    $roleStmt = $db->prepare("SELECT server_role FROM server_members WHERE server_id = :sid AND user_id = :uid LIMIT 1");
-    $roleStmt->execute([':sid' => $channel['server_id'], ':uid' => $user['id']]);
-    $serverRole = $roleStmt->fetchColumn();
-    $canManage = in_array($serverRole, ['owner', 'admin', 'moderator'], true)
-        || (int)($channel['created_by'] ?? 0) === (int)$user['id'];
+    $platformRole = (string)($user['role'] ?? 'student');
+    $isSysAdmin = in_array($platformRole, ['admin','super_admin'], true);
+    $serverRole = null;
+    if (!$isSysAdmin) {
+        $roleStmt = $db->prepare("SELECT server_role FROM server_members WHERE server_id = :sid AND user_id = :uid LIMIT 1");
+        $roleStmt->execute([':sid' => $channel['server_id'], ':uid' => $user['id']]);
+        $serverRole = $roleStmt->fetchColumn();
+    }
+    $canManage = $isSysAdmin
+        || in_array($serverRole, ['owner', 'admin'], true)
+        || (int)($channel['owner_id'] ?? $channel['created_by'] ?? 0) === (int)$user['id'];
 
     $hasAccess = true;
     if ($channel['is_private']) {
         $accStmt = $db->prepare("SELECT 1 FROM channel_members WHERE channel_id = :cid AND user_id = :uid LIMIT 1");
         $accStmt->execute([':cid' => $channelId, ':uid' => $user['id']]);
-        $hasAccess = (bool)$accStmt->fetchColumn() || $canManage;
+        $hasAccess = $isSysAdmin || (bool)$accStmt->fetchColumn() || $canManage;
     }
 
     $members = $hasAccess ? $service->getOnlineMembers((int)$channel['server_id']) : [];
