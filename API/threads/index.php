@@ -276,5 +276,10 @@ try {
     threadJson(['error' => 'Unknown action'], 400);
 } catch (Throwable $e) {
     error_log('[threads] ' . $e->getMessage());
-    threadJson(['error' => defined('APP_DEBUG') && APP_DEBUG ? $e->getMessage() : 'Thread service unavailable'], 500);
+    $errorId = substr(hash('sha256', $e->getMessage() . '|' . $e->getFile() . '|' . $e->getLine()), 0, 12);
+    threadJson([
+        'error' => 'Thread service unavailable',
+        'error_id' => $errorId,
+        'debug' => $e->getMessage()
+    ], 500);
 }
