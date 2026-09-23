@@ -20,9 +20,10 @@ async function upload(files){
   return out;
 }
 function imageHtml(a){
-  const src=a.file_url||a.url||a.path||'';
+  let src=a.file_url||a.url||a.path||'';
   if(!src)return '';
-  return '<img class="tv2-attachment" src="'+esc(src)+'" alt="'+esc(a.file_name||'Thread image')+'" loading="lazy" onerror="this.dataset.failed=1;this.alt=\'Image unavailable\';">';
+  if(src.startsWith('/'))src=base()+src;
+  return '<img class="tv2-attachment" src="'+esc(src)+'" alt="'+esc(a.file_name||'Thread image')+'" loading="lazy">';
 }
 function addFileInput(modalId,inputId,labelId){
   const m=document.getElementById(modalId); if(!m||document.getElementById(inputId))return;
