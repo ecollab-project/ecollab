@@ -427,13 +427,7 @@ $stats = $dashData['stats'] ?? [
 <?php foreach ($dashData['system_logs'] ?? [] as $log): $dotColor=match($log['level']??'info'){'error'=>'red','warn'=>'yellow','success'=>'green',default=>'blue'}; ?>
           <div class="log-item"><div class="log-dot <?= $dotColor ?>"></div><div class="log-time"><?= htmlspecialchars($log['timestamp']??'') ?></div><div class="log-msg"><?= htmlspecialchars($log['message']??'') ?></div></div>
 <?php endforeach; ?>
-<?php if (empty($dashData['system_logs'])): ?>
-          <div class="log-item"><div class="log-dot green"></div><div class="log-time">2025-05-19 14:32:21</div><div class="log-msg">John_Doe logged in from 192.168.1.1</div></div>
-          <div class="log-item"><div class="log-dot green"></div><div class="log-time">2025-05-19 14:15:10</div><div class="log-msg">New user registered: Sara_Kim</div></div>
-          <div class="log-item"><div class="log-dot yellow"></div><div class="log-time">2025-05-19 13:45:33</div><div class="log-msg">Report submitted in #general by Fatima_Student</div></div>
-          <div class="log-item"><div class="log-dot blue"></div><div class="log-time">2025-05-19 13:20:05</div><div class="log-msg">System backup completed: 2.3GB archived</div></div>
-          <div class="log-item"><div class="log-dot red"></div><div class="log-time">2025-05-19 10:08:31</div><div class="log-msg">Ban issued: spam_user123 banned by Adam_Smith</div></div>
-<?php endif; ?>
+<?php if (empty($dashData['system_logs'])): ?><div class="dashboard-empty-state">No activity logs recorded yet.</div><?php endif; ?>
         </div>
         <div class="pagination"><div class="page-info">Showing 1–5 of <?= number_format((int)($stats['total_users']??4832)*4) ?> events</div><div class="page-btns"><button class="page-btn">‹</button><button class="page-btn active">1</button><button class="page-btn" onclick="showToast('Page 2','info','📄')">2</button><button class="page-btn">…</button><button class="page-btn">›</button></div></div>
       </div>
@@ -444,11 +438,11 @@ $stats = $dashData['stats'] ?? [
       <div class="page-title-row"><div><div class="page-title">System Health</div></div><button class="btn-secondary" onclick="refreshHealth()">🔄 Refresh</button></div>
       <div class="card" style="margin-bottom:16px"><div class="card-header"><div class="card-title">Live Metrics</div><div class="status-badge"><div class="status-dot"></div>All Systems Operational</div></div>
         <div class="health-monitors">
-          <div class="hm-card"><div class="hm-label">CPU Usage</div><div class="hm-value yellow" id="cpuVal">42%</div><div class="hm-bar"><div class="hm-fill" id="cpuBar" style="width:42%;background:linear-gradient(90deg,var(--yellow),var(--red))"></div></div></div>
-          <div class="hm-card"><div class="hm-label">Memory Usage</div><div class="hm-value yellow" id="memVal">67%</div><div class="hm-bar"><div class="hm-fill" id="memBar" style="width:67%;background:linear-gradient(90deg,var(--blue),var(--purple))"></div></div></div>
-          <div class="hm-card"><div class="hm-label">Server Uptime</div><div class="hm-value">N/A</div><div class="hm-bar"></div></div>
-          <div class="hm-card"><div class="hm-label">Avg Response</div><div class="hm-value">N/A</div><div class="hm-bar"></div></div>
-          <div class="hm-card"><div class="hm-label">Error Rate</div><div class="hm-value green">0.02%</div><div class="hm-bar"><div class="hm-fill" style="width:2%;background:var(--green)"></div></div></div>
+          <div class="hm-card"><div class="hm-label">CPU Usage</div><div class="hm-value" id="cpuVal">—</div><div class="hm-bar"><div class="hm-fill" id="cpuBar" style="width:0"></div></div></div>
+          <div class="hm-card"><div class="hm-label">Memory Usage</div><div class="hm-value" id="memVal">—</div><div class="hm-bar"><div class="hm-fill" id="memBar" style="width:0"></div></div></div>
+          <div class="hm-card"><div class="hm-label">Server Uptime</div><div class="hm-value" id="uptimeVal">—</div><div class="hm-bar"></div></div>
+          <div class="hm-card"><div class="hm-label">Disk Usage</div><div class="hm-value" id="diskVal">—</div><div class="hm-bar"></div></div>
+          <div class="hm-card"><div class="hm-label">PHP</div><div class="hm-value green" id="phpVal">—</div><div class="hm-bar"><div class="hm-fill" style="width:2%;background:var(--green)"></div></div></div>
         </div>
       </div>
       <div class="card"><div class="card-header"><div class="card-title">Error Logs</div><button class="btn-sm btn-outline" onclick="openModal('clearLogsModal')">Clear Logs</button></div><div class="log-list" style="padding:14px 18px"><div class="log-item"><div class="log-dot yellow"></div><div class="log-time">2025-05-19 14:30:00</div><div class="log-msg">Warning: High memory usage detected (67%)</div></div><div class="log-item"><div class="log-dot green"></div><div class="log-time">2025-05-19 12:00:00</div><div class="log-msg">Info: Auto-scaling triggered, capacity increased</div></div><div class="log-item"><div class="log-dot green"></div><div class="log-time">2025-05-19 08:00:00</div><div class="log-msg">Info: Daily health check passed</div></div></div></div>
@@ -461,7 +455,7 @@ $stats = $dashData['stats'] ?? [
         <div class="announcement-form">
           <div class="form-row"><div class="form-group"><label class="form-label">Title</label><input class="form-input" id="announcTitle" placeholder="Announcement title..."></div><div class="form-group"><label class="form-label">Priority</label><select class="form-input" id="announcPriority"><option>Normal</option><option>Important</option><option>Urgent</option></select></div></div>
           <div class="form-group"><label class="form-label">Message</label><textarea class="form-textarea" id="announcMsg" placeholder="Write your announcement..." style="min-height:100px"></textarea></div>
-          <div class="form-row"><div class="form-group"><label class="form-label">Target Server</label><select class="form-input"><option>All Servers</option><?php foreach($dashData['servers']??[] as $s): ?><option><?=htmlspecialchars($s['name']??'')?></option><?php endforeach; ?></select></div><div class="form-group"><label class="form-label">Schedule (optional)</label><input class="form-input" type="datetime-local"></div></div>
+          <div class="form-row"><div class="form-group"><label class="form-label">Target Server</label><select class="form-input" id="announcServer"><option>All Servers</option><?php foreach($dashData['servers']??[] as $s): ?><option><?=htmlspecialchars($s['name']??'')?></option><?php endforeach; ?></select></div><div class="form-group"><label class="form-label">Schedule (optional)</label><input class="form-input" type="datetime-local" id="announcSchedule"></div></div>
           <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn-primary" onclick="sendAnnouncement()">📢 Broadcast Now</button><button class="btn-secondary" onclick="scheduleAnnouncement()">🕐 Schedule Post</button><button class="btn-secondary" onclick="previewAnnouncement()">👁 Preview</button></div>
         </div>
       </div>
