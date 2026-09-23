@@ -52,15 +52,8 @@ SET @q = IF(
  'SELECT 1'
 ); PREPARE s FROM @q; EXECUTE s; DEALLOCATE PREPARE s;
 
--- Add foreign keys only when equivalent named constraints do not already exist.
-SET @q = IF(
- (SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=@db AND TABLE_NAME='servers' AND CONSTRAINT_NAME='fk_servers_owner')=0,
- 'ALTER TABLE servers ADD CONSTRAINT fk_servers_owner FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE SET NULL',
- 'SELECT 1'
-); PREPARE s FROM @q; EXECUTE s; DEALLOCATE PREPARE s;
-
-SET @q = IF(
- (SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=@db AND TABLE_NAME='channels' AND CONSTRAINT_NAME='fk_channels_owner')=0,
- 'ALTER TABLE channels ADD CONSTRAINT fk_channels_owner FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE SET NULL',
- 'SELECT 1'
-); PREPARE s FROM @q; EXECUTE s; DEALLOCATE PREPARE s;
+-- Foreign keys are intentionally not added here.
+-- Existing deployments may use different integer widths/signedness for users.id
+-- versus servers.owner_id/channels.owner_id, which makes MySQL reject the FK.
+-- Application-level ownership checks remain enforced, and the indexes above
+-- still keep owner lookups efficient.
