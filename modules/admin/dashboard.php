@@ -10,7 +10,7 @@ require_once ROOT_PATH . '/services/UserService.php';
 
 AuthMiddleware::startSession();
 $user = AuthMiddleware::requireAuth();
-RoleMiddleware::requireRole(['admin', 'super_admin', 'moderator']);
+RoleMiddleware::requireRole(['admin', 'super_admin']);
 
 $csrfToken  = AuthMiddleware::csrfToken();
 $activePage = $_GET['page'] ?? 'overview';
@@ -265,7 +265,7 @@ $stats = $dashData['stats'] ?? [
     <div class="page-section" id="page-users">
       <div class="page-title-row"><div><div class="page-title">Users</div><div class="page-sub">Manage platform users, roles, and activity.</div></div><button class="btn-primary" onclick="openModal('createUserModal')">+ Add User</button></div>
       <div class="card">
-        <div class="filter-bar"><div class="filter-search"><span style="color:var(--muted)">🔍</span><input placeholder="Search users..." oninput="filterUsersTable(this.value)"></div><select class="select-filter" id="userCourseFilter" onchange="applyUserFilters()"><option value="">All Courses</option><option>Computer Science</option><option>Information Tech</option></select><select class="select-filter" id="userRoleFilter" onchange="applyUserFilters()"><option value="">All Roles</option><option>Student</option><option>Facilitator</option><option>Moderator</option><option>Admin</option></select><select class="select-filter" id="userStatusFilter" onchange="applyUserFilters()"><option value="">All Status</option><option>Active</option><option>Offline</option><option>Banned</option></select><button class="btn-sm btn-outline" onclick="exportData('users')" style="margin-left:auto">⬇ Export</button></div>
+        <div class="filter-bar"><div class="filter-search"><span style="color:var(--muted)">🔍</span><input placeholder="Search users..." oninput="filterUsersTable(this.value)"></div><select class="select-filter" id="userCourseFilter" onchange="applyUserFilters()"><option value="">All Courses</option><option>Computer Science</option><option>Information Tech</option></select><select class="select-filter" id="userRoleFilter" onchange="applyUserFilters()"><option value="">All Roles</option><option>Student</option><option>Facilitator</option><option>Admin</option></select><select class="select-filter" id="userStatusFilter" onchange="applyUserFilters()"><option value="">All Status</option><option>Active</option><option>Offline</option><option>Banned</option></select><button class="btn-sm btn-outline" onclick="exportData('users')" style="margin-left:auto">⬇ Export</button></div>
         <div class="table-wrap"><table><thead><tr><th>User</th><th>Role</th><th>Course</th><th>Status</th><th>Join Date</th><th>Actions</th></tr></thead><tbody id="usersTable">
 <?php foreach ($dashData['all_users'] ?? [] as $u):
   $uI = strtoupper(substr($u['full_name'] ?? $u['username'] ?? '?', 0, 1));
@@ -275,7 +275,7 @@ $stats = $dashData['stats'] ?? [
   $uC = htmlspecialchars($u['course_name'] ?? 'N/A');
   $uS = $u['status'] === 'active';
   $uJ = htmlspecialchars($u['joined_label'] ?? '');
-  $roleColor = match($u['role']??'student') { 'facilitator'=>'rgba(245,158,11,0.12);color:var(--yellow)', 'moderator'=>'rgba(0,212,255,0.12);color:var(--blue)', 'admin','super_admin'=>'rgba(255,79,216,0.12);color:var(--pink)', default=>'rgba(34,197,94,0.12);color:var(--green)' };
+  $roleColor = match($u['role']??'student') { 'facilitator'=>'rgba(245,158,11,0.12);color:var(--yellow)', 'admin','super_admin'=>'rgba(255,79,216,0.12);color:var(--pink)', default=>'rgba(34,197,94,0.12);color:var(--green)' };
 ?>
           <tr>
             <td><div class="user-cell"><div class="u-avatar" style="background:linear-gradient(135deg,<?= htmlspecialchars($uG) ?>)"><?= htmlspecialchars($uI) ?></div><div><div class="u-name-main"><?= $uN ?></div><div class="u-handle">@<?= strtolower($uN) ?></div></div></div></td>
@@ -320,17 +320,15 @@ $stats = $dashData['stats'] ?? [
       </div></div>
     </div>
 
-    <!-- ══ AI MATCHING PAGE ══ -->
+    <!-- ══ AI GROUP RECOMMENDATION PAGE ══ -->
     <div class="page-section" id="page-aimatching">
-      <div class="page-title-row"><div><div class="page-title">AI Matching</div></div><button class="btn-primary" onclick="openModal('aiConfigModal')">⚙ Configure Rules</button></div>
-      <div class="card"><div class="card-header"><div class="card-title">Matching Statistics</div><button class="btn-sm btn-outline" onclick="showToast('Refreshing...','info','🔄')">🔄 Refresh</button></div>
-        <div class="matching-stats"><div class="ms-card"><div class="ms-label">Matching Accuracy</div><div class="ms-val" style="color:var(--green)"><?= ($stats['ai_accuracy'] === null ? 'N/A' : number_format((float)$stats['ai_accuracy'],1)) ?>%</div></div><div class="ms-card"><div class="ms-label">Matches Today</div><div class="ms-val" style="color:var(--muted2)">N/A</div></div><div class="ms-card"><div class="ms-label">Active Study Groups</div><div class="ms-val" style="color:#a78bfa"><?= (int)($stats['sessions_today'] ?? 0) ?></div></div></div>
-        <div class="chart-wrap" style="height:200px"><canvas id="matchingChart"></canvas></div>
+      <div class="page-title-row"><div><div class="page-title">AI Group Recommendation</div><div class="page-sub">Recommend a real Ecollab group for a topic or task using the VPS local LLM.</div></div></div>
+      <div class="card" style="padding:18px">
+        <div class="form-row"><div class="form-group"><label class="form-label">Topic</label><input class="form-input" id="groupTopic" placeholder="e.g. PHP WebSocket debugging"></div><div class="form-group"><label class="form-label">Group size</label><select class="form-input" id="groupSize"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option></select></div></div>
+        <div class="form-group"><label class="form-label">Task / objective</label><textarea class="form-textarea" id="groupTask" placeholder="Describe the task the group needs to complete."></textarea></div>
+        <button class="btn-primary" id="recommendGroupBtn" onclick="recommendGroup()">✨ Recommend Group</button>
       </div>
-      <div class="card"><div class="card-header"><div class="card-title">Pending Match Requests</div></div><div class="table-wrap"><table><thead><tr><th>Students</th><th>Compatibility</th><th>Tags</th><th>Actions</th></tr></thead><tbody>
-        <tr><td>Fatima_Student & John_Doe</td><td><span style="color:var(--green);font-weight:700">94%</span></td><td>Computer Science, Data Structures</td><td><div class="action-btns"><button class="btn-approve" onclick="showToast('Match approved!','success','✅')">Approve</button><button class="btn-deny" onclick="showToast('Match denied','error','❌')">Deny</button><button class="btn-view" onclick="openModal('aiMatchModal')">Preview</button></div></td></tr>
-        <tr><td>Mike_Lee & Sara_Kim</td><td><span style="color:var(--yellow);font-weight:700">78%</span></td><td>Information Tech, Algorithms</td><td><div class="action-btns"><button class="btn-approve" onclick="showToast('Match approved!','success','✅')">Approve</button><button class="btn-deny" onclick="showToast('Match denied','error','❌')">Deny</button><button class="btn-view" onclick="openModal('aiMatchModal')">Preview</button></div></td></tr>
-      </tbody></table></div></div>
+      <div class="card"><div class="card-header"><div class="card-title">Recommendation Result</div><span id="aiModelStatus" style="color:var(--muted);font-size:11px">Waiting for a topic/task</span></div><div id="groupRecommendationResults" style="padding:18px"><div class="dashboard-empty-state">No recommendation generated yet.</div></div></div>
     </div>
 
     <!-- ══ REPORTS PAGE ══ -->
@@ -407,18 +405,10 @@ $stats = $dashData['stats'] ?? [
       </div>
     </div>
 
-    <!-- ══ MODERATION PAGE ══ -->
+    <!-- ══ REPORT LOGS PAGE ══ -->
     <div class="page-section" id="page-moderation">
-      <div class="page-title-row"><div><div class="page-title">Moderation</div></div><button class="btn-primary" onclick="openModal('issueBanModal')">🔨 Issue Action</button></div>
-      <div class="card">
-        <div class="filter-bar"><button class="log-filter-btn active" onclick="filterModLog(this,'all')">All</button><button class="log-filter-btn" onclick="filterModLog(this,'ban')">Bans</button><button class="log-filter-btn" onclick="filterModLog(this,'kick')">Kicks</button><button class="log-filter-btn" onclick="filterModLog(this,'warn')">Warnings</button><button class="log-filter-btn" onclick="filterModLog(this,'mute')">Mutes</button><button class="btn-sm btn-outline" style="margin-left:auto" onclick="exportData('modlogs')">⬇ Export</button></div>
-        <div id="modLogContainer">
-          <div class="log-entry" data-type="ban"><div class="log-type-badge ban">BAN</div><div class="le-info"><div class="le-main">spam_user123 was permanently banned</div><div class="le-sub">By Moderator: Adam_Smith • Reason: Spamming</div></div><div class="le-time">2h ago</div><button class="btn-view" style="margin-left:8px" onclick="openModal('modActionDetailModal','ban')">View</button></div>
-          <div class="log-entry" data-type="kick"><div class="log-type-badge kick">KICK</div><div class="le-info"><div class="le-main">trollUser99 was kicked from Study Room 2</div><div class="le-sub">By Moderator: Sara_Kim • Reason: Disruptive behavior</div></div><div class="le-time">4h ago</div><button class="btn-view" style="margin-left:8px" onclick="openModal('modActionDetailModal','kick')">View</button></div>
-          <div class="log-entry" data-type="warn"><div class="log-type-badge warn">WARN</div><div class="le-info"><div class="le-main">Warning issued to David_Wilson</div><div class="le-sub">By Moderator: Adam_Smith • Reason: Inappropriate language</div></div><div class="le-time">6h ago</div><button class="btn-view" style="margin-left:8px" onclick="openModal('modActionDetailModal','warn')">View</button></div>
-          <div class="log-entry" data-type="mute"><div class="log-type-badge mute">MUTE</div><div class="le-info"><div class="le-main">Mike_Lee muted for 1 hour</div><div class="le-sub">By Moderator: Sara_Kim • Reason: Repeated spam</div></div><div class="le-time">8h ago</div><button class="btn-view" style="margin-left:8px" onclick="openModal('modActionDetailModal','mute')">View</button></div>
-        </div>
-      </div>
+      <div class="page-title-row"><div><div class="page-title">Logs of Reports</div><div class="page-sub">Facilitators manage reports in their own servers/channels. SysAdmin handles student-owned spaces and keeps the system-wide audit.</div></div><button class="btn-sm btn-outline" onclick="loadReportLogs()">↻ Refresh</button></div>
+      <div class="card"><div id="modLogContainer"><div class="dashboard-empty-state">Loading report logs…</div></div></div>
     </div>
 
     <!-- ══ ANALYTICS PAGE ══ -->
