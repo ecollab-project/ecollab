@@ -130,7 +130,7 @@ window.ECOLLAB_ESC = esc;
 
   (function loadThreadsV2(){
     if(document.getElementById('threadsV2Script'))return;
-    const s=document.createElement('script');s.id='threadsV2Script';s.defer=true;s.src=base()+'/assets/js/chat/threads-v2.js?v=1';
+    const s=document.createElement('script');s.id='threadsV2Script';s.defer=true;s.src=base()+'/assets/js/chat/threads-v2.js?v=imgfix2';
     document.head.appendChild(s);
   })();
 })();
