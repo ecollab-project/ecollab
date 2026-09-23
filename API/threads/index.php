@@ -151,8 +151,8 @@ try {
             $thread = $s->fetch(PDO::FETCH_ASSOC);
             if (!$thread || !canSeeThread($db, $thread, (int)$me['id'])) threadJson(['error' => 'Thread not found'], 404);
 
-            $r = $db->prepare("SELECT r.id, r.thread_id, r.parent_reply_id, r.created_by, r.body, r.created_at, u.username AS author_username, u.full_name AS author_name, u.avatar_url AS author_avatar_url, COALESCE(u.avatar_color_gradient,'#a855f7,#ec4899') AS author_gradient, COALESCE((SELECT SUM(v.vote) FROM thread_reply_votes v WHERE v.reply_id=r.id),0) AS score, COALESCE((SELECT vote FROM thread_reply_votes mv WHERE mv.reply_id=r.id AND mv.user_id=:uid LIMIT 1),0) AS my_vote FROM thread_replies r JOIN users u ON u.id=r.created_by WHERE r.thread_id=:tid AND r.is_deleted=0 ORDER BY r.created_at ASC");
-            $r->execute([':uid' => $me['id'], ':tid' => $id]);
+            $r = $db->prepare("SELECT r.id, r.thread_id, r.parent_reply_id, r.created_by, r.body, r.created_at, u.username AS author_username, u.full_name AS author_name, u.avatar_url AS author_avatar_url, COALESCE(u.avatar_color_gradient,'#a855f7,#ec4899') AS author_gradient, COALESCE((SELECT SUM(v.vote) FROM thread_reply_votes v WHERE v.reply_id=r.id),0) AS score, COALESCE((SELECT vote FROM thread_reply_votes mv WHERE mv.reply_id=r.id AND mv.user_id=? LIMIT 1),0) AS my_vote FROM thread_replies r JOIN users u ON u.id=r.created_by WHERE r.thread_id=? AND r.is_deleted=0 ORDER BY r.created_at ASC");
+            $r->execute([(int)$me['id'], $id]);
 
             threadJson(['thread' => $thread, 'replies' => $r->fetchAll(PDO::FETCH_ASSOC), 'attachments' => attachmentRows($db, $id)]);
         }
