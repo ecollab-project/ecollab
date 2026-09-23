@@ -31,6 +31,7 @@ class AdminDashboardService
             'recent_users'     => $this->getRecentUsers(6),
             'all_users'        => $this->getAllUsers(20),
             'servers'          => $this->getAllServers(),
+            'channels'         => $this->getAllChannels(),
             'study_rooms'      => $this->getAdminStudyRooms(),
             'system_logs'      => $this->getSystemLogs(),
             'sessions_chart'   => $this->getSessionsChartData(),
@@ -173,22 +174,27 @@ class AdminDashboardService
     private function getAllServers(): array
     {
         try {
-            $stmt = $this->db->query("
-                SELECT
-                    id,
-                    name,
-                    icon_emoji,
-                    member_count,
-                    status
-                FROM servers
-                WHERE status = 'active'
-                ORDER BY member_count DESC
-            ");
+            $cols=[]; foreach($this->db->query("SHOW COLUMNS FROM servers")->fetchAll(PDO::FETCH_ASSOC) as $r) $cols[$r['Field']]=true;
+            $owner=isset($cols['owner_id'])?'s.owner_id':(isset($cols['created_by'])?'s.created_by':'NULL');
+            $visibility=isset($cols['visibility'])?'s.visibility':(isset($cols['is_public'])?"IF(s.is_public=1,'public','private')":"'unknown'");
+            $memberCount=isset($cols['member_count'])?'s.member_count':"(SELECT COUNT(*) FROM server_members sm WHERE sm.server_id=s.id)";
+            $statusWhere=isset($cols['status'])?"WHERE s.status='active'":'';
+            $icon=isset($cols['icon_emoji'])?'s.icon_emoji':"'🖥'";
+            $sql="SELECT s.id,s.name,$icon AS icon_emoji,$memberCount AS member_count,$visibility AS visibility,$owner AS owner_id,COALESCE(u.username,'Unknown') AS owner_username,COALESCE(u.role,'unknown') AS owner_role FROM servers s LEFT JOIN users u ON u.id=$owner $statusWhere ORDER BY member_count DESC";
+            return $this->db->query($sql)->fetchAll();
+        } catch (\Throwable) { return []; }
+    }
 
-            return $stmt->fetchAll();
-        } catch (\Throwable) {
-            return [];
-        }
+    private function getAllChannels(): array
+    {
+        try {
+            $cols=[]; foreach($this->db->query("SHOW COLUMNS FROM channels")->fetchAll(PDO::FETCH_ASSOC) as $r) $cols[$r['Field']]=true;
+            $owner=isset($cols['owner_id'])?'c.owner_id':(isset($cols['created_by'])?'c.created_by':'NULL');
+            $visibility=isset($cols['visibility'])?'c.visibility':(isset($cols['is_private'])?"IF(c.is_private=1,'private','public')":"'inherit'");
+            $type=isset($cols['type'])?'c.type':"'text'";
+            $sql="SELECT c.id,c.name,c.server_id,$type AS type,$visibility AS visibility,$owner AS owner_id,COALESCE(u.username,su.username,'Unknown') AS owner_username,COALESCE(u.role,su.role,'unknown') AS owner_role,s.name AS server_name FROM channels c LEFT JOIN users u ON u.id=$owner LEFT JOIN servers s ON s.id=c.server_id LEFT JOIN users su ON su.id=".(isset($cols['owner_id'])?"s.owner_id":(isset($cols['created_by'])?"s.created_by":"NULL"))." ORDER BY c.server_id,c.id";
+            return $this->db->query($sql)->fetchAll();
+        } catch (\Throwable) { return []; }
     }
 
     private function getAdminStudyRooms(): array
