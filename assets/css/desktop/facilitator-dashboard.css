@@ -361,3 +361,11 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 select.fi{color-scheme:dark;background-color:var(--card);color:var(--text);cursor:pointer}
 select.fi option{background:#111827;color:#f8fafc}
 select.fi option:checked{background:#7c3aed;color:#fff}
+
+.fac-report-row{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:16px;padding:14px 16px;border-bottom:1px solid var(--border);align-items:stretch}
+.fac-report-row:last-child{border-bottom:0}
+.fac-report-main{display:flex;flex-direction:column;gap:7px;font-size:12px;min-width:0}
+.fac-report-label{color:var(--muted2);font-weight:700}
+.fac-report-message,.fac-report-details{background:rgba(255,255,255,.035);border:1px solid var(--border2);border-radius:7px;padding:9px 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.fac-report-side{border-left:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding-left:16px;text-transform:capitalize}
+@media(max-width:700px){.fac-report-row{grid-template-columns:1fr}.fac-report-side{border-left:0;border-top:1px solid var(--border);padding:12px 0 0;align-items:flex-start}}
