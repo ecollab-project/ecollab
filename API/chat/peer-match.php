@@ -9,6 +9,14 @@ require_once dirname(__DIR__, 2) . '/services/PeerMatchingService.php';
 require_once dirname(__DIR__, 2) . '/security/SecurityHeaders.php';
 require_once dirname(__DIR__, 2) . '/security/rate-limit/RateLimiter.php';
 
+function canonicalAvatarUrl(?string $url): string {
+    $url = trim((string)$url);
+    if ($url === '') return '';
+    if (preg_match('~^(?:https?:)?//~i', $url) || preg_match('~^(?:data|blob):~i', $url)) return $url;
+    $base = rtrim((string)BASE_URL, '/');
+    return $base . '/' . ltrim($url, '/');
+}
+
 header('Content-Type: application/json; charset=utf-8');
 SecurityHeaders::send(isApi: true);
 AuthMiddleware::startSession();
