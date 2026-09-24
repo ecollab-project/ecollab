@@ -238,52 +238,29 @@ $stats = $dashData['stats'] ?? ['total_members' => 0, 'active_today' => 0, 'mess
               <div style="height:180px;padding:10px 12px"><canvas id="engChart"></canvas></div>
             </div>
 
-            <!-- MY CHANNELS & SERVERS -->
-            <?php $membership = $dashData['membership'] ?? []; ?>
+            <!-- MY SERVERS -->
+            <?php
+            $membership = $dashData['membership'] ?? [];
+            $facDashboardServers = [];
+            try {
+              require_once ROOT_PATH . '/services/ServerMonitoringService.php';
+              $facDashboardServers = (new ServerMonitoringService())->getFacilitatorServers((int)$user['id']);
+            } catch (Throwable $e) { $facDashboardServers = []; }
+            ?>
             <div class="card" style="margin-bottom:12px">
               <div class="ch-bar">
-                <div class="ch-title">My Channels &amp; Servers</div>
-                <a class="period-btn" style="text-decoration:none" href="?page=servermonitoring">Server Monitoring</a>
-                <button class="period-btn" onclick="openModal('channelSwitchModal')">Switch ▾</button>
+                <div class="ch-title">My Servers</div>
+                <a class="period-btn" style="text-decoration:none" href="?page=servermonitoring">View All</a>
               </div>
-              <div style="padding:4px 12px 10px;font-size:11px;color:var(--muted2)">
-                <?= (int)($membership['channels_joined_count'] ?? 0) ?> channel<?= ((int)($membership['channels_joined_count'] ?? 0)) === 1 ? '' : 's' ?> across
-                <?= (int)($membership['servers_joined_count'] ?? 0) ?> server<?= ((int)($membership['servers_joined_count'] ?? 0)) === 1 ? '' : 's' ?>
-                <?php if (($membership['channels_owned_count'] ?? 0) > 0): ?>
-                  · <span style="color:var(--pink);font-weight:600"><?= (int)$membership['channels_owned_count'] ?> created by you</span>
-                <?php endif; ?>
-                <?php if (($membership['servers_managed_count'] ?? 0) > 0): ?>
-                  · <span style="color:var(--blue);font-weight:600"><?= (int)$membership['servers_managed_count'] ?> managed</span>
-                <?php endif; ?>
-              </div>
-              <?php foreach (array_slice($membership['my_channels'] ?? [], 0, 5) as $ch):
-                $chRole = $ch['server_role'] ?? 'member';
-                $roleBadge = match ($chRole) {
-                  'owner' => ['Owner', 'var(--pink)'],
-                  'admin' => ['Admin', 'var(--blue)'],
-                  'moderator' => ['Mod', 'var(--green)'],
-                  default => [null, null],
-                };
-              ?>
-                <div class="ract-row" onclick="switchChannel(<?= (int)($ch['id'] ?? 0) ?>, <?= (int)($ch['server_id'] ?? 0) ?>)" style="cursor:pointer">
-                  <div class="ract-av" style="background:rgba(233,30,140,.12);font-size:14px"><?= htmlspecialchars($ch['icon_emoji'] ?? '#') ?></div>
-                  <div class="ract-msg" style="flex:1">
-                    <strong><?= htmlspecialchars($ch['name'] ?? '') ?></strong>
-                    <span style="color:var(--muted2)"> in <?= htmlspecialchars($ch['server_name'] ?? '') ?></span>
-                    <?php if (!empty($ch['is_creator'])): ?>
-                      <span style="color:var(--pink);font-weight:600"> · Created by you</span>
-                    <?php elseif ($roleBadge[0]): ?>
-                      <span style="color:<?= $roleBadge[1] ?>;font-weight:600"> · <?= $roleBadge[0] ?></span>
-                    <?php endif; ?>
-                  </div>
-                  <div class="ract-time"><?= (int)($ch['member_count'] ?? 0) ?> members</div>
+              <div style="padding:4px 12px 10px;font-size:11px;color:var(--muted2)"><?= count($facDashboardServers) ?> server<?= count($facDashboardServers) === 1 ? '' : 's' ?> you own, facilitate, or manage</div>
+              <?php foreach (array_slice($facDashboardServers, 0, 5) as $srv): ?>
+                <div class="ract-row">
+                  <div class="ract-av" style="background:rgba(124,92,255,.15);font-size:16px"><?= htmlspecialchars($srv['icon_emoji'] ?? '🖥') ?></div>
+                  <div class="ract-msg" style="flex:1"><strong><?= htmlspecialchars($srv['name'] ?? '') ?></strong><span style="color:var(--muted2)"> · <?= (int)($srv['member_count'] ?? 0) ?> members</span></div>
+                  <a class="btn-sm btn-outline" style="text-decoration:none" href="<?= BASE_URL ?>/modules/admin/server-monitor.php?server_id=<?= (int)($srv['id'] ?? 0) ?>&scope=facilitator">Manage</a>
                 </div>
               <?php endforeach; ?>
-              <?php if (empty($membership['my_channels'])): ?>
-                <div style="padding:14px 12px;text-align:center;color:var(--muted2);font-size:12px">
-                  You're not in any channels yet.
-                </div>
-              <?php endif; ?>
+              <?php if (empty($facDashboardServers)): ?><div class="dashboard-empty-state">No servers are assigned to your facilitator account.</div><?php endif; ?>
             </div>
 
             <div class="card">
@@ -389,12 +366,12 @@ try {
       <div class="page-section" id="page-servermonitoring">
         <div class="page-title-row">
           <div>
-            <div class="page-title">Server Monitoring</div>
-            <div class="page-sub">Monitor only the servers you facilitate, own, or manage.</div>
+            <div class="page-title">My Servers</div>
+            <div class="page-sub">Manage the servers you facilitate, own, or administer.</div>
           </div>
         </div>
         <div class="card">
-          <div class="ch-bar"><div class="ch-title">My Managed Servers</div></div>
+          <div class="ch-bar"><div class="ch-title">My Servers</div></div>
           <?php foreach ($facMonitorServers as $srv): ?>
             <div class="ract-row">
               <div class="ract-av" style="background:rgba(124,92,255,.15);font-size:16px"><?= htmlspecialchars($srv['icon_emoji'] ?? '🖥') ?></div>
@@ -402,7 +379,7 @@ try {
                 <strong><?= htmlspecialchars($srv['name'] ?? '') ?></strong>
                 <span style="color:var(--muted2)"> · <?= (int)($srv['member_count'] ?? 0) ?> members</span>
               </div>
-              <a class="btn-sm btn-outline" style="text-decoration:none" href="<?= BASE_URL ?>/modules/admin/server-monitor.php?server_id=<?= (int)($srv['id'] ?? 0) ?>&scope=facilitator">Monitor</a>
+              <a class="btn-sm btn-outline" style="text-decoration:none" href="<?= BASE_URL ?>/modules/admin/server-monitor.php?server_id=<?= (int)($srv['id'] ?? 0) ?>&scope=facilitator">Manage</a>
             </div>
           <?php endforeach; ?>
           <?php if (empty($facMonitorServers)): ?>
