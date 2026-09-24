@@ -4,7 +4,7 @@ require_once dirname(__DIR__,2).'/database/config/db.php';
 require_once dirname(__DIR__,2).'/security/middleware/AuthMiddleware.php';
 header('Content-Type: application/json; charset=utf-8');
 AuthMiddleware::startSession(); $user=AuthMiddleware::requireAuth(true); $db=Database::getInstance();
-$mode=(($_GET['mode']??'server')==='me')?'me':'server'; $sid=(int)($_GET['server_id']??0); $q=trim((string)($_GET['q']??'')); $topics=[]; $label='';
+$mode=(($_GET['mode']??'server')==='me')?'me':'server'; $sid=(int)($_GET['server_id']??0); $q=trim((string)($_GET['q']??'')); $readable=(($_GET['readable']??'1')!=='0'); $topics=[]; $label='';
 
 try {
  if($mode==='server'){
@@ -28,6 +28,6 @@ try {
  $raw=curl_exec($ch); $code=(int)curl_getinfo($ch,CURLINFO_HTTP_CODE); curl_close($ch);
  if($raw===false||$code<200||$code>=300)throw new RuntimeException('Book catalog temporarily unavailable');
  $data=json_decode((string)$raw,true); $books=[];
- foreach(($data['docs']??[]) as $d){$key=(string)($d['key']??'');$books[]=['title'=>(string)($d['title']??'Untitled'),'authors'=>(array)($d['author_name']??[]),'cover'=>empty($d['cover_i'])?null:'https://covers.openlibrary.org/b/id/'.(int)$d['cover_i'].'-M.jpg','year'=>$d['first_publish_year']??null,'subjects'=>array_slice((array)($d['subject']??[]),0,6),'ebook_access'=>(string)($d['ebook_access']??''),'has_fulltext'=>(bool)($d['has_fulltext']??false),'url'=>$key?'https://openlibrary.org'.$key:null,'read_url'=>!empty($d['ia'][0])?'https://archive.org/details/'.rawurlencode((string)$d['ia'][0]):null,'action'=>((string)($d['ebook_access']??''))==='public'?'Read':(((string)($d['ebook_access']??''))==='borrowable'?'Borrow':'Details'),'source'=>'Open Library'];}
+ foreach(($data['docs']??[]) as $d){if($readable && empty($d['has_fulltext']) && !in_array((string)($d['ebook_access']??''),['public','borrowable'],true))continue;$key=(string)($d['key']??'');$books[]=['title'=>(string)($d['title']??'Untitled'),'authors'=>(array)($d['author_name']??[]),'cover'=>empty($d['cover_i'])?null:'https://covers.openlibrary.org/b/id/'.(int)$d['cover_i'].'-M.jpg','year'=>$d['first_publish_year']??null,'subjects'=>array_slice((array)($d['subject']??[]),0,6),'ebook_access'=>(string)($d['ebook_access']??''),'has_fulltext'=>(bool)($d['has_fulltext']??false),'url'=>$key?'https://openlibrary.org'.$key:null,'read_url'=>!empty($d['ia'][0])?'https://archive.org/details/'.rawurlencode((string)$d['ia'][0]):null,'action'=>((string)($d['ebook_access']??''))==='public'?'Read':(((string)($d['ebook_access']??''))==='borrowable'?'Borrow':'Details'),'source'=>'Open Library'];}
  echo json_encode(['success'=>true,'context'=>['label'=>$label,'topics'=>$topics],'books'=>$books],JSON_UNESCAPED_SLASHES);
 } catch(Throwable $e){http_response_code(500);echo json_encode(['success'=>false,'error'=>'Unable to load the library right now.']);}
