@@ -21,6 +21,10 @@ if($scope==='facilitator'){
 }
 if(!$data){http_response_code(403);exit('You do not have access to this server monitor.');}
 $s=$data['server'];$stats=$data['stats'];$daily=$data['daily'];$channels=$data['channels'];$members=$data['members'];$reports=$data['reports'];$recent=$data['recent'];$heat=$data['heatmap'];
+if($scope==='facilitator'){
+  // Give the shared facilitator sidebar the server currently being managed.
+  $sidebarServer=$s;
+}
 function h($v){return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8');}
 ?>
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
