@@ -166,6 +166,10 @@ function _pmMatchCard(m) {
   const [c1, c2] = (m.grad || '#a855f7,#ec4899').split(',');
   const onlineDot = m.is_online
     ? `<span class="pm-online-dot" title="Online now"></span>` : '';
+  const avatarBg = m.avatar_url
+    ? `url("${pmEsc(m.avatar_url)}") center/cover no-repeat`
+    : `linear-gradient(135deg,${c1},${c2})`;
+  const avatarText = m.avatar_url ? '' : init;
 
   const scoreBar = (label, val, color) => `
     <div class="pm-score-row">
@@ -184,8 +188,8 @@ function _pmMatchCard(m) {
   return `
     <div class="pm-card" data-uid="${m.id}">
       <div class="pm-card-top">
-        <div class="pm-avatar" style="background:linear-gradient(135deg,${c1},${c2})">
-          ${init}${onlineDot}
+        <div class="pm-avatar" style="background:${avatarBg}">
+          ${avatarText}${onlineDot}
         </div>
         <div class="pm-card-info">
           <div class="pm-card-name">${pmEsc(m.name)}
@@ -291,6 +295,8 @@ async function _pmRunSearch() {
     if (!users.length) { results.innerHTML = `<div class="pm-empty">No users found</div>`; return; }
     results.innerHTML = users.map(u => {
       const [c1,c2] = (u.avatar_color_gradient||'#a855f7,#ec4899').split(',');
+      const avatarBg = u.avatar_url ? `url("${pmEsc(u.avatar_url)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
+      const avatarText = u.avatar_url ? '' : (u.full_name||u.username||'?')[0].toUpperCase();
       return `
         <div class="pm-search-row">
           <div class="pm-avatar pm-avatar-sm" style="background:linear-gradient(135deg,${c1},${c2})">
@@ -336,6 +342,8 @@ async function _pmRenderRequests(body) {
 function _pmRequestCard(r, dir) {
   const [c1,c2]  = (r.avatar_color_gradient||'#a855f7,#ec4899').split(',');
   const name     = r.full_name || r.username;
+  const avatarBg = r.avatar_url ? `url("${pmEsc(r.avatar_url)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
+  const avatarText = r.avatar_url ? '' : (name||'?')[0].toUpperCase();
   const statusClass = { pending:'pm-status-pending', accepted:'pm-status-accepted', declined:'pm-status-declined', expired:'pm-status-declined' }[r.status] || '';
 
   return `
@@ -386,6 +394,8 @@ async function _pmRenderLeaderboard(body) {
       <div class="pm-leaderboard-list">
         ${leaderboard.map((p, i) => {
           const [c1,c2] = (p.avatar_color_gradient||'#a855f7,#ec4899').split(',');
+          const avatarBg = p.avatar_url ? `url("${pmEsc(p.avatar_url)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
+          const avatarText = p.avatar_url ? '' : (p.full_name||p.username||'?')[0];
           const medals  = ['🥇','🥈','🥉'];
           return `
             <div class="pm-leaderboard-row">
@@ -760,13 +770,15 @@ window.refreshMatches = async function(btn) {
     window._allMatches.length = 0;
     matches.forEach(m => window._allMatches.push({
       id:     m.id, name: m.name, detail: m.detail, pct: m.pct,
-      type:   m.type, tags: m.tags, grad: m.grad,
+      type:   m.type, tags: m.tags, grad: m.grad, avatar_url: m.avatar_url || '',
     }));
 
     const miniList = document.getElementById('matchesList');
     if (miniList) {
       miniList.innerHTML = matches.slice(0,3).map(m => {
         const [c1,c2] = (m.grad||'#a855f7,#ec4899').split(',');
+        const avatarBg = m.avatar_url ? `url("${pmEsc(m.avatar_url)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
+        const avatarText = m.avatar_url ? '' : (m.name||'?')[0];
         return `
           <div class="match-item" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
             <div style="position:relative;width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">
