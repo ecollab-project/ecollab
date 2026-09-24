@@ -51,13 +51,13 @@ window.createThreadV2=async function(){
   const title=document.getElementById('tv2CreateTitle')?.value.trim();
   const body=document.getElementById('tv2CreateBody')?.value.trim();
   const files=document.getElementById('tv2EnhCreateImages')?.files;
-  const scope=window._threadCreateScope||'public',sid=Number(window.ECOLLAB?.currentServerId||0),cid=Number(window.ECOLLAB?.currentChannelId||0);
+  const scope=window._threadCreateScope||'public',sid=Number(window.ECOLLAB?.currentServerId||0);
   if(!title||(!body&&!files?.length)){window.showToast?.('Add a title and either text or an image.','info');return;}
   try{
     const attachments=normalizedAttachments(await upload(files));
-    await req(api,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'create',title,body,scope,server_id:sid,channel_id:cid,attachments})});
+    await req(api,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'create',title,body,scope,server_id:sid,attachments})});
     originalCloseCreate?.(); window.showToast?.('Discussion posted.','success');
-    window.loadThreadsV2?.(scope==='public'?'all':scope);
+    window.loadThreadsV2?.(scope);
   }catch(e){window.showToast?.(e.message,'error');}
 };
 
@@ -137,11 +137,11 @@ function installReplyDelegation(){
     if(e.target.closest?.('#tv2PostReplyBtn')){e.preventDefault();window.threadPostReply(activeDetailId);}
   });
 }
-let feedPoll=null,originalLoadFeed=null,feedScope='all';
+let feedPoll=null,originalLoadFeed=null,feedScope='public';
 function installFeedPolling(){
   if(typeof window.loadThreadsV2!=='function'||window.__threadsEnhFeedInstalled)return false;
   originalLoadFeed=window.loadThreadsV2; window.__threadsEnhFeedInstalled=true;
-  window.loadThreadsV2=function(scope='all'){feedScope=scope;return originalLoadFeed(scope);};
+  window.loadThreadsV2=function(scope='public'){feedScope=scope;return originalLoadFeed(scope);};
   clearInterval(feedPoll);
   feedPoll=setInterval(async()=>{
     const view=document.getElementById('threadsV2View');
