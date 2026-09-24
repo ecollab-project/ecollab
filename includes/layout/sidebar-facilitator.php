@@ -23,6 +23,7 @@ function fNavItem(string $page, string $icon, string $label, $badge, string $act
   <div class="nav-pad">
     <?= fNavItem('dashboard', '🏠', 'Dashboard', null, $activePage) ?>
     <?= fNavItem('servermonitoring', '🖥️', 'My Servers', null, $activePage) ?>
+    <div class="nav-item" onclick="window.location.href='<?= BASE_URL ?>/modules/chat/chat.php'"><span class="nav-ic">💬</span>Go to Messages</div>
   </div>
 
   <div class="nav-section-title">Server Management</div>
