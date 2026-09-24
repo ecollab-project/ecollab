@@ -34,6 +34,7 @@ $serverName = (string)($currentServer['name'] ?? 'Current Server');
     :root{--bg:#0b0f1a;--panel:#111827;--card:#1a2235;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--purple:#a855f7;--pink:#ec4899}
     *{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}.lib-shell{max-width:1200px;margin:auto;padding:24px}.lib-top{display:flex;align-items:center;gap:14px;margin-bottom:24px}.lib-back{color:var(--muted);text-decoration:none;padding:9px 12px;border:1px solid var(--border);border-radius:9px}.lib-title{font-size:25px;font-weight:800}.lib-sub{color:var(--muted);font-size:13px;margin-top:3px}.lib-search{width:100%;padding:13px 15px;background:var(--panel);border:1px solid var(--border);border-radius:11px;color:var(--text);outline:none}.lib-tabs{display:flex;gap:8px;margin:18px 0}.lib-tab{border:1px solid var(--border);background:var(--panel);color:var(--muted);padding:10px 14px;border-radius:9px;cursor:pointer;font-weight:700}.lib-tab.active{color:white;border-color:rgba(168,85,247,.5);background:rgba(168,85,247,.16)}.lib-note{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px}.lib-note h2{margin:0 0 7px;font-size:18px}.lib-note p{margin:0;color:var(--muted);line-height:1.6}.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;margin-top:18px}.lib-placeholder{min-height:220px;background:var(--card);border:1px solid var(--border);border-radius:13px;padding:18px;color:var(--muted)}@media(max-width:600px){.lib-shell{padding:14px}.lib-title{font-size:21px}.lib-tabs{overflow:auto}.lib-tab{white-space:nowrap}.lib-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
   </style>
+  <meta name="csrf-token" content="<?= htmlspecialchars(AuthMiddleware::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body>
 <main class="lib-shell" data-server-id="<?= $serverId ?>">
@@ -57,15 +58,36 @@ $serverName = (string)($currentServer['name'] ?? 'Current Server');
   </section>
 </main>
 <script>
+const LIB_BASE = <?= json_encode(BASE_URL) ?>;
+const LIB_SERVER_ID = <?= $serverId ?>;
+let libMode = 'server';
+const grid = document.getElementById('libraryGrid');
+const search = document.querySelector('.lib-search');
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
+function renderBooks(books){
+  if(!books.length){grid.innerHTML='<div class="lib-placeholder">No books found. Try another search.</div>';return;}
+  grid.innerHTML=books.map(b=>`<article class="lib-placeholder" style="padding:0;overflow:hidden;color:var(--text)">
+    ${b.cover?`<img src="${esc(b.cover)}" alt="" loading="lazy" style="width:100%;height:230px;object-fit:cover;background:#0f172a">`:'<div style="height:230px;display:grid;place-items:center;font-size:42px;background:#0f172a">📚</div>'}
+    <div style="padding:14px"><strong style="display:block;line-height:1.35">${esc(b.title)}</strong>
+    <div style="font-size:12px;color:var(--muted);margin:7px 0">${esc((b.authors||[]).slice(0,2).join(', ')||'Unknown author')}${b.year?' · '+esc(b.year):''}</div>
+    <div style="font-size:11px;color:var(--muted)">${esc(b.source||'Open Library')}</div>
+    ${b.url?`<a href="${esc(b.url)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;color:#c084fc;text-decoration:none;font-weight:700">View book →</a>`:''}</div></article>`).join('');
+}
+async function loadBooks(q=''){
+  grid.innerHTML='<div class="lib-placeholder">Loading books…</div>';
+  const u=new URL(LIB_BASE+'/API/library/books.php',location.origin);
+  u.searchParams.set('server_id',LIB_SERVER_ID);u.searchParams.set('mode',libMode);if(q)u.searchParams.set('q',q);
+  try{const r=await fetch(u);const d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'Unable to load books');renderBooks(d.books||[]);
+    if(d.context?.label)document.getElementById('libraryHeading').textContent=libMode==='me'?'Recommended for Me':'Recommended for '+d.context.label;
+  }catch(e){grid.innerHTML='<div class="lib-placeholder">'+esc(e.message)+'</div>';}
+}
 document.querySelectorAll('.lib-tab').forEach(btn=>btn.addEventListener('click',()=>{
-  document.querySelectorAll('.lib-tab').forEach(x=>x.classList.toggle('active',x===btn));
-  const server=<?= json_encode($serverName) ?>;
-  const mine=btn.dataset.mode==='me';
-  document.getElementById('libraryHeading').textContent=mine?'Recommended for Me':'Recommended for '+server;
-  document.getElementById('libraryDescription').textContent=mine
-    ? 'Books will be ranked using your course, year level, interests and learning profile.'
-    : 'Books will be ranked using this server\'s academic context, subject and tags.';
+  document.querySelectorAll('.lib-tab').forEach(x=>x.classList.toggle('active',x===btn));libMode=btn.dataset.mode;
+  document.getElementById('libraryDescription').textContent=libMode==='me'?'Books ranked using your course, year level and interests.':'Books ranked using this server\'s name, description and academic tags.';
+  loadBooks(search.value.trim());
 }));
+let timer;search.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>loadBooks(search.value.trim()),450);});
+loadBooks();
 </script>
 </body>
 </html>
