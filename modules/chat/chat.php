@@ -202,6 +202,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         onclick="switchWorkspace(<?= $idx ?>, <?= (int)$srv['id'] ?>)"
         title="<?= htmlspecialchars($srv['name']) ?>">
         <?= htmlspecialchars($srv['icon_emoji'] ?: strtoupper(substr($srv['name'], 0, 1))) ?>
+        <span class="workspace-visibility-indicator <?= in_array(strtolower((string)($srv['type'] ?? 'community')), ['private','academic'], true) ? 'is-private' : 'is-public' ?>" title="<?= in_array(strtolower((string)($srv['type'] ?? 'community')), ['private','academic'], true) ? 'Private server' : 'Public server' ?>"><?= in_array(strtolower((string)($srv['type'] ?? 'community')), ['private','academic'], true) ? '🔒' : '🌐' ?></span>
       </div>
     <?php endforeach; ?>
     <div class="workspace-sep"></div>
@@ -213,7 +214,6 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     <div class="sidebar-workspace-header" id="wsHeader" onclick="openServerManager()" title="Server settings">
       <div class="ws-icon" id="wsIcon"><?= htmlspecialchars($firstServer['icon_emoji'] ?? '⭐') ?></div>
       <div class="ws-name" id="wsName"><?= htmlspecialchars($firstServer['name'] ?? 'Ecollab') ?></div>
-      <span class="chat-visibility-badge <?= in_array(strtolower((string)($firstServer['type'] ?? 'community')), ['private','academic'], true) ? 'visibility-private' : 'visibility-public' ?>" id="serverVisibilityBadge"><?= in_array(strtolower((string)($firstServer['type'] ?? 'community')), ['private','academic'], true) ? '🔒 Private' : '🌐 Public' ?></span>
       <div class="ws-chevron">▾</div>
     </div>
 
@@ -290,6 +290,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
                     <span class="ch-new-badge" style="font-size:9px;background:rgba(168,85,247,0.18);color:#c084fc;border-radius:4px;padding:1px 5px;font-weight:700;vertical-align:middle;">new</span>
                   <?php endif; ?>
                 </span>
+                <span class="channel-visibility-indicator <?= !empty($ch['is_private']) ? 'is-private' : 'is-public' ?>" title="<?= !empty($ch['is_private']) ? 'Private channel' : 'Public channel' ?>"><?= !empty($ch['is_private']) ? '🔒' : '🌐' ?></span>
                 <?php if ((int)$ch['unread_count'] > 0): ?>
                   <span class="channel-unread"><?= (int)$ch['unread_count'] ?></span>
                 <?php endif; ?>
@@ -428,7 +429,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
         <span style="font-size:22px;color:var(--text-muted);font-weight:300;">#</span>
         <div>
-          <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;"><div style="font-size:15px;font-weight:700;color:var(--text-primary);line-height:1.2;" id="channelTitle">Select a channel</div><span class="chat-visibility-badge visibility-public" id="channelVisibilityBadge" style="display:none;">🌐 Public</span></div>
+          <div style="font-size:15px;font-weight:700;color:var(--text-primary);line-height:1.2;" id="channelTitle">Select a channel</div>
           <div class="channel-desc" id="channelDesc" style="font-size:12px;color:var(--text-muted);"></div>
           <a id="channelDashboardLink" href="<?= BASE_URL ?>/modules/student/dashboard.php" style="display:none;font-size:11px;color:#c084fc;text-decoration:none;font-weight:700;margin-top:3px;" title="Open dashboard">↗ Dashboard</a>
         </div>
