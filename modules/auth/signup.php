@@ -45,10 +45,7 @@ if (!$isOAuthOnboarding) {
 
   <div class="page">
 
-    <a href="<?= BASE_URL ?>/index.php" class="nav-logo">
-      <div class="ico">🌿</div>
-      <?= APP_NAME ?>
-    </a>
+    <a href="<?= BASE_URL ?>/index.php" class="nav-logo ecollab-auth-brand"><img src="<?= BASE_URL ?>/assets/ecollab-wordmark.webp" alt="eCollab"></a>
 
     <div class="center">
       <div class="card signup-card">
