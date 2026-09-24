@@ -189,7 +189,8 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       <span style="color:var(--accent-purple);font-size:16px;">#</span>
       <span class="mob-channel-name" id="mobChannelName">channels</span>
     </div>
-    <div class="mob-right-btn" onclick="toggleNotifications()" title="Notifications">&#x1F514;</div>
+    <div class="mob-right-btn" onclick="openFullMatchesModal()" title="AI Suggested Matches" aria-label="AI Suggested Matches">✨</div>
+    <div class="mob-right-btn" onclick="toggleNotifications()" title="Notifications" aria-label="Notifications">&#x1F514;</div>
   </div>
 
   <!-- WORKSPACE SWITCHER -->
