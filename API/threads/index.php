@@ -119,7 +119,7 @@ function threadBaseSelect(): string {
     return "
         SELECT
             t.id, t.title, t.body, t.scope, t.server_id, t.channel_id,
-            t.created_by, t.is_locked, t.is_pinned, t.created_at, t.updated_at,
+            t.created_by, t.is_locked, t.is_pinned, t.is_bookmarked, t.created_at, t.updated_at,
             u.username AS author_username, u.full_name AS author_name,
             u.avatar_url AS author_avatar_url,
             COALESCE(u.avatar_color_gradient, '#a855f7,#ec4899') AS author_gradient,
@@ -249,6 +249,42 @@ try {
         saveThreadAttachments($db,$threadId,$replyId,is_array($body['attachments'] ?? null)?$body['attachments']:[],$uid);
         $db->prepare('UPDATE threads SET updated_at=NOW() WHERE id=?')->execute([$threadId]);
         threadJson(['reply_id'=>$replyId,'message'=>'Reply posted'], 201);
+    }
+
+    if ($action === 'bookmark') {
+        $id=(int)($body['id'] ?? 0); if(!$id) threadJson(['error'=>'Thread id is required'],400);
+        $s=$db->prepare('SELECT * FROM threads WHERE id=? AND is_deleted=0 LIMIT 1');$s->execute([$id]);$thread=$s->fetch(PDO::FETCH_ASSOC);
+        if(!$thread || !canSeeThread($db,$thread,$uid)) threadJson(['error'=>'Thread not found'],404);
+        $next=((int)($thread['is_bookmarked'] ?? 0)===1)?0:1;
+        $db->prepare('UPDATE threads SET is_bookmarked=? WHERE id=?')->execute([$next,$id]);
+        threadJson(['bookmarked'=>$next]);
+    }
+
+    if ($action === 'edit') {
+        $id=(int)($body['id'] ?? 0);$title=trim((string)($body['title'] ?? ''));$content=trim((string)($body['body'] ?? ''));
+        $s=$db->prepare('SELECT * FROM threads WHERE id=? AND is_deleted=0 LIMIT 1');$s->execute([$id]);$thread=$s->fetch(PDO::FETCH_ASSOC);
+        if(!$thread) threadJson(['error'=>'Thread not found'],404);
+        if((int)$thread['created_by']!==$uid) threadJson(['error'=>'Only the post owner can edit this post'],403);
+        if($title==='' || mb_strlen($title)>180 || $content==='') threadJson(['error'=>'Title and body are required'],400);
+        $db->prepare('UPDATE threads SET title=?,body=?,updated_at=NOW() WHERE id=?')->execute([$title,$content,$id]);
+        threadJson(['message'=>'Post updated']);
+    }
+
+    if ($action === 'delete') {
+        $id=(int)($body['id'] ?? 0);$s=$db->prepare('SELECT created_by FROM threads WHERE id=? AND is_deleted=0 LIMIT 1');$s->execute([$id]);$owner=(int)$s->fetchColumn();
+        if(!$owner) threadJson(['error'=>'Thread not found'],404);
+        if($owner!==$uid) threadJson(['error'=>'Only the post owner can delete this post'],403);
+        $db->prepare('UPDATE threads SET is_deleted=1,updated_at=NOW() WHERE id=?')->execute([$id]);
+        threadJson(['message'=>'Post deleted']);
+    }
+
+    if ($action === 'report') {
+        $id=(int)($body['id'] ?? 0);$reason=trim((string)($body['reason'] ?? 'other'));
+        $s=$db->prepare('SELECT created_by FROM threads WHERE id=? AND is_deleted=0 LIMIT 1');$s->execute([$id]);$target=(int)$s->fetchColumn();
+        if(!$target) threadJson(['error'=>'Thread not found'],404);
+        if($target===$uid) threadJson(['error'=>'You cannot report your own post'],422);
+        $db->prepare('INSERT INTO thread_reports(thread_id,reporter_id,reported_user_id,reason,status) VALUES(?,?,?,?,\'pending\')')->execute([$id,$uid,$target,mb_substr($reason,0,255)]);
+        threadJson(['message'=>'Post reported']);
     }
 
     if ($action === 'vote') {
