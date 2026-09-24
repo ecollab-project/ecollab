@@ -32,6 +32,21 @@ $hour     = (int)date('G');
 $greeting = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
 
 $stats = $dashData['stats'] ?? ['total_members' => 0, 'active_today' => 0, 'messages_today' => 0, 'study_sessions' => 0];
+
+// Load facilitator-managed servers before any page or modal renders.
+// Previously this list was initialized halfway through the Dashboard markup,
+// so direct navigation to Announcements/Settings could render empty selects.
+$facDashboardServers = [];
+try {
+  require_once ROOT_PATH . '/services/ServerMonitoringService.php';
+  $facDashboardServers = (new ServerMonitoringService())->getFacilitatorServers((int)$user['id']);
+} catch (Throwable $e) {
+  error_log('[FacilitatorDashboard] server list: ' . $e->getMessage());
+}
+$facOwnedServers = array_values(array_filter(
+  $facDashboardServers,
+  static fn(array $srv): bool => (int)($srv['owner_id'] ?? 0) === (int)$user['id']
+));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -239,14 +254,7 @@ $stats = $dashData['stats'] ?? ['total_members' => 0, 'active_today' => 0, 'mess
             </div>
 
             <!-- MY SERVERS -->
-            <?php
-            $membership = $dashData['membership'] ?? [];
-            $facDashboardServers = [];
-            try {
-              require_once ROOT_PATH . '/services/ServerMonitoringService.php';
-              $facDashboardServers = (new ServerMonitoringService())->getFacilitatorServers((int)$user['id']);
-            } catch (Throwable $e) { $facDashboardServers = []; }
-            ?>
+            <?php $membership = $dashData['membership'] ?? []; ?>
             <div class="card" style="margin-bottom:12px">
               <div class="ch-bar">
                 <div class="ch-title">My Servers</div>
@@ -779,7 +787,7 @@ try {
       <div class="page-section" id="page-roles">
         <div class="page-title-row"><div><div class="page-title">Roles & Permissions</div><div class="page-sub">Change permissions for servers you own. Roles cannot be created here.</div></div><button class="btn-primary" onclick="saveFacPermissions()">💾 Save Permissions</button></div>
         <div class="card"><div style="padding:14px">
-          <div class="fg"><label class="fl">Server</label><select class="fi" id="permServer" onchange="loadFacPermissions(this.value)"><option value="">Choose a server...</option><?php foreach($facDashboardServers as $srv): if((int)($srv['owner_id']??0)!==(int)$user['id']) continue; ?><option value="<?= (int)$srv['id'] ?>"><?= htmlspecialchars($srv['name']) ?></option><?php endforeach; ?></select></div>
+          <div class="fg"><label class="fl">Server</label><select class="fi" id="permServer" onchange="loadFacPermissions(this.value)"><option value="">Choose a server...</option><?php foreach($facOwnedServers as $srv): ?><option value="<?= (int)$srv['id'] ?>"><?= htmlspecialchars($srv['name']) ?></option><?php endforeach; ?></select></div>
           <div class="perm-setting"><span>Members can invite users</span><div class="toggle on" id="permInvites" onclick="this.classList.toggle('on')"></div></div>
           <div class="perm-setting"><span>Members can send messages</span><div class="toggle on" id="permMessages" onclick="this.classList.toggle('on')"></div></div>
           <div class="perm-setting"><span>Members can join voice channels</span><div class="toggle on" id="permVoice" onclick="this.classList.toggle('on')"></div></div>
@@ -877,7 +885,7 @@ try {
             <div class="page-title">Server Settings</div>
           </div><button class="btn-primary" onclick="saveChannelSettings()">💾 Save Changes</button>
         </div>
-        <div class="card" style="margin-bottom:12px;padding:14px"><div class="fg" style="margin:0"><label class="fl">Server to manage</label><select class="fi" id="settingsServer"><option value="">Choose a server...</option><?php foreach($facDashboardServers as $srv): if((int)($srv['owner_id']??0)!==(int)$user['id']) continue; ?><option value="<?= (int)$srv['id'] ?>"><?= htmlspecialchars($srv['name']) ?></option><?php endforeach; ?></select></div></div>
+        <div class="card" style="margin-bottom:12px;padding:14px"><div class="fg" style="margin:0"><label class="fl">Server to manage</label><select class="fi" id="settingsServer"><option value="">Choose a server...</option><?php foreach($facOwnedServers as $srv): ?><option value="<?= (int)$srv['id'] ?>"><?= htmlspecialchars($srv['name']) ?></option><?php endforeach; ?></select></div></div>
         <div class="g2">
           <div class="card">
             <div class="ch-bar">
@@ -995,7 +1003,7 @@ try {
         <div class="mx" onclick="closeModal('createAnnModal')">✕</div>
       </div>
       <div class="mb">
-        <div class="fg"><label class="fl">Server</label><select class="fi" id="annServer"><option value="">Choose a server...</option><?php foreach($facDashboardServers as $srv): if((int)($srv['owner_id']??0)!==(int)$user['id']) continue; ?><option value="<?= (int)$srv['id'] ?>"><?= htmlspecialchars($srv['name']) ?></option><?php endforeach; ?></select></div>
+        <div class="fg"><label class="fl">Server</label><select class="fi" id="annServer"><option value="">Choose a server...</option><?php foreach($facOwnedServers as $srv): ?><option value="<?= (int)$srv['id'] ?>"><?= htmlspecialchars($srv['name']) ?></option><?php endforeach; ?></select></div>
         <div class="fg"><label class="fl">Title</label><input class="fi" id="annTitle" placeholder="Announcement title"></div>
         <div class="fg"><label class="fl">Message</label><textarea class="fta" id="annBody" style="min-height:80px" placeholder="Write your announcement..."></textarea></div>
       </div>
