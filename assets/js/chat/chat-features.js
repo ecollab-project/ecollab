@@ -846,12 +846,9 @@ async function _fetchNavViewData(viewName) {
         || parseInt(document.querySelector('.workspace-icon.active')?.dataset?.serverId || '0')
         || parseInt(document.querySelector('[data-server-id]')?.dataset?.serverId || '0')
         || 0;
-      const chanId = window.ECOLLAB?.currentChannelId || 0;
-
       const base = window.ECOLLAB?.baseUrl || '';
       const params = new URLSearchParams({ scope: 'all', limit: '30' });
       if (servId) params.set('server_id', String(servId));
-      if (chanId) params.set('channel_id', String(chanId));
 
       const res = await fetch(`${base}/API/threads/index.php?${params.toString()}`, { credentials: 'same-origin' });
       const d = await res.json();
@@ -1034,7 +1031,6 @@ function _renderNavView(viewName, overlay) {
             <select id="threadScopeInput" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 8px;color:var(--text-secondary);font-size:12px;font-family:inherit;">
               <option value="public">🌐 Public</option>
               ${window.ECOLLAB?.currentServerId ? '<option value="server">🏠 This server</option>' : ''}
-              ${window.ECOLLAB?.currentChannelId ? '<option value="channel">#️⃣ This channel</option>' : ''}
             </select>
             <button onclick="_submitNewThread()" style="margin-left:auto;padding:6px 14px;border-radius:8px;background:#a855f7;border:none;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Post</button>
             <button onclick="document.getElementById('threadComposer').style.display='none'" style="padding:6px 10px;border-radius:8px;background:transparent;border:1px solid var(--border);color:var(--text-muted);font-size:12px;cursor:pointer;font-family:inherit;">Cancel</button>
@@ -2539,6 +2535,13 @@ function _renderThreadList() {
             ${t.is_pinned == 1 ? '<span style="font-size:10px;color:#fbbf24;">📌</span>' : ''}
             ${_threadScopeBadge(t)}
             <span style="font-size:11px;color:var(--text-muted);margin-left:auto;">${_relTime(t.created_at)}</span>
+            <div style="position:relative;" onclick="event.stopPropagation();">
+              <button onclick="_toggleThreadMenu(event,this)" title="Post options" style="border:0;background:transparent;color:var(--text-muted);cursor:pointer;font-size:18px;line-height:1;padding:2px 5px;">⋮</button>
+              <div class="thread-post-menu" style="display:none;position:absolute;right:0;top:24px;z-index:20;min-width:150px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:5px;box-shadow:0 8px 24px rgba(0,0,0,.35);">
+                <button onclick="_threadAction('bookmark',${t.id})" style="width:100%;text-align:left;border:0;background:none;color:var(--text-secondary);padding:7px 9px;cursor:pointer;">🔖 ${Number(t.is_bookmarked)?'Remove bookmark':'Bookmark'}</button>
+                ${Number(t.created_by)===Number(window.ECOLLAB?.userId)?'<button onclick="_editThreadPost('+t.id+')" style="width:100%;text-align:left;border:0;background:none;color:var(--text-secondary);padding:7px 9px;cursor:pointer;">✏️ Edit post</button><button onclick="_threadAction(\'delete\','+t.id+')" style="width:100%;text-align:left;border:0;background:none;color:#f87171;padding:7px 9px;cursor:pointer;">🗑 Delete post</button>':'<button onclick="_reportThreadPost('+t.id+')" style="width:100%;text-align:left;border:0;background:none;color:#fbbf24;padding:7px 9px;cursor:pointer;">🚩 Report post</button>'}
+              </div>
+            </div>
           </div>
           <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">${_esc(t.title)}</div>
           <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">${_esc(bodyPreview)}</div>\n          ${_renderThreadImages(t.attachments)}
@@ -2624,7 +2627,6 @@ async function _submitNewThread() {
       body: JSON.stringify({
         action: 'create', title, body, scope,
         server_id: window.ECOLLAB?.currentServerId || 0,
-        channel_id: window.ECOLLAB?.currentChannelId || 0,
         attachments: _pendingThreadImage ? [_pendingThreadImage] : [],
       }),
     });
@@ -2643,6 +2645,13 @@ async function _submitNewThread() {
   }
 }
 
+function _toggleThreadMenu(e,btn){e.stopPropagation();document.querySelectorAll('.thread-post-menu').forEach(m=>{if(m!==btn.nextElementSibling)m.style.display='none'});const m=btn.nextElementSibling;m.style.display=m.style.display==='block'?'none':'block';}
+async function _threadAction(action,id,payload={}){
+  if(action==='delete'&&!confirm('Delete this post?'))return;
+  try{const base=window.ECOLLAB?.baseUrl||'';const res=await fetch(base+'/API/threads/index.php',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':window.ECOLLAB?.csrfToken||''},body:JSON.stringify({action,id,...payload})});const d=await res.json();if(!res.ok||d.error)throw new Error(d.error||'Action failed');if(window.showToast)showToast(d.message||(action==='bookmark'?(d.bookmarked?'Post bookmarked':'Bookmark removed'):'Done'),'success');await _fetchNavViewData('threads');const root=document.getElementById('threadListRoot');if(root)root.innerHTML=_renderThreadList();}catch(e){if(window.showToast)showToast(e.message,'error');}
+}
+function _editThreadPost(id){const t=_threadMessages.find(x=>Number(x.id)===Number(id))||_threadDetailData?.thread;if(!t)return;const title=prompt('Edit post title:',t.title||'');if(title===null)return;const body=prompt('Edit post:',t.body||'');if(body===null)return;_threadAction('edit',id,{title:title.trim(),body:body.trim()});}
+function _reportThreadPost(id){const reason=prompt('Why are you reporting this post?','Inappropriate content');if(reason===null||!reason.trim())return;_threadAction('report',id,{reason:reason.trim()});}
 async function _voteOnThread(id, vote) {
   try {
     const base = window.ECOLLAB?.baseUrl || '';
@@ -2696,6 +2705,7 @@ function _renderThreadDetailView() {
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
         ${_threadScopeBadge(t)}
         <span style="font-size:11px;color:var(--text-muted);margin-left:auto;">${_relTime(t.created_at)}</span>
+        <div style="position:relative;" onclick="event.stopPropagation();"><button onclick="_toggleThreadMenu(event,this)" style="border:0;background:none;color:var(--text-muted);font-size:18px;cursor:pointer;">⋮</button><div class="thread-post-menu" style="display:none;position:absolute;right:0;top:24px;z-index:20;min-width:150px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:5px;box-shadow:0 8px 24px rgba(0,0,0,.35);"><button onclick="_threadAction('bookmark',${t.id})" style="width:100%;text-align:left;border:0;background:none;color:var(--text-secondary);padding:7px 9px;cursor:pointer;">🔖 ${Number(t.is_bookmarked)?'Remove bookmark':'Bookmark'}</button>${Number(t.created_by)===Number(window.ECOLLAB?.userId)?'<button onclick="_editThreadPost('+t.id+')" style="width:100%;text-align:left;border:0;background:none;color:var(--text-secondary);padding:7px 9px;cursor:pointer;">✏️ Edit post</button><button onclick="_threadAction(\'delete\','+t.id+')" style="width:100%;text-align:left;border:0;background:none;color:#f87171;padding:7px 9px;cursor:pointer;">🗑 Delete post</button>':'<button onclick="_reportThreadPost('+t.id+')" style="width:100%;text-align:left;border:0;background:none;color:#fbbf24;padding:7px 9px;cursor:pointer;">🚩 Report post</button>'}</div></div>
       </div>
       <div style="font-size:16px;font-weight:800;color:var(--text-primary);margin-bottom:8px;">${_esc(t.title)}</div>
       <div style="font-size:13px;color:var(--text-secondary);white-space:pre-wrap;margin-bottom:12px;">${_esc(t.body)}</div>\n      ${_renderThreadImages(_threadDetailData.attachments)}
