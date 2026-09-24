@@ -244,7 +244,8 @@ function _vadLoop() {
   const isSpeaking = avg > 12 && !vcMicMuted;
 
   // Animate the wave bars on user's speaker card
-  const card = document.querySelector('.vc-speaker-card[data-user-id]');
+  const localUserId = Number(window.ECOLLAB?.userId || 0);
+  const card = document.querySelector(`.vc-speaker-card[data-user-id="${localUserId}"], .vc-listener-card[data-user-id="${localUserId}"]`);
   if (card) {
     card.classList.toggle('speaking', isSpeaking);
     const bars = card.querySelectorAll('.sc-wave-bar');
