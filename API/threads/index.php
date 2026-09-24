@@ -199,7 +199,7 @@ try {
         $s->execute($params);
         $threads=$s->fetchAll(PDO::FETCH_ASSOC);
         foreach($threads as &$thread){$thread['attachments']=attachmentRows($db,(int)$thread['id']);}unset($thread);
-        threadJson(['threads'=>$threads, 'scope'=>$scope, 'server_id'=>$serverId, 'channel_id'=>$channelId]);
+        threadJson(['threads'=>$threads, 'scope'=>$scope, 'server_id'=>$serverId, 'channel_id'=>$channelId, 'current_user_id'=>(int)$me['id']]);
     }
 
     if ($method !== 'POST') threadJson(['error' => 'Method not allowed'], 405);
