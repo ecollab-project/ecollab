@@ -33,7 +33,7 @@ function h($v){return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8');}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <?php if($scope==='facilitator'):?><link rel="stylesheet" href="<?=BASE_URL?>/assets/css/desktop/facilitator-dashboard.css"><?php else:?><link rel="stylesheet" href="<?=BASE_URL?>/assets/css/desktop/admin-dashboard.css"><?php endif;?>
 <link rel="stylesheet" href="<?=BASE_URL?>/assets/css/desktop/server-monitor.css"></head>
-<body class="server-monitor-page">
+<body class="server-monitor-page <?= $scope==='facilitator'?'facilitator-monitor':'admin-monitor' ?>">
 <?php $activePage=$scope==='facilitator'?'servermonitoring':'servers'; if($scope==='facilitator'){include ROOT_PATH.'/includes/layout/sidebar-facilitator.php';}else{include ROOT_PATH.'/includes/layout/sidebar-admin.php';} ?>
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <div class="main-content monitor-main">
