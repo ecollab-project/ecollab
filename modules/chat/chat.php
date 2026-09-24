@@ -43,7 +43,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ecollab — Chat</title>
-  <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/assets/ecollab-favicon.svg">
+  <link rel="icon" type="image/webp" href="<?= BASE_URL ?>/assets/ecollab-icon.webp">
   <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken) ?>">
   <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js" defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
@@ -195,6 +195,10 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
   <!-- WORKSPACE SWITCHER -->
   <div class="workspace-switcher" id="workspaceSwitcher">
+    <div class="workspace-brand-mark" aria-label="eCollab" title="eCollab">
+      <img src="<?= BASE_URL ?>/assets/ecollab-icon.webp" alt="" draggable="false">
+    </div>
+    <div class="workspace-sep workspace-brand-sep"></div>
     <?php foreach ($servers as $idx => $srv): ?>
       <div class="workspace-icon<?= $idx === 0 ? ' active' : '' ?>"
         data-server-id="<?= (int)$srv['id'] ?>"
