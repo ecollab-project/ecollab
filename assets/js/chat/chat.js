@@ -172,6 +172,13 @@ function switchWorkspace(wsIdx, serverId) {
   // Keep ECOLLAB object in sync so chat-features.js can read it
   if (window.ECOLLAB) window.ECOLLAB.currentServerId = serverId;
 
+  // Keep the server Library link scoped to the workspace the user selected.
+  const libraryNav = document.getElementById('serverLibraryNav');
+  if (libraryNav) {
+    const base = String(window.ECOLLAB?.baseUrl || '').replace(/\/$/, '');
+    libraryNav.href = base + '/modules/library/library.php?server_id=' + encodeURIComponent(serverId);
+  }
+
   document.querySelectorAll('.workspace-icon').forEach((icon, i) => {
     icon.classList.toggle('active', i === wsIdx);
   });
