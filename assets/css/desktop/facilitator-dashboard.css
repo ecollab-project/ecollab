@@ -384,3 +384,14 @@ select.fi option:checked{background:#7c3aed;color:#fff}
 .resolve-ban{border-color:rgba(220,38,38,.22)}
 .resolve-ban .resolve-action-icon{background:rgba(220,38,38,.15)}
 .resolve-ban strong{color:#f87171}
+
+/* Larger facilitator announcements + visibility indicators */
+#page-announcements #annList{overflow:hidden}
+#page-announcements .ann-item{display:flex;align-items:flex-start;gap:14px;padding:20px 22px;min-height:108px}
+#page-announcements .ann-icon{width:44px;height:44px;flex:0 0 44px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(233,30,140,.12);font-size:21px}
+#page-announcements .ann-item strong,#page-announcements .ann-item [style*="font-size:13px"]{font-size:15px!important;line-height:1.35}
+#page-announcements .ann-item [style*="font-size:11.5px"]{font-size:12.5px!important;line-height:1.65!important;margin-top:7px!important}
+#page-announcements .ann-item .ri-meta{font-size:10.5px;margin-top:9px}
+.visibility-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:999px;font-size:9px;font-weight:800;line-height:1.5;white-space:nowrap;vertical-align:middle}
+.visibility-public{color:#67e8f9;background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.22)}
+.visibility-private{color:#c4b5fd;background:rgba(124,58,237,.13);border:1px solid rgba(124,58,237,.25)}
