@@ -188,6 +188,12 @@ async function loadServerChannels(serverId) {
     if (server) {
       document.getElementById('wsIcon').textContent = server.icon_emoji || '⭐';
       document.getElementById('wsName').textContent = server.name;
+      const serverBadge=document.getElementById('serverVisibilityBadge');
+      if(serverBadge){
+        const serverPrivate=['private','academic'].includes(String(server.type||'community').toLowerCase());
+        serverBadge.textContent=serverPrivate?'🔒 Private':'🌐 Public';
+        serverBadge.className='chat-visibility-badge '+(serverPrivate?'visibility-private':'visibility-public');
+      }
     }
 
     renderChannelList(data.channels || []);
@@ -248,6 +254,7 @@ function renderChannelList(channels) {
       el.className = 'channel-item';
       el.dataset.channelId = ch.id;
       el.dataset.channelName = ch.name;
+      el.dataset.isPrivate = (ch.is_private == 1 || ch.is_private === true) ? '1' : '0';
       if (ch.is_new == 1 || ch.is_new === true) el.dataset.isNew = '1';
       const isAnnouncement = ch.type === 'announcement';
       const isPrivate = ch.is_private == 1 || ch.is_private === true;
@@ -339,6 +346,12 @@ async function switchChannel(el, channelId) {
       const hasAccess = chanData.has_access == 1 || chanData.has_access === true || !isPrivate;
 
       document.getElementById('channelTitle').textContent = ch.name;
+      const channelBadge=document.getElementById('channelVisibilityBadge');
+      if(channelBadge){
+        channelBadge.style.display='inline-flex';
+        channelBadge.textContent=isPrivate?'🔒 Private':'🌐 Public';
+        channelBadge.className='chat-visibility-badge '+(isPrivate?'visibility-private':'visibility-public');
+      }
       document.getElementById('channelDesc').textContent = ch.description || '';
       document.getElementById('chatInputField').placeholder = `Message #${ch.name}`;
       document.getElementById('mobChannelName').textContent = ch.name;
