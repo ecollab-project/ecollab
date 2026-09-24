@@ -412,3 +412,38 @@
   .pm-radar { width: 150px; height: 150px; }
   .pm-breakdown-label { width: 100px; }
 }
+
+/* Mobile peer-matching tabs: keep all five controls visible without horizontal clipping. */
+@media (max-width: 600px) {
+  #peerMatchingModal { padding: 8px; }
+  .pm-shell {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100dvh - 16px);
+    border-radius: 12px;
+  }
+  .pm-header { padding: 11px 12px; }
+  .pm-header-title { font-size: 14px; }
+  .pm-header-sub { font-size: 10px; }
+  .pm-tab-bar {
+    width: 100%;
+    overflow: hidden;
+  }
+  .pm-tab-btn {
+    flex: 1 1 20%;
+    min-width: 0;
+    padding: 9px 2px 7px;
+    font-size: 9px;
+    line-height: 1.15;
+    overflow: hidden;
+    text-overflow: clip;
+  }
+  #pmModalBody { padding: 10px; }
+}
+@media (max-width: 380px) {
+  .pm-tab-btn {
+    font-size: 8px;
+    padding-left: 1px;
+    padding-right: 1px;
+  }
+}
