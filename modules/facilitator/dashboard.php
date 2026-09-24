@@ -844,39 +844,11 @@ try {
       </div>
       <div class="page-section" id="page-polls">
         <div class="page-title-row">
-          <div>
-            <div class="page-title">Polls</div>
-          </div>
-          <div style="display:flex;gap:7px"><button class="btn-sec" onclick="openModal('createPollModal')">📊 Create Poll</button><button class="btn-primary" onclick="openModal('createQuizModal')">📝 Create Quiz</button></div>
+          <div><div class="page-title">Polls</div></div>
         </div>
         <div class="card">
-          <div class="ch-bar">
-            <div class="ch-title">Active Polls</div>
-          </div>
-          <div style="padding:14px">
-            <div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:14px">
-              <div style="font-size:13px;font-weight:700;margin-bottom:10px">Which topic should we cover next?</div>
-              <div style="margin-bottom:6px">
-                <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px"><span>CNNs Deep Dive</span><span style="font-weight:700">45%</span></div>
-                <div class="prog-bar">
-                  <div class="prog-fill" style="width:45%;background:linear-gradient(90deg,var(--pink),var(--purple))"></div>
-                </div>
-              </div>
-              <div style="margin-bottom:6px">
-                <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px"><span>Recurrent Networks</span><span style="font-weight:700">35%</span></div>
-                <div class="prog-bar">
-                  <div class="prog-fill" style="width:35%;background:linear-gradient(90deg,var(--blue),var(--cyan))"></div>
-                </div>
-              </div>
-              <div>
-                <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px"><span>Transformers</span><span style="font-weight:700">20%</span></div>
-                <div class="prog-bar">
-                  <div class="prog-fill" style="width:20%;background:linear-gradient(90deg,var(--green),var(--teal))"></div>
-                </div>
-              </div>
-              <div style="font-size:10.5px;color:var(--muted2);margin-top:8px">42 votes · Ends in 2 days</div>
-            </div>
-          </div>
+          <div class="ch-bar"><div class="ch-title">Active Polls</div></div>
+          <div id="facPollsList" class="dashboard-empty-state">Select one of your servers to view polls created in its chat channels.</div>
         </div>
       </div>
       <div class="page-section" id="page-chsettings">
