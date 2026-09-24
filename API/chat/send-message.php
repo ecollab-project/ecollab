@@ -61,7 +61,7 @@ try {
 
     if (!$isPrivileged) {
         $accessStmt = $db->prepare('
-            SELECT c.is_private, c.created_by, sm.server_role,
+            SELECT c.is_private, c.created_by, c.type, sm.server_role,
                    EXISTS(
                        SELECT 1 FROM channel_members cm
                        WHERE cm.channel_id = c.id AND cm.user_id = :uid_access
@@ -88,6 +88,10 @@ try {
 
         if ((int)$access['is_private'] === 1 && !(bool)$access['has_channel_access'] && !$canManage) {
             throw new RuntimeException('You do not have access to this private channel', 403);
+        }
+
+        if (($access['type'] ?? '') === 'announcement' && !$canManage) {
+            throw new RuntimeException('Announcement channels are view-only for members', 403);
         }
     }
 
