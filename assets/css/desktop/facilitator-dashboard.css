@@ -356,3 +356,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 
 .perm-setting{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--border2)}
 .perm-setting:last-child{border-bottom:0}
+
+/* Native select menus: keep facilitator server filters readable in dark mode. */
+select.fi{color-scheme:dark;background-color:var(--card);color:var(--text);cursor:pointer}
+select.fi option{background:#111827;color:#f8fafc}
+select.fi option:checked{background:#7c3aed;color:#fff}
