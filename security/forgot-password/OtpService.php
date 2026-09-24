@@ -119,11 +119,11 @@ class OtpService {
      */
     public function deliver(string $toEmail, string $toName, string $otp, string $action = 'reset_password'): array {
         $subjects = [
-            'reset_password' => 'Your Ecollab Password Reset Code',
-            'verify_email'   => 'Verify Your Ecollab Email',
-            '2fa'            => 'Your Ecollab Login Code',
+            'reset_password' => 'Your eCollab Password Reset Code',
+            'verify_email'   => 'Verify Your eCollab Email',
+            '2fa'            => 'Your eCollab Login Code',
         ];
-        $subject = $subjects[$action] ?? 'Your Ecollab Verification Code';
+        $subject = $subjects[$action] ?? 'Your eCollab Verification Code';
 
         $expiryMin = (int)(OTP_EXPIRY / 60);
         $body = $this->buildEmailBody($toName, $otp, $expiryMin, $action);
@@ -145,7 +145,7 @@ class OtpService {
 
         $payload = json_encode([
             'sender' => [
-                'name'  => BREVO_SENDER_NAME,
+                'name'  => 'eCollab',
                 'email' => BREVO_SENDER_EMAIL,
             ],
             'to' => [
