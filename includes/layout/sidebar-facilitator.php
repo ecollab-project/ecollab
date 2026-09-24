@@ -33,29 +33,24 @@ function fNavItem(string $page, string $icon, string $label, $badge, string $act
     <?= fNavItem('announcements', '📢', 'Announcements',       null, $activePage) ?>
     <?= fNavItem('resources',     '📚', 'Resources',           null, $activePage) ?>
     <?= fNavItem('files',         '🔗', 'Files & Links',       null, $activePage) ?>
-    <?= fNavItem('chsettings',    '⚙',  'Channel Settings',   null, $activePage) ?>
+    <?= fNavItem('chsettings',    '⚙',  'Server Settings',    null, $activePage) ?>
   </div>
 
   <div class="nav-section-title">Activity & Analytics</div>
   <div class="nav-pad" style="padding-top:0">
     <?= fNavItem('useractivity',  '📈', 'User Activity',      null, $activePage, 'active-soft') ?>
-    <?= fNavItem('messages',      '💬', 'Messages',            null, $activePage) ?>
+    <div class="nav-item" onclick="goToChat()"><span class="nav-ic">💬</span>Messages</div>
     <?= fNavItem('sessions',      '🎓', 'Study Sessions',      null, $activePage) ?>
-    <?= fNavItem('engagement',    '💡', 'Engagement',           null, $activePage) ?>
-    <?= fNavItem('leaderboards',  '🏆', 'Leaderboards',        null, $activePage) ?>
   </div>
 
   <div class="nav-section-title">Moderation</div>
   <div class="nav-pad" style="padding-top:0">
     <?= fNavItem('reports',   '🚩', 'Reports',          2,    $activePage) ?>
-    <?= fNavItem('modqueue',  '⚠',  'Moderation Queue', null, $activePage) ?>
     <?= fNavItem('banned',    '🚫', 'Banned Users',     null, $activePage) ?>
-    <?= fNavItem('chlogs',    '📋', 'Channel Logs',     null, $activePage) ?>
   </div>
 
   <div class="nav-section-title">Tools</div>
   <div class="nav-pad" style="padding-top:0">
-    <?= fNavItem('whiteboard', '🎨', 'Whiteboard',    null, $activePage) ?>
     <?= fNavItem('polls',      '📊', 'Polls & Quizzes',null, $activePage) ?>
     <div class="nav-item" onclick="window.location.href='<?= BASE_URL ?>/modules/collaboration/index.php'"><span class="nav-ic">🧩</span>Collaboration Hub</div>
     <div class="nav-item" onclick="openModal('aiModal')"><span class="nav-ic">🤖</span>AI Assistant</div>
