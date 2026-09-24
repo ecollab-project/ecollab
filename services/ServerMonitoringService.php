@@ -32,7 +32,7 @@ final class ServerMonitoringService
             // they own it, are assigned through subject_classes, or have a management role.
             // Keep the server-member join restricted to this user; otherwise another
             // member's owner/admin role can accidentally affect the result.
-            $sql = "SELECT DISTINCT s.id, s.owner_id, s.name, COALESCE(s.icon_emoji,'🖥') icon_emoji,
+            $sql = "SELECT DISTINCT s.id, s.owner_id, s.name, s.type, COALESCE(s.icon_emoji,'🖥') icon_emoji,
                     (SELECT COUNT(*) FROM server_members sm2 WHERE sm2.server_id=s.id) member_count
                     FROM servers s
                     LEFT JOIN subject_classes sc
