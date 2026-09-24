@@ -33,7 +33,10 @@ final class ServerMonitoringService
                     FROM servers s
                     LEFT JOIN subject_classes sc ON sc.server_id=s.id
                     LEFT JOIN server_members sm ON sm.server_id=s.id AND sm.user_id=:uid
-                    WHERE s.owner_id=:uid OR sc.facilitator_id=:uid OR sm.server_role IN ('owner','admin','moderator')
+                    WHERE s.owner_id=:uid
+                       OR sc.facilitator_id=:uid
+                       OR sm.user_id=:uid
+                       OR sm.server_role IN ('owner','admin','moderator')
                     ORDER BY s.name";
             $st=$this->db->prepare($sql); $st->execute([':uid'=>$userId]);
             return $st->fetchAll() ?: [];
@@ -47,7 +50,7 @@ final class ServerMonitoringService
                 FROM servers s
                 LEFT JOIN subject_classes sc ON sc.server_id=s.id
                 LEFT JOIN server_members sm ON sm.server_id=s.id AND sm.user_id=:uid
-                WHERE s.id=:sid AND (s.owner_id=:uid OR sc.facilitator_id=:uid OR sm.server_role IN ('owner','admin','moderator'))
+                WHERE s.id=:sid AND (s.owner_id=:uid OR sc.facilitator_id=:uid OR sm.user_id=:uid OR sm.server_role IN ('owner','admin','moderator'))
                 LIMIT 1");
             $st->execute([':sid'=>$serverId,':uid'=>$userId]);
             return (bool)$st->fetchColumn();
