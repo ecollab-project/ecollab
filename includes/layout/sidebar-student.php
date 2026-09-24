@@ -40,9 +40,8 @@ function navItem(string $page, string $icon, string $label, $badge, string $acti
 }
 ?>
 <aside class="sidebar">
-  <div class="logo" onclick="showPage('dashboard')">
-    <div class="logo-icon">🔷</div>
-    <span class="logo-text">Ecollab</span>
+  <div class="logo ecollab-brand-logo" onclick="showPage('dashboard')">
+    <img class="ecollab-brand-wordmark" src="<?= BASE_URL ?>/assets/ecollab-wordmark.webp" alt="eCollab">
   </div>
 
   <div class="nav-pad">
