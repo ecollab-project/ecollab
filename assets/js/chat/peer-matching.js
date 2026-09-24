@@ -308,8 +308,8 @@ async function _pmRunSearch() {
       const avatarText = pmAvatarUrl(u.avatar_url) ? '' : (u.full_name||u.username||'?')[0].toUpperCase();
       return `
         <div class="pm-search-row">
-          <div class="pm-avatar pm-avatar-sm" style="background:linear-gradient(135deg,${c1},${c2})">
-            ${(u.full_name||u.username||'?')[0].toUpperCase()}
+          <div class="pm-avatar pm-avatar-sm" style="background:${avatarBg}">
+            ${avatarText}
             ${u.is_online ? '<span class="pm-online-dot"></span>' : ''}
           </div>
           <div class="pm-search-info">
@@ -357,8 +357,8 @@ function _pmRequestCard(r, dir) {
 
   return `
     <div class="pm-request-card">
-      <div class="pm-avatar pm-avatar-sm" style="background:linear-gradient(135deg,${c1},${c2})">
-        ${(name||'?')[0].toUpperCase()}
+      <div class="pm-avatar pm-avatar-sm" style="background:${avatarBg}">
+        ${avatarText}
       </div>
       <div class="pm-request-info">
         <div class="pm-card-name">${pmEsc(name)}</div>
@@ -409,8 +409,8 @@ async function _pmRenderLeaderboard(body) {
           return `
             <div class="pm-leaderboard-row">
               <span class="pm-lb-rank">${medals[i] || `#${i+1}`}</span>
-              <div class="pm-avatar pm-avatar-sm" style="background:linear-gradient(135deg,${c1},${c2})">
-                ${(p.full_name||p.username||'?')[0]}
+              <div class="pm-avatar pm-avatar-sm" style="background:${avatarBg}">
+                ${avatarText}
                 ${p.is_online?'<span class="pm-online-dot"></span>':''}
               </div>
               <div class="pm-lb-info">
@@ -790,8 +790,8 @@ window.refreshMatches = async function(btn) {
         const avatarText = pmAvatarUrl(m.avatar_url) ? '' : (m.name||'?')[0];
         return `
           <div class="match-item" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
-            <div style="position:relative;width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">
-              ${(m.name||'?')[0]}
+            <div style="position:relative;width:36px;height:36px;border-radius:50%;background:${avatarBg};background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">
+              ${avatarText}
               ${m.is_online?'<span style="position:absolute;bottom:0;right:0;width:9px;height:9px;background:#22c55e;border-radius:50%;border:2px solid var(--bg-secondary)"></span>':''}
             </div>
             <div style="flex:1;min-width:0;">
