@@ -24,8 +24,17 @@ async function persist(scene) {
 }
 function App(){
   const api=useRef(null), remote=useRef(false), timer=useRef(null), last=useRef("");
-  const [initial,setInitial]=useState(null), [status,setStatus]=useState("Loading…");
+  const getTheme=()=>document.documentElement.dataset.theme==="light"?"light":"dark";
+  const [initial,setInitial]=useState(null), [status,setStatus]=useState("Loading…"), [theme,setTheme]=useState(getTheme);
   useEffect(()=>{loadBoard().then(s=>{last.current=JSON.stringify(s);setInitial(s);setStatus(canEdit?"Saved":"View only")}).catch(e=>setStatus(e.message))},[]);
+  useEffect(()=>{
+    const sync=()=>setTheme(getTheme());
+    window.addEventListener("ecollab:settings-applied",sync);
+    const observer=new MutationObserver(sync);
+    observer.observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+    sync();
+    return()=>{window.removeEventListener("ecollab:settings-applied",sync);observer.disconnect()};
+  },[]);
   const apply=useCallback(msg=>{
     if(Number(msg.whiteboard_id)!==Number(cfg.whiteboardId))return;
     let scene=null;
@@ -55,7 +64,7 @@ function App(){
   },[]);
   if(!initial)return React.createElement("div",{style:{padding:"30px",color:"#fff"}},status);
   return React.createElement("div",{style:{height:"100%",position:"relative"}},
-    React.createElement(Excalidraw,{initialData:initial,excalidrawAPI:x=>api.current=x,onChange:change,viewModeEnabled:!canEdit,isCollaborating:true}),
+    React.createElement(Excalidraw,{initialData:initial,excalidrawAPI:x=>api.current=x,onChange:change,viewModeEnabled:!canEdit,isCollaborating:true,theme}),
     React.createElement("div",{style:{position:"absolute",right:"12px",bottom:"12px",zIndex:10,padding:"5px 9px",borderRadius:"8px",background:"#151923",color:"#cbd5e1",fontSize:"11px"}},status)
   );
 }
