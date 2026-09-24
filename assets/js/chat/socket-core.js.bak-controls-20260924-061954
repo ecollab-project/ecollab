@@ -217,12 +217,6 @@ function handleSocketMessage(data) {
     case 'dm_call_candidate':
       if (window._onDmCallCandidate) window._onDmCallCandidate(data);
       break;
-    case 'dm_call_renegotiate':
-      if (window._onDmCallRenegotiate) window._onDmCallRenegotiate(data);
-      break;
-    case 'dm_call_renegotiate_answer':
-      if (window._onDmCallRenegotiateAnswer) window._onDmCallRenegotiateAnswer(data);
-      break;
     case 'dm_call_decline':
       if (window._onDmCallDecline) window._onDmCallDecline(data);
       break;

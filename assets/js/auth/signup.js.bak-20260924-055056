@@ -6,8 +6,7 @@
 'use strict';
 
 // ── State ──────────────────────────────────────────────────────────────────
-const OAUTH_ONBOARDING = window.ECOLLAB_OAUTH_ONBOARDING === true;
-let currentStep = OAUTH_ONBOARDING ? 2 : 1;
+let currentStep = 1;
 const TOTAL_STEPS = 5;
 
 // Hobby state: array of { hobby, genre, title, hoursPerMonth, playstyle, experience }
@@ -175,50 +174,29 @@ function showErr(step, msg) {
 
 function clearErr(step) { showErr(step, ''); }
 
-function updateOtpVisibility() {
-  // Google/Microsoft onboarding skips Personal Info and email OTP.
-  if (OAUTH_ONBOARDING) return;
-
-  const email = document.getElementById('email');
-  if (!email) return;
-
-  // Email verification itself is handled by
-  // requestPreSignupEmailVerification() when Step 1 continues.
-}
-
 function setLoading(loading) {
   const btn = document.getElementById('submitBtn');
   if (!btn) return;
   if (loading) {
-    btn.innerHTML = OAUTH_ONBOARDING
-      ? '<span class="btn-spinner"></span>Completing Setup…'
-      : '<span class="btn-spinner"></span>Creating Account…';
+    btn.innerHTML = '<span class="btn-spinner"></span>Creating Account…';
     btn.disabled = true;
   } else {
-    btn.textContent = OAUTH_ONBOARDING ? 'Complete Setup' : 'Create Account';
+    btn.textContent = 'Create Account';
     btn.disabled = false;
   }
 }
 
 // ── Step navigation ────────────────────────────────────────────────────────
 function showStep(n) {
-  if (OAUTH_ONBOARDING && n < 2) {
-    n = 2;
-  }
-
   for (let i = 1; i <= TOTAL_STEPS; i++) {
     document.getElementById('panel' + i)?.classList.toggle('active', i === n);
     document.getElementById('dot' + i)?.classList.toggle('active', i <= n);
   }
   const topBack = document.getElementById('topBackBtn');
-  if (topBack) {
-    topBack.style.display = (!OAUTH_ONBOARDING && n === 1) ? 'grid' : 'none';
-  }
+  if (topBack) topBack.style.display = n === 1 ? 'grid' : 'none';
 
   const ssoButtons = document.getElementById('ssoButtons');
-  if (ssoButtons) {
-    ssoButtons.style.display = (!OAUTH_ONBOARDING && n === 1) ? '' : 'none';
-  }
+  if (ssoButtons) ssoButtons.style.display = n === 1 ? '' : 'none';
 
   const labelEl = document.getElementById('stepLabel');
   const counterEl = document.getElementById('stepCounter');
@@ -283,10 +261,6 @@ async function requestPreSignupEmailVerification() {
 }
 
 function goBack() {
-  if (OAUTH_ONBOARDING && currentStep <= 2) {
-    return;
-  }
-
   if (currentStep > 1) {
     showStep(currentStep - 1);
   } else {
@@ -574,11 +548,7 @@ async function doSignup() {
   };
 
   try {
-    const endpoint = OAUTH_ONBOARDING
-      ? '../../API/auth/complete-oauth-onboarding.php'
-      : '../../API/auth/signup.php';
-
-    const res = await fetch(endpoint, {
+    const res = await fetch('../../API/auth/signup.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrf() },
       body: JSON.stringify(payload),
@@ -589,9 +559,7 @@ async function doSignup() {
     } else if (data.success) {
       const btn = document.getElementById('submitBtn');
       if (btn) {
-        btn.textContent = OAUTH_ONBOARDING
-          ? '✓ Setup Complete!'
-          : '✓ Account Created!';
+        btn.textContent = '✓ Account Created!';
         btn.style.background    = 'linear-gradient(135deg, #0f9, #0cf)';
         btn.style.boxShadow     = '0 0 30px rgba(0,255,180,0.4)';
         btn.disabled = true;
@@ -771,18 +739,8 @@ function closeEmailVerification() {
 
 // ── DOMContentLoaded ───────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  showStep(OAUTH_ONBOARDING ? 2 : 1);
+  showStep(1);
   renderHobbyBuilder();
-
-  if (OAUTH_ONBOARDING) {
-    const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) submitBtn.textContent = 'Complete Setup';
-
-    // Step 2 is the first OAuth onboarding screen.
-    // Hide its Back button so Personal Info cannot be exposed.
-    const panel2Back = document.querySelector('#panel2 .btn-back');
-    if (panel2Back) panel2Back.style.display = 'none';
-  }
 
   // OTP visibility on email input
   document.getElementById('email')?.addEventListener('input', updateOtpVisibility);

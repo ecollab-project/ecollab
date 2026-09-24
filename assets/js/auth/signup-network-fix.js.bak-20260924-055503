@@ -54,13 +54,7 @@
     };
 
     try {
-      const oauthOnboarding = window.ECOLLAB_OAUTH_ONBOARDING === true;
-
-      const endpoint = oauthOnboarding
-        ? '../../API/auth/complete-oauth-onboarding.php'
-        : '../../API/auth/signup.php';
-
-      const res = await fetch(endpoint, {
+      const res = await fetch('../../API/auth/signup.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -103,9 +97,7 @@
 
       const btn = document.getElementById('submitBtn');
       if (btn) {
-        btn.textContent = window.ECOLLAB_OAUTH_ONBOARDING === true
-          ? '✓ Setup Complete!'
-          : '✓ Account Created!';
+        btn.textContent = '✓ Account Created!';
         btn.style.background = 'linear-gradient(135deg, #0f9, #0cf)';
         btn.style.boxShadow = '0 0 30px rgba(0,255,180,0.4)';
         btn.disabled = true;

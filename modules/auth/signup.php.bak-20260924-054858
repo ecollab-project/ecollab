@@ -8,17 +8,7 @@ require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 require_once dirname(__DIR__, 2) . '/security/csrf/csrf.php';
 
 AuthMiddleware::startSession();
-
-// A first-time OAuth student is already authenticated by Google/Microsoft,
-// but still needs to complete signup steps 2-5.
-$isOAuthOnboarding =
-    !empty($_SESSION['user_id']) &&
-    !empty($_SESSION['oauth_onboarding']) &&
-    ($_SESSION['role'] ?? '') === 'student';
-
-if (!$isOAuthOnboarding) {
-    AuthMiddleware::redirectIfAuthed();
-}
+AuthMiddleware::redirectIfAuthed();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -157,9 +147,6 @@ if (!$isOAuthOnboarding) {
     </div>
   </div>
 
-  <script>
-    window.ECOLLAB_OAUTH_ONBOARDING = <?= $isOAuthOnboarding ? 'true' : 'false' ?>;
-  </script>
   <script src="<?= BASE_URL ?>/assets/js/auth/signup.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/auth/signup-network-fix.js" defer></script>
 </body>

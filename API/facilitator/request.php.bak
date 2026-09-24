@@ -73,7 +73,7 @@ try {
     http_response_code(500);
     echo json_encode([
         'success'=>false,
-        'error'=>$e->getMessage(),
+        'error'=>(defined('APP_DEBUG')&&APP_DEBUG)?$e->getMessage():'Unable to submit facilitator request.',
         'code'=>'FACILITATOR_REQUEST_FAILED'
     ]);
 }

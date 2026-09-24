@@ -140,8 +140,6 @@ class ChatServer implements MessageComponentInterface
             'dm_call_offer' => $this->handleDmCallSignal($from, $data, $meta, 'dm_call_offer'),
             'dm_call_answer' => $this->handleDmCallSignal($from, $data, $meta, 'dm_call_answer'),
             'dm_call_candidate' => $this->handleDmCallSignal($from, $data, $meta, 'dm_call_candidate'),
-            'dm_call_renegotiate' => $this->handleDmCallSignal($from, $data, $meta, 'dm_call_renegotiate'),
-            'dm_call_renegotiate_answer' => $this->handleDmCallSignal($from, $data, $meta, 'dm_call_renegotiate_answer'),
             'dm_call_end' => $this->handleDmCallSignal($from, $data, $meta, 'dm_call_end'),
             'dm_call_decline' => $this->handleDmCallSignal($from, $data, $meta, 'dm_call_decline'),
             default => null,

@@ -175,17 +175,6 @@ function showErr(step, msg) {
 
 function clearErr(step) { showErr(step, ''); }
 
-function updateOtpVisibility() {
-  // Google/Microsoft onboarding skips Personal Info and email OTP.
-  if (OAUTH_ONBOARDING) return;
-
-  const email = document.getElementById('email');
-  if (!email) return;
-
-  // Email verification itself is handled by
-  // requestPreSignupEmailVerification() when Step 1 continues.
-}
-
 function setLoading(loading) {
   const btn = document.getElementById('submitBtn');
   if (!btn) return;

@@ -30,13 +30,10 @@ $identifier = trim((string)($body['identifier'] ?? ''));
 $password   = (string)($body['password']   ?? '');
 $remember   = !empty($body['remember']);
 
-// Rate limit this specific login identity.
-// Do NOT use the IP alone here: users on the same school/home/public network
-// must not share the 3-attempt login lockout.
-$limiter  = new RateLimiter();
-$ip       = RateLimiter::getIP();
-$loginKey = hash('sha256', $ip . '|' . strtolower($identifier));
-$result   = $limiter->attempt('login', $loginKey, RATE_LIMIT_LOGIN, RATE_LIMIT_WINDOW);
+// Rate limit by IP + identifier
+$limiter = new RateLimiter();
+$ip      = RateLimiter::getIP();
+$result  = $limiter->attempt('login', $ip, RATE_LIMIT_LOGIN, RATE_LIMIT_WINDOW);
 if (!$result['allowed']) {
     http_response_code(429);
     echo json_encode([
@@ -70,7 +67,7 @@ try {
         }
 
         // Only clear the password-login limiter after the full authentication flow.
-        $limiter->clear('login', $loginKey);
+        $limiter->clear('login', $ip);
         CSRF::regenerate();
 
         $role     = $outcome['role'];

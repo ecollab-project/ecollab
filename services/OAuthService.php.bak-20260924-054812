@@ -116,25 +116,9 @@ class OAuthService
 
         // ── Upsert user in DB and write session ──────────────────────────────
         try {
-            $user = $this->upsertOAuthUser($provider, $providerUser);
-            $this->writeSession($user);
-
-            // Students created through SSO have only a minimal profile initially.
-            // Keep them authenticated, but send them through signup steps 2-5
-            // until their academic profile has been completed.
-            if ($user['role'] === 'student' && !$this->hasCompletedOnboarding((int)$user['id'])) {
-                $_SESSION['oauth_onboarding'] = true;
-                $_SESSION['oauth_onboarding_provider'] = $provider;
-
-                return [
-                    'success' => true,
-                    'redirect' => BASE_URL . '/modules/auth/signup.php?oauth_onboarding=1'
-                ];
-            }
-
-            unset($_SESSION['oauth_onboarding'], $_SESSION['oauth_onboarding_provider']);
-
+            $user     = $this->upsertOAuthUser($provider, $providerUser);
             $redirect = $this->buildRedirect($user['role']);
+            $this->writeSession($user);
             return ['success' => true, 'redirect' => $redirect];
         } catch (\Exception $e) {
             return ['success' => false, 'error' => 'Account setup failed: ' . $e->getMessage()];
@@ -398,22 +382,6 @@ class OAuthService
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         }
-    }
-
-    private function hasCompletedOnboarding(int $userId): bool
-    {
-        $stmt = $this->db->prepare("
-            SELECT academic_program_id, year_level
-            FROM user_profiles
-            WHERE user_id = :uid
-            LIMIT 1
-        ");
-        $stmt->execute([':uid' => $userId]);
-        $profile = $stmt->fetch();
-
-        return $profile
-            && !empty($profile['academic_program_id'])
-            && (int)$profile['year_level'] >= 1;
     }
 
     private function buildRedirect(string $role): string

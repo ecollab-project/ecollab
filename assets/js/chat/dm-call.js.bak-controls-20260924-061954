@@ -27,8 +27,6 @@ let _dmCallState       = 'idle'; // idle | ringing-out | ringing-in | active
 let _dmCallTimeoutTimer = null;
 let _dmCallStartedAt    = null;
 let _dmRingAudio        = null;
-let _dmCallDeafened     = false;
-let _dmCallCameraBusy   = false;
 
 function _dmIceServers() {
   return (typeof ICE_SERVERS !== 'undefined') ? ICE_SERVERS : [{ urls: 'stun:stun.l.google.com:19302' }];
@@ -268,17 +266,9 @@ function _attachDmRemoteMedia() {
     remoteVideo.play().catch(() => {});
   }
 
-  if (remoteAudio) {
-    remoteAudio.muted = _dmCallDeafened;
-
-    if (remoteAudio.srcObject !== _dmCallRemoteStream) {
-      remoteAudio.srcObject = _dmCallRemoteStream;
-      remoteAudio.play().catch(() => {});
-    }
-  }
-
-  if (remoteVideo) {
-    remoteVideo.muted = true;
+  if (remoteAudio && remoteAudio.srcObject !== _dmCallRemoteStream) {
+    remoteAudio.srcObject = _dmCallRemoteStream;
+    remoteAudio.play().catch(() => {});
   }
 }
 
@@ -366,8 +356,6 @@ function _resetDmCallState() {
   _dmCallPc = null;
   _dmCallLocalStream = null;
   _dmCallRemoteStream = null;
-  _dmCallDeafened = false;
-  _dmCallCameraBusy = false;
   _dmCallPeerId = null;
   _dmCallGroupId = null;
   _dmCallLogId = null;
@@ -390,135 +378,15 @@ function _dmCallToggleMic() {
 }
 window._dmCallToggleMic = _dmCallToggleMic;
 
-function _dmCallToggleDeafen() {
-  _dmCallDeafened = !_dmCallDeafened;
-
-  const remoteAudio = document.getElementById('dmCallRemoteAudio');
-  const remoteVideo = document.getElementById('dmCallRemoteVideo');
-
-  if (remoteAudio) remoteAudio.muted = _dmCallDeafened;
-
-  // Remote video may also carry audio. Keep it muted because audio playback
-  // is handled by dmCallRemoteAudio to avoid duplicate/echoed playback.
-  if (remoteVideo) remoteVideo.muted = true;
-
-  const btn = document.getElementById('dmCallDeafenBtn');
-  if (btn) {
-    btn.classList.toggle('muted-state', _dmCallDeafened);
-    btn.textContent = _dmCallDeafened ? '🔇' : '🔊';
-    btn.title = _dmCallDeafened ? 'Undeafen' : 'Deafen';
-  }
-}
-window._dmCallToggleDeafen = _dmCallToggleDeafen;
-
-async function _dmCallToggleCam() {
-  if (!_dmCallPc || !_dmCallLocalStream || _dmCallState !== 'active' || _dmCallCameraBusy) return;
-
-  _dmCallCameraBusy = true;
-
-  try {
-    const existingTrack = _dmCallLocalStream.getVideoTracks()[0];
-
-    if (existingTrack && existingTrack.readyState === 'live') {
-      const sender = _dmCallPc.getSenders().find(s => s.track === existingTrack);
-
-      if (sender) {
-        await sender.replaceTrack(null);
-      }
-
-      _dmCallLocalStream.removeTrack(existingTrack);
-      existingTrack.stop();
-
-      _dmCallIsVideo = false;
-      _renderDmCallOverlay('active');
-
-      await _dmCallRenegotiate();
-      return;
-    }
-
-    const camStream = await navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 640 }, height: { ideal: 480 } },
-      audio: false,
-    });
-
-    const videoTrack = camStream.getVideoTracks()[0];
-    if (!videoTrack) throw new Error('No camera track available');
-
-    _dmCallLocalStream.addTrack(videoTrack);
-
-    const reusableSender = _dmCallPc.getSenders().find(
-      sender => !sender.track && sender.transceiver?.receiver?.track?.kind === 'video'
-    );
-
-    if (reusableSender) {
-      await reusableSender.replaceTrack(videoTrack);
-    } else {
-      _dmCallPc.addTrack(videoTrack, _dmCallLocalStream);
-    }
-
-    _dmCallIsVideo = true;
-    _renderDmCallOverlay('active');
-
-    await _dmCallRenegotiate();
-  } catch (e) {
-    console.error('[DM call] camera toggle failed:', e);
-    showToast('Could not change camera', 'error');
-  } finally {
-    _dmCallCameraBusy = false;
-  }
+function _dmCallToggleCam() {
+  if (!_dmCallLocalStream) return;
+  const track = _dmCallLocalStream.getVideoTracks()[0];
+  if (!track) return;
+  track.enabled = !track.enabled;
+  const btn = document.getElementById('dmCallCamBtn');
+  if (btn) btn.classList.toggle('muted-state', !track.enabled);
 }
 window._dmCallToggleCam = _dmCallToggleCam;
-
-async function _dmCallRenegotiate() {
-  if (!_dmCallPc || !_dmCallPeerId) return;
-
-  const offer = await _dmCallPc.createOffer();
-  await _dmCallPc.setLocalDescription(offer);
-
-  window.wsSend({
-    type: 'dm_call_renegotiate',
-    target_user_id: _dmCallPeerId,
-    group_id: _dmCallGroupId,
-    log_id: _dmCallLogId,
-    is_video: _dmCallIsVideo,
-    sdp: _dmCallPc.localDescription,
-  });
-}
-
-window._onDmCallRenegotiate = async function(data) {
-  if (!_dmCallPc || _dmCallState !== 'active' || !data.sdp) return;
-
-  try {
-    await _dmCallPc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-
-    const answer = await _dmCallPc.createAnswer();
-    await _dmCallPc.setLocalDescription(answer);
-
-    window.wsSend({
-      type: 'dm_call_renegotiate_answer',
-      target_user_id: _dmCallPeerId,
-      group_id: _dmCallGroupId,
-      log_id: _dmCallLogId,
-      is_video: !!data.is_video,
-      sdp: _dmCallPc.localDescription,
-    });
-
-    _dmCallIsVideo = !!data.is_video;
-    _renderDmCallOverlay('active');
-  } catch (e) {
-    console.error('[DM call] renegotiation offer failed:', e);
-  }
-};
-
-window._onDmCallRenegotiateAnswer = async function(data) {
-  if (!_dmCallPc || _dmCallState !== 'active' || !data.sdp) return;
-
-  try {
-    await _dmCallPc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-  } catch (e) {
-    console.error('[DM call] renegotiation answer failed:', e);
-  }
-};
 
 function _renderDmCallOverlay(state) {
   let overlay = document.getElementById('dmCallOverlay');
@@ -554,7 +422,7 @@ function _renderDmCallOverlay(state) {
       <audio id="dmCallRemoteAudio" autoplay playsinline></audio>
       <div style="position:relative;background:#000;height:${_dmCallIsVideo ? '220px' : '0'};">
         ${_dmCallIsVideo ? `
-          <video id="dmCallRemoteVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>
+          <video id="dmCallRemoteVideo" autoplay playsinline style="width:100%;height:100%;object-fit:cover;"></video>
           <video id="dmCallLocalVideo" autoplay playsinline muted style="position:absolute;bottom:8px;right:8px;width:70px;height:52px;border-radius:6px;object-fit:cover;transform:scaleX(-1);border:1px solid rgba(255,255,255,0.3);"></video>
         ` : ''}
       </div>
@@ -564,8 +432,7 @@ function _renderDmCallOverlay(state) {
           <div style="font-size:11px;color:#22c55e;">Connected</div>
         </div>
         <button id="dmCallMicBtn" onclick="_dmCallToggleMic()" title="Mute" style="width:32px;height:32px;border-radius:50%;background:var(--bg-tertiary);border:none;color:var(--text-primary);cursor:pointer;">🎤</button>
-        <button id="dmCallDeafenBtn" onclick="_dmCallToggleDeafen()" title="${_dmCallDeafened ? 'Undeafen' : 'Deafen'}" class="${_dmCallDeafened ? 'muted-state' : ''}" style="width:32px;height:32px;border-radius:50%;background:var(--bg-tertiary);border:none;color:var(--text-primary);cursor:pointer;">${_dmCallDeafened ? '🔇' : '🔊'}</button>
-        <button id="dmCallCamBtn" onclick="_dmCallToggleCam()" title="${_dmCallIsVideo ? 'Turn camera off' : 'Turn camera on'}" class="${_dmCallIsVideo ? '' : 'muted-state'}" style="width:32px;height:32px;border-radius:50%;background:var(--bg-tertiary);border:none;color:var(--text-primary);cursor:pointer;">📷</button>
+        ${_dmCallIsVideo ? `<button id="dmCallCamBtn" onclick="_dmCallToggleCam()" title="Camera" style="width:32px;height:32px;border-radius:50%;background:var(--bg-tertiary);border:none;color:var(--text-primary);cursor:pointer;">📷</button>` : ''}
         <button onclick="endDmCall()" title="End call" style="width:32px;height:32px;border-radius:50%;background:#ef4444;border:none;color:#fff;cursor:pointer;">☎</button>
       </div>`;
 
