@@ -27,9 +27,14 @@ function h($v){return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8');}
 <title><?=h($s['name'])?> — Server Monitor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<?php if($scope==='facilitator'):?><link rel="stylesheet" href="<?=BASE_URL?>/assets/css/desktop/facilitator-dashboard.css"><?php else:?><link rel="stylesheet" href="<?=BASE_URL?>/assets/css/desktop/admin-dashboard.css"><?php endif;?>
 <link rel="stylesheet" href="<?=BASE_URL?>/assets/css/desktop/server-monitor.css"></head>
-<body>
-<div class="monitor-shell">
+<body class="server-monitor-page">
+<?php $activePage=$scope==='facilitator'?'servermonitoring':'servers'; if($scope==='facilitator'){include ROOT_PATH.'/includes/layout/sidebar-facilitator.php';}else{include ROOT_PATH.'/includes/layout/sidebar-admin.php';} ?>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<div class="main-content monitor-main">
+<header class="monitor-appbar"><button class="monitor-menu" onclick="toggleSidebar()" aria-label="Open navigation">☰</button><div><strong>Server Monitoring</strong><span><?= $scope==='facilitator'?'Facilitator':'Administrator' ?></span></div><a href="<?=h($back)?>" class="monitor-return">Back to <?= $scope==='facilitator'?'Dashboard':'Servers' ?></a></header>
+<main class="monitor-page-content"><div class="monitor-shell">
   <div class="monitor-top"><a class="back" href="<?=h($back)?>">← Back</a><div class="server-head"><div class="server-icon"><?=h($s['icon_emoji']??'🖥')?></div><div><h1><?=h($s['name'])?></h1><div class="sub"><?=h(ucfirst($s['type']??$s['visibility']??'private'))?> server · Owner: <?=h($s['owner_username']??'Unknown')?><?php if(!empty($s['facilitator_username'])&&$s['facilitator_username']!=='—'):?> · Facilitator: <?=h($s['facilitator_username'])?><?php endif;?></div></div></div><div class="status">● <?=h(ucfirst($s['status']??'active'))?></div></div>
   <div class="tabs"><button class="tab active" data-tab="overview">Overview</button><button class="tab" data-tab="channels">Channels</button><button class="tab" data-tab="members">Members</button><button class="tab" data-tab="activity">Activity</button><button class="tab" data-tab="reports">Reports</button></div>
   <section id="tab-overview" class="panel active">
@@ -46,4 +51,10 @@ function h($v){return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8');}
   <section id="tab-reports" class="panel"><div class="card"><div class="ct">Server Reports</div><?php foreach($reports as $r):?><div class="row"><span><?=h($r['reported_user'])?> · #<?=h($r['channel_name'])?> · <?=h($r['reason'])?></span><span><?=h($r['status'])?> · <?=h($r['created_at'])?></span></div><?php endforeach;?></div></section>
 </div>
 <script>window.SERVER_MONITOR=<?=json_encode(['daily'=>$daily,'channels'=>$channels],JSON_UNESCAPED_SLASHES)?>;</script>
-<script src="<?=BASE_URL?>/assets/js/server-monitor.js"></script></body></html>
+<script src="<?=BASE_URL?>/assets/js/server-monitor.js"></script>
+<script>
+function showPage(page){window.location.href=(<?= json_encode($scope==='facilitator'?BASE_URL.'/modules/facilitator/dashboard.php?page=':BASE_URL.'/modules/admin/dashboard.php?page=') ?>)+encodeURIComponent(page);}
+function goToChat(){window.location.href=<?= json_encode(BASE_URL.'/modules/chat/chat.php') ?>;}
+function toggleSidebar(){document.querySelector('.sidebar')?.classList.toggle('open');document.getElementById('sidebarOverlay')?.classList.toggle('open');}
+function closeSidebar(){document.querySelector('.sidebar')?.classList.remove('open');document.getElementById('sidebarOverlay')?.classList.remove('open');}
+</script></main></div></body></html>
