@@ -57,14 +57,18 @@ function fNavItem(string $page, string $icon, string $label, $badge, string $act
     <div class="nav-item" onclick="goToChat()"><span class="nav-ic">💬</span>Go to Chat</div>
   </div>
 
-  <!-- Channel selector -->
-  <div class="channel-selector" onclick="openModal('channelSwitchModal')" style="margin-top:auto">
+  <!-- Current server -->
+  <?php
+    $sidebarServerName = $sidebarServer['name'] ?? ($dashData['channel']['name'] ?? 'My Servers');
+    $sidebarServerIcon = $sidebarServer['icon_emoji'] ?? '🖥️';
+    $sidebarServerStatus = ucfirst((string)($sidebarServer['status'] ?? 'active'));
+  ?>
+  <div class="channel-selector facilitator-server-card" style="margin-top:auto" title="<?= htmlspecialchars($sidebarServerName) ?>">
     <div class="cs-top">
-      <div class="cs-av"><?= htmlspecialchars($initials) ?></div>
-      <div class="cs-name">CS 305 – Neural Networks</div>
-      <div class="cs-arr">▾</div>
+      <div class="cs-av"><?= htmlspecialchars($sidebarServerIcon) ?></div>
+      <div class="cs-name"><?= htmlspecialchars($sidebarServerName) ?></div>
     </div>
-    <div class="cs-status"><div class="cs-dot"></div>Active</div>
+    <div class="cs-status"><div class="cs-dot"></div><?= htmlspecialchars($sidebarServerStatus) ?></div>
   </div>
 
   <!-- Profile card -->
@@ -73,7 +77,7 @@ function fNavItem(string $page, string $icon, string $label, $badge, string $act
       <div class="pc-av" style="background:linear-gradient(135deg,<?= htmlspecialchars($c1) ?>,<?= htmlspecialchars($c2) ?>)"><?= htmlspecialchars($initials) ?><div class="pc-online"></div></div>
       <div>
         <div class="pc-name"><?= htmlspecialchars($user['full_name'] ?: $user['username']) ?></div>
-        <div class="pc-role">✅ Channel Administrator</div>
+        <div class="pc-role">✅ Facilitator</div>
       </div>
     </div>
   </div>
