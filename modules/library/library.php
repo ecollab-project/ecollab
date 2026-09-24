@@ -71,7 +71,7 @@ function renderBooks(books){
     <div style="padding:14px"><strong style="display:block;line-height:1.35">${esc(b.title)}</strong>
     <div style="font-size:12px;color:var(--muted);margin:7px 0">${esc((b.authors||[]).slice(0,2).join(', ')||'Unknown author')}${b.year?' · '+esc(b.year):''}</div>
     <div style="font-size:11px;color:var(--muted)">${esc(b.source||'Open Library')}</div>
-    ${b.url?`<a href="${esc(b.url)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;color:#c084fc;text-decoration:none;font-weight:700">View book →</a>`:''}</div></article>`).join('');
+    ${b.url?`<a href="${esc(b.url)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;color:#c084fc;text-decoration:none;font-weight:700">${esc(b.action||'View book')} →</a>`:''}</div></article>`).join('');
 }
 async function loadBooks(q=''){
   grid.innerHTML='<div class="lib-placeholder">Loading books…</div>';
