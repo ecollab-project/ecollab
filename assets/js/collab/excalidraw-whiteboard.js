@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from "https://esm.sh/react@19";
-import { createRoot } from "https://esm.sh/react-dom@19/client";
-import { Excalidraw } from "https://esm.sh/@excalidraw/excalidraw@0.18.0?external=react,react-dom";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { createRoot } from "react-dom/client";
+import { Excalidraw } from "https://esm.sh/@excalidraw/excalidraw@0.18.0/dist/dev/index.js?external=react,react-dom";
 
 const cfg = window.ECOLLAB_EXCALIDRAW || {};
 const host = document.getElementById("excalidraw-root");
