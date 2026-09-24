@@ -28,19 +28,32 @@ final class ServerMonitoringService
     public function getFacilitatorServers(int $userId): array
     {
         try {
+            // A facilitator can monitor a server only when the relationship is explicit:
+            // they own it, are assigned through subject_classes, or have a management role.
+            // Keep the server-member join restricted to this user; otherwise another
+            // member's owner/admin role can accidentally affect the result.
             $sql = "SELECT DISTINCT s.id, s.owner_id, s.name, COALESCE(s.icon_emoji,'🖥') icon_emoji,
-                    COALESCE(s.member_count,(SELECT COUNT(*) FROM server_members sm2 WHERE sm2.server_id=s.id)) member_count
+                    (SELECT COUNT(*) FROM server_members sm2 WHERE sm2.server_id=s.id) member_count
                     FROM servers s
-                    LEFT JOIN subject_classes sc ON sc.server_id=s.id
-                    LEFT JOIN server_members sm ON sm.server_id=s.id AND sm.user_id=:uid
-                    WHERE s.owner_id=:uid
-                       OR sc.facilitator_id=:uid
-                       OR sm.user_id=:uid
+                    LEFT JOIN subject_classes sc
+                      ON sc.server_id=s.id AND sc.facilitator_id=:uid_sc
+                    LEFT JOIN server_members sm
+                      ON sm.server_id=s.id AND sm.user_id=:uid_sm
+                    WHERE s.owner_id=:uid_owner
+                       OR sc.facilitator_id IS NOT NULL
                        OR sm.server_role IN ('owner','admin','moderator')
                     ORDER BY s.name";
-            $st=$this->db->prepare($sql); $st->execute([':uid'=>$userId]);
-            return $st->fetchAll() ?: [];
-        } catch (Throwable) { return []; }
+            $st=$this->db->prepare($sql);
+            $st->execute([
+                ':uid_sc'=>$userId,
+                ':uid_sm'=>$userId,
+                ':uid_owner'=>$userId,
+            ]);
+            return $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (Throwable $e) {
+            error_log('[ServerMonitoringService] getFacilitatorServers: '.$e->getMessage());
+            return [];
+        }
     }
 
     private function facilitatorCanMonitor(int $serverId, int $userId): bool
@@ -48,13 +61,28 @@ final class ServerMonitoringService
         try {
             $st=$this->db->prepare("SELECT 1
                 FROM servers s
-                LEFT JOIN subject_classes sc ON sc.server_id=s.id
-                LEFT JOIN server_members sm ON sm.server_id=s.id AND sm.user_id=:uid
-                WHERE s.id=:sid AND (s.owner_id=:uid OR sc.facilitator_id=:uid OR sm.user_id=:uid OR sm.server_role IN ('owner','admin','moderator'))
+                LEFT JOIN subject_classes sc
+                  ON sc.server_id=s.id AND sc.facilitator_id=:uid_sc
+                LEFT JOIN server_members sm
+                  ON sm.server_id=s.id AND sm.user_id=:uid_sm
+                WHERE s.id=:sid
+                  AND (
+                    s.owner_id=:uid_owner
+                    OR sc.facilitator_id IS NOT NULL
+                    OR sm.server_role IN ('owner','admin','moderator')
+                  )
                 LIMIT 1");
-            $st->execute([':sid'=>$serverId,':uid'=>$userId]);
+            $st->execute([
+                ':sid'=>$serverId,
+                ':uid_sc'=>$userId,
+                ':uid_sm'=>$userId,
+                ':uid_owner'=>$userId,
+            ]);
             return (bool)$st->fetchColumn();
-        } catch (Throwable) { return false; }
+        } catch (Throwable $e) {
+            error_log('[ServerMonitoringService] facilitatorCanMonitor: '.$e->getMessage());
+            return false;
+        }
     }
 
     private function build(int $serverId): ?array
