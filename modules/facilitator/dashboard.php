@@ -1064,6 +1064,35 @@ try {
       </div>
     </div>
   </div>
+  <div class="mo" id="resolveReportModal">
+    <div class="md md-md">
+      <div class="mh">
+        <div>
+          <div class="mt">🚩 Resolve Report</div>
+          <div class="resolve-subtitle">Choose an action for this reported user.</div>
+        </div>
+        <div class="mx" onclick="closeModal('resolveReportModal')">✕</div>
+      </div>
+      <div class="mb">
+        <div class="resolve-target" id="resolveReportUser">Reported user</div>
+        <div class="resolve-actions">
+          <button type="button" class="resolve-action resolve-suspend" onclick="submitReportResolution('suspend',1440)">
+            <span class="resolve-action-icon">⏸</span>
+            <span><strong>Suspend for 24 Hours</strong><small>View-only access. The user can see the server but cannot interact.</small></span>
+          </button>
+          <button type="button" class="resolve-action resolve-mute" onclick="submitReportResolution('mute',1440)">
+            <span class="resolve-action-icon">🔇</span>
+            <span><strong>Mute for 24 Hours</strong><small>Only chat channels are muted. Other allowed server features remain available.</small></span>
+          </button>
+          <button type="button" class="resolve-action resolve-ban" onclick="submitReportResolution('ban',null)">
+            <span class="resolve-action-icon">🚫</span>
+            <span><strong>Ban from Server</strong><small>Remove the user and prevent them from joining this server again.</small></span>
+          </button>
+        </div>
+      </div>
+      <div class="mf"><button class="btn-sec" onclick="closeModal('resolveReportModal')">Cancel</button></div>
+    </div>
+  </div>
   <div class="mo" id="reportDetailModal">
     <div class="md md-sm">
       <div class="mh">
