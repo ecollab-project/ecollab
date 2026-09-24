@@ -132,7 +132,7 @@ window.ECOLLAB_ESC = esc;
     if(document.getElementById('threadsV2Script'))return;
     const s=document.createElement('script');
     s.id='threadsV2Script';
-    s.src=base()+'/assets/js/chat/threads-v2.js?v=scopefix1';
+    s.src=base()+'/assets/js/chat/threads-v2.js?v=postmenu1';
     // threads-enhancements.js depends on the globals created by threads-v2.js.
     // Load the enhancement only after the core script is actually ready.
     s.addEventListener('load',()=>{
