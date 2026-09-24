@@ -28,7 +28,7 @@ final class ServerMonitoringService
     public function getFacilitatorServers(int $userId): array
     {
         try {
-            $sql = "SELECT DISTINCT s.id, s.name, COALESCE(s.icon_emoji,'🖥') icon_emoji,
+            $sql = "SELECT DISTINCT s.id, s.owner_id, s.name, COALESCE(s.icon_emoji,'🖥') icon_emoji,
                     COALESCE(s.member_count,(SELECT COUNT(*) FROM server_members sm2 WHERE sm2.server_id=s.id)) member_count
                     FROM servers s
                     LEFT JOIN subject_classes sc ON sc.server_id=s.id
