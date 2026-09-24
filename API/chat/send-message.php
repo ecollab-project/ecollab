@@ -103,12 +103,12 @@ try {
                 WHERE server_id=(SELECT server_id FROM channels WHERE id=:cid_mod)
                   AND target_user_id=:uid_mod
                   AND is_active=1
-                  AND action_type='mute'
+                  AND action_type IN ('mute','suspend')
                   AND (expires_at IS NULL OR expires_at>NOW())
-                ORDER BY created_at DESC");
+                ORDER BY action_type='suspend' DESC, created_at DESC");
             $modStmt->execute([':cid_mod'=>$channelId, ':uid_mod'=>$user['id']]);
             foreach ($modStmt->fetchAll(PDO::FETCH_ASSOC) as $mod) {
-                if (str_starts_with((string)($mod['reason'] ?? ''), '[SERVER_SUSPEND] ')) {
+                if (($mod['action_type'] ?? '') === 'suspend') {
                     throw new RuntimeException('Your access to this server is suspended. You can view content but cannot interact for now.', 403);
                 }
                 throw new RuntimeException('You are muted in this server for 24 hours.', 403);
