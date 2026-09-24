@@ -45,6 +45,23 @@ try {
         foreach ($rows as $r) {
             $items[] = ['server'=>$r['server'],'channel'=>$r['channel'],'time'=>date('M j',strtotime($r['created_at'])),'author'=>$r['author'],'letter'=>strtoupper(($r['full_name']?:$r['author'])[0]),'text'=>$r['content'],'grad'=>$r['grad']??'#a855f7,#ec4899'];
         }
+        // Also include discussion posts bookmarked from the Discussions feed.
+        $ts = $db->prepare("
+            SELECT t.id,t.title,t.body,t.scope,t.created_at,u.username AS author,u.full_name,
+                   u.avatar_color_gradient AS grad,s.name AS server
+            FROM threads t
+            JOIN users u ON u.id=t.created_by
+            LEFT JOIN servers s ON s.id=t.server_id
+            WHERE t.is_deleted=0 AND t.is_bookmarked=1
+              AND (t.scope='public' OR (t.scope='server' AND EXISTS(
+                SELECT 1 FROM server_members sm WHERE sm.server_id=t.server_id AND sm.user_id=:thread_uid
+              )))
+            ORDER BY t.updated_at DESC LIMIT 20
+        ");
+        $ts->execute([':thread_uid'=>$uid]);
+        foreach ($ts->fetchAll() as $r) {
+            $items[] = ['type'=>'thread','id'=>$r['id'],'server'=>$r['server'] ?: ($r['scope']==='public'?'Public':'Discussion'),'channel'=>'Discussion','time'=>date('M j',strtotime($r['created_at'])),'author'=>$r['author'],'letter'=>strtoupper(($r['full_name']?:$r['author'])[0]),'text'=>$r['title'].($r['body']!==''?' — '.$r['body']:''),'grad'=>$r['grad']??'#a855f7,#ec4899'];
+        }
     } elseif ($view === 'threads') {
         // Messages with replies (parent_id IS NULL but have children)
         $stmt = $db->prepare("
