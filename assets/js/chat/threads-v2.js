@@ -109,7 +109,7 @@
     const g=gradient(t.author_gradient), init=authorName(t).charAt(0).toUpperCase();
     const images=(Array.isArray(t.attachments)?t.attachments:[]).filter(a=>!a.reply_id && (a.file_url || a.url || a.path));
     const media=images.length?`<div class="tv2-card-media">${images.slice(0,3).map(a=>{let src=a.file_url||a.url||a.path||'';if(src.startsWith('/'))src=base()+src;return `<img src="${esc(src)}" alt="${esc(a.file_name||'Discussion image')}" loading="lazy">`;}).join('')}</div>`:'';
-    const mine=Number(t.is_owner)===1 || (authenticatedThreadUserId>0 && Number(t.created_by)===authenticatedThreadUserId);
+    const mine=Number(t.is_owner)===1 || (authenticatedThreadUserId>0 && Number(t.created_by)===authenticatedThreadUserId) || String(t.author_username||'').toLowerCase()===String(window.ECOLLAB?.username||'').toLowerCase();
     const menu=mine
       ? `<button class="tv2-menu-item" onclick="threadBookmarkV2(${t.id})">🔖 ${Number(t.is_bookmarked)?'Remove bookmark':'Bookmark post'}</button><button class="tv2-menu-item" onclick="threadEditV2(${t.id})">✏️ Edit post</button><button class="tv2-menu-item danger" onclick="threadDeleteV2(${t.id})">🗑️ Delete post</button>`
       : `<button class="tv2-menu-item" onclick="threadBookmarkV2(${t.id})">🔖 ${Number(t.is_bookmarked)?'Remove bookmark':'Bookmark post'}</button><button class="tv2-menu-item" onclick="threadReportV2(${t.id})">🚩 Report post</button>`;
