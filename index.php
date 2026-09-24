@@ -40,10 +40,7 @@ $dashUrl  = $isAuthed ? match ($_SESSION['role'] ?? 'student') {
 
   <!-- ── NAV ─────────────────────────────────────────────────────────────── -->
   <nav>
-    <div class="nav-logo">
-      <div class="icon">🌿</div>
-      <?= APP_NAME ?>
-    </div>
+    <div class="nav-logo ecollab-landing-brand"><img src="<?= BASE_URL ?>/assets/ecollab-wordmark.webp" alt="eCollab"></div>
     <ul class="nav-links">
       <li><a href="#hero">Home</a></li>
       <li><a href="#features">Features</a></li>
@@ -84,10 +81,7 @@ $dashUrl  = $isAuthed ? match ($_SESSION['role'] ?? 'student') {
         <div class="tablet-screen">
           <!-- Sidebar -->
           <div class="tab-sidebar">
-            <div class="logo-row">
-              <div class="logo-icon">🌿</div>
-              <?= APP_NAME ?>
-            </div>
+            <div class="logo-row ecollab-demo-brand"><img src="<?= BASE_URL ?>/assets/ecollab-wordmark.webp" alt="eCollab"></div>
             <div class="active-row">
               <div class="dot" style="background:rgba(255,45,117,0.2)">🏠</div>
               Dashboard
