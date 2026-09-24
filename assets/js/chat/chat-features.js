@@ -1011,6 +1011,7 @@ function _renderNavView(viewName, overlay) {
           <div style="flex:1;min-width:0;">
             <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:3px;">${_esc(m.author)}</div>
             <div style="font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${_esc(m.text)}</div>
+            ${m.image_url ? `<img src="${_esc(m.image_url)}" alt="${_esc(m.image_name || 'Bookmarked discussion image')}" loading="lazy" style="display:block;width:100%;max-width:520px;max-height:300px;object-fit:cover;border-radius:9px;border:1px solid var(--border);margin-top:10px;background:var(--bg-secondary);">` : ''}
           </div>
         </div>
         <div style="display:flex;gap:8px;margin-top:8px;">
