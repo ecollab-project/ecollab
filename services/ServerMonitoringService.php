@@ -136,12 +136,18 @@ final class ServerMonitoringService
     private function members(int $sid): array
     {
         try {
-            $st=$this->db->prepare("SELECT u.id,u.username,COALESCE(u.full_name,u.username) full_name,u.status,sm.server_role,
+            $st=$this->db->prepare("SELECT u.id,u.username,COALESCE(u.full_name,u.username) full_name,u.status,
+                CASE WHEN u.id=s.owner_id THEN 'owner' ELSE sm.server_role END server_role,
+                (u.id=s.owner_id) is_owner,
                 COUNT(m.id) messages, MAX(m.created_at) last_message
-                FROM server_members sm JOIN users u ON u.id=sm.user_id
+                FROM server_members sm
+                JOIN servers s ON s.id=sm.server_id
+                JOIN users u ON u.id=sm.user_id
                 LEFT JOIN channels c ON c.server_id=sm.server_id
                 LEFT JOIN messages m ON m.channel_id=c.id AND m.sender_id=u.id AND m.is_deleted=0
-                WHERE sm.server_id=:sid GROUP BY u.id,sm.server_role ORDER BY messages DESC LIMIT 20");
+                WHERE sm.server_id=:sid
+                GROUP BY u.id,u.username,u.full_name,u.status,sm.server_role,s.owner_id
+                ORDER BY is_owner DESC,messages DESC LIMIT 20");
             $st->execute([':sid'=>$sid]); return $st->fetchAll() ?: [];
         } catch(Throwable) { return []; }
     }
