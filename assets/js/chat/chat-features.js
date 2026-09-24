@@ -1485,8 +1485,20 @@ function _populateProfileCard(p) {
   const av = document.getElementById('pcAvatar');
   if (av) {
     const grad = p.avatar_color_gradient || '#a855f7,#ec4899';
-    av.style.background = `linear-gradient(135deg,${grad})`;
-    av.textContent = (p.full_name || p.username || '?').charAt(0).toUpperCase();
+    const rawAvatar = String(p.avatar_url || '').trim();
+    const baseUrl = String(window.ECOLLAB?.baseUrl || '').replace(/\/$/, '');
+    const avatarUrl = rawAvatar
+      ? (/^(?:https?:)?\/\//i.test(rawAvatar) || /^(?:data|blob):/i.test(rawAvatar)
+          ? rawAvatar
+          : baseUrl + '/' + rawAvatar.replace(/^\//, ''))
+      : '';
+    if (avatarUrl) {
+      av.style.background = `url("${avatarUrl.replace(/"/g, '%22')}") center/cover no-repeat`;
+      av.textContent = '';
+    } else {
+      av.style.background = `linear-gradient(135deg,${grad})`;
+      av.textContent = (p.full_name || p.username || '?').charAt(0).toUpperCase();
+    }
   }
 
   // Banner gradient
