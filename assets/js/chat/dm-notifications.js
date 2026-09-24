@@ -815,12 +815,15 @@ function _ensureDmPanel() {
     <div id="dmTypingIndicator" style="display:none;padding:4px 14px;font-size:11px;color:var(--text-muted);font-style:italic;"></div>
 
     <!-- Input -->
-    <div style="display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0;">
+    <div id="dmAttachmentPreview" style="display:none;padding:8px 12px 0;border-top:1px solid var(--border);"></div>
+    <div style="display:flex;gap:8px;padding:10px 12px;flex-shrink:0;align-items:center;">
+      <input id="dmFileInput" type="file" accept="image/jpeg,image/png,image/gif,image/webp,.pdf,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip" style="display:none" onchange="_dmFileChosen(this)" />
+      <button type="button" onclick="document.getElementById('dmFileInput').click()" title="Add image or file" style="width:34px;height:34px;flex:0 0 34px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;color:var(--text-secondary);cursor:pointer;font-size:16px;">📎</button>
       <input id="dmInputField" type="text" placeholder="Message…"
-        style="flex:1;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-primary);font-size:13px;font-family:inherit;outline:none;"
+        style="flex:1;min-width:0;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-primary);font-size:13px;font-family:inherit;outline:none;"
         onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendDmMessage();}"
         oninput="_dmTypingSignal()" />
-      <button onclick="sendDmMessage()" style="background:var(--accent-purple);border:none;border-radius:8px;padding:8px 14px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity 0.1s;" onmouseover="this.style.opacity=0.85" onmouseout="this.style.opacity=1">Send</button>
+      <button onclick="sendDmMessage()" style="background:var(--accent-purple);border:none;border-radius:8px;padding:8px 14px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Send</button>
     </div>`;
 
   document.body.appendChild(panel);
@@ -839,6 +842,27 @@ function _renderDmMessages(messages) {
   area.scrollTop = area.scrollHeight;
 }
 
+let _dmPendingFile=null;
+function _dmFormatBytes(n){n=Number(n)||0;if(n<1024)return n+' B';if(n<1048576)return (n/1024).toFixed(1)+' KB';return (n/1048576).toFixed(1)+' MB';}
+window._dmFileChosen=function(input){
+  const file=input?.files?.[0];if(!file)return;
+  if(file.size>20*1024*1024){showToast('File too large. Max 20 MB.','error');input.value='';return;}
+  _dmPendingFile=file;const p=document.getElementById('dmAttachmentPreview');if(!p)return;
+  const image=file.type.startsWith('image/');const url=image?URL.createObjectURL(file):'';
+  p.style.display='block';p.innerHTML='<div style="display:flex;align-items:center;gap:8px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;padding:8px;">'+(image?'<img src="'+url+'" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">':'<span style="font-size:24px;">📄</span>')+'<div style="min-width:0;flex:1"><div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+_esc(file.name)+'</div><div style="font-size:10px;color:var(--text-muted)">'+_dmFormatBytes(file.size)+'</div></div><button onclick="_dmClearFile()" style="border:0;background:none;color:var(--text-muted);cursor:pointer;font-size:16px;">×</button></div>';
+};
+window._dmClearFile=function(){_dmPendingFile=null;const i=document.getElementById('dmFileInput');if(i)i.value='';const p=document.getElementById('dmAttachmentPreview');if(p){p.innerHTML='';p.style.display='none';}};
+async function _dmUploadPending(){
+  if(!_dmPendingFile)return null;const form=new FormData();form.append('file',_dmPendingFile);
+  const res=await fetch(BASE()+'/API/dm/upload-file.php',{method:'POST',credentials:'same-origin',headers:{'X-CSRF-Token':window.ECOLLAB?.csrfToken||document.querySelector('meta[name="csrf-token"]')?.content||''},body:form});
+  const data=await res.json().catch(()=>({}));if(!res.ok||!data.success)throw new Error(data.error||'Upload failed');return data;
+}
+function _dmAttachmentHTML(m){
+  if(!m.attachment_path)return '';
+  const url=BASE()+'/'+String(m.attachment_path).replace(/^\//,'');const name=_esc(m.attachment_name||'Attachment');const mime=String(m.attachment_mime||'');
+  if(mime.startsWith('image/'))return '<a href="'+_esc(url)+'" target="_blank" rel="noopener"><img src="'+_esc(url)+'" alt="'+name+'" style="display:block;max-width:220px;max-height:180px;object-fit:contain;border-radius:8px;margin-bottom:6px;background:rgba(0,0,0,.15)"></a>';
+  return '<a href="'+_esc(url)+'" target="_blank" rel="noopener" download style="display:flex;align-items:center;gap:8px;color:inherit;text-decoration:none;margin-bottom:6px;padding:7px;background:rgba(0,0,0,.12);border-radius:7px"><span style="font-size:20px">📄</span><span style="min-width:0"><strong style="display:block;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+name+'</strong><small style="opacity:.7">'+_dmFormatBytes(m.attachment_size)+'</small></span></a>';
+}
 function _dmMessageHTML(m) {
   const isMine = m.sender_id == ME_ID();
   const name   = m.sender_name || m.sender_username || 'User';
@@ -848,7 +872,8 @@ function _dmMessageHTML(m) {
     <div style="display:flex;flex-direction:${isMine ? 'row-reverse' : 'row'};align-items:flex-end;gap:8px;" data-msg-id="${m.id}">
       ${!isMine ? _avatar(name, grad, 26, avatarUrl) : ''}
       <div style="max-width:72%;background:${isMine ? 'var(--accent-purple)' : 'var(--bg-tertiary)'};color:${isMine ? '#fff' : 'var(--text-primary)'};padding:8px 12px;border-radius:${isMine ? '12px 12px 4px 12px' : '12px 12px 12px 4px'};font-size:13px;line-height:1.5;word-break:break-word;">
-        ${_esc(m.body)}
+        ${_dmAttachmentHTML(m)}
+        ${m.body ? _esc(m.body) : ''}
         <div style="font-size:10px;opacity:0.65;margin-top:4px;text-align:${isMine ? 'right' : 'left'};">${_timeAgo(m.created_at)}</div>
       </div>
     </div>`;
@@ -892,10 +917,14 @@ window.sendDmMessage = async function() {
   const input = document.getElementById('dmInputField');
   if (!input) return;
   const text = input.value.trim();
-  if (!text || (!DM.activeConvId && !DM.activeGroupId)) return;
+  const pendingFile = _dmPendingFile;
+  if ((!text && !pendingFile) || (!DM.activeConvId && !DM.activeGroupId)) return;
 
   input.value    = '';
   input.disabled = true;
+  let uploaded=null;
+  try { if(pendingFile){showToast('Uploading attachment…','info');uploaded=await _dmUploadPending();_dmClearFile();} }
+  catch(e){input.disabled=false;showToast('Upload failed: '+e.message,'error');return;}
 
   // Optimistic UI
   const optimistic = {
@@ -906,6 +935,10 @@ window.sendDmMessage = async function() {
     sender_name: window.ECOLLAB?.fullName || 'You',
     sender_gradient: window.ECOLLAB?.gradient || window.ECOLLAB?.avatarGradient || '',
     sender_avatar_url: window.ECOLLAB?.avatarUrl || '',
+    attachment_path: uploaded?.file_path || '',
+    attachment_name: uploaded?.file_name || '',
+    attachment_size: uploaded?.file_size || 0,
+    attachment_mime: uploaded?.mime_type || '',
   };
   _appendDmMessage(optimistic);
 
@@ -913,11 +946,11 @@ window.sendDmMessage = async function() {
     if (DM.activeGroupId) {
       const data = await apiFetch(BASE() + '/API/dm/group-message.php', {
         method: 'POST',
-        body: JSON.stringify({ group_id: DM.activeGroupId, body: text }),
+        body: JSON.stringify({ group_id: DM.activeGroupId, body: text, attachment_path:uploaded?.file_path||'', attachment_name:uploaded?.file_name||'', attachment_size:uploaded?.file_size||0, attachment_mime:uploaded?.mime_type||'' }),
       });
       _wsSend({ type: 'dm_group_message', group_id: DM.activeGroupId, message_id: data.message_id, body: text, created_at: new Date().toISOString() });
       const grp = DM.groups.find(g => g.id === DM.activeGroupId);
-      if (grp) { grp.last_message = text.slice(0, 120); grp.last_msg_at = new Date().toISOString(); _renderGroupList(); }
+      if (grp) { grp.last_message = (text || (uploaded ? '📎 '+uploaded.file_name : '')).slice(0, 120); grp.last_msg_at = new Date().toISOString(); _renderGroupList(); }
       input.disabled = false;
       input.focus();
       return;
@@ -930,6 +963,7 @@ window.sendDmMessage = async function() {
       body: JSON.stringify({
         conversation_id: DM.activeConvId,
         body: text,
+        attachment_path:uploaded?.file_path||'', attachment_name:uploaded?.file_name||'', attachment_size:uploaded?.file_size||0, attachment_mime:uploaded?.mime_type||'',
         active_server_id: parseInt(window.ECOLLAB?.serverId || window.currentServerId || document.querySelector('[data-server-id].active')?.dataset?.serverId || 0) || null,
       }),
     });
@@ -950,7 +984,8 @@ window.sendDmMessage = async function() {
         conversation_id: DM.activeConvId,
         message_id:      data.message_id,
         recipient_id:    data.recipient_id,
-        body:            text,
+        body:            text || (uploaded ? '📎 '+uploaded.file_name : ''),
+        attachment_path: uploaded?.file_path||'', attachment_name: uploaded?.file_name||'', attachment_size: uploaded?.file_size||0, attachment_mime: uploaded?.mime_type||'',
         created_at:      data.created_at,
       });
 
