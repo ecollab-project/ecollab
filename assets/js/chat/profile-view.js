@@ -9,6 +9,7 @@
     if(!r.ok||d.success===false) throw new Error(d.error||d.message||`Request failed (${r.status})`);
     return d;
   }
+  function avatarUrl(url){const raw=String(url||'').trim();if(!raw)return '';if(/^(?:https?:)?\/\//i.test(raw)||/^(?:data|blob):/i.test(raw))return raw;return base()+'/'+raw.replace(/^\//,'');}
   function ensureStyles(){
     if(document.getElementById('ec-profile-view-styles')) return;
     const s=document.createElement('style');s.id='ec-profile-view-styles';s.textContent=`
@@ -56,7 +57,7 @@
       const d=await json(`${base()}/API/profile/get-profile.php?${param}`);const p=d.profile||{};window.__ecProfileViewed=p;
       const grad=p.avatar_color_gradient||'#a855f7,#ec4899';
       document.getElementById('ecProfileBanner').style.background=`linear-gradient(135deg,${grad})`;
-      const av=document.getElementById('ecProfileAvatar');if(p.avatar_url){av.style.background=`url("${String(p.avatar_url).replace(/"/g,'%22')}") center/cover no-repeat`;av.textContent='';}else{av.style.background=`linear-gradient(135deg,${grad})`;av.textContent=(p.full_name||p.username||'?')[0].toUpperCase();}
+      const av=document.getElementById('ecProfileAvatar');const avUrl=avatarUrl(p.avatar_url);if(avUrl){av.style.background=`url("${avUrl.replace(/"/g,'%22')}") center/cover no-repeat`;av.textContent='';}else{av.style.background=`linear-gradient(135deg,${grad})`;av.textContent=(p.full_name||p.username||'?')[0].toUpperCase();}
       document.getElementById('ecProfileName').textContent=p.full_name||p.username||'User';
       document.getElementById('ecProfileHandle').textContent=p.username?`@${p.username}`:'';
       const meta=[];if(p.role)meta.push(p.role==='facilitator'?'Facilitator':p.role.charAt(0).toUpperCase()+p.role.slice(1));if(p.year_level)meta.push(p.year_level);if(p.academic_program)meta.push(p.academic_program);document.getElementById('ecProfileMeta').innerHTML=meta.map(x=>`<span class="ec-pill">${esc(x)}</span>`).join('');
