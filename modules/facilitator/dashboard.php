@@ -1044,9 +1044,10 @@ try {
       <div class="page-section" id="page-chsettings">
         <div class="page-title-row">
           <div>
-            <div class="page-title">Channel Settings</div>
+            <div class="page-title">Server Settings</div>
           </div><button class="btn-primary" onclick="saveChannelSettings()">💾 Save Changes</button>
         </div>
+        <div class="card" style="margin-bottom:12px;padding:14px"><div class="fg" style="margin:0"><label class="fl">Server to manage</label><select class="fi" id="settingsServer"><option value="">Choose a server...</option><?php foreach($facDashboardServers as $srv): if((int)($srv['owner_id']??0)!==(int)$user['id']) continue; ?><option value="<?= (int)$srv['id'] ?>"><?= htmlspecialchars($srv['name']) ?></option><?php endforeach; ?></select></div></div>
         <div class="g2">
           <div class="card">
             <div class="ch-bar">
@@ -1164,6 +1165,7 @@ try {
         <div class="mx" onclick="closeModal('createAnnModal')">✕</div>
       </div>
       <div class="mb">
+        <div class="fg"><label class="fl">Server</label><select class="fi" id="annServer"><option value="">Choose a server...</option><?php foreach($facDashboardServers as $srv): if((int)($srv['owner_id']??0)!==(int)$user['id']) continue; ?><option value="<?= (int)$srv['id'] ?>"><?= htmlspecialchars($srv['name']) ?></option><?php endforeach; ?></select></div>
         <div class="fg"><label class="fl">Title</label><input class="fi" id="annTitle" placeholder="Announcement title"></div>
         <div class="fg"><label class="fl">Message</label><textarea class="fta" id="annBody" style="min-height:80px" placeholder="Write your announcement..."></textarea></div>
       </div>
