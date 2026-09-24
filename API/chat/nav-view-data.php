@@ -60,7 +60,10 @@ try {
         ");
         $ts->execute([':thread_uid'=>$uid]);
         foreach ($ts->fetchAll() as $r) {
-            $items[] = ['type'=>'thread','id'=>$r['id'],'server'=>$r['server'] ?: ($r['scope']==='public'?'Public':'Discussion'),'channel'=>'Discussion','time'=>date('M j',strtotime($r['created_at'])),'author'=>$r['author'],'letter'=>strtoupper(($r['full_name']?:$r['author'])[0]),'text'=>$r['title'].($r['body']!==''?' — '.$r['body']:''),'grad'=>$r['grad']??'#a855f7,#ec4899'];
+            $img=$db->prepare("SELECT file_url,file_name,mime_type FROM thread_attachments WHERE thread_id=? AND reply_id IS NULL AND mime_type LIKE 'image/%' ORDER BY id ASC LIMIT 1");
+            $img->execute([(int)$r['id']]);
+            $image=$img->fetch(PDO::FETCH_ASSOC) ?: null;
+            $items[] = ['type'=>'thread','id'=>$r['id'],'server'=>$r['server'] ?: ($r['scope']==='public'?'Public':'Discussion'),'channel'=>'Discussion','time'=>date('M j',strtotime($r['created_at'])),'author'=>$r['author'],'letter'=>strtoupper(($r['full_name']?:$r['author'])[0]),'text'=>$r['title'].($r['body']!==''?' — '.$r['body']:''),'grad'=>$r['grad']??'#a855f7,#ec4899','image_url'=>$image['file_url']??null,'image_name'=>$image['file_name']??null];
         }
     } elseif ($view === 'threads') {
         // Messages with replies (parent_id IS NULL but have children)
