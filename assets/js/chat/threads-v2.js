@@ -126,6 +126,20 @@
   }
   window.loadThreadsV2=loadFeed;
 
+  function ensureThreadActionModal(){
+    if(document.getElementById('tv2ActionModal'))return;
+    const el=document.createElement('div');el.id='tv2ActionModal';el.className='tv2-modal';
+    el.innerHTML='<div class="tv2-modal-card" style="max-width:420px"><div class="tv2-modal-head"><strong id="tv2ActionTitle">Confirm action</strong><button class="tv2-close" onclick="closeThreadActionModal()">×</button></div><div class="tv2-modal-body"><div id="tv2ActionText" style="font-size:13px;color:var(--text-secondary);line-height:1.55"></div><label id="tv2ActionInputWrap" style="display:none;margin-top:14px"><span style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Details</span><textarea id="tv2ActionInput" class="tv2-input" rows="4" style="resize:vertical"></textarea></label><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px"><button class="tv2-btn" onclick="closeThreadActionModal()">Cancel</button><button id="tv2ActionConfirm" class="tv2-btn primary">Confirm</button></div></div></div>';
+    document.body.appendChild(el);
+  }
+  window.closeThreadActionModal=function(){document.getElementById('tv2ActionModal')?.classList.remove('open');window._tv2ActionConfirm=null;};
+  function openThreadActionModal({title,text,input=false,value='',placeholder='',confirmText='Confirm',danger=false,onConfirm}){
+    ensureThreadActionModal();const modal=document.getElementById('tv2ActionModal'),wrap=document.getElementById('tv2ActionInputWrap'),field=document.getElementById('tv2ActionInput'),btn=document.getElementById('tv2ActionConfirm');
+    document.getElementById('tv2ActionTitle').textContent=title;document.getElementById('tv2ActionText').textContent=text;wrap.style.display=input?'block':'none';field.value=value;field.placeholder=placeholder;btn.textContent=confirmText;btn.style.background=danger?'#dc2626':'';
+    btn.onclick=async()=>{try{await onConfirm(input?field.value:'');closeThreadActionModal();}catch(e){toast(e.message,'error');}};
+    modal.classList.add('open');if(input)setTimeout(()=>field.focus(),40);
+  }
+
   window.toggleThreadPostMenu=function(event,button){event?.stopPropagation();const menu=button?.nextElementSibling;document.querySelectorAll('.tv2-post-menu.open').forEach(x=>{if(x!==menu)x.classList.remove('open')});menu?.classList.toggle('open');};
   document.addEventListener('click',()=>document.querySelectorAll('.tv2-post-menu.open').forEach(x=>x.classList.remove('open')));
 
@@ -136,9 +150,9 @@
     return d;
   }
   window.threadBookmarkV2=async function(id){try{await postAction('bookmark',id);}catch(e){toast(e.message,'error');}};
-  window.threadReportV2=async function(id){const reason=prompt('Why are you reporting this post?','Inappropriate content');if(reason===null||!reason.trim())return;try{await postAction('report',id,{reason:reason.trim()});}catch(e){toast(e.message,'error');}};
-  window.threadEditV2=async function(id){try{const d=await request(api+'?action=get&id='+encodeURIComponent(id));const t=d.thread;const title=prompt('Edit post title:',t.title||'');if(title===null)return;const body=prompt('Edit post:',t.body||'');if(body===null)return;await postAction('edit',id,{title:title.trim(),body:body.trim()});}catch(e){toast(e.message,'error');}};
-  window.threadDeleteV2=async function(id){if(!confirm('Delete this post? This cannot be undone.'))return;try{await postAction('delete',id);}catch(e){toast(e.message,'error');}};
+  window.threadReportV2=function(id){openThreadActionModal({title:'Report post',text:'Tell us why you are reporting this discussion post.',input:true,value:'',placeholder:'Reason for reporting this post…',confirmText:'Submit report',onConfirm:async reason=>{if(!reason.trim())throw new Error('Please enter a reason.');await postAction('report',id,{reason:reason.trim()});}});};
+  window.threadEditV2=async function(id){try{const d=await request(api+'?action=get&id='+encodeURIComponent(id));const t=d.thread;openThreadActionModal({title:'Edit post',text:'Update the post content below.',input:true,value:t.body||'',placeholder:'Post content…',confirmText:'Save changes',onConfirm:async body=>{if(!body.trim())throw new Error('Post content is required.');await postAction('edit',id,{title:t.title||'',body:body.trim()});}});}catch(e){toast(e.message,'error');}};
+  window.threadDeleteV2=function(id){openThreadActionModal({title:'Delete post',text:'Delete this post permanently? This action cannot be undone.',confirmText:'Delete post',danger:true,onConfirm:async()=>{await postAction('delete',id);}});};
 
   window.voteThreadV2=async function(target,id,vote){try{const d=await request(api,{method:'POST',body:JSON.stringify({action:'vote',target,id,vote})});const b=document.querySelector(`button[onclick*="voteThreadV2('${target}',${id},"]`);if(b)b.blur();loadFeed(activeScope);}catch(e){toast(e.message,'error');}};
 
