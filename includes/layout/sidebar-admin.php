@@ -14,9 +14,8 @@ function aNavItem(string $page, string $icon, string $label, string $active): st
 }
 ?>
 <aside class="sidebar">
-  <div class="logo">
-    <div class="logo-icon">🔷</div>
-    <span class="logo-text">Ecollab</span>
+  <div class="logo ecollab-brand-logo">
+    <img class="ecollab-brand-wordmark" src="<?= BASE_URL ?>/assets/ecollab-wordmark.webp" alt="eCollab">
   </div>
 
   <div class="nav-section">
