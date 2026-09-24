@@ -43,10 +43,10 @@ document.querySelectorAll('.mo').forEach(o=>o.addEventListener('click',e=>{if(e.
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.mo.show').forEach(o=>closeModal(o.id));closeAllDD();}});
 
 // ═══ DROPDOWNS ═══
-function toggleNotif(){const d=document.getElementById('ndrop');const open=d.classList.contains('show');closeAllDD();if(!open)d.classList.add('show');}
-function togglePDrop(){const d=document.getElementById('pdrop');const open=d.classList.contains('show');closeAllDD();if(!open)d.classList.add('show');}
-function closeAllDD(){document.getElementById('ndrop').classList.remove('show');document.getElementById('pdrop').classList.remove('show');hideSD();}
-document.addEventListener('click',e=>{if(!e.target.closest('#nBtn'))document.getElementById('ndrop').classList.remove('show');if(!e.target.closest('#pchip'))document.getElementById('pdrop').classList.remove('show');if(!e.target.closest('#swrap'))hideSD();});
+function toggleNotif(){const d=document.getElementById('ndrop');if(!d)return;const open=d.classList.contains('show');closeAllDD();if(!open)d.classList.add('show');}
+function togglePDrop(){const d=document.getElementById('pdrop');if(!d)return;const open=d.classList.contains('show');closeAllDD();if(!open)d.classList.add('show');}
+function closeAllDD(){document.getElementById('ndrop')?.classList.remove('show');document.getElementById('pdrop')?.classList.remove('show');hideSD();}
+document.addEventListener('click',e=>{if(!e.target.closest('#nBtn'))document.getElementById('ndrop')?.classList.remove('show');if(!e.target.closest('#pchip'))document.getElementById('pdrop')?.classList.remove('show');if(!e.target.closest('#swrap'))hideSD();});
 
 // ═══ NOTIFICATIONS ═══
 function handleNotif(el,msg){el.classList.remove('unread');const d=el.querySelector('.ndd');if(d)d.remove();updateNB();toast(msg,'info','🔔');}
@@ -55,8 +55,8 @@ function updateNB(){const c=document.querySelectorAll('.ndi.unread').length;cons
 
 // ═══ SEARCH ═══
 function handleSearch(v){if(v.length>0)showSD();else hideSD();}
-function showSD(){if(document.getElementById('gsearch').value.length>0)document.getElementById('sdrop').classList.add('show');}
-function hideSD(){document.getElementById('sdrop').classList.remove('show');}
+function showSD(){const search=document.getElementById('gsearch'),drop=document.getElementById('sdrop');if(search&&drop&&search.value.length>0)drop.classList.add('show');}
+function hideSD(){document.getElementById('sdrop')?.classList.remove('show');}
 
 // ═══ TABS ═══
 function switchTab(btn,cid){const m=btn.closest('.md')||btn.closest('.page-section');m.querySelectorAll('.tb').forEach(b=>b.classList.remove('active'));m.querySelectorAll('.tc').forEach(c=>c.classList.remove('active'));btn.classList.add('active');const c=document.getElementById(cid);if(c)c.classList.add('active');}
