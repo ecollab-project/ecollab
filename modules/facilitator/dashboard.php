@@ -243,6 +243,7 @@ $stats = $dashData['stats'] ?? ['total_members' => 0, 'active_today' => 0, 'mess
             <div class="card" style="margin-bottom:12px">
               <div class="ch-bar">
                 <div class="ch-title">My Channels &amp; Servers</div>
+                <a class="period-btn" style="text-decoration:none" href="?page=servermonitoring">Server Monitoring</a>
                 <button class="period-btn" onclick="openModal('channelSwitchModal')">Switch ▾</button>
               </div>
               <div style="padding:4px 12px 10px;font-size:11px;color:var(--muted2)">
@@ -373,6 +374,40 @@ $stats = $dashData['stats'] ?? ['total_members' => 0, 'active_today' => 0, 'mess
               <div class="ri-actions"><button class="btn-sm" style="background:rgba(220,38,38,.15);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="openModal('kickModal','spam_user99')">Kick</button><button class="btn-sm btn-outline" onclick="openModal('reportDetailModal','Reported User')">Detail</button></div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <?php
+$facMonitorServers = [];
+try {
+  require_once ROOT_PATH . '/services/ServerMonitoringService.php';
+  $facMonitorServers = (new ServerMonitoringService())->getFacilitatorServers((int)$user['id']);
+} catch (Throwable $e) {
+  $facMonitorServers = [];
+}
+?>
+      <div class="page-section" id="page-servermonitoring">
+        <div class="page-title-row">
+          <div>
+            <div class="page-title">Server Monitoring</div>
+            <div class="page-sub">Monitor only the servers you facilitate, own, or manage.</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ch-bar"><div class="ch-title">My Managed Servers</div></div>
+          <?php foreach ($facMonitorServers as $srv): ?>
+            <div class="ract-row">
+              <div class="ract-av" style="background:rgba(124,92,255,.15);font-size:16px"><?= htmlspecialchars($srv['icon_emoji'] ?? '🖥') ?></div>
+              <div class="ract-msg" style="flex:1">
+                <strong><?= htmlspecialchars($srv['name'] ?? '') ?></strong>
+                <span style="color:var(--muted2)"> · <?= (int)($srv['member_count'] ?? 0) ?> members</span>
+              </div>
+              <a class="btn-sm btn-outline" style="text-decoration:none" href="<?= BASE_URL ?>/modules/admin/server-monitor.php?server_id=<?= (int)($srv['id'] ?? 0) ?>&scope=facilitator">Monitor</a>
+            </div>
+          <?php endforeach; ?>
+          <?php if (empty($facMonitorServers)): ?>
+            <div class="dashboard-empty-state">No facilitator-managed servers are assigned to your account.</div>
+          <?php endif; ?>
         </div>
       </div>
 
