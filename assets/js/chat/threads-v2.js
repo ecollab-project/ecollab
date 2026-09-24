@@ -108,7 +108,7 @@
     const g=gradient(t.author_gradient), init=authorName(t).charAt(0).toUpperCase();
     const images=(Array.isArray(t.attachments)?t.attachments:[]).filter(a=>!a.reply_id && (a.file_url || a.url || a.path));
     const media=images.length?`<div class="tv2-card-media">${images.slice(0,3).map(a=>{let src=a.file_url||a.url||a.path||'';if(src.startsWith('/'))src=base()+src;return `<img src="${esc(src)}" alt="${esc(a.file_name||'Discussion image')}" loading="lazy">`;}).join('')}</div>`:'';
-    const mine=Number(t.created_by)===Number(window.ECOLLAB?.userId);
+    const mine=Number(t.is_owner)===1 || Number(t.created_by)===Number(window.ECOLLAB?.userId);
     const menu=mine
       ? `<button class="tv2-menu-item" onclick="threadBookmarkV2(${t.id})">🔖 ${Number(t.is_bookmarked)?'Remove bookmark':'Bookmark post'}</button><button class="tv2-menu-item" onclick="threadEditV2(${t.id})">✏️ Edit post</button><button class="tv2-menu-item danger" onclick="threadDeleteV2(${t.id})">🗑️ Delete post</button>`
       : `<button class="tv2-menu-item" onclick="threadBookmarkV2(${t.id})">🔖 ${Number(t.is_bookmarked)?'Remove bookmark':'Bookmark post'}</button><button class="tv2-menu-item" onclick="threadReportV2(${t.id})">🚩 Report post</button>`;
@@ -116,7 +116,7 @@
   }
 
   let feedLoaded=false, feedSignatures=new Map();
-  function threadSignature(t){return JSON.stringify([t.id,t.title,t.body,t.scope,t.created_by,t.is_bookmarked,t.created_at,t.updated_at,t.reply_count,t.score,t.my_vote,t.server_name,t.channel_name,(t.attachments||[]).map(a=>[a.id,a.reply_id,a.file_url,a.file_name,a.mime_type])]);}
+  function threadSignature(t){return JSON.stringify([t.id,t.title,t.body,t.scope,t.created_by,t.is_owner,t.is_bookmarked,t.created_at,t.updated_at,t.reply_count,t.score,t.my_vote,t.server_name,t.channel_name,(t.attachments||[]).map(a=>[a.id,a.reply_id,a.file_url,a.file_name,a.mime_type])]);}
   function reconcileFeed(threads){
     const body=document.getElementById('tv2Feed'); if(!body)return;
     const list=Array.isArray(threads)?threads:[];
