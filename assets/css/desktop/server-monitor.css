@@ -12,3 +12,5 @@
 .server-monitor-page .tabs{position:sticky;top:64px;z-index:15}
 .server-monitor-page .sidebar .nav-item{cursor:pointer}
 @media(max-width:768px){.monitor-menu{display:block}.server-monitor-page .monitor-page-content{padding:0 10px 24px}.monitor-appbar{padding:0 12px}.monitor-return{font-size:0}.monitor-return:after{content:"Back";font-size:12px}.server-monitor-page .monitor-top{min-height:96px}.server-monitor-page .sidebar-overlay.open{display:block}}
+
+.owner-summary{margin-bottom:14px}.owner-line{display:flex;align-items:center;gap:12px}.owner-avatar{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(135deg,#6d3cb4,#35205e);font-size:20px}.owner-line strong{display:block;font-size:14px}.owner-line small{display:block;margin-top:4px;color:var(--muted);font-size:11px}
