@@ -188,12 +188,7 @@ async function loadServerChannels(serverId) {
     if (server) {
       document.getElementById('wsIcon').textContent = server.icon_emoji || '⭐';
       document.getElementById('wsName').textContent = server.name;
-      const serverBadge=document.getElementById('serverVisibilityBadge');
-      if(serverBadge){
-        const serverPrivate=['private','academic'].includes(String(server.type||'community').toLowerCase());
-        serverBadge.textContent=serverPrivate?'🔒 Private':'🌐 Public';
-        serverBadge.className='chat-visibility-badge '+(serverPrivate?'visibility-private':'visibility-public');
-      }
+
     }
 
     renderChannelList(data.channels || []);
@@ -267,6 +262,7 @@ function renderChannelList(channels) {
             : `<span class="channel-hash">#</span>`
         }
         <span class="channel-name-text" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(ch.name)}${isNew ? ' <span class="ch-new-badge" style="font-size:9px;background:rgba(168,85,247,0.18);color:#c084fc;border-radius:4px;padding:1px 5px;font-weight:700;vertical-align:middle;">new</span>' : ''}</span>
+        <span class="channel-visibility-indicator ${isPrivate?'is-private':'is-public'}" title="${isPrivate?'Private channel':'Public channel'}">${isPrivate?'🔒':'🌐'}</span>
         ${ch.unread_count > 0 ? `<span class="channel-unread">${ch.unread_count}</span>` : ''}
       `;
       el.onclick = () => switchChannel(el, parseInt(ch.id));
@@ -346,12 +342,6 @@ async function switchChannel(el, channelId) {
       const hasAccess = chanData.has_access == 1 || chanData.has_access === true || !isPrivate;
 
       document.getElementById('channelTitle').textContent = ch.name;
-      const channelBadge=document.getElementById('channelVisibilityBadge');
-      if(channelBadge){
-        channelBadge.style.display='inline-flex';
-        channelBadge.textContent=isPrivate?'🔒 Private':'🌐 Public';
-        channelBadge.className='chat-visibility-badge '+(isPrivate?'visibility-private':'visibility-public');
-      }
       document.getElementById('channelDesc').textContent = ch.description || '';
       document.getElementById('chatInputField').placeholder = `Message #${ch.name}`;
       document.getElementById('mobChannelName').textContent = ch.name;
