@@ -1083,7 +1083,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     7. dm-notifications.js — DM badge polling
   -->
   <script src="<?= BASE_URL ?>/assets/js/chat/socket.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=avatar-sync-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=voice-isolation-1" defer></script>
@@ -1145,7 +1145,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-tools.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-liveeditor.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-extra.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/peer-matching.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/peer-matching.js?v=avatar-sync-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/server-channel-management.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/server-discovery.js?v=privacy1" defer></script>
 
