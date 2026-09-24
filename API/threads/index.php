@@ -287,7 +287,13 @@ try {
         $s=$db->prepare('SELECT created_by FROM threads WHERE id=? AND is_deleted=0 LIMIT 1');$s->execute([$id]);$target=(int)$s->fetchColumn();
         if(!$target) threadJson(['error'=>'Thread not found'],404);
         if($target===$uid) threadJson(['error'=>'You cannot report your own post'],422);
-        $db->prepare('INSERT INTO thread_reports(thread_id,reporter_id,reported_user_id,reason,status) VALUES(?,?,?,?,\'pending\')')->execute([$id,$uid,$target,mb_substr($reason,0,255)]);
+        try {
+            $db->prepare("INSERT INTO thread_reports(thread_id,reporter_id,reported_user_id,reason,status) VALUES(?,?,?,?, 'pending')")->execute([$id,$uid,$target,mb_substr($reason,0,255)]);
+        } catch (PDOException $e) {
+            // uq_thread_reporter prevents the same account from reporting the same post twice.
+            if ((string)$e->getCode() === '23000') threadJson(['error'=>'You already reported this post'],409);
+            throw $e;
+        }
         threadJson(['message'=>'Post reported']);
     }
 
