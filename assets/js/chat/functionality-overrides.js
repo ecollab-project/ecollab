@@ -132,14 +132,14 @@ window.ECOLLAB_ESC = esc;
     if(document.getElementById('threadsV2Script'))return;
     const s=document.createElement('script');
     s.id='threadsV2Script';
-    s.src=base()+'/assets/js/chat/threads-v2.js?v=imgfix3';
+    s.src=base()+'/assets/js/chat/threads-v2.js?v=scopefix1';
     // threads-enhancements.js depends on the globals created by threads-v2.js.
     // Load the enhancement only after the core script is actually ready.
     s.addEventListener('load',()=>{
       if(document.getElementById('threadsEnhancementsScript'))return;
       const e=document.createElement('script');
       e.id='threadsEnhancementsScript';
-      e.src=base()+'/assets/js/chat/threads-enhancements.js?v=imgfix3';
+      e.src=base()+'/assets/js/chat/threads-enhancements.js?v=scopefix1';
       document.head.appendChild(e);
     },{once:true});
     document.head.appendChild(s);
