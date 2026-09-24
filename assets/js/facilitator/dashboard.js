@@ -25,18 +25,20 @@ const annData={
 function openModal(id, param) {
   closeAllDD();
   if(param) {
-    if(id==='memberDetailModal'){document.getElementById('mdTitle').textContent=param+' — Profile';document.getElementById('mdName').textContent=param;}
-    if(id==='kickModal'){document.getElementById('kickTarget').textContent=param;}
-    if(id==='warnModal'){document.getElementById('warnTarget').textContent=param;}
-    if(id==='muteModal'){document.getElementById('muteTarget').textContent=param;}
+    const setText=(eid,text)=>{const el=document.getElementById(eid);if(el)el.textContent=text;};
+    if(id==='memberDetailModal'){setText('mdTitle',param+' — Profile');setText('mdName',param);}
+    if(id==='kickModal')setText('kickTarget',param);
+    if(id==='warnModal')setText('warnTarget',param);
+    if(id==='muteModal')setText('muteTarget',param);
     if(id==='changeRoleModal'){const t=document.getElementById('crTarget');if(t)t.value=param;}
-    if(id==='sessionDetailModal'){document.getElementById('sdTitle').textContent=param;}
-    if(id==='reportDetailModal'){document.getElementById('rdTitle2').textContent='Report: '+param;}
-    if(id==='viewAnnModal'){document.getElementById('vaTitle').textContent=param;document.getElementById('vaName').textContent=param;const d=annData[param];if(d){document.getElementById('vaBody').textContent=d[1];}}
-    if(id==='editAnnModal'){document.getElementById('eaTitle').textContent='Edit: '+param;const t=document.getElementById('eaAnnTitle');if(t)t.value=param;}
+    if(id==='sessionDetailModal')setText('sdTitle',param);
+    if(id==='reportDetailModal')setText('rdTitle2','Report: '+param);
+    if(id==='viewAnnModal'){setText('vaTitle',param);setText('vaName',param);const d=annData[param];if(d)setText('vaBody',d[1]);}
+    if(id==='editAnnModal'){setText('eaTitle','Edit: '+param);const t=document.getElementById('eaAnnTitle');if(t)t.value=param;}
   }
   const o=document.getElementById(id);
-  if(o){o.classList.add('show');document.body.style.overflow='hidden';}
+  if(!o){console.warn('Modal not present:',id);return;}
+  o.classList.add('show');document.body.style.overflow='hidden';
 }
 function closeModal(id){const o=document.getElementById(id);if(o){o.classList.remove('show');document.body.style.overflow='';}}
 document.querySelectorAll('.mo').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeModal(o.id);}));
