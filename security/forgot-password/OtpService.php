@@ -243,6 +243,13 @@ class OtpService {
             str_split($otp)
         ));
 
+        $year = date('Y');
+        $brandUrl = rtrim((string)BASE_URL, '/');
+        if (!preg_match('#^https?://#i', $brandUrl)) {
+            $brandUrl = 'https://ecollab.tech' . ($brandUrl === '/' ? '' : $brandUrl);
+        }
+        $brandLogo = htmlspecialchars($brandUrl . '/assets/ecollab-wordmark.webp', ENT_QUOTES, 'UTF-8');
+
         return <<<HTML
 <!DOCTYPE html>
 <html lang="en">
@@ -252,8 +259,7 @@ class OtpService {
     <tr><td align="center">
       <table width="480" cellpadding="0" cellspacing="0" style="background:#0f0c1a;border:1px solid rgba(255,45,117,0.25);border-radius:20px;overflow:hidden;max-width:480px;">
         <tr><td style="background:linear-gradient(135deg,#FF2D75,#9F3BFF);padding:28px 32px;text-align:center;">
-          <div style="font-size:28px;margin-bottom:4px;">🌿</div>
-          <div style="color:#fff;font-size:20px;font-weight:700;font-family:'Poppins',Arial,sans-serif;">Ecollab</div>
+          <img src="{$brandLogo}" width="210" alt="eCollab" style="display:block;width:210px;max-width:82%;height:auto;margin:0 auto;border:0;outline:none;text-decoration:none;">
         </td></tr>
         <tr><td style="padding:32px;">
           <p style="color:#fff;font-size:16px;font-weight:600;margin:0 0 8px;">Hi {$name},</p>
@@ -266,7 +272,7 @@ class OtpService {
           </p>
           <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:0 0 20px;">
           <p style="color:#6e6e82;font-size:11px;text-align:center;margin:0;">
-            © <?= date('Y') ?> Ecollab · Built for Fatima Computing Students
+            © {$year} eCollab · Built for Fatima Computing Students
           </p>
         </td></tr>
       </table>
