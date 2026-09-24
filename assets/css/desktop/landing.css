@@ -614,3 +614,8 @@
     from { transform: scaleX(0); }
     to   { transform: scaleX(1); }
   }
+
+/* New eCollab wordmark */
+.ecollab-landing-brand img{display:block;width:142px;max-height:44px;object-fit:contain;object-position:left center}
+.ecollab-demo-brand img{display:block;width:108px;max-height:34px;object-fit:contain;object-position:left center}
+@media(max-width:600px){.ecollab-landing-brand img{width:120px}.ecollab-demo-brand img{width:92px}}
