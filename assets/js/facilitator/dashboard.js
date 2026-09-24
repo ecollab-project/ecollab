@@ -193,3 +193,5 @@ function switchChannel(channelIdOrName, serverId){
   }
   window.location.href = `${base}/modules/chat/chat.php?${params.toString()}`;
 }
+
+window.addEventListener('DOMContentLoaded',()=>{const p=new URLSearchParams(location.search).get('page');if(p)showPage(p);});
