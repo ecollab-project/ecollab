@@ -23,11 +23,11 @@ try {
  foreach($map as $needle=>$vals)if(str_contains($seed,$needle))$topics=array_merge($topics,$vals);
  $topics=array_values(array_unique($topics)); if(!$topics)$topics=['computer science'];
  $query=$q!==''?$q:implode(' ',array_slice($topics,0,4));
- $url='https://openlibrary.org/search.json?'.http_build_query(['q'=>$query,'fields'=>'key,title,author_name,cover_i,first_publish_year,subject,ebook_access,has_fulltext','limit'=>24]);
+ $url='https://openlibrary.org/search.json?'.http_build_query(['q'=>$query,'fields'=>'key,title,author_name,cover_i,first_publish_year,subject,ebook_access,has_fulltext,ia,public_scan_b,availability','limit'=>24]);
  $ch=curl_init($url); curl_setopt_array($ch,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_TIMEOUT=>8,CURLOPT_CONNECTTIMEOUT=>4,CURLOPT_HTTPHEADER=>['Accept: application/json','User-Agent: eCollab-Academic-Library']]);
  $raw=curl_exec($ch); $code=(int)curl_getinfo($ch,CURLINFO_HTTP_CODE); curl_close($ch);
  if($raw===false||$code<200||$code>=300)throw new RuntimeException('Book catalog temporarily unavailable');
  $data=json_decode((string)$raw,true); $books=[];
- foreach(($data['docs']??[]) as $d){$key=(string)($d['key']??'');$books[]=['title'=>(string)($d['title']??'Untitled'),'authors'=>(array)($d['author_name']??[]),'cover'=>empty($d['cover_i'])?null:'https://covers.openlibrary.org/b/id/'.(int)$d['cover_i'].'-M.jpg','year'=>$d['first_publish_year']??null,'subjects'=>array_slice((array)($d['subject']??[]),0,6),'ebook_access'=>(string)($d['ebook_access']??''),'has_fulltext'=>(bool)($d['has_fulltext']??false),'url'=>$key?'https://openlibrary.org'.$key:null,'source'=>'Open Library'];}
+ foreach(($data['docs']??[]) as $d){$key=(string)($d['key']??'');$books[]=['title'=>(string)($d['title']??'Untitled'),'authors'=>(array)($d['author_name']??[]),'cover'=>empty($d['cover_i'])?null:'https://covers.openlibrary.org/b/id/'.(int)$d['cover_i'].'-M.jpg','year'=>$d['first_publish_year']??null,'subjects'=>array_slice((array)($d['subject']??[]),0,6),'ebook_access'=>(string)($d['ebook_access']??''),'has_fulltext'=>(bool)($d['has_fulltext']??false),'url'=>$key?'https://openlibrary.org'.$key:null,'read_url'=>!empty($d['ia'][0])?'https://archive.org/details/'.rawurlencode((string)$d['ia'][0]):null,'action'=>((string)($d['ebook_access']??''))==='public'?'Read':(((string)($d['ebook_access']??''))==='borrowable'?'Borrow':'Details'),'source'=>'Open Library'];}
  echo json_encode(['success'=>true,'context'=>['label'=>$label,'topics'=>$topics],'books'=>$books],JSON_UNESCAPED_SLASHES);
 } catch(Throwable $e){http_response_code(500);echo json_encode(['success'=>false,'error'=>'Unable to load the library right now.']);}
