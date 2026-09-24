@@ -89,7 +89,7 @@ function isLocalRuntime(): bool
         && preg_match('~^[A-Za-z]:[\\\\/]xampp[\\\\/]htdocs(?:[\\\\/]|$)~i', $rootDir) === 1;
 }
 
-define('APP_NAME',    env('APP_NAME',    'Ecollab'));
+define('APP_NAME',    env('APP_NAME',    'eCollab'));
 define('APP_ENV',     env('APP_ENV',     'production'));
 define('APP_URL',     resolveAppUrl());
 define('APP_DEBUG',   env('APP_DEBUG',   'false') === 'true' && env('APP_ENV', 'production') !== 'production');
@@ -128,7 +128,7 @@ define('OTP_LENGTH', (int)env('OTP_LENGTH', 6));
 define('BREVO_API_URL',      env('BREVO_API_URL',      'https://api.brevo.com'));
 define('BREVO_API_KEY',      env('BREVO_API_KEY',      ''));
 define('BREVO_SENDER_EMAIL', env('BREVO_SENDER_EMAIL', ''));
-define('BREVO_SENDER_NAME',  env('BREVO_SENDER_NAME',  'Ecollab'));
+define('BREVO_SENDER_NAME',  env('BREVO_SENDER_NAME',  'eCollab'));
 
 // ── WebSocket ─────────────────────────────────────────────────────────────────
 define('WS_HOST', env('WS_HOST', '0.0.0.0'));
