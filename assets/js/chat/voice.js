@@ -18,6 +18,12 @@ let vcActive = false;       // true while connected to a voice channel
 let vcRoomName = '';
 let vcChannelId = null;        // current voice channel id
 let localStream = null;
+let _localCameraTrack = null;
+let _cameraToggleBusy = false;
+const _remoteCameraStreams = {};
+const _remoteScreenStreams = {};
+const _watchedScreenUsers = new Set();
+const _renegotiationQueues = {};
 
 // WebRTC state
 let peerConnections = {};    // user_id => RTCPeerConnection
@@ -547,10 +553,15 @@ function disconnectVoice() {
   _updateConnectedBar(false);
   _stopVAD();
 
+  if (_screenStream) {
+    try { _screenStream.getTracks().forEach(t => t.stop()); } catch {}
+    _screenStream = null; vcScreenOn = false;
+  }
   if (localStream) {
     localStream.getTracks().forEach(t => t.stop());
     localStream = null;
   }
+  _localCameraTrack = null; vcCamOn = false;
 
   // Close all WebRTC peer connections
   Object.entries(peerConnections).forEach(([uid, pc]) => {
@@ -561,6 +572,10 @@ function disconnectVoice() {
   });
   peerConnections = {};
   remoteStreams = {};
+  Object.keys(_remoteCameraStreams).forEach(k => delete _remoteCameraStreams[k]);
+  Object.keys(_remoteScreenStreams).forEach(k => delete _remoteScreenStreams[k]);
+  _watchedScreenUsers.clear();
+  Object.keys(_renegotiationQueues).forEach(k => delete _renegotiationQueues[k]);
   iceCandidateQueues = {};
 
   if (window.chatSocket && window.chatSocket.readyState === WebSocket.OPEN) {
@@ -615,7 +630,8 @@ function _moveUserCardOnMute(isMuted) {
   if (!speakingGrid || !listeningGrid) return;
 
   // Preserve live camera stream before removing old card (from either card type)
-  const existingCam = document.querySelector('.vc-cam-preview');
+  const localCard = document.querySelector(`.vc-speaker-card[data-user-id="${userId}"], .vc-listener-card[data-user-id="${userId}"]`);
+  const existingCam = localCard?.querySelector('.vc-cam-preview:not(.vc-screen-preview)') || null;
   const savedCamStream = (existingCam && existingCam.srcObject) ? existingCam.srcObject : null;
 
   // Remove existing user card from both grids
@@ -1054,90 +1070,107 @@ function _micTestDraw() {
   draw();
 }
 
+// Serialize renegotiation per peer so rapid media toggles cannot overlap offers.
+function _renegotiatePeer(userId, extra = {}) {
+  const uid = String(userId);
+  const previous = _renegotiationQueues[uid] || Promise.resolve();
+  const next = previous.catch(() => {}).then(async () => {
+    const pc = peerConnections[uid];
+    if (!pc || pc.signalingState === 'closed') return;
+    if (pc.signalingState !== 'stable') {
+      await new Promise(resolve => setTimeout(resolve, 80));
+      if (pc.signalingState !== 'stable') return;
+    }
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    if (window.chatSocket && window.chatSocket.readyState === WebSocket.OPEN) {
+      window.chatSocket.send(JSON.stringify({
+        type: 'webrtc_offer', target_user_id: Number(uid), channel_id: vcChannelId,
+        sdp: pc.localDescription, ...extra
+      }));
+    }
+  }).catch(err => console.warn('[WebRTC] renegotiation failed for', uid, err));
+  _renegotiationQueues[uid] = next;
+  next.finally(() => { if (_renegotiationQueues[uid] === next) delete _renegotiationQueues[uid]; });
+  return next;
+}
+
 // ── Camera toggle with live preview in speaker card ───────────────────────
 async function toggleCamera() {
-  vcCamOn = !vcCamOn;
+  if (_cameraToggleBusy) return;
+  _cameraToggleBusy = true;
+  const localUserId = Number(window.ECOLLAB?.userId || 0);
   const btn = document.getElementById('vcCamBtn');
-  if (btn) btn.classList.toggle('active', vcCamOn);
-
-  if (vcCamOn) {
-    try {
+  try {
+    if (!vcCamOn) {
+      if (_localCameraTrack) {
+        try { _localCameraTrack.stop(); } catch {}
+        try { localStream?.removeTrack(_localCameraTrack); } catch {}
+        _localCameraTrack = null;
+      }
       const camStream = await navigator.mediaDevices.getUserMedia({ video: true });
-      // contentHint='motion' marks this as camera (not screen) for the receiver's ontrack
-      camStream.getVideoTracks().forEach(t => { t.contentHint = 'motion'; });
-      if (!localStream) localStream = camStream;
-      else camStream.getVideoTracks().forEach(t => localStream.addTrack(t));
-
-      // Push camera track to all existing peer connections and renegotiate
       const camTrack = camStream.getVideoTracks()[0];
-      Object.entries(peerConnections).forEach(([uid, pc]) => {
-        try {
-          pc.addTrack(camTrack, localStream);
-          pc.createOffer().then(offer => pc.setLocalDescription(offer).then(() => {
-            if (window.chatSocket && window.chatSocket.readyState === WebSocket.OPEN) {
-              window.chatSocket.send(JSON.stringify({
-                type: 'webrtc_offer',
-                target_user_id: parseInt(uid),
-                sdp: pc.localDescription,
-              }));
-            }
-          })).catch(e => console.warn('[Camera] renegotiate failed:', e));
-        } catch (e) { console.warn('[Camera] addTrack failed:', e); }
-      });
+      if (!camTrack) throw new Error('No camera video track available');
+      camTrack.contentHint = 'motion';
+      _localCameraTrack = camTrack;
+      if (!localStream) localStream = new MediaStream();
+      if (!localStream.getTracks().includes(camTrack)) localStream.addTrack(camTrack);
 
-      // Inject live video preview into the local speaker card
-      const card = document.querySelector('.vc-speaker-card[data-user-id]');
+      for (const [uid, pc] of Object.entries(peerConnections)) {
+        if (!pc || pc.signalingState === 'closed') continue;
+        if (!pc.getSenders().some(sender => sender.track === camTrack)) pc.addTrack(camTrack, localStream);
+        _renegotiatePeer(uid);
+      }
+
+      vcCamOn = true;
+      btn?.classList.add('active');
+      const card = document.querySelector(`.vc-speaker-card[data-user-id="${localUserId}"], .vc-listener-card[data-user-id="${localUserId}"]`);
       if (card) {
-        let vid = card.querySelector('.vc-cam-preview');
+        let vid = card.querySelector('.vc-cam-preview:not(.vc-screen-preview)');
         if (!vid) {
           vid = document.createElement('video');
           vid.className = 'vc-cam-preview vc-mirror';
-          vid.autoplay = true;
-          vid.muted = true;
-          vid.playsInline = true;
-          // Insert before sc-top so the video sits at the top of the card
+          vid.autoplay = true; vid.muted = true; vid.playsInline = true;
           const scTop = card.querySelector('.sc-top');
           card.insertBefore(vid, scTop || card.firstChild);
         }
-        vid.srcObject = camStream;
-        // Mark the card so CSS can reflow the layout properly
+        vid.srcObject = new MediaStream([camTrack]);
         card.classList.add('has-camera');
       }
+      camTrack.addEventListener('ended', () => {
+        if (_localCameraTrack === camTrack && vcCamOn) toggleCamera();
+      }, { once: true });
       showToast('📷 Camera on', 'success');
-    } catch {
-      showToast('📷 Camera access denied', 'info');
+    } else {
+      const camTrack = _localCameraTrack;
       vcCamOn = false;
-      if (btn) btn.classList.remove('active');
+      btn?.classList.remove('active');
+      const card = document.querySelector(`.vc-speaker-card[data-user-id="${localUserId}"], .vc-listener-card[data-user-id="${localUserId}"]`);
+      const vid = card?.querySelector('.vc-cam-preview:not(.vc-screen-preview)');
+      if (vid) { vid.srcObject = null; vid.remove(); }
+      if (card && !card.querySelector('.vc-screen-preview')) card.classList.remove('has-camera');
+
+      if (camTrack) {
+        for (const [uid, pc] of Object.entries(peerConnections)) {
+          const sender = pc?.getSenders().find(sender => sender.track === camTrack);
+          if (!sender) continue;
+          try { pc.removeTrack(sender); } catch (err) { console.warn('[Camera] removeTrack failed:', err); }
+          _renegotiatePeer(uid);
+        }
+        try { localStream?.removeTrack(camTrack); } catch {}
+        try { camTrack.stop(); } catch {}
+        if (_localCameraTrack === camTrack) _localCameraTrack = null;
+      }
+      showToast('📷 Camera off', 'info');
     }
-  } else {
-    // Remove preview, stop cam tracks, and restore card layout
-    document.querySelectorAll('.vc-cam-preview').forEach(v => { v.srcObject = null; v.remove(); });
-    document.querySelectorAll('.vc-speaker-card.has-camera').forEach(c => c.classList.remove('has-camera'));
-    if (localStream) {
-      localStream.getVideoTracks().forEach(t => {
-        // Remove from all peer connections before stopping
-        Object.entries(peerConnections).forEach(([uid, pc]) => {
-          try {
-            const sender = pc.getSenders().find(s => s.track === t);
-            if (sender) {
-              pc.removeTrack(sender);
-              pc.createOffer().then(offer => pc.setLocalDescription(offer).then(() => {
-                if (window.chatSocket && window.chatSocket.readyState === WebSocket.OPEN) {
-                  window.chatSocket.send(JSON.stringify({
-                    type: 'webrtc_offer',
-                    target_user_id: parseInt(uid),
-                    sdp: pc.localDescription,
-                  }));
-                }
-              })).catch(() => { });
-            }
-          } catch (e) { }
-        });
-        t.stop();
-        try { localStream.removeTrack(t); } catch { }
-      });
-    }
-    showToast('📷 Camera off', 'info');
+  } catch (err) {
+    console.warn('[Camera] toggle failed:', err);
+    vcCamOn = false; btn?.classList.remove('active');
+    showToast('📷 Camera access denied or unavailable', 'info');
+  } finally {
+    _cameraToggleBusy = false;
+    _syncVoiceQuickActions();
+    _refreshVoiceLayout();
   }
 }
 
@@ -1190,19 +1223,8 @@ async function startStopScreenShare() {
       Object.entries(peerConnections).forEach(([uid, pc]) => {
         try {
           console.log('[SCREEN DEBUG] addTrack screen to peer', uid, 'streamId:', screenOnlyStream.id);
-          pc.addTrack(screenVideoTrack, screenOnlyStream);
-          pc.createOffer().then(offer => {
-            return pc.setLocalDescription(offer).then(() => {
-              if (window.chatSocket && window.chatSocket.readyState === WebSocket.OPEN) {
-                window.chatSocket.send(JSON.stringify({
-                  type: 'webrtc_offer',
-                  target_user_id: parseInt(uid),
-                  sdp: pc.localDescription,
-                  is_screen_offer: true,
-                }));
-              }
-            });
-          }).catch(err => console.warn('[ScreenShare] renegotiate failed:', err));
+          if (!pc.getSenders().some(sender => sender.track === screenVideoTrack)) pc.addTrack(screenVideoTrack, screenOnlyStream);
+          _renegotiatePeer(uid, { is_screen_offer: true });
         } catch (e) {
           console.warn('[ScreenShare] addTrack failed for peer', uid, e);
         }
@@ -1215,20 +1237,19 @@ async function startStopScreenShare() {
       if (screenGrid) {
         screenGrid.innerHTML = '';
         const sc = document.createElement('div');
-        sc.id = 'vcScreenCard';
         sc.className = 'vc-screen-card';
         sc.dataset.screenUser = window.ECOLLAB?.userId || 0;
         sc.innerHTML = `
           <div class="vc-screen-card-inner">
-            <video id="vcScreenCardVid" autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;background:#000;"></video>
+            <video class="vc-screen-card-video" autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;background:#000;"></video>
           </div>
           <div class="vc-screen-card-live">LIVE</div>
           <div class="vc-screen-card-label">🖥️ Your screen</div>
           <div class="vc-screen-card-watch">
-            <button class="vc-screen-watch-btn" onclick="event.stopPropagation(); toggleScreenExpand()">Watch</button>
+            <button class="vc-screen-watch-btn" onclick="event.stopPropagation(); toggleScreenWatch(Number(this.closest('.vc-screen-card').dataset.screenUser))">Watch</button>
           </div>`;
         screenGrid.appendChild(sc);
-        const vid = document.getElementById('vcScreenCardVid');
+        const vid = sc.querySelector('.vc-screen-card-video');
         if (vid) vid.srcObject = _screenStream;
         const cnt = document.getElementById('vcScreenSectionCount');
         if (cnt) cnt.textContent = '1';
@@ -1268,16 +1289,7 @@ function stopScreenShare() {
         const sender = pc.getSenders().find(s => s.track === stoppedTrack);
         if (sender) {
           pc.removeTrack(sender);
-          pc.createOffer().then(offer => {
-            pc.setLocalDescription(offer);
-            if (window.chatSocket && window.chatSocket.readyState === WebSocket.OPEN) {
-              window.chatSocket.send(JSON.stringify({
-                type: 'webrtc_offer',
-                target_user_id: parseInt(uid),
-                sdp: offer,
-              }));
-            }
-          }).catch(() => { });
+          _renegotiatePeer(uid);
         }
       } catch (e) { }
     });
@@ -1375,11 +1387,20 @@ function _createPeerConnection(remoteUserId, remoteUsername) {
         _attachRemoteCamera(remoteUserId, camOnlyStream);
       }
       track.onended = () => {
-        if (isScreen) {
-          _hideRemoteScreenShareSection(remoteUserId);
-        } else {
-          _removeRemoteCamera(remoteUserId);
-        }
+        if (isScreen) _hideRemoteScreenShareSection(remoteUserId);
+        else _removeRemoteCamera(remoteUserId);
+      };
+      track.onmute = () => {
+        setTimeout(() => {
+          if (!track.muted) return;
+          if (isScreen) _hideRemoteScreenShareSection(remoteUserId);
+          else _removeRemoteCamera(remoteUserId);
+        }, 150);
+      };
+      track.onunmute = () => {
+        const liveStream = new MediaStream([track]);
+        if (isScreen) _showRemoteScreenShareSection(remoteUserId, remoteUsername, liveStream);
+        else _attachRemoteCamera(remoteUserId, liveStream);
       };
     }
   };
@@ -1416,11 +1437,13 @@ function _attachRemoteAudio(userId, username, stream) {
 
 // ── Attach remote camera feed into their speaker card ─────────────────────
 function _attachRemoteCamera(userId, stream) {
-  let card = document.querySelector(`.vc-speaker-card[data-user-id="${userId}"]`);
+  const uid = Number(userId);
+  _remoteCameraStreams[uid] = stream;
+  let card = document.querySelector(`.vc-speaker-card[data-user-id="${uid}"], .vc-listener-card[data-user-id="${uid}"]`);
   if (!card) {
     // Card may not be in DOM yet if ontrack fired before addVcParticipant — retry
     console.log('[SCREEN DEBUG] _attachRemoteCamera: card not found for', userId, '— retrying in 500ms');
-    setTimeout(() => _attachRemoteCamera(userId, stream), 500);
+    setTimeout(() => { if (_remoteCameraStreams[uid] === stream) _attachRemoteCamera(uid, stream); }, 500);
     return;
   }
   let vid = card.querySelector('.vc-cam-preview:not(.vc-screen-preview)');
@@ -1437,7 +1460,9 @@ function _attachRemoteCamera(userId, stream) {
 }
 
 function _removeRemoteCamera(userId) {
-  const card = document.querySelector(`.vc-speaker-card[data-user-id="${userId}"]`);
+  const uid = Number(userId);
+  delete _remoteCameraStreams[uid];
+  const card = document.querySelector(`.vc-speaker-card[data-user-id="${uid}"], .vc-listener-card[data-user-id="${uid}"]`);
   if (!card) return;
   const vid = card.querySelector('.vc-cam-preview:not(.vc-screen-preview)');
   if (vid) { vid.srcObject = null; vid.remove(); }
@@ -1473,44 +1498,44 @@ function _removeRemoteScreenShare(userId) {
 
 // ── Show the remote screen share in the SCREEN SHARE section (viewer side) ─
 function _showRemoteScreenShareSection(userId, username, stream) {
-  console.log('[SCREEN DEBUG] _showRemoteScreenShareSection called for user', userId);
+  const uid = Number(userId);
+  _remoteScreenStreams[uid] = stream;
   const screenSection = document.getElementById('vcScreenSection');
   if (screenSection) screenSection.style.display = '';
-
   const screenGrid = document.getElementById('vcScreenGrid');
   if (!screenGrid) return;
 
-  // Remove existing card for this user if any
-  const existing = screenGrid.querySelector(`[data-screen-user="${userId}"]`);
-  if (existing) existing.remove();
-
-  const sc = document.createElement('div');
-  sc.id = 'vcScreenCard';   // same id toggleScreenExpand() looks for
-  sc.className = 'vc-screen-card';
-  sc.dataset.screenUser = userId;
-  sc.innerHTML = `
-    <div class="vc-screen-card-inner">
-      <video id="vcScreenCardVid" autoplay playsinline style="width:100%;height:100%;object-fit:cover;background:#000;"></video>
-    </div>
-    <div class="vc-screen-card-live">LIVE</div>
-    <div class="vc-screen-card-label">🖥️ ${username}'s screen</div>
-    <div class="vc-screen-card-watch">
-      <button class="vc-screen-watch-btn" onclick="event.stopPropagation(); toggleScreenExpand()">Watch</button>
-    </div>`;
-  screenGrid.appendChild(sc);
-
-  const vid = sc.querySelector('video');
-  if (vid) vid.srcObject = stream;
-
+  let sc = screenGrid.querySelector(`[data-screen-user="${uid}"]`);
+  if (!sc) {
+    sc = document.createElement('div');
+    sc.className = 'vc-screen-card';
+    sc.dataset.screenUser = uid;
+    sc.innerHTML = `
+      <div class="vc-screen-card-inner">
+        <video class="vc-screen-card-video" autoplay playsinline style="width:100%;height:100%;object-fit:cover;background:#000;"></video>
+      </div>
+      <div class="vc-screen-card-live">LIVE</div>
+      <div class="vc-screen-card-label">🖥️ ${username}'s screen</div>
+      <div class="vc-screen-card-watch"><button class="vc-screen-watch-btn" type="button">Watch</button></div>`;
+    sc.querySelector('.vc-screen-watch-btn')?.addEventListener('click', event => {
+      event.stopPropagation(); toggleScreenWatch(uid);
+    });
+    screenGrid.appendChild(sc);
+  }
+  const vid = sc.querySelector('.vc-screen-card-video');
+  if (vid && vid.srcObject !== stream) vid.srcObject = stream;
+  _applyScreenWatchState(uid);
   const cnt = document.getElementById('vcScreenSectionCount');
   if (cnt) cnt.textContent = String(screenGrid.querySelectorAll('.vc-screen-card').length);
 }
 
 function _hideRemoteScreenShareSection(userId) {
-  console.log('[SCREEN DEBUG] _hideRemoteScreenShareSection called for user', userId);
+  const uid = Number(userId);
+  delete _remoteScreenStreams[uid];
+  _watchedScreenUsers.delete(uid);
   const screenGrid = document.getElementById('vcScreenGrid');
   if (screenGrid) {
-    const card = screenGrid.querySelector(`[data-screen-user="${userId}"]`);
+    const card = screenGrid.querySelector(`[data-screen-user="${uid}"]`);
     if (card) card.remove();
     const cnt = document.getElementById('vcScreenSectionCount');
     if (cnt) cnt.textContent = String(screenGrid.querySelectorAll('.vc-screen-card').length);
@@ -1683,6 +1708,10 @@ function handleVoiceLeave(data) {
   if (pc) { try { pc.close(); } catch {} }
   delete peerConnections[userId];
   delete remoteStreams[userId];
+  delete _remoteCameraStreams[userId];
+  delete _remoteScreenStreams[userId];
+  _watchedScreenUsers.delete(userId);
+  delete _renegotiationQueues[userId];
   delete iceCandidateQueues[userId];
 
   document.querySelectorAll(
@@ -1753,13 +1782,29 @@ window.toggleVcMinimize = toggleVcMinimize;
 window.toggleVcPanelFromBar = toggleVcPanelFromBar;
 window.toggleVcMic = toggleVcMic;
 window.toggleVcDeafen = toggleVcDeafen;
-function toggleScreenExpand() {
-  const card = document.getElementById('vcScreenCard');
+function _applyScreenWatchState(userId) {
+  const uid = Number(userId);
+  const card = document.getElementById('vcScreenGrid')?.querySelector(`[data-screen-user="${uid}"]`);
   if (!card) return;
-  const isExpanded = card.classList.toggle('vc-screen-expanded');
-  const vid = document.getElementById('vcScreenCardVid');
-  if (vid) vid.style.objectFit = isExpanded ? 'contain' : 'cover';
+  const watched = _watchedScreenUsers.has(uid);
+  card.classList.toggle('vc-screen-expanded', watched);
+  const vid = card.querySelector('.vc-screen-card-video');
+  if (vid) vid.style.objectFit = watched ? 'contain' : 'cover';
+  const btn = card.querySelector('.vc-screen-watch-btn');
+  if (btn) btn.textContent = watched ? 'Unwatch' : 'Watch';
 }
+function toggleScreenWatch(userId) {
+  const uid = Number(userId);
+  if (!uid) return;
+  if (_watchedScreenUsers.has(uid)) _watchedScreenUsers.delete(uid);
+  else _watchedScreenUsers.add(uid);
+  _applyScreenWatchState(uid);
+}
+function toggleScreenExpand(userId) {
+  const uid = Number(userId || document.querySelector('#vcScreenGrid .vc-screen-card')?.dataset.screenUser || 0);
+  if (uid) toggleScreenWatch(uid);
+}
+window.toggleScreenWatch = toggleScreenWatch;
 window.toggleScreenExpand = toggleScreenExpand;
 window.toggleCamera = toggleCamera;
 window.toggleScreenShare = toggleScreenShare;
