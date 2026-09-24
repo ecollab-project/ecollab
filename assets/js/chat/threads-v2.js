@@ -19,6 +19,7 @@
   let activeThreadId = 0;
   let originalSwitchView = null;
   let initialized = false;
+  let authenticatedThreadUserId = Number(window.ECOLLAB?.userId || 0);
 
   function scopeLabel(scope) {
     return scope === 'public' ? '🌐 Public' : '⭐ Server';
@@ -108,7 +109,7 @@
     const g=gradient(t.author_gradient), init=authorName(t).charAt(0).toUpperCase();
     const images=(Array.isArray(t.attachments)?t.attachments:[]).filter(a=>!a.reply_id && (a.file_url || a.url || a.path));
     const media=images.length?`<div class="tv2-card-media">${images.slice(0,3).map(a=>{let src=a.file_url||a.url||a.path||'';if(src.startsWith('/'))src=base()+src;return `<img src="${esc(src)}" alt="${esc(a.file_name||'Discussion image')}" loading="lazy">`;}).join('')}</div>`:'';
-    const mine=Number(t.is_owner)===1 || Number(t.created_by)===Number(window.ECOLLAB?.userId);
+    const mine=Number(t.is_owner)===1 || (authenticatedThreadUserId>0 && Number(t.created_by)===authenticatedThreadUserId);
     const menu=mine
       ? `<button class="tv2-menu-item" onclick="threadBookmarkV2(${t.id})">🔖 ${Number(t.is_bookmarked)?'Remove bookmark':'Bookmark post'}</button><button class="tv2-menu-item" onclick="threadEditV2(${t.id})">✏️ Edit post</button><button class="tv2-menu-item danger" onclick="threadDeleteV2(${t.id})">🗑️ Delete post</button>`
       : `<button class="tv2-menu-item" onclick="threadBookmarkV2(${t.id})">🔖 ${Number(t.is_bookmarked)?'Remove bookmark':'Bookmark post'}</button><button class="tv2-menu-item" onclick="threadReportV2(${t.id})">🚩 Report post</button>`;
@@ -137,7 +138,7 @@
     activeScope=scope;const body=document.getElementById('tv2Feed');if(!body)return;
     if(!feedLoaded||!body.querySelector('[data-thread-id]'))body.innerHTML='<div class="tv2-empty">Loading discussions…</div>';
     const sid=Number(window.ECOLLAB?.currentServerId||0);
-    try{const d=await request(api+'?scope='+encodeURIComponent(scope)+'&server_id='+sid+'&limit=50');reconcileFeed(d.threads||[]);}
+    try{const d=await request(api+'?scope='+encodeURIComponent(scope)+'&server_id='+sid+'&limit=50');authenticatedThreadUserId=Number(d.current_user_id||window.ECOLLAB?.userId||0);reconcileFeed(d.threads||[]);}
     catch(e){if(!feedLoaded)body.innerHTML='<div class="tv2-empty"><strong>Could not load discussions</strong>'+esc(e.message)+'</div>';}
   }
   window.loadThreadsV2=loadFeed;
