@@ -93,7 +93,7 @@ try {
     $readStmt->closeCursor();
 
     $msgs = $db->prepare(
-        'SELECT dm.id, dm.sender_id, dm.body, dm.created_at,
+        'SELECT dm.id, dm.sender_id, dm.body, dm.attachment_path, dm.attachment_name, dm.attachment_size, dm.attachment_mime, dm.created_at,
                 u.username AS sender_username,
                 u.full_name AS sender_name,
                 u.avatar_url AS sender_avatar_url,
