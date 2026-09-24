@@ -119,7 +119,7 @@ function threadBaseSelect(): string {
     return "
         SELECT
             t.id, t.title, t.body, t.scope, t.server_id, t.channel_id,
-            t.created_by, (t.created_by = :owner_user) AS is_owner, t.is_locked, t.is_pinned, t.is_bookmarked, t.created_at, t.updated_at,
+            t.created_by, t.is_locked, t.is_pinned, t.is_bookmarked, t.created_at, t.updated_at,
             u.username AS author_username, u.full_name AS author_name,
             u.avatar_url AS author_avatar_url,
             COALESCE(u.avatar_color_gradient, '#a855f7,#ec4899') AS author_gradient,
@@ -147,8 +147,9 @@ try {
 
             $sql = threadBaseSelect() . ' WHERE t.id = :id AND t.is_deleted = 0 LIMIT 1';
             $s = $db->prepare($sql);
-            $s->execute([':id' => $id, ':vote_user' => $me['id'], ':owner_user' => $me['id']]);
+            $s->execute([':id' => $id, ':vote_user' => $me['id']]);
             $thread = $s->fetch(PDO::FETCH_ASSOC);
+            if ($thread) $thread['is_owner'] = ((int)$thread['created_by'] === (int)$me['id']) ? 1 : 0;
             if (!$thread || !canSeeThread($db, $thread, (int)$me['id'])) threadJson(['error' => 'Thread not found'], 404);
 
             $r = $db->prepare("SELECT r.id, r.thread_id, r.parent_reply_id, r.created_by, r.body, r.created_at, u.username AS author_username, u.full_name AS author_name, u.avatar_url AS author_avatar_url, COALESCE(u.avatar_color_gradient,'#a855f7,#ec4899') AS author_gradient, COALESCE((SELECT SUM(v.vote) FROM thread_reply_votes v WHERE v.reply_id=r.id),0) AS score, COALESCE((SELECT vote FROM thread_reply_votes mv WHERE mv.reply_id=r.id AND mv.user_id=? LIMIT 1),0) AS my_vote FROM thread_replies r JOIN users u ON u.id=r.created_by WHERE r.thread_id=? AND r.is_deleted=0 ORDER BY r.created_at ASC");
@@ -163,7 +164,7 @@ try {
         $limit = max(1, min(50, (int)($_GET['limit'] ?? 30)));
 
         $conditions = ['t.is_deleted = 0'];
-        $params = [':vote_user' => $me['id'], ':owner_user' => $me['id']];
+        $params = [':vote_user' => $me['id']];
 
         if ($scope === 'public') {
             $conditions[] = "t.scope = 'public'";
@@ -198,7 +199,10 @@ try {
         $s = $db->prepare($sql);
         $s->execute($params);
         $threads=$s->fetchAll(PDO::FETCH_ASSOC);
-        foreach($threads as &$thread){$thread['attachments']=attachmentRows($db,(int)$thread['id']);}unset($thread);
+        foreach($threads as &$thread){
+            $thread['is_owner'] = ((int)$thread['created_by'] === (int)$me['id']) ? 1 : 0;
+            $thread['attachments']=attachmentRows($db,(int)$thread['id']);
+        }unset($thread);
         threadJson(['threads'=>$threads, 'scope'=>$scope, 'server_id'=>$serverId, 'channel_id'=>$channelId, 'current_user_id'=>(int)$me['id']]);
     }
 
