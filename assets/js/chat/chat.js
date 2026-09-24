@@ -1254,9 +1254,9 @@ function renderMembersPanel(members) {
       const memberAvatar = m.avatar_url ? `url("${escHtml(m.avatar_url)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
       const memberInitial = m.avatar_url ? '' : init;
       return `
-        <div class="active-user" onclick="openMiniProfile(event, '${escHtml(m.full_name || m.username)}', '${escHtml(m.role)}', '', '${init}')">
+        <div class="active-user" onclick="openMiniProfile(event, '${escHtml(m.full_name || m.username)}', '${escHtml(m.role)}', '', '${init}', ${m.id || m.user_id || 0})">
           <div class="user-avatar">
-            <div class="avatar-placeholder" style="width:34px;height:34px;font-size:13px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;">${init}</div>
+            <div class="avatar-placeholder" style="width:34px;height:34px;font-size:13px;border-radius:50%;background:${memberAvatar};background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;">${memberInitial}</div>
             <div class="online-dot"></div>
           </div>
           <div class="active-user-info">
