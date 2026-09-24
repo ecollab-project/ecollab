@@ -1,0 +1,43 @@
+/* eCollab global responsive safety layer — phones, tablets, laptops, desktop, touch */
+html{width:100%;max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{width:100%;max-width:100%;overflow-x:hidden}
+img,video,svg,canvas,iframe{max-width:100%}
+img,video{height:auto}
+input,select,textarea,button{max-width:100%;font:inherit}
+textarea{resize:vertical}
+table{max-width:100%}
+.responsive-table,.table-wrap,[class*="table-wrap"]{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+pre,code{max-width:100%;overflow-wrap:anywhere}
+@media (hover:none) and (pointer:coarse){
+  button,a,[role="button"],input,select{min-height:40px}
+  button,a,[role="button"]{-webkit-tap-highlight-color:transparent}
+}
+@media (max-width:1024px){
+  .page-content,.monitor-page-content{min-width:0}
+  .stats-grid,.stat-grid,.cards-grid,.dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .modal,.modal-card,[class*="modal-card"]{max-width:calc(100vw - 32px)}
+}
+@media (max-width:768px){
+  body{font-size:14px}
+  .main,.main-content,.monitor-main{min-width:0!important;width:100%!important;margin-left:0!important}
+  .page-content,.monitor-page-content{padding-left:14px!important;padding-right:14px!important}
+  .header,.topbar,.monitor-appbar{min-width:0}
+  .search-wrap,.tb-search{min-width:0;max-width:100%}
+  .search-wrap input,.tb-search input{min-width:0;width:100%}
+  .stats-grid,.stat-grid,.cards-grid,.dashboard-grid{grid-template-columns:1fr!important}
+  .modal-overlay,.modal-backdrop,[class*="modal-overlay"]{padding:12px!important}
+  .modal,.modal-card,[class*="modal-card"]{width:min(100%,560px)!important;max-width:calc(100vw - 24px)!important;max-height:calc(100dvh - 24px)!important;overflow-y:auto}
+  .dropdown,.n-drop,.ndrop,.p-drop{max-width:calc(100vw - 20px)}
+}
+@media (max-width:480px){
+  body{font-size:13px}
+  .page-content,.monitor-page-content{padding-left:10px!important;padding-right:10px!important}
+  h1{font-size:clamp(22px,7vw,30px)}
+  h2{font-size:clamp(18px,5.5vw,24px)}
+  .card,.box,[class*="card"]{min-width:0}
+  .modal,.modal-card,[class*="modal-card"]{max-width:calc(100vw - 16px)!important}
+  input,select,textarea{font-size:16px} /* prevents iOS input zoom */
+}
+@media (max-height:600px) and (orientation:landscape){
+  .modal,.modal-card,[class*="modal-card"]{max-height:calc(100dvh - 16px)!important;overflow-y:auto}
+}
