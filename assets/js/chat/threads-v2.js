@@ -15,13 +15,13 @@
     return data;
   }
 
-  let activeScope = 'all';
+  let activeScope = 'public';
   let activeThreadId = 0;
   let originalSwitchView = null;
   let initialized = false;
 
   function scopeLabel(scope) {
-    return scope === 'public' ? '🌐 Public' : scope === 'server' ? '⭐ Server' : '🔒 Channel';
+    return scope === 'public' ? '🌐 Public' : '⭐ Server';
   }
   function scopeClass(scope) { return `thread-scope-${scope}`; }
   function relTime(s) {
@@ -59,7 +59,7 @@
       <div class="tv2-modal" id="threadsV2CreateModal" onclick="if(event.target===this)window.closeThreadCreateModal()">
         <div class="tv2-box"><div class="tv2-modal-head"><div class="tv2-modal-title">Start a Discussion</div><button class="tv2-close" onclick="closeThreadCreateModal()">×</button></div>
           <div class="tv2-modal-body"><input id="tv2CreateTitle" class="tv2-field" maxlength="180" placeholder="Discussion title / topic…"><textarea id="tv2CreateBody" class="tv2-field" placeholder="Explain the topic and ask for opinions…"></textarea>
-            <div class="tv2-scope-grid"><div class="tv2-scope-opt active" data-create-scope="public" onclick="selectThreadCreateScope('public')"><b>🌐 Public</b><span>Visible system-wide</span></div><div class="tv2-scope-opt" data-create-scope="server" onclick="selectThreadCreateScope('server')"><b>⭐ Server</b><span>Everyone in this server</span></div><div class="tv2-scope-opt" data-create-scope="channel" onclick="selectThreadCreateScope('channel')"><b>🔒 Channel</b><span>Everyone with channel access</span></div></div>
+            <div class="tv2-scope-grid"><div class="tv2-scope-opt active" data-create-scope="public" onclick="selectThreadCreateScope('public')"><b>🌐 Public</b><span>Visible system-wide</span></div><div class="tv2-scope-opt" data-create-scope="server" onclick="selectThreadCreateScope('server')"><b>⭐ Server</b><span>Everyone in this server</span></div></div>
             <div id="tv2CreateContext" style="font-size:11px;color:var(--text-muted);padding:8px 10px;background:rgba(168,85,247,.05);border:1px solid rgba(168,85,247,.12);border-radius:8px"></div>
           </div><div class="tv2-footer"><button class="tv2-btn" onclick="closeThreadCreateModal()">Cancel</button><button class="tv2-btn primary" onclick="createThreadV2()">Post Discussion</button></div></div>
       </div>
@@ -69,9 +69,8 @@
   function contextText(){
     const sid=Number(window.ECOLLAB?.currentServerId||0), cid=Number(window.ECOLLAB?.currentChannelId||0);
     const server=document.querySelector('.workspace-icon.active')?.title || document.getElementById('wsName')?.textContent || 'current server';
-    const channel=document.querySelector(`.channel-item[data-channel-id="${cid}"]`)?.dataset.channelName || document.getElementById('channelTitle')?.textContent || 'current channel';
     const el=document.getElementById('tv2CreateContext');
-    if(el) el.textContent=`Current context: ${server}${cid?' / #'+channel:''}`;
+    if(el) el.textContent=`Current server: ${server}`;
   }
 
   window.selectThreadCreateScope=function(scope){
@@ -83,9 +82,9 @@
 
   window.createThreadV2=async function(){
     const title=document.getElementById('tv2CreateTitle')?.value.trim(), body=document.getElementById('tv2CreateBody')?.value.trim();
-    const scope=window._threadCreateScope||'public', serverId=Number(window.ECOLLAB?.currentServerId||0), channelId=Number(window.ECOLLAB?.currentChannelId||0);
+    const scope=window._threadCreateScope||'public', serverId=Number(window.ECOLLAB?.currentServerId||0);
     if(!title||!body){toast('Add a title and discussion body.','info');return;}
-    try{await request(api,{method:'POST',body:JSON.stringify({action:'create',title,body,scope,server_id:serverId,channel_id:channelId})});closeThreadCreateModal();toast('Discussion posted.','success');if(window._currentNavView==='threads')loadFeed('all');}
+    try{await request(api,{method:'POST',body:JSON.stringify({action:'create',title,body,scope,server_id:serverId})});closeThreadCreateModal();toast('Discussion posted.','success');if(window._currentNavView==='threads')loadFeed(scope);}
     catch(e){toast(e.message,'error');}
   };
 
@@ -114,11 +113,11 @@
     body.querySelector('.tv2-empty')?.remove();feedSignatures.forEach((_,id)=>{if(!nextIds.has(id))feedSignatures.delete(id);});feedLoaded=true;
     if(!wasNearTop)body.scrollTop=Math.max(0,body.scrollTop+(body.scrollHeight-oldScrollHeight));else body.scrollTop=oldScrollTop;
   }
-  async function loadFeed(scope='all'){
+  async function loadFeed(scope='public'){
     activeScope=scope;const body=document.getElementById('tv2Feed');if(!body)return;
     if(!feedLoaded||!body.querySelector('[data-thread-id]'))body.innerHTML='<div class="tv2-empty">Loading discussions…</div>';
-    const sid=Number(window.ECOLLAB?.currentServerId||0),cid=Number(window.ECOLLAB?.currentChannelId||0);
-    try{const d=await request(api+'?scope='+encodeURIComponent(scope)+'&server_id='+sid+'&channel_id='+cid+'&limit=50');reconcileFeed(d.threads||[]);}
+    const sid=Number(window.ECOLLAB?.currentServerId||0);
+    try{const d=await request(api+'?scope='+encodeURIComponent(scope)+'&server_id='+sid+'&limit=50');reconcileFeed(d.threads||[]);}
     catch(e){if(!feedLoaded)body.innerHTML='<div class="tv2-empty"><strong>Could not load discussions</strong>'+esc(e.message)+'</div>';}
   }
   window.loadThreadsV2=loadFeed;
@@ -128,8 +127,8 @@
   function renderView(){
     ensureStyles();ensureModal();
     const overlay=document.getElementById('navViewOverlay'); if(!overlay)return;
-    overlay.innerHTML=`<div id="threadsV2View"><div class="tv2-head"><div style="font-size:22px">💬</div><div><div class="tv2-title">Discussions</div><div class="tv2-sub">Reddit-style topics for Ecollab — public, server-wide, or channel-wide.</div></div><button class="tv2-btn primary" style="margin-left:auto" onclick="openThreadCreateModal()">+ Start Discussion</button></div><div class="tv2-tabs"><button class="tv2-tab active" data-scope="all" onclick="setThreadScope('all',this)">All visible</button><button class="tv2-tab" data-scope="public" onclick="setThreadScope('public',this)">🌐 Public</button><button class="tv2-tab" data-scope="server" onclick="setThreadScope('server',this)">⭐ This Server</button><button class="tv2-tab" data-scope="channel" onclick="setThreadScope('channel',this)">🔒 This Channel</button></div><div class="tv2-body"><div id="tv2Feed" class="tv2-feed"></div></div></div>`;
-    const savedScope=localStorage.getItem('ecollab.threads.scope')||activeScope||'all';activeScope=savedScope;document.querySelectorAll('.tv2-tab').forEach(x=>x.classList.toggle('active',x.dataset.scope===savedScope));feedLoaded=false;feedSignatures.clear();loadFeed(savedScope);
+    overlay.innerHTML=`<div id="threadsV2View"><div class="tv2-head"><div style="font-size:22px">💬</div><div><div class="tv2-title">Discussions</div><div class="tv2-sub">Reddit-style topics for Ecollab — public, server-wide, or channel-wide.</div></div><button class="tv2-btn primary" style="margin-left:auto" onclick="openThreadCreateModal()">+ Start Discussion</button></div><div class="tv2-tabs"><button class="tv2-tab active" data-scope="public" onclick="setThreadScope('public',this)">🌐 Public</button><button class="tv2-tab" data-scope="server" onclick="setThreadScope('server',this)">⭐ This Server</button></div><div class="tv2-body"><div id="tv2Feed" class="tv2-feed"></div></div></div>`;
+    let savedScope=localStorage.getItem('ecollab.threads.scope')||activeScope||'public';if(!['public','server'].includes(savedScope))savedScope='public';activeScope=savedScope;document.querySelectorAll('.tv2-tab').forEach(x=>x.classList.toggle('active',x.dataset.scope===savedScope));feedLoaded=false;feedSignatures.clear();loadFeed(savedScope);
   }
   window.setThreadScope=function(scope,el){activeScope=scope;document.querySelectorAll('.tv2-tab').forEach(x=>x.classList.remove('active'));el?.classList.add('active');feedLoaded=false;feedSignatures.clear();localStorage.setItem('ecollab.threads.scope',scope);window.loadThreadsV2?.(scope);};
 
