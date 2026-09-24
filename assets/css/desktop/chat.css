@@ -6377,3 +6377,12 @@ body.vc-active:not(.vc-pip) .sidebar-icons {
 .chat-visibility-badge.visibility-public{color:#67e8f9;background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.24)}
 .chat-visibility-badge.visibility-private{color:#c4b5fd;background:rgba(124,58,237,.14);border:1px solid rgba(124,58,237,.28)}
 .sidebar-workspace-header .chat-visibility-badge{margin-left:auto}
+
+/* Visibility belongs to navigation items, not names/headers. */
+.workspace-icon{position:relative}
+.workspace-visibility-indicator{position:absolute;right:-3px;bottom:-3px;width:17px;height:17px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:9px;line-height:1;background:#0b1120;border:2px solid var(--bg-primary);z-index:3;box-shadow:0 1px 5px rgba(0,0,0,.45)}
+.workspace-visibility-indicator.is-public{color:#67e8f9}
+.workspace-visibility-indicator.is-private{color:#c4b5fd}
+.channel-visibility-indicator{margin-left:5px;flex:0 0 auto;font-size:10px;line-height:1;opacity:.9}
+.channel-visibility-indicator.is-public{color:#67e8f9}
+.channel-visibility-indicator.is-private{color:#c4b5fd}
