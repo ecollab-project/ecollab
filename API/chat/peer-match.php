@@ -263,7 +263,7 @@ try {
                     'components'=>['subjects'=>$score['subjects'],'style'=>$score['style'],'interests'=>$score['interests'],'hobbies'=>$score['hobbies']],
                     'already_connected'=>$friendship === 'accepted',
                     'request_status'=>$requestStatus,
-                    'avatar_url'=>(string)($candidate['avatar_url'] ?? ''),
+                    'avatar_url'=>canonicalAvatarUrl((string)($candidate['avatar_url'] ?? '')),
                     'grad'=>(string)($candidate['avatar_color_gradient'] ?? '#a855f7,#ec4899'),
                 ];
             }
