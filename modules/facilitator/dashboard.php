@@ -264,7 +264,7 @@ $facOwnedServers = array_values(array_filter(
               <?php foreach (array_slice($facDashboardServers, 0, 5) as $srv): ?>
                 <div class="ract-row">
                   <div class="ract-av" style="background:rgba(124,92,255,.15);font-size:16px"><?= htmlspecialchars($srv['icon_emoji'] ?? '🖥') ?></div>
-                  <div class="ract-msg" style="flex:1"><strong><?= htmlspecialchars($srv['name'] ?? '') ?></strong><span style="color:var(--muted2)"> · <?= (int)($srv['member_count'] ?? 0) ?> members</span></div>
+                  <div class="ract-msg" style="flex:1"><strong><?= htmlspecialchars($srv['name'] ?? '') ?></strong> <span class="visibility-badge <?= (($srv['type'] ?? '') === 'private' || ($srv['type'] ?? '') === 'academic') ? 'visibility-private' : 'visibility-public' ?>"><?= (($srv['type'] ?? '') === 'private' || ($srv['type'] ?? '') === 'academic') ? '🔒 Private' : '🌐 Public' ?></span><span style="color:var(--muted2)"> · <?= (int)($srv['member_count'] ?? 0) ?> members</span></div>
                   <a class="btn-sm btn-outline" style="text-decoration:none" href="<?= BASE_URL ?>/modules/admin/server-monitor.php?server_id=<?= (int)($srv['id'] ?? 0) ?>&scope=facilitator">Manage</a>
                 </div>
               <?php endforeach; ?>
