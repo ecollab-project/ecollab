@@ -71,6 +71,7 @@ async function createAnnouncement(){
     const data=await res.json();if(!res.ok)throw new Error(data.error||'Unable to publish');
     closeModal('createAnnModal');document.getElementById('annTitle').value='';document.getElementById('annBody').value='';
     toast('Published to the server announcement channel and members notified','success','📢');
+    const annPicker=document.querySelector('#page-announcements .fac-server-picker');if(annPicker){annPicker.value=String(serverId);loadFacAnnouncements(serverId);}
   }catch(e){toast(e.message||'Unable to publish announcement','error','❌');}
 }
 function deleteAnn(btn){if(!confirm('Delete this announcement?'))return;btn.closest('.ann-item').remove();toast('Announcement deleted','success','🗑');}
@@ -255,6 +256,22 @@ async function facModerate(sid,uid,kind,reportId=0,duration=null){
   const label=kind==='suspend'?'Suspend for 24 hours':kind==='mute'?'Mute chat for 24 hours':kind==='ban'?'Ban from server':kind;
   try{const r=await fetch((window.ECOLLAB_BASE||'')+'/API/facilitator/server-tools.php?action=moderate',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':document.querySelector('meta[name="csrf-token"]')?.content||''},body:JSON.stringify({server_id:sid,target_user_id:uid,kind,report_id:reportId,duration_mins:duration,reason:'Facilitator action from report'})});const d=await r.json();if(!r.ok)throw new Error(d.error||'Action failed');toast(label+' applied','success','✅');loadFacReports(sid);loadFacBanned(sid);}catch(e){toast(e.message,'error','❌');}
 }
+function facFormatAnnouncement(content){
+  const text=String(content||'').replace(/^📢\s*/,'');
+  const parts=text.split(/\n\n/);
+  return {title:(parts.shift()||'Announcement').trim(),body:parts.join('\n\n').trim()};
+}
+async function loadFacAnnouncements(sid){
+  const card=document.getElementById('annList');if(!card||!sid)return;
+  card.innerHTML='<div class="dashboard-empty-state">Loading announcements...</div>';
+  try{
+    const d=await facGet('announcements',sid),items=d.announcements||[];
+    if(!items.length){card.innerHTML='<div class="dashboard-empty-state">No announcements have been published in this server yet.</div>';return;}
+    card.innerHTML='<div class="ch-bar"><div class="ch-title">Published Announcements</div></div>'+items.map(a=>{const x=facFormatAnnouncement(a.content);const when=a.created_at?new Date(String(a.created_at).replace(' ','T')).toLocaleString():'';
+      return '<div class="ann-item"><div class="ann-icon">📢</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:800">'+escFac(x.title)+'</div><div style="font-size:11.5px;color:var(--muted2);white-space:pre-wrap;margin-top:4px">'+escFac(x.body)+'</div><div class="ri-meta">'+escFac(a.author_name||'Facilitator')+(when?' · '+escFac(when):'')+' · #'+escFac(a.channel_name||'announcements')+'</div></div><a class="btn-sm btn-outline" style="text-decoration:none" href="'+(window.ECOLLAB_BASE||'')+'/modules/chat/chat.php?server_id='+Number(sid)+'&channel_id='+Number(a.channel_id)+'">View in Chat</a></div>';
+    }).join('');
+  }catch(e){card.innerHTML='<div class="dashboard-empty-state">Unable to load announcements.</div>';toast(e.message,'error','❌');}
+}
 async function loadFacReports(sid){
   const page=document.getElementById('page-reports'),card=document.getElementById('facReportsList')||page?.querySelector('.card');if(!card||!sid)return;
   try{const d=await facGet('reports',sid);const rows=(d.reports||[]).map(r=>{const pending=r.status==='pending'||r.status==='reviewing';return '<div class="fac-report-row"><div class="fac-report-main"><div><span class="fac-report-label">User:</span> <strong>'+escFac(r.reported_name||r.reported_username||'Unknown user')+'</strong></div><div><span class="fac-report-label">Report reason:</span> '+escFac(FAC_REPORT_REASON[r.reason]||r.reason||'Other')+'</div><div class="fac-report-message"><span class="fac-report-label">The message:</span> '+escFac(r.message_content||'[Message unavailable or deleted]')+'</div>'+(r.description?'<div class="fac-report-details"><span class="fac-report-label">Details:</span> '+escFac(r.description)+'</div>':'')+'<div class="ri-meta">Reported by '+escFac(r.reporter_name||r.reporter_username||'Unknown')+(r.channel_name?' · #'+escFac(r.channel_name):'')+'</div></div><div class="fac-report-side"><span class="status-pill '+(pending?'sp-p':'sp-a')+'">'+escFac(r.status||'pending')+'</span>'+(pending&&r.reported_user_id?'<button class="btn-primary fac-resolve-btn" data-sid="'+Number(sid)+'" data-report-id="'+Number(r.id)+'" data-user-id="'+Number(r.reported_user_id)+'" data-user-name="'+encodeURIComponent(r.reported_name||r.reported_username||'Reported user')+'">Resolve</button>':'')+'</div></div>';}).join('');card.innerHTML='<div class="ch-bar"><div class="ch-title">Server Reports</div></div>'+ (rows||'<div class="dashboard-empty-state">No reports for this server.</div>');
@@ -273,5 +290,5 @@ async function saveFacPermissions(){
   const on=id=>!!document.getElementById(id)?.classList.contains('on');
   try{const r=await fetch((window.ECOLLAB_BASE||'')+'/API/facilitator/server-tools.php?action=permissions',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':document.querySelector('meta[name="csrf-token"]')?.content||''},body:JSON.stringify({server_id:sid,apply_scope:all?'all':'server',allow_member_invites:on('permInvites'),allow_member_messages:on('permMessages'),allow_voice:on('permVoice'),allow_polls:on('permPolls'),allow_files:on('permFiles')})});const d=await r.json();if(!r.ok)throw new Error(d.error||'Unable to save permissions');toast('Permissions saved','success','✅');}catch(e){toast(e.message,'error','❌');}
 }
-async function initFacilitatorServerPages(){try{const s=await facOwnedServers();facServerPicker('page-resources',s,loadFacResources);facServerPicker('page-files',s,loadFacWorkspace);facServerPicker('page-useractivity',s,loadFacActivity);facServerPicker('page-reports',s,loadFacReports);facServerPicker('page-banned',s,loadFacBanned);facServerPicker('page-polls',s,()=>toast('Polls and quizzes will use channels from the selected server','info','📊'));}catch(e){console.error('Facilitator server pages:',e);}}
+async function initFacilitatorServerPages(){try{const s=await facOwnedServers();facServerPicker('page-announcements',s,loadFacAnnouncements);facServerPicker('page-resources',s,loadFacResources);facServerPicker('page-files',s,loadFacWorkspace);facServerPicker('page-useractivity',s,loadFacActivity);facServerPicker('page-reports',s,loadFacReports);facServerPicker('page-banned',s,loadFacBanned);facServerPicker('page-polls',s,()=>toast('Polls and quizzes will use channels from the selected server','info','📊'));}catch(e){console.error('Facilitator server pages:',e);}}
 window.addEventListener('DOMContentLoaded',initFacilitatorServerPages);
