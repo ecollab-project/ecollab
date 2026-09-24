@@ -19,6 +19,7 @@ class WhiteboardHandler
     ];
 
     private const COMMENT_ALLOWED_OPS = ['sticky_add','sticky_move','sticky_text'];
+    private const MAX_EXCALIDRAW_SCENE_BYTES = 5242880;
 
     public function __construct(){ $this->db=Database::getInstance(); }
 
@@ -97,6 +98,16 @@ class WhiteboardHandler
 
     public function recordOp(int $channelId,int $userId,array $op,?int $whiteboardId=null):array
     {
+        if (($op['op'] ?? '') === 'excalidraw_scene') {
+            $scene = $op['scene'] ?? null;
+            if (!is_array($scene) || !is_array($scene['elements'] ?? null)) {
+                throw new \InvalidArgumentException('Invalid Excalidraw scene.');
+            }
+            $encoded = json_encode($scene, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+            if ($encoded === false || strlen($encoded) > self::MAX_EXCALIDRAW_SCENE_BYTES) {
+                throw new \LengthException('Excalidraw scene is too large.');
+            }
+        }
         $key=$this->roomKey($channelId,$whiteboardId);$meta=$this->rooms[$key][$userId]??[];
         $stamped=array_merge($op,['user_id'=>$userId,'username'=>$meta['username']??'','color'=>$meta['color']??'#a855f7','grad'=>$meta['grad']??'','initial'=>$meta['initial']??'?','ts'=>round(microtime(true)*1000)]);
         if(($op['op']??'')==='cursor')return $stamped;
