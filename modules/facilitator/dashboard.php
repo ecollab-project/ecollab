@@ -618,57 +618,12 @@ try {
         </div>
       </div>
       <div class="page-section" id="page-announcements">
-        <div class="page-title-row">
-          <div>
-            <div class="page-title">Announcements</div>
-          </div><button class="btn-primary" onclick="openModal('createAnnModal')">📢 Create Announcement</button>
-        </div>
-        <div class="card" id="annList"><?php foreach ($dashData['announcements'] ?? [] as $ann): ?><div class="ann-item">
-              <div class="ann-title">📌 <?= htmlspecialchars($ann['title'] ?? '') ?></div>
-              <div class="ann-body"><?= htmlspecialchars($ann['content'] ?? '') ?></div>
-              <div class="ann-meta"><?= $name ?> · <?= htmlspecialchars($ann['time_ago'] ?? '') ?></div>
-              <div class="ri-actions"><button class="btn-sm btn-outline" onclick="openModal('editAnnModal','<?= htmlspecialchars($ann['title'] ?? '') ?>')">Edit</button><button class="btn-sm" style="background:rgba(220,38,38,.1);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="deleteAnn(this)">Delete</button></div>
-            </div><?php endforeach; ?><?php if (empty($dashData['announcements'])): ?><div class="ann-item">
-              <div class="ann-title">📌 Quiz 2 Reminder</div>
-              <div class="ann-body">Don't forget! Quiz 2 will be on Friday. Review chapters 4 and 5.</div>
-              <div class="ann-meta"><?= $name ?> · 2h ago</div>
-              <div class="ri-actions"><button class="btn-sm btn-outline" onclick="openModal('editAnnModal','Quiz 2 Reminder')">Edit</button><button class="btn-sm" style="background:rgba(220,38,38,.1);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="deleteAnn(this)">Delete</button></div>
-            </div>
-            <div class="ann-item">
-              <div class="ann-title">📘 New Resource Added</div>
-              <div class="ann-body">New lecture notes on Backpropagation added to Resources.</div>
-              <div class="ann-meta"><?= $name ?> · 1d ago</div>
-              <div class="ri-actions"><button class="btn-sm btn-outline" onclick="openModal('editAnnModal','New Resource')">Edit</button><button class="btn-sm" style="background:rgba(220,38,38,.1);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="deleteAnn(this)">Delete</button></div>
-            </div><?php endif; ?>
-        </div>
+        <div class="page-title-row"><div><div class="page-title">Announcements</div><div class="page-sub">Announcements are posted to the selected server's view-only #announcements channel.</div></div><button class="btn-primary" onclick="openModal('createAnnModal')">📢 Create Announcement</button></div>
+        <div class="card" id="annList"><div class="dashboard-empty-state">Choose a server when creating an announcement. Published announcements appear in that server's #announcements channel.</div></div>
       </div>
       <div class="page-section" id="page-reports">
-        <div class="page-title-row">
-          <div>
-            <div class="page-title">Reports</div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="ch-bar">
-            <div class="ch-title">Pending Reports</div><span style="background:rgba(220,38,38,.15);color:var(--red);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700">2 pending</span>
-          </div>
-          <div class="report-item">
-            <div class="ri-header">
-              <div class="ri-ico" style="background:rgba(220,38,38,.15)">🚩</div>
-              <div class="ri-title">Flagged Message: "Inappropriate content..."</div>
-            </div>
-            <div class="ri-meta">Reported by Mia_Wong · #general · 1h ago</div>
-            <div class="ri-actions"><button class="btn-sm" style="background:rgba(22,163,74,.15);color:var(--green);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="resolveReport(this,'approved')">Approve</button><button class="btn-sm" style="background:rgba(220,38,38,.1);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="resolveReport(this,'dismissed')">Dismiss</button><button class="btn-sm btn-outline" onclick="openModal('reportDetailModal','Flagged Message')">Detail</button></div>
-          </div>
-          <div class="report-item">
-            <div class="ri-header">
-              <div class="ri-ico" style="background:rgba(217,119,6,.15)">⚠</div>
-              <div class="ri-title">Reported User: spam_user99 for spamming</div>
-            </div>
-            <div class="ri-meta">Reported by Alex_Chen · 3h ago</div>
-            <div class="ri-actions"><button class="btn-sm" style="background:rgba(220,38,38,.15);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="openModal('kickModal','spam_user99')">Kick User</button><button class="btn-sm btn-outline" onclick="openModal('reportDetailModal','Reported User')">Detail</button></div>
-          </div>
-        </div>
+        <div class="page-title-row"><div><div class="page-title">Reports</div><div class="page-sub">Reports from chat in servers you own.</div></div></div>
+        <div class="card" id="facReportsList"><div class="dashboard-empty-state">Choose a server to view reports.</div></div>
       </div>
       <div class="page-section" id="page-modqueue">
         <div class="page-title-row">
@@ -699,22 +654,8 @@ try {
         </div>
       </div>
       <div class="page-section" id="page-banned">
-        <div class="page-title-row">
-          <div>
-            <div class="page-title">Banned Users</div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="ch-bar">
-            <div class="ch-title">Banned Members</div>
-          </div>
-          <div class="ract-row">
-            <div class="ract-av" style="background:linear-gradient(135deg,#dc2626,#b91c1c)">S</div>
-            <div class="ract-msg">spam_user99 · Banned for repeated spamming</div>
-            <div style="display:flex;gap:5px;margin-left:8px"><button class="btn-sm btn-outline" onclick="toast('User unbanned','success','✅')">Unban</button></div>
-          </div>
-          <div style="padding:20px;text-align:center;color:var(--muted2);font-size:12px">No other banned users.</div>
-        </div>
+        <div class="page-title-row"><div><div class="page-title">Banned Users</div></div></div>
+        <div class="card" id="facBannedList"><div class="dashboard-empty-state">Choose a server to view banned users.</div></div>
       </div>
       <div class="page-section" id="page-chlogs">
         <div class="page-title-row">
@@ -748,38 +689,8 @@ try {
         </div>
       </div>
       <div class="page-section" id="page-sessions">
-        <div class="page-title-row">
-          <div>
-            <div class="page-title">Study Sessions</div>
-          </div><button class="btn-primary" onclick="openModal('startSessionModal')">🎓 Start Session</button>
-        </div>
-        <div class="card">
-          <div class="ch-bar">
-            <div class="ch-title">Active Sessions</div>
-            <div class="live-badge">
-              <div class="live-dot"></div>LIVE
-            </div>
-          </div>
-          <div class="ract-row">
-            <div style="width:32px;height:32px;border-radius:9px;background:rgba(233,30,140,.15);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">🧠</div>
-            <div class="ract-msg" style="flex:1">
-              <div style="font-size:12.5px;font-weight:700">Backpropagation Study Group</div>
-              <div style="font-size:10.5px;color:var(--muted2)">8 members active · Started 45m ago</div>
-            </div><button class="btn-sm btn-outline" onclick="openModal('sessionDetailModal','Backpropagation Study Group')">View</button><button class="btn-sm" style="background:rgba(220,38,38,.1);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px;margin-left:5px" onclick="toast('Session ended','success','✅')">End</button>
-          </div>
-        </div>
-        <div class="card">
-          <div class="ch-bar">
-            <div class="ch-title">Past Sessions</div>
-          </div>
-          <div class="ract-row">
-            <div style="font-size:20px;flex-shrink:0">🎓</div>
-            <div class="ract-msg" style="flex:1">
-              <div style="font-size:12.5px;font-weight:700">Neural Networks Q&A</div>
-              <div style="font-size:10.5px;color:var(--muted2)">12 participants · 2h duration · May 18</div>
-            </div><button class="btn-sm btn-outline" onclick="openModal('sessionDetailModal','Neural Networks QA')">View</button>
-          </div>
-        </div>
+        <div class="page-title-row"><div><div class="page-title">Study Sessions</div></div><button class="btn-primary" onclick="openModal('startSessionModal')">🎓 Schedule Session</button></div>
+        <div class="card" id="studySessionsList"><div class="dashboard-empty-state">No study sessions to display.</div></div>
       </div>
       <div class="page-section" id="page-engagement">
         <div class="page-title-row">
@@ -862,104 +773,23 @@ try {
         </div>
       </div>
       <div class="page-section" id="page-resources">
-        <div class="page-title-row">
-          <div>
-            <div class="page-title">Resources</div>
-          </div><button class="btn-primary" onclick="openModal('uploadResourceModal')">+ Add Resource</button>
-        </div>
-        <div class="card" id="resourcesList"><?php foreach ($dashData['files'] ?? [] as $f): $ext = strtolower(pathinfo($f['file_name'] ?? '', PATHINFO_EXTENSION));
-                                                $ico = $ext === 'pdf' ? '📄' : ($ext === 'xlsx' ? '📊' : '📎');
-                                                $bg = $ext === 'pdf' ? 'rgba(220,38,38,.15)' : ($ext === 'xlsx' ? 'rgba(37,99,235,.15)' : 'rgba(22,163,74,.15)'); ?><div class="ract-row">
-              <div style="width:28px;height:28px;border-radius:7px;background:<?= $bg ?>;display:flex;align-items:center;justify-content:center;font-size:13px"><?= $ico ?></div>
-              <div class="ract-msg" style="flex:1">
-                <div style="font-size:12px;font-weight:600"><?= htmlspecialchars($f['file_name'] ?? '') ?></div>
-                <div style="font-size:10.5px;color:var(--muted2)"><?= htmlspecialchars($f['course_code'] ?? '') ?> · <?= htmlspecialchars($f['file_size_formatted'] ?? '') ?></div>
-              </div>
-              <div style="display:flex;gap:5px"><button class="btn-sm btn-outline" onclick="toast('Downloading...','info','⬇')">Download</button><button class="btn-sm" style="background:rgba(220,38,38,.1);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="this.closest('.ract-row').remove();toast('Deleted','success','🗑')">Delete</button></div>
-            </div><?php endforeach; ?><?php if (empty($dashData['files'])): ?><div class="ract-row">
-              <div style="width:28px;height:28px;border-radius:7px;background:rgba(220,38,38,.15);display:flex;align-items:center;justify-content:center;font-size:13px">📄</div>
-              <div class="ract-msg" style="flex:1">
-                <div style="font-size:12px;font-weight:600">Chapter 5 Lecture Notes</div>
-                <div style="font-size:10.5px;color:var(--muted2)">PDF · 2.4 MB</div>
-              </div>
-              <div style="display:flex;gap:5px"><button class="btn-sm btn-outline" onclick="toast('Downloading...','info','⬇')">Download</button><button class="btn-sm" style="background:rgba(220,38,38,.1);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="this.closest('.ract-row').remove()">Delete</button></div>
-            </div><?php endif; ?></div>
+        <div class="page-title-row"><div><div class="page-title">Resources</div><div class="page-sub">Files sent inside servers you own.</div></div></div>
+        <div class="card" id="resourcesList"><div class="dashboard-empty-state">Choose a server to view its files.</div></div>
       </div>
       <div class="page-section" id="page-roles">
-        <div class="page-title-row">
-          <div>
-            <div class="page-title">Roles & Permissions</div>
-          </div><button class="btn-primary" onclick="openModal('createRoleModal')">+ Create Role</button>
-        </div>
-        <div class="g2">
-          <div class="card">
-            <div class="ch-bar">
-              <div class="ct">Roles</div>
-            </div>
-            <div style="padding:14px">
-              <div style="margin-bottom:10px;padding:12px;background:rgba(233,30,140,.08);border:1px solid rgba(233,30,140,.15);border-radius:9px">
-                <div style="font-size:12.5px;font-weight:700;margin-bottom:3px">Channel Administrator</div>
-                <div style="font-size:10.5px;color:var(--muted2)">Full management · 1 member</div>
-              </div>
-              <div style="margin-bottom:10px;padding:12px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.15);border-radius:9px">
-                <div style="font-size:12.5px;font-weight:700;margin-bottom:3px">Facilitator</div>
-                <div style="font-size:10.5px;color:var(--muted2)">Post announcements · 3 members</div>
-              </div>
-              <div style="padding:12px;background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.15);border-radius:9px">
-                <div style="font-size:12.5px;font-weight:700;margin-bottom:3px">Student</div>
-                <div style="font-size:10.5px;color:var(--muted2)">Read and participate · <?= (int)($stats['total_members'] ?? 72) - 4 ?> members</div>
-              </div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="ch-bar">
-              <div class="ct">Permissions</div>
-            </div>
-            <div style="padding:14px">
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border2)">
-                <div>
-                  <div style="font-size:12px;font-weight:600">Students can post messages</div>
-                </div>
-                <div class="toggle on" onclick="this.classList.toggle('on');toast('Permission updated','success','✅')"></div>
-              </div>
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border2)">
-                <div>
-                  <div style="font-size:12px;font-weight:600">Students can upload files</div>
-                </div>
-                <div class="toggle on" onclick="this.classList.toggle('on');toast('Permission updated','success','✅')"></div>
-              </div>
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0">
-                <div>
-                  <div style="font-size:12px;font-weight:600">Students can create rooms</div>
-                </div>
-                <div class="toggle" onclick="this.classList.toggle('on');toast('Permission updated','success','✅')"></div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div class="page-title-row"><div><div class="page-title">Roles & Permissions</div><div class="page-sub">Change permissions for servers you own. Roles cannot be created here.</div></div><button class="btn-primary" onclick="saveFacPermissions()">💾 Save Permissions</button></div>
+        <div class="card"><div style="padding:14px">
+          <div class="fg"><label class="fl">Server</label><select class="fi" id="permServer" onchange="loadFacPermissions(this.value)"><option value="">Choose a server...</option><?php foreach($facDashboardServers as $srv): if((int)($srv['owner_id']??0)!==(int)$user['id']) continue; ?><option value="<?= (int)$srv['id'] ?>"><?= htmlspecialchars($srv['name']) ?></option><?php endforeach; ?></select></div>
+          <div class="perm-setting"><span>Members can invite users</span><div class="toggle on" id="permInvites" onclick="this.classList.toggle('on')"></div></div>
+          <div class="perm-setting"><span>Members can send messages</span><div class="toggle on" id="permMessages" onclick="this.classList.toggle('on')"></div></div>
+          <div class="perm-setting"><span>Members can join voice channels</span><div class="toggle on" id="permVoice" onclick="this.classList.toggle('on')"></div></div>
+          <div class="perm-setting"><span>Members can create/respond to polls</span><div class="toggle on" id="permPolls" onclick="this.classList.toggle('on')"></div></div>
+          <div class="perm-setting"><span>Members can upload files</span><div class="toggle on" id="permFiles" onclick="this.classList.toggle('on')"></div></div>
+        </div></div>
       </div>
       <div class="page-section" id="page-files">
-        <div class="page-title-row">
-          <div>
-            <div class="page-title">Files & Links</div>
-          </div><button class="btn-primary" onclick="openModal('uploadResourceModal')">+ Add File</button>
-        </div>
-        <div class="card" id="filesList">
-          <div class="ract-row">
-            <div style="width:28px;height:28px;border-radius:7px;background:rgba(220,38,38,.15);display:flex;align-items:center;justify-content:center;font-size:13px">📄</div>
-            <div class="ract-msg" style="flex:1">
-              <div style="font-size:12px;font-weight:600">lecture_notes_ch5.pdf</div>
-              <div style="font-size:10.5px;color:var(--muted2)">CS 305 · 2.4 MB · John_Doe</div>
-            </div><button class="btn-sm btn-outline" onclick="toast('Downloading...','info','⬇')">Download</button>
-          </div>
-          <div class="ract-row">
-            <div style="width:28px;height:28px;border-radius:7px;background:rgba(37,99,235,.15);display:flex;align-items:center;justify-content:center;font-size:13px">📊</div>
-            <div class="ract-msg" style="flex:1">
-              <div style="font-size:12px;font-weight:600">DSA_cheatsheet.xlsx</div>
-              <div style="font-size:10.5px;color:var(--muted2)">CS 305 · 845 KB · Fatima_Student</div>
-            </div><button class="btn-sm btn-outline" onclick="toast('Downloading...','info','⬇')">Download</button>
-          </div>
-        </div>
+        <div class="page-title-row"><div><div class="page-title">Files & Links</div><div class="page-sub">Public Coworkspace documents and whiteboards are listed here in view-only mode.</div></div></div>
+        <div class="card" id="filesList"><div class="dashboard-empty-state">Choose a server to view public Coworkspace resources.</div></div>
       </div>
       <div class="page-section" id="page-messages">
         <div class="page-title-row">
@@ -1007,7 +837,7 @@ try {
       <div class="page-section" id="page-polls">
         <div class="page-title-row">
           <div>
-            <div class="page-title">Polls & Quizzes</div>
+            <div class="page-title">Polls</div>
           </div>
           <div style="display:flex;gap:7px"><button class="btn-sec" onclick="openModal('createPollModal')">📊 Create Poll</button><button class="btn-primary" onclick="openModal('createQuizModal')">📝 Create Quiz</button></div>
         </div>
