@@ -64,6 +64,15 @@ async function apiFetch(url, options = {}, _retried = false) {
   return res.json();
 }
 
+function chatAvatarUrl(url) {
+  const raw = String(url || '').trim();
+  if (!raw) return '';
+  if (/^(?:https?:)?\/\//i.test(raw) || /^(?:data|blob):/i.test(raw)) return raw;
+  const base = String(window.ECOLLAB?.baseUrl || '').replace(/\/$/, '');
+  if (raw.startsWith('/')) return base + raw;
+  return base + '/' + raw.replace(/^\.\//, '');
+}
+
 const API_BASE = (window.ECOLLAB?.baseUrl || '') + '/API/chat';
 const UPLOAD_ENDPOINT = (window.ECOLLAB?.baseUrl || '') + '/API/chat/upload-file.php';
 
@@ -434,7 +443,7 @@ function buildMessageElement(msg) {
   const grad = msg.avatar_color_gradient || '#3b82f6,#6366f1';
   const [c1, c2] = grad.split(',');
   const init = (msg.full_name || msg.username || '?').charAt(0).toUpperCase();
-  const avatarUrl = msg.avatar_url || '';
+  const avatarUrl = chatAvatarUrl(msg.avatar_url);
   const avatarBg = avatarUrl ? `url("${escHtml(avatarUrl)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
   const avatarText = avatarUrl ? '' : init;
   const isMe = parseInt(msg.sender_id) === parseInt(window.ECOLLAB?.userId);
@@ -1224,8 +1233,9 @@ function renderMembersPanel(members) {
     const grad = m.avatar_color_gradient || '#3b82f6,#6366f1';
     const [c1, c2] = grad.split(',');
     const init = (m.full_name || m.username || '?').charAt(0).toUpperCase();
-    const memberAvatar = m.avatar_url ? `url("${escHtml(m.avatar_url)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
-    const memberInitial = m.avatar_url ? '' : init;
+    const memberAvatarUrl = chatAvatarUrl(m.avatar_url);
+    const memberAvatar = memberAvatarUrl ? `url("${escHtml(memberAvatarUrl)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
+    const memberInitial = memberAvatarUrl ? '' : init;
     const online = m.is_online ? 'online' : '';
     return `
       <div class="member-item" data-user-id="${m.id || m.user_id || 0}" data-user-grad="${grad}" onclick="openMiniProfile(event, '${escHtml(m.full_name || m.username)}', '${escHtml(m.role || 'Student')}', '', '${init}', ${m.id || m.user_id || 0})">
@@ -1251,8 +1261,9 @@ function renderMembersPanel(members) {
       const grad = m.avatar_color_gradient || '#3b82f6,#6366f1';
       const [c1, c2] = grad.split(',');
       const init = (m.full_name || m.username || '?').charAt(0).toUpperCase();
-      const memberAvatar = m.avatar_url ? `url("${escHtml(m.avatar_url)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
-      const memberInitial = m.avatar_url ? '' : init;
+      const memberAvatarUrl = chatAvatarUrl(m.avatar_url);
+    const memberAvatar = memberAvatarUrl ? `url("${escHtml(memberAvatarUrl)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
+      const memberInitial = memberAvatarUrl ? '' : init;
       return `
         <div class="active-user" onclick="openMiniProfile(event, '${escHtml(m.full_name || m.username)}', '${escHtml(m.role)}', '', '${init}', ${m.id || m.user_id || 0})">
           <div class="user-avatar">
