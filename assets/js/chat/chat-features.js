@@ -430,37 +430,36 @@ function closeSearchOverlay(event) {
   }
 }
 
+let _messageSearchTimer=null;
 function searchMessages(query) {
-  const resultsEl = document.getElementById('searchResults');
-  if (!resultsEl) return;
-  if (!query.trim()) {
-    resultsEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">Type to search messages in this channel...</div>';
-    return;
-  }
-  // Search visible messages in the DOM
-  const q = query.toLowerCase();
-  const msgs = [];
-  document.querySelectorAll('.message-group').forEach(mg => {
-    const textEl = mg.querySelector('.msg-text');
-    const authorEl = mg.querySelector('.msg-username');
-    const timeEl = mg.querySelector('.msg-timestamp');
-    if (!textEl) return;
-    const text = textEl.textContent || '';
-    const author = authorEl?.textContent || '';
-    if (text.toLowerCase().includes(q) || author.toLowerCase().includes(q)) {
-      msgs.push({ text, author, time: timeEl?.textContent || '' });
-    }
-  });
-  if (!msgs.length) {
-    resultsEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">No messages found.</div>';
-    return;
-  }
-  resultsEl.innerHTML = msgs.map(m => `
-    <div style="padding:10px;background:var(--bg-tertiary);border-radius:8px;margin-bottom:8px;cursor:pointer;border:1px solid var(--border);">
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">${m.author} · ${m.time}</div>
-      <div style="font-size:13px;color:var(--text-secondary);">${m.text.replace(new RegExp(query, 'gi'), '<mark style="background:rgba(168,85,247,0.3);color:#fff;border-radius:2px;padding:0 1px;">$&</mark>')}</div>
-    </div>`).join('');
+  const resultsEl=document.getElementById('searchResults');
+  if(!resultsEl)return;
+  const q=String(query||'').trim();
+  clearTimeout(_messageSearchTimer);
+  if(q.length<2){resultsEl.innerHTML='<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">Type at least 2 characters to search messages in this server...</div>';return;}
+  resultsEl.innerHTML='<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">Searching…</div>';
+  _messageSearchTimer=setTimeout(async()=>{
+    try{
+      const base=window.ECOLLAB?.baseUrl||'';
+      const sid=Number(window.ECOLLAB?.currentServerId||window.currentServerId||0);
+      const res=await fetch(base+'/API/chat/search-messages.php?server_id='+sid+'&q='+encodeURIComponent(q),{credentials:'same-origin'});
+      const data=await res.json().catch(()=>({}));
+      if(!res.ok||!data.success)throw new Error(data.error||'Search failed');
+      const rows=data.results||[];
+      if(!rows.length){resultsEl.innerHTML='<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">No matching messages found.</div>';return;}
+      resultsEl.innerHTML=rows.map(m=>{
+        const author=_esc(m.full_name||m.username||'User'), channel=_esc(m.channel_name||'channel'), text=_esc(m.content||''), time=_esc(m.created_at||'');
+        return '<button type="button" onclick="_openSearchResult('+Number(m.channel_id)+','+Number(m.id)+')" style="display:block;width:100%;text-align:left;padding:10px;background:var(--bg-tertiary);border-radius:8px;margin-bottom:8px;cursor:pointer;border:1px solid var(--border);color:inherit"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;"><strong style="color:var(--text-primary)">'+author+'</strong> · #'+channel+' · '+time+'</div><div style="font-size:13px;color:var(--text-secondary);white-space:normal;word-break:break-word;">'+text+'</div></button>';
+      }).join('');
+    }catch(e){resultsEl.innerHTML='<div style="text-align:center;color:#f87171;font-size:13px;padding:20px 0;">'+_esc(e.message||'Search failed')+'</div>';}
+  },250);
 }
+window._openSearchResult=function(channelId,messageId){
+  const item=document.querySelector('.channel-item[data-channel-id="'+channelId+'"]');
+  if(item&&typeof window.switchChannel==='function')window.switchChannel(item,channelId);
+  window.closeModal?.('searchOverlay');
+  setTimeout(()=>{const el=document.querySelector('.message-group[data-msg-id="'+messageId+'"]');if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.style.outline='2px solid var(--accent-purple)';setTimeout(()=>el.style.outline='',1800);}},450);
+};
 
 // ═══════════════════════════════════════════════════════
 // ACTIVE NOW MODAL
