@@ -262,6 +262,12 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           </svg>
           Drafts
         </div>
+        <a class="sidebar-nav-item" id="serverLibraryNav" href="<?= BASE_URL ?>/modules/library/library.php?server_id=<?= (int)($firstServer['id'] ?? 0) ?>" style="text-decoration:none;color:inherit;">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5v-16zm16 0A2.5 2.5 0 0 0 17.5 3H13v16h4.5a2.5 2.5 0 0 1 2.5 2.5v-16z" />
+          </svg>
+          Library
+        </a>
       </div>
 
       <div class="sidebar-section">
