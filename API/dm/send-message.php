@@ -20,11 +20,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $body   = json_decode(file_get_contents('php://input'), true) ?? [];
 $convId = (int)($body['conversation_id'] ?? 0);
 $text   = trim($body['body'] ?? '');
+$attachmentPath = trim((string)($body['attachment_path'] ?? ''));
+$attachmentName = trim((string)($body['attachment_name'] ?? ''));
+$attachmentSize = max(0, (int)($body['attachment_size'] ?? 0));
+$attachmentMime = trim((string)($body['attachment_mime'] ?? ''));
 $activeServerId = isset($body['active_server_id']) ? (int)$body['active_server_id'] : null;
 
-if (!$convId || $text === '' || mb_strlen($text) > 4000) {
+if (!$convId || ($text === '' && $attachmentPath === '') || mb_strlen($text) > 4000) {
     http_response_code(400);
-    echo json_encode(['error' => 'conversation_id and non-empty body (max 4000 chars) required']);
+    echo json_encode(['error' => 'conversation_id and a message or attachment are required (max 4000 chars)']);
     exit;
 }
 
@@ -69,10 +73,10 @@ try {
         && ($recipient['username'] ?? '') === 'ecollab_ai';
 
     $ins = $db->prepare(
-        "INSERT INTO dm_messages (conversation_id, sender_id, body)
-         VALUES (:cid, :uid, :body)"
+        "INSERT INTO dm_messages (conversation_id, sender_id, body, attachment_path, attachment_name, attachment_size, attachment_mime)
+         VALUES (:cid, :uid, :body, :apath, :aname, :asize, :amime)"
     );
-    $ins->execute([':cid' => $convId, ':uid' => $me['id'], ':body' => $text]);
+    $ins->execute([':cid' => $convId, ':uid' => $me['id'], ':body' => $text, ':apath' => $attachmentPath ?: null, ':aname' => $attachmentName ?: null, ':asize' => $attachmentSize ?: null, ':amime' => $attachmentMime ?: null]);
     $msgId = (int)$db->lastInsertId();
 
     $createdStmt = $db->prepare("SELECT created_at FROM dm_messages WHERE id = :id LIMIT 1");
@@ -82,7 +86,7 @@ try {
     $db->prepare(
         "UPDATE dm_conversations SET last_message = :body, last_msg_at = :created_at WHERE id = :cid"
     )->execute([
-        ':body' => mb_substr($text, 0, 120),
+        ':body' => mb_substr($text !== '' ? $text : ('📎 ' . ($attachmentName ?: 'Attachment')), 0, 120),
         ':created_at' => $createdAt,
         ':cid' => $convId,
     ]);
@@ -120,6 +124,10 @@ try {
             'message_id'   => $msgId,
             'sender_id'    => $me['id'],
             'body'         => $text,
+            'attachment_path' => $attachmentPath,
+            'attachment_name' => $attachmentName,
+            'attachment_size' => $attachmentSize,
+            'attachment_mime' => $attachmentMime,
             'created_at'   => $createdAt,
             'recipient_id' => $recipientId,
             'is_ai'        => false,
