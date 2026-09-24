@@ -6387,3 +6387,16 @@ body.vc-active:not(.vc-pip) .sidebar-icons {
 .channel-visibility-indicator{margin-left:5px;flex:0 0 auto;font-size:10px;line-height:1;opacity:.9}
 .channel-visibility-indicator.is-public{color:#67e8f9}
 .channel-visibility-indicator.is-private{color:#c4b5fd}
+
+/* eCollab system mark at the top of the server/workspace rail. Intentionally non-clickable. */
+.workspace-brand-mark{
+  width:40px;height:40px;margin:8px auto 6px;flex:0 0 40px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:12px;overflow:hidden;pointer-events:none;user-select:none;
+  background:#05030b;
+}
+.workspace-brand-mark img{width:100%;height:100%;display:block;object-fit:cover;pointer-events:none}
+.workspace-brand-sep{margin-top:2px!important;margin-bottom:6px!important}
+@media(max-width:860px){
+  .workspace-brand-mark{width:38px;height:38px;flex-basis:38px;margin-top:7px}
+}
