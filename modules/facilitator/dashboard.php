@@ -627,7 +627,7 @@ try {
       </div>
       <div class="page-section" id="page-announcements">
         <div class="page-title-row"><div><div class="page-title">Announcements</div><div class="page-sub">Announcements are posted to the selected server's view-only #announcements channel.</div></div><button class="btn-primary" onclick="openModal('createAnnModal')">📢 Create Announcement</button></div>
-        <div class="card" id="annList"><div class="dashboard-empty-state">Choose a server when creating an announcement. Published announcements appear in that server's #announcements channel.</div></div>
+        <div class="card" id="annList"><div class="dashboard-empty-state">Choose a server to view its published announcements.</div></div>
       </div>
       <div class="page-section" id="page-reports">
         <div class="page-title-row"><div><div class="page-title">Reports</div><div class="page-sub">Reports from chat in servers you own.</div></div></div>
