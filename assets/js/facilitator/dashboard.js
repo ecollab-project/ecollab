@@ -230,7 +230,7 @@ function facServerPicker(pageId,servers,onChange){
   const page=document.getElementById(pageId);if(!page||page.querySelector('.fac-server-picker'))return;
   const row=page.querySelector('.page-title-row');if(!row)return;
   const wrap=document.createElement('div');wrap.className='fac-server-picker';wrap.style.cssText='margin:0 0 12px;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:10px';
-  wrap.innerHTML='<label class="fl">Server</label><select class="fi"><option value="">Choose a server...</option>'+servers.map(s=>'<option value="'+s.id+'">'+escFac(s.name)+'</option>').join('')+'</select>';
+  wrap.innerHTML='<label class="fl">Server</label><select class="fi"><option value="">Choose a server...</option>'+servers.map(s=>'<option value="'+s.id+'">'+(((s.type||'').toLowerCase()==='private'||(s.type||'').toLowerCase()==='academic')?'🔒 Private':'🌐 Public')+' — '+escFac(s.name)+'</option>').join('')+'</select>';
   row.insertAdjacentElement('afterend',wrap);wrap.querySelector('select').addEventListener('change',e=>onChange(Number(e.target.value||0)));
 }
 async function facGet(action,sid){if(!sid)return null;const r=await fetch((window.ECOLLAB_BASE||'')+'/API/facilitator/server-tools.php?action='+encodeURIComponent(action)+'&server_id='+sid);const d=await r.json();if(!r.ok)throw new Error(d.error||'Unable to load data');return d;}
@@ -268,7 +268,7 @@ async function loadFacAnnouncements(sid){
     const d=await facGet('announcements',sid),items=d.announcements||[];
     if(!items.length){card.innerHTML='<div class="dashboard-empty-state">No announcements have been published in this server yet.</div>';return;}
     card.innerHTML='<div class="ch-bar"><div class="ch-title">Published Announcements</div></div>'+items.map(a=>{const x=facFormatAnnouncement(a.content);const when=a.created_at?new Date(String(a.created_at).replace(' ','T')).toLocaleString():'';
-      return '<div class="ann-item"><div class="ann-icon">📢</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:800">'+escFac(x.title)+'</div><div style="font-size:11.5px;color:var(--muted2);white-space:pre-wrap;margin-top:4px">'+escFac(x.body)+'</div><div class="ri-meta">'+escFac(a.author_name||'Facilitator')+(when?' · '+escFac(when):'')+' · #'+escFac(a.channel_name||'announcements')+'</div></div><a class="btn-sm btn-outline" style="text-decoration:none" href="'+(window.ECOLLAB_BASE||'')+'/modules/chat/chat.php?server_id='+Number(sid)+'&channel_id='+Number(a.channel_id)+'">View in Chat</a></div>';
+      return '<div class="ann-item"><div class="ann-icon">📢</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:800">'+escFac(x.title)+'</div><div style="font-size:11.5px;color:var(--muted2);white-space:pre-wrap;margin-top:4px">'+escFac(x.body)+'</div><div class="ri-meta">'+escFac(a.author_name||'Facilitator')+(when?' · '+escFac(when):'')+' · #'+escFac(a.channel_name||'announcements')+' <span class="visibility-badge '+(Number(a.is_private)?'visibility-private':'visibility-public')+'">'+(Number(a.is_private)?'🔒 Private':'🌐 Public')+'</span></div></div><a class="btn-sm btn-outline" style="text-decoration:none" href="'+(window.ECOLLAB_BASE||'')+'/modules/chat/chat.php?server_id='+Number(sid)+'&channel_id='+Number(a.channel_id)+'">View in Chat</a></div>';
     }).join('');
   }catch(e){card.innerHTML='<div class="dashboard-empty-state">Unable to load announcements.</div>';toast(e.message,'error','❌');}
 }
