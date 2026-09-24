@@ -14,3 +14,33 @@
 @media(max-width:768px){.monitor-menu{display:block}.server-monitor-page .monitor-page-content{padding:0 10px 24px}.monitor-appbar{padding:0 12px}.monitor-return{font-size:0}.monitor-return:after{content:"Back";font-size:12px}.server-monitor-page .monitor-top{min-height:96px}.server-monitor-page .sidebar-overlay.open{display:block}}
 
 .owner-summary{margin-bottom:14px}.owner-line{display:flex;align-items:center;gap:12px}.owner-avatar{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(135deg,#6d3cb4,#35205e);font-size:20px}.owner-line strong{display:block;font-size:14px}.owner-line small{display:block;margin-top:4px;color:var(--muted);font-size:11px}
+
+/* Server monitor layout polish */
+.server-monitor-page .sidebar{width:220px}
+.server-monitor-page .main-content.monitor-main{margin-left:220px;width:calc(100% - 220px)}
+.server-monitor-page .monitor-page-content{padding:0 24px 40px}
+.server-monitor-page .monitor-shell{max-width:1680px;margin:0 auto}
+.server-monitor-page .monitor-top{min-height:104px;gap:18px}
+.server-monitor-page .server-head{min-width:0}
+.server-monitor-page .server-head>div:last-child{min-width:0}
+.server-monitor-page h1{font-size:25px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.server-monitor-page .sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.server-monitor-page .status{margin-left:auto;white-space:nowrap}
+.server-monitor-page .tabs{position:static;top:auto;padding:4px}
+.server-monitor-page .tab{flex:0 0 112px;text-align:center}
+.server-monitor-page .stats{gap:12px}
+.server-monitor-page .stat{padding:14px;min-width:0}
+.server-monitor-page .si{width:42px;height:42px;flex:0 0 42px}
+.server-monitor-page .stat strong{font-size:19px}
+.server-monitor-page .grid2{grid-template-columns:minmax(0,1.35fr) minmax(320px,.75fr)}
+.server-monitor-page .grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.server-monitor-page .card{overflow:hidden}
+.server-monitor-page .barrow{grid-template-columns:minmax(82px,120px) minmax(70px,1fr) 34px}
+.server-monitor-page .barrow>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.server-monitor-page canvas{width:100%!important}
+.server-monitor-page .facilitator-server-card{cursor:default}
+.server-monitor-page .facilitator-server-card .cs-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:132px}
+.server-monitor-page .facilitator-server-card .cs-av{display:grid;place-items:center;font-size:16px}
+@media(max-width:1180px){.server-monitor-page .stats{grid-template-columns:repeat(3,1fr)}.server-monitor-page .grid2{grid-template-columns:1fr}.server-monitor-page .grid3,.server-monitor-page .bottom{grid-template-columns:1fr 1fr}}
+@media(max-width:768px){.server-monitor-page .sidebar{width:260px}.server-monitor-page .main-content.monitor-main{margin-left:0;width:100%}.server-monitor-page .monitor-page-content{padding:0 12px 28px}.server-monitor-page .monitor-top{min-height:92px}.server-monitor-page .back{display:none}.server-monitor-page .server-icon{width:54px;height:54px;border-radius:14px}.server-monitor-page h1{font-size:20px}.server-monitor-page .tabs{overflow-x:auto}.server-monitor-page .tab{flex:0 0 auto}.server-monitor-page .grid3,.server-monitor-page .bottom{grid-template-columns:1fr}}
+@media(max-width:520px){.server-monitor-page .stats{grid-template-columns:1fr 1fr}.server-monitor-page .stat{padding:11px}.server-monitor-page .monitor-appbar{height:56px}.server-monitor-page .server-head{gap:10px}.server-monitor-page .sub{font-size:10px}}
