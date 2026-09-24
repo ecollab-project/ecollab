@@ -538,3 +538,19 @@ td{padding:10px 16px;font-size:12px;vertical-align:middle}
   .tb-search{min-width:0;width:min(52vw,300px)}
   .tb-prof .pn,.tb-prof .pr,.tb-prof>span:last-child{display:none}
 }
+
+/* Dashboard brand: contain the full eCollab wordmark inside the sidebar header. */
+.sidebar .logo.ecollab-brand-logo{
+  width:100%!important;height:64px!important;min-height:64px!important;
+  padding:7px 12px!important;display:flex!important;align-items:center!important;
+  justify-content:flex-start!important;overflow:hidden!important;
+}
+.sidebar .logo.ecollab-brand-logo .ecollab-brand-wordmark{
+  display:block!important;width:100%!important;max-width:164px!important;
+  height:50px!important;max-height:50px!important;object-fit:contain!important;
+  object-position:left center!important;margin:0!important;
+}
+@media(max-width:768px){
+  .sidebar .logo.ecollab-brand-logo{height:56px!important;min-height:56px!important;padding:6px 10px!important}
+  .sidebar .logo.ecollab-brand-logo .ecollab-brand-wordmark{max-width:145px!important;height:44px!important;max-height:44px!important}
+}
