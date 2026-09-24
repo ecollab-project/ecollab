@@ -229,7 +229,13 @@ class ChannelService
     public function getOnlineMembers(int $serverId): array
     {
         $stmt = $this->db->prepare("
-            SELECT u.id, u.username, u.full_name, u.avatar_url,
+            SELECT u.id, u.username, u.full_name,
+                   CASE
+                       WHEN u.avatar_url IS NULL OR TRIM(u.avatar_url) = '' THEN ''
+                       WHEN u.avatar_url LIKE 'http://%' OR u.avatar_url LIKE 'https://%' THEN u.avatar_url
+                       WHEN u.avatar_url LIKE '/%' THEN CONCAT(TRIM(TRAILING '/' FROM :base_url), u.avatar_url)
+                       ELSE CONCAT(TRIM(TRAILING '/' FROM :base_url2), '/', u.avatar_url)
+                   END AS avatar_url,
                    u.avatar_color_gradient, u.status, u.is_online, u.role,
                    sm.server_role, sm.nickname
             FROM users u
@@ -239,7 +245,11 @@ class ChannelService
               AND u.status NOT IN ('banned','suspended','deactivated')
             ORDER BY sm.server_role ASC, u.full_name ASC
         ");
-        $stmt->execute([':sid' => $serverId]);
+        $stmt->execute([
+            ':sid' => $serverId,
+            ':base_url' => (string)BASE_URL,
+            ':base_url2' => (string)BASE_URL,
+        ]);
         return $stmt->fetchAll();
     }
 
