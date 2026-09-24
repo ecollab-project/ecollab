@@ -22,7 +22,7 @@ function fNavItem(string $page, string $icon, string $label, $badge, string $act
 
   <div class="nav-pad">
     <?= fNavItem('dashboard', '🏠', 'Dashboard', null, $activePage) ?>
-    <?= fNavItem('mychannel', '📡', 'My Channel', null, $activePage) ?>
+    <?= fNavItem('servermonitoring', '🖥️', 'My Servers', null, $activePage) ?>
   </div>
 
   <div class="nav-section-title">Channel Management</div>
