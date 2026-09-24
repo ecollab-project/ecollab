@@ -62,7 +62,19 @@ function hideSD(){document.getElementById('sdrop')?.classList.remove('show');}
 function switchTab(btn,cid){const m=btn.closest('.md')||btn.closest('.page-section');m.querySelectorAll('.tb').forEach(b=>b.classList.remove('active'));m.querySelectorAll('.tc').forEach(c=>c.classList.remove('active'));btn.classList.add('active');const c=document.getElementById(cid);if(c)c.classList.add('active');}
 
 // ═══ ACTIONS ═══
-function createAnnouncement(){const t=document.getElementById('annTitle').value;const b=document.getElementById('annBody').value;if(!t||!b){toast('Please fill title and message','error','❌');return;}closeModal('createAnnModal');const list=document.getElementById('annList');const d=document.createElement('div');d.className='ann-item';d.innerHTML=`<div class="ann-title">📌 ${t}</div><div class="ann-body">${b}</div><div class="ann-meta">Prof. Reyes · Just now</div><div class="ri-actions"><button class="btn-sm btn-outline" onclick="openModal('editAnnModal','${t}')">Edit</button><button class="btn-sm" style="background:rgba(220,38,38,.1);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="this.closest('.ann-item').remove();toast('Announcement deleted','success','🗑')">Delete</button></div>`;list.insertBefore(d,list.firstChild);document.getElementById('annTitle').value='';document.getElementById('annBody').value='';toast('Announcement posted!','success','📢');}
+async function createAnnouncement(){
+  const serverId=Number(document.getElementById('annServer')?.value||0);
+  const title=(document.getElementById('annTitle')?.value||'').trim();
+  const message=(document.getElementById('annBody')?.value||'').trim();
+  if(!serverId){toast('Choose which server receives the announcement','error','❌');return;}
+  if(!title||!message){toast('Please fill title and message','error','❌');return;}
+  try{
+    const res=await fetch((window.ECOLLAB_BASE||'')+'/API/facilitator/server-tools.php?action=announcement',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':document.querySelector('meta[name="csrf-token"]')?.content||''},body:JSON.stringify({server_id:serverId,title,message})});
+    const data=await res.json();if(!res.ok)throw new Error(data.error||'Unable to publish');
+    closeModal('createAnnModal');document.getElementById('annTitle').value='';document.getElementById('annBody').value='';
+    toast('Published to the server announcement channel and members notified','success','📢');
+  }catch(e){toast(e.message||'Unable to publish announcement','error','❌');}
+}
 function deleteAnn(btn){if(!confirm('Delete this announcement?'))return;btn.closest('.ann-item').remove();toast('Announcement deleted','success','🗑');}
 function startSession(){const t=document.getElementById('sessTitle').value;if(!t){toast('Enter a session title','error','❌');return;}closeModal('startSessionModal');toast('Study session "'+t+'" started!','success','🎓');document.getElementById('sessTitle').value='';}
 async function doKick(){
@@ -195,3 +207,18 @@ function switchChannel(channelIdOrName, serverId){
 }
 
 window.addEventListener('DOMContentLoaded',()=>{const p=new URLSearchParams(location.search).get('page');if(p)showPage(p);});
+
+async function saveChannelSettings(){
+  const serverId=Number(document.getElementById('settingsServer')?.value||0);
+  if(!serverId){toast('Choose a server first','error','❌');return;}
+  const name=(document.querySelector('#page-chsettings .fg input.fi')?.value||document.getElementById('settingsServer')?.selectedOptions?.[0]?.text||'').trim();
+  const description=(document.querySelector('#page-chsettings textarea.fta')?.value||'').trim();
+  const toggles=[...document.querySelectorAll('#page-chsettings .toggle')];
+  const visibility=toggles[0]?.classList.contains('on')?'public':'private';
+  const lockChannels=!!toggles[1]?.classList.contains('on');
+  try{
+    const res=await fetch((window.ECOLLAB_BASE||'')+'/API/facilitator/server-tools.php?action=settings',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':document.querySelector('meta[name="csrf-token"]')?.content||''},body:JSON.stringify({server_id:serverId,name,description,visibility,lock_channels:lockChannels})});
+    const data=await res.json();if(!res.ok)throw new Error(data.error||'Unable to save settings');
+    toast('Server settings and channel permissions updated','success','💾');
+  }catch(e){toast(e.message||'Unable to save settings','error','❌');}
+}
