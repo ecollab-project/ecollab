@@ -175,7 +175,9 @@ try {
             || preg_match('~\\banyone\\s+(?:here|online|active)\\b~i', $text);
 
         if ($isPresenceQuestion) {
-            $resolvedServerId = ($activeServerId && $jarredTools->canAccessServer((int)$me['id'], $activeServerId))
+            // activeMembers() performs the permission check internally. Do not call
+            // JarredTools::canAccessServer() here because it is intentionally private.
+            $resolvedServerId = ($activeServerId && $activeServerId > 0)
                 ? $activeServerId
                 : null;
 
