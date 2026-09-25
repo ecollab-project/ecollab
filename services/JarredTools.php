@@ -22,6 +22,35 @@ final class JarredTools
         $this->channels = new ChannelService();
     }
 
+    public function toolDefinitions(): array
+    {
+        return [
+            ['type'=>'function','function'=>['name'=>'get_active_members','description'=>'Get live active/idle/voice members for the current accessible eCollab server.','parameters'=>['type'=>'object','properties'=>[]]]],
+            ['type'=>'function','function'=>['name'=>'get_peer_matches','description'=>'Get deterministic eCollab peer matches for the requester, optionally scoped to the current server.','parameters'=>['type'=>'object','properties'=>['limit'=>['type'=>'integer','minimum'=>1,'maximum'=>12]]]]],
+            ['type'=>'function','function'=>['name'=>'get_servers_and_channels','description'=>'List eCollab servers and channels the requester is authorized to access.','parameters'=>['type'=>'object','properties'=>[]]]],
+            ['type'=>'function','function'=>['name'=>'search_messages','description'=>'Search authorized eCollab channel messages. Use only when the user asks to find or recall messages/discussions.','parameters'=>['type'=>'object','properties'=>['query'=>['type'=>'string'],'limit'=>['type'=>'integer','minimum'=>1,'maximum'=>25]],'required'=>['query']]]],
+            ['type'=>'function','function'=>['name'=>'get_collaboration_context','description'=>'Get authorized Coworkspace/document/whiteboard metadata and presence for the current eCollab surface.','parameters'=>['type'=>'object','properties'=>[]]]],
+            ['type'=>'function','function'=>['name'=>'get_library_recommendations','description'=>'Get academic book/library recommendations personalized for the requester or current server.','parameters'=>['type'=>'object','properties'=>['query'=>['type'=>'string']]]]],
+        ];
+    }
+
+    public function executeTool(int $requesterId, string $name, array $arguments, ?int $activeServerId = null, array $surface = []): array
+    {
+        $serverId = ($activeServerId && $this->canAccessServer($requesterId, $activeServerId)) ? $activeServerId : null;
+
+        return match ($name) {
+            'get_active_members' => $serverId
+                ? ['server_id'=>$serverId,'members'=>$this->activeMembers($requesterId,$serverId)]
+                : ['server_id'=>null,'members'=>[],'error'=>'No accessible active server context.'],
+            'get_peer_matches' => $this->peerMatches($requesterId,$serverId,(int)($arguments['limit']??8)),
+            'get_servers_and_channels' => $this->accessibleServersAndChannels($requesterId),
+            'search_messages' => $this->searchMessages($requesterId,trim((string)($arguments['query']??'')),(int)($arguments['limit']??12),$serverId),
+            'get_collaboration_context' => $this->collaborationContext($requesterId,$serverId,$surface),
+            'get_library_recommendations' => $this->libraryRecommendations($requesterId,$serverId,trim((string)($arguments['query']??'')),12),
+            default => throw new InvalidArgumentException('Unknown or unauthorized Jarred tool: '.$name),
+        };
+    }
+
     public function contextForPrompt(int $requesterId, string $prompt, ?int $activeServerId = null, array $surface = []): string
     {
         $prompt = trim($prompt);
