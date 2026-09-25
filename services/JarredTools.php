@@ -84,6 +84,13 @@ final class JarredTools
             );
         }
 
+        if (preg_match('/\\b(book|books|ebook|ebooks|library|read|reading|textbook|textbooks|resource|resources|reference|references|literature)\\b/i', $prompt)) {
+            $parts[] = 'ECOLLAB ACADEMIC LIBRARY: ' . json_encode(
+                $this->libraryRecommendations($requesterId, $serverId, $prompt, 12),
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+            );
+        }
+
         return implode("\n\n", $parts);
     }
 
@@ -255,6 +262,127 @@ final class JarredTools
                 'channels'=>array_map(static fn(array $c):array=>['id'=>(int)$c['id'],'name'=>$c['name'],'type'=>$c['type'],'is_private'=>(int)($c['is_private']??0)],$this->channels->getChannelsForUser($sid,$requesterId))];
         }
         return $result;
+    }
+
+    public function libraryRecommendations(int $requesterId, ?int $serverId, string $prompt = '', int $limit = 12): array
+    {
+        $limit = max(1, min(20, $limit));
+        $topics = [];
+        $label = 'My profile';
+        $scope = 'me';
+        $seed = '';
+
+        $serverIntent = (bool)preg_match('/\\b(this|current|our|the)\\s+server\\b|\\bserver\\s+(?:book|library|resource|reading|recommend)/i', $prompt);
+        if ($serverId && $serverIntent && $this->canAccessServer($requesterId, $serverId)) {
+            $scope = 'server';
+            $st = $this->db->prepare(
+                "SELECT s.name,s.description,s.category,GROUP_CONCAT(DISTINCT it.name SEPARATOR ', ') tags
+                 FROM servers s
+                 JOIN server_members sm ON sm.server_id=s.id AND sm.user_id=:uid
+                 LEFT JOIN server_tags st ON st.server_id=s.id
+                 LEFT JOIN interest_tags it ON it.id=st.interest_tag_id
+                 WHERE s.id=:sid AND s.status='active'
+                 GROUP BY s.id"
+            );
+            $st->execute([':uid'=>$requesterId, ':sid'=>$serverId]);
+            $r = $st->fetch(PDO::FETCH_ASSOC) ?: [];
+            if ($r) {
+                $label = (string)$r['name'];
+                $seed = strtolower(implode(' ', [$r['name'] ?? '', $r['description'] ?? '', $r['category'] ?? '', $r['tags'] ?? '']));
+            }
+        } else {
+            $st = $this->db->prepare(
+                "SELECT ap.name program,ap.code,up.year_level,GROUP_CONCAT(DISTINCT it.name SEPARATOR ', ') interests
+                 FROM users u
+                 LEFT JOIN user_profiles up ON up.user_id=u.id
+                 LEFT JOIN academic_programs ap ON ap.id=up.academic_program_id
+                 LEFT JOIN user_interests ui ON ui.user_id=u.id
+                 LEFT JOIN interest_tags it ON it.id=ui.interest_tag_id
+                 WHERE u.id=:uid
+                 GROUP BY u.id,ap.name,ap.code,up.year_level"
+            );
+            $st->execute([':uid'=>$requesterId]);
+            $r = $st->fetch(PDO::FETCH_ASSOC) ?: [];
+            $year = (int)($r['year_level'] ?? 0);
+            $label = trim((string)($r['code'] ?? '') . ' ' . ($year ? $year . ' Year' : '')) ?: 'My profile';
+            $seed = strtolower(implode(' ', [$r['program'] ?? '', $r['code'] ?? '', $r['interests'] ?? '']));
+            $levels = [
+                1=>['programming fundamentals','introduction to computing'],
+                2=>['data structures','database fundamentals','web development'],
+                3=>['software engineering','cybersecurity','advanced databases'],
+                4=>['capstone','research methods','project management']
+            ];
+            $topics = $levels[$year] ?? [];
+        }
+
+        $map = [
+            'database'=>['database','sql','relational database'],
+            'program'=>['programming','software development'],
+            'web'=>['web development'],
+            'network'=>['computer networks'],
+            'cyber'=>['cybersecurity'],
+            'security'=>['information security'],
+            'algorithm'=>['algorithms'],
+            'software'=>['software engineering'],
+            'bsit'=>['information technology','computer science'],
+            'bscs'=>['computer science','programming'],
+            'research'=>['research methods']
+        ];
+        foreach ($map as $needle=>$values) {
+            if (str_contains($seed, $needle)) $topics = array_merge($topics, $values);
+        }
+        $topics = array_values(array_unique($topics));
+        if (!$topics) $topics = ['computer science'];
+
+        $query = $this->extractLibraryQuery($prompt);
+        if ($query === '') $query = implode(' ', array_slice($topics, 0, 4));
+
+        $url = 'https://openlibrary.org/search.json?' . http_build_query([
+            'q'=>$query,
+            'fields'=>'key,title,author_name,first_publish_year,subject,ebook_access,has_fulltext,ia',
+            'limit'=>$limit
+        ]);
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER=>true,
+            CURLOPT_TIMEOUT=>8,
+            CURLOPT_CONNECTTIMEOUT=>4,
+            CURLOPT_HTTPHEADER=>['Accept: application/json','User-Agent: eCollab-Jarred-Academic-Library']
+        ]);
+        $raw = curl_exec($ch);
+        $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($raw === false || $code < 200 || $code >= 300) {
+            return ['scope'=>$scope,'label'=>$label,'topics'=>$topics,'query'=>$query,'available'=>false,'books'=>[]];
+        }
+
+        $data = json_decode((string)$raw, true);
+        $books = [];
+        foreach (($data['docs'] ?? []) as $d) {
+            $key = (string)($d['key'] ?? '');
+            $access = (string)($d['ebook_access'] ?? '');
+            $books[] = [
+                'title'=>(string)($d['title'] ?? 'Untitled'),
+                'authors'=>array_slice((array)($d['author_name'] ?? []),0,3),
+                'year'=>$d['first_publish_year'] ?? null,
+                'subjects'=>array_slice((array)($d['subject'] ?? []),0,6),
+                'availability'=>$access === 'public' ? 'Read' : ($access === 'borrowable' ? 'Borrow' : 'Details'),
+                'has_fulltext'=>(bool)($d['has_fulltext'] ?? false),
+                'url'=>$key ? 'https://openlibrary.org'.$key : null,
+                'read_url'=>!empty($d['ia'][0]) ? 'https://archive.org/details/'.rawurlencode((string)$d['ia'][0]) : null,
+                'source'=>'Open Library'
+            ];
+        }
+        return ['scope'=>$scope,'label'=>$label,'topics'=>$topics,'query'=>$query,'available'=>true,'books'=>$books];
+    }
+
+    private function extractLibraryQuery(string $prompt): string
+    {
+        if (preg_match('/["“](.+?)["”]/u', $prompt, $m)) return mb_substr(trim($m[1]), 0, 100);
+        $clean = preg_replace('/\\b(jarred|please|can you|could you|recommend|recommended|suggest|find|show|give|me|some|books?|ebooks?|textbooks?|resources?|references?|library|for|this|current|our|server|my|about|on|to|read|reading)\\b/i', ' ', $prompt);
+        $clean = trim(preg_replace('/\\s+/', ' ', (string)$clean));
+        return mb_substr($clean, 0, 100);
     }
 
     private function loadMatchingProfile(int $userId): array
