@@ -1017,14 +1017,24 @@ window.sendDmMessage = async function() {
     }
 
     // Jarred write actions are explicit backend results, never model-authored JS.
-    if (data.is_ai && data.ai_action?.type === 'open_temporary_voice') {
+    if (data.is_ai && data.ai_action) {
       const a = data.ai_action;
-      if (typeof window.joinVoice === 'function') {
-        setTimeout(() => window.joinVoice(a.channel_slug || ('temp-voice-' + a.channel_id), null, Number(a.channel_id), a.channel_name || 'Temporary Room'), 250);
-      } else if (typeof joinVoice === 'function') {
-        setTimeout(() => joinVoice(a.channel_slug || ('temp-voice-' + a.channel_id), null, Number(a.channel_id), a.channel_name || 'Temporary Room'), 250);
-      } else {
-        showToast('Temporary room created, but the voice UI is not ready. Refresh the server to join it.', 'info');
+      if (a.type === 'open_temporary_voice') {
+        if (typeof window.joinVoice === 'function') {
+          setTimeout(() => window.joinVoice(a.channel_slug || ('temp-voice-' + a.channel_id), null, Number(a.channel_id), a.channel_name || 'Temporary Room'), 250);
+        } else if (typeof joinVoice === 'function') {
+          setTimeout(() => joinVoice(a.channel_slug || ('temp-voice-' + a.channel_id), null, Number(a.channel_id), a.channel_name || 'Temporary Room'), 250);
+        } else {
+          showToast('Temporary room created, but the voice UI is not ready. Refresh the server to join it.', 'info');
+        }
+      } else if (a.type === 'open_channel') {
+        const target = document.querySelector('[data-channel-id="' + Number(a.channel_id) + '"]');
+        if (target) target.click();
+        else showToast('Channel found, but it is not currently rendered in the sidebar.', 'info');
+      } else if (a.type === 'open_document' || a.type === 'open_whiteboard') {
+        // Coworkspace owns the concrete resource opener. Dispatch instead of
+        // guessing URLs so the existing collaboration UI can handle it safely.
+        window.dispatchEvent(new CustomEvent('ecollab:jarred-action', { detail: a }));
       }
     }
 
