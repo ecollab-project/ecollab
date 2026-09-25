@@ -965,6 +965,12 @@ window.sendDmMessage = async function() {
         body: text,
         attachment_path:uploaded?.file_path||'', attachment_name:uploaded?.file_name||'', attachment_size:uploaded?.file_size||0, attachment_mime:uploaded?.mime_type||'',
         active_server_id: parseInt(window.ECOLLAB?.currentServerId || window.ECOLLAB?.serverId || window.currentServerId || document.querySelector('[data-server-id].active')?.dataset?.serverId || 0) || null,
+        surface: (typeof vcActive !== 'undefined' && vcActive) ? 'voice' : 'chat',
+        channel_id: parseInt(window.ECOLLAB?.currentChannelId || window.currentChannelId || 0) || null,
+        voice_channel_id: (typeof vcChannelId !== 'undefined' ? parseInt(vcChannelId || 0) : 0) || null,
+        workspace_id: parseInt(window.ECOLLAB?.currentWorkspaceId || window.currentWorkspaceId || 0) || null,
+        document_id: parseInt(window.ECOLLAB?.currentDocumentId || window.currentDocumentId || 0) || null,
+        whiteboard_id: parseInt(window.ECOLLAB?.currentWhiteboardId || window.currentWhiteboardId || 0) || null,
       }),
     });
 
