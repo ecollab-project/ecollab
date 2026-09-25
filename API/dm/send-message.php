@@ -165,65 +165,18 @@ try {
         $jarredTools = new JarredTools();
         $jarredContext = $jarredTools->contextForPrompt((int)$me['id'], $text, $activeServerId, $jarredSurface);
 
-        // Presence is authoritative application state. Answer simple presence questions
-        // directly instead of asking the language model to reinterpret live eCollab data.
-        $directJarredText = null;
-        $isPresenceQuestion =
-            preg_match('~\\b(online|active|connected)\\b~i', $text)
-            || preg_match("~\\bwho(?:'s| is)\\s+(?:here|online|active)\\b~i", $text)
-            || preg_match("~\\bwho(?:'s| is)\\s+(?:on|in)\\s+(?:my|this|the|our)\\s+server\\b~i", $text)
-            || preg_match('~\\banyone\\s+(?:here|online|active)\\b~i', $text);
-
-        if ($isPresenceQuestion) {
-            // activeMembers() performs the permission check internally. Do not call
-            // JarredTools::canAccessServer() here because it is intentionally private.
-            $resolvedServerId = ($activeServerId && $activeServerId > 0)
-                ? $activeServerId
-                : null;
-
-            if ($resolvedServerId) {
-                $activeMembers = $jarredTools->activeMembers((int)$me['id'], $resolvedServerId);
-                if (!$activeMembers) {
-                    $directJarredText = 'No members are currently active on this server.';
-                } else {
-                    $names = array_map(
-                        static fn(array $member): string => trim((string)($member['nickname'] ?: $member['full_name'] ?: $member['username'])),
-                        $activeMembers
-                    );
-                    $count = count($names);
-                    $directJarredText = $count === 1
-                        ? $names[0] . ' is currently active on this server.'
-                        : implode(', ', array_slice($names, 0, -1)) . ' and ' . $names[$count - 1] . ' are currently active on this server.';
-                }
-            } else {
-                $directJarredText = 'I need an active eCollab server context to check who is active.';
-            }
-        }
-
-        if ($jarredContext !== '') {
-            // Keep authoritative tool data before the conversational history so it is
-            // not buried behind prior assistant replies.
-            array_unshift($messages, [
-                'role' => 'system',
-                'content' => "Authoritative live eCollab context. Treat these application results as facts when answering the current request. Never contradict them or replace them with generic advice about other platforms.\n\n" . $jarredContext,
-            ]);
-        }
-
-        if ($directJarredText !== null) {
-            $result = [
-                'text' => $directJarredText,
-                'input_tokens' => 0,
-                'output_tokens' => 0,
-                'model' => 'ecollab-direct',
-            ];
-        } else {
-            $ollama = new OllamaService();
-            $result = $ollama->generate(
+        // Natural-language Jarred requests are routed through permission-scoped application tools.
+        $ollama = new OllamaService();
+        $result = $ollama->chatWithTools(
             $messages,
-            'You are Jarred, the central built-in AI assistant for eCollab. You assist users across servers, channels, voice channels, Coworkspaces, documents, whiteboards, study workflows, and intelligent peer matching. The backend may provide permission-scoped live ECOLLAB CONTEXT. That context is authoritative application data: use it directly and never replace it with generic advice about Discord, Slack, Teams, or other platforms. When peer-match results are supplied, explain the deterministic eCollab compatibility scores and reasons; do not invent scores or people. When document or whiteboard context is supplied, discuss only content/metadata actually provided. Voice context tells you presence and channel membership, not spoken audio unless a transcript is explicitly supplied. If required eCollab data is missing, say exactly what context is missing instead of pretending the feature is unavailable. Never invent users, messages, presence, servers, channels, documents, whiteboards, permissions, or private information. You have read/search/recommendation capabilities only: never claim to kick, ban, mute, remove users, change roles or permissions, delete content, access unauthorized private data, reveal secrets, execute SQL/shell/PHP, or bypass eCollab authorization. Be concise, practical, educational, and eCollab-specific.',
-            400
-            );
-        }
+            'You are Jarred, the built-in AI assistant for eCollab. Converse naturally. When a request depends on current eCollab data, use the appropriate provided tool rather than guessing. Tool results are authoritative. Use get_active_members for presence questions, get_peer_matches for study partners, search_messages for authorized discussions, get_servers_and_channels for navigation, get_collaboration_context for Coworkspace/document/whiteboard context, and get_library_recommendations for academic reading. Do not invent application data or permissions. If context is missing, say what is missing. Be concise and eCollab-specific.',
+            $jarredTools->toolDefinitions(),
+            static function (string $name, array $arguments) use ($jarredTools, $me, $activeServerId, $jarredSurface): array {
+                return $jarredTools->executeTool((int)$me['id'], $name, $arguments, $activeServerId, $jarredSurface);
+            },
+            400,
+            3
+        );
 
         $aiText = trim((string)($result['text'] ?? ''));
         if ($aiText === '') {
