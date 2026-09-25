@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
+require_once dirname(__DIR__, 2) . '/services/TemporaryVoiceService.php';
 
 header('Content-Type: application/json');
 header('Cache-Control: no-cache, no-store');
@@ -19,6 +20,8 @@ $db       = Database::getInstance();
 $userId   = (int)$user['id'];
 $serverId = (int)($_GET['server_id'] ?? $_POST['server_id'] ?? 0);
 $action   = $_GET['action'] ?? $_POST['action'] ?? 'get';
+$tempVoice = new TemporaryVoiceService();
+$tempVoice->cleanupExpired();
 
 // ── Heartbeat: keep user online ───────────────────────────────────────────
 if ($action === 'heartbeat') {
@@ -34,6 +37,7 @@ if ($action === 'join_voice') {
     if ($channelId) {
         $db->prepare("UPDATE users SET voice_channel_id=:cid WHERE id=:id")
            ->execute([':cid' => $channelId, ':id' => $userId]);
+        $tempVoice->markJoined($channelId);
     }
     echo json_encode(['success' => true]);
     exit;
@@ -41,8 +45,12 @@ if ($action === 'join_voice') {
 
 // ── Leave voice ───────────────────────────────────────────────────────────
 if ($action === 'leave_voice') {
+    $oldStmt = $db->prepare("SELECT voice_channel_id FROM users WHERE id=:id LIMIT 1");
+    $oldStmt->execute([':id'=>$userId]);
+    $oldChannelId = (int)($oldStmt->fetchColumn() ?: 0);
     $db->prepare("UPDATE users SET voice_channel_id=NULL WHERE id=:id")
        ->execute([':id' => $userId]);
+    if ($oldChannelId > 0) $tempVoice->markLeftAndSchedule($oldChannelId);
     echo json_encode(['success' => true]);
     exit;
 }
