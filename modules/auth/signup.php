@@ -8,7 +8,17 @@ require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 require_once dirname(__DIR__, 2) . '/security/csrf/csrf.php';
 
 AuthMiddleware::startSession();
-AuthMiddleware::redirectIfAuthed();
+
+// A first-time OAuth student is already authenticated by Google/Microsoft,
+// but still needs to complete signup steps 2-5.
+$isOAuthOnboarding =
+    !empty($_SESSION['user_id']) &&
+    !empty($_SESSION['oauth_onboarding']) &&
+    ($_SESSION['role'] ?? '') === 'student';
+
+if (!$isOAuthOnboarding) {
+    AuthMiddleware::redirectIfAuthed();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -35,10 +45,7 @@ AuthMiddleware::redirectIfAuthed();
 
   <div class="page">
 
-    <a href="<?= BASE_URL ?>/index.php" class="nav-logo">
-      <div class="ico">🌿</div>
-      <?= APP_NAME ?>
-    </a>
+    <a href="<?= BASE_URL ?>/index.php" class="nav-logo ecollab-auth-brand"><img src="<?= BASE_URL ?>/assets/ecollab-wordmark.webp" alt="eCollab"></a>
 
     <div class="center">
       <div class="card signup-card">
@@ -65,10 +72,8 @@ AuthMiddleware::redirectIfAuthed();
           <div class="form-box">
             <div class="input-wrap"><div class="input-row"><input type="text" id="fullName" placeholder="Full Name" autocomplete="name"></div></div>
             <div class="field-divider"></div>
-            <div class="input-wrap"><div class="input-row"><input type="text" id="email" placeholder="Email / Student ID" autocomplete="off" inputmode="email"><span class="input-suffix">@fatima.edu.ph</span></div></div>
+            <div class="input-wrap"><div class="input-row"><input type="email" id="email" placeholder="Email address" autocomplete="email" inputmode="email"></div></div>
             <div class="field-divider"></div>
-            <div class="input-wrap" id="otpWrap" style="display:none;"><div class="input-row otp-row"><input type="text" id="otpInput" placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric" autocomplete="one-time-code"><button class="otp-send-btn" id="otpSendBtn" onclick="sendOtp()" type="button">Send Code</button></div><p class="otp-hint" id="otpHint"></p></div>
-            <div class="field-divider" id="otpDivider" style="display:none;"></div>
             <div class="input-wrap"><div class="input-row"><input type="password" id="password" placeholder="Password" oninput="updateStrength(this.value)" autocomplete="new-password"><button class="eye-btn" onclick="toggleEye('password','eyePass')" type="button" aria-label="Toggle password"><svg id="eyePass" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg></button></div></div>
             <div class="strength-wrap"><div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div></div>
             <div class="input-wrap"><div class="input-row"><input type="password" id="confirmPass" placeholder="Confirm Password" autocomplete="new-password"><button class="eye-btn" onclick="toggleEye('confirmPass','eyeConf')" type="button" aria-label="Toggle confirm password"><svg id="eyeConf" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg></button></div></div>
@@ -128,6 +133,20 @@ AuthMiddleware::redirectIfAuthed();
           <a href="<?= BASE_URL ?>/API/auth/oauth-init.php?provider=microsoft" class="social-btn"><div class="ms-icon"><span style="background:#F25022;"></span><span style="background:#7FBA00;"></span><span style="background:#00A4EF;"></span><span style="background:#FFB900;"></span></div><div class="s-text"><span>Continue with Microsoft</span><span class="s-sub">University SSO</span></div></a>
         </div>
 
+        <div id="emailVerificationModal" role="dialog" aria-modal="true" aria-labelledby="emailVerificationTitle" style="display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;padding:20px;background:rgba(3,2,8,.78);backdrop-filter:blur(10px);">
+          <div style="width:min(440px,100%);background:#0f0c1a;border:1px solid rgba(255,45,117,.28);border-radius:20px;padding:30px;box-shadow:0 20px 80px rgba(0,0,0,.55);">
+            <div style="font-size:28px;margin-bottom:8px;">✉️</div>
+            <h2 id="emailVerificationTitle" style="margin:0 0 8px;color:#fff;font-family:Poppins,Arial,sans-serif;font-size:22px;">Verify your email</h2>
+            <p style="margin:0 0 20px;color:#B0B0C0;font:14px/1.6 Inter,Arial,sans-serif;">We sent a 6-digit verification code to the email address you entered. Verify it to finish creating your account.</p>
+            <input id="signupOtpInput" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000" aria-label="6-digit email verification code" style="width:100%;box-sizing:border-box;padding:15px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:#07040F;color:#fff;text-align:center;font:700 24px/1 Inter,Arial,sans-serif;letter-spacing:8px;outline:none;">
+            <p id="signupOtpError" role="alert" style="min-height:20px;margin:9px 0 0;color:#ff6b8f;font:13px/1.4 Inter,Arial,sans-serif;"></p>
+            <p id="signupOtpHint" style="min-height:20px;margin:0 0 18px;color:#8f8fa5;font:12px/1.4 Inter,Arial,sans-serif;text-align:center;"></p>
+            <button id="signupVerifyBtn" type="button" onclick="verifySignupOtp()" style="width:100%;padding:13px;border:0;border-radius:12px;background:linear-gradient(135deg,#FF2D75,#9F3BFF);color:#fff;font:700 14px Inter,Arial,sans-serif;cursor:pointer;">Verify Email</button>
+            <button id="signupResendBtn" type="button" onclick="resendSignupOtp()" style="width:100%;margin-top:9px;padding:11px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:transparent;color:#fff;font:600 13px Inter,Arial,sans-serif;cursor:pointer;">Resend Code</button>
+            <button type="button" onclick="closeEmailVerification()" style="display:block;margin:14px auto 0;border:0;background:none;color:#77778a;font:12px Inter,Arial,sans-serif;cursor:pointer;">Close</button>
+          </div>
+        </div>
+
         <div class="login-text">Already have an account? <a href="login.php">Login</a></div>
         <div class="badge"><div class="b-ico">🌿</div>Built for Fatima Computing</div>
 
@@ -135,6 +154,9 @@ AuthMiddleware::redirectIfAuthed();
     </div>
   </div>
 
+  <script>
+    window.ECOLLAB_OAUTH_ONBOARDING = <?= $isOAuthOnboarding ? 'true' : 'false' ?>;
+  </script>
   <script src="<?= BASE_URL ?>/assets/js/auth/signup.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/auth/signup-network-fix.js" defer></script>
 </body>

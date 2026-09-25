@@ -9,6 +9,14 @@ require_once dirname(__DIR__, 2) . '/services/PeerMatchingService.php';
 require_once dirname(__DIR__, 2) . '/security/SecurityHeaders.php';
 require_once dirname(__DIR__, 2) . '/security/rate-limit/RateLimiter.php';
 
+function canonicalAvatarUrl(?string $url): string {
+    $url = trim((string)$url);
+    if ($url === '') return '';
+    if (preg_match('~^(?:https?:)?//~i', $url) || preg_match('~^(?:data|blob):~i', $url)) return $url;
+    $base = rtrim((string)BASE_URL, '/');
+    return $base . '/' . ltrim($url, '/');
+}
+
 header('Content-Type: application/json; charset=utf-8');
 SecurityHeaders::send(isApi: true);
 AuthMiddleware::startSession();
@@ -198,9 +206,9 @@ try {
             $minScore = max(0, min(100, (float)($_GET['min_score'] ?? 0)));
             $sort = (string)($_GET['sort'] ?? 'score');
 
-            $users = $db->prepare("SELECT u.id, u.username, u.full_name, u.role, u.avatar_color_gradient, u.bio, u.is_online
+            $users = $db->prepare("SELECT u.id, u.username, u.full_name, u.role, u.avatar_url, u.avatar_color_gradient, u.bio, u.is_online
                 FROM users u
-                WHERE u.id != ? AND u.deleted_at IS NULL AND u.status != 'banned'
+                WHERE u.id != ? AND u.deleted_at IS NULL AND u.status != 'banned' AND COALESCE(u.is_system, 0) = 0
                 ORDER BY u.is_online DESC, u.last_active_at DESC LIMIT 100");
             $users->execute([$uid]);
             $service = new PeerMatchingService();
@@ -263,6 +271,7 @@ try {
                     'components'=>['subjects'=>$score['subjects'],'style'=>$score['style'],'interests'=>$score['interests'],'hobbies'=>$score['hobbies']],
                     'already_connected'=>$friendship === 'accepted',
                     'request_status'=>$requestStatus,
+                    'avatar_url'=>(string)($candidate['avatar_url'] ?? ''),
                     'grad'=>(string)($candidate['avatar_color_gradient'] ?? '#a855f7,#ec4899'),
                 ];
             }
@@ -286,14 +295,14 @@ try {
             $studyStyle = trim((string)($_GET['study_style'] ?? ''));
             if ($q === '' && !$subjectId && !$hobbyId && !$interestId && $studyStyle === '') $json(['users'=>[]]);
 
-            $where = ['u.id != ?', 'u.deleted_at IS NULL', "u.status != 'banned'"];
+            $where = ['u.id != ?', 'u.deleted_at IS NULL', "u.status != 'banned'", 'COALESCE(u.is_system, 0) = 0'];
             $params = [$uid];
             if ($q !== '') { $where[] = '(u.full_name LIKE ? OR u.username LIKE ? OR u.bio LIKE ?)'; $params[]="%$q%"; $params[]="%$q%"; $params[]="%$q%"; }
             if ($subjectId) { $where[] = 'EXISTS (SELECT 1 FROM pm_user_subjects ps WHERE ps.user_id=u.id AND ps.subject_id=?)'; $params[]=$subjectId; }
             if ($hobbyId) { $where[] = 'EXISTS (SELECT 1 FROM pm_user_hobbies ph WHERE ph.user_id=u.id AND ph.hobby_id=?)'; $params[]=$hobbyId; }
             if ($interestId) { $where[] = 'EXISTS (SELECT 1 FROM pm_user_interests pi WHERE pi.user_id=u.id AND pi.interest_id=?)'; $params[]=$interestId; }
             if ($studyStyle !== '') { $where[] = 'EXISTS (SELECT 1 FROM pm_user_study_prefs pp WHERE pp.user_id=u.id AND pp.study_style=?)'; $params[]=$studyStyle; }
-            $stmt = $db->prepare('SELECT u.id,u.username,u.full_name,u.role,u.avatar_color_gradient,u.bio,u.is_online FROM users u WHERE '.implode(' AND ',$where).' ORDER BY u.is_online DESC,u.last_active_at DESC LIMIT 50');
+            $stmt = $db->prepare('SELECT u.id,u.username,u.full_name,u.role,u.avatar_url,u.avatar_color_gradient,u.bio,u.is_online FROM users u WHERE '.implode(' AND ',$where).' ORDER BY u.is_online DESC,u.last_active_at DESC LIMIT 50');
             $stmt->execute($params);
             $users = [];
             $service = new PeerMatchingService();
@@ -306,11 +315,57 @@ try {
             $json(['users'=>$users]);
 
         case 'list_requests':
-            $stmt = $db->prepare("SELECT r.*, u.username,u.full_name,u.avatar_color_gradient FROM pm_match_requests r JOIN users u ON u.id=r.requester_id WHERE r.addressee_id=? ORDER BY r.created_at DESC");
-            $stmt->execute([$uid]);
+            // Friend requests can be created from both the peer-matching modal
+            // (pm_match_requests) and profile/member Connect buttons (friendships).
+            // Return both sources so the Requests tab is the single inbox/outbox.
+            $stmt = $db->prepare("
+                SELECT r.id, r.requester_id, r.addressee_id, r.status, r.created_at,
+                       r.score, r.note, r.matched_via,
+                       u.username, u.full_name, u.avatar_url, u.avatar_color_gradient
+                FROM pm_match_requests r
+                JOIN users u ON u.id = r.requester_id
+                WHERE r.addressee_id = ?
+                UNION ALL
+                SELECT f.id, f.requester_id, f.addressee_id, f.status, f.created_at,
+                       0 AS score, NULL AS note, 'connection' AS matched_via,
+                       u.username, u.full_name, u.avatar_url, u.avatar_color_gradient
+                FROM friendships f
+                JOIN users u ON u.id = f.requester_id
+                WHERE f.addressee_id = ? AND f.status = 'pending'
+                  AND NOT EXISTS (
+                      SELECT 1 FROM pm_match_requests p
+                      WHERE p.requester_id = f.requester_id
+                        AND p.addressee_id = f.addressee_id
+                        AND p.status = 'pending'
+                  )
+                ORDER BY created_at DESC
+            ");
+            $stmt->execute([$uid, $uid]);
             $incoming = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $stmt = $db->prepare("SELECT r.*, u.username,u.full_name,u.avatar_color_gradient FROM pm_match_requests r JOIN users u ON u.id=r.addressee_id WHERE r.requester_id=? ORDER BY r.created_at DESC");
-            $stmt->execute([$uid]);
+
+            $stmt = $db->prepare("
+                SELECT r.id, r.requester_id, r.addressee_id, r.status, r.created_at,
+                       r.score, r.note, r.matched_via,
+                       u.username, u.full_name, u.avatar_url, u.avatar_color_gradient
+                FROM pm_match_requests r
+                JOIN users u ON u.id = r.addressee_id
+                WHERE r.requester_id = ?
+                UNION ALL
+                SELECT f.id, f.requester_id, f.addressee_id, f.status, f.created_at,
+                       0 AS score, NULL AS note, 'connection' AS matched_via,
+                       u.username, u.full_name, u.avatar_url, u.avatar_color_gradient
+                FROM friendships f
+                JOIN users u ON u.id = f.addressee_id
+                WHERE f.requester_id = ? AND f.status = 'pending'
+                  AND NOT EXISTS (
+                      SELECT 1 FROM pm_match_requests p
+                      WHERE p.requester_id = f.requester_id
+                        AND p.addressee_id = f.addressee_id
+                        AND p.status = 'pending'
+                  )
+                ORDER BY created_at DESC
+            ");
+            $stmt->execute([$uid, $uid]);
             $outgoing = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $json(['incoming'=>$incoming,'outgoing'=>$outgoing]);
 
@@ -318,7 +373,7 @@ try {
             if ($method !== 'POST') $fail('POST required.', 405);
             $peerId = (int)($body['addressee_id'] ?? 0);
             if ($peerId <= 0 || $peerId === $uid) $fail('A valid study buddy is required.');
-            $check = $db->prepare("SELECT id FROM users WHERE id=? AND deleted_at IS NULL AND status!='banned'");
+            $check = $db->prepare("SELECT id FROM users WHERE id=? AND deleted_at IS NULL AND status!='banned' AND COALESCE(is_system, 0)=0");
             $check->execute([$peerId]);
             if (!$check->fetchColumn()) $fail('Study buddy not found.',404);
             $a=min($uid,$peerId); $b=max($uid,$peerId);
@@ -334,15 +389,31 @@ try {
             $reqId=(int)($body['request_id'] ?? 0);
             $response=(string)($body['response'] ?? '');
             if (!in_array($response,['accepted','declined'],true)) $fail('Invalid response.');
+
+            // Requests shown in this modal can originate from either
+            // pm_match_requests or the canonical friendships table.
             $stmt=$db->prepare('SELECT * FROM pm_match_requests WHERE id=? AND addressee_id=?');
             $stmt->execute([$reqId,$uid]);
             $req=$stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$req) $fail('Request not found.',404);
-            $db->prepare('UPDATE pm_match_requests SET status=?,responded_at=CURRENT_TIMESTAMP WHERE id=?')->execute([$response,$reqId]);
-            if ($response === 'accepted') {
-                $friend=$db->prepare("INSERT INTO friendships (requester_id,addressee_id,status) VALUES (?,?, 'accepted') ON DUPLICATE KEY UPDATE status='accepted'");
-                $friend->execute([(int)$req['requester_id'],$uid]);
+
+            if ($req) {
+                $db->prepare('UPDATE pm_match_requests SET status=?,responded_at=CURRENT_TIMESTAMP WHERE id=?')->execute([$response,$reqId]);
+                if ($response === 'accepted') {
+                    $friend=$db->prepare("INSERT INTO friendships (requester_id,addressee_id,status) VALUES (?,?, 'accepted') ON DUPLICATE KEY UPDATE status='accepted'");
+                    $friend->execute([(int)$req['requester_id'],$uid]);
+                }
+                $json(['status'=>$response]);
             }
+
+            $stmt=$db->prepare("SELECT * FROM friendships WHERE id=? AND addressee_id=? AND status='pending' LIMIT 1");
+            $stmt->execute([$reqId,$uid]);
+            $friendReq=$stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$friendReq) $fail('Request not found.',404);
+
+            // friendships.status uses pending/accepted/rejected.
+            $friendStatus = $response === 'declined' ? 'rejected' : 'accepted';
+            $db->prepare('UPDATE friendships SET status=? WHERE id=? AND addressee_id=?')
+               ->execute([$friendStatus,$reqId,$uid]);
             $json(['status'=>$response]);
 
         case 'get_compatibility':
@@ -373,7 +444,7 @@ try {
             $json(['saved' => true]);
 
         case 'get_leaderboard':
-            $stmt=$db->prepare("SELECT c.*, CASE WHEN c.user_a_id=? THEN c.user_b_id ELSE c.user_a_id END AS peer_id, u.username,u.full_name,u.avatar_color_gradient,u.is_online FROM pm_compatibility c JOIN users u ON u.id=CASE WHEN c.user_a_id=? THEN c.user_b_id ELSE c.user_a_id END WHERE (c.user_a_id=? OR c.user_b_id=?) ORDER BY c.score_total DESC LIMIT 20");
+            $stmt=$db->prepare("SELECT c.*, CASE WHEN c.user_a_id=? THEN c.user_b_id ELSE c.user_a_id END AS peer_id, u.username,u.full_name,u.avatar_url,u.avatar_color_gradient,u.is_online FROM pm_compatibility c JOIN users u ON u.id=CASE WHEN c.user_a_id=? THEN c.user_b_id ELSE c.user_a_id END WHERE (c.user_a_id=? OR c.user_b_id=?) ORDER BY c.score_total DESC LIMIT 20");
             $stmt->execute([$uid,$uid,$uid,$uid]);
             $json(['leaderboard'=>$stmt->fetchAll(PDO::FETCH_ASSOC)]);
 
@@ -383,5 +454,10 @@ try {
 } catch (Throwable $e) {
     error_log('[Ecollab] peer matching endpoint: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['ok'=>false,'error'=>defined('APP_DEBUG') && APP_DEBUG ? $e->getMessage() : 'Peer matching service unavailable.']);
+    echo json_encode([
+        'ok' => false,
+        'error' => defined('APP_DEBUG') && APP_DEBUG
+            ? $e->getMessage()
+            : 'Peer matching service unavailable.'
+    ]);
 }

@@ -29,22 +29,41 @@ try {
             $items[] = ['server'=>$r['server'],'channel'=>$r['channel'],'time'=>date('g:i A',strtotime($r['created_at'])),'author'=>$r['author'],'letter'=>strtoupper(($r['full_name']?:$r['author'])[0]),'text'=>$r['content'],'grad'=>$r['grad']??'#3b82f6,#6366f1'];
         }
     } elseif ($view === 'bookmarks') {
-        // bookmarks via message_reads or a dedicated table - show pinned messages for now
         $stmt = $db->prepare("
             SELECT m.id, m.content, m.created_at, u.username AS author, u.full_name,
                    u.avatar_color_gradient AS grad, c.name AS channel, s.name AS server
-            FROM messages m
+            FROM message_bookmarks mb
+            JOIN messages m ON m.id = mb.message_id
             JOIN users u ON u.id = m.sender_id
             JOIN channels c ON c.id = m.channel_id
             JOIN servers s ON s.id = c.server_id
-            JOIN server_members sm ON sm.server_id = s.id AND sm.user_id = :uid
-            WHERE m.is_pinned = 1 AND m.is_deleted = 0
-            ORDER BY m.created_at DESC LIMIT 20
+            WHERE mb.user_id = :uid AND m.is_deleted = 0
+            ORDER BY mb.created_at DESC LIMIT 20
         ");
         $stmt->execute([':uid'=>$uid]);
         $rows = $stmt->fetchAll();
         foreach ($rows as $r) {
             $items[] = ['server'=>$r['server'],'channel'=>$r['channel'],'time'=>date('M j',strtotime($r['created_at'])),'author'=>$r['author'],'letter'=>strtoupper(($r['full_name']?:$r['author'])[0]),'text'=>$r['content'],'grad'=>$r['grad']??'#a855f7,#ec4899'];
+        }
+        // Also include discussion posts bookmarked from the Discussions feed.
+        $ts = $db->prepare("
+            SELECT t.id,t.title,t.body,t.scope,t.created_at,u.username AS author,u.full_name,
+                   u.avatar_color_gradient AS grad,s.name AS server
+            FROM threads t
+            JOIN users u ON u.id=t.created_by
+            LEFT JOIN servers s ON s.id=t.server_id
+            WHERE t.is_deleted=0 AND t.is_bookmarked=1
+              AND (t.scope='public' OR (t.scope='server' AND EXISTS(
+                SELECT 1 FROM server_members sm WHERE sm.server_id=t.server_id AND sm.user_id=:thread_uid
+              )))
+            ORDER BY t.updated_at DESC LIMIT 20
+        ");
+        $ts->execute([':thread_uid'=>$uid]);
+        foreach ($ts->fetchAll() as $r) {
+            $img=$db->prepare("SELECT file_url,file_name,mime_type FROM thread_attachments WHERE thread_id=? AND reply_id IS NULL AND mime_type LIKE 'image/%' ORDER BY id ASC LIMIT 1");
+            $img->execute([(int)$r['id']]);
+            $image=$img->fetch(PDO::FETCH_ASSOC) ?: null;
+            $items[] = ['type'=>'thread','id'=>$r['id'],'server'=>$r['server'] ?: ($r['scope']==='public'?'Public':'Discussion'),'channel'=>'Discussion','time'=>date('M j',strtotime($r['created_at'])),'author'=>$r['author'],'letter'=>strtoupper(($r['full_name']?:$r['author'])[0]),'text'=>$r['title'].($r['body']!==''?' — '.$r['body']:''),'grad'=>$r['grad']??'#a855f7,#ec4899','image_url'=>$image['file_url']??null,'image_name'=>$image['file_name']??null];
         }
     } elseif ($view === 'threads') {
         // Messages with replies (parent_id IS NULL but have children)

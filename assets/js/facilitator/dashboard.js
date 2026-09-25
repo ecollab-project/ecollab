@@ -16,37 +16,35 @@ function showPage(id, navEl) {
 }
 
 // ═══ MODALS ═══
-const annData={
-  'Quiz 2 Reminder':['📌','Don\'t forget! Quiz 2 will be on Friday. Make sure to review chapters 4 and 5.'],
-  'New Resource Added':['📘','I\'ve added new lecture notes on Backpropagation to the Resources section.'],
-  'Office Hours':['🕐','Office hours this week: Wednesday 3–5 PM. Feel free to drop by for questions.']
-};
+const annData={};
 
 function openModal(id, param) {
   closeAllDD();
   if(param) {
-    if(id==='memberDetailModal'){document.getElementById('mdTitle').textContent=param+' — Profile';document.getElementById('mdName').textContent=param;}
-    if(id==='kickModal'){document.getElementById('kickTarget').textContent=param;}
-    if(id==='warnModal'){document.getElementById('warnTarget').textContent=param;}
-    if(id==='muteModal'){document.getElementById('muteTarget').textContent=param;}
+    const setText=(eid,text)=>{const el=document.getElementById(eid);if(el)el.textContent=text;};
+    if(id==='memberDetailModal'){setText('mdTitle',param+' — Profile');setText('mdName',param);}
+    if(id==='kickModal')setText('kickTarget',param);
+    if(id==='warnModal')setText('warnTarget',param);
+    if(id==='muteModal')setText('muteTarget',param);
     if(id==='changeRoleModal'){const t=document.getElementById('crTarget');if(t)t.value=param;}
-    if(id==='sessionDetailModal'){document.getElementById('sdTitle').textContent=param;}
-    if(id==='reportDetailModal'){document.getElementById('rdTitle2').textContent='Report: '+param;}
-    if(id==='viewAnnModal'){document.getElementById('vaTitle').textContent=param;document.getElementById('vaName').textContent=param;const d=annData[param];if(d){document.getElementById('vaBody').textContent=d[1];}}
-    if(id==='editAnnModal'){document.getElementById('eaTitle').textContent='Edit: '+param;const t=document.getElementById('eaAnnTitle');if(t)t.value=param;}
+    if(id==='sessionDetailModal')setText('sdTitle',param);
+    if(id==='reportDetailModal')setText('rdTitle2','Report: '+param);
+    if(id==='viewAnnModal'){setText('vaTitle',param);setText('vaName',param);const d=annData[param];if(d)setText('vaBody',d[1]);}
+    if(id==='editAnnModal'){setText('eaTitle','Edit: '+param);const t=document.getElementById('eaAnnTitle');if(t)t.value=param;}
   }
   const o=document.getElementById(id);
-  if(o){o.classList.add('show');document.body.style.overflow='hidden';}
+  if(!o){console.warn('Modal not present:',id);return;}
+  o.classList.add('show');document.body.style.overflow='hidden';
 }
 function closeModal(id){const o=document.getElementById(id);if(o){o.classList.remove('show');document.body.style.overflow='';}}
 document.querySelectorAll('.mo').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeModal(o.id);}));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.mo.show').forEach(o=>closeModal(o.id));closeAllDD();}});
 
 // ═══ DROPDOWNS ═══
-function toggleNotif(){const d=document.getElementById('ndrop');const open=d.classList.contains('show');closeAllDD();if(!open)d.classList.add('show');}
-function togglePDrop(){const d=document.getElementById('pdrop');const open=d.classList.contains('show');closeAllDD();if(!open)d.classList.add('show');}
-function closeAllDD(){document.getElementById('ndrop').classList.remove('show');document.getElementById('pdrop').classList.remove('show');hideSD();}
-document.addEventListener('click',e=>{if(!e.target.closest('#nBtn'))document.getElementById('ndrop').classList.remove('show');if(!e.target.closest('#pchip'))document.getElementById('pdrop').classList.remove('show');if(!e.target.closest('#swrap'))hideSD();});
+function toggleNotif(){const d=document.getElementById('ndrop');if(!d)return;const open=d.classList.contains('show');closeAllDD();if(!open)d.classList.add('show');}
+function togglePDrop(){const d=document.getElementById('pdrop');if(!d)return;const open=d.classList.contains('show');closeAllDD();if(!open)d.classList.add('show');}
+function closeAllDD(){document.getElementById('ndrop')?.classList.remove('show');document.getElementById('pdrop')?.classList.remove('show');hideSD();}
+document.addEventListener('click',e=>{if(!e.target.closest('#nBtn'))document.getElementById('ndrop')?.classList.remove('show');if(!e.target.closest('#pchip'))document.getElementById('pdrop')?.classList.remove('show');if(!e.target.closest('#swrap'))hideSD();});
 
 // ═══ NOTIFICATIONS ═══
 function handleNotif(el,msg){el.classList.remove('unread');const d=el.querySelector('.ndd');if(d)d.remove();updateNB();toast(msg,'info','🔔');}
@@ -55,19 +53,59 @@ function updateNB(){const c=document.querySelectorAll('.ndi.unread').length;cons
 
 // ═══ SEARCH ═══
 function handleSearch(v){if(v.length>0)showSD();else hideSD();}
-function showSD(){if(document.getElementById('gsearch').value.length>0)document.getElementById('sdrop').classList.add('show');}
-function hideSD(){document.getElementById('sdrop').classList.remove('show');}
+function showSD(){const search=document.getElementById('gsearch'),drop=document.getElementById('sdrop');if(search&&drop&&search.value.length>0)drop.classList.add('show');}
+function hideSD(){document.getElementById('sdrop')?.classList.remove('show');}
 
 // ═══ TABS ═══
 function switchTab(btn,cid){const m=btn.closest('.md')||btn.closest('.page-section');m.querySelectorAll('.tb').forEach(b=>b.classList.remove('active'));m.querySelectorAll('.tc').forEach(c=>c.classList.remove('active'));btn.classList.add('active');const c=document.getElementById(cid);if(c)c.classList.add('active');}
 
 // ═══ ACTIONS ═══
-function createAnnouncement(){const t=document.getElementById('annTitle').value;const b=document.getElementById('annBody').value;if(!t||!b){toast('Please fill title and message','error','❌');return;}closeModal('createAnnModal');const list=document.getElementById('annList');const d=document.createElement('div');d.className='ann-item';d.innerHTML=`<div class="ann-title">📌 ${t}</div><div class="ann-body">${b}</div><div class="ann-meta">Prof. Reyes · Just now</div><div class="ri-actions"><button class="btn-sm btn-outline" onclick="openModal('editAnnModal','${t}')">Edit</button><button class="btn-sm" style="background:rgba(220,38,38,.1);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="this.closest('.ann-item').remove();toast('Announcement deleted','success','🗑')">Delete</button></div>`;list.insertBefore(d,list.firstChild);document.getElementById('annTitle').value='';document.getElementById('annBody').value='';toast('Announcement posted!','success','📢');}
+async function createAnnouncement(){
+  const serverId=Number(document.getElementById('annServer')?.value||0);
+  const title=(document.getElementById('annTitle')?.value||'').trim();
+  const message=(document.getElementById('annBody')?.value||'').trim();
+  if(!serverId){toast('Choose which server receives the announcement','error','❌');return;}
+  if(!title||!message){toast('Please fill title and message','error','❌');return;}
+  try{
+    const res=await fetch((window.ECOLLAB_BASE||'')+'/API/facilitator/server-tools.php?action=announcement',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':document.querySelector('meta[name="csrf-token"]')?.content||''},body:JSON.stringify({server_id:serverId,title,message})});
+    const data=await res.json();if(!res.ok)throw new Error(data.error||'Unable to publish');
+    closeModal('createAnnModal');document.getElementById('annTitle').value='';document.getElementById('annBody').value='';
+    toast('Published to the server announcement channel and members notified','success','📢');
+    const annPicker=document.querySelector('#page-announcements .fac-server-picker');if(annPicker){annPicker.value=String(serverId);loadFacAnnouncements(serverId);}
+  }catch(e){toast(e.message||'Unable to publish announcement','error','❌');}
+}
 function deleteAnn(btn){if(!confirm('Delete this announcement?'))return;btn.closest('.ann-item').remove();toast('Announcement deleted','success','🗑');}
 function startSession(){const t=document.getElementById('sessTitle').value;if(!t){toast('Enter a session title','error','❌');return;}closeModal('startSessionModal');toast('Study session "'+t+'" started!','success','🎓');document.getElementById('sessTitle').value='';}
-function doKick(){closeModal('kickModal');toast('Member kicked from channel','success','👢');}
-function doUpload(){closeModal('uploadResourceModal');toast('Resource uploaded!','success','✅');}
-function resolveReport(btn, action){btn.closest('.report-item').style.opacity='.4';toast('Report '+action,'success','✅');}
+async function doKick(){
+  const name=(document.getElementById('kickName')?.textContent||'').trim();
+  const csrf=document.querySelector('meta[name="csrf-token"]')?.content||FAC_DATA?.csrfToken||'';
+  const channelId=Number(FAC_DATA?.channelId||0);
+  if(!name||!channelId){toast('Member context is missing; refresh the dashboard.','error','❌');return;}
+  try{
+    const r=await fetch((window.ECOLLAB_BASE||'')+'/API/facilitator/dashboard-data.php?action=kick_member',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({channel_id:channelId,username:name,csrf_token:csrf})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d.success)throw new Error(d.error||'Unable to remove member');
+    closeModal('kickModal');toast('Member removed from the server','success','👢');
+  }catch(e){toast(e.message,'error','❌');}
+}
+function doUpload(){
+  closeModal('uploadResourceModal');
+  toast('Use Collaboration to upload a resource so it is stored and associated with the server.','info','📁');
+  window.location.href=(window.ECOLLAB_BASE||'')+'/modules/collaboration/coworkspaces.php';
+}
+async function resolveReport(btn, action){
+  const item=btn?.closest('.report-item');
+  const messageId=Number(item?.dataset?.messageId||0);
+  if(!messageId){toast('This report has no message ID attached; it cannot be resolved safely.','error','❌');return;}
+  const csrf=document.querySelector('meta[name="csrf-token"]')?.content||FAC_DATA?.csrfToken||'';
+  const resolution=(action==='removed'||action==='dismissed')?action:'dismissed';
+  try{
+    const r=await fetch((window.ECOLLAB_BASE||'')+'/API/facilitator/dashboard-data.php?action=resolve_report',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({message_id:messageId,resolution,csrf_token:csrf})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d.success)throw new Error(d.error||'Unable to resolve report');
+    item.style.opacity='.4';toast('Report '+resolution,'success','✅');
+  }catch(e){toast(e.message,'error','❌');}
+}
 function setAnnType(btn){document.querySelectorAll('.ann-type-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
 function sendFacMsg(){const inp=document.getElementById('msgInput');const msg=inp.value.trim();if(!msg)return;const feed=document.getElementById('msgFeed');const d=document.createElement('div');d.style.display='flex';d.style.gap='8px';d.innerHTML=`<div class="ract-av" style="background:linear-gradient(135deg,#e91e8c,#7c3aed);font-size:9px;font-weight:700">PR</div><div><div style="font-size:10px;font-weight:700;color:var(--pink);margin-bottom:2px">Prof. Reyes (You) · Just now</div><div style="background:rgba(233,30,140,.1);border-radius:0 9px 9px 9px;padding:8px 11px;font-size:12px;line-height:1.5">${msg}</div></div>`;feed.appendChild(d);inp.value='';feed.scrollTop=feed.scrollHeight;}
 function doLogout(){closeModal('logoutModal');toast('Signing out...','info','🚪');setTimeout(()=>{document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:14px;background:#070b14;color:#f1f5f9;font-family:Plus Jakarta Sans,sans-serif"><div style="font-size:30px">🔷</div><div style="font-size:22px;font-weight:800">Ecollab</div><div style="color:#94a3b8;font-size:13px">You have been signed out.</div><button onclick="location.reload()" style="margin-top:10px;padding:9px 22px;background:linear-gradient(135deg,#e91e8c,#7c3aed);border:none;border-radius:9px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Sign In Again</button></div>';},1000);}
@@ -162,10 +200,95 @@ function switchChannel(channelIdOrName, serverId){
   if (typeof channelIdOrName === 'number' || /^\d+$/.test(String(channelIdOrName))) {
     params.set('channel_id', channelIdOrName);
   } else {
-    // Legacy: only a channel name was provided — chat module will
-    // fall back to its default (first) channel, but we still pass
-    // the name so it can be matched/highlighted if found.
     params.set('channel_name', channelIdOrName);
   }
   window.location.href = `${base}/modules/chat/chat.php?${params.toString()}`;
 }
+
+window.addEventListener('DOMContentLoaded',()=>{const p=new URLSearchParams(location.search).get('page');if(p)showPage(p);});
+
+async function saveChannelSettings(){
+  const serverId=Number(document.getElementById('settingsServer')?.value||0);
+  if(!serverId){toast('Choose a server first','error','❌');return;}
+  const name=(document.querySelector('#page-chsettings .fg input.fi')?.value||document.getElementById('settingsServer')?.selectedOptions?.[0]?.text||'').trim();
+  const description=(document.querySelector('#page-chsettings textarea.fta')?.value||'').trim();
+  const toggles=[...document.querySelectorAll('#page-chsettings .toggle')];
+  const visibility=toggles[0]?.classList.contains('on')?'public':'private';
+  const lockChannels=!!toggles[1]?.classList.contains('on');
+  try{
+    const res=await fetch((window.ECOLLAB_BASE||'')+'/API/facilitator/server-tools.php?action=settings',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':document.querySelector('meta[name="csrf-token"]')?.content||''},body:JSON.stringify({server_id:serverId,name,description,visibility,lock_channels:lockChannels})});
+    const data=await res.json();if(!res.ok)throw new Error(data.error||'Unable to save settings');
+    toast('Server settings and channel permissions updated','success','💾');
+  }catch(e){toast(e.message||'Unable to save settings','error','❌');}
+}
+
+function escFac(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+async function facOwnedServers(){
+  const r=await fetch((window.ECOLLAB_BASE||'')+'/API/facilitator/server-tools.php?action=servers');const d=await r.json();if(!r.ok)throw new Error(d.error||'Unable to load servers');return d.servers||[];
+}
+function facServerPicker(pageId,servers,onChange){
+  const page=document.getElementById(pageId);if(!page||page.querySelector('.fac-server-picker'))return;
+  const row=page.querySelector('.page-title-row');if(!row)return;
+  const wrap=document.createElement('div');wrap.className='fac-server-picker';wrap.style.cssText='margin:0 0 12px;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:10px';
+  wrap.innerHTML='<label class="fl">Server</label><select class="fi"><option value="">Choose a server...</option>'+servers.map(s=>'<option value="'+s.id+'">'+(((s.type||'').toLowerCase()==='private'||(s.type||'').toLowerCase()==='academic')?'🔒 Private':'🌐 Public')+' — '+escFac(s.name)+'</option>').join('')+'</select>';
+  row.insertAdjacentElement('afterend',wrap);wrap.querySelector('select').addEventListener('change',e=>onChange(Number(e.target.value||0)));
+}
+async function facGet(action,sid){if(!sid)return null;const r=await fetch((window.ECOLLAB_BASE||'')+'/API/facilitator/server-tools.php?action='+encodeURIComponent(action)+'&server_id='+sid);const d=await r.json();if(!r.ok)throw new Error(d.error||'Unable to load data');return d;}
+async function loadFacResources(sid){const el=document.getElementById('resourcesList');if(!el||!sid)return;try{const d=await facGet('resources',sid);el.innerHTML=(d.files||[]).map(f=>'<div class="ract-row"><div style="font-size:18px">📎</div><div class="ract-msg" style="flex:1"><strong>'+escFac(f.original_name||f.file_name)+'</strong><div style="font-size:10px;color:var(--muted2)">#'+escFac(f.channel_name||'server')+' · '+escFac(f.username)+'</div></div><a class="btn-sm btn-outline" href="'+escFac((window.ECOLLAB_BASE||'')+'/'+String(f.file_path||'').replace(/^\//,''))+'" download>Download</a></div>').join('')||'<div class="dashboard-empty-state">No files in this server.</div>';}catch(e){toast(e.message,'error','❌');}}
+async function loadFacWorkspace(sid){const el=document.getElementById('filesList');if(!el||!sid)return;try{const d=await facGet('workspace',sid);el.innerHTML=(d.items||[]).map(x=>'<div class="ract-row"><div style="font-size:18px">'+(x.item_type==='whiteboard'?'🧠':'📄')+'</div><div class="ract-msg" style="flex:1"><strong>'+escFac(x.item_name)+'</strong><div style="font-size:10px;color:var(--muted2)">Public · view only'+(x.channel_name?' · #'+escFac(x.channel_name):'')+'</div></div><span class="status-pill sp-a">View only</span></div>').join('')||'<div class="dashboard-empty-state">No public Coworkspace documents or whiteboards.</div>';}catch(e){toast(e.message,'error','❌');}}
+async function loadFacActivity(sid){const page=document.getElementById('page-useractivity');const tb=page?.querySelector('tbody');if(!tb||!sid)return;try{const d=await facGet('activity',sid);tb.innerHTML=(d.users||[]).map(u=>'<tr><td><strong>'+escFac(u.full_name||u.username)+'</strong><div class="u-handle">@'+escFac(u.username)+'</div></td><td>'+Number(u.messages||0)+'</td><td>'+Number(u.voice_joins||0)+'</td><td colspan="2">'+Math.round(Number(u.voice_seconds||0)/60)+' min voice</td><td>'+escFac(u.last_message||'—')+'</td><td><span class="status-pill sp-a">Member</span></td></tr>').join('')||'<tr><td colspan="7" class="dashboard-empty-state">No other users in this server.</td></tr>';}catch(e){toast(e.message,'error','❌');}}
+
+const FAC_REPORT_REASON={spam:'🗑 Spam or self-promotion',harassment:'😡 Harassment or bullying',inappropriate:'🔞 Inappropriate content',phishing:'🎣 Phishing or scam',other:'⚠️ Other'};
+let facPendingResolution=null;
+function facResolveMenu(sid,reportId,uid,userName='Reported user'){
+  facPendingResolution={sid:Number(sid),reportId:Number(reportId),uid:Number(uid)};
+  const target=document.getElementById('resolveReportUser');
+  if(target)target.textContent=userName;
+  openModal('resolveReportModal');
+}
+async function submitReportResolution(kind,duration=null){
+  if(!facPendingResolution)return;
+  const p=facPendingResolution;
+  closeModal('resolveReportModal');
+  await facModerate(p.sid,p.uid,kind,p.reportId,duration);
+}
+async function facModerate(sid,uid,kind,reportId=0,duration=null){
+  const label=kind==='suspend'?'Suspend for 24 hours':kind==='mute'?'Mute chat for 24 hours':kind==='ban'?'Ban from server':kind;
+  try{const r=await fetch((window.ECOLLAB_BASE||'')+'/API/facilitator/server-tools.php?action=moderate',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':document.querySelector('meta[name="csrf-token"]')?.content||''},body:JSON.stringify({server_id:sid,target_user_id:uid,kind,report_id:reportId,duration_mins:duration,reason:'Facilitator action from report'})});const d=await r.json();if(!r.ok)throw new Error(d.error||'Action failed');toast(label+' applied','success','✅');loadFacReports(sid);loadFacBanned(sid);}catch(e){toast(e.message,'error','❌');}
+}
+function facFormatAnnouncement(content){
+  const text=String(content||'').replace(/^📢\s*/,'');
+  const parts=text.split(/\n\n/);
+  return {title:(parts.shift()||'Announcement').trim(),body:parts.join('\n\n').trim()};
+}
+async function loadFacAnnouncements(sid){
+  const card=document.getElementById('annList');if(!card||!sid)return;
+  card.innerHTML='<div class="dashboard-empty-state">Loading announcements...</div>';
+  try{
+    const d=await facGet('announcements',sid),items=d.announcements||[];
+    if(!items.length){card.innerHTML='<div class="dashboard-empty-state">No announcements have been published in this server yet.</div>';return;}
+    card.innerHTML='<div class="ch-bar"><div class="ch-title">Published Announcements</div></div>'+items.map(a=>{const x=facFormatAnnouncement(a.content);const when=a.created_at?new Date(String(a.created_at).replace(' ','T')).toLocaleString():'';
+      return '<div class="ann-item"><div class="ann-icon">📢</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:800">'+escFac(x.title)+'</div><div style="font-size:11.5px;color:var(--muted2);white-space:pre-wrap;margin-top:4px">'+escFac(x.body)+'</div><div class="ri-meta">'+escFac(a.author_name||'Facilitator')+(when?' · '+escFac(when):'')+' · #'+escFac(a.channel_name||'announcements')+' <span class="visibility-badge '+(Number(a.is_private)?'visibility-private':'visibility-public')+'">'+(Number(a.is_private)?'🔒 Private':'🌐 Public')+'</span></div></div><a class="btn-sm btn-outline" style="text-decoration:none" href="'+(window.ECOLLAB_BASE||'')+'/modules/chat/chat.php?server_id='+Number(sid)+'&channel_id='+Number(a.channel_id)+'">View in Chat</a></div>';
+    }).join('');
+  }catch(e){card.innerHTML='<div class="dashboard-empty-state">Unable to load announcements.</div>';toast(e.message,'error','❌');}
+}
+async function loadFacReports(sid){
+  const page=document.getElementById('page-reports'),card=document.getElementById('facReportsList')||page?.querySelector('.card');if(!card||!sid)return;
+  try{const d=await facGet('reports',sid);const rows=(d.reports||[]).map(r=>{const pending=r.status==='pending'||r.status==='reviewing';return '<div class="fac-report-row"><div class="fac-report-main"><div><span class="fac-report-label">User:</span> <strong>'+escFac(r.reported_name||r.reported_username||'Unknown user')+'</strong></div><div><span class="fac-report-label">Report reason:</span> '+escFac(FAC_REPORT_REASON[r.reason]||r.reason||'Other')+'</div><div class="fac-report-message"><span class="fac-report-label">The message:</span> '+escFac(r.message_content||'[Message unavailable or deleted]')+'</div>'+(r.description?'<div class="fac-report-details"><span class="fac-report-label">Details:</span> '+escFac(r.description)+'</div>':'')+'<div class="ri-meta">Reported by '+escFac(r.reporter_name||r.reporter_username||'Unknown')+(r.channel_name?' · #'+escFac(r.channel_name):'')+'</div></div><div class="fac-report-side"><span class="status-pill '+(pending?'sp-p':'sp-a')+'">'+escFac(r.status||'pending')+'</span>'+(pending&&r.reported_user_id?'<button class="btn-primary fac-resolve-btn" data-sid="'+Number(sid)+'" data-report-id="'+Number(r.id)+'" data-user-id="'+Number(r.reported_user_id)+'" data-user-name="'+encodeURIComponent(r.reported_name||r.reported_username||'Reported user')+'">Resolve</button>':'')+'</div></div>';}).join('');card.innerHTML='<div class="ch-bar"><div class="ch-title">Server Reports</div></div>'+ (rows||'<div class="dashboard-empty-state">No reports for this server.</div>');
+    card.querySelectorAll('.fac-resolve-btn').forEach(btn=>btn.addEventListener('click',()=>facResolveMenu(Number(btn.dataset.sid),Number(btn.dataset.reportId),Number(btn.dataset.userId),decodeURIComponent(btn.dataset.userName||'Reported user'))));
+  }catch(e){toast(e.message,'error','❌');}
+}
+async function loadFacBanned(sid){const page=document.getElementById('page-banned');const card=document.getElementById('facBannedList')||page?.querySelector('.card');if(!card||!sid)return;try{const d=await facGet('banned',sid);card.innerHTML='<div class="ch-bar"><div class="ch-title">Banned Members</div></div>'+((d.users||[]).map(u=>'<div class="ract-row"><div class="ract-msg" style="flex:1"><strong>'+escFac(u.full_name||u.username)+'</strong> · '+escFac(u.reason||'No reason')+'</div><button class="btn-sm btn-outline" onclick="facModerate('+sid+','+Number(u.target_user_id)+',\'unban\')">Unban</button></div>').join('')||'<div class="dashboard-empty-state">No banned users for this server.</div>');}catch(e){toast(e.message,'error','❌');}}
+async function loadFacPermissions(sid){
+  if(!sid)return;
+  try{const d=await facGet('permissions',Number(sid)),p=d.permissions||{};[['permInvites','allow_member_invites'],['permMessages','allow_member_messages'],['permVoice','allow_voice'],['permPolls','allow_polls'],['permFiles','allow_files']].forEach(([id,k])=>document.getElementById(id)?.classList.toggle('on',Number(p[k]??1)===1));}catch(e){toast(e.message,'error','❌');}
+}
+async function saveFacPermissions(){
+  const sid=Number(document.getElementById('permServer')?.value||0);if(!sid){toast('Choose a server first','error','❌');return;}
+  const all=confirm('Apply these permission changes to ALL servers you own?\n\nOK = all owned servers\nCancel = only the selected server');
+  if(!all&&!confirm('Apply these permission changes only to the selected server?'))return;
+  const on=id=>!!document.getElementById(id)?.classList.contains('on');
+  try{const r=await fetch((window.ECOLLAB_BASE||'')+'/API/facilitator/server-tools.php?action=permissions',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':document.querySelector('meta[name="csrf-token"]')?.content||''},body:JSON.stringify({server_id:sid,apply_scope:all?'all':'server',allow_member_invites:on('permInvites'),allow_member_messages:on('permMessages'),allow_voice:on('permVoice'),allow_polls:on('permPolls'),allow_files:on('permFiles')})});const d=await r.json();if(!r.ok)throw new Error(d.error||'Unable to save permissions');toast('Permissions saved','success','✅');}catch(e){toast(e.message,'error','❌');}
+}
+async function initFacilitatorServerPages(){try{const s=await facOwnedServers();facServerPicker('page-announcements',s,loadFacAnnouncements);facServerPicker('page-resources',s,loadFacResources);facServerPicker('page-files',s,loadFacWorkspace);facServerPicker('page-useractivity',s,loadFacActivity);facServerPicker('page-reports',s,loadFacReports);facServerPicker('page-banned',s,loadFacBanned);facServerPicker('page-polls',s,()=>toast('Polls and quizzes will use channels from the selected server','info','📊'));}catch(e){console.error('Facilitator server pages:',e);}}
+window.addEventListener('DOMContentLoaded',initFacilitatorServerPages);

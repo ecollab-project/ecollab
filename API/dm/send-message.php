@@ -4,6 +4,9 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
+require_once dirname(__DIR__, 2) . '/services/OllamaService.php';
+require_once dirname(__DIR__, 2) . '/services/JarredTools.php';
+require_once dirname(__DIR__, 2) . '/services/JarredActionService.php';
 
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
@@ -18,22 +21,34 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $body   = json_decode(file_get_contents('php://input'), true) ?? [];
 $convId = (int)($body['conversation_id'] ?? 0);
 $text   = trim($body['body'] ?? '');
+$attachmentPath = trim((string)($body['attachment_path'] ?? ''));
+$attachmentName = trim((string)($body['attachment_name'] ?? ''));
+$attachmentSize = max(0, (int)($body['attachment_size'] ?? 0));
+$attachmentMime = trim((string)($body['attachment_mime'] ?? ''));
+$activeServerId = isset($body['active_server_id']) ? (int)$body['active_server_id'] : null;
+$jarredSurface = [
+    'surface' => trim((string)($body['surface'] ?? 'dm')),
+    'channel_id' => (int)($body['channel_id'] ?? 0),
+    'voice_channel_id' => (int)($body['voice_channel_id'] ?? 0),
+    'workspace_id' => (int)($body['workspace_id'] ?? 0),
+    'document_id' => (int)($body['document_id'] ?? 0),
+    'whiteboard_id' => (int)($body['whiteboard_id'] ?? 0),
+];
 
-if (!$convId || $text === '' || mb_strlen($text) > 4000) {
+if (!$convId || ($text === '' && $attachmentPath === '') || mb_strlen($text) > 4000) {
     http_response_code(400);
-    echo json_encode(['error' => 'conversation_id and non-empty body (max 4000 chars) required']);
+    echo json_encode(['error' => 'conversation_id and a message or attachment are required (max 4000 chars)']);
     exit;
 }
 
 try {
     $db = Database::getInstance();
 
-    // Verify this user is part of the conversation.
-    $check = $db->prepare("
-        SELECT id, user_a, user_b FROM dm_conversations
-        WHERE id = :cid AND (user_a = :me OR user_b = :me2)
-        LIMIT 1
-    ");
+    $check = $db->prepare(
+        "SELECT id, user_a, user_b FROM dm_conversations
+         WHERE id = :cid AND (user_a = :me OR user_b = :me2)
+         LIMIT 1"
+    );
     $check->execute([':cid' => $convId, ':me' => $me['id'], ':me2' => $me['id']]);
     $conv = $check->fetch(PDO::FETCH_ASSOC);
 
@@ -43,58 +58,219 @@ try {
         exit;
     }
 
-    // The message itself is the core operation and must not be rolled back
-    // because an optional read/notification table is missing on an older local
-    // database.
-    $ins = $db->prepare(
-        "INSERT INTO dm_messages (conversation_id, sender_id, body) VALUES (:cid, :uid, :body)"
+    $recipientId = ((int)$conv['user_a'] === (int)$me['id'])
+        ? (int)$conv['user_b']
+        : (int)$conv['user_a'];
+
+    $recipientStmt = $db->prepare(
+        "SELECT id, username, full_name, avatar_url, avatar_color_gradient, is_system
+         FROM users
+         WHERE id = :id AND deleted_at IS NULL
+         LIMIT 1"
     );
-    $ins->execute([':cid' => $convId, ':uid' => $me['id'], ':body' => $text]);
+    $recipientStmt->execute([':id' => $recipientId]);
+    $recipient = $recipientStmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$recipient) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Recipient not found']);
+        exit;
+    }
+
+    $isAiConversation =
+        (int)($recipient['is_system'] ?? 0) === 1
+        && ($recipient['username'] ?? '') === 'ecollab_ai';
+
+    $ins = $db->prepare(
+        "INSERT INTO dm_messages (conversation_id, sender_id, body, attachment_path, attachment_name, attachment_size, attachment_mime)
+         VALUES (:cid, :uid, :body, :apath, :aname, :asize, :amime)"
+    );
+    $ins->execute([':cid' => $convId, ':uid' => $me['id'], ':body' => $text, ':apath' => $attachmentPath ?: null, ':aname' => $attachmentName ?: null, ':asize' => $attachmentSize ?: null, ':amime' => $attachmentMime ?: null]);
     $msgId = (int)$db->lastInsertId();
 
-    $db->prepare(
-        "UPDATE dm_conversations SET last_message = :body, last_msg_at = NOW() WHERE id = :cid"
-    )->execute([':body' => mb_substr($text, 0, 120), ':cid' => $convId]);
+    $createdStmt = $db->prepare("SELECT created_at FROM dm_messages WHERE id = :id LIMIT 1");
+    $createdStmt->execute([':id' => $msgId]);
+    $createdAt = (string)($createdStmt->fetchColumn() ?: gmdate('Y-m-d H:i:s'));
 
-    // Read cursor is supplementary. Older installations may not have the
-    // dm_reads table or its current key yet; that must not make sending fail.
+    $db->prepare(
+        "UPDATE dm_conversations SET last_message = :body, last_msg_at = :created_at WHERE id = :cid"
+    )->execute([
+        ':body' => mb_substr($text !== '' ? $text : ('📎 ' . ($attachmentName ?: 'Attachment')), 0, 120),
+        ':created_at' => $createdAt,
+        ':cid' => $convId,
+    ]);
+
     try {
         $db->prepare(
             "INSERT INTO dm_reads (user_id, conversation_id, last_read_at)
-             VALUES (:uid, :cid, NOW())
-             ON DUPLICATE KEY UPDATE last_read_at = NOW()"
+             VALUES (:uid, :cid, UTC_TIMESTAMP())
+             ON DUPLICATE KEY UPDATE last_read_at = UTC_TIMESTAMP()"
         )->execute([':uid' => $me['id'], ':cid' => $convId]);
     } catch (Throwable $e) {
         error_log('[dm/send-message] read cursor update skipped: ' . $e->getMessage());
     }
 
-    $recipientId = ($conv['user_a'] == $me['id']) ? (int)$conv['user_b'] : (int)$conv['user_a'];
+    if (!$isAiConversation) {
+        try {
+            $db->prepare(
+                "INSERT INTO notifications
+                    (recipient_id, actor_id, type, title, body, link_url, icon, is_read)
+                 VALUES
+                    (:recipient, :actor, 'message', :title, :body2, :link, '💬', 0)"
+            )->execute([
+                ':recipient' => $recipientId,
+                ':actor'     => (int)$me['id'],
+                ':title'     => ($me['full_name'] ?: $me['username']) . ' sent you a message',
+                ':body2'     => mb_substr($text, 0, 500),
+                ':link'      => BASE_URL . '/modules/chat/chat.php?dm=' . $convId,
+            ]);
+        } catch (Throwable $e) {
+            error_log('[dm/send-message] notification insert skipped: ' . $e->getMessage());
+        }
 
-    // Notifications are supplementary. Older databases may have a legacy
-    // notifications schema; sending the DM must still succeed in that case.
-    try {
-        $db->prepare(
-            "INSERT INTO notifications (user_id, type, title, body, ref_id)
-             VALUES (:uid, 'dm', :title, :body2, :ref)"
-        )->execute([
-            ':uid'   => $recipientId,
-            ':title' => ($me['full_name'] ?: $me['username']) . ' sent you a message',
-            ':body2' => mb_substr($text, 0, 120),
-            ':ref'   => $msgId,
+        echo json_encode([
+            'success'      => true,
+            'message_id'   => $msgId,
+            'sender_id'    => $me['id'],
+            'body'         => $text,
+            'attachment_path' => $attachmentPath,
+            'attachment_name' => $attachmentName,
+            'attachment_size' => $attachmentSize,
+            'attachment_mime' => $attachmentMime,
+            'created_at'   => $createdAt,
+            'recipient_id' => $recipientId,
+            'is_ai'        => false,
         ]);
-    } catch (Throwable $e) {
-        error_log('[dm/send-message] notification insert skipped: ' . $e->getMessage());
+        exit;
     }
 
-    echo json_encode([
-        'success'      => true,
-        'message_id'   => $msgId,
-        'sender_id'    => $me['id'],
-        'body'         => $text,
-        'created_at'   => date('Y-m-d H:i:s'),
-        'recipient_id' => $recipientId,
-    ]);
+    try {
+        $historyStmt = $db->prepare(
+            "SELECT m.sender_id, m.body
+             FROM dm_messages m
+             WHERE m.conversation_id = :cid AND m.is_deleted = 0
+             ORDER BY m.id DESC
+             LIMIT 12"
+        );
+        $historyStmt->execute([':cid' => $convId]);
+        $history = array_reverse($historyStmt->fetchAll(PDO::FETCH_ASSOC));
 
+        $messages = [];
+        foreach ($history as $row) {
+            $messages[] = [
+                'role' => (int)$row['sender_id'] === $recipientId ? 'assistant' : 'user',
+                'content' => (string)$row['body'],
+            ];
+        }
+
+        $jarredTools = new JarredTools();
+
+        // Central action authority runs before Qwen. PHP owns action state,
+        // authorization and execution; the model never receives write access.
+        $jarredActions = new JarredActionService();
+        $actionResult = $jarredActions->handleMessage((int)$me['id'], $convId, $text, $activeServerId, $jarredSurface);
+        if ($actionResult !== null) {
+            $aiText = (string)$actionResult['reply'];
+            $aiInsert = $db->prepare("INSERT INTO dm_messages (conversation_id, sender_id, body) VALUES (:cid, :uid, :body)");
+            $aiInsert->execute([':cid'=>$convId, ':uid'=>$recipientId, ':body'=>$aiText]);
+            $aiMsgId = (int)$db->lastInsertId();
+            $aiCreatedStmt = $db->prepare("SELECT created_at FROM dm_messages WHERE id=:id LIMIT 1");
+            $aiCreatedStmt->execute([':id'=>$aiMsgId]);
+            $aiCreatedAt = (string)($aiCreatedStmt->fetchColumn() ?: gmdate('Y-m-d H:i:s'));
+            $db->prepare("UPDATE dm_conversations SET last_message=:body,last_msg_at=:created_at WHERE id=:cid")
+               ->execute([':body'=>mb_substr($aiText,0,120),':created_at'=>$aiCreatedAt,':cid'=>$convId]);
+            echo json_encode([
+                'success'=>true,'message_id'=>$msgId,'sender_id'=>$me['id'],'body'=>$text,'created_at'=>$createdAt,
+                'recipient_id'=>$recipientId,'is_ai'=>true,
+                'ai_message'=>['id'=>$aiMsgId,'conversation_id'=>$convId,'sender_id'=>$recipientId,'sender_name'=>'Jarred','sender_username'=>$recipient['username'],'sender_avatar_url'=>$recipient['avatar_url']??'','sender_gradient'=>$recipient['avatar_color_gradient']?:'#6366f1,#8b5cf6','body'=>$aiText,'created_at'=>$aiCreatedAt],
+                'ai_action'=>$actionResult['action'] ?? null,
+            ]);
+            exit;
+        }
+
+        $jarredContext = $jarredTools->contextForPrompt((int)$me['id'], $text, $activeServerId, $jarredSurface);
+
+        // qwen3:1.7b on this VPS does not reliably emit native Ollama tool_calls.
+        // Use permission-scoped context routing, then let Qwen answer naturally from those facts.
+        $ollama = new OllamaService();
+        if ($jarredContext !== '') {
+            array_unshift($messages, [
+                'role' => 'system',
+                'content' => "Authoritative live eCollab context for the current request. Use these application results as facts. Do not claim you lack access when the requested data is present here.\n\n" . $jarredContext,
+            ]);
+        }
+        $result = $ollama->generate(
+            $messages,
+            'You are Jarred, eCollab\'s built-in AI assistant. Your name is Jarred; never address the user as Jarred unless they explicitly say that is their name. Talk naturally and casually when the user is casual. You can joke, react, and have ordinary conversation without turning every emotional or joking remark into a scripted support response. Be warm but not patronizing. Avoid phrases like "let\'s take a break", "let\'s reset", "you\'re safe here", or repetitive offers of support unless the situation genuinely calls for them. Permission-scoped eCollab context may be supplied with the conversation; when present, it is authoritative. Your CURRENT eCollab capabilities are: create temporary public/private voice rooms through the server-authorized Jarred workflow; answer from authorized eCollab context; report active/online members; explain deterministic peer matches; search authorized message context when supplied; describe accessible servers/channels; discuss authorized Coworkspace, document, and whiteboard context; recommend academic library material; answer eCollab questions; and have normal conversation. Do NOT claim you can create/delete permanent channels, send messages on the user\'s behalf, join or place voice/video calls, change roles or permissions, kick/ban/mute users, edit documents/whiteboards yourself, or perform any other action unless the backend explicitly provides that action capability. When asked what you can do, describe only these current capabilities and distinguish helping/explaining from actually performing actions. Never invent users, messages, presence, servers, channels, documents, permissions, features, or compatibility scores. If required eCollab context is absent, say exactly what is missing. Keep replies concise unless the user asks for detail.',
+            400
+        );
+
+        $aiText = trim((string)($result['text'] ?? ''));
+        if ($aiText === '') {
+            throw new RuntimeException('AI returned an empty response');
+        }
+
+        $aiInsert = $db->prepare(
+            "INSERT INTO dm_messages (conversation_id, sender_id, body)
+             VALUES (:cid, :uid, :body)"
+        );
+        $aiInsert->execute([
+            ':cid' => $convId,
+            ':uid' => $recipientId,
+            ':body' => $aiText,
+        ]);
+        $aiMsgId = (int)$db->lastInsertId();
+
+        $aiCreatedStmt = $db->prepare("SELECT created_at FROM dm_messages WHERE id = :id LIMIT 1");
+        $aiCreatedStmt->execute([':id' => $aiMsgId]);
+        $aiCreatedAt = (string)($aiCreatedStmt->fetchColumn() ?: gmdate('Y-m-d H:i:s'));
+
+        $db->prepare(
+            "UPDATE dm_conversations SET last_message = :body, last_msg_at = :created_at WHERE id = :cid"
+        )->execute([
+            ':body' => mb_substr($aiText, 0, 120),
+            ':created_at' => $aiCreatedAt,
+            ':cid' => $convId,
+        ]);
+
+        echo json_encode([
+            'success' => true,
+            'message_id' => $msgId,
+            'sender_id' => $me['id'],
+            'body' => $text,
+            'created_at' => $createdAt,
+            'recipient_id' => $recipientId,
+            'is_ai' => true,
+            'ai_message' => [
+                'id' => $aiMsgId,
+                'conversation_id' => $convId,
+                'sender_id' => $recipientId,
+                'sender_name' => 'Jarred',
+                'sender_username' => $recipient['username'],
+                'sender_avatar_url' => $recipient['avatar_url'] ?? '',
+                'sender_gradient' => $recipient['avatar_color_gradient'] ?: '#6366f1,#8b5cf6',
+                'body' => $aiText,
+                'created_at' => $aiCreatedAt,
+            ],
+            'ai_usage' => [
+                'input_tokens' => $result['input_tokens'] ?? null,
+                'output_tokens' => $result['output_tokens'] ?? null,
+                'model' => $result['model'] ?? null,
+            ],
+        ]);
+    } catch (Throwable $aiError) {
+        error_log('[dm/send-message][AI] ' . $aiError->getMessage());
+        echo json_encode([
+            'success' => true,
+            'message_id' => $msgId,
+            'sender_id' => $me['id'],
+            'body' => $text,
+            'created_at' => $createdAt,
+            'recipient_id' => $recipientId,
+            'is_ai' => true,
+            'ai_error' => 'AI is temporarily unavailable',
+        ]);
+    }
 } catch (Throwable $e) {
     error_log('[dm/send-message] ' . $e->getMessage());
     http_response_code(500);

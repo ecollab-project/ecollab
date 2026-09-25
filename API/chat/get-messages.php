@@ -31,7 +31,7 @@ try {
     $roleStmt->execute([':uid' => $user['id']]);
     $userRole = $roleStmt->fetchColumn() ?: 'student';
     $roleStmt->closeCursor();
-    $isPrivileged = in_array($userRole, ['admin', 'super_admin', 'moderator'], true);
+    $isPrivileged = in_array($userRole, ['admin', 'super_admin'], true);
 
     if (!$isPrivileged) {
         // Use a double-quoted SQL string so MySQL receives real newlines
@@ -62,7 +62,7 @@ try {
 
         $canManage = in_array(
             $access['server_role'],
-            ['owner', 'admin', 'moderator'],
+            ['owner', 'admin'],
             true
         ) || (int)$access['created_by'] === (int)$user['id'];
 

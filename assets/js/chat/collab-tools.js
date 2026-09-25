@@ -299,7 +299,7 @@ async function loadCode() {
     const { snippet } = await collabFetch('code', 'get', {}, 'GET');
     _codeVersion = parseInt(snippet.version) || 0;
     pane.innerHTML = `
-      <div class="code-toolbar">
+      <div class="code-toolbar" data-snippet-id="${escH(snippet.id || '')}">
         <input id="codeTitle" class="code-title-input" value="${escH(snippet.title || 'Untitled')}" placeholder="Snippet title…" />
         <select id="codeLang" onchange="_scheduleCodeSave()" class="code-lang-select">
           ${CODE_LANGS.map(l => `<option value="${l}" ${l === (snippet.language||'javascript') ? 'selected':''}>${l}</option>`).join('')}

@@ -1,3 +1,4 @@
+@import url('../responsive.css');
 /* Ecollab profile viewer — eye-friendly dark treatment.
  * Loaded after the base chat styles and intentionally uses !important where
  * profile-view.js injects inline styles at runtime.

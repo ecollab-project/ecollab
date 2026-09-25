@@ -20,6 +20,8 @@ $userService = new UserService();
 $dashData    = $userService->getFacilitatorDashboardData($user['id']);
 
 $grad     = $user['avatar_color_gradient'] ?? '#e91e8c,#7c3aed';
+$avatarUrl = (string)($user['avatar_url'] ?? '');
+$avatarStyle = $avatarUrl !== '' ? "background-image:url('" . htmlspecialchars($avatarUrl, ENT_QUOTES) . "');background-size:cover;background-position:center" : "background:linear-gradient(135deg," . htmlspecialchars($grad) . ")";
 $parts    = explode(',', $grad . ',#7c3aed');
 $c1       = trim($parts[0]);
 $c2       = trim($parts[1]);
@@ -29,7 +31,22 @@ $name     = htmlspecialchars($user['full_name'] ?: $user['username']);
 $hour     = (int)date('G');
 $greeting = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
 
-$stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'messages_today' => 156, 'study_sessions' => 12];
+$stats = $dashData['stats'] ?? ['total_members' => 0, 'active_today' => 0, 'messages_today' => 0, 'study_sessions' => 0];
+
+// Load facilitator-managed servers before any page or modal renders.
+// Previously this list was initialized halfway through the Dashboard markup,
+// so direct navigation to Announcements/Settings could render empty selects.
+$facDashboardServers = [];
+try {
+  require_once ROOT_PATH . '/services/ServerMonitoringService.php';
+  $facDashboardServers = (new ServerMonitoringService())->getFacilitatorServers((int)$user['id']);
+} catch (Throwable $e) {
+  error_log('[FacilitatorDashboard] server list: ' . $e->getMessage());
+}
+$facOwnedServers = array_values(array_filter(
+  $facDashboardServers,
+  static fn(array $srv): bool => (int)($srv['owner_id'] ?? 0) === (int)$user['id']
+));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -89,7 +106,7 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
           </div>
         </div>
         <div class="prof-chip" id="pchip" onclick="togglePDrop()">
-          <div class="av" style="background:linear-gradient(135deg,<?= htmlspecialchars($c1) ?>,<?= htmlspecialchars($c2) ?>)"><?= htmlspecialchars($initials) ?></div>
+          <div class="av" style="<?= $avatarStyle ?>"><?= $avatarUrl === '' ? htmlspecialchars($initials) : '' ?></div>
           <div>
             <div class="pn"><?= $name ?></div>
             <div class="pr">Facilitator</div>
@@ -132,32 +149,32 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
               <div class="sc-label">Total Members</div>
               <div class="sc-icon">👥</div>
             </div>
-            <div class="sc-val"><?= (int)($stats['total_members'] ?? 72) ?></div>
-            <div class="sc-sub">+4 this week</div>
+            <div class="sc-val"><?= (int)($stats['total_members'] ?? 0) ?></div>
+            <div class="sc-sub">Current member count</div>
           </div>
           <div class="stat-card sc2" onclick="openModal('activeModal')">
             <div class="sc-top">
               <div class="sc-label">Active Today</div>
               <div class="sc-icon">⚡</div>
             </div>
-            <div class="sc-val"><?= (int)($stats['active_today'] ?? 38) ?></div>
-            <div class="sc-sub"><?= round((int)($stats['active_today'] ?? 38) / max(1, (int)($stats['total_members'] ?? 72)) * 100, 1) ?>% of members</div>
+            <div class="sc-val"><?= (int)($stats['active_today'] ?? 0) ?></div>
+            <div class="sc-sub"><?= round((int)($stats['active_today'] ?? 0) / max(1, (int)($stats['total_members'] ?? 0)) * 100, 1) ?>% of members</div>
           </div>
           <div class="stat-card sc3" onclick="openModal('messagesModal')">
             <div class="sc-top">
               <div class="sc-label">Messages Today</div>
               <div class="sc-icon">💬</div>
             </div>
-            <div class="sc-val"><?= (int)($stats['messages_today'] ?? 156) ?></div>
-            <div class="sc-sub">+23% from yesterday</div>
+            <div class="sc-val"><?= (int)($stats['messages_today'] ?? 0) ?></div>
+            <div class="sc-sub">Recorded today</div>
           </div>
           <div class="stat-card sc4" onclick="showPage('sessions')">
             <div class="sc-top">
               <div class="sc-label">Study Sessions</div>
               <div class="sc-icon">🕐</div>
             </div>
-            <div class="sc-val"><?= (int)($stats['study_sessions'] ?? 12) ?></div>
-            <div class="sc-sub">+3 this week</div>
+            <div class="sc-val"><?= (int)($stats['study_sessions'] ?? 0) ?></div>
+            <div class="sc-sub">Recorded sessions</div>
           </div>
         </div>
 
@@ -212,7 +229,7 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
                           </div>
                         </div>
                       </td>
-                      <td><?= (int)($a['messages'] ?? 0) ?> <span class="delta pos">+<?= rand(5, 15) ?>%</span></td>
+                      <td><?= (int)($a['messages'] ?? 0) ?></td>
                       <td><?= (int)($a['sessions'] ?? 0) ?></td>
                       <td><?= (int)($a['wb_edits'] ?? 0) ?></td>
                       <td><?= (int)($a['files_uploaded'] ?? 0) ?></td>
@@ -220,59 +237,7 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
                       <td><span class="status-pill <?= $statusClass ?>"><?= $statusLabel ?></span></td>
                     </tr>
                   <?php endforeach; ?>
-                  <?php if (empty($dashData['activity'])): ?>
-                    <tr onclick="openModal('memberDetailModal','Fatima_Student')">
-                      <td>
-                        <div class="user-cell">
-                          <div class="u-av" style="background:linear-gradient(135deg,#e91e8c,#7c3aed)">F</div>
-                          <div>
-                            <div class="u-name">Fatima_Student</div>
-                            <div class="u-handle">@fatima.student</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>42 <span class="delta pos">+12%</span></td>
-                      <td>3</td>
-                      <td>8</td>
-                      <td>4</td>
-                      <td style="color:var(--muted2)">10m ago</td>
-                      <td><span class="status-pill sp-va">Very Active</span></td>
-                    </tr>
-                    <tr onclick="openModal('memberDetailModal','John_Doe')">
-                      <td>
-                        <div class="user-cell">
-                          <div class="u-av" style="background:linear-gradient(135deg,#2563eb,#06b6d4)">J</div>
-                          <div>
-                            <div class="u-name">John_Doe</div>
-                            <div class="u-handle">@john.doe</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>35 <span class="delta pos">+8%</span></td>
-                      <td>2</td>
-                      <td>5</td>
-                      <td>2</td>
-                      <td style="color:var(--muted2)">25m ago</td>
-                      <td><span class="status-pill sp-va">Very Active</span></td>
-                    </tr>
-                    <tr onclick="openModal('memberDetailModal','Alex_Chen')">
-                      <td>
-                        <div class="user-cell">
-                          <div class="u-av" style="background:linear-gradient(135deg,#16a34a,#0d9488)">A</div>
-                          <div>
-                            <div class="u-name">Alex Chen</div>
-                            <div class="u-handle">@alex.chen</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>28 <span class="delta pos">+15%</span></td>
-                      <td>4</td>
-                      <td>7</td>
-                      <td>3</td>
-                      <td style="color:var(--muted2)">1h ago</td>
-                      <td><span class="status-pill sp-a">Active</span></td>
-                    </tr>
-                  <?php endif; ?>
+                  <tr><td colspan="7" class="dashboard-empty-state">No member activity recorded yet.</td></tr>
                 </tbody>
               </table>
             </div>
@@ -288,51 +253,22 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
               <div style="height:180px;padding:10px 12px"><canvas id="engChart"></canvas></div>
             </div>
 
-            <!-- MY CHANNELS & SERVERS -->
+            <!-- MY SERVERS -->
             <?php $membership = $dashData['membership'] ?? []; ?>
             <div class="card" style="margin-bottom:12px">
               <div class="ch-bar">
-                <div class="ch-title">My Channels &amp; Servers</div>
-                <button class="period-btn" onclick="openModal('channelSwitchModal')">Switch ▾</button>
+                <div class="ch-title">My Servers</div>
+                <a class="period-btn" style="text-decoration:none" href="?page=servermonitoring">View All</a>
               </div>
-              <div style="padding:4px 12px 10px;font-size:11px;color:var(--muted2)">
-                <?= (int)($membership['channels_joined_count'] ?? 0) ?> channel<?= ((int)($membership['channels_joined_count'] ?? 0)) === 1 ? '' : 's' ?> across
-                <?= (int)($membership['servers_joined_count'] ?? 0) ?> server<?= ((int)($membership['servers_joined_count'] ?? 0)) === 1 ? '' : 's' ?>
-                <?php if (($membership['channels_owned_count'] ?? 0) > 0): ?>
-                  · <span style="color:var(--pink);font-weight:600"><?= (int)$membership['channels_owned_count'] ?> created by you</span>
-                <?php endif; ?>
-                <?php if (($membership['servers_managed_count'] ?? 0) > 0): ?>
-                  · <span style="color:var(--blue);font-weight:600"><?= (int)$membership['servers_managed_count'] ?> managed</span>
-                <?php endif; ?>
-              </div>
-              <?php foreach (array_slice($membership['my_channels'] ?? [], 0, 5) as $ch):
-                $chRole = $ch['server_role'] ?? 'member';
-                $roleBadge = match ($chRole) {
-                  'owner' => ['Owner', 'var(--pink)'],
-                  'admin' => ['Admin', 'var(--blue)'],
-                  'moderator' => ['Mod', 'var(--green)'],
-                  default => [null, null],
-                };
-              ?>
-                <div class="ract-row" onclick="switchChannel(<?= (int)($ch['id'] ?? 0) ?>, <?= (int)($ch['server_id'] ?? 0) ?>)" style="cursor:pointer">
-                  <div class="ract-av" style="background:rgba(233,30,140,.12);font-size:14px"><?= htmlspecialchars($ch['icon_emoji'] ?? '#') ?></div>
-                  <div class="ract-msg" style="flex:1">
-                    <strong><?= htmlspecialchars($ch['name'] ?? '') ?></strong>
-                    <span style="color:var(--muted2)"> in <?= htmlspecialchars($ch['server_name'] ?? '') ?></span>
-                    <?php if (!empty($ch['is_creator'])): ?>
-                      <span style="color:var(--pink);font-weight:600"> · Created by you</span>
-                    <?php elseif ($roleBadge[0]): ?>
-                      <span style="color:<?= $roleBadge[1] ?>;font-weight:600"> · <?= $roleBadge[0] ?></span>
-                    <?php endif; ?>
-                  </div>
-                  <div class="ract-time"><?= (int)($ch['member_count'] ?? 0) ?> members</div>
+              <div style="padding:4px 12px 10px;font-size:11px;color:var(--muted2)"><?= count($facDashboardServers) ?> server<?= count($facDashboardServers) === 1 ? '' : 's' ?> you own, facilitate, or manage</div>
+              <?php foreach (array_slice($facDashboardServers, 0, 5) as $srv): ?>
+                <div class="ract-row">
+                  <div class="ract-av" style="background:rgba(124,92,255,.15);font-size:16px"><?= htmlspecialchars($srv['icon_emoji'] ?? '🖥') ?></div>
+                  <div class="ract-msg" style="flex:1"><strong><?= htmlspecialchars($srv['name'] ?? '') ?></strong> <span class="visibility-badge <?= (($srv['type'] ?? '') === 'private' || ($srv['type'] ?? '') === 'academic') ? 'visibility-private' : 'visibility-public' ?>"><?= (($srv['type'] ?? '') === 'private' || ($srv['type'] ?? '') === 'academic') ? '🔒 Private' : '🌐 Public' ?></span><span style="color:var(--muted2)"> · <?= (int)($srv['member_count'] ?? 0) ?> members</span></div>
+                  <a class="btn-sm btn-outline" style="text-decoration:none" href="<?= BASE_URL ?>/modules/admin/server-monitor.php?server_id=<?= (int)($srv['id'] ?? 0) ?>&scope=facilitator">Manage</a>
                 </div>
               <?php endforeach; ?>
-              <?php if (empty($membership['my_channels'])): ?>
-                <div style="padding:14px 12px;text-align:center;color:var(--muted2);font-size:12px">
-                  You're not in any channels yet.
-                </div>
-              <?php endif; ?>
+              <?php if (empty($facDashboardServers)): ?><div class="dashboard-empty-state">No servers are assigned to your facilitator account.</div><?php endif; ?>
             </div>
 
             <div class="card">
@@ -350,28 +286,7 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
                   <div class="ract-time"><?= htmlspecialchars($act['time_ago'] ?? '') ?></div>
                 </div>
               <?php endforeach; ?>
-              <?php if (empty($dashData['recent_activity'])): ?>
-                <div class="ract-row">
-                  <div class="ract-av" style="background:linear-gradient(135deg,#e91e8c,#7c3aed)">F</div>
-                  <div class="ract-msg" style="flex:1">Fatima_Student posted in <span class="ract-link">#general</span></div>
-                  <div class="ract-time">10m ago</div>
-                </div>
-                <div class="ract-row">
-                  <div class="ract-av" style="background:linear-gradient(135deg,#16a34a,#0d9488)">A</div>
-                  <div class="ract-msg" style="flex:1">Alex Chen edited whiteboard</div>
-                  <div class="ract-time">25m ago</div>
-                </div>
-                <div class="ract-row">
-                  <div class="ract-av" style="background:linear-gradient(135deg,#d97706,#ea580c)">M</div>
-                  <div class="ract-msg" style="flex:1">Mia Wong joined study room</div>
-                  <div class="ract-time">1h ago</div>
-                </div>
-                <div class="ract-row">
-                  <div class="ract-av" style="background:linear-gradient(135deg,#2563eb,#06b6d4)">J</div>
-                  <div class="ract-msg" style="flex:1">John_Doe uploaded <span class="ract-link">lecture_notes_ch5.pdf</span></div>
-                  <div class="ract-time">2h ago</div>
-                </div>
-              <?php endif; ?>
+              <div class="dashboard-empty-state">No recent activity recorded yet.</div>
             </div>
           </div>
         </div>
@@ -444,6 +359,40 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
               <div class="ri-actions"><button class="btn-sm" style="background:rgba(220,38,38,.15);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="openModal('kickModal','spam_user99')">Kick</button><button class="btn-sm btn-outline" onclick="openModal('reportDetailModal','Reported User')">Detail</button></div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <?php
+$facMonitorServers = [];
+try {
+  require_once ROOT_PATH . '/services/ServerMonitoringService.php';
+  $facMonitorServers = (new ServerMonitoringService())->getFacilitatorServers((int)$user['id']);
+} catch (Throwable $e) {
+  $facMonitorServers = [];
+}
+?>
+      <div class="page-section" id="page-servermonitoring">
+        <div class="page-title-row">
+          <div>
+            <div class="page-title">My Servers</div>
+            <div class="page-sub">Manage the servers you facilitate, own, or administer.</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ch-bar"><div class="ch-title">My Servers</div></div>
+          <?php foreach ($facMonitorServers as $srv): ?>
+            <div class="ract-row">
+              <div class="ract-av" style="background:rgba(124,92,255,.15);font-size:16px"><?= htmlspecialchars($srv['icon_emoji'] ?? '🖥') ?></div>
+              <div class="ract-msg" style="flex:1">
+                <strong><?= htmlspecialchars($srv['name'] ?? '') ?></strong>
+                <span style="color:var(--muted2)"> · <?= (int)($srv['member_count'] ?? 0) ?> members</span>
+              </div>
+              <a class="btn-sm btn-outline" style="text-decoration:none" href="<?= BASE_URL ?>/modules/admin/server-monitor.php?server_id=<?= (int)($srv['id'] ?? 0) ?>&scope=facilitator">Manage</a>
+            </div>
+          <?php endforeach; ?>
+          <?php if (empty($facMonitorServers)): ?>
+            <div class="dashboard-empty-state">No facilitator-managed servers are assigned to your account.</div>
+          <?php endif; ?>
         </div>
       </div>
 
@@ -649,7 +598,7 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
                         </div>
                       </div>
                     </td>
-                    <td><?= (int)($a['messages'] ?? 0) ?> <span class="delta pos">+<?= rand(5, 15) ?>%</span></td>
+                    <td><?= (int)($a['messages'] ?? 0) ?></td>
                     <td><?= (int)($a['sessions'] ?? 0) ?> <span class="delta neu">-</span></td>
                     <td><?= (int)($a['wb_edits'] ?? 0) ?></td>
                     <td><?= (int)($a['files_uploaded'] ?? 0) ?></td>
@@ -677,57 +626,12 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
         </div>
       </div>
       <div class="page-section" id="page-announcements">
-        <div class="page-title-row">
-          <div>
-            <div class="page-title">Announcements</div>
-          </div><button class="btn-primary" onclick="openModal('createAnnModal')">📢 Create Announcement</button>
-        </div>
-        <div class="card" id="annList"><?php foreach ($dashData['announcements'] ?? [] as $ann): ?><div class="ann-item">
-              <div class="ann-title">📌 <?= htmlspecialchars($ann['title'] ?? '') ?></div>
-              <div class="ann-body"><?= htmlspecialchars($ann['content'] ?? '') ?></div>
-              <div class="ann-meta"><?= $name ?> · <?= htmlspecialchars($ann['time_ago'] ?? '') ?></div>
-              <div class="ri-actions"><button class="btn-sm btn-outline" onclick="openModal('editAnnModal','<?= htmlspecialchars($ann['title'] ?? '') ?>')">Edit</button><button class="btn-sm" style="background:rgba(220,38,38,.1);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="deleteAnn(this)">Delete</button></div>
-            </div><?php endforeach; ?><?php if (empty($dashData['announcements'])): ?><div class="ann-item">
-              <div class="ann-title">📌 Quiz 2 Reminder</div>
-              <div class="ann-body">Don't forget! Quiz 2 will be on Friday. Review chapters 4 and 5.</div>
-              <div class="ann-meta"><?= $name ?> · 2h ago</div>
-              <div class="ri-actions"><button class="btn-sm btn-outline" onclick="openModal('editAnnModal','Quiz 2 Reminder')">Edit</button><button class="btn-sm" style="background:rgba(220,38,38,.1);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="deleteAnn(this)">Delete</button></div>
-            </div>
-            <div class="ann-item">
-              <div class="ann-title">📘 New Resource Added</div>
-              <div class="ann-body">New lecture notes on Backpropagation added to Resources.</div>
-              <div class="ann-meta"><?= $name ?> · 1d ago</div>
-              <div class="ri-actions"><button class="btn-sm btn-outline" onclick="openModal('editAnnModal','New Resource')">Edit</button><button class="btn-sm" style="background:rgba(220,38,38,.1);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="deleteAnn(this)">Delete</button></div>
-            </div><?php endif; ?>
-        </div>
+        <div class="page-title-row"><div><div class="page-title">Announcements</div><div class="page-sub">Announcements are posted to the selected server's view-only #announcements channel.</div></div><button class="btn-primary" onclick="openModal('createAnnModal')">📢 Create Announcement</button></div>
+        <div class="card" id="annList"><div class="dashboard-empty-state">Choose a server to view its published announcements.</div></div>
       </div>
       <div class="page-section" id="page-reports">
-        <div class="page-title-row">
-          <div>
-            <div class="page-title">Reports</div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="ch-bar">
-            <div class="ch-title">Pending Reports</div><span style="background:rgba(220,38,38,.15);color:var(--red);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700">2 pending</span>
-          </div>
-          <div class="report-item">
-            <div class="ri-header">
-              <div class="ri-ico" style="background:rgba(220,38,38,.15)">🚩</div>
-              <div class="ri-title">Flagged Message: "Inappropriate content..."</div>
-            </div>
-            <div class="ri-meta">Reported by Mia_Wong · #general · 1h ago</div>
-            <div class="ri-actions"><button class="btn-sm" style="background:rgba(22,163,74,.15);color:var(--green);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="resolveReport(this,'approved')">Approve</button><button class="btn-sm" style="background:rgba(220,38,38,.1);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="resolveReport(this,'dismissed')">Dismiss</button><button class="btn-sm btn-outline" onclick="openModal('reportDetailModal','Flagged Message')">Detail</button></div>
-          </div>
-          <div class="report-item">
-            <div class="ri-header">
-              <div class="ri-ico" style="background:rgba(217,119,6,.15)">⚠</div>
-              <div class="ri-title">Reported User: spam_user99 for spamming</div>
-            </div>
-            <div class="ri-meta">Reported by Alex_Chen · 3h ago</div>
-            <div class="ri-actions"><button class="btn-sm" style="background:rgba(220,38,38,.15);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="openModal('kickModal','spam_user99')">Kick User</button><button class="btn-sm btn-outline" onclick="openModal('reportDetailModal','Reported User')">Detail</button></div>
-          </div>
-        </div>
+        <div class="page-title-row"><div><div class="page-title">Reports</div><div class="page-sub">Reports from chat in servers you own.</div></div></div>
+        <div class="card" id="facReportsList"><div class="dashboard-empty-state">Choose a server to view reports.</div></div>
       </div>
       <div class="page-section" id="page-modqueue">
         <div class="page-title-row">
@@ -758,22 +662,8 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
         </div>
       </div>
       <div class="page-section" id="page-banned">
-        <div class="page-title-row">
-          <div>
-            <div class="page-title">Banned Users</div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="ch-bar">
-            <div class="ch-title">Banned Members</div>
-          </div>
-          <div class="ract-row">
-            <div class="ract-av" style="background:linear-gradient(135deg,#dc2626,#b91c1c)">S</div>
-            <div class="ract-msg">spam_user99 · Banned for repeated spamming</div>
-            <div style="display:flex;gap:5px;margin-left:8px"><button class="btn-sm btn-outline" onclick="toast('User unbanned','success','✅')">Unban</button></div>
-          </div>
-          <div style="padding:20px;text-align:center;color:var(--muted2);font-size:12px">No other banned users.</div>
-        </div>
+        <div class="page-title-row"><div><div class="page-title">Banned Users</div></div></div>
+        <div class="card" id="facBannedList"><div class="dashboard-empty-state">Choose a server to view banned users.</div></div>
       </div>
       <div class="page-section" id="page-chlogs">
         <div class="page-title-row">
@@ -807,38 +697,8 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
         </div>
       </div>
       <div class="page-section" id="page-sessions">
-        <div class="page-title-row">
-          <div>
-            <div class="page-title">Study Sessions</div>
-          </div><button class="btn-primary" onclick="openModal('startSessionModal')">🎓 Start Session</button>
-        </div>
-        <div class="card">
-          <div class="ch-bar">
-            <div class="ch-title">Active Sessions</div>
-            <div class="live-badge">
-              <div class="live-dot"></div>LIVE
-            </div>
-          </div>
-          <div class="ract-row">
-            <div style="width:32px;height:32px;border-radius:9px;background:rgba(233,30,140,.15);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">🧠</div>
-            <div class="ract-msg" style="flex:1">
-              <div style="font-size:12.5px;font-weight:700">Backpropagation Study Group</div>
-              <div style="font-size:10.5px;color:var(--muted2)">8 members active · Started 45m ago</div>
-            </div><button class="btn-sm btn-outline" onclick="openModal('sessionDetailModal','Backpropagation Study Group')">View</button><button class="btn-sm" style="background:rgba(220,38,38,.1);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px;margin-left:5px" onclick="toast('Session ended','success','✅')">End</button>
-          </div>
-        </div>
-        <div class="card">
-          <div class="ch-bar">
-            <div class="ch-title">Past Sessions</div>
-          </div>
-          <div class="ract-row">
-            <div style="font-size:20px;flex-shrink:0">🎓</div>
-            <div class="ract-msg" style="flex:1">
-              <div style="font-size:12.5px;font-weight:700">Neural Networks Q&A</div>
-              <div style="font-size:10.5px;color:var(--muted2)">12 participants · 2h duration · May 18</div>
-            </div><button class="btn-sm btn-outline" onclick="openModal('sessionDetailModal','Neural Networks QA')">View</button>
-          </div>
-        </div>
+        <div class="page-title-row"><div><div class="page-title">Study Sessions</div></div><button class="btn-primary" onclick="openModal('startSessionModal')">🎓 Schedule Session</button></div>
+        <div class="card" id="studySessionsList"><div class="dashboard-empty-state">No study sessions to display.</div></div>
       </div>
       <div class="page-section" id="page-engagement">
         <div class="page-title-row">
@@ -865,7 +725,7 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
                 </div>
                 <div class="ig-item">
                   <div class="ig-label">Avg Messages/Day</div>
-                  <div class="ig-val"><?= round((int)($stats['messages_today'] ?? 156) / 1, 1) ?></div>
+                  <div class="ig-val"><?= round((int)($stats['messages_today'] ?? 0) / 1, 1) ?></div>
                 </div>
                 <div class="ig-item">
                   <div class="ig-label">Active Members</div>
@@ -873,7 +733,7 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
                 </div>
                 <div class="ig-item">
                   <div class="ig-label">Retention Rate</div>
-                  <div class="ig-val" style="color:var(--green)">91%</div>
+                  <div class="ig-val" style="color:var(--muted2)">N/A</div>
                 </div>
               </div>
             </div>
@@ -921,104 +781,23 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
         </div>
       </div>
       <div class="page-section" id="page-resources">
-        <div class="page-title-row">
-          <div>
-            <div class="page-title">Resources</div>
-          </div><button class="btn-primary" onclick="openModal('uploadResourceModal')">+ Add Resource</button>
-        </div>
-        <div class="card" id="resourcesList"><?php foreach ($dashData['files'] ?? [] as $f): $ext = strtolower(pathinfo($f['file_name'] ?? '', PATHINFO_EXTENSION));
-                                                $ico = $ext === 'pdf' ? '📄' : ($ext === 'xlsx' ? '📊' : '📎');
-                                                $bg = $ext === 'pdf' ? 'rgba(220,38,38,.15)' : ($ext === 'xlsx' ? 'rgba(37,99,235,.15)' : 'rgba(22,163,74,.15)'); ?><div class="ract-row">
-              <div style="width:28px;height:28px;border-radius:7px;background:<?= $bg ?>;display:flex;align-items:center;justify-content:center;font-size:13px"><?= $ico ?></div>
-              <div class="ract-msg" style="flex:1">
-                <div style="font-size:12px;font-weight:600"><?= htmlspecialchars($f['file_name'] ?? '') ?></div>
-                <div style="font-size:10.5px;color:var(--muted2)"><?= htmlspecialchars($f['course_code'] ?? '') ?> · <?= htmlspecialchars($f['file_size_formatted'] ?? '') ?></div>
-              </div>
-              <div style="display:flex;gap:5px"><button class="btn-sm btn-outline" onclick="toast('Downloading...','info','⬇')">Download</button><button class="btn-sm" style="background:rgba(220,38,38,.1);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="this.closest('.ract-row').remove();toast('Deleted','success','🗑')">Delete</button></div>
-            </div><?php endforeach; ?><?php if (empty($dashData['files'])): ?><div class="ract-row">
-              <div style="width:28px;height:28px;border-radius:7px;background:rgba(220,38,38,.15);display:flex;align-items:center;justify-content:center;font-size:13px">📄</div>
-              <div class="ract-msg" style="flex:1">
-                <div style="font-size:12px;font-weight:600">Chapter 5 Lecture Notes</div>
-                <div style="font-size:10.5px;color:var(--muted2)">PDF · 2.4 MB</div>
-              </div>
-              <div style="display:flex;gap:5px"><button class="btn-sm btn-outline" onclick="toast('Downloading...','info','⬇')">Download</button><button class="btn-sm" style="background:rgba(220,38,38,.1);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="this.closest('.ract-row').remove()">Delete</button></div>
-            </div><?php endif; ?></div>
+        <div class="page-title-row"><div><div class="page-title">Resources</div><div class="page-sub">Files sent inside servers you own.</div></div></div>
+        <div class="card" id="resourcesList"><div class="dashboard-empty-state">Choose a server to view its files.</div></div>
       </div>
       <div class="page-section" id="page-roles">
-        <div class="page-title-row">
-          <div>
-            <div class="page-title">Roles & Permissions</div>
-          </div><button class="btn-primary" onclick="openModal('createRoleModal')">+ Create Role</button>
-        </div>
-        <div class="g2">
-          <div class="card">
-            <div class="ch-bar">
-              <div class="ct">Roles</div>
-            </div>
-            <div style="padding:14px">
-              <div style="margin-bottom:10px;padding:12px;background:rgba(233,30,140,.08);border:1px solid rgba(233,30,140,.15);border-radius:9px">
-                <div style="font-size:12.5px;font-weight:700;margin-bottom:3px">Channel Administrator</div>
-                <div style="font-size:10.5px;color:var(--muted2)">Full management · 1 member</div>
-              </div>
-              <div style="margin-bottom:10px;padding:12px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.15);border-radius:9px">
-                <div style="font-size:12.5px;font-weight:700;margin-bottom:3px">Facilitator</div>
-                <div style="font-size:10.5px;color:var(--muted2)">Post announcements · 3 members</div>
-              </div>
-              <div style="padding:12px;background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.15);border-radius:9px">
-                <div style="font-size:12.5px;font-weight:700;margin-bottom:3px">Student</div>
-                <div style="font-size:10.5px;color:var(--muted2)">Read and participate · <?= (int)($stats['total_members'] ?? 72) - 4 ?> members</div>
-              </div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="ch-bar">
-              <div class="ct">Permissions</div>
-            </div>
-            <div style="padding:14px">
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border2)">
-                <div>
-                  <div style="font-size:12px;font-weight:600">Students can post messages</div>
-                </div>
-                <div class="toggle on" onclick="this.classList.toggle('on');toast('Permission updated','success','✅')"></div>
-              </div>
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border2)">
-                <div>
-                  <div style="font-size:12px;font-weight:600">Students can upload files</div>
-                </div>
-                <div class="toggle on" onclick="this.classList.toggle('on');toast('Permission updated','success','✅')"></div>
-              </div>
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0">
-                <div>
-                  <div style="font-size:12px;font-weight:600">Students can create rooms</div>
-                </div>
-                <div class="toggle" onclick="this.classList.toggle('on');toast('Permission updated','success','✅')"></div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div class="page-title-row"><div><div class="page-title">Roles & Permissions</div><div class="page-sub">Change permissions for servers you own. Roles cannot be created here.</div></div><button class="btn-primary" onclick="saveFacPermissions()">💾 Save Permissions</button></div>
+        <div class="card"><div style="padding:14px">
+          <div class="fg"><label class="fl">Server</label><select class="fi" id="permServer" onchange="loadFacPermissions(this.value)"><option value="">Choose a server...</option><?php foreach($facOwnedServers as $srv): ?><option value="<?= (int)$srv['id'] ?>"><?= htmlspecialchars($srv['name']) ?></option><?php endforeach; ?></select></div>
+          <div class="perm-setting"><span>Members can invite users</span><div class="toggle on" id="permInvites" onclick="this.classList.toggle('on')"></div></div>
+          <div class="perm-setting"><span>Members can send messages</span><div class="toggle on" id="permMessages" onclick="this.classList.toggle('on')"></div></div>
+          <div class="perm-setting"><span>Members can join voice channels</span><div class="toggle on" id="permVoice" onclick="this.classList.toggle('on')"></div></div>
+          <div class="perm-setting"><span>Members can create/respond to polls</span><div class="toggle on" id="permPolls" onclick="this.classList.toggle('on')"></div></div>
+          <div class="perm-setting"><span>Members can upload files</span><div class="toggle on" id="permFiles" onclick="this.classList.toggle('on')"></div></div>
+        </div></div>
       </div>
       <div class="page-section" id="page-files">
-        <div class="page-title-row">
-          <div>
-            <div class="page-title">Files & Links</div>
-          </div><button class="btn-primary" onclick="openModal('uploadResourceModal')">+ Add File</button>
-        </div>
-        <div class="card" id="filesList">
-          <div class="ract-row">
-            <div style="width:28px;height:28px;border-radius:7px;background:rgba(220,38,38,.15);display:flex;align-items:center;justify-content:center;font-size:13px">📄</div>
-            <div class="ract-msg" style="flex:1">
-              <div style="font-size:12px;font-weight:600">lecture_notes_ch5.pdf</div>
-              <div style="font-size:10.5px;color:var(--muted2)">CS 305 · 2.4 MB · John_Doe</div>
-            </div><button class="btn-sm btn-outline" onclick="toast('Downloading...','info','⬇')">Download</button>
-          </div>
-          <div class="ract-row">
-            <div style="width:28px;height:28px;border-radius:7px;background:rgba(37,99,235,.15);display:flex;align-items:center;justify-content:center;font-size:13px">📊</div>
-            <div class="ract-msg" style="flex:1">
-              <div style="font-size:12px;font-weight:600">DSA_cheatsheet.xlsx</div>
-              <div style="font-size:10.5px;color:var(--muted2)">CS 305 · 845 KB · Fatima_Student</div>
-            </div><button class="btn-sm btn-outline" onclick="toast('Downloading...','info','⬇')">Download</button>
-          </div>
-        </div>
+        <div class="page-title-row"><div><div class="page-title">Files & Links</div><div class="page-sub">Public Coworkspace documents and whiteboards are listed here in view-only mode.</div></div></div>
+        <div class="card" id="filesList"><div class="dashboard-empty-state">Choose a server to view public Coworkspace resources.</div></div>
       </div>
       <div class="page-section" id="page-messages">
         <div class="page-title-row">
@@ -1040,7 +819,7 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
               </div>
             </div>
             <div style="display:flex;gap:8px">
-              <div class="ract-av" style="background:linear-gradient(135deg,<?= htmlspecialchars($c1) ?>,<?= htmlspecialchars($c2) ?>;font-size:9px"><?= htmlspecialchars($initials) ?></div>
+              <div class="ract-av" style="background:linear-gradient(135deg,<?= htmlspecialchars($c1) ?>,<?= htmlspecialchars($c2) ?>;font-size:9px"><?= $avatarUrl === '' ? htmlspecialchars($initials) : '' ?></div>
               <div>
                 <div style="font-size:10px;font-weight:700;color:var(--pink);margin-bottom:2px"><?= $name ?> (You) · 5m ago</div>
                 <div style="background:rgba(233,30,140,.1);border-radius:0 9px 9px 9px;padding:8px 11px;font-size:12px;line-height:1.5">Great initiative! Office hours are Wed 3-5 PM 📌</div>
@@ -1065,47 +844,20 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
       </div>
       <div class="page-section" id="page-polls">
         <div class="page-title-row">
-          <div>
-            <div class="page-title">Polls & Quizzes</div>
-          </div>
-          <div style="display:flex;gap:7px"><button class="btn-sec" onclick="openModal('createPollModal')">📊 Create Poll</button><button class="btn-primary" onclick="openModal('createQuizModal')">📝 Create Quiz</button></div>
+          <div><div class="page-title">Polls</div></div>
         </div>
         <div class="card">
-          <div class="ch-bar">
-            <div class="ch-title">Active Polls</div>
-          </div>
-          <div style="padding:14px">
-            <div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:14px">
-              <div style="font-size:13px;font-weight:700;margin-bottom:10px">Which topic should we cover next?</div>
-              <div style="margin-bottom:6px">
-                <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px"><span>CNNs Deep Dive</span><span style="font-weight:700">45%</span></div>
-                <div class="prog-bar">
-                  <div class="prog-fill" style="width:45%;background:linear-gradient(90deg,var(--pink),var(--purple))"></div>
-                </div>
-              </div>
-              <div style="margin-bottom:6px">
-                <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px"><span>Recurrent Networks</span><span style="font-weight:700">35%</span></div>
-                <div class="prog-bar">
-                  <div class="prog-fill" style="width:35%;background:linear-gradient(90deg,var(--blue),var(--cyan))"></div>
-                </div>
-              </div>
-              <div>
-                <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px"><span>Transformers</span><span style="font-weight:700">20%</span></div>
-                <div class="prog-bar">
-                  <div class="prog-fill" style="width:20%;background:linear-gradient(90deg,var(--green),var(--teal))"></div>
-                </div>
-              </div>
-              <div style="font-size:10.5px;color:var(--muted2);margin-top:8px">42 votes · Ends in 2 days</div>
-            </div>
-          </div>
+          <div class="ch-bar"><div class="ch-title">Active Polls</div></div>
+          <div id="facPollsList" class="dashboard-empty-state">Select one of your servers to view polls created in its chat channels.</div>
         </div>
       </div>
       <div class="page-section" id="page-chsettings">
         <div class="page-title-row">
           <div>
-            <div class="page-title">Channel Settings</div>
+            <div class="page-title">Server Settings</div>
           </div><button class="btn-primary" onclick="saveChannelSettings()">💾 Save Changes</button>
         </div>
+        <div class="card" style="margin-bottom:12px;padding:14px"><div class="fg" style="margin:0"><label class="fl">Server to manage</label><select class="fi" id="settingsServer"><option value="">Choose a server...</option><?php foreach($facOwnedServers as $srv): ?><option value="<?= (int)$srv['id'] ?>"><?= htmlspecialchars($srv['name']) ?></option><?php endforeach; ?></select></div></div>
         <div class="g2">
           <div class="card">
             <div class="ch-bar">
@@ -1223,6 +975,7 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
         <div class="mx" onclick="closeModal('createAnnModal')">✕</div>
       </div>
       <div class="mb">
+        <div class="fg"><label class="fl">Server</label><select class="fi" id="annServer"><option value="">Choose a server...</option><?php foreach($facOwnedServers as $srv): ?><option value="<?= (int)$srv['id'] ?>"><?= htmlspecialchars($srv['name']) ?></option><?php endforeach; ?></select></div>
         <div class="fg"><label class="fl">Title</label><input class="fi" id="annTitle" placeholder="Announcement title"></div>
         <div class="fg"><label class="fl">Message</label><textarea class="fta" id="annBody" style="min-height:80px" placeholder="Write your announcement..."></textarea></div>
       </div>
@@ -1281,6 +1034,35 @@ $stats = $dashData['stats'] ?? ['total_members' => 72, 'active_today' => 38, 'me
       <div class="mb">
         <div style="display:flex;flex-direction:column;gap:7px"><button class="btn-primary" style="justify-content:center" onclick="closeModal('exportModal');toast('Exported as CSV!','success','⬇')">📊 Export as CSV</button><button class="btn-sec" style="justify-content:center" onclick="closeModal('exportModal');toast('Exported as PDF!','success','⬇')">📄 Export as PDF</button></div>
       </div>
+    </div>
+  </div>
+  <div class="mo" id="resolveReportModal">
+    <div class="md md-md">
+      <div class="mh">
+        <div>
+          <div class="mt">🚩 Resolve Report</div>
+          <div class="resolve-subtitle">Choose an action for this reported user.</div>
+        </div>
+        <div class="mx" onclick="closeModal('resolveReportModal')">✕</div>
+      </div>
+      <div class="mb">
+        <div class="resolve-target" id="resolveReportUser">Reported user</div>
+        <div class="resolve-actions">
+          <button type="button" class="resolve-action resolve-suspend" onclick="submitReportResolution('suspend',1440)">
+            <span class="resolve-action-icon">⏸</span>
+            <span><strong>Suspend for 24 Hours</strong><small>View-only access. The user can see the server but cannot interact.</small></span>
+          </button>
+          <button type="button" class="resolve-action resolve-mute" onclick="submitReportResolution('mute',1440)">
+            <span class="resolve-action-icon">🔇</span>
+            <span><strong>Mute for 24 Hours</strong><small>Only chat channels are muted. Other allowed server features remain available.</small></span>
+          </button>
+          <button type="button" class="resolve-action resolve-ban" onclick="submitReportResolution('ban',null)">
+            <span class="resolve-action-icon">🚫</span>
+            <span><strong>Ban from Server</strong><small>Remove the user and prevent them from joining this server again.</small></span>
+          </button>
+        </div>
+      </div>
+      <div class="mf"><button class="btn-sec" onclick="closeModal('resolveReportModal')">Cancel</button></div>
     </div>
   </div>
   <div class="mo" id="reportDetailModal">

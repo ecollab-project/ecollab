@@ -134,3 +134,54 @@
   .wb-tadd   { width: 34px !important; height: 34px !important; }
 
 }
+
+
+/* ── Excalidraw Coworkspace responsive shell ── */
+@media (max-width: 900px) {
+  #excalidraw-root {
+    inset: 52px 0 32px 0 !important;
+    min-width: 0;
+    overflow: hidden;
+  }
+  #excalidraw-root .excalidraw { width: 100%; height: 100%; }
+  .wb-hdr { min-width: 0; }
+  .wb-hdr-titles { min-width: 0; flex: 1; }
+  .wb-hdr-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wb-hdr-right { min-width: 0; }
+  .wb-permission-label, .wb-session-badge { white-space: nowrap; }
+  .wb-manage-modal { padding: 10px; }
+  .wb-manage-box { max-height: calc(100dvh - 20px); }
+}
+
+@media (max-width: 600px) {
+  html, body, #wbOverlay { height: 100dvh !important; }
+  #excalidraw-root {
+    inset: 48px 0 28px 0 !important;
+    touch-action: none;
+  }
+  .wb-page-back {
+    width: 34px; height: 34px; padding: 0; margin-right: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    overflow: hidden; white-space: nowrap; text-indent: -9999px;
+  }
+  .wb-page-back::after { content: "←"; text-indent: 0; font-size: 18px; }
+  .wb-hdr-logo { width: 28px; height: 28px; }
+  .wb-hdr-titles { max-width: 38vw; }
+  .wb-hdr-right { gap: 4px; margin-left: auto; }
+  .wb-hdr-center, .wb-av-stack, .wb-session-badge { display: none !important; }
+  .wb-permission-label { font-size: 9px; padding: 3px 6px; margin-right: 0; }
+  .wb-page-btn { height: 30px; padding: 0 8px; font-size: 10px; }
+  .wb-status { height: 28px; padding: 0 8px; gap: 6px; overflow: hidden; }
+  .wb-status-item { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wb-status-item:nth-child(2) { margin-left: auto; }
+  .wb-manage-box { padding: 15px; border-radius: 12px; }
+  .wb-manage-actions { flex-direction: column-reverse; }
+  .wb-manage-actions .wb-page-btn { width: 100%; height: 38px; }
+  #excalidraw-root .App-menu_top .Stack_horizontal { max-width: calc(100vw - 16px); }
+}
+
+@media (max-width: 380px) {
+  .wb-hdr-titles { max-width: 32vw; }
+  .wb-permission-label { display: none; }
+  .wb-page-btn { padding: 0 6px; }
+}

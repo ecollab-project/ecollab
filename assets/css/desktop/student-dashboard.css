@@ -1,3 +1,4 @@
+@import url('../responsive.css');
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -370,3 +371,43 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .cal-day.has-event{position:relative}
 .cal-day.has-event::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--pink)}
 .cal-day.other{opacity:.25}
+
+
+/* ── Dashboard data-safe layout ─────────────────────────────────────────── */
+.dashboard-empty-state{
+  min-height:72px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px 14px;
+  color:var(--muted2,#94a3b8);
+  font-size:12px;
+  text-align:center;
+  border:1px dashed var(--border,rgba(255,255,255,.1));
+  border-radius:10px;
+  background:rgba(255,255,255,.015);
+}
+.main-grid,.grid-2,.stats-row,.stat-row,.stats-grid,.bottom-grid,.qa-grid,.analytics-grid{min-width:0;}
+.main-grid>* ,.grid-2>*{min-width:0;}
+.card,.sc-card,.stat-card{min-width:0;box-sizing:border-box;}
+.table-wrap,.act-table-wrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+
+@media (max-width: 1100px){
+  .main-grid,.grid-2{grid-template-columns:1fr !important;}
+}
+
+/* Dashboard brand: contain the full eCollab wordmark inside the sidebar header. */
+.sidebar .logo.ecollab-brand-logo{
+  width:100%!important;height:64px!important;min-height:64px!important;
+  padding:7px 12px!important;display:flex!important;align-items:center!important;
+  justify-content:flex-start!important;overflow:hidden!important;
+}
+.sidebar .logo.ecollab-brand-logo .ecollab-brand-wordmark{
+  display:block!important;width:100%!important;max-width:164px!important;
+  height:50px!important;max-height:50px!important;object-fit:contain!important;
+  object-position:left center!important;margin:0!important;
+}
+@media(max-width:768px){
+  .sidebar .logo.ecollab-brand-logo{height:56px!important;min-height:56px!important;padding:6px 10px!important}
+  .sidebar .logo.ecollab-brand-logo .ecollab-brand-wordmark{max-width:145px!important;height:44px!important;max-height:44px!important}
+}

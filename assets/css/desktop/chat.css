@@ -1,3 +1,4 @@
+@import url('../responsive.css');
 *,
 *::before,
 *::after {
@@ -764,6 +765,14 @@ body {
   background: rgba(239, 68, 68, 0.14);
   border-color: rgba(239, 68, 68, 0.35);
   color: #ef4444;
+}
+
+/* DM call panel mic/camera buttons — same red "off" treatment, its own
+   rule since these buttons aren't .vc-ctrl-btn (that's the voice-channel
+   control bar, this is the DM call overlay). */
+#dmCallOverlay button.muted-state {
+  background: rgba(239, 68, 68, 0.25) !important;
+  color: #ef4444 !important;
 }
 
 .vc-ctrl-btn.green-state {
@@ -2107,6 +2116,35 @@ body {
   pointer-events: all;
 }
 
+/* ── Compact Mode ────────────────────────────────────────────────────────
+   Was a switch that saved correctly but had no visual effect anywhere.
+   Reduces spacing/sizing across the message list and sidebar. */
+html.compact-mode .message-group {
+  gap: 8px;
+  margin-bottom: 0;
+  padding: 2px 8px 2px 4px;
+}
+
+html.compact-mode .msg-avatar,
+html.compact-mode .message-group .avatar {
+  width: 28px;
+  height: 28px;
+}
+
+html.compact-mode .msg-content {
+  font-size: 13.5px;
+  line-height: 1.35;
+}
+
+html.compact-mode .channel-item,
+html.compact-mode .dm-item {
+  padding: 4px 8px;
+}
+
+html.compact-mode .sidebar-section-header {
+  padding: 4px 8px;
+}
+
 .message-group.pinned-msg-highlight {
   background: rgba(245, 158, 11, 0.06);
   border-left: 3px solid var(--accent-yellow);
@@ -2155,6 +2193,10 @@ body {
 
 .msg-action-btn.pin-active {
   color: var(--accent-yellow);
+}
+
+.msg-action-btn.bookmark-active {
+  color: #a855f7;
 }
 
 /* Tooltip on action buttons */
@@ -4072,7 +4114,8 @@ body {
 /* TOAST */
 .toast-container {
   position: fixed;
-  bottom: 20px;
+  top: 20px;
+  bottom: auto;
   left: 50%;
   transform: translateX(-50%);
   z-index: 2000;
@@ -5515,6 +5558,64 @@ input[type=range].vc-range::-webkit-slider-thumb {
   display: none;
 }
 
+/* ── Compact PiP layout ──────────────────────────────────────────────────
+   The full-size view has 9 control buttons across 3 groups plus a room-info
+   hero block (icon/title/subtitle/tags). None of that fits a 340×220 box —
+   previously nothing here hid or resized it, producing an overlapping mess.
+   Keep only what a PiP actually needs: mic / leave / deafen, plus enough of
+   the header to identify the channel. */
+
+.voice-channel-view.vc-minimized .vc-room-info,
+.voice-channel-view.vc-minimized .vc-section-header,
+.voice-channel-view.vc-minimized .vc-room-sub,
+.voice-channel-view.vc-minimized .vc-tags,
+.voice-channel-view.vc-minimized .vc-stat-badge span,
+.voice-channel-view.vc-minimized .vc-invite-btn {
+  display: none;
+}
+
+.voice-channel-view.vc-minimized .vc-body {
+  padding: 6px 8px;
+  overflow-y: auto;
+}
+
+.voice-channel-view.vc-minimized .vc-controls-bar {
+  padding: 6px 8px;
+  gap: 4px;
+}
+
+/* Hide the two side groups (screen share/camera/whiteboard, and mic-test/
+   noise-cancel/audio-settings) — keep only the center mute/leave/deafen
+   group, which is what a PiP is actually for. */
+.voice-channel-view.vc-minimized .vc-controls-bar > .vc-bar-grp:not(.center) {
+  display: none;
+}
+
+.voice-channel-view.vc-minimized .vc-controls-bar > .vc-bar-grp.center {
+  width: 100%;
+  justify-content: center;
+  gap: 10px;
+}
+
+.voice-channel-view.vc-minimized .vc-btn-lg {
+  width: 38px;
+  height: 38px;
+}
+
+.voice-channel-view.vc-minimized .vc-btn-lg svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Tooltips overlaying an already-tiny box just add to the crowding */
+.voice-channel-view.vc-minimized .vc-ctrl-tooltip {
+  display: none;
+}
+
+.voice-channel-view.vc-minimized .vc-header-right {
+  gap: 4px;
+}
+
 @keyframes vcSlideIn {
   from {
     opacity: 0;
@@ -5895,6 +5996,13 @@ input[type=range].vc-range::-webkit-slider-thumb {
   z-index: 0;
 }
 
+/* Mirror only your own camera preview (matches how every mirror/video app
+   shows your own feed) — never applied to remote participants' video, so
+   what others see of you is not flipped. */
+.vc-cam-preview.vc-mirror {
+  transform: scaleX(-1);
+}
+
 /* Card becomes a positioned container; inner elements float above the video */
 .vc-speaker-card.has-camera {
   min-height: 160px;
@@ -6155,4 +6263,140 @@ body.vc-active:not(.vc-pip) .sidebar-icons {
 .vc-listener-card.has-camera .lc-sub,
 .vc-listener-card.has-camera .lc-vol {
   display: none;
+}
+
+/* Voice header quick actions — horizontal alignment */
+.vc-header-right .vc-quick-actions{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:6px!important;
+  width:auto!important;
+  height:auto!important;
+  position:static!important;
+  margin:0!important;
+}
+.vc-header-right .vc-quick-actions .vc-quick-btn{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:34px!important;
+  height:34px!important;
+  min-width:34px!important;
+  min-height:34px!important;
+  padding:0!important;
+  margin:0!important;
+  flex:0 0 34px!important;
+  border-radius:9px!important;
+}
+.vc-header-right .vc-quick-actions .vc-quick-btn i{
+  display:block!important;
+  width:auto!important;
+  height:auto!important;
+  line-height:1!important;
+  font-size:13px!important;
+}
+
+.vc-header-right .vc-quick-actions .vc-quick-btn svg{
+  width:15px!important;height:15px!important;display:block!important;
+  fill:currentColor!important;pointer-events:none!important;
+}
+
+/* Minimized voice dock: placement only. Do not alter maximized voice layout. */
+.voice-channel-view.vc-minimized{
+  position:fixed!important;
+  top:auto!important;
+  left:auto!important;
+  right:8px!important;
+  bottom:12px!important;
+  width:286px!important;
+  height:196px!important;
+  max-width:calc(100vw - 16px)!important;
+  border-radius:12px!important;
+  overflow:hidden!important;
+  z-index:1200!important;
+}
+
+/* ═══ Final minimized voice layout only — compact dock under members ═══ */
+.voice-channel-view.vc-minimized{
+  right:8px!important;bottom:8px!important;
+  width:270px!important;height:184px!important;
+  display:grid!important;grid-template-rows:40px minmax(0,1fr) 48px!important;
+}
+.voice-channel-view.vc-minimized .vc-header{
+  height:40px!important;min-height:40px!important;padding:0 8px!important;
+  display:flex!important;align-items:center!important;gap:6px!important;
+}
+.voice-channel-view.vc-minimized .vc-header-icon{width:28px!important;height:28px!important;min-width:28px!important}
+.voice-channel-view.vc-minimized .vc-header-meta{min-width:0!important;flex:1!important}
+.voice-channel-view.vc-minimized .vc-header-title{font-size:12px!important;line-height:1.1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.voice-channel-view.vc-minimized .vc-header-subtitle{font-size:9px!important;line-height:1.1!important}
+.voice-channel-view.vc-minimized .vc-header-right{display:flex!important;align-items:center!important;gap:4px!important;flex:0 0 auto!important}
+.voice-channel-view.vc-minimized .vc-header-right .vc-quick-actions,
+.voice-channel-view.vc-minimized .vc-header-right .vc-invite-btn,
+.voice-channel-view.vc-minimized .vc-header-right .vc-stat-badge{display:none!important}
+.voice-channel-view.vc-minimized .vc-header-right .vc-icon-btn,
+.voice-channel-view.vc-minimized .vc-header-right .vc-minimize-btn{
+  display:flex!important;width:28px!important;height:28px!important;min-width:28px!important;padding:0!important
+}
+.voice-channel-view.vc-minimized .vc-body{
+  min-height:0!important;height:auto!important;padding:7px!important;overflow:hidden!important;
+  display:block!important;
+}
+.voice-channel-view.vc-minimized .vc-room-info,
+.voice-channel-view.vc-minimized .vc-section-header,
+.voice-channel-view.vc-minimized .vc-listening-grid{display:none!important}
+.voice-channel-view.vc-minimized .vc-speaking-grid{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:6px!important;padding:0!important;margin:0!important;height:100%!important;overflow:auto!important;
+}
+.voice-channel-view.vc-minimized .vc-speaker-card{
+  width:auto!important;min-width:0!important;max-width:none!important;
+  height:72px!important;min-height:72px!important;padding:6px!important;margin:0!important;border-radius:9px!important;
+}
+.voice-channel-view.vc-minimized .sc-av{width:32px!important;height:32px!important;min-width:32px!important}
+.voice-channel-view.vc-minimized .sc-name{font-size:9px!important;max-width:100%!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.voice-channel-view.vc-minimized .sc-role,
+.voice-channel-view.vc-minimized .sc-quality,
+.voice-channel-view.vc-minimized .sc-mic-btn{display:none!important}
+.voice-channel-view.vc-minimized .vc-controls-bar{
+  height:48px!important;min-height:48px!important;padding:0 8px!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+}
+.voice-channel-view.vc-minimized .vc-controls-bar .vc-bar-grp.left,
+.voice-channel-view.vc-minimized .vc-controls-bar .vc-bar-grp.right{display:none!important}
+.voice-channel-view.vc-minimized .vc-controls-bar .vc-bar-grp.center{
+  display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;margin:0!important;
+}
+.voice-channel-view.vc-minimized .vc-controls-bar .vc-btn-lg{
+  width:34px!important;height:34px!important;min-width:34px!important;padding:0!important;border-radius:50%!important;
+}
+
+/* Server/channel visibility indicators */
+.chat-visibility-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:999px;font-size:9px;font-weight:800;line-height:1.45;white-space:nowrap;flex-shrink:0}
+.chat-visibility-badge.visibility-public{color:#67e8f9;background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.24)}
+.chat-visibility-badge.visibility-private{color:#c4b5fd;background:rgba(124,58,237,.14);border:1px solid rgba(124,58,237,.28)}
+.sidebar-workspace-header .chat-visibility-badge{margin-left:auto}
+
+/* Visibility belongs to navigation items, not names/headers. */
+.workspace-icon{position:relative}
+.workspace-visibility-indicator{position:absolute;right:-3px;bottom:-3px;width:17px;height:17px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:9px;line-height:1;background:#0b1120;border:2px solid var(--bg-primary);z-index:3;box-shadow:0 1px 5px rgba(0,0,0,.45)}
+.workspace-visibility-indicator.is-public{color:#67e8f9}
+.workspace-visibility-indicator.is-private{color:#c4b5fd}
+.channel-visibility-indicator{margin-left:5px;flex:0 0 auto;font-size:10px;line-height:1;opacity:.9}
+.channel-visibility-indicator.is-public{color:#67e8f9}
+.channel-visibility-indicator.is-private{color:#c4b5fd}
+
+/* eCollab system mark at the top of the server/workspace rail. Intentionally non-clickable. */
+.workspace-brand-mark{
+  width:40px;height:40px;margin:8px auto 6px;flex:0 0 40px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:12px;overflow:hidden;pointer-events:none;user-select:none;
+  background:#05030b;
+}
+.workspace-brand-mark img{width:100%;height:100%;display:block;object-fit:cover;pointer-events:none}
+.workspace-brand-sep{margin-top:2px!important;margin-bottom:6px!important}
+@media(max-width:860px){
+  .workspace-brand-mark{width:38px;height:38px;flex-basis:38px;margin-top:7px}
 }

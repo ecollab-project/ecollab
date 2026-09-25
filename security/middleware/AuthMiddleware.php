@@ -36,6 +36,7 @@ class AuthMiddleware
             'role'                 => $_SESSION['role']                 ?? 'student',
             'avatar_gradient'      => $gradient,        // auth canonical
             'avatar_color_gradient' => $gradient,        // chat canonical (alias)
+            'avatar_url'            => $_SESSION['avatar_url'] ?? '',
         ];
     }
 

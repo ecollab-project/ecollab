@@ -81,41 +81,26 @@ try {
     $friendStmt->execute([':me' => $me['id'], ':them' => $uid, ':them2' => $uid, ':me2' => $me['id']]);
     $friendStatus = $friendStmt->fetchColumn() ?: 'none';
 
-    // ── Compatibility score ────────────────────────────────────────────────
+    // ── Compatibility score (same profile-to-profile engine used by peer matching) ──
     $compatScore = null;
-    if ($uid !== $me['id']) {
-        // Check peer_matches table first
-        $pmStmt = $db->prepare("
-            SELECT match_score FROM peer_matches
-            WHERE (user_a_id = :me AND user_b_id = :them)
-               OR (user_a_id = :them2 AND user_b_id = :me2)
-            ORDER BY created_at DESC LIMIT 1
-        ");
-        $pmStmt->execute([':me' => $me['id'], ':them' => $uid, ':them2' => $uid, ':me2' => $me['id']]);
-        $dbScore = $pmStmt->fetchColumn();
-
-        if ($dbScore !== false) {
-            $compatScore = (int)round((float)$dbScore);
-        } else {
-            // Compute on the fly
-            $score = 60;
-            $score += min(30, count($mutualServers) * 10);
-            if (count($interests) > 0) {
-                // Get my interests
-                $myIntStmt = $db->prepare("SELECT interest_tag_id FROM user_interests WHERE user_id = :uid");
-                $myIntStmt->execute([':uid' => $me['id']]);
-                $myInts = $myIntStmt->fetchAll(PDO::FETCH_COLUMN);
-                $theirIntStmt = $db->prepare("SELECT interest_tag_id FROM user_interests WHERE user_id = :uid");
-                $theirIntStmt->execute([':uid' => $uid]);
-                $theirInts = $theirIntStmt->fetchAll(PDO::FETCH_COLUMN);
-                $shared = count(array_intersect($myInts, $theirInts));
-                $score += min(20, $shared * 5);
-            }
-            // Role compatibility
-            $myRole    = $me['role'] ?? 'student';
-            $theirRole = $user['role'] ?? 'student';
-            if ($myRole === 'student' && in_array($theirRole, ['facilitator', 'admin'])) $score += 10;
-            $compatScore = min(99, $score);
+    $compatBreakdown = null;
+    if ($uid !== (int)$me['id']) {
+        require_once dirname(__DIR__, 2) . '/services/PeerMatchingService.php';
+        $pairA = min((int)$me['id'], $uid);
+        $pairB = max((int)$me['id'], $uid);
+        $pcStmt = $db->prepare("SELECT score_total, score_subjects, score_style, score_interests, score_hobbies
+                                FROM pm_compatibility
+                                WHERE user_a_id = :a AND user_b_id = :b LIMIT 1");
+        $pcStmt->execute([':a'=>$pairA, ':b'=>$pairB]);
+        $pc = $pcStmt->fetch(PDO::FETCH_ASSOC);
+        if ($pc) {
+            $compatScore = (int)round((float)$pc['score_total']);
+            $compatBreakdown = [
+                'subjects'=>(int)round((float)$pc['score_subjects']),
+                'style'=>(int)round((float)$pc['score_style']),
+                'interests'=>(int)round((float)$pc['score_interests']),
+                'hobbies'=>(int)round((float)$pc['score_hobbies']),
+            ];
         }
     }
 
@@ -136,6 +121,7 @@ try {
             'username'              => $user['username'],
             'full_name'             => $user['full_name'],
             'role'                  => $user['role'],
+            'avatar_url'            => $user['avatar_url'] ?? '',
             'avatar_color_gradient' => $user['avatar_color_gradient'] ?? '',
             'bio'                   => $user['bio'] ?? '',
             'interests'             => implode(', ', $interests),
@@ -144,8 +130,18 @@ try {
             'goals'                 => $goalLabel,
             'year_level'            => $profile['year_level'] ? 'Year ' . $profile['year_level'] : '',
             'academic_program'      => $program,
+            'academic_program_id'   => isset($profile['academic_program_id']) ? (int)$profile['academic_program_id'] : null,
+            'year_level_value'      => isset($profile['year_level']) ? (int)$profile['year_level'] : null,
+            'study_style_value'     => $profile['study_style'] ?? '',
+            'primary_goal'          => $profile['primary_goal'] ?? '',
+            'weekly_goal_hours'     => (float)($profile['weekly_goal_hours'] ?? 20),
+            'timezone'              => $profile['timezone'] ?? 'Asia/Manila',
+            'github_url'            => $profile['github_url'] ?? '',
+            'linkedin_url'          => $profile['linkedin_url'] ?? '',
+            'portfolio_url'         => $profile['portfolio_url'] ?? '',
             'mutual_servers'        => $mutualServers,
             'compatibility_score'   => $compatScore,
+            'compatibility_breakdown'=> $compatBreakdown,
             'connection_status'     => $friendStatus,
             'streak_days'           => (int)($profile['current_streak_days'] ?? 0),
             'study_hours'           => (float)($profile['total_study_hours'] ?? 0),

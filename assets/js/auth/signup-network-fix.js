@@ -54,7 +54,13 @@
     };
 
     try {
-      const res = await fetch('../../API/auth/signup.php', {
+      const oauthOnboarding = window.ECOLLAB_OAUTH_ONBOARDING === true;
+
+      const endpoint = oauthOnboarding
+        ? '../../API/auth/complete-oauth-onboarding.php'
+        : '../../API/auth/signup.php';
+
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -87,9 +93,19 @@
         return;
       }
 
+      // Email verification is a required step for new password accounts.
+      // Do not redirect after registration until the OTP has been verified.
+      if (data.otp_required && typeof showEmailVerification === 'function') {
+        showEmailVerification(data);
+        if (typeof setLoading === 'function') setLoading(false);
+        return;
+      }
+
       const btn = document.getElementById('submitBtn');
       if (btn) {
-        btn.textContent = '✓ Account Created!';
+        btn.textContent = window.ECOLLAB_OAUTH_ONBOARDING === true
+          ? '✓ Setup Complete!'
+          : '✓ Account Created!';
         btn.style.background = 'linear-gradient(135deg, #0f9, #0cf)';
         btn.style.boxShadow = '0 0 30px rgba(0,255,180,0.4)';
         btn.disabled = true;
