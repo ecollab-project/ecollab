@@ -29,7 +29,7 @@ final class JarredTools
 
         $parts = [];
 
-        if (preg_match('/\b(online|who(?:\'s| is) (?:here|online)|active users?|members? online)\b/i', $prompt)) {
+        if (preg_match('/\b(online|who(?:\'s| is) (?:here|online|active)|active(?:\s+(?:users?|members?|people))?|currently active|members? (?:online|active))\b/i', $prompt)) {
             $serverId = ($activeServerId && $this->canAccessServer($requesterId, $activeServerId))
                 ? $activeServerId
                 : $this->resolveServerId($requesterId, $prompt);
