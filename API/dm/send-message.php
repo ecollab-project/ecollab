@@ -6,7 +6,7 @@ require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 require_once dirname(__DIR__, 2) . '/services/OllamaService.php';
 require_once dirname(__DIR__, 2) . '/services/JarredTools.php';
-require_once dirname(__DIR__, 2) . '/services/TemporaryVoiceService.php';
+require_once dirname(__DIR__, 2) . '/services/JarredActionService.php';
 
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
@@ -165,12 +165,12 @@ try {
 
         $jarredTools = new JarredTools();
 
-        // Stateful write action: Jarred may create only temporary voice rooms.
-        // PHP owns confirmation/privacy/invite state and authorization; Qwen never writes the DB.
-        $temporaryVoice = new TemporaryVoiceService();
-        $tempVoiceResult = $temporaryVoice->handleJarredMessage((int)$me['id'], $convId, $text, $activeServerId);
-        if ($tempVoiceResult !== null) {
-            $aiText = (string)$tempVoiceResult['reply'];
+        // Central action authority runs before Qwen. PHP owns action state,
+        // authorization and execution; the model never receives write access.
+        $jarredActions = new JarredActionService();
+        $actionResult = $jarredActions->handleMessage((int)$me['id'], $convId, $text, $activeServerId, $jarredSurface);
+        if ($actionResult !== null) {
+            $aiText = (string)$actionResult['reply'];
             $aiInsert = $db->prepare("INSERT INTO dm_messages (conversation_id, sender_id, body) VALUES (:cid, :uid, :body)");
             $aiInsert->execute([':cid'=>$convId, ':uid'=>$recipientId, ':body'=>$aiText]);
             $aiMsgId = (int)$db->lastInsertId();
@@ -183,7 +183,7 @@ try {
                 'success'=>true,'message_id'=>$msgId,'sender_id'=>$me['id'],'body'=>$text,'created_at'=>$createdAt,
                 'recipient_id'=>$recipientId,'is_ai'=>true,
                 'ai_message'=>['id'=>$aiMsgId,'conversation_id'=>$convId,'sender_id'=>$recipientId,'sender_name'=>'Jarred','sender_username'=>$recipient['username'],'sender_avatar_url'=>$recipient['avatar_url']??'','sender_gradient'=>$recipient['avatar_color_gradient']?:'#6366f1,#8b5cf6','body'=>$aiText,'created_at'=>$aiCreatedAt],
-                'ai_action'=>$tempVoiceResult['action'] ?? null,
+                'ai_action'=>$actionResult['action'] ?? null,
             ]);
             exit;
         }
