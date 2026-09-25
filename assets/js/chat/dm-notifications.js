@@ -352,6 +352,18 @@ window._handleNotifClick = async function(notifId, type, refId) {
   const t = String(type || '').toLowerCase();
   const link = String(notif?.link_url || '');
 
+  // Temporary private voice invitation.
+  if (t === 'temporary_voice_invite') {
+    const m = link.match(/[?&]temp_voice=(\d+)/i);
+    const channelId = Number(m?.[1] || refId || 0);
+    if (channelId > 0 && typeof window.joinVoice === 'function') {
+      window.joinVoice('temp-voice-' + channelId, null, channelId, 'Private Temporary Voice');
+    } else if (channelId > 0 && typeof joinVoice === 'function') {
+      joinVoice('temp-voice-' + channelId, null, channelId, 'Private Temporary Voice');
+    }
+    return;
+  }
+
   // Connection notifications belong to the Study Partners workflow.
   if (t === 'connection_request' || t === 'connection_accepted' ||
       /friend_request|connection/i.test(link)) {
@@ -1002,6 +1014,18 @@ window.sendDmMessage = async function() {
 
     if (data.is_ai && data.ai_message) {
       _appendDmMessage(data.ai_message);
+    }
+
+    // Jarred write actions are explicit backend results, never model-authored JS.
+    if (data.is_ai && data.ai_action?.type === 'open_temporary_voice') {
+      const a = data.ai_action;
+      if (typeof window.joinVoice === 'function') {
+        setTimeout(() => window.joinVoice(a.channel_slug || ('temp-voice-' + a.channel_id), null, Number(a.channel_id), a.channel_name || 'Temporary Room'), 250);
+      } else if (typeof joinVoice === 'function') {
+        setTimeout(() => joinVoice(a.channel_slug || ('temp-voice-' + a.channel_id), null, Number(a.channel_id), a.channel_name || 'Temporary Room'), 250);
+      } else {
+        showToast('Temporary room created, but the voice UI is not ready. Refresh the server to join it.', 'info');
+      }
     }
 
     if (data.ai_error) {
