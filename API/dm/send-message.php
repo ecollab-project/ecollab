@@ -25,6 +25,14 @@ $attachmentName = trim((string)($body['attachment_name'] ?? ''));
 $attachmentSize = max(0, (int)($body['attachment_size'] ?? 0));
 $attachmentMime = trim((string)($body['attachment_mime'] ?? ''));
 $activeServerId = isset($body['active_server_id']) ? (int)$body['active_server_id'] : null;
+$jarredSurface = [
+    'surface' => trim((string)($body['surface'] ?? 'dm')),
+    'channel_id' => (int)($body['channel_id'] ?? 0),
+    'voice_channel_id' => (int)($body['voice_channel_id'] ?? 0),
+    'workspace_id' => (int)($body['workspace_id'] ?? 0),
+    'document_id' => (int)($body['document_id'] ?? 0),
+    'whiteboard_id' => (int)($body['whiteboard_id'] ?? 0),
+];
 
 if (!$convId || ($text === '' && $attachmentPath === '') || mb_strlen($text) > 4000) {
     http_response_code(400);
@@ -154,7 +162,7 @@ try {
             ];
         }
 
-        $jarredContext = (new JarredTools())->contextForPrompt((int)$me['id'], $text, $activeServerId);
+        $jarredContext = (new JarredTools())->contextForPrompt((int)$me['id'], $text, $activeServerId, $jarredSurface);
         if ($jarredContext !== '') {
             $messages[] = [
                 'role' => 'system',
@@ -165,7 +173,7 @@ try {
         $ollama = new OllamaService();
         $result = $ollama->generate(
             $messages,
-            'You are Jarred, the built-in eCollab assistant. Help college students with studying, programming, collaboration, research planning, explanations, and project work. You may use permission-scoped eCollab context supplied by the backend, including accessible servers/channels, message and thread search results, and live presence. Treat that backend context as authoritative. Never claim access to information that was not supplied. You have read/search capabilities only: never claim to kick, ban, mute, remove users, change roles or permissions, delete servers/channels/content, access another user\'s private data, reveal secrets, execute SQL/shell/PHP, or bypass eCollab authorization. Be concise, useful, friendly, and honest.',
+            'You are Jarred, the central built-in AI assistant for eCollab. You assist users across servers, channels, voice channels, Coworkspaces, documents, whiteboards, study workflows, and intelligent peer matching. The backend may provide permission-scoped live ECOLLAB CONTEXT. That context is authoritative application data: use it directly and never replace it with generic advice about Discord, Slack, Teams, or other platforms. When peer-match results are supplied, explain the deterministic eCollab compatibility scores and reasons; do not invent scores or people. When document or whiteboard context is supplied, discuss only content/metadata actually provided. Voice context tells you presence and channel membership, not spoken audio unless a transcript is explicitly supplied. If required eCollab data is missing, say exactly what context is missing instead of pretending the feature is unavailable. Never invent users, messages, presence, servers, channels, documents, whiteboards, permissions, or private information. You have read/search/recommendation capabilities only: never claim to kick, ban, mute, remove users, change roles or permissions, delete content, access unauthorized private data, reveal secrets, execute SQL/shell/PHP, or bypass eCollab authorization. Be concise, practical, educational, and eCollab-specific.',
             400
         );
 
