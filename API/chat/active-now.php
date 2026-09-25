@@ -35,6 +35,21 @@ if ($action === 'heartbeat') {
 if ($action === 'join_voice') {
     $channelId = (int)($_POST['channel_id'] ?? 0);
     if ($channelId) {
+        $access = $db->prepare(
+            "SELECT c.id FROM channels c
+             JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid
+             WHERE c.id=:cid AND c.type='voice'
+               AND (c.is_private=0 OR c.created_by=:uid2 OR EXISTS(
+                    SELECT 1 FROM channel_members cm WHERE cm.channel_id=c.id AND cm.user_id=:uid3
+               ))
+             LIMIT 1"
+        );
+        $access->execute([':uid'=>$userId,':cid'=>$channelId,':uid2'=>$userId,':uid3'=>$userId]);
+        if (!$access->fetchColumn()) {
+            http_response_code(403);
+            echo json_encode(['success'=>false,'error'=>'Voice channel access denied']);
+            exit;
+        }
         $db->prepare("UPDATE users SET voice_channel_id=:cid WHERE id=:id")
            ->execute([':cid' => $channelId, ':id' => $userId]);
         $tempVoice->markJoined($channelId);
