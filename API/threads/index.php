@@ -290,8 +290,13 @@ try {
         try {
             $db->prepare("INSERT INTO thread_reports(thread_id,reporter_id,reported_user_id,reason,status) VALUES(?,?,?,?, 'pending')")->execute([$id,$uid,$target,mb_substr($reason,0,255)]);
         } catch (PDOException $e) {
-            // uq_thread_reporter prevents the same account from reporting the same post twice.
-            if ((string)$e->getCode() === '23000') threadJson(['error'=>'You already reported this post'],409);
+            // A retry must preserve the original report, including its moderation status.
+            $errorInfo = $e->errorInfo ?? [];
+            if (($errorInfo[0] ?? '') === '23000'
+                && (int)($errorInfo[1] ?? 0) === 1062
+                && preg_match("/for key '(?:thread_reports\.)?uq_thread_reporter'/", (string)($errorInfo[2] ?? '')) === 1) {
+                threadJson(['message'=>'Post reported', 'already_reported'=>true]);
+            }
             throw $e;
         }
         threadJson(['message'=>'Post reported']);
