@@ -169,10 +169,10 @@ try {
         // directly instead of asking the language model to reinterpret live eCollab data.
         $directJarredText = null;
         $isPresenceQuestion =
-            preg_match('/\\b(online|active|connected)\\b/i', $text)
-            || preg_match('/\\bwho(?:\\'s| is)\\s+(?:here|online|active)\\b/i', $text)
-            || preg_match('/\\bwho(?:\\'s| is)\\s+(?:on|in)\\s+(?:my|this|the|our)\\s+server\\b/i', $text)
-            || preg_match('/\\banyone\\s+(?:here|online|active)\\b/i', $text);
+            preg_match("~\\b(online|active|connected)\\b~i", $text)
+            || preg_match("~\\bwho(?:'s| is)\\s+(?:here|online|active)\\b~i", $text)
+            || preg_match("~\\bwho(?:'s| is)\\s+(?:on|in)\\s+(?:my|this|the|our)\\s+server\\b~i", $text)
+            || preg_match("~\\banyone\\s+(?:here|online|active)\\b~i", $text);
 
         if ($isPresenceQuestion) {
             $resolvedServerId = ($activeServerId && $jarredTools->canAccessServer((int)$me['id'], $activeServerId))
