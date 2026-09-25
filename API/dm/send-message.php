@@ -6,6 +6,7 @@ require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 require_once dirname(__DIR__, 2) . '/services/OllamaService.php';
 require_once dirname(__DIR__, 2) . '/services/JarredTools.php';
+require_once dirname(__DIR__, 2) . '/services/TemporaryVoiceService.php';
 
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
@@ -163,6 +164,30 @@ try {
         }
 
         $jarredTools = new JarredTools();
+
+        // Stateful write action: Jarred may create only temporary voice rooms.
+        // PHP owns confirmation/privacy/invite state and authorization; Qwen never writes the DB.
+        $temporaryVoice = new TemporaryVoiceService();
+        $tempVoiceResult = $temporaryVoice->handleJarredMessage((int)$me['id'], $convId, $text, $activeServerId);
+        if ($tempVoiceResult !== null) {
+            $aiText = (string)$tempVoiceResult['reply'];
+            $aiInsert = $db->prepare("INSERT INTO dm_messages (conversation_id, sender_id, body) VALUES (:cid, :uid, :body)");
+            $aiInsert->execute([':cid'=>$convId, ':uid'=>$recipientId, ':body'=>$aiText]);
+            $aiMsgId = (int)$db->lastInsertId();
+            $aiCreatedStmt = $db->prepare("SELECT created_at FROM dm_messages WHERE id=:id LIMIT 1");
+            $aiCreatedStmt->execute([':id'=>$aiMsgId]);
+            $aiCreatedAt = (string)($aiCreatedStmt->fetchColumn() ?: gmdate('Y-m-d H:i:s'));
+            $db->prepare("UPDATE dm_conversations SET last_message=:body,last_msg_at=:created_at WHERE id=:cid")
+               ->execute([':body'=>mb_substr($aiText,0,120),':created_at'=>$aiCreatedAt,':cid'=>$convId]);
+            echo json_encode([
+                'success'=>true,'message_id'=>$msgId,'sender_id'=>$me['id'],'body'=>$text,'created_at'=>$createdAt,
+                'recipient_id'=>$recipientId,'is_ai'=>true,
+                'ai_message'=>['id'=>$aiMsgId,'conversation_id'=>$convId,'sender_id'=>$recipientId,'sender_name'=>'Jarred','sender_username'=>$recipient['username'],'sender_avatar_url'=>$recipient['avatar_url']??'','sender_gradient'=>$recipient['avatar_color_gradient']?:'#6366f1,#8b5cf6','body'=>$aiText,'created_at'=>$aiCreatedAt],
+                'ai_action'=>$tempVoiceResult['action'] ?? null,
+            ]);
+            exit;
+        }
+
         $jarredContext = $jarredTools->contextForPrompt((int)$me['id'], $text, $activeServerId, $jarredSurface);
 
         // qwen3:1.7b on this VPS does not reliably emit native Ollama tool_calls.
@@ -176,7 +201,7 @@ try {
         }
         $result = $ollama->generate(
             $messages,
-            'You are Jarred, eCollab\'s built-in AI assistant. Your name is Jarred; never address the user as Jarred unless they explicitly say that is their name. Talk naturally and casually when the user is casual. You can joke, react, and have ordinary conversation without turning every emotional or joking remark into a scripted support response. Be warm but not patronizing. Avoid phrases like "let\'s take a break", "let\'s reset", "you\'re safe here", or repetitive offers of support unless the situation genuinely calls for them. Permission-scoped eCollab context may be supplied with the conversation; when present, it is authoritative. Your CURRENT eCollab capabilities are: answer from authorized eCollab context; report active/online members; explain deterministic peer matches; search authorized message context when supplied; describe accessible servers/channels; discuss authorized Coworkspace, document, and whiteboard context; recommend academic library material; answer eCollab questions; and have normal conversation. Do NOT claim you can create/delete channels, send messages on the user\'s behalf, join or place voice/video calls, change roles or permissions, kick/ban/mute users, edit documents/whiteboards yourself, or perform any other action unless the backend explicitly provides that action capability. When asked what you can do, describe only these current capabilities and distinguish helping/explaining from actually performing actions. Never invent users, messages, presence, servers, channels, documents, permissions, features, or compatibility scores. If required eCollab context is absent, say exactly what is missing. Keep replies concise unless the user asks for detail.',
+            'You are Jarred, eCollab\'s built-in AI assistant. Your name is Jarred; never address the user as Jarred unless they explicitly say that is their name. Talk naturally and casually when the user is casual. You can joke, react, and have ordinary conversation without turning every emotional or joking remark into a scripted support response. Be warm but not patronizing. Avoid phrases like "let\'s take a break", "let\'s reset", "you\'re safe here", or repetitive offers of support unless the situation genuinely calls for them. Permission-scoped eCollab context may be supplied with the conversation; when present, it is authoritative. Your CURRENT eCollab capabilities are: create temporary public/private voice rooms through the server-authorized Jarred workflow; answer from authorized eCollab context; report active/online members; explain deterministic peer matches; search authorized message context when supplied; describe accessible servers/channels; discuss authorized Coworkspace, document, and whiteboard context; recommend academic library material; answer eCollab questions; and have normal conversation. Do NOT claim you can create/delete permanent channels, send messages on the user\'s behalf, join or place voice/video calls, change roles or permissions, kick/ban/mute users, edit documents/whiteboards yourself, or perform any other action unless the backend explicitly provides that action capability. When asked what you can do, describe only these current capabilities and distinguish helping/explaining from actually performing actions. Never invent users, messages, presence, servers, channels, documents, permissions, features, or compatibility scores. If required eCollab context is absent, say exactly what is missing. Keep replies concise unless the user asks for detail.',
             400
         );
 
