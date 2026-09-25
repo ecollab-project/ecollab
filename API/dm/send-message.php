@@ -165,17 +165,19 @@ try {
         $jarredTools = new JarredTools();
         $jarredContext = $jarredTools->contextForPrompt((int)$me['id'], $text, $activeServerId, $jarredSurface);
 
-        // Natural-language Jarred requests are routed through permission-scoped application tools.
+        // qwen3:1.7b on this VPS does not reliably emit native Ollama tool_calls.
+        // Use permission-scoped context routing, then let Qwen answer naturally from those facts.
         $ollama = new OllamaService();
-        $result = $ollama->chatWithTools(
+        if ($jarredContext !== '') {
+            array_unshift($messages, [
+                'role' => 'system',
+                'content' => "Authoritative live eCollab context for the current request. Use these application results as facts. Do not claim you lack access when the requested data is present here.\n\n" . $jarredContext,
+            ]);
+        }
+        $result = $ollama->generate(
             $messages,
-            'You are Jarred, the built-in AI assistant for eCollab. Converse naturally. When a request depends on current eCollab data, use the appropriate provided tool rather than guessing. Tool results are authoritative. Use get_active_members for presence questions, get_peer_matches for study partners, search_messages for authorized discussions, get_servers_and_channels for navigation, get_collaboration_context for Coworkspace/document/whiteboard context, and get_library_recommendations for academic reading. Do not invent application data or permissions. If context is missing, say what is missing. Be concise and eCollab-specific.',
-            $jarredTools->toolDefinitions(),
-            static function (string $name, array $arguments) use ($jarredTools, $me, $activeServerId, $jarredSurface): array {
-                return $jarredTools->executeTool((int)$me['id'], $name, $arguments, $activeServerId, $jarredSurface);
-            },
-            400,
-            3
+            'You are Jarred, the built-in AI assistant for eCollab. Converse naturally and understand varied wording. Permission-scoped eCollab context may be supplied with the current conversation; when present, it is authoritative. Answer from that context instead of giving generic advice about other platforms. Never invent users, messages, presence, servers, channels, documents, permissions, or compatibility scores. If required eCollab context is genuinely absent, say exactly what context is missing. Be concise, practical, and eCollab-specific.',
+            400
         );
 
         $aiText = trim((string)($result['text'] ?? ''));
