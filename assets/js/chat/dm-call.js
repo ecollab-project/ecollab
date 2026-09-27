@@ -92,7 +92,15 @@ async function startDmCall(video) {
   if (!targetId && !groupId) return;
 
   if (groupId) {
-    await startDmGroupLiveKitCall(groupId, !!video);
+    // Group Messages use their own LiveKit room/token flow. Mark this event so
+    // legacy voice-channel UI cannot reinterpret the synthetic group id as a
+    // server voice channel and call /API/chat/livekit-token.php.
+    window.__ecollabStartingDmGroupCall = true;
+    try {
+      await startDmGroupLiveKitCall(groupId, !!video);
+    } finally {
+      window.__ecollabStartingDmGroupCall = false;
+    }
     return;
   }
 
