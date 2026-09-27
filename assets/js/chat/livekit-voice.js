@@ -36,6 +36,78 @@
     return Number(m.ecollab_user_id || String(participant.identity || '').replace(/^user-/, '')) || 0;
   }
 
+  function participantUser(participant) {
+    let metadata = {};
+    try { metadata = JSON.parse(participant.metadata || '{}'); } catch (_) {}
+
+    const id = participantId(participant);
+    const name = participant.name || metadata.full_name || metadata.username || participant.identity || 'Participant';
+
+    return {
+      id,
+      user_id: id,
+      full_name: name,
+      username: metadata.username || name,
+      role: metadata.role || '',
+      avatar_color_gradient: metadata.avatar_color_gradient || '#3b82f6,#6366f1',
+      muted: !participant.isMicrophoneEnabled,
+    };
+  }
+
+  function participantCard(participant) {
+    const uid = participantId(participant);
+    return document.querySelector(
+      '.vc-speaker-card[data-user-id="' + uid + '"], .vc-listener-card[data-user-id="' + uid + '"]'
+    );
+  }
+
+  function refreshParticipantCounts() {
+    const speaking = document.querySelectorAll('.vc-speaker-card').length;
+    const listening = document.querySelectorAll('.vc-listener-card').length;
+    updateVcCounts(speaking, listening);
+    if (typeof _refreshVoiceLayout === 'function') _refreshVoiceLayout();
+  }
+
+  function syncParticipantState(participant) {
+    const uid = participantId(participant);
+    if (!uid || uid === Number(window.ECOLLAB?.userId || 0)) return;
+
+    const muted = !participant.isMicrophoneEnabled;
+    const shouldBeSpeaker = !muted;
+    let card = participantCard(participant);
+
+    if (
+      card &&
+      ((shouldBeSpeaker && card.classList.contains('vc-listener-card')) ||
+       (!shouldBeSpeaker && card.classList.contains('vc-speaker-card')))
+    ) {
+      card.remove();
+      addVcParticipant({ ...participantUser(participant), muted }, shouldBeSpeaker);
+      card = participantCard(participant);
+    }
+
+    if (card) card.classList.toggle('speaking', participant.isSpeaking === true && !muted);
+    refreshParticipantCounts();
+  }
+
+  function syncParticipant(participant) {
+    const uid = participantId(participant);
+    if (!uid || uid === Number(window.ECOLLAB?.userId || 0)) return;
+
+    if (!participantCard(participant)) {
+      addVcParticipant(participantUser(participant), participant.isMicrophoneEnabled);
+    }
+    syncParticipantState(participant);
+  }
+
+  function removeParticipant(participant) {
+    participantCard(participant)?.remove();
+    document.querySelectorAll(
+      '.livekit-media-track[data-livekit-participant="' + participant.identity + '"]'
+    ).forEach(el => el.remove());
+    refreshParticipantCounts();
+  }
+
   function attach(track, publication, participant) {
     const el = track.attach();
     el.autoplay = true;
@@ -77,8 +149,42 @@
       disconnectOnPageLeave: true,
     });
 
-    room.on(RoomEvent.TrackSubscribed, attach);
-    room.on(RoomEvent.TrackUnsubscribed, detach);
+    room.on(RoomEvent.ParticipantConnected, participant => {
+      console.log('[LiveKit] participant connected:', participant.identity);
+      syncParticipant(participant);
+    });
+    room.on(RoomEvent.ParticipantDisconnected, participant => {
+      console.log('[LiveKit] participant disconnected:', participant.identity);
+      removeParticipant(participant);
+    });
+    room.on(RoomEvent.ParticipantMetadataChanged, (_metadata, participant) => {
+      if (participant) syncParticipant(participant);
+    });
+    room.on(RoomEvent.TrackMuted, (_publication, participant) => {
+      if (participant) syncParticipantState(participant);
+    });
+    room.on(RoomEvent.TrackUnmuted, (_publication, participant) => {
+      if (participant) syncParticipantState(participant);
+    });
+    room.on(RoomEvent.ActiveSpeakersChanged, participants => {
+      const active = new Set(participants.map(participant => participant.identity));
+      room.remoteParticipants.forEach(participant => {
+        const card = participantCard(participant);
+        if (card) card.classList.toggle(
+          'speaking',
+          active.has(participant.identity) && participant.isMicrophoneEnabled
+        );
+      });
+    });
+    room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+      syncParticipant(participant);
+      attach(track, publication, participant);
+      refreshParticipantCounts();
+    });
+    room.on(RoomEvent.TrackUnsubscribed, track => {
+      detach(track);
+      refreshParticipantCounts();
+    });
     room.on(RoomEvent.Disconnected, () => {
       document.querySelectorAll('.livekit-media-track').forEach(el => el.remove());
       activeChannelId = null;
@@ -89,6 +195,19 @@
 
     // eCollab joins muted by default.
     await room.localParticipant.setMicrophoneEnabled(false);
+
+    // ParticipantConnected only fires for later arrivals. Synchronize users
+    // who were already present when this browser joined the LiveKit room.
+    room.remoteParticipants.forEach(participant => {
+      syncParticipant(participant);
+      participant.trackPublications.forEach(publication => {
+        if (publication.track && publication.isSubscribed) {
+          attach(publication.track, publication, participant);
+        }
+      });
+    });
+    refreshParticipantCounts();
+
     return room;
   }
 
