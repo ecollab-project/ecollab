@@ -116,4 +116,94 @@
     get room() { return room; },
     get channelId() { return activeChannelId; },
   };
+
+  // Replace only the media-facing voice-channel entry points. The existing
+  // eCollab overlay/layout helpers remain in use.
+  joinVoice = async function (channelSlug, el, channelId, roomNameOverride) {
+    if (vcActive && Number(vcChannelId) !== Number(channelId)) await disconnect();
+
+    document.querySelectorAll('.voice-channel').forEach(v => v.classList.remove('connected'));
+    if (el) el.classList.add('connected');
+
+    vcActive = true;
+    vcMinimized = false;
+    vcChannelId = Number(channelId);
+    vcRoomName = roomNameOverride || el?.textContent?.trim()?.replace(/\\d+/g, '').trim() || 'Voice Channel';
+
+    const view = document.getElementById('voiceChannelView');
+    if (view) {
+      view.classList.remove('vc-minimized');
+      view.classList.add('active');
+      document.body.classList.add('vc-active');
+    }
+    _setVcLabels();
+    _updateConnectedBar(true);
+    renderVcUser();
+    _ensureMinimizeBtn();
+    _ensureVoiceQuickActions();
+    _refreshVoiceLayout();
+
+    try {
+      await connect(channelId);
+      if (typeof _reportVoiceStatus === 'function') _reportVoiceStatus('join', channelId);
+      if (typeof _bumpSidebarVcCount === 'function') _bumpSidebarVcCount(channelId, 1);
+      showToast('🔊 Joined ' + vcRoomName, 'success');
+    } catch (err) {
+      console.error('[LiveKit] join failed', err);
+      vcActive = false;
+      view?.classList.remove('active');
+      document.body.classList.remove('vc-active');
+      if (el) el.classList.remove('connected');
+      showToast('Voice connection failed: ' + err.message, 'info');
+    }
+  };
+
+  disconnectVoice = async function () {
+    const leavingChannel = vcChannelId;
+    await disconnect();
+    vcActive = false;
+    vcMinimized = false;
+    vcCamOn = false;
+    vcScreenOn = false;
+    vcMicMuted = true;
+    document.getElementById('voiceChannelView')?.classList.remove('active', 'vc-minimized');
+    document.body.classList.remove('vc-active', 'vc-pip');
+    document.querySelectorAll('.voice-channel').forEach(v => v.classList.remove('connected'));
+    _updateConnectedBar(false);
+    if (typeof _bumpSidebarVcCount === 'function') _bumpSidebarVcCount(leavingChannel, -1);
+    if (typeof _reportVoiceStatus === 'function') _reportVoiceStatus('leave', leavingChannel);
+    showToast('Disconnected from voice', 'info');
+  };
+
+  toggleVcMic = async function () {
+    if (!room) return;
+    const nextMuted = !vcMicMuted;
+    try {
+      await setMic(!nextMuted);
+      vcMicMuted = nextMuted;
+      document.getElementById('vcMicBtn')?.classList.toggle('muted-state', vcMicMuted);
+      document.getElementById('vcMicBtn')?.classList.toggle('unmuted', !vcMicMuted);
+      _moveUserCardOnMute(vcMicMuted);
+    } catch (err) { showToast('Microphone error: ' + err.message, 'info'); }
+  };
+
+  toggleCamera = async function () {
+    if (!room) return;
+    try {
+      await setCamera(!vcCamOn);
+      vcCamOn = !vcCamOn;
+      document.getElementById('vcCamBtn')?.classList.toggle('active', vcCamOn);
+      document.getElementById('vcQuickCam')?.classList.toggle('active', vcCamOn);
+    } catch (err) { showToast('Camera error: ' + err.message, 'info'); }
+  };
+
+  toggleScreenShare = async function () {
+    if (!room) return;
+    try {
+      await setScreen(!vcScreenOn);
+      vcScreenOn = !vcScreenOn;
+      document.getElementById('vcScreenBtn')?.classList.toggle('active', vcScreenOn);
+      document.getElementById('vcQuickScreen')?.classList.toggle('active', vcScreenOn);
+    } catch (err) { showToast('Screen share error: ' + err.message, 'info'); }
+  };
 })();
