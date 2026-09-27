@@ -760,6 +760,13 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         </div>
       </div>
       <div class="vc-bar-grp center">
+        <button class="vc-ctrl-btn vc-unwatch-btn" id="vcUnwatchBtn" type="button" onclick="unwatchAllScreens()" title="Unwatch Screen Share" style="display:none;">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2H4C2.9 4 2 4.9 2 6v10c0 1.1.9 2 2 2h6v2H7v2h10v-2h-3v-2h6ZM4 6h16v10H4V6Z"/>
+            <path d="M7.4 7.4 16.6 16.6M16.6 7.4 7.4 16.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <span class="vc-ctrl-tooltip">Unwatch</span>
+        </button>
         <div class="vc-btn-lg mic-btn" id="vcMicBtn" onclick="toggleVcMic()">
           <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
