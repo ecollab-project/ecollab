@@ -118,6 +118,45 @@ class DmHandler
         foreach ($userConns[$targetId] as $conn) { try { $conn->send($payload); } catch (\Throwable) {} }
     }
 
+    public static function handleDmGroupCallSignal(ConnectionInterface $from, array $data, array $meta, array $userConns, PDO $db, string $type): void {
+        $groupId = (int)($data['group_id'] ?? 0);
+        $callerId = (int)$meta['user_id'];
+        if (!$groupId) return;
+
+        $mem = $db->prepare('SELECT 1 FROM dm_group_members WHERE group_id=:gid AND user_id=:uid');
+        $mem->execute([':gid'=>$groupId, ':uid'=>$callerId]);
+        if (!$mem->fetchColumn()) return;
+
+        if ($type === 'dm_group_call_busy') {
+            $targetId = (int)($data['target_user_id'] ?? 0);
+            if (!$targetId || $targetId === $callerId || !isset($userConns[$targetId])) return;
+            $target = $db->prepare('SELECT 1 FROM dm_group_members WHERE group_id=:gid AND user_id=:uid');
+            $target->execute([':gid'=>$groupId, ':uid'=>$targetId]);
+            if (!$target->fetchColumn()) return;
+            $payload = json_encode([
+                'type'=>'dm_group_call_busy',
+                'group_id'=>$groupId,
+                'from_user_id'=>$callerId,
+                'from_username'=>$meta['full_name'] ?? $meta['username'],
+            ]);
+            foreach ($userConns[$targetId] as $conn) { try { $conn->send($payload); } catch (\Throwable) {} }
+            return;
+        }
+
+        $members = $db->prepare('SELECT user_id FROM dm_group_members WHERE group_id=:gid AND user_id != :uid');
+        $members->execute([':gid'=>$groupId, ':uid'=>$callerId]);
+        $payload = json_encode([
+            'type'=>'dm_group_call_start',
+            'group_id'=>$groupId,
+            'from_user_id'=>$callerId,
+            'from_username'=>$meta['full_name'] ?? $meta['username'],
+            'is_video'=>(bool)($data['is_video'] ?? false),
+        ]);
+        foreach ($members->fetchAll(PDO::FETCH_COLUMN) as $memberId) {
+            foreach ($userConns[(int)$memberId] ?? [] as $conn) { try { $conn->send($payload); } catch (\Throwable) {} }
+        }
+    }
+
     public static function handleDmCallSignal(ConnectionInterface $from, array $data, array $meta, array $userConns, PDO $db, string $type): void {
         $callerId = (int)$meta['user_id'];
         $targetId = (int)($data['target_user_id'] ?? 0);
