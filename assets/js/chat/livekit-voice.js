@@ -131,17 +131,27 @@
 
       // Reuse eCollab's existing in-card camera renderer instead of falling
       // back to the entire voice view (which made remote video fullscreen).
-      if (source === 'camera' && mediaTrack && typeof _attachRemoteCamera === 'function') {
+      if (source === 'camera' && mediaTrack) {
+        // Keep the LiveKit RemoteVideoTrack attached to the actual visible
+        // video element. Do not clone mediaStreamTrack into a new MediaStream:
+        // doing so bypasses LiveKit's remote-track lifecycle and can freeze on
+        // mobile browsers.
         el.remove();
         if (typeof _removeRemoteCamera === 'function') _removeRemoteCamera(uid);
-        _attachRemoteCamera(uid, new MediaStream([mediaTrack]));
-        const video = document.querySelector('[data-user-id="' + uid + '"] .vc-cam-preview:not(.vc-screen-preview)');
-        if (video) {
-          video.playsInline = true;
+        const card = participantCard(participant);
+        if (!card) return;
+        let video = card.querySelector('.vc-cam-preview:not(.vc-screen-preview)');
+        if (!video) {
+          video = document.createElement('video');
+          video.className = 'vc-cam-preview';
           video.autoplay = true;
           video.muted = true;
-          video.play().catch(() => {});
+          video.playsInline = true;
+          card.insertBefore(video, card.firstChild);
         }
+        track.attach(video);
+        card.classList.add('has-camera');
+        video.play().catch(() => {});
         return;
       }
 
@@ -194,7 +204,10 @@
     const auth = await tokenFor(channelId);
     const { Room, RoomEvent, Track } = window.LivekitClient;
     room = new Room({
-      adaptiveStream: true,
+      // eCollab dynamically removes/recreates participant video elements.
+      // Adaptive stream observes element visibility and may pause a remote
+      // track while those elements are being moved, especially on mobile.
+      adaptiveStream: false,
       dynacast: true,
       disconnectOnPageLeave: true,
     });
