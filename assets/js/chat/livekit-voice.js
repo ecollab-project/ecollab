@@ -404,6 +404,12 @@
   // Replace only the media-facing voice-channel entry points. The existing
   // eCollab overlay/layout helpers remain in use.
   joinVoice = async function (channelSlug, el, channelId, roomNameOverride) {
+    // DM group calls use /API/dm/livekit-group-token.php. A group id is not a
+    // server voice-channel id and must never reach /API/chat/livekit-token.php.
+    if (window.__ecollabStartingDmGroupCall) {
+      console.warn('[LiveKit] Ignored server voice join during DM group call flow.');
+      return;
+    }
     if (vcActive && Number(vcChannelId) !== Number(channelId)) await disconnect();
 
     document.querySelectorAll('.voice-channel').forEach(v => v.classList.remove('connected'));
