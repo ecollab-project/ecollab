@@ -200,11 +200,31 @@
     room.on(RoomEvent.ParticipantMetadataChanged, (_metadata, participant) => {
       if (participant) syncParticipant(participant);
     });
-    room.on(RoomEvent.TrackMuted, (_publication, participant) => {
-      if (participant) syncParticipantState(participant);
+    room.on(RoomEvent.TrackMuted, (publication, participant) => {
+      if (!participant) return;
+      syncParticipantState(participant);
+
+      const uid = participantId(participant);
+      const source = publication?.source || publication?.track?.source || '';
+      // LiveKit disables an existing camera by muting its publication; it does
+      // not necessarily unsubscribe/unpublish it. Remove the stale remote
+      // preview as soon as the remote camera publication becomes muted.
+      if (uid && source === 'camera' && typeof _removeRemoteCamera === 'function') {
+        _removeRemoteCamera(uid);
+      }
+      if (uid && source === 'screen_share') {
+        if (typeof _removeRemoteScreenShare === 'function') _removeRemoteScreenShare(uid);
+        if (typeof _hideRemoteScreenShareSection === 'function') _hideRemoteScreenShareSection(uid);
+      }
     });
-    room.on(RoomEvent.TrackUnmuted, (_publication, participant) => {
-      if (participant) syncParticipantState(participant);
+    room.on(RoomEvent.TrackUnmuted, (publication, participant) => {
+      if (!participant) return;
+      syncParticipantState(participant);
+
+      const source = publication?.source || publication?.track?.source || '';
+      if ((source === 'camera' || source === 'screen_share') && publication?.track) {
+        attach(publication.track, publication, participant);
+      }
     });
     room.on(RoomEvent.ActiveSpeakersChanged, participants => {
       const active = new Set(participants.map(participant => participant.identity));
