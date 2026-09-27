@@ -203,6 +203,9 @@ async function startDmGroupLiveKitCall(groupId, video) {
     });
 
     await room.connect(data.url, data.token);
+    if (!window.__joiningDmGroupInvite) {
+      window.wsSend?.({ type: 'dm_group_call_start', group_id: Number(groupId), is_video: !!video });
+    }
     await room.localParticipant.setMicrophoneEnabled(true);
     if (video) await room.localParticipant.setCameraEnabled(true);
     _renderDmGroupCallOverlay(data.room_name);
@@ -271,6 +274,65 @@ function endDmGroupCall() {
 }
 window.endDmGroupCall = endDmGroupCall;
 window.startDmGroupLiveKitCall = startDmGroupLiveKitCall;
+
+let _dmGroupIncomingPopup = null;
+
+function _closeDmGroupIncomingPopup() {
+  document.getElementById('dmGroupIncomingCallPopup')?.remove();
+  _dmGroupIncomingPopup = null;
+}
+
+window._onDmGroupCallStart = function (data) {
+  const groupId = Number(data.group_id || 0);
+  if (!groupId) return;
+
+  const unavailable = _dmCallState !== 'idle' || !!_dmGroupLiveKitRoom || !!window.vcActive;
+  if (unavailable) {
+    window.wsSend?.({
+      type: 'dm_group_call_busy',
+      group_id: groupId,
+      target_user_id: Number(data.from_user_id),
+    });
+    return;
+  }
+
+  _closeDmGroupIncomingPopup();
+  const caller = data.from_username || 'Someone';
+  const kind = data.is_video ? 'video' : 'voice';
+  const popup = document.createElement('div');
+  popup.id = 'dmGroupIncomingCallPopup';
+  popup.style.cssText = 'position:fixed;top:18px;right:18px;z-index:10050;width:330px;padding:16px;background:var(--bg-secondary,#202225);border:1px solid var(--border,#3a3d42);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.45);';
+  popup.innerHTML = `
+    <div style="font-weight:800;font-size:14px;margin-bottom:4px;">${data.is_video ? '🎥' : '📞'} Incoming group ${kind} call</div>
+    <div style="font-size:13px;color:var(--text-muted,#b5bac1);margin-bottom:14px;">${escHtml(caller)} started a group call</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button id="dmGroupDeclineCall" type="button" style="padding:8px 14px;border:0;border-radius:8px;background:#ef4444;color:#fff;font-weight:700;cursor:pointer;">Decline</button>
+      <button id="dmGroupAcceptCall" type="button" style="padding:8px 14px;border:0;border-radius:8px;background:#22c55e;color:#fff;font-weight:700;cursor:pointer;">Accept</button>
+    </div>`;
+  document.body.appendChild(popup);
+  _dmGroupIncomingPopup = popup;
+
+  popup.querySelector('#dmGroupDeclineCall')?.addEventListener('click', _closeDmGroupIncomingPopup);
+  popup.querySelector('#dmGroupAcceptCall')?.addEventListener('click', async () => {
+    _closeDmGroupIncomingPopup();
+    window.__joiningDmGroupInvite = true;
+    try {
+      await startDmGroupLiveKitCall(groupId, !!data.is_video);
+    } finally {
+      window.__joiningDmGroupInvite = false;
+    }
+  });
+};
+
+window._onDmGroupCallBusy = function (data) {
+  const who = data.from_username || 'User';
+  if (typeof showToast === 'function') {
+    showToast(escHtml(who) + ' is busy', 'info');
+  }
+  const toast = document.querySelector('.toast:last-child, .toast-notification:last-child');
+  if (toast) setTimeout(() => toast.remove(), 2000);
+};
+
 
 window._onDmCallOfferSent = function (data) {
   if (data.log_id) _dmCallLogId = data.log_id;
