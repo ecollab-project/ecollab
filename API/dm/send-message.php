@@ -157,10 +157,27 @@ try {
 
         $messages = [];
         foreach ($history as $row) {
+            $isAssistant = (int)$row['sender_id'] === $recipientId;
+            $content = trim((string)$row['body']);
+            if ($content === '') continue;
+
+            // qwen3:1.7b strongly imitates earlier assistant turns. Old Jarred
+            // replies may contain obsolete/hallucinated channel behavior, so do
+            // not feed those replies back as authority. Preserve recent USER
+            // turns for conversational continuity; the current Jarred response
+            // is always regenerated from the current system prompt/context.
+            if ($isAssistant) continue;
+
             $messages[] = [
-                'role' => (int)$row['sender_id'] === $recipientId ? 'assistant' : 'user',
-                'content' => (string)$row['body'],
+                'role' => 'user',
+                'content' => $content,
             ];
+        }
+
+        // Avoid sending a long stack of user-only history to the small model.
+        // Keep the latest few user turns, including the current request.
+        if (count($messages) > 4) {
+            $messages = array_slice($messages, -4);
         }
 
         $jarredTools = new JarredTools();
