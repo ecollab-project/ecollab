@@ -137,6 +137,19 @@
         return;
       }
 
+      if (source === 'screen_share' && mediaTrack) {
+        el.remove();
+        const stream = new MediaStream([mediaTrack]);
+        const username = participant.name || participant.identity || 'Participant';
+        if (typeof _attachRemoteScreenShare === 'function') {
+          _attachRemoteScreenShare(uid, username, stream);
+        }
+        if (typeof _showRemoteScreenShareSection === 'function') {
+          _showRemoteScreenShareSection(uid, username, stream);
+        }
+        return;
+      }
+
       const target = document.querySelector(
         '[data-user-id="' + uid + '"] .vc-video-wrap, [data-user-id="' + uid + '"] .vc-video'
       );
@@ -208,7 +221,16 @@
       attach(track, publication, participant);
       refreshParticipantCounts();
     });
-    room.on(RoomEvent.TrackUnsubscribed, track => {
+    room.on(RoomEvent.TrackUnsubscribed, (track, publication, participant) => {
+      const uid = participant ? participantId(participant) : 0;
+      const source = publication?.source || track?.source || '';
+      if (uid && source === 'camera' && typeof _removeRemoteCamera === 'function') {
+        _removeRemoteCamera(uid);
+      }
+      if (uid && source === 'screen_share') {
+        if (typeof _removeRemoteScreenShare === 'function') _removeRemoteScreenShare(uid);
+        if (typeof _hideRemoteScreenShareSection === 'function') _hideRemoteScreenShareSection(uid);
+      }
       detach(track);
       refreshParticipantCounts();
     });
@@ -267,6 +289,25 @@
   async function setScreen(enabled) {
     if (!room) throw new Error('Not connected to voice.');
     await room.localParticipant.setScreenShareEnabled(Boolean(enabled));
+
+    const uid = Number(window.ECOLLAB?.userId || 0);
+    if (!uid) return;
+
+    if (!enabled) {
+      if (typeof _removeRemoteScreenShare === 'function') _removeRemoteScreenShare(uid);
+      if (typeof _hideRemoteScreenShareSection === 'function') _hideRemoteScreenShareSection(uid);
+      return;
+    }
+
+    const publication = Array.from(room.localParticipant.trackPublications?.values?.() || [])
+      .find(pub => (pub.source || pub.track?.source) === 'screen_share');
+    const mediaTrack = publication?.track?.mediaStreamTrack;
+    if (mediaTrack) {
+      const stream = new MediaStream([mediaTrack]);
+      const username = window.ECOLLAB?.fullName || window.ECOLLAB?.username || 'You';
+      if (typeof _attachRemoteScreenShare === 'function') _attachRemoteScreenShare(uid, username, stream);
+      if (typeof _showRemoteScreenShareSection === 'function') _showRemoteScreenShareSection(uid, username, stream);
+    }
   }
 
   window.EcollabLiveKit = {
