@@ -1799,7 +1799,12 @@ function _applyScreenWatchState(userId) {
   const vid = card.querySelector('.vc-screen-card-video');
   if (vid) vid.style.objectFit = watched ? 'contain' : 'cover';
   const btn = card.querySelector('.vc-screen-watch-btn');
-  if (btn) btn.textContent = watched ? 'Unwatch' : 'Watch';
+  if (btn) {
+    btn.textContent = watched ? 'Unwatch' : 'Watch';
+    btn.setAttribute('aria-label', watched ? 'Unwatch screen share' : 'Watch screen share');
+    btn.setAttribute('title', watched ? 'Stop watching this screen' : 'Watch this screen');
+    btn.classList.toggle('is-watching', watched);
+  }
 }
 function toggleScreenWatch(userId) {
   const uid = Number(userId);
