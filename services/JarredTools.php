@@ -62,20 +62,37 @@ final class JarredTools
             : $this->resolveServerId($requesterId, $prompt);
 
         $parts = [];
-        $policy = (new JarredCapabilityPolicy())->context($requesterId, $serverId, $surface);
-        $parts[] = 'JARRED AUTHORITY CONTEXT: ' . json_encode(
-            $policy,
-            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+
+        // Do not inject server/surface metadata into ordinary conversation.
+        // qwen3:1.7b tends to over-focus on supplied application context and can
+        // turn a simple "hello" into a fabricated channel-specific response.
+        $surfaceName = strtolower(trim((string)($surface['surface'] ?? 'dm')));
+        $hasResourceSurface = (int)($surface['document_id'] ?? 0) > 0
+            || (int)($surface['whiteboard_id'] ?? 0) > 0
+            || str_contains($surfaceName, 'facilitator')
+            || str_contains($surfaceName, 'assessment')
+            || str_contains($surfaceName, 'quiz');
+        $needsAppContext = $hasResourceSurface || (bool)preg_match(
+            '/\\b(online|active|member|voice|call|match|matching|peer|partner|skill|document|docx|xlsx|pptx|coworkspace|workspace|whiteboard|board|excalidraw|diagram|find|search|thread|message|said|mentioned|discussed|conversation|summari[sz]e|recap|server|channel|book|ebook|library|resource|reference)\\b/i',
+            $prompt
         );
-        $parts[] = 'ECOLLAB REQUEST CONTEXT: ' . json_encode([
-            'server_id' => $serverId,
-            'surface' => $surface['surface'] ?? 'dm',
-            'channel_id' => isset($surface['channel_id']) ? (int)$surface['channel_id'] : null,
-            'voice_channel_id' => isset($surface['voice_channel_id']) ? (int)$surface['voice_channel_id'] : null,
-            'workspace_id' => isset($surface['workspace_id']) ? (int)$surface['workspace_id'] : null,
-            'document_id' => isset($surface['document_id']) ? (int)$surface['document_id'] : null,
-            'whiteboard_id' => isset($surface['whiteboard_id']) ? (int)$surface['whiteboard_id'] : null,
-        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        if ($needsAppContext) {
+            $policy = (new JarredCapabilityPolicy())->context($requesterId, $serverId, $surface);
+            $parts[] = 'JARRED AUTHORITY CONTEXT: ' . json_encode(
+                $policy,
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+            );
+            $parts[] = 'ECOLLAB REQUEST CONTEXT: ' . json_encode([
+                'server_id' => $serverId,
+                'surface' => $surface['surface'] ?? 'dm',
+                'channel_id' => isset($surface['channel_id']) ? (int)$surface['channel_id'] : null,
+                'voice_channel_id' => isset($surface['voice_channel_id']) ? (int)$surface['voice_channel_id'] : null,
+                'workspace_id' => isset($surface['workspace_id']) ? (int)$surface['workspace_id'] : null,
+                'document_id' => isset($surface['document_id']) ? (int)$surface['document_id'] : null,
+                'whiteboard_id' => isset($surface['whiteboard_id']) ? (int)$surface['whiteboard_id'] : null,
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
 
         if (preg_match('/\b(online|active|who(?:\'s| is) (?:here|online|active)|members? (?:online|active)|voice|call|connected)\b/i', $prompt)) {
             if ($serverId) {
