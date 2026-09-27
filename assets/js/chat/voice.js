@@ -1690,14 +1690,18 @@ function handleVoiceJoin(data) {
       role: user.role || 'Student',
       avatar_color_gradient: user.avatar_color_gradient || '#3b82f6,#6366f1',
       muted: !!user.muted,
-    }, !user.muted);
+    }, true);
   }
 
-  setTimeout(() => {
-    if (vcActive && Number(vcChannelId) === Number(data.channel_id)) {
-      _initiateWebRtcOffer(userId, user.username);
-    }
-  }, 100);
+  // LiveKit owns media/signaling when its adapter is loaded. Keep this
+  // WebSocket event only for eCollab roster/presence.
+  if (!window.EcollabLiveKit) {
+    setTimeout(() => {
+      if (vcActive && Number(vcChannelId) === Number(data.channel_id)) {
+        _initiateWebRtcOffer(userId, user.username);
+      }
+    }, 100);
+  }
 }
 
 function handleVoiceLeave(data) {
@@ -1752,11 +1756,14 @@ function handleVoicePeers(data) {
         role: peer.role || 'Student',
         avatar_color_gradient: peer.avatar_color_gradient || '#3b82f6,#6366f1',
         muted: !!peer.muted,
-      }, !peer.muted); // muted peers go to Listening, unmuted to Speaking
+      }, true); // mic mute is not a Listening-role change
     }
 
-    // Initiate WebRTC offer to each existing peer
-    setTimeout(() => _initiateWebRtcOffer(peer.user_id, peer.username), 100);
+    // LiveKit replaces the legacy peer-to-peer media mesh. Preserve this
+    // event for roster data only while the LiveKit adapter is present.
+    if (!window.EcollabLiveKit) {
+      setTimeout(() => _initiateWebRtcOffer(peer.user_id, peer.username), 100);
+    }
   });
 }
 
