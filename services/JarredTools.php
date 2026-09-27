@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/database/config/db.php';
 require_once dirname(__DIR__) . '/services/ChannelService.php';
 require_once dirname(__DIR__) . '/services/PeerMatchingService.php';
+require_once dirname(__DIR__) . '/services/JarredCapabilityPolicy.php';
 
 /**
  * JarredTools
@@ -61,6 +62,11 @@ final class JarredTools
             : $this->resolveServerId($requesterId, $prompt);
 
         $parts = [];
+        $policy = (new JarredCapabilityPolicy())->context($requesterId, $serverId, $surface);
+        $parts[] = 'JARRED AUTHORITY CONTEXT: ' . json_encode(
+            $policy,
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        );
         $parts[] = 'ECOLLAB REQUEST CONTEXT: ' . json_encode([
             'server_id' => $serverId,
             'surface' => $surface['surface'] ?? 'dm',
