@@ -73,20 +73,25 @@
     if (!uid || uid === Number(window.ECOLLAB?.userId || 0)) return;
 
     const muted = !participant.isMicrophoneEnabled;
-    const shouldBeSpeaker = !muted;
     let card = participantCard(participant);
 
-    if (
-      card &&
-      ((shouldBeSpeaker && card.classList.contains('vc-listener-card')) ||
-       (!shouldBeSpeaker && card.classList.contains('vc-speaker-card')))
-    ) {
+    // Muting is a microphone state, not a listening-role change. Normal voice
+    // participants stay in the Speaking section even while their mic is muted.
+    if (card?.classList.contains('vc-listener-card')) {
       card.remove();
-      addVcParticipant({ ...participantUser(participant), muted }, shouldBeSpeaker);
+      addVcParticipant({ ...participantUser(participant), muted }, true);
       card = participantCard(participant);
     }
 
-    if (card) card.classList.toggle('speaking', participant.isSpeaking === true && !muted);
+    if (card) {
+      card.classList.toggle('speaking', participant.isSpeaking === true && !muted);
+      const mic = card.querySelector('.sc-mic-btn');
+      if (mic) {
+        mic.classList.toggle('muted-state', muted);
+        mic.title = muted ? 'Muted' : 'Speaking';
+      }
+    }
+
     refreshParticipantCounts();
   }
 
@@ -95,7 +100,9 @@
     if (!uid || uid === Number(window.ECOLLAB?.userId || 0)) return;
 
     if (!participantCard(participant)) {
-      addVcParticipant(participantUser(participant), participant.isMicrophoneEnabled);
+      // A normal LiveKit room participant is a voice participant regardless of
+      // whether their microphone is currently muted.
+      addVcParticipant(participantUser(participant), true);
     }
     syncParticipantState(participant);
   }
