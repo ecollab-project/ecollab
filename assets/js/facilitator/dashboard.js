@@ -111,9 +111,50 @@ function sendFacMsg(){const inp=document.getElementById('msgInput');const msg=in
 function doLogout(){closeModal('logoutModal');toast('Signing out...','info','🚪');setTimeout(()=>{document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:14px;background:#070b14;color:#f1f5f9;font-family:Plus Jakarta Sans,sans-serif"><div style="font-size:30px">🔷</div><div style="font-size:22px;font-weight:800">Ecollab</div><div style="color:#94a3b8;font-size:13px">You have been signed out.</div><button onclick="location.reload()" style="margin-top:10px;padding:9px 22px;background:linear-gradient(135deg,#e91e8c,#7c3aed);border:none;border-radius:9px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Sign In Again</button></div>';},1000);}
 
 // ═══ AI ═══
-const aiR={'Summarize channel activity this week':'**CS 305 Weekly Summary**\n\nThis week your channel performed very well:\n\n• 38 active members (52.8% engagement rate)\n• 156 messages sent today (+23% from yesterday)\n• 12 study sessions completed\n• Top contributor: Fatima_Student (245 pts)\n\nEngagement is trending up — great job!','Suggest ways to improve engagement':'**Engagement Improvement Tips**\n\n1. 📊 Post weekly polls — boosts participation by avg. 30%\n2. 🎯 Create study challenges with badges\n3. 📢 Schedule regular announcements (2-3x/week)\n4. 🤝 Pair inactive members with active ones\n5. 🏆 Highlight top contributors weekly\n\nYour current engagement rate of 64.7% is above average!','Draft a quiz reminder announcement':'**Draft Announcement:**\n\n📌 **Quiz 2 – This Friday!**\n\nHello CS 305! 👋 A reminder that Quiz 2 will be held this Friday. \n\n📚 Review Topics:\n• Chapter 4: Activation Functions\n• Chapter 5: Backpropagation\n\nJoin the study session tomorrow 3-5PM for review. Good luck! 🎓\n\nYou can copy and post this directly!'};
-function sendAI(){const inp=document.getElementById('aiInput');const msg=inp.value.trim();if(!msg)return;const log=document.getElementById('aiLog');const ud=document.createElement('div');ud.innerHTML=`<div style="font-size:9.5px;font-weight:700;color:var(--cyan);margin-bottom:2px;text-align:right">Prof. Reyes</div><div style="background:rgba(6,182,212,.1);border-radius:9px;padding:8px 11px;font-size:12px;line-height:1.6;max-width:88%;align-self:flex-end;margin-left:auto">${msg}</div>`;log.appendChild(ud);inp.value='';log.scrollTop=log.scrollHeight;const r=aiR[msg]||'That\'s a great question! Based on your CS 305 channel data, I can help you analyze trends, create content, or manage your members. Could you be more specific about what you need?';setTimeout(()=>{const ad=document.createElement('div');ad.innerHTML=`<div style="font-size:9.5px;font-weight:700;color:#a78bfa;margin-bottom:2px">AI Assistant</div><div style="background:rgba(124,58,237,.1);border-radius:9px;padding:8px 11px;font-size:12px;line-height:1.6;max-width:88%;white-space:pre-wrap">${r}</div>`;log.appendChild(ad);log.scrollTop=log.scrollHeight;},600);}
-function aiQP(p){document.getElementById('aiInput').value=p;sendAI();}
+async function sendAI(){
+  const inp=document.getElementById('aiInput');
+  const msg=(inp?.value||'').trim();
+  if(!msg)return;
+  const log=document.getElementById('aiLog');
+  if(!log)return;
+
+  const ud=document.createElement('div');
+  ud.innerHTML='<div style="font-size:9.5px;font-weight:700;color:var(--cyan);margin-bottom:2px;text-align:right">You</div><div style="background:rgba(6,182,212,.1);border-radius:9px;padding:8px 11px;font-size:12px;line-height:1.6;max-width:88%;align-self:flex-end;margin-left:auto"></div>';
+  ud.lastElementChild.textContent=msg;
+  log.appendChild(ud);
+  inp.value='';
+  log.scrollTop=log.scrollHeight;
+
+  const pending=document.createElement('div');
+  pending.innerHTML='<div style="font-size:9.5px;font-weight:700;color:#a78bfa;margin-bottom:2px">Jarred</div><div style="background:rgba(124,58,237,.1);border-radius:9px;padding:8px 11px;font-size:12px;line-height:1.6;max-width:88%">Analyzing the authorized dashboard data…</div>';
+  log.appendChild(pending);
+  log.scrollTop=log.scrollHeight;
+
+  try{
+    const selectedServer=Number(
+      document.querySelector('.fac-server-picker')?.value ||
+      document.getElementById('annServer')?.value ||
+      0
+    );
+    const r=await fetch((window.ECOLLAB_BASE||'')+'/API/facilitator/jarred.php',{
+      method:'POST',
+      credentials:'same-origin',
+      headers:{
+        'Content-Type':'application/json',
+        'X-CSRF-Token':document.querySelector('meta[name="csrf-token"]')?.content||''
+      },
+      body:JSON.stringify({prompt:msg,server_id:selectedServer||null})
+    });
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d.success)throw new Error(d.error||'Jarred is unavailable.');
+    pending.lastElementChild.textContent=d.reply;
+    pending.lastElementChild.style.whiteSpace='pre-wrap';
+  }catch(e){
+    pending.lastElementChild.textContent=e.message||'Jarred is temporarily unavailable.';
+  }
+  log.scrollTop=log.scrollHeight;
+}
+function aiQP(p){const i=document.getElementById('aiInput');if(i){i.value=p;sendAI();}}
 
 // ═══ HEATMAP ═══
 function buildHeatmap(){
