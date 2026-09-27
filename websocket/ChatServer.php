@@ -134,6 +134,8 @@ class ChatServer implements MessageComponentInterface
             'dm_typing' => $this->handleDmTyping($from, $data, $meta),
             'dm_group_message' => $this->handleDmGroupMessage($from, $data, $meta),
             'dm_group_typing' => $this->handleDmGroupTyping($from, $data, $meta),
+            'dm_group_call_start' => DmHandler::handleDmGroupCallSignal($from, $data, $meta, $this->userConns, $this->db, 'dm_group_call_start'),
+            'dm_group_call_busy' => DmHandler::handleDmGroupCallSignal($from, $data, $meta, $this->userConns, $this->db, 'dm_group_call_busy'),
             'notify_conn_req' => $this->handleNotifyConnReq($from, $data, $meta),
             'notify_conn_accepted' => $this->handleNotifyConnAccepted($from, $data, $meta),
             'voice_invite' => $this->handleVoiceInvite($from, $data, $meta),
