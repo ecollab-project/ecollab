@@ -8,6 +8,7 @@ require_once ROOT_PATH.'/security/middleware/RoleMiddleware.php';
 require_once ROOT_PATH.'/services/UserService.php';
 require_once ROOT_PATH.'/services/OllamaService.php';
 require_once ROOT_PATH.'/services/JarredCapabilityPolicy.php';
+require_once ROOT_PATH.'/services/JarredGroupRecommendationService.php';
 
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
@@ -53,6 +54,12 @@ try{
     }
 
     $policy=(new JarredCapabilityPolicy())->context($uid,$serverId?:null,['surface'=>'facilitator_dashboard']);
+    $groupEvidence=null;
+    if($serverId>0 && preg_match('/\\b(group|groups|grouping|team|teams|compatib|match students)\\b/i',$prompt)){
+        $requestedSize=4;
+        if(preg_match('/\\b(?:groups? of|team(?:s)? of)\\s*(\\d{1,2})\\b/i',$prompt,$m)) $requestedSize=(int)$m[1];
+        $groupEvidence=(new JarredGroupRecommendationService())->recommend($uid,$serverId,$requestedSize);
+    }
 
     // Release the PHP session before the potentially slow local-model call.
     if(session_status()===PHP_SESSION_ACTIVE) session_write_close();
@@ -67,6 +74,7 @@ try{
             'recent_activity'=>$dash['recent_activity']??[],
             'upcoming_sessions'=>$dash['upcoming_sessions']??[],
             'membership'=>$dash['membership']??[],
+            'group_recommendation'=>$groupEvidence,
         ],
     ];
 
