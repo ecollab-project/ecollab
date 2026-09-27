@@ -21,7 +21,8 @@ let _dmCallRemoteStream = null;
 let _dmCallPeerId      = null;
 let _dmCallGroupId     = null;
 let _dmCallLogId       = null;
-let _dmCallIsVideo     = false;
+let _dmCallIsVideo     = false; // local camera state
+let _dmCallRemoteVideo = false; // peer camera state
 let _dmCallPendingCandidates = [];
 let _dmCallState       = 'idle'; // idle | ringing-out | ringing-in | active
 let _dmCallTimeoutTimer = null;
@@ -98,6 +99,7 @@ async function startDmCall(video) {
   _dmCallPeerId  = targetId;
   _dmCallGroupId = groupId;
   _dmCallIsVideo = !!video;
+  _dmCallRemoteVideo = !!video;
   _dmCallState   = 'ringing-out';
 
   try {
@@ -174,6 +176,7 @@ async function _acceptDmCall() {
   _dmCallPeerId  = data.from_user_id;
   _dmCallGroupId = data.group_id || null;
   _dmCallIsVideo = !!data.is_video;
+  _dmCallRemoteVideo = !!data.is_video;
 
   try {
     _dmCallLocalStream = await navigator.mediaDevices.getUserMedia({
@@ -367,6 +370,8 @@ function _resetDmCallState() {
   _dmCallLocalStream = null;
   _dmCallRemoteStream = null;
   _dmCallDeafened = false;
+  _dmCallIsVideo = false;
+  _dmCallRemoteVideo = false;
   _dmCallCameraBusy = false;
   _dmCallPeerId = null;
   _dmCallGroupId = null;
@@ -503,9 +508,9 @@ window._onDmCallRenegotiate = async function(data) {
       sdp: _dmCallPc.localDescription,
     });
 
-    // Remote renegotiation describes the peer's camera state. Do not
-    // overwrite this user's local camera state or rebuild their local preview.
-    _attachDmRemoteMedia();
+    // Keep the peer camera state separate from this user's local camera.
+    _dmCallRemoteVideo = !!data.is_video;
+    _renderDmCallOverlay('active');
   } catch (e) {
     console.error('[DM call] renegotiation offer failed:', e);
   }
@@ -553,11 +558,9 @@ function _renderDmCallOverlay(state) {
   } else if (state === 'active') {
     overlay.innerHTML = `
       <audio id="dmCallRemoteAudio" autoplay playsinline></audio>
-      <div style="position:relative;background:#000;height:${_dmCallIsVideo ? '220px' : '0'};">
-        ${_dmCallIsVideo ? `
-          <video id="dmCallRemoteVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>
-          <video id="dmCallLocalVideo" autoplay playsinline muted style="position:absolute;bottom:8px;right:8px;width:70px;height:52px;border-radius:6px;object-fit:cover;transform:scaleX(-1);border:1px solid rgba(255,255,255,0.3);"></video>
-        ` : ''}
+      <div style="position:relative;background:#000;height:${(_dmCallIsVideo || _dmCallRemoteVideo) ? '220px' : '0'};">
+        ${_dmCallRemoteVideo ? `<video id="dmCallRemoteVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>` : ''}
+        ${_dmCallIsVideo ? `<video id="dmCallLocalVideo" autoplay playsinline muted style="position:absolute;bottom:8px;right:8px;width:70px;height:52px;border-radius:6px;object-fit:cover;transform:scaleX(-1);border:1px solid rgba(255,255,255,0.3);"></video>` : ''}
       </div>
       <div style="padding:12px;display:flex;align-items:center;gap:10px;">
         <div style="flex:1;min-width:0;">
