@@ -126,8 +126,28 @@
       document.body.appendChild(el);
     } else {
       const uid = participantId(participant);
-      const target = document.querySelector('[data-user-id="' + uid + '"] .vc-video-wrap, [data-user-id="' + uid + '"] .vc-video') || mediaContainer();
-      target.appendChild(el);
+      const source = publication?.source || track.source || '';
+      const mediaTrack = track.mediaStreamTrack;
+
+      // Reuse eCollab's existing in-card camera renderer instead of falling
+      // back to the entire voice view (which made remote video fullscreen).
+      if (source === 'camera' && mediaTrack && typeof _attachRemoteCamera === 'function') {
+        el.remove();
+        _attachRemoteCamera(uid, new MediaStream([mediaTrack]));
+        return;
+      }
+
+      const target = document.querySelector(
+        '[data-user-id="' + uid + '"] .vc-video-wrap, [data-user-id="' + uid + '"] .vc-video'
+      );
+      if (target) {
+        target.appendChild(el);
+      } else {
+        // Never append a participant camera directly to voiceChannelView.
+        // Keep the track attached but hidden until a proper target exists.
+        el.style.display = 'none';
+        document.body.appendChild(el);
+      }
     }
   }
 
@@ -226,6 +246,22 @@
   async function setCamera(enabled) {
     if (!room) throw new Error('Not connected to voice.');
     await room.localParticipant.setCameraEnabled(Boolean(enabled));
+
+    const uid = Number(window.ECOLLAB?.userId || 0);
+    if (!uid) return;
+
+    if (!enabled) {
+      if (typeof _removeRemoteCamera === 'function') _removeRemoteCamera(uid);
+      return;
+    }
+
+    const publication = room.localParticipant.getTrackPublication?.('camera')
+      || Array.from(room.localParticipant.trackPublications?.values?.() || [])
+        .find(pub => (pub.source || pub.track?.source) === 'camera');
+    const mediaTrack = publication?.track?.mediaStreamTrack;
+    if (mediaTrack && typeof _attachRemoteCamera === 'function') {
+      _attachRemoteCamera(uid, new MediaStream([mediaTrack]));
+    }
   }
 
   async function setScreen(enabled) {
