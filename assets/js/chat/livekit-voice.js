@@ -135,6 +135,13 @@
         el.remove();
         if (typeof _removeRemoteCamera === 'function') _removeRemoteCamera(uid);
         _attachRemoteCamera(uid, new MediaStream([mediaTrack]));
+        const video = document.querySelector('[data-user-id="' + uid + '"] .vc-cam-preview:not(.vc-screen-preview)');
+        if (video) {
+          video.playsInline = true;
+          video.autoplay = true;
+          video.muted = true;
+          video.play().catch(() => {});
+        }
         return;
       }
 
@@ -224,13 +231,14 @@
       if (!participant) return;
       syncParticipantState(participant);
 
-      // Do not attach here. On camera/screen restart LiveKit can emit
-      // TrackUnmuted while the publication still references the previous media
-      // track. TrackSubscribed is the authoritative point where the fresh
-      // subscribed track is attached to the eCollab UI.
+      // LiveKit commonly keeps the same subscribed publication when a camera
+      // is toggled off/on. In that case TrackSubscribed will NOT fire again,
+      // so reattach the existing live track on TrackUnmuted.
       const source = publication?.source || publication?.track?.source || '';
-      if (source === 'camera' || source === 'screen_share') {
-        console.log('[LiveKit] media unmuted; waiting for subscribed track:', source, participant.identity);
+      const track = publication?.track;
+      const mediaTrack = track?.mediaStreamTrack;
+      if ((source === 'camera' || source === 'screen_share') && track && mediaTrack && mediaTrack.readyState === 'live') {
+        attach(track, publication, participant);
       }
     });
     room.on(RoomEvent.ActiveSpeakersChanged, participants => {
@@ -242,6 +250,13 @@
           active.has(participant.identity) && participant.isMicrophoneEnabled
         );
       });
+    });
+    room.on(RoomEvent.TrackStreamStateChanged, (publication, streamState, participant) => {
+      if (!participant || !publication?.track) return;
+      const source = publication.source || publication.track.source || '';
+      if ((source === 'camera' || source === 'screen_share') && String(streamState).toLowerCase().includes('active')) {
+        attach(publication.track, publication, participant);
+      }
     });
     room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
       syncParticipant(participant);
