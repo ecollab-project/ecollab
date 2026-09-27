@@ -425,19 +425,23 @@ async function _dmCallToggleCam() {
     const existingTrack = _dmCallLocalStream.getVideoTracks()[0];
 
     if (existingTrack && existingTrack.readyState === 'live') {
-      const sender = _dmCallPc.getSenders().find(s => s.track === existingTrack);
-
-      if (sender) {
-        await sender.replaceTrack(null);
-      }
-
-      _dmCallLocalStream.removeTrack(existingTrack);
-      existingTrack.stop();
-
+      // Keep the negotiated video sender/transceiver alive. Removing the track,
+      // stopping it, rebuilding the overlay and renegotiating caused the peer's
+      // receiver/video element to be torn down and produced black frames on
+      // camera restart (especially desktop <-> mobile).
+      existingTrack.enabled = false;
       _dmCallIsVideo = false;
       _renderDmCallOverlay('active');
+      return;
+    }
 
-      await _dmCallRenegotiate();
+    // A disabled camera track is intentionally retained so it can resume
+    // without getUserMedia + SDP renegotiation.
+    const disabledTrack = _dmCallLocalStream.getVideoTracks()[0];
+    if (disabledTrack && disabledTrack.readyState === 'live' && !disabledTrack.enabled) {
+      disabledTrack.enabled = true;
+      _dmCallIsVideo = true;
+      _renderDmCallOverlay('active');
       return;
     }
 
