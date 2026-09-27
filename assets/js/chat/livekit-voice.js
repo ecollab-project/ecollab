@@ -167,6 +167,32 @@
         if (typeof _showRemoteScreenShareSection === 'function') {
           _showRemoteScreenShareSection(uid, username, stream);
         }
+
+        // Ensure the screen-share card always has a visible Watch/Unwatch
+        // control even when the card was created by the LiveKit path.
+        requestAnimationFrame(() => {
+          const card = document.getElementById('vcScreenGrid')?.querySelector('[data-screen-user="' + uid + '"]');
+          if (!card) return;
+          let wrap = card.querySelector('.vc-screen-card-watch');
+          if (!wrap) {
+            wrap = document.createElement('div');
+            wrap.className = 'vc-screen-card-watch';
+            card.appendChild(wrap);
+          }
+          let btn = wrap.querySelector('.vc-screen-watch-btn');
+          if (!btn) {
+            btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'vc-screen-watch-btn';
+            wrap.appendChild(btn);
+          }
+          btn.onclick = event => {
+            event.stopPropagation();
+            if (typeof toggleScreenWatch === 'function') toggleScreenWatch(uid);
+          };
+          if (typeof _applyScreenWatchState === 'function') _applyScreenWatchState(uid);
+          else btn.textContent = 'Watch';
+        });
         return;
       }
 
