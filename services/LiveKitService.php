@@ -59,6 +59,43 @@ final class LiveKitService
         ];
     }
 
+    public function issueNamedRoomToken(array $user, string $room, string $roomName, array $metadata = []): array
+    {
+        $now = time();
+        $identity = 'user-' . (int)$user['id'];
+        $name = trim((string)($user['full_name'] ?? $user['username'] ?? $identity));
+        if (!preg_match('/^ecollab-[a-z0-9-]+$/', $room)) {
+            throw new InvalidArgumentException('Invalid LiveKit room name.');
+        }
+
+        $header = ['alg' => 'HS256', 'typ' => 'JWT'];
+        $payload = [
+            'iss' => $this->apiKey,
+            'sub' => $identity,
+            'nbf' => $now - 5,
+            'iat' => $now,
+            'exp' => $now + 600,
+            'name' => $name,
+            'metadata' => json_encode(['ecollab_user_id' => (int)$user['id']] + $metadata, JSON_UNESCAPED_SLASHES),
+            'video' => [
+                'roomJoin' => true,
+                'room' => $room,
+                'canPublish' => true,
+                'canSubscribe' => true,
+                'canPublishData' => true,
+            ],
+        ];
+
+        return [
+            'url' => $this->wsUrl,
+            'room' => $room,
+            'room_name' => $roomName,
+            'identity' => $identity,
+            'token' => $this->jwt($header, $payload),
+            'expires_in' => 600,
+        ];
+    }
+
     private function jwt(array $header, array $payload): string
     {
         $h = $this->b64(json_encode($header, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
