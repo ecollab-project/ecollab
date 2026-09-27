@@ -19,6 +19,8 @@ try {
         exit;
     }
 
+    AuthMiddleware::verifyCsrf();
+
     $input = json_decode((string)file_get_contents('php://input'), true);
     if (!is_array($input)) {
         throw new InvalidArgumentException('Invalid JSON body.');
