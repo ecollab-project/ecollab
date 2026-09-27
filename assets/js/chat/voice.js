@@ -103,16 +103,16 @@ function joinVoice(channelSlug, el, channelId, roomNameOverride) {
   showToast('🔊 Joined ' + vcRoomName, 'success');
 }
 
-// ── DM group voice — reuses the exact same mesh/UI as a real voice channel,
-// just with a synthetic channel_id (see DM_GROUP_VOICE_ID_OFFSET server-side)
-// so no real `channels` row is needed. Everyone in the group can join or
-// ignore it — it's not a ring-everyone-at-once call like 1:1 DM calling.
-const DM_GROUP_VOICE_ID_OFFSET = 2000000000;
-
+// ── DM group voice — LiveKit room authorized by DM group membership.
+// Do not synthesize a server channel_id: /API/chat/livekit-token.php correctly
+// rejects those IDs because they are not rows in channels.
 function startDmGroupVoice(groupId, groupName) {
   if (vcActive) { showToast('Already in a voice channel', 'info'); return; }
-  const channelId = DM_GROUP_VOICE_ID_OFFSET + parseInt(groupId);
-  joinVoice('dm-group-' + groupId, null, channelId, groupName || 'Group Voice Call');
+  if (typeof window.startDmGroupLiveKitCall !== 'function') {
+    showToast('Group call service is not ready. Refresh eCollab and try again.', 'error');
+    return;
+  }
+  return window.startDmGroupLiveKitCall(parseInt(groupId), false, groupName || 'Group Voice Call');
 }
 window.startDmGroupVoice = startDmGroupVoice;
 
