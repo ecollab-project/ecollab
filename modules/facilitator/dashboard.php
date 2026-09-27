@@ -1126,14 +1126,14 @@ try {
   <div class="mo" id="aiModal">
     <div class="md md-lg">
       <div class="mh">
-        <div class="mt">🤖 AI Assistant</div>
+        <div class="mt">🤖 Jarred</div>
         <div class="mx" onclick="closeModal('aiModal')">✕</div>
       </div>
       <div class="mb">
         <div class="ai-log" id="aiLog">
           <div>
-            <div class="ai-label ai">AI Assistant</div>
-            <div class="ai-msg ai">Hello <?= $name ?>! I can help analyze member activity, generate reports, or draft announcements. What would you like help with?</div>
+            <div class="ai-label ai">Jarred</div>
+            <div class="ai-msg ai">Hello <?= $name ?>! I can analyze the real dashboard data you are authorized to access, summarize activity, prepare reports, and explain patterns without inventing metrics. What would you like to review?</div>
           </div>
         </div>
         <div style="display:flex;gap:7px;margin-top:9px"><input class="fi" id="aiInput" placeholder="Ask anything..." onkeydown="if(event.key==='Enter')sendAI()"><button class="btn-primary" onclick="sendAI()">Send →</button></div>
