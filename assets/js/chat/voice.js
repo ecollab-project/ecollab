@@ -1800,11 +1800,29 @@ function _applyScreenWatchState(userId) {
   if (vid) vid.style.objectFit = watched ? 'contain' : 'cover';
   const btn = card.querySelector('.vc-screen-watch-btn');
   if (btn) {
-    btn.textContent = watched ? 'Unwatch' : 'Watch';
-    btn.setAttribute('aria-label', watched ? 'Unwatch screen share' : 'Watch screen share');
-    btn.setAttribute('title', watched ? 'Stop watching this screen' : 'Watch this screen');
+    // Discord-style behavior: the card action starts watching. Once watched,
+    // stopping is handled by the persistent control in the bottom call bar.
+    btn.textContent = 'Watch';
+    btn.setAttribute('aria-label', 'Watch screen share');
+    btn.setAttribute('title', watched ? 'Currently watching' : 'Watch this screen');
     btn.classList.toggle('is-watching', watched);
+    btn.style.display = watched ? 'none' : '';
   }
+  _syncScreenUnwatchControl();
+}
+function _syncScreenUnwatchControl() {
+  const btn = document.getElementById('vcUnwatchBtn');
+  if (!btn) return;
+  const watching = _watchedScreenUsers.size > 0;
+  btn.style.display = watching ? '' : 'none';
+  btn.classList.toggle('active', watching);
+}
+function unwatchAllScreens() {
+  [..._watchedScreenUsers].forEach(uid => {
+    _watchedScreenUsers.delete(uid);
+    _applyScreenWatchState(uid);
+  });
+  _syncScreenUnwatchControl();
 }
 function toggleScreenWatch(userId) {
   const uid = Number(userId);
@@ -1818,6 +1836,7 @@ function toggleScreenExpand(userId) {
   if (uid) toggleScreenWatch(uid);
 }
 window.toggleScreenWatch = toggleScreenWatch;
+window.unwatchAllScreens = unwatchAllScreens;
 window.toggleScreenExpand = toggleScreenExpand;
 window.toggleCamera = toggleCamera;
 window.toggleScreenShare = toggleScreenShare;
