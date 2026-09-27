@@ -203,6 +203,12 @@ function handleSocketMessage(data) {
     case 'dm_group_voice_start':
       if (window._onDmGroupVoiceStart) window._onDmGroupVoiceStart(data);
       break;
+    case 'dm_group_call_start':
+      if (window._onDmGroupCallStart) window._onDmGroupCallStart(data);
+      break;
+    case 'dm_group_call_busy':
+      if (window._onDmGroupCallBusy) window._onDmGroupCallBusy(data);
+      break;
 
     // ── DM voice/video call signaling ──
     case 'dm_call_offer':
