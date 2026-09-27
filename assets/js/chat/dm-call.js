@@ -503,8 +503,9 @@ window._onDmCallRenegotiate = async function(data) {
       sdp: _dmCallPc.localDescription,
     });
 
-    _dmCallIsVideo = !!data.is_video;
-    _renderDmCallOverlay('active');
+    // Remote renegotiation describes the peer's camera state. Do not
+    // overwrite this user's local camera state or rebuild their local preview.
+    _attachDmRemoteMedia();
   } catch (e) {
     console.error('[DM call] renegotiation offer failed:', e);
   }
