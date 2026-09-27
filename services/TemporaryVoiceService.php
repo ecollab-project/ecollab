@@ -128,7 +128,34 @@ final class TemporaryVoiceService
         $q=$this->db->prepare("SELECT COUNT(*) FROM users WHERE voice_channel_id=?");
         $q->execute([$channelId]);
         if ((int)$q->fetchColumn()===0) {
-            $this->db->prepare("UPDATE temporary_voice_rooms SET empty_since=COALESCE(empty_since,NOW()),expires_at=COALESCE(expires_at,DATE_ADD(NOW(),INTERVAL 2 MINUTE)) WHERE channel_id=?")->execute([$channelId]);
+            // Jarred temporary rooms are ephemeral: once the last participant
+            // leaves, remove the room immediately instead of leaving an empty
+            // channel visible for a grace period.
+            $this->deleteIfEmpty($channelId);
+        }
+    }
+
+    private function deleteIfEmpty(int $channelId): bool
+    {
+        $exists=$this->db->prepare("SELECT 1 FROM temporary_voice_rooms WHERE channel_id=? LIMIT 1");
+        $exists->execute([$channelId]);
+        if(!$exists->fetchColumn()) return false;
+
+        $c=$this->db->prepare("SELECT COUNT(*) FROM users WHERE voice_channel_id=?");
+        $c->execute([$channelId]);
+        if((int)$c->fetchColumn()>0) return false;
+
+        $this->db->beginTransaction();
+        try {
+            $this->db->prepare("DELETE FROM channel_members WHERE channel_id=?")->execute([$channelId]);
+            $this->db->prepare("DELETE FROM temporary_voice_rooms WHERE channel_id=?")->execute([$channelId]);
+            $this->db->prepare("DELETE FROM channels WHERE id=?")->execute([$channelId]);
+            $this->db->commit();
+            return true;
+        } catch(Throwable $e) {
+            if($this->db->inTransaction()) $this->db->rollBack();
+            error_log('[TemporaryVoiceService] immediate cleanup failed: '.$e->getMessage());
+            return false;
         }
     }
 
