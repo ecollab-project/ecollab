@@ -133,6 +133,7 @@
       // back to the entire voice view (which made remote video fullscreen).
       if (source === 'camera' && mediaTrack && typeof _attachRemoteCamera === 'function') {
         el.remove();
+        if (typeof _removeRemoteCamera === 'function') _removeRemoteCamera(uid);
         _attachRemoteCamera(uid, new MediaStream([mediaTrack]));
         return;
       }
@@ -141,6 +142,8 @@
         el.remove();
         const stream = new MediaStream([mediaTrack]);
         const username = participant.name || participant.identity || 'Participant';
+        if (typeof _removeRemoteScreenShare === 'function') _removeRemoteScreenShare(uid);
+        if (typeof _hideRemoteScreenShareSection === 'function') _hideRemoteScreenShareSection(uid);
         if (typeof _attachRemoteScreenShare === 'function') {
           _attachRemoteScreenShare(uid, username, stream);
         }
@@ -221,9 +224,13 @@
       if (!participant) return;
       syncParticipantState(participant);
 
+      // Do not attach here. On camera/screen restart LiveKit can emit
+      // TrackUnmuted while the publication still references the previous media
+      // track. TrackSubscribed is the authoritative point where the fresh
+      // subscribed track is attached to the eCollab UI.
       const source = publication?.source || publication?.track?.source || '';
-      if ((source === 'camera' || source === 'screen_share') && publication?.track) {
-        attach(publication.track, publication, participant);
+      if (source === 'camera' || source === 'screen_share') {
+        console.log('[LiveKit] media unmuted; waiting for subscribed track:', source, participant.identity);
       }
     });
     room.on(RoomEvent.ActiveSpeakersChanged, participants => {
