@@ -204,7 +204,24 @@ async function startDmGroupLiveKitCall(groupId, video) {
 
     await room.connect(data.url, data.token);
     if (!window.__joiningDmGroupInvite) {
-      window.wsSend?.({ type: 'dm_group_call_start', group_id: Number(groupId), is_video: !!video });
+      const invite = { type: 'dm_group_call_start', group_id: Number(groupId), is_video: !!video };
+      const sent = window.wsSend?.(invite);
+      console.log('[DM group call] invite signal', sent ? 'sent' : 'not sent', invite);
+      if (!sent) {
+        // The LiveKit room can connect before Ratchet authentication is ready.
+        // Retry briefly so media success never silently drops the incoming-call popup.
+        let attempts = 0;
+        const retryInvite = setInterval(() => {
+          attempts += 1;
+          if (window.wsSend?.(invite)) {
+            console.log('[DM group call] invite signal sent on retry', attempts);
+            clearInterval(retryInvite);
+          } else if (attempts >= 10) {
+            console.error('[DM group call] invite signal could not be sent after retries');
+            clearInterval(retryInvite);
+          }
+        }, 250);
+      }
     }
     await room.localParticipant.setMicrophoneEnabled(true);
     if (video) await room.localParticipant.setCameraEnabled(true);
