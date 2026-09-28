@@ -209,6 +209,9 @@ function handleSocketMessage(data) {
     case 'dm_group_call_busy':
       if (window._onDmGroupCallBusy) window._onDmGroupCallBusy(data);
       break;
+    case 'dm_group_call_invite_sent':
+      console.log('[DM group call] server delivered invite to', Number(data.delivered || 0), 'socket(s)', data);
+      break;
 
     // ── DM voice/video call signaling ──
     case 'dm_call_offer':
