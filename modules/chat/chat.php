@@ -1104,7 +1104,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     6. whiteboard.js — collaborative whiteboard
     7. dm-notifications.js — DM badge polling
   -->
-  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=group-call-popup-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=group-call-popup-2" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=avatar-sync-3" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=avatar-sync-3" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js" defer></script>
@@ -1158,7 +1158,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </div>
 
   <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/dm-call.js?v=group-call-popup-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/dm-call.js?v=group-call-popup-2" defer></script>
   <!--
     Collab tools load order:
     ot-engine.js        — pure OT algorithm (no deps, must come first)
