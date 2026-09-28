@@ -1158,7 +1158,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </div>
 
   <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/dm-call.js?v=group-call-popup-2" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/dm-call.js?v=group-call-popup-3" defer></script>
   <!--
     Collab tools load order:
     ot-engine.js        — pure OT algorithm (no deps, must come first)
