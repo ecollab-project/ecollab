@@ -343,6 +343,12 @@ window._onDmGroupCallStart = function (data) {
   });
 };
 
+if (window.__pendingDmGroupCallInvite) {
+  const pending = window.__pendingDmGroupCallInvite;
+  delete window.__pendingDmGroupCallInvite;
+  setTimeout(() => window._onDmGroupCallStart?.(pending), 0);
+}
+
 window._onDmGroupCallBusy = function (data) {
   const who = data.from_username || 'User';
   if (typeof showToast === 'function') {
