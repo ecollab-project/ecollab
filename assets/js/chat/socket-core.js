@@ -68,6 +68,9 @@ function initWebSocket() {
       if (chatSocket !== socket) return;
       let data;
       try { data = JSON.parse(event.data); } catch { return; }
+      if (typeof data?.type === 'string' && data.type.startsWith('dm_group_call_')) {
+        console.log('[DM group call] received WS event', data);
+      }
       handleSocketMessage(data);
     };
 
@@ -204,7 +207,12 @@ function handleSocketMessage(data) {
       if (window._onDmGroupVoiceStart) window._onDmGroupVoiceStart(data);
       break;
     case 'dm_group_call_start':
-      if (window._onDmGroupCallStart) window._onDmGroupCallStart(data);
+      if (window._onDmGroupCallStart) {
+        window._onDmGroupCallStart(data);
+      } else {
+        console.error('[DM group call] invite arrived before popup handler loaded; queueing it', data);
+        window.__pendingDmGroupCallInvite = data;
+      }
       break;
     case 'dm_group_call_busy':
       if (window._onDmGroupCallBusy) window._onDmGroupCallBusy(data);
