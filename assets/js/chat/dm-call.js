@@ -202,27 +202,29 @@ async function startDmGroupLiveKitCall(groupId, video) {
       _dmGroupLiveKitRoom = null;
     });
 
-    await room.connect(data.url, data.token);
+    // Ring group members as soon as authorization succeeds. Do not wait for
+    // LiveKit media negotiation: a slow/blocked RTC connect must not suppress
+    // the incoming Accept/Decline popup on the other members.
     if (!window.__joiningDmGroupInvite) {
       const invite = { type: 'dm_group_call_start', group_id: Number(groupId), is_video: !!video };
-      const sent = window.wsSend?.(invite);
-      console.log('[DM group call] invite signal', sent ? 'sent' : 'not sent', invite);
-      if (!sent) {
-        // The LiveKit room can connect before Ratchet authentication is ready.
-        // Retry briefly so media success never silently drops the incoming-call popup.
-        let attempts = 0;
+      let attempts = 0;
+      const sendInvite = () => {
+        attempts += 1;
+        const sent = window.wsSend?.(invite) === true;
+        console.log('[DM group call] invite attempt', attempts, sent ? 'sent' : 'not sent', invite);
+        return sent;
+      };
+      if (!sendInvite()) {
         const retryInvite = setInterval(() => {
-          attempts += 1;
-          if (window.wsSend?.(invite)) {
-            console.log('[DM group call] invite signal sent on retry', attempts);
+          if (sendInvite() || attempts >= 12) {
             clearInterval(retryInvite);
-          } else if (attempts >= 10) {
-            console.error('[DM group call] invite signal could not be sent after retries');
-            clearInterval(retryInvite);
+            if (attempts >= 12) console.error('[DM group call] invite signal could not be sent');
           }
         }, 250);
       }
     }
+
+    await room.connect(data.url, data.token);
     await room.localParticipant.setMicrophoneEnabled(true);
     if (video) await room.localParticipant.setCameraEnabled(true);
     _renderDmGroupCallOverlay(data.room_name);
