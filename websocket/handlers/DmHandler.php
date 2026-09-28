@@ -152,9 +152,19 @@ class DmHandler
             'from_username'=>$meta['full_name'] ?? $meta['username'],
             'is_video'=>(bool)($data['is_video'] ?? false),
         ]);
+        $delivered = 0;
         foreach ($members->fetchAll(PDO::FETCH_COLUMN) as $memberId) {
-            foreach ($userConns[(int)$memberId] ?? [] as $conn) { try { $conn->send($payload); } catch (\Throwable) {} }
+            foreach ($userConns[(int)$memberId] ?? [] as $conn) {
+                try { $conn->send($payload); $delivered++; } catch (\Throwable) {}
+            }
         }
+        try {
+            $from->send(json_encode([
+                'type'=>'dm_group_call_invite_sent',
+                'group_id'=>$groupId,
+                'delivered'=>$delivered,
+            ]));
+        } catch (\Throwable) {}
     }
 
     public static function handleDmCallSignal(ConnectionInterface $from, array $data, array $meta, array $userConns, PDO $db, string $type): void {
