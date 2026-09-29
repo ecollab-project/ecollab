@@ -648,6 +648,7 @@ async function openCompatibilityModal(userId, name) {
       { label: 'Style',     val: s.style,     max: 100, color: '#a855f7' },
       { label: 'Interests', val: s.interests, max: 100, color: '#f59e0b' },
       { label: 'Hobbies',   val: s.hobbies,   max: 100, color: '#22c55e' },
+      ...(s.semantic != null ? [{ label: 'Topics', val: s.semantic, max: 100, color: '#06b6d4' }] : []),
     ]);
 
     const tagSection = (title, items, emptyMsg) => {
@@ -679,6 +680,7 @@ async function openCompatibilityModal(userId, name) {
             <div class="pm-compat-total-wrap">
               <div class="pm-compat-total" style="color:${_pmScoreColor(s.total)}">${s.total}%</div>
               <div class="pm-compat-total-label">Overall Match</div>
+              <div class="pm-section-note">${s.semantic != null ? 'Includes related study topics' : 'Based on profile preferences'}. Match score, not a probability.</div>
             </div>
             ${radarSVG}
           </div>
@@ -687,7 +689,8 @@ async function openCompatibilityModal(userId, name) {
             ${[['Subjects',w.subjects,s.subjects,'#3b82f6'],
                ['Study Style',w.style,s.style,'#a855f7'],
                ['Interests',w.interests,s.interests,'#f59e0b'],
-               ['Hobbies',w.hobbies,s.hobbies,'#22c55e']].map(([lbl,wt,val,col])=>`
+               ['Hobbies',w.hobbies,s.hobbies,'#22c55e'],
+               ...(s.semantic != null ? [['Related Topics',w.semantic,s.semantic,'#06b6d4']] : [])].map(([lbl,wt,val,col])=>`
               <div class="pm-breakdown-row">
                 <span class="pm-breakdown-label">${lbl} <small>(${wt}% weight)</small></span>
                 <div class="pm-score-track" style="flex:1">
