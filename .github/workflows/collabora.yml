@@ -26,9 +26,16 @@ jobs:
           php-version: '8.3'
           extensions: pdo_mysql, zip, curl, simplexml
       - name: PHP syntax
-        run: find services API/collaboration modules/collaboration tests -name '*.php' -print0 | xargs -0 -n1 php -l
+        run: find services API/collaboration modules/collaboration modules/whiteboard websocket tests -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Authorization, token and version regression
         env:
           COLLABORA_TEST_DSN: mysql:host=127.0.0.1;port=3306;dbname=collabora_test
           COLLABORA_TEST_PASSWORD: test
         run: php tests/collabora-regression.php
+      - name: Whiteboard permission regression
+        env:
+          COLLABORA_TEST_DSN: mysql:host=127.0.0.1;port=3306;dbname=collabora_test
+          COLLABORA_TEST_PASSWORD: test
+        run: php tests/whiteboard-realtime-regression.php
+      - name: Whiteboard socket routing
+        run: node tests/whiteboard-socket-regression.cjs

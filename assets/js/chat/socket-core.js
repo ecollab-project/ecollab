@@ -145,7 +145,7 @@ function handleSocketMessage(data) {
       _socketAuthenticated = true;
       console.log('[WS] Authenticated as user', data.user_id);
       // Join current channel if any
-      if (window.ECOLLAB?.currentChannelId) {
+      if (window.ECOLLAB?.currentChannelId && !window.ECOLLAB?.whiteboardStandalone) {
         chatSocket.send(JSON.stringify({
           type: 'join_channel',
           channel_id: window.ECOLLAB.currentChannelId,
@@ -781,6 +781,7 @@ let pollInterval    = null;
 let lastMessageId   = 0;
 
 function startPollingFallback() {
+  if (window.ECOLLAB?.whiteboardStandalone) return;
   if (pollInterval) return;
   console.info('[WS] Starting polling fallback (3 s interval)');
   pollInterval = setInterval(async () => {
