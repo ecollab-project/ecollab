@@ -1,6 +1,12 @@
 <?php
 
 declare(strict_types=1);
+require_once dirname(__DIR__, 3) . '/config.php';
+if (env('DOCUMENT_EDITOR', 'onlyoffice') === 'collabora') {
+    header('Location: ' . BASE_URL . '/modules/collaboration/collabora-editor.php?id=' . (int)($_GET['id'] ?? 0));
+    exit;
+}
+
 
 require_once dirname(__DIR__, 3) . '/config.php';
 require_once ROOT_PATH . '/database/config/db.php';
@@ -116,3 +122,4 @@ window.addEventListener('load', function () {
 </script>
 </body>
 </html>
+

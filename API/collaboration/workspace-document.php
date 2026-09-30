@@ -6,6 +6,7 @@ require_once dirname(__DIR__, 2) . '/config.php';
 require_once ROOT_PATH . '/database/config/db.php';
 require_once ROOT_PATH . '/security/middleware/AuthMiddleware.php';
 require_once ROOT_PATH . '/services/CoworkspaceService.php';
+require_once ROOT_PATH . '/services/DocumentAccessService.php';
 
 AuthMiddleware::startSession();
 $user = AuthMiddleware::requireAuth(true);
@@ -29,6 +30,9 @@ $documentId = (int)($input['document_id'] ?? 0);
 if ($workspaceId < 1 || $documentId < 1) docLinkFail('Workspace and document are required.');
 
 try {
+    $access = DocumentAccessService::get($db, $documentId, $uid);
+    if (!$access['owner']) docLinkFail('Only owners can move documents.', 403);
+    if ((int)$access['document']['workspace_id'] !== $workspaceId) docLinkFail('Cross-workspace moves require a new sharing review and are not supported.', 409);
     $workspace = CoworkspaceService::get($db, $workspaceId, $uid);
     $role = (string)($workspace['member_role'] ?? '');
     if ((int)$workspace['allow_create_documents'] !== 1 && !in_array($role, ['host','editor'], true)) {
@@ -78,3 +82,4 @@ try {
     $status = (int)$e->getCode();
     docLinkFail($e->getMessage(), ($status >= 400 && $status < 600) ? $status : 500);
 }
+

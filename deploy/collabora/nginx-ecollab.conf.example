@@ -1,0 +1,17 @@
+# Add inside the eCollab HTTPS server block. Adjust script path/socket to this installation.
+# This exact route must take precedence over generic PHP and application rewrites.
+location ~ ^/API/collaboration/wopi(/files/[1-9][0-9]*(?:/contents)?)$ {
+    set $wopi_path $1;
+    include fastcgi_params;
+    fastcgi_param SCRIPT_FILENAME /home/ecollabadmin/ecollab-inspect/API/collaboration/wopi.php;
+    fastcgi_param SCRIPT_NAME /API/collaboration/wopi.php;
+    fastcgi_param PATH_INFO $wopi_path;
+    fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+    client_max_body_size 25m;
+    fastcgi_read_timeout 120s;
+    access_log off;
+}
+# Documents, archived revisions and temporary saves must never be served as public files.
+location ^~ /uploads/collab-docs/ { return 404; }
+# Also set client_max_body_size 26m at server level for multipart uploads,
+# and PHP upload_max_filesize=25M and post_max_size=26M.
