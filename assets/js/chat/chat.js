@@ -64,6 +64,15 @@ async function apiFetch(url, options = {}, _retried = false) {
   return res.json();
 }
 
+function chatAvatarUrl(url) {
+  const raw = String(url || '').trim();
+  if (!raw) return '';
+  if (/^(?:https?:)?\/\//i.test(raw) || /^(?:data|blob):/i.test(raw)) return raw;
+  const base = String(window.ECOLLAB?.baseUrl || '').replace(/\/$/, '');
+  if (raw.startsWith('/')) return base + raw;
+  return base + '/' + raw.replace(/^\.\//, '');
+}
+
 const API_BASE = (window.ECOLLAB?.baseUrl || '') + '/API/chat';
 const UPLOAD_ENDPOINT = (window.ECOLLAB?.baseUrl || '') + '/API/chat/upload-file.php';
 
@@ -163,6 +172,13 @@ function switchWorkspace(wsIdx, serverId) {
   // Keep ECOLLAB object in sync so chat-features.js can read it
   if (window.ECOLLAB) window.ECOLLAB.currentServerId = serverId;
 
+  // Keep the server Library link scoped to the workspace the user selected.
+  const libraryNav = document.getElementById('serverLibraryNav');
+  if (libraryNav) {
+    const base = String(window.ECOLLAB?.baseUrl || '').replace(/\/$/, '');
+    libraryNav.href = base + '/modules/library/library.php?server_id=' + encodeURIComponent(serverId);
+  }
+
   document.querySelectorAll('.workspace-icon').forEach((icon, i) => {
     icon.classList.toggle('active', i === wsIdx);
   });
@@ -179,6 +195,7 @@ async function loadServerChannels(serverId) {
     if (server) {
       document.getElementById('wsIcon').textContent = server.icon_emoji || '⭐';
       document.getElementById('wsName').textContent = server.name;
+
     }
 
     renderChannelList(data.channels || []);
@@ -239,6 +256,7 @@ function renderChannelList(channels) {
       el.className = 'channel-item';
       el.dataset.channelId = ch.id;
       el.dataset.channelName = ch.name;
+      el.dataset.isPrivate = (ch.is_private == 1 || ch.is_private === true) ? '1' : '0';
       if (ch.is_new == 1 || ch.is_new === true) el.dataset.isNew = '1';
       const isAnnouncement = ch.type === 'announcement';
       const isPrivate = ch.is_private == 1 || ch.is_private === true;
@@ -251,6 +269,7 @@ function renderChannelList(channels) {
             : `<span class="channel-hash">#</span>`
         }
         <span class="channel-name-text" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(ch.name)}${isNew ? ' <span class="ch-new-badge" style="font-size:9px;background:rgba(168,85,247,0.18);color:#c084fc;border-radius:4px;padding:1px 5px;font-weight:700;vertical-align:middle;">new</span>' : ''}</span>
+        <span class="channel-visibility-indicator ${isPrivate?'is-private':'is-public'}" title="${isPrivate?'Private channel':'Public channel'}">${isPrivate?'🔒':'🌐'}</span>
         ${ch.unread_count > 0 ? `<span class="channel-unread">${ch.unread_count}</span>` : ''}
       `;
       el.onclick = () => switchChannel(el, parseInt(ch.id));
@@ -333,6 +352,8 @@ async function switchChannel(el, channelId) {
       document.getElementById('channelDesc').textContent = ch.description || '';
       document.getElementById('chatInputField').placeholder = `Message #${ch.name}`;
       document.getElementById('mobChannelName').textContent = ch.name;
+      const dashboardLink = document.getElementById('channelDashboardLink');
+      if (dashboardLink) dashboardLink.style.display = String(ch.name || '').trim().toLowerCase() === 's1.election' ? 'inline-block' : 'none';
 
       // Show/hide manage button for private channels
       const manageBtn = document.getElementById('manageChannelBtn');
@@ -432,6 +453,9 @@ function buildMessageElement(msg) {
   const grad = msg.avatar_color_gradient || '#3b82f6,#6366f1';
   const [c1, c2] = grad.split(',');
   const init = (msg.full_name || msg.username || '?').charAt(0).toUpperCase();
+  const avatarUrl = chatAvatarUrl(msg.avatar_url);
+  const avatarBg = avatarUrl ? `url("${escHtml(avatarUrl)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
+  const avatarText = avatarUrl ? '' : init;
   const isMe = parseInt(msg.sender_id) === parseInt(window.ECOLLAB?.userId);
   const time = formatTime(msg.created_at);
   const edited = msg.is_edited ? '<span class="edited-tag" style="font-size:10px;color:var(--text-muted);margin-left:4px;">(edited)</span>' : '';
@@ -490,19 +514,20 @@ function buildMessageElement(msg) {
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
       </button>
       <button class="msg-action-btn ${msg.is_pinned ? 'pin-active' : ''}" title="${msg.is_pinned ? 'Unpin Message' : 'Pin Message'}" onclick="msgPin(this,'${escHtml(msg.username)}','${escHtml((msg.content || '').substring(0, 60))}', ${msg.id})">📌</button>
+      <button class="msg-action-btn" title="Bookmark" onclick="msgBookmark(this, ${msg.id})">🔖</button>
       <button class="msg-action-btn" title="More Options" onclick="showMsgMenu(event,this,'${escHtml(msg.username)}', ${msg.id}, ${isMe ? 'true' : 'false'})">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
       </button>
     </div>
     <div class="msg-avatar">
-      <div class="avatar-placeholder" style="width:36px;height:36px;font-size:14px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;position:relative;flex-shrink:0;">
-        ${init}
+      <div class="avatar-placeholder" style="width:36px;height:36px;font-size:14px;border-radius:50%;background:${avatarBg};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;position:relative;flex-shrink:0;">
+        ${avatarText}
         <div class="online-dot"></div>
       </div>
     </div>
     <div class="msg-content">
       <div class="msg-header">
-        <span class="msg-username ${roleClass}" onclick="openMiniProfile(event, '${escHtml(msg.full_name || msg.username)}', '${escHtml(msg.role || 'Student')}', '', '${init}', ${msg.sender_id || 0})">${escHtml(msg.username)}</span>
+        <span class="msg-username ${roleClass}" onclick="openMiniProfile(event, '${escHtml(msg.full_name || msg.username)}', '${escHtml(msg.role || 'Student')}', '', '${init}', ${msg.sender_id || 0})">${escHtml(msg.full_name || msg.username)}</span>
         ${msg.role === 'facilitator' ? '<span class="msg-badge">FACULTY</span>' : ''}
         ${msg.is_verified ? '<span style="color:#a855f7;font-size:12px;" title="Verified">✓</span>' : ''}
         <span class="msg-timestamp">${time}</span>
@@ -866,6 +891,20 @@ async function msgPin(btn, author, text, msgId) {
   }
 }
 
+async function msgBookmark(btn, msgId) {
+  if (!msgId) return;
+  try {
+    const data = await apiFetch(`${API_BASE}/bookmark-message.php`, {
+      method: 'POST',
+      body: JSON.stringify({ message_id: msgId }),
+    });
+    btn?.classList.toggle('bookmark-active', !!data.bookmarked);
+    showToast(data.bookmarked ? '🔖 Bookmarked' : '🔖 Removed bookmark', 'success');
+  } catch (e) {
+    showToast('🔖 ' + (e?.message || 'Could not bookmark message'), 'info');
+  }
+}
+
 // ── Message context menu ──
 function showMsgMenu(event, btn, author, msgId, isMe) {
   event.stopPropagation();
@@ -1204,15 +1243,18 @@ function renderMembersPanel(members) {
     const grad = m.avatar_color_gradient || '#3b82f6,#6366f1';
     const [c1, c2] = grad.split(',');
     const init = (m.full_name || m.username || '?').charAt(0).toUpperCase();
+    const memberAvatarUrl = chatAvatarUrl(m.avatar_url);
+    const memberAvatar = memberAvatarUrl ? `url("${escHtml(memberAvatarUrl)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
+    const memberInitial = memberAvatarUrl ? '' : init;
     const online = m.is_online ? 'online' : '';
     return `
       <div class="member-item" data-user-id="${m.id || m.user_id || 0}" data-user-grad="${grad}" onclick="openMiniProfile(event, '${escHtml(m.full_name || m.username)}', '${escHtml(m.role || 'Student')}', '', '${init}', ${m.id || m.user_id || 0})">
         <div class="user-avatar">
-          <div class="avatar-placeholder" style="width:28px;height:28px;font-size:11px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;">${init}</div>
+          <div class="avatar-placeholder" style="width:28px;height:28px;font-size:11px;border-radius:50%;background:${memberAvatar};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;">${memberInitial}</div>
           <div class="online-dot ${m.is_online ? '' : 'offline'}"></div>
         </div>
         <div class="member-info">
-          <div class="member-name">${escHtml(m.nickname || m.username)}${m.server_role === 'owner' ? ' <span class="member-badge">👑</span>' : ''}</div>
+          <div class="member-name">${escHtml(m.full_name || m.nickname || m.username)}${m.server_role === 'owner' ? ' <span class="member-badge">👑</span>' : ''}</div>
           <div class="member-sub" style="color:${m.is_online ? 'var(--accent-green)' : 'var(--text-muted)'};font-size:10px;">${m.is_online ? 'Online' : 'Offline'}</div>
         </div>
         <div class="member-status ${online}">● ${m.is_online ? 'Online' : ''}</div>
@@ -1229,10 +1271,13 @@ function renderMembersPanel(members) {
       const grad = m.avatar_color_gradient || '#3b82f6,#6366f1';
       const [c1, c2] = grad.split(',');
       const init = (m.full_name || m.username || '?').charAt(0).toUpperCase();
+      const memberAvatarUrl = chatAvatarUrl(m.avatar_url);
+    const memberAvatar = memberAvatarUrl ? `url("${escHtml(memberAvatarUrl)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
+      const memberInitial = memberAvatarUrl ? '' : init;
       return `
-        <div class="active-user" onclick="openMiniProfile(event, '${escHtml(m.full_name || m.username)}', '${escHtml(m.role)}', '', '${init}')">
+        <div class="active-user" onclick="openMiniProfile(event, '${escHtml(m.full_name || m.username)}', '${escHtml(m.role)}', '', '${init}', ${m.id || m.user_id || 0})">
           <div class="user-avatar">
-            <div class="avatar-placeholder" style="width:34px;height:34px;font-size:13px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;">${init}</div>
+            <div class="avatar-placeholder" style="width:34px;height:34px;font-size:13px;border-radius:50%;background:${memberAvatar};background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;">${memberInitial}</div>
             <div class="online-dot"></div>
           </div>
           <div class="active-user-info">
@@ -1397,32 +1442,36 @@ function filterSidebar(query) {
 
 // ── AI Assist ──
 async function generateAIReply() {
-  const input = document.getElementById('chatInputField');
-  if (!input) return;
   const btn = document.getElementById('aiAssistBtn');
-  if (btn) { btn.textContent = '✨ Generating…'; btn.disabled = true; }
+  if (btn) {
+    btn.textContent = '✨ Opening AI…';
+    btn.disabled = true;
+  }
+
   try {
-    // Gather last 8 messages as context
-    const msgEls = document.querySelectorAll('.msg-text');
-    const context = Array.from(msgEls).slice(-8).map(el => el.textContent.trim()).filter(Boolean).join('\n');
+    const data = await apiFetch((window.ECOLLAB?.baseUrl || '') + '/API/ai/dm-account.php');
+    const ai = data.ai || data.account || data.user || data;
 
-    const data = await apiFetch(`${API_BASE}/ai-assist.php`, {
-      method: 'POST',
-      body: JSON.stringify({
-        prompt: input.value || 'Suggest a helpful reply for this study chat',
-        context,
-      }),
-    });
-
-    if (data.suggestion) {
-      input.value = data.suggestion;
-      input.focus();
-      input.dispatchEvent(new Event('input'));
+    if (!ai?.id) {
+      throw new Error('eCollab AI account is unavailable');
     }
+
+    if (typeof window.openDmConversation !== 'function') {
+      throw new Error('Direct messages are still loading');
+    }
+
+    await window.openDmConversation(
+      parseInt(ai.id),
+      ai.full_name || 'Jarred',
+      ai.avatar_color_gradient || '#6366f1,#8b5cf6'
+    );
   } catch (err) {
-    if (window.showToast) showToast(err.message || 'AI assist unavailable', 'info');
+    if (window.showToast) showToast(err.message || 'eCollab AI unavailable', 'info');
   } finally {
-    if (btn) { btn.innerHTML = '✨ AI Assist <span class="ai-assist-chevron">▾</span>'; btn.disabled = false; }
+    if (btn) {
+      btn.innerHTML = '✨ AI Assist <span class="ai-assist-chevron">▾</span>';
+      btn.disabled = false;
+    }
   }
 }
 
@@ -1461,19 +1510,31 @@ if (typeof switchView !== 'undefined') window.switchView = switchView;
 
 // ── Open whiteboard channel ──
 function openWhiteboardChannel(channelId, channelName) {
-  // Highlight the wb channel item
   document.querySelectorAll('.wb-channel-item').forEach(el => el.classList.remove('active'));
-  const el = document.querySelector(`.wb-channel-item[data-channel-id="${channelId}"]`);
+  const el = document.querySelector('.wb-channel-item[data-channel-id="' + channelId + '"]');
   if (el) el.classList.add('active');
 
-  // Update header
-  const nameEl = document.getElementById('channelName');
-  if (nameEl) nameEl.textContent = channelName;
-  const topicEl = document.getElementById('channelTopic');
-  if (topicEl) topicEl.textContent = 'Collaborative whiteboard';
-
-  // Open the whiteboard view
-  if (window.openWhiteboard) window.openWhiteboard(channelName, channelId);
+  let overlay = document.getElementById('wbIframeOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'wbIframeOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:1200;background:#070b14;display:flex;flex-direction:column;';
+    overlay.innerHTML =
+      '<div style="height:42px;display:flex;align-items:center;gap:10px;padding:0 12px;background:#0d1320;border-bottom:1px solid rgba(255,255,255,.1);">' +
+      '<strong id="wbIframeTitle" style="font-size:13px;color:#e2e8f0;flex:1;"></strong>' +
+      '<button id="wbIframeNewTab" type="button" style="padding:6px 10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#cbd5e1;border-radius:6px;cursor:pointer;">Open tab</button>' +
+      '<button id="wbIframeClose" type="button" style="padding:6px 10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#fff;border-radius:6px;cursor:pointer;">Close</button>' +
+      '</div><iframe id="wbIframe" title="Ecollab Whiteboard" style="width:100%;height:calc(100% - 42px);border:0;background:#0b0f1a;"></iframe>';
+    document.body.appendChild(overlay);
+    document.getElementById('wbIframeClose').onclick = () => overlay.remove();
+    document.getElementById('wbIframeNewTab').onclick = () => {
+      const frame = document.getElementById('wbIframe');
+      if (frame?.src) window.open(frame.src, '_blank', 'noopener');
+    };
+  }
+  const url=(window.ECOLLAB?.baseUrl || '') + '/modules/whiteboard/index.php?channel_id=' + encodeURIComponent(channelId);
+  document.getElementById('wbIframeTitle').textContent = channelName || 'Whiteboard';
+  document.getElementById('wbIframe').src = url;
 }
 window.openWhiteboardChannel = openWhiteboardChannel;
 
@@ -1575,6 +1636,7 @@ window.handleKeyDown = handleKeyDown;
 window.msgReply = msgReply;
 window.cancelReply = cancelReply;
 window.msgPin = msgPin;
+window.msgBookmark = msgBookmark;
 window.showMsgMenu = showMsgMenu;
 window.startEditMsg = startEditMsg;
 window.saveEditMsg = saveEditMsg;

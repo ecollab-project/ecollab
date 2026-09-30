@@ -1,3 +1,4 @@
+@import url('../responsive.css');
 /* ── Ecollab Auth Pages CSS ───────────────────────────────────────────────────
    Extracted from login.html and signup.html.
    Covers: login, signup (3-step), forgot-password.
@@ -865,3 +866,8 @@ body::after {
   .signup-scroll-box { max-height: 260px; }
 }
 
+
+/* New eCollab wordmark */
+.ecollab-auth-brand{display:flex!important;align-items:center;width:150px!important;height:46px!important;padding:0!important;background:transparent!important}
+.ecollab-auth-brand img{display:block;width:150px;height:auto;max-height:46px;object-fit:contain;object-position:left center}
+@media(max-width:600px){.ecollab-auth-brand,.ecollab-auth-brand img{width:128px!important;max-width:128px!important}}

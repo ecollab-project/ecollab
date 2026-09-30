@@ -32,18 +32,36 @@ function _esc(s) {
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-function _timeAgo(dateStr) {
-  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (diff < 60)  return 'just now';
-  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
-  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
-  return Math.floor(diff/86400) + 'd ago';
+function _parseUtcDate(dateStr) {
+  if (!dateStr) return null;
+  const raw = String(dateStr).trim();
+
+  if (/[zZ]$|[+-]\d{2}:\d{2}$/.test(raw)) {
+    const d = new Date(raw);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  const d = new Date(raw.replace(' ', 'T') + 'Z');
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function _avatar(name, gradient, size = 34) {
+function _timeAgo(dateStr) {
+  const date = _parseUtcDate(dateStr);
+  if (!date) return '';
+
+  const diff = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  return Math.floor(diff / 86400) + 'd ago';
+}
+
+function _avatar(name, gradient, size = 34, avatarUrl = '') {
   const [c1,c2] = (gradient || '#a855f7,#ec4899').split(',');
   const init = String(name||'?').charAt(0).toUpperCase();
-  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:${Math.floor(size*0.4)}px;font-weight:800;color:#fff;flex-shrink:0;">${init}</div>`;
+  const bg = avatarUrl ? `url("&quot;${_esc(avatarUrl)}&quot;")` : `linear-gradient(135deg,${c1},${c2})`;
+  const style = avatarUrl ? `background-image:url('${_esc(avatarUrl)}');background-size:cover;background-position:center;` : `background:${bg};`;
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;${style}display:flex;align-items:center;justify-content:center;font-size:${Math.floor(size*0.4)}px;font-weight:800;color:#fff;flex-shrink:0;">${avatarUrl?'':init}</div>`;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -55,6 +73,9 @@ const DM = {
   activeConvId: null,
   activePartnerId: null,
   activePartnerName: '',
+  activePartnerIsAI: false,
+  groups: [],               // [{id, name, display_name, members, last_message, ...}]
+  activeGroupId: null,
   typingTimers: {},         // conversation_id => clearTimeout handle
 };
 
@@ -86,6 +107,8 @@ function _hookWebSocket() {
       switch (data.type) {
         case 'dm_message':          _onWsDmMessage(data);       break;
         case 'dm_typing':           _onWsDmTyping(data);        break;
+        case 'dm_group_message':    _onWsDmGroupMessage(data);  break;
+        case 'dm_group_typing':     _onWsDmGroupTyping(data);   break;
         case 'connection_request':  _onWsConnRequest(data);     break;
         case 'connection_accepted': _onWsConnAccepted(data);    break;
         case 'notification':        _onWsNotification(data);    break;
@@ -132,6 +155,12 @@ function _onWsDmMessage(data) {
     showToast(`💬 ${name}: ${String(data.body || '').slice(0, 60)}`, 'info');
   }
 
+  // Don't notify yourself about your own message (this event fires for
+  // both sender and recipient)
+  if (typeof showDesktopNotification === 'function' && data.sender_id != ME_ID()) {
+    showDesktopNotification('notification_messages', data.sender_name || 'New message', String(data.body || '').slice(0, 100));
+  }
+
   // Add notification badge
   if (data.sender_id !== ME_ID()) {
     _addInlineNotification({
@@ -159,6 +188,53 @@ function _onWsDmTyping(data) {
   } else {
     indicator.style.display = 'none';
     clearTimeout(DM.typingTimers[data.conversation_id]);
+  }
+}
+
+function _onWsDmGroupMessage(data) {
+  const groupId = data.group_id;
+
+  const grp = DM.groups.find(g => g.id == groupId);
+  if (grp) {
+    grp.last_message = data.body;
+    grp.last_msg_at  = data.created_at;
+    if (DM.activeGroupId != groupId) {
+      grp.unread_count = (parseInt(grp.unread_count) || 0) + 1;
+    }
+    _renderGroupList();
+  } else {
+    loadDmList();
+  }
+
+  if (DM.activeGroupId == groupId) {
+    _appendDmMessage(data);
+  } else {
+    const name = data.sender_name || 'Someone';
+    showToast(`💬 ${name} (${grp ? grp.display_name : 'Group'}): ${String(data.body || '').slice(0, 60)}`, 'info');
+  }
+
+  // Don't notify yourself about your own message (this event fires for
+  // every group member, including the sender)
+  if (typeof showDesktopNotification === 'function' && data.sender_id != ME_ID()) {
+    const groupName = grp ? grp.display_name : 'Group';
+    showDesktopNotification('notification_messages', `${data.sender_name || 'Someone'} (${groupName})`, String(data.body || '').slice(0, 100));
+  }
+}
+
+function _onWsDmGroupTyping(data) {
+  if (DM.activeGroupId != data.group_id) return;
+  const indicator = document.getElementById('dmTypingIndicator');
+  if (!indicator) return;
+
+  const key = 'group_' + data.group_id;
+  if (data.is_typing) {
+    indicator.style.display = 'flex';
+    indicator.textContent   = `${_esc(data.sender_name)} is typing…`;
+    clearTimeout(DM.typingTimers[key]);
+    DM.typingTimers[key] = setTimeout(() => { indicator.style.display = 'none'; }, 3000);
+  } else {
+    indicator.style.display = 'none';
+    clearTimeout(DM.typingTimers[key]);
   }
 }
 
@@ -204,6 +280,8 @@ function _addInlineNotification(notif) {
     body:       notif.body || '',
     is_read:    0,
     created_at: notif.created_at || new Date().toISOString(),
+    ref_id:     notif.ref_id || 0,
+    link_url:   notif.link_url || '',
   });
   if (NOTIF.items.length > 30) NOTIF.items.pop();
   NOTIF.unreadCount++;
@@ -255,28 +333,100 @@ function _renderNotifDropdown() {
     </div>`).join('');
 }
 
-window._handleNotifClick = function(notifId, type, refId) {
-  // Mark this notification read
-  const notif = NOTIF.items.find(n => n.id === notifId);
+window._handleNotifClick = async function(notifId, type, refId) {
+  const notif = NOTIF.items.find(n => String(n.id) === String(notifId));
   if (notif && !notif.is_read) {
     notif.is_read = 1;
     NOTIF.unreadCount = Math.max(0, NOTIF.unreadCount - 1);
     _updateNotifBadge();
     _renderNotifDropdown();
-    // Persist to DB
     apiFetch(BASE() + '/API/notifications/mark-read.php', {
       method: 'POST',
       body: JSON.stringify({ ids: [notifId] }),
     }).catch(() => {});
   }
 
-  // Navigate
-  if (type === 'dm' || type === 'dm_message') {
-    // Close dropdown, open DM panel — refId is message_id, we need conv
-    const conv = DM.conversations.find(c => c.unread_count > 0);
-    if (conv) openDmConversation(conv.partner_id, conv.partner_name, conv.partner_gradient);
+  const dd = document.getElementById('notifDropdown');
+  if (dd) { dd.style.display = 'none'; dd.classList.remove('open'); }
+
+  const t = String(type || '').toLowerCase();
+  const link = String(notif?.link_url || '');
+
+  // Temporary private voice invitation.
+  if (t === 'temporary_voice_invite') {
+    const m = link.match(/[?&]temp_voice=(\d+)/i);
+    const channelId = Number(m?.[1] || refId || 0);
+    if (channelId > 0 && typeof window.joinVoice === 'function') {
+      window.joinVoice('temp-voice-' + channelId, null, channelId, 'Private Temporary Voice');
+    } else if (channelId > 0 && typeof joinVoice === 'function') {
+      joinVoice('temp-voice-' + channelId, null, channelId, 'Private Temporary Voice');
+    }
+    return;
   }
-  // connection_request banner already shown separately
+
+  // Connection notifications belong to the Study Partners workflow.
+  if (t === 'connection_request' || t === 'connection_accepted' ||
+      /friend_request|connection/i.test(link)) {
+    if (typeof window.openPeerMatchingModal === 'function') {
+      window.openPeerMatchingModal();
+      if (typeof window._pmShowTab === 'function') {
+        setTimeout(() => window._pmShowTab('requests'), 60);
+      }
+    }
+    return;
+  }
+
+  // Thread notifications open Threads; when ref_id is a thread id, open it.
+  if (t === 'thread' || t === 'thread_reply' || t === 'thread_mention' ||
+      /thread/i.test(link)) {
+    const threadNav = [...document.querySelectorAll('[onclick]')].find(el =>
+      /switchView\(['"]threads['"]/.test(el.getAttribute('onclick') || '')
+    );
+    if (typeof window.switchView === 'function') {
+      window.switchView('threads', threadNav || null);
+    } else if (threadNav) {
+      threadNav.click();
+    }
+    if (Number(refId) > 0 && typeof window._openThreadDetail === 'function') {
+      setTimeout(() => window._openThreadDetail(Number(refId)), 120);
+    }
+    return;
+  }
+
+  // DM notifications: prefer an explicit partner/conversation encoded by the
+  // notification; otherwise resolve the referenced message against loaded DMs.
+  if (t === 'dm' || t === 'dm_message' || t === 'message' || /\/dm\b|conversation/i.test(link)) {
+    let conv = null;
+    const partnerMatch = link.match(/[?&](?:partner_id|user_id)=(\d+)/i);
+    if (partnerMatch) {
+      conv = DM.conversations.find(c => Number(c.partner_id) === Number(partnerMatch[1]));
+    }
+    if (!conv && Number(refId) > 0) {
+      conv = DM.conversations.find(c =>
+        Number(c.last_message_id || c.message_id || 0) === Number(refId)
+      );
+    }
+    if (!conv) conv = DM.conversations.find(c => (parseInt(c.unread_count) || 0) > 0);
+    if (conv) {
+      await window.openDmConversation?.(
+        Number(conv.partner_id),
+        conv.partner_name || conv.partner_username || 'User',
+        conv.partner_gradient || ''
+      );
+      return;
+    }
+    await loadDmList();
+    conv = DM.conversations.find(c => (parseInt(c.unread_count) || 0) > 0);
+    if (conv) {
+      await window.openDmConversation?.(Number(conv.partner_id), conv.partner_name || conv.partner_username || 'User', conv.partner_gradient || '');
+    }
+    return;
+  }
+
+  // Mentions/bookmarks and other notifications can use their stored internal URL.
+  if (link && link.startsWith('/')) {
+    window.location.href = BASE() + link;
+  }
 };
 
 // Poll notifications from DB on a slow cadence (backup to WebSocket)
@@ -332,6 +482,39 @@ async function loadDmList() {
       _renderDmList();
     }
   } catch (_) {}
+  try {
+    const gdata = await apiFetch(BASE() + '/API/dm/groups.php?action=list');
+    if (gdata.groups) {
+      DM.groups = gdata.groups;
+      _renderGroupList();
+    }
+  } catch (_) {}
+}
+
+function _renderGroupList() {
+  const container = document.getElementById('groupList');
+  if (!container) return;
+
+  if (!DM.groups.length) {
+    container.innerHTML = `<div style="padding:8px 16px;font-size:12px;color:var(--text-muted);">No group messages yet</div>`;
+    return;
+  }
+
+  container.innerHTML = DM.groups.map(g => {
+    const isActive = DM.activeGroupId === g.id;
+    const members = g.members || [];
+    const preview = g.last_message ? String(g.last_message).slice(0, 40) : 'No messages yet';
+    return `
+      <div class="channel-item dm-item ${isActive ? 'active' : ''}"
+           data-group-id="${g.id}"
+           onclick="openGroupConversation(${g.id})">
+        <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#ec4899);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;">${members.length}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(g.display_name)}</div>
+          <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(preview)}</div>
+        </div>
+      </div>`;
+  }).join('');
 }
 
 function _renderDmList() {
@@ -345,7 +528,8 @@ function _renderDmList() {
 
   container.innerHTML = DM.conversations.map(c => {
     const isActive  = DM.activeConvId === c.conversation_id;
-    const name      = c.partner_name || c.partner_username || 'Unknown';
+    const isJarred  = c.partner_username === 'ecollab_ai' || c.partner_is_system == 1;
+    const name      = isJarred ? 'Jarred' : (c.partner_name || c.partner_username || 'Unknown');
     const preview   = c.last_message ? String(c.last_message).slice(0, 40) : 'No messages yet';
     const unread    = parseInt(c.unread_count) || 0;
 
@@ -353,7 +537,7 @@ function _renderDmList() {
       <div class="channel-item dm-item ${isActive ? 'active' : ''}"
            data-conv-id="${c.conversation_id}"
            onclick="openDmConversation(${c.partner_id},'${_esc(name)}','${_esc(c.partner_gradient || '')}')">
-        ${_avatar(name, c.partner_gradient, 28)}
+        ${_avatar(name, c.partner_gradient, 28, c.partner_avatar_url || '')}
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:${unread > 0 ? 700 : 500};color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(name)}</div>
           <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(preview)}</div>
@@ -368,12 +552,18 @@ function _renderDmList() {
 // ═══════════════════════════════════════════════════════════════
 
 window.openNewDMModal = function() {
+  _dmPickerSelected = {};
   _ensureDmSearchModal();
   document.getElementById('dmSearchModal').style.display = 'flex';
   setTimeout(() => document.getElementById('dmSearchModal').classList.add('open'), 10);
   document.getElementById('dmSearchInput')?.focus();
   _loadDmSearchResults('');
+  _renderDmPickerFooter();
 };
+window.openNewGroupModal = window.openNewDMModal;
+
+let _dmPickerSelected = {}; // id => {id, name, gradient, username}
+let _dmPickerConnectedOnly = false;
 
 function _ensureDmSearchModal() {
   if (document.getElementById('dmSearchModal')) return;
@@ -384,25 +574,87 @@ function _ensureDmSearchModal() {
   modal.innerHTML = `
     <div class="modal" style="max-width:440px;width:100%;max-height:80vh;">
       <div class="modal-header">
-        <span style="font-size:16px;font-weight:800;">💬 New Direct Message</span>
+        <span style="font-size:16px;font-weight:800;">💬 New Message</span>
         <button class="modal-close" onclick="closeDmSearchModal()">×</button>
       </div>
       <div style="padding:12px 16px;">
-        <input id="dmSearchInput" type="text" placeholder="Search by name or username…"
+        <input id="dmSearchInput" type="text" placeholder="Search people in your servers…"
           style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text-primary);font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;"
           oninput="_loadDmSearchResults(this.value)" />
       </div>
-      <div id="dmSearchResults" style="overflow-y:auto;max-height:340px;padding:0 8px 12px;"></div>
+      <div style="padding:0 16px 10px;display:flex;gap:6px;"><button id="dmFilterAll" type="button" onclick="_setDmPickerFilter(false)" style="border:1px solid var(--border);background:var(--accent-purple);color:#fff;border-radius:999px;padding:5px 10px;font-size:11px;cursor:pointer;">All</button><button id="dmFilterConnected" type="button" onclick="_setDmPickerFilter(true)" style="border:1px solid var(--border);background:var(--bg-tertiary);color:var(--text-secondary);border-radius:999px;padding:5px 10px;font-size:11px;cursor:pointer;">Connected</button></div><div id="dmPickerChips" style="display:none;padding:0 16px 10px;gap:6px;flex-wrap:wrap;"></div>
+      <div id="dmSearchResults" style="overflow-y:auto;max-height:300px;padding:0 8px 12px;"></div>
+      <div id="dmPickerFooter" style="padding:10px 16px;border-top:1px solid var(--border);display:none;"></div>
     </div>`;
   document.body.appendChild(modal);
 }
 
+window._setDmPickerFilter = function(connectedOnly){_dmPickerConnectedOnly=!!connectedOnly;const a=document.getElementById('dmFilterAll'),b=document.getElementById('dmFilterConnected');if(a){a.style.background=!_dmPickerConnectedOnly?'var(--accent-purple)':'var(--bg-tertiary)';a.style.color=!_dmPickerConnectedOnly?'#fff':'var(--text-secondary)'}if(b){b.style.background=_dmPickerConnectedOnly?'var(--accent-purple)':'var(--bg-tertiary)';b.style.color=_dmPickerConnectedOnly?'#fff':'var(--text-secondary)'}_loadDmSearchResults(document.getElementById('dmSearchInput')?.value||'')};
 window.closeDmSearchModal = function() {
   const modal = document.getElementById('dmSearchModal');
   if (!modal) return;
   modal.classList.remove('open');
   setTimeout(() => { modal.style.display = ''; }, 200);
+  _dmPickerSelected = {};
 };
+
+function _togglePickerUser(u) {
+  const name = (u.username === 'ecollab_ai' || u.is_system == 1) ? 'Jarred' : (u.full_name || u.fullName || u.name || u.username || 'User');
+  if (_dmPickerSelected[u.id]) {
+    delete _dmPickerSelected[u.id];
+  } else {
+    _dmPickerSelected[u.id] = { id: u.id, name, gradient: u.avatar_color_gradient || u.gradient || '', avatar_url: u.avatar_url || '', username: u.username || '' };
+  }
+  _renderDmPickerFooter();
+  const row = document.getElementById(`dmPickerRow_${u.id}`);
+  if (row) row.style.background = _dmPickerSelected[u.id] ? 'var(--bg-tertiary)' : '';
+}
+
+function _renderDmPickerFooter() {
+  const chips = document.getElementById('dmPickerChips');
+  const footer = document.getElementById('dmPickerFooter');
+  const selected = Object.values(_dmPickerSelected);
+  if (!chips || !footer) return;
+
+  if (selected.length === 0) {
+    chips.style.display = 'none';
+    footer.style.display = 'none';
+    return;
+  }
+
+  chips.style.display = 'flex';
+  chips.innerHTML = selected.map(s => `
+    <span style="display:inline-flex;align-items:center;gap:4px;background:rgba(168,85,247,0.12);color:#c084fc;border-radius:12px;padding:3px 8px 3px 4px;font-size:11px;">
+      ${_avatar(s.name, s.gradient, 16, s.avatar_url || '')}${_esc(s.name)}
+      <span onclick="_togglePickerUser({id:${s.id}})" style="cursor:pointer;margin-left:2px;">×</span>
+    </span>`).join('');
+
+  footer.style.display = 'block';
+  if (selected.length === 1) {
+    footer.innerHTML = `<button onclick="openDmConversation(${selected[0].id},'${_esc(selected[0].name)}','${_esc(selected[0].gradient)}');closeDmSearchModal();" style="width:100%;padding:9px;border-radius:8px;background:var(--accent-purple);border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Message ${_esc(selected[0].name)}</button>`;
+  } else {
+    footer.innerHTML = `<button onclick="_createGroupFromPicker()" style="width:100%;padding:9px;border-radius:8px;background:var(--accent-purple);border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Create Group (${selected.length} people)</button>`;
+  }
+}
+
+async function _createGroupFromPicker() {
+  const ids = Object.keys(_dmPickerSelected).map(Number);
+  if (ids.length < 2) return;
+  try {
+    const data = await apiFetch(BASE() + '/API/dm/groups.php?action=create', {
+      method: 'POST',
+      body: JSON.stringify({ member_ids: ids }),
+    });
+    if (data.group_id) {
+      closeDmSearchModal();
+      await loadDmList();
+      openGroupConversation(data.group_id);
+      if (window.showToast) showToast('Group created!', 'success');
+    }
+  } catch (err) {
+    if (window.showToast) showToast(err.message || 'Could not create group', 'error');
+  }
+}
 
 let _dmSearchTimer;
 async function _loadDmSearchResults(query) {
@@ -413,33 +665,38 @@ async function _loadDmSearchResults(query) {
     container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">Searching…</div>';
 
     try {
-      // Reuse existing get-matches or search endpoint; fall back to friends list
-      const url = query.trim()
-        ? BASE() + '/API/chat/get-matches.php?q=' + encodeURIComponent(query)
-        : BASE() + '/API/chat/get-matches.php';
+      const sid = parseInt(window.ECOLLAB?.currentServerId || window.ECOLLAB?.serverId || window.currentServerId || 0) || 0;
+      const params = new URLSearchParams();
+      if (query.trim()) params.set('q', query.trim());
+      if (sid) params.set('server_id', String(sid));
+      const url = BASE() + '/API/dm/server-users.php' + (params.toString() ? '?' + params.toString() : '');
       const data = await apiFetch(url);
-      const matches = data.matches || data.users || [];
+      const friends = (data.users || []).filter(u => !_dmPickerConnectedOnly || Number(u.is_connected) === 1);
 
-      if (matches.length === 0) {
-        container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">No users found</div>';
+      if (friends.length === 0) {
+        container.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">
+          ${query.trim() ? 'No matching members in your server' : 'No other members found in your server.'}
+        </div>`;
         return;
       }
 
-      container.innerHTML = matches.map(u => {
-        const name = u.full_name || u.fullName || u.name || u.username || 'User';
+      container.innerHTML = friends.map(u => {
+        const name = (u.username === 'ecollab_ai' || u.is_system == 1) ? 'Jarred' : (u.full_name || u.username || 'User');
+        const isSelected = !!_dmPickerSelected[u.id];
         return `
-          <div onclick="openDmConversation(${u.id},'${_esc(name)}','${_esc(u.avatar_color_gradient || u.gradient || '')}');closeDmSearchModal();"
-               style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;transition:background 0.1s;"
-               onmouseover="this.style.background='var(--bg-tertiary)'" onmouseout="this.style.background=''">
-            ${_avatar(name, u.avatar_color_gradient || u.gradient, 34)}
-            <div>
+          <div id="dmPickerRow_${u.id}" onclick='_togglePickerUser(${JSON.stringify(u).replace(/'/g, "&#39;")})'
+               style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;transition:background 0.1s;background:${isSelected ? 'var(--bg-tertiary)' : ''}"
+               onmouseover="this.style.background='var(--bg-tertiary)'" onmouseout="this.style.background='${isSelected ? 'var(--bg-tertiary)' : ''}'">
+            ${_avatar(name, u.avatar_color_gradient, 34, u.avatar_url || '')}
+            <div style="flex:1;">
               <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${_esc(name)}</div>
-              <div style="font-size:11px;color:var(--text-muted);">@${_esc(u.username || '')}</div>
+              <div style="font-size:11px;color:var(--text-muted);">@${_esc(u.username || '')} ${u.is_online == 1 ? '· <span style=\"color:#22c55e;\">online</span>' : ''}</div>
             </div>
+            ${isSelected ? '<span style="color:#a855f7;font-size:16px;">✓</span>' : ''}
           </div>`;
       }).join('');
     } catch (_) {
-      container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">Failed to load users</div>';
+      container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">Failed to load server members</div>';
     }
   }, 250);
 }
@@ -448,12 +705,19 @@ async function _loadDmSearchResults(query) {
 //  DM CONVERSATION PANEL
 // ═══════════════════════════════════════════════════════════════
 
-window.openDmConversation = async function(partnerId, partnerName, partnerGradient) {
+window.openDmConversation = async function(partnerId, partnerName, partnerGradient, partnerAvatarUrl = '') {
   partnerId    = parseInt(partnerId);
   partnerName  = partnerName || 'User';
 
+  DM.activeGroupId     = null;
   DM.activePartnerId   = partnerId;
   DM.activePartnerName = partnerName;
+  const selectedConv = DM.conversations.find(c => Number(c.partner_id) === partnerId);
+  partnerAvatarUrl = partnerAvatarUrl || selectedConv?.partner_avatar_url || '';
+  DM.activePartnerIsAI =
+    selectedConv?.partner_is_system == 1 ||
+    String(selectedConv?.partner_username || '').trim().toLowerCase() === 'ecollab_ai' ||
+    String(partnerName).trim().toLowerCase() === 'ecollab ai';
 
   _ensureDmPanel();
 
@@ -462,9 +726,25 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
   setTimeout(() => panel.classList.add('open'), 10);
 
   // Header
-  document.getElementById('dmPanelTitle').innerHTML = `
-    ${_avatar(partnerName, partnerGradient, 30)}
-    <span style="font-size:15px;font-weight:700;">${_esc(partnerName)}</span>`;
+  const title = document.getElementById('dmPanelTitle');
+  if (DM.activePartnerIsAI) {
+    title.innerHTML = `
+      <span style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">
+        ${_avatar('Jarred', partnerGradient || '#6366f1,#8b5cf6', 30, partnerAvatarUrl)}
+        <span style="display:flex;flex-direction:column;min-width:0;">
+          <span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Jarred</span>
+          <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;">🤖 AI Assistant · <span style="color:#22c55e;">● Online</span></span>
+        </span>
+      </span>`;
+  } else {
+    title.innerHTML = `
+      <span onclick="openMiniProfile(event,'${_esc(partnerName)}','','${_esc(partnerGradient || '')}','${_esc((partnerName[0]||'?').toUpperCase())}',${partnerId})" style="display:flex;align-items:center;gap:8px;cursor:pointer;min-width:0;flex:1;">
+        ${_avatar(partnerName, partnerGradient, 30, partnerAvatarUrl)}
+        <span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(partnerName)}</span>
+      </span>
+      <button onclick="startDmCall(false)" title="Voice call" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;flex-shrink:0;">📞</button>
+      <button onclick="startDmCall(true)" title="Video call" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;flex-shrink:0;">🎥</button>`;
+  }
 
   // Load messages
   const msgArea = document.getElementById('dmMessagesArea');
@@ -477,6 +757,38 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
     // Clear unread from list
     const conv = DM.conversations.find(c => c.conversation_id === DM.activeConvId);
     if (conv) { conv.unread_count = 0; _renderDmList(); }
+
+    _renderDmMessages(data.messages || []);
+  } catch (err) {
+    msgArea.innerHTML = `<div style="text-align:center;padding:20px;color:#f87171;font-size:13px;">Failed to load: ${_esc(err.message)}</div>`;
+  }
+};
+
+window.openGroupConversation = async function(groupId) {
+  groupId = parseInt(groupId);
+  DM.activeConvId    = null;
+  DM.activePartnerId = null;
+  DM.activeGroupId   = groupId;
+
+  _ensureDmPanel();
+
+  const panel = document.getElementById('dmConversationPanel');
+  panel.style.display = 'flex';
+  setTimeout(() => panel.classList.add('open'), 10);
+
+  const msgArea = document.getElementById('dmMessagesArea');
+  msgArea.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">Loading…</div>';
+
+  try {
+    const data = await apiFetch(BASE() + `/API/dm/group-message.php?group_id=${groupId}`);
+    const displayName = data.group?.name || (DM.groups.find(g => g.id === groupId)?.display_name) || 'Group';
+
+    document.getElementById('dmPanelTitle').innerHTML = `
+      <span style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">
+        <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#ec4899);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;">${(data.members || []).length}</div>
+        <span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(displayName)}</span>
+      </span>
+      <button onclick="window.startDmGroupVoice(${groupId}, '${_esc(displayName).replace(/'/g, "\\'")}')" title="Start voice call — anyone in the group can join" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;flex-shrink:0;">📞</button>`;
 
     _renderDmMessages(data.messages || []);
   } catch (err) {
@@ -515,12 +827,15 @@ function _ensureDmPanel() {
     <div id="dmTypingIndicator" style="display:none;padding:4px 14px;font-size:11px;color:var(--text-muted);font-style:italic;"></div>
 
     <!-- Input -->
-    <div style="display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0;">
+    <div id="dmAttachmentPreview" style="display:none;padding:8px 12px 0;border-top:1px solid var(--border);"></div>
+    <div style="display:flex;gap:8px;padding:10px 12px;flex-shrink:0;align-items:center;">
+      <input id="dmFileInput" type="file" accept="image/jpeg,image/png,image/gif,image/webp,.pdf,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip" style="display:none" onchange="_dmFileChosen(this)" />
+      <button type="button" onclick="document.getElementById('dmFileInput').click()" title="Add image or file" style="width:34px;height:34px;flex:0 0 34px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;color:var(--text-secondary);cursor:pointer;font-size:16px;">📎</button>
       <input id="dmInputField" type="text" placeholder="Message…"
-        style="flex:1;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-primary);font-size:13px;font-family:inherit;outline:none;"
+        style="flex:1;min-width:0;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-primary);font-size:13px;font-family:inherit;outline:none;"
         onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendDmMessage();}"
         oninput="_dmTypingSignal()" />
-      <button onclick="sendDmMessage()" style="background:var(--accent-purple);border:none;border-radius:8px;padding:8px 14px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity 0.1s;" onmouseover="this.style.opacity=0.85" onmouseout="this.style.opacity=1">Send</button>
+      <button onclick="sendDmMessage()" style="background:var(--accent-purple);border:none;border-radius:8px;padding:8px 14px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Send</button>
     </div>`;
 
   document.body.appendChild(panel);
@@ -539,15 +854,38 @@ function _renderDmMessages(messages) {
   area.scrollTop = area.scrollHeight;
 }
 
+let _dmPendingFile=null;
+function _dmFormatBytes(n){n=Number(n)||0;if(n<1024)return n+' B';if(n<1048576)return (n/1024).toFixed(1)+' KB';return (n/1048576).toFixed(1)+' MB';}
+window._dmFileChosen=function(input){
+  const file=input?.files?.[0];if(!file)return;
+  if(file.size>20*1024*1024){showToast('File too large. Max 20 MB.','error');input.value='';return;}
+  _dmPendingFile=file;const p=document.getElementById('dmAttachmentPreview');if(!p)return;
+  const image=file.type.startsWith('image/');const url=image?URL.createObjectURL(file):'';
+  p.style.display='block';p.innerHTML='<div style="display:flex;align-items:center;gap:8px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;padding:8px;">'+(image?'<img src="'+url+'" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">':'<span style="font-size:24px;">📄</span>')+'<div style="min-width:0;flex:1"><div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+_esc(file.name)+'</div><div style="font-size:10px;color:var(--text-muted)">'+_dmFormatBytes(file.size)+'</div></div><button onclick="_dmClearFile()" style="border:0;background:none;color:var(--text-muted);cursor:pointer;font-size:16px;">×</button></div>';
+};
+window._dmClearFile=function(){_dmPendingFile=null;const i=document.getElementById('dmFileInput');if(i)i.value='';const p=document.getElementById('dmAttachmentPreview');if(p){p.innerHTML='';p.style.display='none';}};
+async function _dmUploadPending(){
+  if(!_dmPendingFile)return null;const form=new FormData();form.append('file',_dmPendingFile);
+  const res=await fetch(BASE()+'/API/dm/upload-file.php',{method:'POST',credentials:'same-origin',headers:{'X-CSRF-Token':window.ECOLLAB?.csrfToken||document.querySelector('meta[name="csrf-token"]')?.content||''},body:form});
+  const data=await res.json().catch(()=>({}));if(!res.ok||!data.success)throw new Error(data.error||'Upload failed');return data;
+}
+function _dmAttachmentHTML(m){
+  if(!m.attachment_path)return '';
+  const url=BASE()+'/'+String(m.attachment_path).replace(/^\//,'');const name=_esc(m.attachment_name||'Attachment');const mime=String(m.attachment_mime||'');
+  if(mime.startsWith('image/'))return '<a href="'+_esc(url)+'" target="_blank" rel="noopener"><img src="'+_esc(url)+'" alt="'+name+'" style="display:block;max-width:220px;max-height:180px;object-fit:contain;border-radius:8px;margin-bottom:6px;background:rgba(0,0,0,.15)"></a>';
+  return '<a href="'+_esc(url)+'" target="_blank" rel="noopener" download style="display:flex;align-items:center;gap:8px;color:inherit;text-decoration:none;margin-bottom:6px;padding:7px;background:rgba(0,0,0,.12);border-radius:7px"><span style="font-size:20px">📄</span><span style="min-width:0"><strong style="display:block;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+name+'</strong><small style="opacity:.7">'+_dmFormatBytes(m.attachment_size)+'</small></span></a>';
+}
 function _dmMessageHTML(m) {
   const isMine = m.sender_id == ME_ID();
   const name   = m.sender_name || m.sender_username || 'User';
   const grad   = m.sender_gradient || '';
+  const avatarUrl = m.sender_avatar_url || '';
   return `
     <div style="display:flex;flex-direction:${isMine ? 'row-reverse' : 'row'};align-items:flex-end;gap:8px;" data-msg-id="${m.id}">
-      ${!isMine ? _avatar(name, grad, 26) : ''}
+      ${!isMine ? _avatar(name, grad, 26, avatarUrl) : ''}
       <div style="max-width:72%;background:${isMine ? 'var(--accent-purple)' : 'var(--bg-tertiary)'};color:${isMine ? '#fff' : 'var(--text-primary)'};padding:8px 12px;border-radius:${isMine ? '12px 12px 4px 12px' : '12px 12px 12px 4px'};font-size:13px;line-height:1.5;word-break:break-word;">
-        ${_esc(m.body)}
+        ${_dmAttachmentHTML(m)}
+        ${m.body ? _esc(m.body) : ''}
         <div style="font-size:10px;opacity:0.65;margin-top:4px;text-align:${isMine ? 'right' : 'left'};">${_timeAgo(m.created_at)}</div>
       </div>
     </div>`;
@@ -562,10 +900,24 @@ function _appendDmMessage(m) {
   area.scrollTop = area.scrollHeight;
 }
 
+function _showAiTyping() {
+  const indicator = document.getElementById('dmTypingIndicator');
+  if (!indicator) return;
+  indicator.style.display = 'flex';
+  indicator.innerHTML = 'Jarred is typing <span style="letter-spacing:2px;margin-left:4px;">•••</span>';
+}
+
+function _hideAiTyping() {
+  const indicator = document.getElementById('dmTypingIndicator');
+  if (!indicator) return;
+  indicator.style.display = 'none';
+  indicator.innerHTML = '';
+}
+
 // Typing signal debounce
 let _dmTypingTimeout;
 function _dmTypingSignal() {
-  if (!DM.activeConvId || !DM.activePartnerId) return;
+  if (!DM.activeConvId || !DM.activePartnerId || DM.activePartnerIsAI) return;
   _wsSend({ type: 'dm_typing', conversation_id: DM.activeConvId, recipient_id: DM.activePartnerId, is_typing: true });
   clearTimeout(_dmTypingTimeout);
   _dmTypingTimeout = setTimeout(() => {
@@ -577,10 +929,14 @@ window.sendDmMessage = async function() {
   const input = document.getElementById('dmInputField');
   if (!input) return;
   const text = input.value.trim();
-  if (!text || !DM.activeConvId) return;
+  const pendingFile = _dmPendingFile;
+  if ((!text && !pendingFile) || (!DM.activeConvId && !DM.activeGroupId)) return;
 
   input.value    = '';
   input.disabled = true;
+  let uploaded=null;
+  try { if(pendingFile){showToast('Uploading attachment…','info');uploaded=await _dmUploadPending();_dmClearFile();} }
+  catch(e){input.disabled=false;showToast('Upload failed: '+e.message,'error');return;}
 
   // Optimistic UI
   const optimistic = {
@@ -589,40 +945,118 @@ window.sendDmMessage = async function() {
     body: text,
     created_at: new Date().toISOString(),
     sender_name: window.ECOLLAB?.fullName || 'You',
-    sender_gradient: window.ECOLLAB?.gradient || '',
+    sender_gradient: window.ECOLLAB?.gradient || window.ECOLLAB?.avatarGradient || '',
+    sender_avatar_url: window.ECOLLAB?.avatarUrl || '',
+    attachment_path: uploaded?.file_path || '',
+    attachment_name: uploaded?.file_name || '',
+    attachment_size: uploaded?.file_size || 0,
+    attachment_mime: uploaded?.mime_type || '',
   };
   _appendDmMessage(optimistic);
 
   try {
+    if (DM.activeGroupId) {
+      const data = await apiFetch(BASE() + '/API/dm/group-message.php', {
+        method: 'POST',
+        body: JSON.stringify({ group_id: DM.activeGroupId, body: text, attachment_path:uploaded?.file_path||'', attachment_name:uploaded?.file_name||'', attachment_size:uploaded?.file_size||0, attachment_mime:uploaded?.mime_type||'' }),
+      });
+      _wsSend({ type: 'dm_group_message', group_id: DM.activeGroupId, message_id: data.message_id, body: text, created_at: new Date().toISOString() });
+      const grp = DM.groups.find(g => g.id === DM.activeGroupId);
+      if (grp) { grp.last_message = (text || (uploaded ? '📎 '+uploaded.file_name : '')).slice(0, 120); grp.last_msg_at = new Date().toISOString(); _renderGroupList(); }
+      input.disabled = false;
+      input.focus();
+      return;
+    }
+
+    if (DM.activePartnerIsAI) _showAiTyping();
+
     const data = await apiFetch(BASE() + '/API/dm/send-message.php', {
       method: 'POST',
-      body: JSON.stringify({ conversation_id: DM.activeConvId, body: text }),
+      body: JSON.stringify({
+        conversation_id: DM.activeConvId,
+        body: text,
+        attachment_path:uploaded?.file_path||'', attachment_name:uploaded?.file_name||'', attachment_size:uploaded?.file_size||0, attachment_mime:uploaded?.mime_type||'',
+        active_server_id: parseInt(window.ECOLLAB?.currentServerId || window.ECOLLAB?.serverId || window.currentServerId || document.querySelector('[data-server-id].active')?.dataset?.serverId || 0) || null,
+        surface: (typeof vcActive !== 'undefined' && vcActive) ? 'voice' : 'chat',
+        channel_id: parseInt(window.ECOLLAB?.currentChannelId || window.currentChannelId || 0) || null,
+        voice_channel_id: (typeof vcChannelId !== 'undefined' ? parseInt(vcChannelId || 0) : 0) || null,
+        workspace_id: parseInt(window.ECOLLAB?.currentWorkspaceId || window.currentWorkspaceId || 0) || null,
+        document_id: parseInt(window.ECOLLAB?.currentDocumentId || window.currentDocumentId || 0) || null,
+        whiteboard_id: parseInt(window.ECOLLAB?.currentWhiteboardId || window.currentWhiteboardId || 0) || null,
+      }),
     });
 
-    // Notify recipient via WS
-    _wsSend({
-      type:            'dm_message',
-      conversation_id: DM.activeConvId,
-      message_id:      data.message_id,
-      recipient_id:    data.recipient_id,
-      body:            text,
-      created_at:      data.created_at,
-    });
+    _hideAiTyping();
 
-    // Notify server to push connection request notification if applicable
-    if (data.recipient_id) {
-      _wsSend({ type: 'notify_conn_req_check', recipient_id: data.recipient_id });
+    // Replace optimistic ID with the real DB message ID.
+    const optimisticEl = document.querySelector(`[data-msg-id="${optimistic.id}"]`);
+    if (optimisticEl && data.message_id) {
+      optimisticEl.dataset.msgId = String(data.message_id);
+    }
+
+    // Human DMs still use WebSocket. The AI reply is returned directly
+    // from send-message.php and has no WebSocket client of its own.
+    if (!data.is_ai) {
+      _wsSend({
+        type:            'dm_message',
+        conversation_id: DM.activeConvId,
+        message_id:      data.message_id,
+        recipient_id:    data.recipient_id,
+        body:            text || (uploaded ? '📎 '+uploaded.file_name : ''),
+        attachment_path: uploaded?.file_path||'', attachment_name: uploaded?.file_name||'', attachment_size: uploaded?.file_size||0, attachment_mime: uploaded?.mime_type||'',
+        created_at:      data.created_at,
+      });
+
+      if (data.recipient_id) {
+        _wsSend({ type: 'notify_conn_req_check', recipient_id: data.recipient_id });
+      }
+    }
+
+    if (data.is_ai && data.ai_message) {
+      _appendDmMessage(data.ai_message);
+    }
+
+    // Jarred write actions are explicit backend results, never model-authored JS.
+    if (data.is_ai && data.ai_action) {
+      const a = data.ai_action;
+      if (a.type === 'open_temporary_voice') {
+        if (typeof window.joinVoice === 'function') {
+          setTimeout(() => window.joinVoice(a.channel_slug || ('temp-voice-' + a.channel_id), null, Number(a.channel_id), a.channel_name || 'Temporary Room'), 250);
+        } else if (typeof joinVoice === 'function') {
+          setTimeout(() => joinVoice(a.channel_slug || ('temp-voice-' + a.channel_id), null, Number(a.channel_id), a.channel_name || 'Temporary Room'), 250);
+        } else {
+          showToast('Temporary room created, but the voice UI is not ready. Refresh the server to join it.', 'info');
+        }
+      } else if (a.type === 'open_channel') {
+        const target = document.querySelector('[data-channel-id="' + Number(a.channel_id) + '"]');
+        if (target) target.click();
+        else showToast('Channel found, but it is not currently rendered in the sidebar.', 'info');
+      } else if (a.type === 'open_document' || a.type === 'open_whiteboard') {
+        // Coworkspace owns the concrete resource opener. Dispatch instead of
+        // guessing URLs so the existing collaboration UI can handle it safely.
+        window.dispatchEvent(new CustomEvent('ecollab:jarred-action', { detail: a }));
+      }
+    }
+
+    if (data.ai_error) {
+      showToast('Jarred could not reply: ' + data.ai_error, 'info');
     }
 
     // Update sidebar preview
     const conv = DM.conversations.find(c => c.conversation_id === DM.activeConvId);
     if (conv) {
-      conv.last_message = text.slice(0, 120);
-      conv.last_msg_at  = data.created_at;
+      if (data.is_ai && data.ai_message) {
+        conv.last_message = String(data.ai_message.body || '').slice(0, 120);
+        conv.last_msg_at  = data.ai_message.created_at || data.created_at;
+      } else {
+        conv.last_message = text.slice(0, 120);
+        conv.last_msg_at  = data.created_at;
+      }
       _renderDmList();
     }
 
   } catch (err) {
+    _hideAiTyping();
     showToast('Failed to send: ' + err.message, 'error');
     // Remove optimistic message
     document.querySelector(`[data-msg-id="${optimistic.id}"]`)?.remove();
@@ -637,8 +1071,11 @@ window.closeDmPanel = function() {
   if (!panel) return;
   panel.classList.remove('open');
   setTimeout(() => { panel.style.display = 'none'; }, 250);
-  DM.activeConvId    = null;
-  DM.activePartnerId = null;
+  DM.activeConvId       = null;
+  DM.activePartnerId    = null;
+  DM.activePartnerName  = '';
+  DM.activePartnerIsAI  = false;
+  _hideAiTyping();
 };
 
 // ═══════════════════════════════════════════════════════════════

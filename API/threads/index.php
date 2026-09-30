@@ -16,7 +16,18 @@ function threadJson(array $data, int $status = 200): never {
     exit;
 }
 
+function platformRole(PDO $db, int $userId): string {
+    $s = $db->prepare('SELECT role FROM users WHERE id = ? LIMIT 1');
+    $s->execute([$userId]);
+    return (string)($s->fetchColumn() ?: 'student');
+}
+
+function isSysAdmin(PDO $db, int $userId): bool {
+    return in_array(platformRole($db, $userId), ['admin', 'super_admin'], true);
+}
+
 function serverRole(PDO $db, int $serverId, int $userId): ?string {
+    if (isSysAdmin($db, $userId)) return 'sysadmin';
     $s = $db->prepare('SELECT server_role FROM server_members WHERE server_id = ? AND user_id = ? LIMIT 1');
     $s->execute([$serverId, $userId]);
     $role = $s->fetchColumn();
@@ -24,6 +35,11 @@ function serverRole(PDO $db, int $serverId, int $userId): ?string {
 }
 
 function isServerMember(PDO $db, int $serverId, int $userId): bool {
+    if (isSysAdmin($db, $userId)) {
+        $s = $db->prepare("SELECT 1 FROM servers WHERE id = ? AND status = 'active' LIMIT 1");
+        $s->execute([$serverId]);
+        return (bool)$s->fetchColumn();
+    }
     return serverRole($db, $serverId, $userId) !== null;
 }
 
@@ -34,11 +50,12 @@ function channelRow(PDO $db, int $channelId): ?array {
 }
 
 function canAccessChannel(PDO $db, array $channel, int $userId): bool {
+    if (isSysAdmin($db, $userId)) return true;
     $sid = (int)$channel['server_id'];
     $role = serverRole($db, $sid, $userId);
     if ($role === null) return false;
     if ((int)$channel['is_private'] !== 1) return true;
-    if ((int)$channel['created_by'] === $userId || in_array($role, ['owner', 'admin', 'moderator'], true)) return true;
+    if ((int)$channel['created_by'] === $userId || in_array($role, ['owner', 'admin'], true)) return true;
     $s = $db->prepare('SELECT 1 FROM channel_members WHERE channel_id = ? AND user_id = ? LIMIT 1');
     $s->execute([(int)$channel['id'], $userId]);
     return (bool)$s->fetchColumn();
@@ -66,12 +83,45 @@ function canPostToScope(PDO $db, string $scope, int $serverId, int $channelId, i
     return [true, null];
 }
 
+
+function attachmentRows(PDO $db, int $threadId): array {
+    $s=$db->prepare('SELECT id, thread_id, reply_id, file_url, file_name, mime_type, file_size, created_by, created_at FROM thread_attachments WHERE thread_id=? ORDER BY id ASC');
+    $s->execute([$threadId]);
+    return $s->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function validThreadAttachments(array $items): array {
+    $out=[];
+    foreach ($items as $item) {
+        $path=trim((string)($item['path'] ?? ''));
+        $url=trim((string)($item['url'] ?? ''));
+        if ($path !== '' && preg_match('#^/uploads/threads/[A-Za-z0-9._/-]+$#',$path)) {
+            $url=rtrim(BASE_URL,'/').$path;
+        } elseif ($url !== '' && preg_match('#^'.preg_quote(rtrim(BASE_URL,'/'),'#').'/uploads/threads/[A-Za-z0-9._/-]+$#',$url)) {
+            $path=parse_url($url,PHP_URL_PATH) ?: '';
+        } else {
+            continue;
+        }
+        $mime=(string)($item['mime_type'] ?? '');
+        if (!in_array($mime,['image/jpeg','image/png','image/gif','image/webp'],true)) continue;
+        $out[]=['url'=>$url,'file_name'=>mb_substr(trim((string)($item['file_name'] ?? 'image')),0,255),'mime_type'=>$mime,'file_size'=>max(0,(int)($item['file_size'] ?? 0))];
+    }
+    return $out;
+}
+
+function saveThreadAttachments(PDO $db, int $threadId, ?int $replyId, array $items, int $uid): void {
+    foreach (validThreadAttachments($items) as $a) {
+        $s=$db->prepare('INSERT INTO thread_attachments(thread_id,reply_id,file_url,file_name,mime_type,file_size,created_by) VALUES(?,?,?,?,?,?,?)');
+        $s->execute([$threadId,$replyId,$a['url'],$a['file_name'],$a['mime_type'],$a['file_size'],$uid]);
+    }
+}
 function threadBaseSelect(): string {
     return "
         SELECT
             t.id, t.title, t.body, t.scope, t.server_id, t.channel_id,
-            t.created_by, t.is_locked, t.is_pinned, t.created_at, t.updated_at,
+            t.created_by, t.is_locked, t.is_pinned, t.is_bookmarked, t.created_at, t.updated_at,
             u.username AS author_username, u.full_name AS author_name,
+            u.avatar_url AS author_avatar_url,
             COALESCE(u.avatar_color_gradient, '#a855f7,#ec4899') AS author_gradient,
             COALESCE((SELECT SUM(v.vote) FROM thread_votes v WHERE v.thread_id = t.id), 0) AS score,
             COALESCE((SELECT COUNT(*) FROM thread_replies r WHERE r.thread_id = t.id AND r.is_deleted = 0), 0) AS reply_count,
@@ -99,12 +149,13 @@ try {
             $s = $db->prepare($sql);
             $s->execute([':id' => $id, ':vote_user' => $me['id']]);
             $thread = $s->fetch(PDO::FETCH_ASSOC);
+            if ($thread) $thread['is_owner'] = ((int)$thread['created_by'] === (int)$me['id']) ? 1 : 0;
             if (!$thread || !canSeeThread($db, $thread, (int)$me['id'])) threadJson(['error' => 'Thread not found'], 404);
 
-            $r = $db->prepare("SELECT r.id, r.thread_id, r.parent_reply_id, r.created_by, r.body, r.created_at, u.username AS author_username, u.full_name AS author_name, COALESCE(u.avatar_color_gradient,'#a855f7,#ec4899') AS author_gradient, COALESCE((SELECT SUM(v.vote) FROM thread_reply_votes v WHERE v.reply_id=r.id),0) AS score, COALESCE((SELECT vote FROM thread_reply_votes mv WHERE mv.reply_id=r.id AND mv.user_id=:uid LIMIT 1),0) AS my_vote FROM thread_replies r JOIN users u ON u.id=r.created_by WHERE r.thread_id=:tid AND r.is_deleted=0 ORDER BY r.created_at ASC");
-            $r->execute([':uid' => $me['id'], ':tid' => $id]);
+            $r = $db->prepare("SELECT r.id, r.thread_id, r.parent_reply_id, r.created_by, r.body, r.created_at, u.username AS author_username, u.full_name AS author_name, u.avatar_url AS author_avatar_url, COALESCE(u.avatar_color_gradient,'#a855f7,#ec4899') AS author_gradient, COALESCE((SELECT SUM(v.vote) FROM thread_reply_votes v WHERE v.reply_id=r.id),0) AS score, COALESCE((SELECT vote FROM thread_reply_votes mv WHERE mv.reply_id=r.id AND mv.user_id=? LIMIT 1),0) AS my_vote FROM thread_replies r JOIN users u ON u.id=r.created_by WHERE r.thread_id=? AND r.is_deleted=0 ORDER BY r.created_at ASC");
+            $r->execute([(int)$me['id'], $id]);
 
-            threadJson(['thread' => $thread, 'replies' => $r->fetchAll(PDO::FETCH_ASSOC)]);
+            threadJson(['thread' => $thread, 'replies' => $r->fetchAll(PDO::FETCH_ASSOC), 'attachments' => attachmentRows($db, $id)]);
         }
 
         $scope = (string)($_GET['scope'] ?? 'all');
@@ -147,7 +198,12 @@ try {
         $sql = threadBaseSelect() . ' WHERE ' . implode(' AND ', $conditions) . ' ORDER BY t.is_pinned DESC, t.created_at DESC LIMIT ' . $limit;
         $s = $db->prepare($sql);
         $s->execute($params);
-        threadJson(['threads' => $s->fetchAll(PDO::FETCH_ASSOC), 'scope' => $scope, 'server_id' => $serverId, 'channel_id' => $channelId]);
+        $threads=$s->fetchAll(PDO::FETCH_ASSOC);
+        foreach($threads as &$thread){
+            $thread['is_owner'] = ((int)$thread['created_by'] === (int)$me['id']) ? 1 : 0;
+            $thread['attachments']=attachmentRows($db,(int)$thread['id']);
+        }unset($thread);
+        threadJson(['threads'=>$threads, 'scope'=>$scope, 'server_id'=>$serverId, 'channel_id'=>$channelId, 'current_user_id'=>(int)$me['id']]);
     }
 
     if ($method !== 'POST') threadJson(['error' => 'Method not allowed'], 405);
@@ -163,7 +219,7 @@ try {
         $serverId = (int)($body['server_id'] ?? 0);
         $channelId = (int)($body['channel_id'] ?? 0);
         if ($title === '' || mb_strlen($title) > 180) threadJson(['error' => 'Title is required and must be 180 characters or less'], 400);
-        if ($content === '') threadJson(['error' => 'Thread body is required'], 400);
+        if ($content === '' && empty($body['attachments'])) threadJson(['error' => 'Add text, an image, or both'], 400);
         [$allowed, $reason] = canPostToScope($db, $scope, $serverId, $channelId, $uid);
         if (!$allowed) threadJson(['error' => $reason], 403);
         if ($scope === 'public') { $serverId = null; $channelId = null; }
@@ -171,14 +227,16 @@ try {
 
         $s = $db->prepare('INSERT INTO threads(title,body,scope,server_id,channel_id,created_by) VALUES(?,?,?,?,?,?)');
         $s->execute([$title, $content, $scope, $serverId ?: null, $channelId ?: null, $uid]);
-        threadJson(['thread_id' => (int)$db->lastInsertId(), 'message' => 'Thread created'], 201);
+        $threadId=(int)$db->lastInsertId();
+        saveThreadAttachments($db,$threadId,null,is_array($body['attachments'] ?? null)?$body['attachments']:[],$uid);
+        threadJson(['thread_id'=>$threadId,'message'=>'Thread created'], 201);
     }
 
     if ($action === 'reply') {
         $threadId = (int)($body['thread_id'] ?? 0);
         $content = trim((string)($body['body'] ?? ''));
         $parentId = (int)($body['parent_reply_id'] ?? 0);
-        if (!$threadId || $content === '') threadJson(['error' => 'thread_id and body are required'], 400);
+        if (!$threadId || ($content === '' && empty($body['attachments']))) threadJson(['error' => 'Add text, an image, or both'], 400);
         $s = $db->prepare('SELECT * FROM threads WHERE id=? AND is_deleted=0 LIMIT 1');
         $s->execute([$threadId]);
         $thread = $s->fetch(PDO::FETCH_ASSOC);
@@ -191,8 +249,57 @@ try {
         }
         $s = $db->prepare('INSERT INTO thread_replies(thread_id,parent_reply_id,created_by,body) VALUES(?,?,?,?)');
         $s->execute([$threadId, $parentId ?: null, $uid, $content]);
+        $replyId=(int)$db->lastInsertId();
+        saveThreadAttachments($db,$threadId,$replyId,is_array($body['attachments'] ?? null)?$body['attachments']:[],$uid);
         $db->prepare('UPDATE threads SET updated_at=NOW() WHERE id=?')->execute([$threadId]);
-        threadJson(['reply_id' => (int)$db->lastInsertId(), 'message' => 'Reply posted'], 201);
+        threadJson(['reply_id'=>$replyId,'message'=>'Reply posted'], 201);
+    }
+
+    if ($action === 'bookmark') {
+        $id=(int)($body['id'] ?? 0); if(!$id) threadJson(['error'=>'Thread id is required'],400);
+        $s=$db->prepare('SELECT * FROM threads WHERE id=? AND is_deleted=0 LIMIT 1');$s->execute([$id]);$thread=$s->fetch(PDO::FETCH_ASSOC);
+        if(!$thread || !canSeeThread($db,$thread,$uid)) threadJson(['error'=>'Thread not found'],404);
+        $next=((int)($thread['is_bookmarked'] ?? 0)===1)?0:1;
+        $db->prepare('UPDATE threads SET is_bookmarked=? WHERE id=?')->execute([$next,$id]);
+        threadJson(['bookmarked'=>$next]);
+    }
+
+    if ($action === 'edit') {
+        $id=(int)($body['id'] ?? 0);$title=trim((string)($body['title'] ?? ''));$content=trim((string)($body['body'] ?? ''));
+        $s=$db->prepare('SELECT * FROM threads WHERE id=? AND is_deleted=0 LIMIT 1');$s->execute([$id]);$thread=$s->fetch(PDO::FETCH_ASSOC);
+        if(!$thread) threadJson(['error'=>'Thread not found'],404);
+        if((int)$thread['created_by']!==$uid) threadJson(['error'=>'Only the post owner can edit this post'],403);
+        if($title==='' || mb_strlen($title)>180 || $content==='') threadJson(['error'=>'Title and body are required'],400);
+        $db->prepare('UPDATE threads SET title=?,body=?,updated_at=NOW() WHERE id=?')->execute([$title,$content,$id]);
+        threadJson(['message'=>'Post updated']);
+    }
+
+    if ($action === 'delete') {
+        $id=(int)($body['id'] ?? 0);$s=$db->prepare('SELECT created_by FROM threads WHERE id=? AND is_deleted=0 LIMIT 1');$s->execute([$id]);$owner=(int)$s->fetchColumn();
+        if(!$owner) threadJson(['error'=>'Thread not found'],404);
+        if($owner!==$uid) threadJson(['error'=>'Only the post owner can delete this post'],403);
+        $db->prepare('UPDATE threads SET is_deleted=1,updated_at=NOW() WHERE id=?')->execute([$id]);
+        threadJson(['message'=>'Post deleted']);
+    }
+
+    if ($action === 'report') {
+        $id=(int)($body['id'] ?? 0);$reason=trim((string)($body['reason'] ?? 'other'));
+        $s=$db->prepare('SELECT created_by FROM threads WHERE id=? AND is_deleted=0 LIMIT 1');$s->execute([$id]);$target=(int)$s->fetchColumn();
+        if(!$target) threadJson(['error'=>'Thread not found'],404);
+        if($target===$uid) threadJson(['error'=>'You cannot report your own post'],422);
+        try {
+            $db->prepare("INSERT INTO thread_reports(thread_id,reporter_id,reported_user_id,reason,status) VALUES(?,?,?,?, 'pending')")->execute([$id,$uid,$target,mb_substr($reason,0,255)]);
+        } catch (PDOException $e) {
+            // A retry must preserve the original report, including its moderation status.
+            $errorInfo = $e->errorInfo ?? [];
+            if (($errorInfo[0] ?? '') === '23000'
+                && (int)($errorInfo[1] ?? 0) === 1062
+                && preg_match("/for key '(?:thread_reports\.)?uq_thread_reporter'/", (string)($errorInfo[2] ?? '')) === 1) {
+                threadJson(['message'=>'Post reported', 'already_reported'=>true]);
+            }
+            throw $e;
+        }
+        threadJson(['message'=>'Post reported']);
     }
 
     if ($action === 'vote') {
@@ -220,5 +327,5 @@ try {
     threadJson(['error' => 'Unknown action'], 400);
 } catch (Throwable $e) {
     error_log('[threads] ' . $e->getMessage());
-    threadJson(['error' => defined('APP_DEBUG') && APP_DEBUG ? $e->getMessage() : 'Thread service unavailable'], 500);
+    threadJson(['error' => 'Thread service unavailable'], 500);
 }

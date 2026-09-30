@@ -16,11 +16,13 @@ function showPage(id, navEl) {
       if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+id+"'")) n.classList.add('active');
     });
   }
-  document.getElementById('bcText').textContent = bc[id] || id;
+  const bcText = document.getElementById('bcText');
+  if (bcText) bcText.textContent = bc[id] || id;
   closeAllDropdowns();
   if (id==='analytics') initAnalyticsCharts();
   if (id==='aimatching') initMatchingChart();
   if (id==='reports') loadReports();
+  if (id==='facilitatorrequests') loadFacilitatorRequests();
 }
 
 // ═══ MODALS ═══
@@ -29,21 +31,20 @@ function openModal(id, param) {
   closeAllDropdowns();
   // Set params
   if (param) {
-    if (id==='banModal') { document.getElementById('banTarget').textContent = param; }
-    if (id==='kickModal') { document.getElementById('kickTarget').textContent = param; }
-    if (id==='muteModal') { document.getElementById('muteTarget').textContent = param; }
-    if (id==='warnModal') { document.getElementById('warnTarget').textContent = param; }
+    if (id==='banModal') { const t=document.getElementById('banTarget')||document.getElementById('banUsername'); if(t)t.textContent=param; }
+    if (id==='kickModal') { const t=document.getElementById('kickTarget')||document.getElementById('kickUsername'); if(t)t.textContent=param; }
+    if (id==='muteModal') { const t=document.getElementById('muteTarget')||document.getElementById('muteUsername'); if(t)t.textContent=param; }
+    if (id==='warnModal') { const t=document.getElementById('warnTarget'); if(t)t.textContent=param; }
     if (id==='editRoleModal') { const t=document.getElementById('editRoleTarget'); if(t) t.value=param; }
     if (id==='editPermsModal') { const t=document.getElementById('editPermsRole'); if(t) t.textContent=param; }
-    if (id==='deleteRoleModal') { document.getElementById('deleteRoleTarget').textContent=param; }
-    if (id==='serverDetailModal') { document.getElementById('serverDetailTitle').textContent='Server — '+param; document.getElementById('serverDetailName').textContent=param; }
+    if (id==='deleteRoleModal') { const t=document.getElementById('deleteRoleTarget')||document.getElementById('drRole'); if(t)t.textContent=param; }
+    if (id==='serverDetailModal') { const a=document.getElementById('serverDetailTitle')||document.getElementById('sdmTitle'); const b=document.getElementById('serverDetailName'); if(a)a.textContent='Server — '+param;if(b)b.textContent=param; }
     if (id==='serverPermsModal') { }
-    if (id==='deleteServerModal') { document.getElementById('deleteServerTarget').textContent=param; }
-    if (id==='editChannelModal') { document.getElementById('editChannelName').value=param; }
+    if (id==='deleteServerModal') { const t=document.getElementById('deleteServerTarget')||document.getElementById('delSrvName');if(t)t.textContent=param; }
+    if (id==='editChannelModal') { const t=document.getElementById('editChannelName')||document.getElementById('ecInput');if(t)t.value=param;const n=document.getElementById('ecName');if(n)n.textContent=param; }
     if (id==='modActionDetailModal') {
       const types={ban:'BAN — Permanent',kick:'KICK — Session Removal',warn:'WARNING — Formal Notice',mute:'MUTE — 1 Hour'};
-      document.getElementById('modDetailTitle').textContent='Moderation — '+param.toUpperCase();
-      document.getElementById('modDetailType').textContent=types[param]||param;
+      const a=document.getElementById('modDetailTitle'),b=document.getElementById('modDetailType');if(a)a.textContent='Report — '+param.toUpperCase();if(b)b.textContent=types[param]||param;
     }
   }
   const overlay = document.getElementById(id);
@@ -67,25 +68,28 @@ document.addEventListener('keydown', e => {
 
 // ═══ DROPDOWNS ═══
 function toggleNotifDrop() {
-  const d = document.getElementById('notifDrop');
+  const d = document.getElementById('notifDrop') || document.getElementById('nDrop');
+  if (!d) return;
   const isOpen = d.classList.contains('show');
   closeAllDropdowns();
   if (!isOpen) d.classList.add('show');
 }
+function toggleNotif(){ toggleNotifDrop(); }
+function togglePDrop(){ toggleProfileDrop(); }
 function toggleProfileDrop() {
-  const d = document.getElementById('profileDrop');
+  const d = document.getElementById('profileDrop') || document.getElementById('pDrop');
+  if (!d) return;
   const isOpen = d.classList.contains('show');
   closeAllDropdowns();
   if (!isOpen) d.classList.add('show');
 }
 function closeAllDropdowns() {
-  document.getElementById('notifDrop').classList.remove('show');
-  document.getElementById('profileDrop').classList.remove('show');
+  [document.getElementById('notifDrop'),document.getElementById('nDrop'),document.getElementById('profileDrop'),document.getElementById('pDrop')].forEach(el=>el?.classList.remove('show'));
   hideSearchDrop();
 }
 document.addEventListener('click', e => {
-  if (!e.target.closest('#notifBtn')) document.getElementById('notifDrop').classList.remove('show');
-  if (!e.target.closest('#profileChip')) document.getElementById('profileDrop').classList.remove('show');
+  if (!e.target.closest('#notifBtn') && !e.target.closest('#nBtn') && !e.target.closest('#nWrap')) (document.getElementById('notifDrop')||document.getElementById('nDrop'))?.classList.remove('show');
+  if (!e.target.closest('#profileChip') && !e.target.closest('#pWrap')) (document.getElementById('profileDrop')||document.getElementById('pDrop'))?.classList.remove('show');
   if (!e.target.closest('#searchBar')) hideSearchDrop();
   if (!e.target.closest('#ctxMenu') && !e.target.closest('.btn-more')) closeCtx();
 });
@@ -114,11 +118,11 @@ function handleSearch(v) {
   if (v.length > 0) showSearchDrop(); else hideSearchDrop();
 }
 function showSearchDrop() {
-  if (document.getElementById('globalSearch').value.length > 0)
-    document.getElementById('searchDrop').classList.add('show');
+  const input=document.getElementById('globalSearch'), drop=document.getElementById('searchDrop');
+  if (input && drop && input.value.length > 0) drop.classList.add('show');
 }
 function hideSearchDrop() {
-  document.getElementById('searchDrop').classList.remove('show');
+  document.getElementById('searchDrop')?.classList.remove('show');
 }
 
 // ═══ CONTEXT MENU ═══
@@ -207,7 +211,7 @@ async function loadReports(status = 'pending') {
     const res = await fetch(`${base}/API/admin/dashboard-data.php?action=get_reports&status=${status}`, { credentials: 'same-origin' });
     const data = await res.json();
     if (!data.success || !data.reports.length) {
-      container.innerHTML = '<div style="padding:30px;color:var(--muted);text-align:center;">✅ No ' + status + ' reports.</div>';
+      container.innerHTML = '<div style="padding:30px;color:var(--muted);text-align:center;">No ' + escHtml(status) + ' reports from student-owned spaces.</div>';
       return;
     }
     // Update badge
@@ -461,9 +465,10 @@ function resolveFeedback(btn, status) {
 
 // ═══ FILTERS ═══
 function filterUsersTable(q) {
-  const rows = document.querySelectorAll('#usersTable tr');
-  rows.forEach(r => {
-    r.style.display = r.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+  const usersPage=document.getElementById('page-users');
+  if(usersPage?.classList.contains('active')) { applyUserFilters(); return; }
+  document.querySelectorAll('#recentUsersTable tr,#usersTable tr').forEach(r => {
+    r.style.display = r.textContent.toLowerCase().includes(String(q).toLowerCase()) ? '' : 'none';
   });
 }
 
@@ -488,23 +493,34 @@ function logout() {
 
 // ═══ EXPORT ═══
 function exportData(type) {
-  showToast('Exporting ' + type + ' data...', 'info', '⬇️');
-  setTimeout(()=>showToast('Export complete — download started', 'success', '✅'), 1000);
+  const base=window.ECOLLAB_BASE||'';
+  if(type==='users'||type==='all'){
+    window.location.href=base+'/API/admin/dashboard-data.php?action=export';
+    return;
+  }
+  const rows=[...document.querySelectorAll(type==='modlogs'?'#modLogContainer .log-entry':type==='logs'?'.log-list .log-item':'#page-'+type+' table tr')];
+  if(!rows.length){showToast('No '+type+' data available to export.','warning','⚠️');return;}
+  const csv=rows.filter(r=>r.offsetParent!==null).map(r=>[...r.querySelectorAll('th,td,.le-main,.le-sub,.le-time,.log-time,.log-msg')].map(x=>'"'+x.textContent.trim().replaceAll('"','""')+'"').join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='ecollab-'+type+'-'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(a.href);
 }
 
 // ═══ MODERATION ═══
 function issueModerationAction() { closeModal('issueBanModal'); showToast('Moderation action issued', 'success', '🔨'); }
 
 // ═══ SYSTEM HEALTH ═══
-function refreshHealth() {
-  showToast('Refreshing metrics...', 'info', '🔄');
-  const cpu = Math.floor(Math.random()*60+10);
-  const mem = Math.floor(Math.random()*50+30);
-  document.getElementById('cpuVal').textContent=cpu+'%';
-  document.getElementById('cpuBar').style.width=cpu+'%';
-  document.getElementById('memVal').textContent=mem+'%';
-  document.getElementById('memBar').style.width=mem+'%';
-  setTimeout(()=>showToast('Metrics updated', 'success', '✅'), 800);
+async function refreshHealth() {
+  showToast('Loading live VPS metrics...','info','🔄');
+  try{
+    const r=await fetch((window.ECOLLAB_BASE||'')+'/API/admin/system-health.php',{credentials:'same-origin'}),d=await r.json();
+    if(!r.ok||!d.success) throw new Error(d.error||'Health request failed');
+    const h=d.health,m=h.memory||{};
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
+    set('cpuVal',h.cpu_percent==null?'N/A':h.cpu_percent+'%'); set('memVal',m.percent==null?'N/A':m.percent+'%'); set('diskVal',h.disk_percent==null?'N/A':h.disk_percent+'%'); set('phpVal',h.php_version||'N/A');
+    const up=Number(h.uptime_seconds||0);set('uptimeVal',up?Math.floor(up/86400)+'d '+Math.floor((up%86400)/3600)+'h':'N/A');
+    const cpu=document.getElementById('cpuBar'),mem=document.getElementById('memBar');if(cpu)cpu.style.width=(h.cpu_percent||0)+'%';if(mem)mem.style.width=(m.percent||0)+'%';
+    showToast('Live VPS metrics updated','success','✅');
+  }catch(e){showToast(e.message||'Unable to read VPS metrics','error','❌');}
 }
 function clearLogs() { closeModal('clearLogsModal'); showToast('Error logs cleared', 'success', '🗑'); }
 
@@ -533,13 +549,27 @@ function addLogEntry(color, msg) {
 // ═══ CHARTS ═══
 function initSessionsChart() {
   const ctx = document.getElementById('sessionsChart');
-  if (!ctx || ctx._c) return;
-  ctx._c = new Chart(ctx, { type:'line', data:{ labels:['May 13','May 14','May 15','May 16','May 17','May 18','May 19'], datasets:[{ data:[40,55,48,70,85,95,110], borderColor:'#ff4fd8', backgroundColor:'rgba(255,79,216,0.1)', borderWidth:2, fill:true, tension:0.4, pointBackgroundColor:'#ff4fd8', pointRadius:3 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{color:'rgba(255,255,255,0.05)'},border:{display:false}}, y:{grid:{color:'rgba(255,255,255,0.05)'},border:{display:false},min:0,max:120,ticks:{stepSize:20}} } } });
+  if (!ctx) return;
+  const data = Array.isArray(window.ADMIN_DATA?.sessData) ? window.ADMIN_DATA.sessData : [];
+  const labels = data.map((_, i) => 'Day ' + (i + 1));
+  if (!data.length) {
+    const wrap = ctx.parentElement;
+    if (wrap) wrap.innerHTML = '<div class="dashboard-empty-state">No session data available.</div>';
+    return;
+  }
+  ctx._c = new Chart(ctx, { type:'line', data:{ labels, datasets:[{ data, borderColor:'#ff4fd8', backgroundColor:'rgba(255,79,216,0.1)', borderWidth:2, fill:true, tension:0.4, pointBackgroundColor:'#ff4fd8', pointRadius:3 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{color:'rgba(255,255,255,0.05)'},border:{display:false}}, y:{grid:{color:'rgba(255,255,255,0.05)'},border:{display:false},min:0}} } });
 }
 function initEngagementChart() {
   const ctx = document.getElementById('engagementChart');
-  if (!ctx || ctx._c) return;
-  ctx._c = new Chart(ctx, { type:'bar', data:{ labels:['#ai-study','#proj-help','#general','#resources','#thesis','#random'], datasets:[{ label:'Messages', data:[220,180,200,140,160,190], backgroundColor:'rgba(255,79,216,0.7)', borderRadius:4 },{ label:'Active Users', data:[100,120,130,90,110,80], backgroundColor:'rgba(59,130,246,0.7)', borderRadius:4 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{display:false},border:{display:false}}, y:{grid:{color:'rgba(255,255,255,0.05)'},border:{display:false},min:0,max:250} } } });
+  if (!ctx) return;
+  const data = Array.isArray(window.ADMIN_DATA?.engData) ? window.ADMIN_DATA.engData : [];
+  const labels = data.map((_, i) => 'Day ' + (i + 1));
+  if (!data.length) {
+    const wrap = ctx.parentElement;
+    if (wrap) wrap.innerHTML = '<div class="dashboard-empty-state">No engagement data available.</div>';
+    return;
+  }
+  ctx._c = new Chart(ctx, { type:'bar', data:{ labels, datasets:[{ label:'Messages', data, backgroundColor:'rgba(255,79,216,0.7)', borderRadius:4 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{display:false},border:{display:false}}, y:{grid:{color:'rgba(255,255,255,0.05)'},border:{display:false},min:0} } } });
 }
 function initRingChart() {
   const canvas = document.getElementById('ringChart');
@@ -580,3 +610,111 @@ function doLogout(){
     .catch(()=>{ window.location.href=(window.ECOLLAB_BASE||'')+'/modules/auth/login.php'; });
 }
 function goToChat(){ window.location.href=(window.ECOLLAB_BASE||'')+'/modules/chat/chat.php'; }
+
+
+// ═══ FACILITATOR REQUESTS ═══
+function facReqEsc(value){
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
+}
+async function loadFacilitatorRequests(status){
+  const filter=document.getElementById('facReqStatusFilter');
+  status=status || (filter ? filter.value : 'pending');
+  const tbody=document.getElementById('facilitatorRequestsTable');
+  const count=document.getElementById('facReqCount');
+  if(!tbody) return;
+  tbody.innerHTML='<tr><td colspan="6" class="dashboard-empty-state">Loading facilitator requests…</td></tr>';
+  try{
+    const res=await fetch((window.ECOLLAB_BASE||'')+'/API/admin/facilitator-requests.php?status='+encodeURIComponent(status),{credentials:'same-origin'});
+    const data=await res.json();
+    if(!res.ok || !data.success) throw new Error(data.error||'Unable to load facilitator requests.');
+    const rows=Array.isArray(data.requests)?data.requests:[];
+    if(count) count.textContent=rows.length+' request'+(rows.length===1?'':'s');
+    if(!rows.length){
+      tbody.innerHTML='<tr><td colspan="6" class="dashboard-empty-state">No '+facReqEsc(status)+' facilitator requests.</td></tr>';
+      return;
+    }
+    tbody.innerHTML=rows.map(r=>{
+      const name=facReqEsc(r.full_name||r.username||('User #'+r.user_id));
+      const username=facReqEsc(r.username||'');
+      const email=facReqEsc(r.email||'');
+      const reason=facReqEsc(r.reason||'No reason provided.');
+      const proofName=facReqEsc(r.proof_original_name||'Proof');
+      const proofPath=String(r.proof_path||'').replace(/^\/+/, '');
+      const proofUrl=proofPath ? (window.ECOLLAB_BASE||'')+'/'+proofPath.split('/').map(encodeURIComponent).join('/') : '';
+      const submitted=facReqEsc(r.created_at||'');
+      const state=facReqEsc(r.status||'pending');
+      const pending=r.status==='pending';
+      return '<tr>'+
+        '<td><div class="u-name-main">'+name+'</div><div class="u-handle">@'+username+' · '+email+'</div></td>'+
+        '<td style="max-width:320px;white-space:normal">'+reason+'</td>'+
+        '<td>'+(proofUrl?'<a class="btn-view" href="'+facReqEsc(proofUrl)+'" target="_blank" rel="noopener">View '+proofName+'</a>':'<span style="color:var(--muted)">Unavailable</span>')+'</td>'+
+        '<td style="color:var(--muted)">'+submitted+'</td>'+
+        '<td><span class="pill '+(state==='approved'?'active':'offline')+'">'+state.toUpperCase()+'</span></td>'+
+        '<td>'+(pending?'<div class="action-btns"><button class="btn-approve" onclick="reviewFacilitatorRequest('+Number(r.id)+',\'approve\')">Approve</button><button class="btn-deny" onclick="reviewFacilitatorRequest('+Number(r.id)+',\'reject\')">Reject</button></div>':(r.review_note?'<span title="'+facReqEsc(r.review_note)+'">Reviewed</span>':'Reviewed'))+'</td>'+
+      '</tr>';
+    }).join('');
+  }catch(err){
+    if(count) count.textContent='Load failed';
+    tbody.innerHTML='<tr><td colspan="6" class="dashboard-empty-state">'+facReqEsc(err.message||'Unable to load facilitator requests.')+'</td></tr>';
+  }
+}
+async function reviewFacilitatorRequest(requestId, decision){
+  let note='';
+  if(decision==='reject'){
+    note=window.prompt('Reason for rejecting this facilitator request:','') ?? '';
+    if(note===null) return;
+  }else if(!window.confirm('Approve this request and promote the student to Facilitator?')){
+    return;
+  }
+  try{
+    const res=await fetch((window.ECOLLAB_BASE||'')+'/API/admin/facilitator-requests.php',{
+      method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json','X-CSRF-Token':ADMIN_DATA.csrfToken||''},
+      body:JSON.stringify({request_id:Number(requestId),decision:decision,note:note})
+    });
+    const data=await res.json();
+    if(!res.ok || !data.success) throw new Error(data.error||'Unable to review request.');
+    showToast(decision==='approve'?'Student promoted to Facilitator.':'Facilitator request rejected.','success',decision==='approve'?'✅':'🛡️');
+    await loadFacilitatorRequests();
+  }catch(err){
+    showToast(err.message||'Unable to review request.','error','⚠️');
+  }
+}
+
+function applyUserFilters(){
+  const q=(document.querySelector('#page-users .filter-search input')?.value||'').toLowerCase();
+  const course=(document.getElementById('userCourseFilter')?.value||'').toLowerCase();
+  const role=(document.getElementById('userRoleFilter')?.value||'').toLowerCase();
+  const status=(document.getElementById('userStatusFilter')?.value||'').toLowerCase();
+  document.querySelectorAll('#usersTable tr').forEach(row=>{
+    if(row.querySelector('.dashboard-empty-state')) return;
+    const text=row.textContent.toLowerCase();
+    const cells=row.querySelectorAll('td');
+    const rowRole=(cells[1]?.textContent||'').trim().toLowerCase();
+    const rowCourse=(cells[2]?.textContent||'').trim().toLowerCase();
+    const rowStatus=(cells[3]?.textContent||'').trim().toLowerCase();
+    row.style.display=(!q||text.includes(q))&&(!course||rowCourse.includes(course))&&(!role||rowRole===role)&&(!status||rowStatus.includes(status))?'':'none';
+  });
+}
+function openChannelPermissions(name){
+  showToast('Permission editor opened for '+name+'.','info','🔐');
+  const modal=document.getElementById('editPermsModal');
+  const label=document.getElementById('epRole');
+  if(label) label.textContent=name;
+  if(modal) openModal('editPermsModal');
+}
+function setAnalyticsRange(days){
+  showToast('Analytics range set to last '+days+' days.','info','📊');
+  initAnalyticsCharts();
+}
+
+async function recommendGroup(){
+ const topic=document.getElementById('groupTopic')?.value.trim()||'',task=document.getElementById('groupTask')?.value.trim()||'',group_size=Number(document.getElementById('groupSize')?.value||4);
+ if(!topic&&!task){showToast('Enter a topic or task first.','error','⚠️');return;}
+ const btn=document.getElementById('recommendGroupBtn'),out=document.getElementById('groupRecommendationResults'),status=document.getElementById('aiModelStatus');btn.disabled=true;btn.textContent='Thinking…';status.textContent='Calling VPS local LLM…';out.innerHTML='<div class="dashboard-empty-state">Analyzing real user profiles…</div>';
+ try{const r=await fetch((window.ECOLLAB_BASE||'')+'/API/admin/group-recommendations.php',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':ADMIN_DATA.csrfToken},body:JSON.stringify({topic,task,group_size})}),d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'Recommendation failed');status.textContent=(d.model||'Local LLM')+' · '+d.candidate_count+' real candidates';out.innerHTML=d.groups.length?d.groups.map((g,i)=>'<div class="report-item"><div class="ri-icon">✨</div><div class="ri-body"><div class="ri-title">Recommended Group '+(i+1)+'</div><div class="ri-meta">'+escHtml(g.reason||'Balanced profile match')+'</div><div style="margin-top:8px">'+g.members.map(m=>'<span class="perm-tag granted" title="'+escHtml(m.fit||'')+'">'+escHtml(m.name||m.username)+' · '+escHtml(m.role)+'</span>').join(' ')+'</div></div></div>').join(''):'<div class="dashboard-empty-state">No valid group could be formed from current profiles.</div>';}catch(e){status.textContent='Local LLM unavailable';out.innerHTML='<div class="dashboard-empty-state">'+escHtml(e.message)+'</div>';}finally{btn.disabled=false;btn.textContent='✨ Recommend Group';}
+}
+async function loadReportLogs(){
+ const box=document.getElementById('modLogContainer');if(!box)return;box.innerHTML='<div class="dashboard-empty-state">Loading report logs…</div>';
+ try{const r=await fetch((window.ECOLLAB_BASE||'')+'/API/admin/dashboard-data.php?action=get_reports&status=all',{credentials:'same-origin'}),d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'Failed');box.innerHTML=(d.reports||[]).length?d.reports.map(x=>'<div class="log-entry"><div class="log-type-badge '+(x.status==='resolved'?'':'warn')+'">'+escHtml(x.status||'pending').toUpperCase()+'</div><div class="le-info"><div class="le-main">'+escHtml(x.reason||'Report')+'</div><div class="le-sub">'+escHtml(x.reporter_username||'Unknown')+' · '+escHtml(x.server_name||'Unknown server')+'</div></div><div class="le-time">'+escHtml(x.created_at||'')+'</div></div>').join(''):'<div class="dashboard-empty-state">No report logs recorded.</div>';}catch(e){box.innerHTML='<div class="dashboard-empty-state">Unable to load report logs.</div>';}
+}

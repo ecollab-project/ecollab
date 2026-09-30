@@ -20,6 +20,7 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 const typingUsers          = new Set();
 let _authed                = false;
 let _wsToken               = null;        // server-issued token, fetched before connect
+let _socketAuthenticated    = false;
 
 // ── Token fetch + connect entry point ────────────────────────────────────────
 async function connectWebSocket() {
@@ -42,48 +43,69 @@ async function connectWebSocket() {
 function initWebSocket() {
   const wsUrl = window.ECOLLAB?.wsUrl || 'ws://localhost:8080';
 
+  if (chatSocket && (chatSocket.readyState === WebSocket.CONNECTING || chatSocket.readyState === WebSocket.OPEN)) {
+    return;
+  }
+
   try {
-    chatSocket        = new WebSocket(wsUrl);
-    window.chatSocket = chatSocket;
+    const socket = new WebSocket(wsUrl);
+    chatSocket = socket;
+    window.chatSocket = socket;
+
+    socket.onopen = () => {
+      if (chatSocket !== socket || socket.readyState !== WebSocket.OPEN) return;
+      console.log('[WS] Connected');
+      socketReconnectDelay    = 2000;
+      socketReconnectAttempts = 0;
+      _authed                 = false;
+      _socketAuthenticated    = false;
+
+      // Authenticate this exact socket; a reconnect may have replaced the global.
+      socket.send(JSON.stringify({ type: 'auth', ws_token: _wsToken }));
+    };
+
+    socket.onmessage = (event) => {
+      if (chatSocket !== socket) return;
+      let data;
+      try { data = JSON.parse(event.data); } catch { return; }
+      handleSocketMessage(data);
+    };
+
+    socket.onclose = (event) => {
+      if (chatSocket !== socket) return;
+      chatSocket = null;
+      _authed = false;
+      console.info(`[WS] Closed (code ${event.code}${event.reason ? ', reason: ' + event.reason : ''})`);
+
+      // Code 1000 is a deliberate normal close. Reconnecting forever on a
+      // deliberate close created a tight loop and consumed fresh auth tokens.
+      if (event.code === 1000) {
+        if (!_socketAuthenticated) {
+          console.warn('[WS] Connection closed normally before authentication; polling fallback enabled.');
+          startPollingFallback();
+        }
+        return;
+      }
+
+      if (event.code === 1006 && socketReconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+        console.info('[WS] Server unreachable — switching to polling mode');
+        startPollingFallback();
+        return;
+      }
+      if (socketReconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+        scheduleReconnect();
+      } else {
+        console.info('[WS] Max reconnect attempts — polling mode');
+        startPollingFallback();
+      }
+    };
+
+    socket.onerror = () => { /* onclose fires immediately after */ };
   } catch (err) {
     console.warn('[WS] WebSocket constructor threw — polling mode.');
     startPollingFallback();
     return;
   }
-
-  chatSocket.onopen = () => {
-    console.log('[WS] Connected');
-    socketReconnectDelay    = 2000;
-    socketReconnectAttempts = 0;
-    _authed                 = false;
-
-    // Authenticate using the server-issued token (never trust client-supplied user_id)
-    chatSocket.send(JSON.stringify({ type: 'auth', ws_token: _wsToken }));
-  };
-
-  chatSocket.onmessage = (event) => {
-    let data;
-    try { data = JSON.parse(event.data); } catch { return; }
-    handleSocketMessage(data);
-  };
-
-  chatSocket.onclose = (event) => {
-    _authed = false;
-    console.info(`[WS] Closed (code ${event.code})`);
-    if (event.code === 1006 && socketReconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-      console.info('[WS] Server unreachable — switching to polling mode');
-      startPollingFallback();
-      return;
-    }
-    if (socketReconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-      scheduleReconnect();
-    } else {
-      console.info('[WS] Max reconnect attempts — polling mode');
-      startPollingFallback();
-    }
-  };
-
-  chatSocket.onerror = () => { /* onclose fires immediately after */ };
 }
 
 function scheduleReconnect() {
@@ -120,6 +142,7 @@ function handleSocketMessage(data) {
     // ── Auth ──
     case 'auth_ok':
       _authed = true;
+      _socketAuthenticated = true;
       console.log('[WS] Authenticated as user', data.user_id);
       // Join current channel if any
       if (window.ECOLLAB?.currentChannelId) {
@@ -127,6 +150,18 @@ function handleSocketMessage(data) {
           type: 'join_channel',
           channel_id: window.ECOLLAB.currentChannelId,
         }));
+      }
+      // Restore the voice-room membership after a WS reconnect.
+      // The server intentionally keeps voice rooms in memory per socket.
+      if (window.vcChannelId != null && window.vcActive !== false) {
+        chatSocket.send(JSON.stringify({
+          type: 'join_voice',
+          channel_id: Number(window.vcChannelId),
+        }));
+      }
+      // Rejoin an open whiteboard after WebSocket authentication.
+      if (typeof window.wbRejoinRoom === 'function') {
+        setTimeout(() => window.wbRejoinRoom(), 50);
       }
       break;
 
@@ -159,6 +194,42 @@ function handleSocketMessage(data) {
       handlePresenceUpdate(data);
       break;
 
+    // ── Voice channel invite ──
+    case 'voice_invite':
+      if (window._onVoiceInvite) window._onVoiceInvite(data);
+      break;
+
+    // ── DM group voice (reuses the real voice-channel mesh) ──
+    case 'dm_group_voice_start':
+      if (window._onDmGroupVoiceStart) window._onDmGroupVoiceStart(data);
+      break;
+
+    // ── DM voice/video call signaling ──
+    case 'dm_call_offer':
+      if (window._onDmCallOffer) window._onDmCallOffer(data);
+      break;
+    case 'dm_call_offer_sent':
+      if (window._onDmCallOfferSent) window._onDmCallOfferSent(data);
+      break;
+    case 'dm_call_answer':
+      if (window._onDmCallAnswer) window._onDmCallAnswer(data);
+      break;
+    case 'dm_call_candidate':
+      if (window._onDmCallCandidate) window._onDmCallCandidate(data);
+      break;
+    case 'dm_call_renegotiate':
+      if (window._onDmCallRenegotiate) window._onDmCallRenegotiate(data);
+      break;
+    case 'dm_call_renegotiate_answer':
+      if (window._onDmCallRenegotiateAnswer) window._onDmCallRenegotiateAnswer(data);
+      break;
+    case 'dm_call_decline':
+      if (window._onDmCallDecline) window._onDmCallDecline(data);
+      break;
+    case 'dm_call_end':
+      if (window._onDmCallEnd) window._onDmCallEnd(data);
+      break;
+
     // ── Channel events ──
     case 'channel_created':
       handleChannelCreated(data.channel);
@@ -184,30 +255,50 @@ function handleSocketMessage(data) {
 
     // ── Voice ──
     case 'voice_join':
-      handleVoiceJoin(data);
+      // Never render a participant from another voice room.
+      if (window.vcChannelId != null && Number(data.channel_id) === Number(window.vcChannelId) &&
+          typeof window.handleVoiceJoin === 'function') {
+        window.handleVoiceJoin(data);
+      }
       break;
     case 'voice_leave':
-      handleVoiceLeave(data);
+      // Never remove a participant from the active room because of a stale event.
+      if (window.vcChannelId != null && Number(data.channel_id) === Number(window.vcChannelId) &&
+          typeof window.handleVoiceLeave === 'function') {
+        window.handleVoiceLeave(data);
+      }
       break;
     case 'voice_peers':
-      if (window.handleVoicePeers) window.handleVoicePeers(data);
+      if (window.vcChannelId != null && Number(data.channel_id) === Number(window.vcChannelId) &&
+          typeof window.handleVoicePeers === 'function') {
+        window.handleVoicePeers(data);
+      }
       break;
 
     // ── WebRTC signaling ──
     case 'screen_share_notify':
-      handleScreenShareNotify(data);
+      if (window.vcChannelId != null && Number(data.channel_id) === Number(window.vcChannelId) &&
+          typeof window.handleScreenShareNotify === 'function') {
+        window.handleScreenShareNotify(data);
+      }
       break;
     case 'webrtc_offer':
-      if (window._handleWebRtcOffer)
+      if (window.vcChannelId != null && Number(data.channel_id) === Number(window.vcChannelId) &&
+          typeof window._handleWebRtcOffer === 'function') {
         window._handleWebRtcOffer(data.from_user_id, data.from_username, data.sdp, !!data.is_screen_offer);
+      }
       break;
     case 'webrtc_answer':
-      if (window._handleWebRtcAnswer)
+      if (window.vcChannelId != null && Number(data.channel_id) === Number(window.vcChannelId) &&
+          typeof window._handleWebRtcAnswer === 'function') {
         window._handleWebRtcAnswer(data.from_user_id, data.sdp);
+      }
       break;
     case 'webrtc_candidate':
-      if (window._handleWebRtcCandidate)
+      if (window.vcChannelId != null && Number(data.channel_id) === Number(window.vcChannelId) &&
+          typeof window._handleWebRtcCandidate === 'function') {
         window._handleWebRtcCandidate(data.from_user_id, data.candidate);
+      }
       break;
 
     // ── Whiteboard ──
@@ -221,6 +312,9 @@ function handleSocketMessage(data) {
     case 'wb_cursor':
     case 'wb_state':
     case 'wb_state_saved':
+    case 'wb_lock_changed':
+    case 'wb_version_saved':
+    case 'wb_state_reverted':
       if (window.wbHandleWsMessage) window.wbHandleWsMessage(data);
       break;
 
@@ -493,12 +587,47 @@ function handleThreadReply(data) {
   }
 }
 
+// ── Notification preferences (desktop + sound) ─────────────────────────────
+// Every notification_* setting previously saved correctly but had nothing
+// anywhere that actually checked it — no desktop notification, no sound, for
+// messages or mentions. This is the first real consumer of those settings.
+let _notifAudio = null;
+
+function _notifEnabled(kind) {
+  const s = window._userSettings;
+  if (!s) return true; // settings not loaded yet — default to notifying
+  if (s.notification_desktop === 0) return false; // master switch off
+  if (kind && s[kind] === 0) return false;
+  return true;
+}
+
+function showDesktopNotification(kind, title, body) {
+  if (!_notifEnabled(kind)) return;
+
+  if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+    try {
+      const n = new Notification(title, { body, silent: true });
+      n.onclick = () => { window.focus(); n.close(); };
+    } catch (e) { /* ignore unsupported/blocked notifications */ }
+  }
+
+  if (_notifEnabled('notification_sound')) {
+    try {
+      if (!_notifAudio) _notifAudio = new Audio((window.ECOLLAB?.baseUrl || '') + '/assets/sounds/notification.mp3');
+      _notifAudio.currentTime = 0;
+      _notifAudio.play().catch(() => {}); // browsers block autoplay until first user interaction
+    } catch (e) { /* ignore */ }
+  }
+}
+window.showDesktopNotification = showDesktopNotification;
+
 // ── Mentions ─────────────────────────────────────────────────────────────────
 function handleMentionEvent(data) {
   if (!data.entry) return;
   _storeMention(data.entry);
   if (typeof showToast === 'function')
     showToast(`💬 You were mentioned in #${data.entry.channel || 'a channel'}`, 'info');
+  showDesktopNotification('notification_mentions', 'You were mentioned', `in #${data.entry.channel || 'a channel'}`);
 }
 
 function _storeMention(entry) {
@@ -546,8 +675,18 @@ function handleVoiceJoin(data) {
     }
   }
 
+  _bumpSidebarVcCount(data.channel_id, 1);
+
   if (typeof showToast === 'function')
     showToast(`🔊 ${data.user?.full_name || data.user?.username || 'Someone'} joined voice`, 'info');
+}
+
+function _bumpSidebarVcCount(channelId, delta) {
+  if (!channelId) return;
+  const badge = document.querySelector(`.voice-channel[data-channel-id="${channelId}"] .vc-count`);
+  if (!badge) return;
+  const next = Math.max(0, (parseInt(badge.textContent, 10) || 0) + delta);
+  badge.textContent = next;
 }
 
 function handleVoiceLeave(data) {
@@ -577,6 +716,8 @@ function handleVoiceLeave(data) {
   const speaking  = document.querySelectorAll('#vcSpeakingGrid  .vc-speaker-card').length;
   const listening = document.querySelectorAll('#vcListeningGrid .vc-listener-card').length;
   if (window.updateVcCounts) window.updateVcCounts(speaking, listening);
+
+  _bumpSidebarVcCount(data.channel_id, -1);
 
   // Stop remote audio
   const audio = document.getElementById(`remote-audio-${uid}`);

@@ -430,37 +430,36 @@ function closeSearchOverlay(event) {
   }
 }
 
+let _messageSearchTimer=null;
 function searchMessages(query) {
-  const resultsEl = document.getElementById('searchResults');
-  if (!resultsEl) return;
-  if (!query.trim()) {
-    resultsEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">Type to search messages in this channel...</div>';
-    return;
-  }
-  // Search visible messages in the DOM
-  const q = query.toLowerCase();
-  const msgs = [];
-  document.querySelectorAll('.message-group').forEach(mg => {
-    const textEl = mg.querySelector('.msg-text');
-    const authorEl = mg.querySelector('.msg-username');
-    const timeEl = mg.querySelector('.msg-timestamp');
-    if (!textEl) return;
-    const text = textEl.textContent || '';
-    const author = authorEl?.textContent || '';
-    if (text.toLowerCase().includes(q) || author.toLowerCase().includes(q)) {
-      msgs.push({ text, author, time: timeEl?.textContent || '' });
-    }
-  });
-  if (!msgs.length) {
-    resultsEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">No messages found.</div>';
-    return;
-  }
-  resultsEl.innerHTML = msgs.map(m => `
-    <div style="padding:10px;background:var(--bg-tertiary);border-radius:8px;margin-bottom:8px;cursor:pointer;border:1px solid var(--border);">
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">${m.author} · ${m.time}</div>
-      <div style="font-size:13px;color:var(--text-secondary);">${m.text.replace(new RegExp(query, 'gi'), '<mark style="background:rgba(168,85,247,0.3);color:#fff;border-radius:2px;padding:0 1px;">$&</mark>')}</div>
-    </div>`).join('');
+  const resultsEl=document.getElementById('searchResults');
+  if(!resultsEl)return;
+  const q=String(query||'').trim();
+  clearTimeout(_messageSearchTimer);
+  if(q.length<2){resultsEl.innerHTML='<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">Type at least 2 characters to search messages in this server...</div>';return;}
+  resultsEl.innerHTML='<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">Searching…</div>';
+  _messageSearchTimer=setTimeout(async()=>{
+    try{
+      const base=window.ECOLLAB?.baseUrl||'';
+      const sid=Number(window.ECOLLAB?.currentServerId||window.currentServerId||0);
+      const res=await fetch(base+'/API/chat/search-messages.php?server_id='+sid+'&q='+encodeURIComponent(q),{credentials:'same-origin'});
+      const data=await res.json().catch(()=>({}));
+      if(!res.ok||!data.success)throw new Error(data.error||'Search failed');
+      const rows=data.results||[];
+      if(!rows.length){resultsEl.innerHTML='<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">No matching messages found.</div>';return;}
+      resultsEl.innerHTML=rows.map(m=>{
+        const author=_esc(m.full_name||m.username||'User'), channel=_esc(m.channel_name||'channel'), text=_esc(m.content||''), time=_esc(m.created_at||'');
+        return '<button type="button" onclick="_openSearchResult('+Number(m.channel_id)+','+Number(m.id)+')" style="display:block;width:100%;text-align:left;padding:10px;background:var(--bg-tertiary);border-radius:8px;margin-bottom:8px;cursor:pointer;border:1px solid var(--border);color:inherit"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;"><strong style="color:var(--text-primary)">'+author+'</strong> · #'+channel+' · '+time+'</div><div style="font-size:13px;color:var(--text-secondary);white-space:normal;word-break:break-word;">'+text+'</div></button>';
+      }).join('');
+    }catch(e){resultsEl.innerHTML='<div style="text-align:center;color:#f87171;font-size:13px;padding:20px 0;">'+_esc(e.message||'Search failed')+'</div>';}
+  },250);
 }
+window._openSearchResult=function(channelId,messageId){
+  const item=document.querySelector('.channel-item[data-channel-id="'+channelId+'"]');
+  if(item&&typeof window.switchChannel==='function')window.switchChannel(item,channelId);
+  window.closeModal?.('searchOverlay');
+  setTimeout(()=>{const el=document.querySelector('.message-group[data-msg-id="'+messageId+'"]');if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.style.outline='2px solid var(--accent-purple)';setTimeout(()=>el.style.outline='',1800);}},450);
+};
 
 // ═══════════════════════════════════════════════════════
 // ACTIVE NOW MODAL
@@ -687,8 +686,16 @@ function filterMembersModal(val) {
 const _allMatches = []; // populated from API on load
 
 function openFullMatchesModal() {
-  _populateFullMatches('all');
-  if (window.openModal) openModal('matchesModal');
+  // Previously opened a separate, simpler "matchesModal" that duplicated
+  // most of what peerMatchingModal already does (browse matches, connect).
+  // Consolidated onto the one real implementation instead of maintaining
+  // two competing UIs for the same feature.
+  if (window.openPeerMatchingModal) {
+    openPeerMatchingModal();
+  } else if (window.openModal) {
+    _populateFullMatches('all');
+    openModal('matchesModal');
+  }
 }
 
 function _populateFullMatches(filter) {
@@ -794,18 +801,28 @@ const _navViewConfigs = {
 // Real data — populated from API when view is opened
 const _mentionMessages = [];
 const _bookmarkedMessages = [];
-const _threadMessages = [];
+let _threadMessages = [];
+let _threadDetailId = null;
+let _threadDetailData = null;
 const _draftMessages = [];
 
 // Load nav view data from localStorage (set by chat.js interactions)
 async function _fetchNavViewData(viewName) {
   if (viewName === 'mentions') {
-    const data = window._mentions || JSON.parse(localStorage.getItem('ec_mentions') || '[]');
-    _mentionMessages.length = 0;
-    data.forEach(i => _mentionMessages.push(i));
+    try {
+      const apiBase = window.API_BASE || '/API/chat';
+      const resp = await fetch(`${apiBase}/nav-view-data.php?view=mentions`, { credentials: 'same-origin' });
+      const json = await resp.json();
+      _mentionMessages.length = 0;
+      (json.items || []).forEach(i => _mentionMessages.push(i));
+    } catch (e) {
+      // Fall back to localStorage mentions if API fails
+      const data = window._mentions || JSON.parse(localStorage.getItem('ec_mentions') || '[]');
+      _mentionMessages.length = 0;
+      data.forEach(i => _mentionMessages.push(i));
+    }
     // Mark all as read when viewing
-    data.forEach(i => i.read = true);
-    localStorage.setItem('ec_mentions', JSON.stringify(data));
+    localStorage.setItem('ec_mentions', JSON.stringify([]));
     if (window._updateMentionBadge) window._updateMentionBadge();
   }
   if (viewName === 'bookmarks') {
@@ -825,41 +842,24 @@ async function _fetchNavViewData(viewName) {
   }
   if (viewName === 'threads') {
     try {
-      // Try multiple sources for the current server ID
       const servId = window.ECOLLAB?.currentServerId
         || parseInt(document.querySelector('.workspace-icon.active')?.dataset?.serverId || '0')
         || parseInt(document.querySelector('[data-server-id]')?.dataset?.serverId || '0')
         || 0;
-
-      if (!servId) {
-        console.warn('[threads] No server ID found - cannot fetch members');
-        return;
-      }
-
       const base = window.ECOLLAB?.baseUrl || '';
-      const res = await fetch(`${base}/API/threads/get-server-members.php?server_id=${servId}`, {
-        credentials: 'same-origin',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': window.ECOLLAB?.csrfToken || '',
-        }
-      });
+      const params = new URLSearchParams({ scope: 'all', limit: '30' });
+      if (servId) params.set('server_id', String(servId));
 
-      if (!res.ok) {
-        console.warn('[threads] API returned', res.status, await res.text());
-        return;
-      }
-
+      const res = await fetch(`${base}/API/threads/index.php?${params.toString()}`, { credentials: 'same-origin' });
       const d = await res.json();
       _threadMessages.length = 0;
-      if (d.success && d.members) {
-        d.members.forEach(m => _threadMessages.push(m));
-        console.log('[threads] Loaded', d.members.length, 'server members');
+      if (d.threads) {
+        d.threads.forEach(t => _threadMessages.push(t));
       } else {
         console.warn('[threads] API error:', d.error || 'unknown');
       }
     } catch (e) {
-      console.warn('[threads] Failed to load server members', e);
+      console.warn('[threads] Failed to load threads', e);
     }
   }
   if (viewName === 'drafts') {
@@ -877,7 +877,60 @@ window._notifyDraftChange = function () {
   }
 };
 
+function _restoreChatNavView() {
+  let saved = null;
+  try {
+    saved = localStorage.getItem(ECOLLAB_CHAT_NAV_STATE_KEY);
+  } catch (_) {}
+
+  if (!saved || saved === 'home') {
+    if (saved === 'home') _saveChatNavView('home');
+    return;
+  }
+
+  // Restore only a real Chat navigation view. This prevents stale values
+  // from older builds or unrelated localStorage entries from creating a
+  // broken overlay.
+  if (!_navViewConfigs[saved]) return;
+
+  const navItem = _findChatNavItem(saved);
+  switchView(saved, navItem);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _restoreChatNavView, { once: true });
+} else {
+  _restoreChatNavView();
+}
+
+const ECOLLAB_CHAT_NAV_STATE_KEY = 'ecollab.chat.activeView';
+
+function _saveChatNavView(viewName) {
+  const view = String(viewName || '').trim();
+  if (!view) return;
+  try {
+    localStorage.setItem(ECOLLAB_CHAT_NAV_STATE_KEY, view);
+  } catch (_) {}
+}
+
+function _findChatNavItem(viewName) {
+  const wanted = String(viewName || '').trim();
+  if (!wanted) return null;
+
+  const explicit = Array.from(document.querySelectorAll('.sidebar-nav-item')).find(item =>
+    item.dataset.view === wanted
+  );
+  if (explicit) return explicit;
+
+  return Array.from(document.querySelectorAll('.sidebar-nav-item')).find(item => {
+    const handler = item.getAttribute('onclick') || '';
+    return handler.includes(`switchView('${wanted}'`) ||
+      handler.includes(`switchView("${wanted}"`);
+  }) || null;
+}
+
 function switchView(viewName, el) {
+  _saveChatNavView(viewName);
   document.querySelectorAll('.sidebar-nav-item').forEach(n => n.classList.remove('active'));
   if (el) el.classList.add('active');
   _currentView = viewName;
@@ -958,6 +1011,7 @@ function _renderNavView(viewName, overlay) {
           <div style="flex:1;min-width:0;">
             <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:3px;">${_esc(m.author)}</div>
             <div style="font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${_esc(m.text)}</div>
+            ${m.image_url ? `<img src="${_esc(m.image_url)}" alt="${_esc(m.image_name || 'Bookmarked discussion image')}" loading="lazy" style="display:block;width:100%;max-width:520px;max-height:300px;object-fit:cover;border-radius:9px;border:1px solid var(--border);margin-top:10px;background:var(--bg-secondary);">` : ''}
           </div>
         </div>
         <div style="display:flex;gap:8px;margin-top:8px;">
@@ -965,37 +1019,26 @@ function _renderNavView(viewName, overlay) {
         </div>
       </div>`).join('') || _nvEmpty('No pinned messages in this server yet.');
   } else if (viewName === 'threads') {
-    // Threads = server-wide DM directory
-    bodyHTML = `<div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;padding:6px 10px;background:rgba(168,85,247,0.06);border-radius:8px;border:1px solid rgba(168,85,247,0.12);">
-      💬 <strong style="color:var(--text-secondary);">Threads</strong> — private one-on-one chats with anyone in this server.
-    </div>` + (_threadMessages.map((m) => {
-      const grad = m.grad || '#a855f7,#ec4899';
-      const [c1, c2] = grad.split(',');
-      const init = (m.full_name || m.username || '?').charAt(0).toUpperCase();
-      const displayName = _esc(m.nickname || m.full_name || m.username);
-      const lastMsg = m.last_message ? _esc(m.last_message) : '<span style="color:var(--text-muted);font-style:italic;">No messages yet</span>';
-      const unread = parseInt(m.unread_count) || 0;
-      const online = m.is_online == 1;
-      const timeStr = m.last_msg_at ? _relTime(m.last_msg_at) : '';
-      return `
-      <div data-thread-user="${m.id}" style="${cardStyle}" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='var(--bg-tertiary)'" onclick="openThreadDM(${m.id},'${displayName.replace(/'/g,"\\'")}')">
-        <div style="display:flex;gap:10px;align-items:center;">
-          <div style="position:relative;flex-shrink:0;">
-            <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;">${init}</div>
-            <div style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:${online ? '#22c55e' : 'var(--text-muted)'};border:2px solid var(--bg-secondary);"></div>
+    bodyHTML = `
+      <div style="margin-bottom:14px;">
+        <button onclick="_showThreadComposer()" style="width:100%;padding:10px;border-radius:10px;background:rgba(168,85,247,0.1);border:1px dashed rgba(168,85,247,0.35);color:#c084fc;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Start a new thread</button>
+        <div id="threadComposer" style="display:none;margin-top:10px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:10px;padding:12px;">
+          <input id="threadTitleInput" maxlength="180" placeholder="Title" style="width:100%;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text-primary);font-size:13px;font-family:inherit;margin-bottom:8px;">
+          <textarea id="threadBodyInput" placeholder="What's on your mind?" rows="3" style="width:100%;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text-primary);font-size:13px;font-family:inherit;resize:vertical;margin-bottom:8px;"></textarea>
+          <input id="threadImageInput" type="file" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none" onchange="_selectThreadImage(this)">
+          <div id="threadImagePreview" style="display:none;margin-bottom:8px;"></div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button type="button" onclick="document.getElementById('threadImageInput').click()" style="padding:6px 10px;border-radius:8px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-size:12px;cursor:pointer;font-family:inherit;">🖼 Add image</button>
+            <select id="threadScopeInput" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 8px;color:var(--text-secondary);font-size:12px;font-family:inherit;">
+              <option value="public">🌐 Public</option>
+              ${window.ECOLLAB?.currentServerId ? '<option value="server">🏠 This server</option>' : ''}
+            </select>
+            <button onclick="_submitNewThread()" style="margin-left:auto;padding:6px 14px;border-radius:8px;background:#a855f7;border:none;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Post</button>
+            <button onclick="document.getElementById('threadComposer').style.display='none'" style="padding:6px 10px;border-radius:8px;background:transparent;border:1px solid var(--border);color:var(--text-muted);font-size:12px;cursor:pointer;font-family:inherit;">Cancel</button>
           </div>
-          <div style="flex:1;min-width:0;">
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
-              <span style="font-size:13px;font-weight:700;color:var(--text-primary);">${displayName}</span>
-              ${m.server_role === 'owner' ? '<span style="font-size:9px;background:rgba(245,158,11,0.15);color:#fbbf24;border-radius:3px;padding:1px 5px;">👑 Owner</span>' : ''}
-              ${timeStr ? `<span style="margin-left:auto;font-size:10px;color:var(--text-muted);white-space:nowrap;">${timeStr}</span>` : ''}
-            </div>
-            <div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${lastMsg}</div>
-          </div>
-          ${unread > 0 ? `<span style="min-width:18px;height:18px;border-radius:9px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;flex-shrink:0;">${unread}</span>` : ''}
         </div>
-      </div>`;
-    }).join('') || _nvEmpty('No server members found.'));
+      </div>
+      <div id="threadListRoot">${_renderThreadList()}</div>`;
   } else if (viewName === 'drafts') {
     bodyHTML = _draftMessages.map((m, i) => `
       <div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.15);border-radius:10px;padding:14px;margin-bottom:8px;">
@@ -1131,6 +1174,11 @@ function _vcNoop(name) { if (typeof window[name] === 'function' && window[name] 
 // openWhiteboard and closeWhiteboard are implemented in whiteboard.js
 // These shims ensure backward-compatibility if whiteboard.js hasn't loaded yet
 function openWhiteboard(boardName, channelId) {
+  const targetChannelId = channelId || window.ECOLLAB?.currentChannelId || window.__currentChannelId;
+  if (targetChannelId && !window.ECOLLAB?.whiteboardStandalone) {
+    window.location.href = `${window.ECOLLAB?.baseUrl || ''}/modules/whiteboard/index.php?channel_id=${encodeURIComponent(targetChannelId)}`;
+    return;
+  }
   if (window._wbOpen) { window._wbOpen(boardName, channelId); return; }
   const overlay = document.getElementById('wbOverlay');
   if (overlay) { overlay.classList.add('wb-visible'); }
@@ -1433,8 +1481,20 @@ function _populateProfileCard(p) {
   const av = document.getElementById('pcAvatar');
   if (av) {
     const grad = p.avatar_color_gradient || '#a855f7,#ec4899';
-    av.style.background = `linear-gradient(135deg,${grad})`;
-    av.textContent = (p.full_name || p.username || '?').charAt(0).toUpperCase();
+    const rawAvatar = String(p.avatar_url || '').trim();
+    const baseUrl = String(window.ECOLLAB?.baseUrl || '').replace(/\/$/, '');
+    const avatarUrl = rawAvatar
+      ? (/^(?:https?:)?\/\//i.test(rawAvatar) || /^(?:data|blob):/i.test(rawAvatar)
+          ? rawAvatar
+          : baseUrl + '/' + rawAvatar.replace(/^\//, ''))
+      : '';
+    if (avatarUrl) {
+      av.style.background = `url("${avatarUrl.replace(/"/g, '%22')}") center/cover no-repeat`;
+      av.textContent = '';
+    } else {
+      av.style.background = `linear-gradient(135deg,${grad})`;
+      av.textContent = (p.full_name || p.username || '?').charAt(0).toUpperCase();
+    }
   }
 
   // Banner gradient
@@ -1539,12 +1599,62 @@ function profileCardConnect() {
 // ═══════════════════════════════════════════════════════
 // NOTIFICATIONS
 // ═══════════════════════════════════════════════════════
+async function loadChatNotifications() {
+  const list = document.getElementById('notifList');
+  const badge = document.getElementById('notifBadge');
+  if (!list) return;
+  try {
+    const base = window.ECOLLAB?.baseUrl || '';
+    const res = await fetch(base + '/API/notifications/get.php', { credentials: 'same-origin' });
+    const data = await res.json();
+    if (!data.success) return;
+    if (badge) {
+      badge.textContent = data.unread_count || '';
+      badge.style.display = data.unread_count > 0 ? '' : 'none';
+    }
+    const items = Array.isArray(data.notifications) ? data.notifications.slice(0, 12) : [];
+    list.innerHTML = items.length ? items.map(n => {
+      const link = n.link_url || '';
+      const safeLink = String(link).replace(/"/g, '&quot;');
+      const title = String(n.title || 'Notification').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const body = String(n.body || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const time = n.created_at ? new Date(n.created_at).toLocaleString() : '';
+      return '<div class="notif-item ' + (!n.is_read ? 'unread' : '') + '" data-notif-id="' + (n.id || '') + '" data-link="' + safeLink + '" onclick="openChatNotification(this)">' +
+        (!n.is_read ? '<div class="notif-dot"></div>' : '') +
+        '<div class="notif-content"><div class="notif-text"><strong>' + title + '</strong>' + (body ? ' — ' + body : '') + '</div><div class="notif-time">' + time + '</div></div></div>';
+    }).join('') : '<div class="notif-item"><div class="notif-content"><div class="notif-text">No notifications</div></div></div>';
+  } catch (e) {
+    console.warn('[notifications] load failed', e);
+  }
+}
+
+async function openChatNotification(el) {
+  if (!el) return;
+  const id = parseInt(el.dataset.notifId || '0', 10);
+  const link = el.dataset.link || '';
+  if (id) {
+    fetch((window.ECOLLAB?.baseUrl || '') + '/API/notifications/mark-read.php', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ids:[id]})
+    }).catch(() => {});
+  }
+  if (link) {
+    try {
+      const url = new URL(link, window.location.origin);
+      if (url.origin === window.location.origin) { window.location.href = url.href; return; }
+    } catch (e) {}
+  }
+}
+
 function toggleNotifications() {
   const dd = document.getElementById('notifDropdown');
   if (!dd) return;
   const isOpen = dd.classList.contains('open') || dd.style.display === 'block';
   dd.classList.toggle('open', !isOpen);
   dd.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) loadChatNotifications();
 }
 
 function closeNotifications() {
@@ -1557,6 +1667,10 @@ function markAllRead(event) {
   document.querySelectorAll('.notif-dot').forEach(d => d.classList.add('read'));
   const badge = document.getElementById('notifBadge');
   if (badge) badge.style.display = 'none';
+  fetch((window.ECOLLAB?.baseUrl || '') + '/API/notifications/mark-read.php', {
+    method: 'POST', credentials: 'same-origin',
+    headers: {'Content-Type':'application/json'}, body: JSON.stringify({})
+  }).catch(() => {});
   if (window.showToast) showToast('✓ All notifications marked as read', 'info');
 }
 
@@ -2375,3 +2489,315 @@ async function _pollPrivateChannelRequests() {
 setInterval(() => {
   if (!document.hidden) _pollPrivateChannelRequests();
 }, 30000);
+
+/* ══════════════════════════════════════════════════════════════
+   THREADS — Reddit/Threads-app style discussion posts
+   Backed by API/threads/index.php (list/get/create/reply/vote).
+   ══════════════════════════════════════════════════════════════ */
+
+function _threadScopeBadge(t) {
+  if (t.scope === 'server') return `<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:rgba(59,130,246,0.12);color:#60a5fa;">🏠 ${_esc(t.server_name || 'Server')}</span>`;
+  if (t.scope === 'channel') return `<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:rgba(34,197,94,0.12);color:#4ade80;">#️⃣ ${_esc(t.channel_name || 'Channel')}</span>`;
+  return `<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:rgba(168,85,247,0.12);color:#c084fc;">🌐 Public</span>`;
+}
+
+function _renderThreadImages(attachments, replyId = null) {
+  if (!Array.isArray(attachments) || !attachments.length) return '';
+  const images = attachments.filter(a => {
+    const belongs = replyId === null ? !a.reply_id : parseInt(a.reply_id) === parseInt(replyId);
+    return belongs && String(a.mime_type || '').startsWith('image/') && a.file_url;
+  });
+  if (!images.length) return '';
+  return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:8px 0 10px;">${images.map(a => `
+    <a href="${_esc(a.file_url)}" target="_blank" rel="noopener" onclick="event.stopPropagation();" style="display:block;overflow:hidden;border-radius:9px;border:1px solid var(--border);background:var(--bg-secondary);">
+      <img src="${_esc(a.file_url)}" alt="${_esc(a.file_name || 'Thread image')}" loading="lazy" style="display:block;width:100%;max-height:320px;object-fit:cover;">
+    </a>`).join('')}</div>`;
+}
+
+function _renderThreadList() {
+  if (!_threadMessages.length) return _nvEmpty('No threads yet — start the first one.');
+  return _threadMessages.map(t => {
+    const grad = t.author_gradient || '#a855f7,#ec4899';
+    const [c1, c2] = grad.split(',');
+    const init = (t.author_name || t.author_username || '?').charAt(0).toUpperCase();
+    const score = parseInt(t.score) || 0;
+    const myVote = parseInt(t.my_vote) || 0;
+    const bodyPreview = (t.body || '').length > 140 ? t.body.slice(0, 140) + '…' : (t.body || '');
+    return `
+    <div style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;cursor:pointer;" onclick="_openThreadDetail(${t.id})">
+      <div style="display:flex;gap:10px;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;padding-top:2px;">
+          <button onclick="event.stopPropagation();_voteOnThread(${t.id}, ${myVote === 1 ? 0 : 1})" style="background:none;border:none;cursor:pointer;font-size:14px;color:${myVote === 1 ? '#a855f7' : 'var(--text-muted)'};padding:2px;">▲</button>
+          <span style="font-size:12px;font-weight:700;color:var(--text-secondary);">${score}</span>
+          <button onclick="event.stopPropagation();_voteOnThread(${t.id}, ${myVote === -1 ? 0 : -1})" style="background:none;border:none;cursor:pointer;font-size:14px;color:${myVote === -1 ? '#ef4444' : 'var(--text-muted)'};padding:2px;">▼</button>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap;">
+            ${t.is_pinned == 1 ? '<span style="font-size:10px;color:#fbbf24;">📌</span>' : ''}
+            ${_threadScopeBadge(t)}
+            <span style="font-size:11px;color:var(--text-muted);margin-left:auto;">${_relTime(t.created_at)}</span>
+            <div style="position:relative;" onclick="event.stopPropagation();">
+              <button onclick="_toggleThreadMenu(event,this)" title="Post options" style="border:0;background:transparent;color:var(--text-muted);cursor:pointer;font-size:18px;line-height:1;padding:2px 5px;">⋮</button>
+              <div class="thread-post-menu" style="display:none;position:absolute;right:0;top:24px;z-index:20;min-width:150px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:5px;box-shadow:0 8px 24px rgba(0,0,0,.35);">
+                <button onclick="_threadAction('bookmark',${t.id})" style="width:100%;text-align:left;border:0;background:none;color:var(--text-secondary);padding:7px 9px;cursor:pointer;">🔖 ${Number(t.is_bookmarked)?'Remove bookmark':'Bookmark'}</button>
+                ${Number(t.created_by)===Number(window.ECOLLAB?.userId)?'<button onclick="_editThreadPost('+t.id+')" style="width:100%;text-align:left;border:0;background:none;color:var(--text-secondary);padding:7px 9px;cursor:pointer;">✏️ Edit post</button><button onclick="_threadAction(\'delete\','+t.id+')" style="width:100%;text-align:left;border:0;background:none;color:#f87171;padding:7px 9px;cursor:pointer;">🗑 Delete post</button>':'<button onclick="_reportThreadPost('+t.id+')" style="width:100%;text-align:left;border:0;background:none;color:#fbbf24;padding:7px 9px;cursor:pointer;">🚩 Report post</button>'}
+              </div>
+            </div>
+          </div>
+          <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">${_esc(t.title)}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">${_esc(bodyPreview)}</div>\n          ${_renderThreadImages(t.attachments)}
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);">
+            <div style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;">${init}</div>
+            <span>${_esc(t.author_name || t.author_username)}</span>
+            <span style="margin-left:auto;">💬 ${parseInt(t.reply_count) || 0} ${parseInt(t.reply_count) === 1 ? 'reply' : 'replies'}</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function _showThreadComposer() {
+  const el = document.getElementById('threadComposer');
+  if (el) { el.style.display = el.style.display === 'none' ? 'block' : 'none'; }
+}
+
+let _pendingThreadImage = null;
+
+async function _selectThreadImage(input) {
+  const file = input?.files?.[0];
+  if (!file) return;
+  if (!['image/jpeg','image/png','image/gif','image/webp'].includes(file.type)) {
+    if (window.showToast) showToast('Only JPG, PNG, GIF, and WebP images are allowed.', 'error');
+    input.value = '';
+    return;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    if (window.showToast) showToast('Image too large. Max 10 MB.', 'error');
+    input.value = '';
+    return;
+  }
+  const fd = new FormData();
+  fd.append('image', file);
+  try {
+    const base = window.ECOLLAB?.baseUrl || '';
+    const res = await fetch(`${base}/API/threads/upload-image.php`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'X-CSRF-Token': window.ECOLLAB?.csrfToken || '' },
+      body: fd,
+    });
+    const d = await res.json();
+    if (!res.ok || !d.success) throw new Error(d.error || 'Image upload failed');
+    _pendingThreadImage = d;
+    const preview = document.getElementById('threadImagePreview');
+    if (preview) {
+      preview.style.display = 'block';
+      preview.innerHTML = `<div style="position:relative;display:inline-block;max-width:100%;">
+        <img src="${_esc(d.url)}" alt="Thread image preview" style="display:block;max-width:100%;max-height:240px;border-radius:9px;border:1px solid var(--border);object-fit:cover;">
+        <button type="button" onclick="_clearThreadImage()" style="position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,.7);color:#fff;cursor:pointer;">×</button>
+      </div>`;
+    }
+  } catch (e) {
+    _pendingThreadImage = null;
+    input.value = '';
+    if (window.showToast) showToast(e.message || 'Image upload failed', 'error');
+  }
+}
+
+function _clearThreadImage() {
+  _pendingThreadImage = null;
+  const input = document.getElementById('threadImageInput');
+  if (input) input.value = '';
+  const preview = document.getElementById('threadImagePreview');
+  if (preview) { preview.innerHTML = ''; preview.style.display = 'none'; }
+}
+
+async function _submitNewThread() {
+  const title = document.getElementById('threadTitleInput')?.value.trim();
+  const body = document.getElementById('threadBodyInput')?.value.trim();
+  const scope = document.getElementById('threadScopeInput')?.value || 'public';
+  if (!title || !body) { if (window.showToast) showToast('Title and body are required', 'error'); return; }
+
+  try {
+    const base = window.ECOLLAB?.baseUrl || '';
+    const res = await fetch(`${base}/API/threads/index.php`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.ECOLLAB?.csrfToken || '' },
+      body: JSON.stringify({
+        action: 'create', title, body, scope,
+        server_id: window.ECOLLAB?.currentServerId || 0,
+        attachments: _pendingThreadImage ? [_pendingThreadImage] : [],
+      }),
+    });
+    const d = await res.json();
+    if (!res.ok || d.error) { if (window.showToast) showToast(d.error || 'Could not post thread', 'error'); return; }
+    document.getElementById('threadTitleInput').value = '';
+    document.getElementById('threadBodyInput').value = '';
+    _clearThreadImage();
+    document.getElementById('threadComposer').style.display = 'none';
+    await _fetchNavViewData('threads');
+    const root = document.getElementById('threadListRoot');
+    if (root) root.innerHTML = _renderThreadList();
+    if (window.showToast) showToast('Thread posted!', 'success');
+  } catch (e) {
+    console.warn('[threads] create failed', e);
+  }
+}
+
+function _toggleThreadMenu(e,btn){e.stopPropagation();document.querySelectorAll('.thread-post-menu').forEach(m=>{if(m!==btn.nextElementSibling)m.style.display='none'});const m=btn.nextElementSibling;m.style.display=m.style.display==='block'?'none':'block';}
+async function _threadAction(action,id,payload={}){
+  if(action==='delete'&&!confirm('Delete this post?'))return;
+  try{const base=window.ECOLLAB?.baseUrl||'';const res=await fetch(base+'/API/threads/index.php',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':window.ECOLLAB?.csrfToken||''},body:JSON.stringify({action,id,...payload})});const d=await res.json();if(!res.ok||d.error)throw new Error(d.error||'Action failed');if(window.showToast)showToast(d.message||(action==='bookmark'?(d.bookmarked?'Post bookmarked':'Bookmark removed'):'Done'),'success');await _fetchNavViewData('threads');const root=document.getElementById('threadListRoot');if(root)root.innerHTML=_renderThreadList();}catch(e){if(window.showToast)showToast(e.message,'error');}
+}
+function _editThreadPost(id){const t=_threadMessages.find(x=>Number(x.id)===Number(id))||_threadDetailData?.thread;if(!t)return;const title=prompt('Edit post title:',t.title||'');if(title===null)return;const body=prompt('Edit post:',t.body||'');if(body===null)return;_threadAction('edit',id,{title:title.trim(),body:body.trim()});}
+function _reportThreadPost(id){const reason=prompt('Why are you reporting this post?','Inappropriate content');if(reason===null||!reason.trim())return;_threadAction('report',id,{reason:reason.trim()});}
+async function _voteOnThread(id, vote) {
+  try {
+    const base = window.ECOLLAB?.baseUrl || '';
+    const res = await fetch(`${base}/API/threads/index.php`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.ECOLLAB?.csrfToken || '' },
+      body: JSON.stringify({ action: 'vote', target: 'thread', id, vote }),
+    });
+    const d = await res.json();
+    if (res.ok) {
+      const t = _threadMessages.find(x => x.id === id);
+      if (t) { t.score = d.score; t.my_vote = d.my_vote; }
+      const root = document.getElementById('threadListRoot');
+      if (root) root.innerHTML = _renderThreadList();
+      if (_threadDetailId === id && _threadDetailData) {
+        _threadDetailData.thread.score = d.score;
+        _threadDetailData.thread.my_vote = d.my_vote;
+        _renderThreadDetailView();
+      }
+    }
+  } catch (e) { console.warn('[threads] vote failed', e); }
+}
+
+async function _openThreadDetail(id) {
+  try {
+    const base = window.ECOLLAB?.baseUrl || '';
+    const res = await fetch(`${base}/API/threads/index.php?action=get&id=${id}`, { credentials: 'same-origin' });
+    const d = await res.json();
+    if (!res.ok || d.error) { if (window.showToast) showToast(d.error || 'Thread not found', 'error'); return; }
+    _threadDetailId = id;
+    _threadDetailData = d;
+    _renderThreadDetailView();
+  } catch (e) { console.warn('[threads] load detail failed', e); }
+}
+
+function _renderThreadDetailView() {
+  const root = document.getElementById('threadListRoot');
+  const composer = document.getElementById('threadComposer');
+  if (composer) composer.style.display = 'none';
+  if (!root || !_threadDetailData) return;
+  const t = _threadDetailData.thread;
+  const replies = _threadDetailData.replies || [];
+  const grad = t.author_gradient || '#a855f7,#ec4899';
+  const [c1, c2] = grad.split(',');
+  const myVote = parseInt(t.my_vote) || 0;
+
+  root.innerHTML = `
+    <button onclick="_threadDetailId=null;_threadDetailData=null;document.getElementById('threadListRoot').innerHTML=_renderThreadList();" style="background:none;border:none;color:#c084fc;font-size:12px;cursor:pointer;margin-bottom:10px;font-family:inherit;">← Back to threads</button>
+    <div style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+        ${_threadScopeBadge(t)}
+        <span style="font-size:11px;color:var(--text-muted);margin-left:auto;">${_relTime(t.created_at)}</span>
+        <div style="position:relative;" onclick="event.stopPropagation();"><button onclick="_toggleThreadMenu(event,this)" style="border:0;background:none;color:var(--text-muted);font-size:18px;cursor:pointer;">⋮</button><div class="thread-post-menu" style="display:none;position:absolute;right:0;top:24px;z-index:20;min-width:150px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:5px;box-shadow:0 8px 24px rgba(0,0,0,.35);"><button onclick="_threadAction('bookmark',${t.id})" style="width:100%;text-align:left;border:0;background:none;color:var(--text-secondary);padding:7px 9px;cursor:pointer;">🔖 ${Number(t.is_bookmarked)?'Remove bookmark':'Bookmark'}</button>${Number(t.created_by)===Number(window.ECOLLAB?.userId)?'<button onclick="_editThreadPost('+t.id+')" style="width:100%;text-align:left;border:0;background:none;color:var(--text-secondary);padding:7px 9px;cursor:pointer;">✏️ Edit post</button><button onclick="_threadAction(\'delete\','+t.id+')" style="width:100%;text-align:left;border:0;background:none;color:#f87171;padding:7px 9px;cursor:pointer;">🗑 Delete post</button>':'<button onclick="_reportThreadPost('+t.id+')" style="width:100%;text-align:left;border:0;background:none;color:#fbbf24;padding:7px 9px;cursor:pointer;">🚩 Report post</button>'}</div></div>
+      </div>
+      <div style="font-size:16px;font-weight:800;color:var(--text-primary);margin-bottom:8px;">${_esc(t.title)}</div>
+      <div style="font-size:13px;color:var(--text-secondary);white-space:pre-wrap;margin-bottom:12px;">${_esc(t.body)}</div>\n      ${_renderThreadImages(_threadDetailData.attachments)}
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;">${(t.author_name || t.author_username || '?').charAt(0).toUpperCase()}</div>
+        <span style="font-size:12px;color:var(--text-muted);">${_esc(t.author_name || t.author_username)}</span>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
+          <button onclick="_voteOnThread(${t.id}, ${myVote === 1 ? 0 : 1})" style="background:none;border:none;cursor:pointer;font-size:14px;color:${myVote === 1 ? '#a855f7' : 'var(--text-muted)'};">▲</button>
+          <span style="font-size:12px;font-weight:700;">${parseInt(t.score) || 0}</span>
+          <button onclick="_voteOnThread(${t.id}, ${myVote === -1 ? 0 : -1})" style="background:none;border:none;cursor:pointer;font-size:14px;color:${myVote === -1 ? '#ef4444' : 'var(--text-muted)'};">▼</button>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px;">${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}</div>
+    <div id="threadRepliesRoot">${_renderThreadReplies(replies)}</div>
+    <div style="margin-top:12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:10px;padding:10px;">
+      <textarea id="threadReplyInput" placeholder="Write a reply…" rows="2" style="width:100%;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text-primary);font-size:13px;font-family:inherit;resize:vertical;margin-bottom:8px;"></textarea>
+      <button onclick="_submitThreadReply(${t.id})" style="padding:6px 14px;border-radius:8px;background:#a855f7;border:none;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Reply</button>
+    </div>`;
+}
+
+function _renderThreadReplies(replies) {
+  if (!replies.length) return `<div style="font-size:12px;color:var(--text-muted);padding:8px 0;">No replies yet — be the first.</div>`;
+  return replies.map(r => {
+    const grad = r.author_gradient || '#a855f7,#ec4899';
+    const [c1, c2] = grad.split(',');
+    const myVote = parseInt(r.my_vote) || 0;
+    return `
+    <div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
+      <div style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;flex-shrink:0;">${(r.author_name || r.author_username || '?').charAt(0).toUpperCase()}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+          <span style="font-size:12px;font-weight:700;color:var(--text-primary);">${_esc(r.author_name || r.author_username)}</span>
+          <span style="font-size:10px;color:var(--text-muted);">${_relTime(r.created_at)}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);white-space:pre-wrap;">${_esc(r.body)}</div>\n        ${_renderThreadImages(_threadDetailData?.attachments || [], r.id)}
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+          <button onclick="_voteOnReply(${r.id}, ${myVote === 1 ? 0 : 1})" style="background:none;border:none;cursor:pointer;font-size:11px;color:${myVote === 1 ? '#a855f7' : 'var(--text-muted)'};">▲</button>
+          <span style="font-size:11px;color:var(--text-muted);">${parseInt(r.score) || 0}</span>
+          <button onclick="_voteOnReply(${r.id}, ${myVote === -1 ? 0 : -1})" style="background:none;border:none;cursor:pointer;font-size:11px;color:${myVote === -1 ? '#ef4444' : 'var(--text-muted)'};">▼</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function _submitThreadReply(threadId) {
+  const input = document.getElementById('threadReplyInput');
+  const body = input?.value.trim();
+  if (!body) return;
+  try {
+    const base = window.ECOLLAB?.baseUrl || '';
+    const res = await fetch(`${base}/API/threads/index.php`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.ECOLLAB?.csrfToken || '' },
+      body: JSON.stringify({ action: 'reply', thread_id: threadId, body }),
+    });
+    const d = await res.json();
+    if (!res.ok || d.error) { if (window.showToast) showToast(d.error || 'Could not post reply', 'error'); return; }
+    input.value = '';
+    await _openThreadDetail(threadId);
+    const t = _threadMessages.find(x => x.id === threadId);
+    if (t) t.reply_count = (parseInt(t.reply_count) || 0) + 1;
+  } catch (e) { console.warn('[threads] reply failed', e); }
+}
+
+async function _voteOnReply(id, vote) {
+  try {
+    const base = window.ECOLLAB?.baseUrl || '';
+    const res = await fetch(`${base}/API/threads/index.php`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.ECOLLAB?.csrfToken || '' },
+      body: JSON.stringify({ action: 'vote', target: 'reply', id, vote }),
+    });
+    const d = await res.json();
+    if (res.ok && _threadDetailData) {
+      const r = (_threadDetailData.replies || []).find(x => x.id === id);
+      if (r) { r.score = d.score; r.my_vote = d.my_vote; }
+      const root = document.getElementById('threadRepliesRoot');
+      if (root) root.innerHTML = _renderThreadReplies(_threadDetailData.replies || []);
+    }
+  } catch (e) { console.warn('[threads] reply vote failed', e); }
+}
+
+window._showThreadComposer = _showThreadComposer;
+window._selectThreadImage = _selectThreadImage;
+window._clearThreadImage = _clearThreadImage;
+window._submitNewThread = _submitNewThread;
+window._voteOnThread = _voteOnThread;
+window._openThreadDetail = _openThreadDetail;
+window._submitThreadReply = _submitThreadReply;
+window._voteOnReply = _voteOnReply;

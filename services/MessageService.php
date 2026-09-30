@@ -350,7 +350,7 @@ class MessageService
         $stmt = $this->db->prepare("
             SELECT m.id, m.channel_id, m.sender_id, m.content, m.content_type,
                    m.is_pinned, m.created_at, m.updated_at,
-                   u.username, u.full_name, u.avatar_color_gradient AS grad
+                   u.username, u.full_name, u.avatar_url, u.avatar_color_gradient AS grad
             FROM messages m
             JOIN users u ON u.id = m.sender_id
             WHERE m.channel_id = :cid AND m.is_pinned = 1 AND m.is_deleted = 0

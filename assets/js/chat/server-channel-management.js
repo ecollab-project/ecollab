@@ -162,7 +162,7 @@
 
   async function renderServerInvite(body) {
     const id=currentServer?.id||serverId();
-    body.innerHTML=`<div class="scm-muted" style="margin-bottom:10px">Create a real invite link. Anyone using it will join this server as a regular member.</div><div class="scm-grid"><input id="scmMaxUses" class="scm-input" type="number" min="0" value="0" placeholder="Max uses (0 = unlimited)"><input id="scmExpires" class="scm-input" type="number" min="0" value="0" placeholder="Expires in hours (0 = never)"></div><button class="scm-btn" id="scmCreateServerInviteBtn">🔗 Create Invite Link</button><div class="scm-section">Latest invites</div><div id="scmInviteList"><div class="scm-empty">Loading…</div></div>`;
+    body.innerHTML=`<div class="scm-muted" style="margin-bottom:10px">Create a real invite link. Anyone using it will join this server as a regular member. Unlimited uses by default — the link expires automatically after 24 hours, or set your own limits below. Creating a new link retires the previous one.</div><div class="scm-grid"><input id="scmMaxUses" class="scm-input" type="number" min="0" value="0" placeholder="Max uses (0 = unlimited)"><input id="scmExpires" class="scm-input" type="number" min="0" value="24" placeholder="Expires in hours (0 = never)"></div><button class="scm-btn" id="scmCreateServerInviteBtn">🔗 Create Invite Link</button><div class="scm-section">Latest invites</div><div id="scmInviteList"><div class="scm-empty">Loading…</div></div>`;
     document.getElementById('scmCreateServerInviteBtn').onclick=async()=>{try{const d=await request('/API/server/invite.php','create',{},'POST',{server_id:id,max_uses:Number(document.getElementById('scmMaxUses').value||0),expires_hours:Number(document.getElementById('scmExpires').value||0)});renderCreatedInvite(body,d.invite.invite_url);await loadServerInvites();}catch(e){toast(e.message,'error');}};
     await loadServerInvites();
   }
@@ -187,10 +187,21 @@
   async function renderServerAddMembers(body){
     const id=currentServer?.id||serverId();
     setupServerMemberActions(id);
-    body.innerHTML=`<div class="scm-help"><strong>Add members directly.</strong> Search an Ecollab user below and click <strong>+ Add</strong>. Added users become regular server members immediately.</div><div class="scm-grid"><input id="scmMemberSearch" class="scm-input" placeholder="Search by name, username, or email…"><button class="scm-btn" id="scmSearchBtn">Search</button></div><div id="scmCandidates"><div class="scm-empty">Search for a user to add.</div></div>`;
+    body.innerHTML=`<div class="scm-help"><strong>Add members directly.</strong> Search an Ecollab user below and click <strong>+ Add</strong>. Added users become regular server members immediately.</div><div class="scm-grid"><input id="scmMemberSearch" class="scm-input" placeholder="Search by name, username, or email…"><button class="scm-btn" id="scmSearchBtn">Search</button></div><div class="scm-section">Your connections</div><div id="scmCandidates"><div class="scm-empty">Loading your friends…</div></div>`;
     const search=async()=>{try{const q=document.getElementById('scmMemberSearch').value.trim();const d=await request('/API/server/members.php','candidates',{server_id:id,q});document.getElementById('scmCandidates').innerHTML=d.users.length?d.users.map(u=>memberRow(u,true)).join(''):'<div class="scm-empty">No users found outside this server.</div>';}catch(e){toast(e.message,'error');}};
+    const loadFriends=async()=>{
+      try{
+        const res=await fetch((window.ECOLLAB?.baseUrl||'')+'/API/friendship/list.php',{credentials:'same-origin'});
+        const d=await res.json();
+        const friends=(d.friends||[]);
+        document.getElementById('scmCandidates').innerHTML=friends.length
+          ? friends.map(u=>memberRow(u,true)).join('')
+          : '<div class="scm-empty">No connections yet — search above to find someone to add.</div>';
+      }catch(e){ document.getElementById('scmCandidates').innerHTML='<div class="scm-empty">Could not load connections.</div>'; }
+    };
     document.getElementById('scmSearchBtn').onclick=search;
     document.getElementById('scmMemberSearch').onkeydown=e=>{if(e.key==='Enter')search();};
+    await loadFriends();
   }
 
   async function renderServerMembers(body){
@@ -219,7 +230,7 @@
 
   async function renderChannelInvite(body){
     const id=currentChannel?.id||syncChannelContext();
-    body.innerHTML=`<div class="scm-muted" style="margin-bottom:10px">Create a shareable invite for <strong>#${esc(currentChannel?.name||channelName(id))}</strong>. The link grants channel access and joins the server if needed.</div><div class="scm-grid"><input id="scmChMaxUses" class="scm-input" type="number" min="0" value="0" placeholder="Max uses (0 = unlimited)"><input id="scmChExpires" class="scm-input" type="number" min="0" value="0" placeholder="Expires in hours (0 = never)"></div><button class="scm-btn" id="scmCreateChannelInviteBtn">🔗 Create Channel Invite</button><div class="scm-section">Latest invites</div><div id="scmChannelInviteList"><div class="scm-empty">Loading…</div></div>`;
+    body.innerHTML=`<div class="scm-muted" style="margin-bottom:10px">Create a shareable invite for <strong>#${esc(currentChannel?.name||channelName(id))}</strong>. The link grants channel access and joins the server if needed. Unlimited uses by default — expires automatically after 24 hours. Creating a new link retires the previous one.</div><div class="scm-grid"><input id="scmChMaxUses" class="scm-input" type="number" min="0" value="0" placeholder="Max uses (0 = unlimited)"><input id="scmChExpires" class="scm-input" type="number" min="0" value="24" placeholder="Expires in hours (0 = never)"></div><button class="scm-btn" id="scmCreateChannelInviteBtn">🔗 Create Channel Invite</button><div class="scm-section">Latest invites</div><div id="scmChannelInviteList"><div class="scm-empty">Loading…</div></div>`;
     document.getElementById('scmCreateChannelInviteBtn').onclick=async()=>{try{const d=await request('/API/chat/channel-invite.php','create',{},'POST',{channel_id:id,max_uses:Number(document.getElementById('scmChMaxUses').value||0),expires_hours:Number(document.getElementById('scmChExpires').value||0)});renderCreatedInvite(body,d.invite.invite_url);await loadChannelInvites();}catch(e){toast(e.message,'error');}};
     await loadChannelInvites();
   }

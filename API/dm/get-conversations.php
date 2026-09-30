@@ -21,6 +21,7 @@ try {
             u.id            AS partner_id,
             u.username      AS partner_username,
             u.full_name     AS partner_name,
+            u.avatar_url     AS partner_avatar_url,
             u.avatar_color_gradient AS partner_gradient,
             (
                 SELECT COUNT(*) FROM dm_messages dm

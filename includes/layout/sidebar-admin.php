@@ -14,9 +14,8 @@ function aNavItem(string $page, string $icon, string $label, string $active): st
 }
 ?>
 <aside class="sidebar">
-  <div class="logo">
-    <div class="logo-icon">🔷</div>
-    <span class="logo-text">Ecollab</span>
+  <div class="logo ecollab-brand-logo">
+    <img class="ecollab-brand-wordmark" src="<?= BASE_URL ?>/assets/ecollab-wordmark.webp" alt="eCollab">
   </div>
 
   <div class="nav-section">
@@ -27,7 +26,7 @@ function aNavItem(string $page, string $icon, string $label, string $active): st
   <div class="nav-section">
     <div class="nav-section-title">User Management</div>
     <?= aNavItem('users',      '👥', 'Users',              $activePage) ?>
-    <?= aNavItem('roles',      '🛡', 'Roles & Permissions', $activePage) ?>
+    <?= aNavItem('facilitatorrequests', '🪪', 'Facilitator Requests', $activePage) ?>
     <?= aNavItem('courses',    '🔖', 'Course & Tags',       $activePage) ?>
     <?= aNavItem('aimatching', '✨', 'AI Matching',          $activePage) ?>
     <?= aNavItem('reports',    '🚩', 'Reports',              $activePage) ?>
@@ -38,7 +37,7 @@ function aNavItem(string $page, string $icon, string $label, string $active): st
     <?= aNavItem('servers',    '🖥', 'Servers',    $activePage) ?>
     <?= aNavItem('channels',   '#',  'Channels',   $activePage) ?>
     <?= aNavItem('settings',   '⚙',  'Settings',   $activePage) ?>
-    <?= aNavItem('moderation', '🔨', 'Moderation', $activePage) ?>
+    <?= aNavItem('moderation', '📋', 'Report Logs', $activePage) ?>
   </div>
 
   <div class="nav-section">

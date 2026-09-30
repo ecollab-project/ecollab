@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
+require_once dirname(__DIR__, 2) . '/services/TemporaryVoiceService.php';
 
 header('Content-Type: application/json');
 header('Cache-Control: no-cache, no-store');
@@ -19,6 +20,8 @@ $db       = Database::getInstance();
 $userId   = (int)$user['id'];
 $serverId = (int)($_GET['server_id'] ?? $_POST['server_id'] ?? 0);
 $action   = $_GET['action'] ?? $_POST['action'] ?? 'get';
+$tempVoice = new TemporaryVoiceService();
+$tempVoice->cleanupExpired();
 
 // ── Heartbeat: keep user online ───────────────────────────────────────────
 if ($action === 'heartbeat') {
@@ -32,8 +35,24 @@ if ($action === 'heartbeat') {
 if ($action === 'join_voice') {
     $channelId = (int)($_POST['channel_id'] ?? 0);
     if ($channelId) {
+        $access = $db->prepare(
+            "SELECT c.id FROM channels c
+             JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid
+             WHERE c.id=:cid AND c.type='voice'
+               AND (c.is_private=0 OR c.created_by=:uid2 OR EXISTS(
+                    SELECT 1 FROM channel_members cm WHERE cm.channel_id=c.id AND cm.user_id=:uid3
+               ))
+             LIMIT 1"
+        );
+        $access->execute([':uid'=>$userId,':cid'=>$channelId,':uid2'=>$userId,':uid3'=>$userId]);
+        if (!$access->fetchColumn()) {
+            http_response_code(403);
+            echo json_encode(['success'=>false,'error'=>'Voice channel access denied']);
+            exit;
+        }
         $db->prepare("UPDATE users SET voice_channel_id=:cid WHERE id=:id")
            ->execute([':cid' => $channelId, ':id' => $userId]);
+        $tempVoice->markJoined($channelId);
     }
     echo json_encode(['success' => true]);
     exit;
@@ -41,8 +60,12 @@ if ($action === 'join_voice') {
 
 // ── Leave voice ───────────────────────────────────────────────────────────
 if ($action === 'leave_voice') {
+    $oldStmt = $db->prepare("SELECT voice_channel_id FROM users WHERE id=:id LIMIT 1");
+    $oldStmt->execute([':id'=>$userId]);
+    $oldChannelId = (int)($oldStmt->fetchColumn() ?: 0);
     $db->prepare("UPDATE users SET voice_channel_id=NULL WHERE id=:id")
        ->execute([':id' => $userId]);
+    if ($oldChannelId > 0) $tempVoice->markLeftAndSchedule($oldChannelId);
     echo json_encode(['success' => true]);
     exit;
 }
@@ -65,8 +88,13 @@ if (!$check->fetch()) {
 $db->prepare("UPDATE users SET is_online=1, last_active_at=NOW() WHERE id=:id")
    ->execute([':id' => $userId]);
 
-// Fetch online users (active in last 2 minutes counts as online)
-// Also get users who are in a voice channel
+// Fetch online/recently-active users (active in last 10 minutes).
+// is_online alone is NOT used to qualify someone as active — that flag only
+// gets reset to 0 on an explicit logout or a clean WebSocket disconnect
+// event, so it can get stuck at 1 forever (a dropped connection, a crashed
+// browser, or a seed/dummy account that never had a real session to trigger
+// either reset path). last_active_at is refreshed by real heartbeats and is
+// the only reliable recency signal.
 $stmt = $db->prepare("
     SELECT
         u.id,
@@ -80,24 +108,26 @@ $stmt = $db->prepare("
         c.name AS voice_channel_name,
         CASE
             WHEN u.voice_channel_id IS NOT NULL THEN 'voice'
-            WHEN u.is_online = 1 AND u.last_active_at >= DATE_SUB(NOW(), INTERVAL 2 MINUTE) THEN 'study'
-            WHEN u.is_online = 1 OR u.last_active_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE) THEN 'idle'
+            WHEN u.last_active_at >= DATE_SUB(NOW(), INTERVAL 2 MINUTE) THEN 'study'
+            WHEN u.last_active_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE) THEN 'idle'
             ELSE 'offline'
         END AS status
     FROM users u
     JOIN server_members sm ON sm.user_id = u.id AND sm.server_id = :sid
     LEFT JOIN channels c ON c.id = u.voice_channel_id
-    WHERE (u.is_online = 1 OR u.last_active_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE))
+    LEFT JOIN user_settings us ON us.user_id = u.id
+    WHERE u.last_active_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE)
+      AND (us.activity_status IS NULL OR us.activity_status = 1 OR u.id = :self)
     ORDER BY
         FIELD(CASE
             WHEN u.voice_channel_id IS NOT NULL THEN 'voice'
-            WHEN u.is_online = 1 AND u.last_active_at >= DATE_SUB(NOW(), INTERVAL 2 MINUTE) THEN 'study'
+            WHEN u.last_active_at >= DATE_SUB(NOW(), INTERVAL 2 MINUTE) THEN 'study'
             ELSE 'idle'
         END, 'voice','study','idle'),
         u.full_name ASC
     LIMIT 100
 ");
-$stmt->execute([':sid' => $serverId]);
+$stmt->execute([':sid' => $serverId, ':self' => $userId]);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $users = [];

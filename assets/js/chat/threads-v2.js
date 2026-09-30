@@ -15,13 +15,14 @@
     return data;
   }
 
-  let activeScope = 'all';
+  let activeScope = 'public';
   let activeThreadId = 0;
   let originalSwitchView = null;
   let initialized = false;
+  let authenticatedThreadUserId = Number(window.ECOLLAB?.userId || 0);
 
   function scopeLabel(scope) {
-    return scope === 'public' ? '🌐 Public' : scope === 'server' ? '⭐ Server' : '🔒 Channel';
+    return scope === 'public' ? '🌐 Public' : '⭐ Server';
   }
   function scopeClass(scope) { return `thread-scope-${scope}`; }
   function relTime(s) {
@@ -32,6 +33,7 @@
   }
   function authorName(t){return t.author_name || t.author_username || 'Unknown';}
   function gradient(g){return g || '#a855f7,#ec4899';}
+  function authorAvatar(t,size=30){const g=gradient(t.author_gradient),n=authorName(t),u=t.author_avatar_url||'';const bg=u?`background-image:url('${esc(u)}');background-size:cover;background-position:center;`:`background:linear-gradient(135deg,${g});`;return `<div class="tv2-avatar" style="width:${size}px;height:${size}px;${bg}">${u?'':esc(n.charAt(0).toUpperCase())}</div>`;}
 
   function ensureStyles(){
     if(document.getElementById('threadsV2Styles')) return;
@@ -43,8 +45,24 @@
       .tv2-tabs{display:flex;gap:6px;padding:12px 20px 8px;border-bottom:1px solid var(--border);overflow-x:auto}
       .tv2-tab{border:1px solid var(--border);background:var(--bg-tertiary);color:var(--text-muted);padding:7px 12px;border-radius:999px;font:600 11px Inter,sans-serif;cursor:pointer;white-space:nowrap}.tv2-tab.active{color:#c084fc;border-color:rgba(168,85,247,.4);background:rgba(168,85,247,.12)}
       .tv2-body{flex:1;overflow-y:auto;padding:14px 20px}.tv2-feed{max-width:920px;margin:0 auto}.tv2-card{background:var(--bg-tertiary);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;transition:.12s}.tv2-card:hover{border-color:rgba(168,85,247,.28)}
-      .tv2-meta{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--text-muted);margin-bottom:8px}.tv2-scope{padding:2px 7px;border-radius:999px;background:rgba(168,85,247,.1);color:#c084fc;font-weight:700}.tv2-card h3{margin:0 0 6px;font-size:15px;color:var(--text-primary);line-height:1.35}.tv2-card p{margin:0;color:var(--text-secondary);font-size:12px;line-height:1.55;white-space:pre-wrap;word-break:break-word}.tv2-author{font-weight:700;color:var(--text-primary)}
-      .tv2-actions{display:flex;align-items:center;gap:7px;margin-top:12px}.tv2-vote{border:1px solid var(--border);background:var(--bg-card);color:var(--text-muted);border-radius:7px;padding:5px 8px;cursor:pointer;font:600 11px Inter,sans-serif}.tv2-vote.active{color:#c084fc;border-color:rgba(168,85,247,.45);background:rgba(168,85,247,.1)}.tv2-replies{color:var(--text-muted);font-size:11px;margin-left:3px}.tv2-open{margin-left:auto;border:1px solid rgba(168,85,247,.25);background:rgba(168,85,247,.08);color:#c084fc;border-radius:7px;padding:5px 10px;cursor:pointer;font:600 11px Inter,sans-serif}
+      .tv2-meta{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--text-muted);margin-bottom:8px}.tv2-scope{padding:2px 7px;border-radius:999px;background:rgba(168,85,247,.1);color:#c084fc;font-weight:700}.tv2-card h3{margin:0 0 6px;font-size:15px;color:var(--text-primary);line-height:1.35}.tv2-card p{margin:0;color:var(--text-secondary);font-size:12px;line-height:1.55;white-space:pre-wrap;word-break:break-word}.tv2-card-media{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:10px 0 12px}.tv2-card-media img{display:block;width:100%;height:auto;max-height:520px;object-fit:contain;border-radius:9px;border:1px solid var(--border);background:#0b1020}.tv2-author{font-weight:700;color:var(--text-primary)}
+      .tv2-actions{display:flex;align-items:center;gap:7px;margin-top:12px}.tv2-vote{border:1px solid var(--border);background:var(--bg-card);color:var(--text-muted);border-radius:7px;padding:5px 8px;cursor:pointer;font:600 11px Inter,sans-serif}.tv2-vote.active{color:#c084fc;border-color:rgba(168,85,247,.45);background:rgba(168,85,247,.1)}.tv2-replies{color:var(--text-muted);font-size:11px;margin-left:3px}.tv2-open{margin-left:auto;border:1px solid rgba(168,85,247,.25);background:rgba(168,85,247,.08);color:#c084fc;border-radius:7px;padding:5px 10px;cursor:pointer;font:600 11px Inter,sans-serif}.tv2-menu-wrap{position:relative;margin-left:auto}.tv2-more{width:28px;height:28px;border:1px solid transparent;background:transparent;color:var(--text-muted);border-radius:7px;cursor:pointer;font-size:20px;line-height:20px;display:flex;align-items:center;justify-content:center}.tv2-more:hover{background:var(--bg-card);border-color:var(--border);color:var(--text-primary)}.tv2-post-menu{display:none;position:absolute;right:0;top:32px;z-index:80;min-width:165px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:9px;padding:5px;box-shadow:0 14px 35px rgba(0,0,0,.48)}.tv2-post-menu.open{display:block}.tv2-menu-item{display:block;width:100%;border:0;background:transparent;color:var(--text-secondary);text-align:left;border-radius:6px;padding:8px 9px;cursor:pointer;font:600 11px Inter,sans-serif}.tv2-menu-item:hover{background:var(--bg-tertiary);color:var(--text-primary)}.tv2-menu-item.danger{color:#f87171}
+/* Compact post-action modal: solid Ecollab card, dim backdrop, no blur */
+#tv2ActionModal.tv2-modal{position:fixed;inset:0;z-index:10050;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(2,6,23,.68);backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+#tv2ActionModal.tv2-modal.open{display:flex}
+#tv2ActionModal .tv2-modal-card{width:min(430px,calc(100vw - 32px));max-width:430px!important;background:#111827!important;border:1px solid rgba(148,163,184,.18);border-radius:14px;box-shadow:0 24px 70px rgba(0,0,0,.55);overflow:hidden;transform:none!important}
+#tv2ActionModal .tv2-modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid rgba(148,163,184,.14);background:#111827}
+#tv2ActionModal .tv2-modal-head strong{font-size:15px;color:#f8fafc}
+#tv2ActionModal .tv2-close{width:30px;height:30px;display:grid;place-items:center;border:0;border-radius:7px;background:transparent;color:#94a3b8;font-size:20px;cursor:pointer}
+#tv2ActionModal .tv2-close:hover{background:#1e293b;color:#fff}
+#tv2ActionModal .tv2-modal-body{padding:18px;background:#111827}
+#tv2ActionModal #tv2ActionText{font-size:13px!important;color:#94a3b8!important;line-height:1.55!important}
+#tv2ActionModal .tv2-input{width:100%;box-sizing:border-box;background:#0f172a;border:1px solid #334155;border-radius:9px;padding:10px 11px;color:#f8fafc;font:13px Inter,sans-serif;outline:none}
+#tv2ActionModal .tv2-input:focus{border-color:#a855f7;box-shadow:0 0 0 2px rgba(168,85,247,.13)}
+#tv2ActionModal .tv2-btn{border:1px solid #334155;background:#1e293b;color:#cbd5e1;border-radius:8px;padding:8px 13px;font:600 12px Inter,sans-serif;cursor:pointer}
+#tv2ActionModal .tv2-btn:hover{background:#273449;color:#fff}
+#tv2ActionModal .tv2-btn.primary{border-color:transparent;background:#a855f7;color:#fff}
+#tv2ActionModal .tv2-btn.primary:hover{filter:brightness(1.08)}
       .tv2-empty{text-align:center;padding:70px 20px;color:var(--text-muted);font-size:13px}.tv2-empty strong{display:block;color:var(--text-secondary);font-size:15px;margin-bottom:5px}
       .tv2-modal{position:fixed;inset:0;z-index:12000;background:rgba(0,0,0,.7);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:20px}.tv2-modal.open{display:flex}.tv2-box{width:min(760px,96vw);max-height:88vh;display:flex;flex-direction:column;background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.65)}.tv2-modal-head{padding:15px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}.tv2-modal-title{font-size:15px;font-weight:800;color:var(--text-primary);flex:1}.tv2-close{border:0;background:none;color:var(--text-muted);font-size:21px;cursor:pointer}.tv2-modal-body{padding:16px;overflow-y:auto}.tv2-field{width:100%;box-sizing:border-box;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text-primary);font:13px Inter,sans-serif;outline:none;margin-bottom:10px}.tv2-field:focus{border-color:rgba(168,85,247,.5)}textarea.tv2-field{min-height:130px;resize:vertical}.tv2-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}.tv2-btn{border:1px solid var(--border);background:var(--bg-tertiary);color:var(--text-secondary);border-radius:8px;padding:8px 14px;cursor:pointer;font:600 12px Inter,sans-serif}.tv2-btn.primary{background:linear-gradient(135deg,#a855f7,#ec4899);border:0;color:#fff}.tv2-scope-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}.tv2-scope-opt{padding:10px;border:1px solid var(--border);border-radius:9px;background:var(--bg-tertiary);cursor:pointer}.tv2-scope-opt.active{border-color:rgba(168,85,247,.5);background:rgba(168,85,247,.1)}.tv2-scope-opt b{display:block;color:var(--text-primary);font-size:12px}.tv2-scope-opt span{display:block;color:var(--text-muted);font-size:10px;margin-top:3px}
       .tv2-detail{max-width:920px;margin:0 auto}.tv2-reply{display:flex;gap:10px;padding:12px 0;border-top:1px solid var(--border)}.tv2-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800;flex-shrink:0}.tv2-reply-body{flex:1;min-width:0}.tv2-reply-text{font-size:12px;color:var(--text-secondary);line-height:1.5;white-space:pre-wrap;word-break:break-word}.tv2-reply-actions{display:flex;gap:5px;margin-top:6px}.tv2-back{border:1px solid var(--border);background:var(--bg-tertiary);color:var(--text-secondary);border-radius:8px;padding:6px 10px;cursor:pointer;font:600 11px Inter,sans-serif}
@@ -58,7 +76,7 @@
       <div class="tv2-modal" id="threadsV2CreateModal" onclick="if(event.target===this)window.closeThreadCreateModal()">
         <div class="tv2-box"><div class="tv2-modal-head"><div class="tv2-modal-title">Start a Discussion</div><button class="tv2-close" onclick="closeThreadCreateModal()">×</button></div>
           <div class="tv2-modal-body"><input id="tv2CreateTitle" class="tv2-field" maxlength="180" placeholder="Discussion title / topic…"><textarea id="tv2CreateBody" class="tv2-field" placeholder="Explain the topic and ask for opinions…"></textarea>
-            <div class="tv2-scope-grid"><div class="tv2-scope-opt active" data-create-scope="public" onclick="selectThreadCreateScope('public')"><b>🌐 Public</b><span>Visible system-wide</span></div><div class="tv2-scope-opt" data-create-scope="server" onclick="selectThreadCreateScope('server')"><b>⭐ Server</b><span>Everyone in this server</span></div><div class="tv2-scope-opt" data-create-scope="channel" onclick="selectThreadCreateScope('channel')"><b>🔒 Channel</b><span>Everyone with channel access</span></div></div>
+            <div class="tv2-scope-grid"><div class="tv2-scope-opt active" data-create-scope="public" onclick="selectThreadCreateScope('public')"><b>🌐 Public</b><span>Visible system-wide</span></div><div class="tv2-scope-opt" data-create-scope="server" onclick="selectThreadCreateScope('server')"><b>⭐ Server</b><span>Everyone in this server</span></div></div>
             <div id="tv2CreateContext" style="font-size:11px;color:var(--text-muted);padding:8px 10px;background:rgba(168,85,247,.05);border:1px solid rgba(168,85,247,.12);border-radius:8px"></div>
           </div><div class="tv2-footer"><button class="tv2-btn" onclick="closeThreadCreateModal()">Cancel</button><button class="tv2-btn primary" onclick="createThreadV2()">Post Discussion</button></div></div>
       </div>
@@ -68,9 +86,8 @@
   function contextText(){
     const sid=Number(window.ECOLLAB?.currentServerId||0), cid=Number(window.ECOLLAB?.currentChannelId||0);
     const server=document.querySelector('.workspace-icon.active')?.title || document.getElementById('wsName')?.textContent || 'current server';
-    const channel=document.querySelector(`.channel-item[data-channel-id="${cid}"]`)?.dataset.channelName || document.getElementById('channelTitle')?.textContent || 'current channel';
     const el=document.getElementById('tv2CreateContext');
-    if(el) el.textContent=`Current context: ${server}${cid?' / #'+channel:''}`;
+    if(el) el.textContent=`Current server: ${server}`;
   }
 
   window.selectThreadCreateScope=function(scope){
@@ -82,51 +99,104 @@
 
   window.createThreadV2=async function(){
     const title=document.getElementById('tv2CreateTitle')?.value.trim(), body=document.getElementById('tv2CreateBody')?.value.trim();
-    const scope=window._threadCreateScope||'public', serverId=Number(window.ECOLLAB?.currentServerId||0), channelId=Number(window.ECOLLAB?.currentChannelId||0);
+    const scope=window._threadCreateScope||'public', serverId=Number(window.ECOLLAB?.currentServerId||0);
     if(!title||!body){toast('Add a title and discussion body.','info');return;}
-    try{await request(api,{method:'POST',body:JSON.stringify({action:'create',title,body,scope,server_id:serverId,channel_id:channelId})});closeThreadCreateModal();toast('Discussion posted.','success');if(window._currentNavView==='threads')loadFeed('all');}
+    try{await request(api,{method:'POST',body:JSON.stringify({action:'create',title,body,scope,server_id:serverId})});closeThreadCreateModal();toast('Discussion posted.','success');if(window._currentNavView==='threads')loadFeed(scope);}
     catch(e){toast(e.message,'error');}
   };
 
   function threadCard(t){
     const g=gradient(t.author_gradient), init=authorName(t).charAt(0).toUpperCase();
-    return `<article class="tv2-card"><div class="tv2-meta"><span class="tv2-scope ${scopeClass(t.scope)}">${scopeLabel(t.scope)}</span><span>by <span class="tv2-author">${esc(authorName(t))}</span></span><span>· ${relTime(t.created_at)}</span>${t.server_name?`<span>· ${esc(t.server_name)}</span>`:''}${t.channel_name?`<span>· #${esc(t.channel_name)}</span>`:''}</div><h3>${esc(t.title)}</h3><p>${esc(t.body)}</p><div class="tv2-actions"><button class="tv2-vote ${Number(t.my_vote)===1?'active':''}" onclick="voteThreadV2('thread',${t.id},${Number(t.my_vote)===1?0:1})">▲ ${Number(t.score)||0}</button><button class="tv2-vote ${Number(t.my_vote)===-1?'active':''}" onclick="voteThreadV2('thread',${t.id},${Number(t.my_vote)===-1?0:-1})">▼</button><span class="tv2-replies">💬 ${Number(t.reply_count)||0} replies</span><button class="tv2-open" onclick="openThreadDetail(${t.id})">Open discussion →</button></div></article>`;
+    const images=(Array.isArray(t.attachments)?t.attachments:[]).filter(a=>!a.reply_id && (a.file_url || a.url || a.path));
+    const media=images.length?`<div class="tv2-card-media">${images.slice(0,3).map(a=>{let src=a.file_url||a.url||a.path||'';if(src.startsWith('/'))src=base()+src;return `<img src="${esc(src)}" alt="${esc(a.file_name||'Discussion image')}" loading="lazy">`;}).join('')}</div>`:'';
+    const mine=Number(t.is_owner)===1 || (authenticatedThreadUserId>0 && Number(t.created_by)===authenticatedThreadUserId) || String(t.author_username||'').toLowerCase()===String(window.ECOLLAB?.username||'').toLowerCase();
+    const menu=mine
+      ? `<button class="tv2-menu-item" onclick="threadBookmarkV2(${t.id})">🔖 ${Number(t.is_bookmarked)?'Remove bookmark':'Bookmark post'}</button><button class="tv2-menu-item" onclick="threadEditV2(${t.id})">✏️ Edit post</button><button class="tv2-menu-item danger" onclick="threadDeleteV2(${t.id})">🗑️ Delete post</button>`
+      : `<button class="tv2-menu-item" onclick="threadBookmarkV2(${t.id})">🔖 ${Number(t.is_bookmarked)?'Remove bookmark':'Bookmark post'}</button><button class="tv2-menu-item" onclick="threadReportV2(${t.id})">🚩 Report post</button>`;
+    return `<article class="tv2-card" data-thread-id="${Number(t.id)}"><div style="display:flex;gap:9px;align-items:center;margin-bottom:5px">${authorAvatar(t,30)}<div class="tv2-meta"><span class="tv2-scope ${scopeClass(t.scope)}">${scopeLabel(t.scope)}</span><span>by <span class="tv2-author">${esc(authorName(t))}</span></span><span>· ${relTime(t.created_at)}</span>${t.server_name?`<span>· ${esc(t.server_name)}</span>`:''}</div><div class="tv2-menu-wrap"><button class="tv2-more" title="Post settings" aria-label="Post settings" onclick="toggleThreadPostMenu(event,this)">⋮</button><div class="tv2-post-menu">${menu}</div></div></div><h3>${esc(t.title)}</h3><p>${esc(t.body)}</p>${media}<div class="tv2-actions"><button class="tv2-vote ${Number(t.my_vote)===1?'active':''}" onclick="voteThreadV2('thread',${t.id},${Number(t.my_vote)===1?0:1})">▲ ${Number(t.score)||0}</button><button class="tv2-vote ${Number(t.my_vote)===-1?'active':''}" onclick="voteThreadV2('thread',${t.id},${Number(t.my_vote)===-1?0:-1})">▼</button><span class="tv2-replies">💬 ${Number(t.reply_count)||0} replies</span><button class="tv2-open" onclick="openThreadDetail(${t.id})">Open discussion →</button></div></article>`;
   }
 
-  async function loadFeed(scope='all'){
-    activeScope=scope; const body=document.getElementById('tv2Feed'); if(!body)return; body.innerHTML='<div class="tv2-empty">Loading discussions…</div>';
-    const sid=Number(window.ECOLLAB?.currentServerId||0), cid=Number(window.ECOLLAB?.currentChannelId||0);
-    try{const d=await request(`${api}?scope=${encodeURIComponent(scope)}&server_id=${sid}&channel_id=${cid}&limit=50`);body.innerHTML=d.threads?.length?d.threads.map(threadCard).join(''):'<div class="tv2-empty"><strong>No discussions yet</strong>Start the first discussion for this scope.</div>';}
-    catch(e){body.innerHTML=`<div class="tv2-empty"><strong>Could not load discussions</strong>${esc(e.message)}</div>`;}
+  let feedLoaded=false, feedSignatures=new Map();
+  function threadSignature(t){return JSON.stringify([t.id,t.title,t.body,t.scope,t.created_by,t.is_owner,t.is_bookmarked,t.created_at,t.updated_at,t.reply_count,t.score,t.my_vote,t.server_name,t.channel_name,(t.attachments||[]).map(a=>[a.id,a.reply_id,a.file_url,a.file_name,a.mime_type])]);}
+  function reconcileFeed(threads){
+    const body=document.getElementById('tv2Feed'); if(!body)return;
+    const list=Array.isArray(threads)?threads:[];
+    if(!list.length){if(!body.querySelector('.tv2-empty'))body.innerHTML='<div class="tv2-empty"><strong>No discussions yet</strong>Start the first discussion for this scope.</div>';feedSignatures.clear();feedLoaded=true;return;}
+    const wasNearTop=body.scrollTop<40, oldScrollHeight=body.scrollHeight, oldScrollTop=body.scrollTop;
+    const existing=new Map(Array.from(body.querySelectorAll('[data-thread-id]')).map(el=>[String(el.dataset.threadId),el]));
+    const nextIds=new Set();
+    for(const t of list){const id=String(t.id);nextIds.add(id);const sig=threadSignature(t);let el=existing.get(id);
+      if(!el){const temp=document.createElement('div');temp.innerHTML=threadCard(t);el=temp.firstElementChild;}
+      else if(feedSignatures.get(id)!==sig){const temp=document.createElement('div');temp.innerHTML=threadCard(t);const replacement=temp.firstElementChild;el.replaceWith(replacement);el=replacement;}
+      body.appendChild(el);feedSignatures.set(id,sig);
+    }
+    Array.from(body.querySelectorAll('[data-thread-id]')).forEach(el=>{if(!nextIds.has(String(el.dataset.threadId)))el.remove();});
+    body.querySelector('.tv2-empty')?.remove();feedSignatures.forEach((_,id)=>{if(!nextIds.has(id))feedSignatures.delete(id);});feedLoaded=true;
+    if(!wasNearTop)body.scrollTop=Math.max(0,body.scrollTop+(body.scrollHeight-oldScrollHeight));else body.scrollTop=oldScrollTop;
+  }
+  async function loadFeed(scope='public'){
+    activeScope=scope;const body=document.getElementById('tv2Feed');if(!body)return;
+    if(!feedLoaded||!body.querySelector('[data-thread-id]'))body.innerHTML='<div class="tv2-empty">Loading discussions…</div>';
+    const sid=Number(window.ECOLLAB?.currentServerId||0);
+    try{const d=await request(api+'?scope='+encodeURIComponent(scope)+'&server_id='+sid+'&limit=50');authenticatedThreadUserId=Number(d.current_user_id||window.ECOLLAB?.userId||0);reconcileFeed(d.threads||[]);}
+    catch(e){if(!feedLoaded)body.innerHTML='<div class="tv2-empty"><strong>Could not load discussions</strong>'+esc(e.message)+'</div>';}
   }
   window.loadThreadsV2=loadFeed;
+
+  function ensureThreadActionModal(){
+    if(document.getElementById('tv2ActionModal'))return;
+    const el=document.createElement('div');el.id='tv2ActionModal';el.className='tv2-modal';
+    el.innerHTML='<div class="tv2-modal-card" style="max-width:420px"><div class="tv2-modal-head"><strong id="tv2ActionTitle">Confirm action</strong><button class="tv2-close" onclick="closeThreadActionModal()">×</button></div><div class="tv2-modal-body"><div id="tv2ActionText" style="font-size:13px;color:var(--text-secondary);line-height:1.55"></div><label id="tv2ActionSelectWrap" style="display:none;margin-top:14px"><span style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Reason</span><select id="tv2ActionSelect" class="tv2-input"><option value="">Select a reason…</option><option value="Harassment or bullying">Harassment or bullying</option><option value="Hate speech or discrimination">Hate speech or discrimination</option><option value="Nudity or sexual content">Nudity or sexual content</option><option value="Spam or misleading content">Spam or misleading content</option><option value="Violence or harmful content">Violence or harmful content</option></select></label><label id="tv2ActionInputWrap" style="display:none;margin-top:14px"><span style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Details</span><textarea id="tv2ActionInput" class="tv2-input" rows="4" style="resize:vertical"></textarea></label><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px"><button class="tv2-btn" onclick="closeThreadActionModal()">Cancel</button><button id="tv2ActionConfirm" class="tv2-btn primary">Confirm</button></div></div></div>';
+    document.body.appendChild(el);
+  }
+  window.closeThreadActionModal=function(){document.getElementById('tv2ActionModal')?.classList.remove('open');window._tv2ActionConfirm=null;};
+  function openThreadActionModal({title,text,input=false,select=false,value='',placeholder='',confirmText='Confirm',danger=false,onConfirm}){
+    ensureThreadActionModal();const modal=document.getElementById('tv2ActionModal'),wrap=document.getElementById('tv2ActionInputWrap'),field=document.getElementById('tv2ActionInput'),selectWrap=document.getElementById('tv2ActionSelectWrap'),selectField=document.getElementById('tv2ActionSelect'),btn=document.getElementById('tv2ActionConfirm');
+    document.getElementById('tv2ActionTitle').textContent=title;document.getElementById('tv2ActionText').textContent=text;wrap.style.display=input?'block':'none';selectWrap.style.display=select?'block':'none';field.value=value;field.placeholder=placeholder;selectField.value='';btn.textContent=confirmText;btn.style.background=danger?'#dc2626':'';
+    btn.onclick=async()=>{try{await onConfirm(select?selectField.value:(input?field.value:''));closeThreadActionModal();}catch(e){toast(e.message,'error');}};
+    modal.classList.add('open');if(select)setTimeout(()=>selectField.focus(),40);else if(input)setTimeout(()=>field.focus(),40);
+  }
+
+  window.toggleThreadPostMenu=function(event,button){event?.stopPropagation();const menu=button?.nextElementSibling;document.querySelectorAll('.tv2-post-menu.open').forEach(x=>{if(x!==menu)x.classList.remove('open')});menu?.classList.toggle('open');};
+  document.addEventListener('click',()=>document.querySelectorAll('.tv2-post-menu.open').forEach(x=>x.classList.remove('open')));
+
+  async function postAction(action,id,payload={}){
+    const d=await request(api,{method:'POST',body:JSON.stringify({action,id,...payload})});
+    toast(d.message || (action==='bookmark'?(d.bookmarked?'Post bookmarked.':'Bookmark removed.'):'Done.'),'success');
+    await loadFeed(activeScope);
+    return d;
+  }
+  window.threadBookmarkV2=async function(id){try{await postAction('bookmark',id);}catch(e){toast(e.message,'error');}};
+  window.threadReportV2=function(id){openThreadActionModal({title:'Report post',text:'Choose the reason that best describes the problem with this discussion post.',select:true,confirmText:'Submit report',onConfirm:async reason=>{if(!reason)throw new Error('Please select a report reason.');await postAction('report',id,{reason});}});};
+  window.threadEditV2=async function(id){try{const d=await request(api+'?action=get&id='+encodeURIComponent(id));const t=d.thread;openThreadActionModal({title:'Edit post',text:'Update the post content below.',input:true,value:t.body||'',placeholder:'Post content…',confirmText:'Save changes',onConfirm:async body=>{if(!body.trim())throw new Error('Post content is required.');await postAction('edit',id,{title:t.title||'',body:body.trim()});}});}catch(e){toast(e.message,'error');}};
+  window.threadDeleteV2=function(id){openThreadActionModal({title:'Delete post',text:'Delete this post permanently? This action cannot be undone.',confirmText:'Delete post',danger:true,onConfirm:async()=>{await postAction('delete',id);}});};
 
   window.voteThreadV2=async function(target,id,vote){try{const d=await request(api,{method:'POST',body:JSON.stringify({action:'vote',target,id,vote})});const b=document.querySelector(`button[onclick*="voteThreadV2('${target}',${id},"]`);if(b)b.blur();loadFeed(activeScope);}catch(e){toast(e.message,'error');}};
 
   function renderView(){
     ensureStyles();ensureModal();
     const overlay=document.getElementById('navViewOverlay'); if(!overlay)return;
-    overlay.innerHTML=`<div id="threadsV2View"><div class="tv2-head"><div style="font-size:22px">💬</div><div><div class="tv2-title">Discussions</div><div class="tv2-sub">Reddit-style topics for Ecollab — public, server-wide, or channel-wide.</div></div><button class="tv2-btn primary" style="margin-left:auto" onclick="openThreadCreateModal()">+ Start Discussion</button></div><div class="tv2-tabs"><button class="tv2-tab active" data-scope="all" onclick="setThreadScope('all',this)">All visible</button><button class="tv2-tab" data-scope="public" onclick="setThreadScope('public',this)">🌐 Public</button><button class="tv2-tab" data-scope="server" onclick="setThreadScope('server',this)">⭐ This Server</button><button class="tv2-tab" data-scope="channel" onclick="setThreadScope('channel',this)">🔒 This Channel</button></div><div class="tv2-body"><div id="tv2Feed" class="tv2-feed"></div></div></div>`;
-    loadFeed(activeScope);
+    overlay.innerHTML=`<div id="threadsV2View"><div class="tv2-head"><div style="font-size:22px">💬</div><div><div class="tv2-title">Discussions</div><div class="tv2-sub">Reddit-style topics for Ecollab — public, server-wide, or channel-wide.</div></div><button class="tv2-btn primary" style="margin-left:auto" onclick="openThreadCreateModal()">+ Start Discussion</button></div><div class="tv2-tabs"><button class="tv2-tab active" data-scope="public" onclick="setThreadScope('public',this)">🌐 Public</button><button class="tv2-tab" data-scope="server" onclick="setThreadScope('server',this)">⭐ This Server</button></div><div class="tv2-body"><div id="tv2Feed" class="tv2-feed"></div></div></div>`;
+    let savedScope=localStorage.getItem('ecollab.threads.scope')||activeScope||'public';if(!['public','server'].includes(savedScope))savedScope='public';activeScope=savedScope;document.querySelectorAll('.tv2-tab').forEach(x=>x.classList.toggle('active',x.dataset.scope===savedScope));feedLoaded=false;feedSignatures.clear();loadFeed(savedScope);
   }
-  window.setThreadScope=function(scope,el){document.querySelectorAll('.tv2-tab').forEach(x=>x.classList.remove('active'));el?.classList.add('active');loadFeed(scope);};
+  window.setThreadScope=function(scope,el){activeScope=scope;document.querySelectorAll('.tv2-tab').forEach(x=>x.classList.remove('active'));el?.classList.add('active');feedLoaded=false;feedSignatures.clear();localStorage.setItem('ecollab.threads.scope',scope);window.loadThreadsV2?.(scope);};
 
   window.openThreadDetail=async function(id){
-    ensureStyles();ensureModal();activeThreadId=id;const body=document.getElementById('tv2DetailBody');const modal=document.getElementById('threadsV2DetailModal');if(!body||!modal)return;modal.classList.add('open');body.innerHTML='<div class="tv2-empty">Loading discussion…</div>';
+    ensureStyles();ensureModal();activeThreadId=id;localStorage.setItem('ecollab.threads.activeThread',String(id));const body=document.getElementById('tv2DetailBody');const modal=document.getElementById('threadsV2DetailModal');if(!body||!modal)return;modal.classList.add('open');body.innerHTML='<div class="tv2-empty">Loading discussion…</div>';
     try{const d=await request(`${api}?action=get&id=${id}`);const t=d.thread;document.getElementById('tv2DetailTitle').textContent=t.title;body.innerHTML=`<div class="tv2-detail"><div class="tv2-meta"><span class="tv2-scope">${scopeLabel(t.scope)}</span><span>by <b>${esc(authorName(t))}</b> · ${relTime(t.created_at)}</span></div><h2 style="font-size:19px;color:var(--text-primary);margin:0 0 8px">${esc(t.title)}</h2><p style="font-size:13px;line-height:1.65;color:var(--text-secondary);white-space:pre-wrap">${esc(t.body)}</p><div class="tv2-actions" style="margin:14px 0"><button class="tv2-vote ${Number(t.my_vote)===1?'active':''}" onclick="voteDetailV2('thread',${t.id},${Number(t.my_vote)===1?0:1})">▲ ${Number(t.score)||0}</button><button class="tv2-vote ${Number(t.my_vote)===-1?'active':''}" onclick="voteDetailV2('thread',${t.id},${Number(t.my_vote)===-1?0:-1})">▼</button><span class="tv2-replies">${d.replies?.length||0} replies</span></div><div id="tv2Replies">${(d.replies||[]).map(replyCard).join('')||'<div class="tv2-empty" style="padding:30px 0">No replies yet. Be the first to give an opinion.</div>'}</div><div style="margin-top:14px"><textarea id="tv2ReplyInput" class="tv2-field" placeholder="Share your opinion…"></textarea><button class="tv2-btn primary" onclick="replyThreadV2(${t.id})">Post Reply</button></div></div>`;}
     catch(e){body.innerHTML=`<div class="tv2-empty"><strong>Could not open discussion</strong>${esc(e.message)}</div>`;}
   };
-  function replyCard(r){const g=gradient(r.author_gradient),init=authorName(r).charAt(0).toUpperCase();return `<div class="tv2-reply"><div class="tv2-avatar" style="background:linear-gradient(135deg,${g})">${init}</div><div class="tv2-reply-body"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px"><b style="color:var(--text-primary)">${esc(authorName(r))}</b> · ${relTime(r.created_at)}</div><div class="tv2-reply-text">${esc(r.body)}</div><div class="tv2-reply-actions"><button class="tv2-vote ${Number(r.my_vote)===1?'active':''}" onclick="voteDetailV2('reply',${r.id},${Number(r.my_vote)===1?0:1})">▲ ${Number(r.score)||0}</button><button class="tv2-vote ${Number(r.my_vote)===-1?'active':''}" onclick="voteDetailV2('reply',${r.id},${Number(r.my_vote)===-1?0:-1})">▼</button></div></div></div>`;}
+  function replyCard(r){return `<div class="tv2-reply">${authorAvatar(r,30)}<div class="tv2-reply-body"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px"><b style="color:var(--text-primary)">${esc(authorName(r))}</b> · ${relTime(r.created_at)}</div><div class="tv2-reply-text">${esc(r.body)}</div><div class="tv2-reply-actions"><button class="tv2-vote ${Number(r.my_vote)===1?'active':''}" onclick="voteDetailV2('reply',${r.id},${Number(r.my_vote)===1?0:1})">▲ ${Number(r.score)||0}</button><button class="tv2-vote ${Number(r.my_vote)===-1?'active':''}" onclick="voteDetailV2('reply',${r.id},${Number(r.my_vote)===-1?0:-1})">▼</button></div></div></div>`;}
   window.voteDetailV2=async function(target,id,vote){try{await request(api,{method:'POST',body:JSON.stringify({action:'vote',target,id,vote})});openThreadDetail(activeThreadId);}catch(e){toast(e.message,'error');}};
   window.replyThreadV2=async function(id){const input=document.getElementById('tv2ReplyInput'),body=input?.value.trim();if(!body)return;try{await request(api,{method:'POST',body:JSON.stringify({action:'reply',thread_id:id,body})});input.value='';openThreadDetail(id);}catch(e){toast(e.message,'error');}};
-  window.closeThreadDetail=function(){document.getElementById('threadsV2DetailModal')?.classList.remove('open');activeThreadId=0;};
+  window.closeThreadDetail=function(){document.getElementById('threadsV2DetailModal')?.classList.remove('open');activeThreadId=0;localStorage.removeItem('ecollab.threads.activeThread');};
 
   function installSwitch(){
     if(initialized)return; initialized=true;
     originalSwitchView=window.switchView;
     window.switchView=function(viewName,el){
       if(viewName==='threads'){
-        document.querySelectorAll('.sidebar-nav-item').forEach(n=>n.classList.remove('active'));el?.classList.add('active');window._currentNavView='threads';
+        document.querySelectorAll('.sidebar-nav-item').forEach(n=>n.classList.remove('active'));el?.classList.add('active');window._currentNavView='threads';localStorage.setItem('ecollab.threads.navView','threads');
         const chatMain=document.querySelector('.chat-main');let overlay=document.getElementById('navViewOverlay');
         if(chatMain)chatMain.style.display='none';
         if(!overlay){overlay=document.createElement('div');overlay.id='navViewOverlay';overlay.style.cssText='flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--bg-primary);';chatMain?.parentNode.insertBefore(overlay,chatMain.nextSibling);}else overlay.style.display='flex';
@@ -137,6 +207,7 @@
     window.__real_switchView=window.switchView;
   }
 
+  function restoreThreadView(){const globalView=localStorage.getItem('ecollab.chat.activeView');if(localStorage.getItem('ecollab.threads.navView')!=='threads'||(globalView&&globalView!=='threads'))return;const nav=document.querySelector('.sidebar-nav-item[onclick*="threads"]')||document.querySelector('[data-view="threads"]');window.switchView?.('threads',nav);const savedThread=Number(localStorage.getItem('ecollab.threads.activeThread')||0);if(savedThread>0)setTimeout(()=>window.openThreadDetail?.(savedThread),250);}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installSwitch,{once:true});else installSwitch();
-  window.addEventListener('load',installSwitch,{once:true});
+  window.addEventListener('load',()=>{installSwitch();setTimeout(restoreThreadView,120);},{once:true});
 })();

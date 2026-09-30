@@ -18,7 +18,7 @@ try {
     $db = Database::getInstance();
 
     $partnerStmt = $db->prepare(
-        'SELECT id, username, full_name, avatar_color_gradient
+        'SELECT id, username, full_name, avatar_url, avatar_color_gradient
          FROM users
          WHERE id = :id AND deleted_at IS NULL
          LIMIT 1'
@@ -49,10 +49,10 @@ try {
     $friendStatus = $friend->fetchColumn();
     $friend->closeCursor();
 
-    // user_settings uses allow_dm (not direct_messages).
+    // user_settings uses direct_messages (added by the settings-page migration).
     // A missing settings row means the platform default is to allow DMs.
     $pref = $db->prepare(
-        'SELECT allow_dm FROM user_settings WHERE user_id = :id LIMIT 1'
+        'SELECT direct_messages FROM user_settings WHERE user_id = :id LIMIT 1'
     );
     $pref->execute([':id' => $partnerId]);
     $allow = $pref->fetchColumn();
@@ -93,9 +93,10 @@ try {
     $readStmt->closeCursor();
 
     $msgs = $db->prepare(
-        'SELECT dm.id, dm.sender_id, dm.body, dm.created_at,
+        'SELECT dm.id, dm.sender_id, dm.body, dm.attachment_path, dm.attachment_name, dm.attachment_size, dm.attachment_mime, dm.created_at,
                 u.username AS sender_username,
                 u.full_name AS sender_name,
+                u.avatar_url AS sender_avatar_url,
                 u.avatar_color_gradient AS sender_gradient
          FROM dm_messages dm
          JOIN users u ON u.id = dm.sender_id

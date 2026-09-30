@@ -1,3 +1,4 @@
+@import url('../responsive.css');
 /* ══════════════════════════════════════════════════════════════
    peer-matching.css — Tag-based peer compatibility UI
    ══════════════════════════════════════════════════════════════ */
@@ -410,4 +411,91 @@
   .pm-compat-top { flex-direction: column; }
   .pm-radar { width: 150px; height: 150px; }
   .pm-breakdown-label { width: 100px; }
+}
+
+/* Mobile peer-matching tabs: keep all five controls visible without horizontal clipping. */
+@media (max-width: 600px) {
+  #peerMatchingModal { padding: 8px; }
+  .pm-shell {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100dvh - 16px);
+    border-radius: 12px;
+  }
+  .pm-header { padding: 11px 12px; }
+  .pm-header-title { font-size: 14px; }
+  .pm-header-sub { font-size: 10px; }
+  .pm-tab-bar {
+    width: 100%;
+    overflow: hidden;
+  }
+  .pm-tab-btn {
+    flex: 1 1 20%;
+    min-width: 0;
+    padding: 9px 2px 7px;
+    font-size: 9px;
+    line-height: 1.15;
+    overflow: hidden;
+    text-overflow: clip;
+  }
+  #pmModalBody { padding: 10px; }
+}
+@media (max-width: 380px) {
+  .pm-tab-btn {
+    font-size: 8px;
+    padding-left: 1px;
+    padding-right: 1px;
+  }
+}
+
+/* Phone Search tab: use the full modal width and keep filters/results readable. */
+@media (max-width: 600px) {
+  .pm-search-bar { width: 100%; }
+  .pm-search-bar .pm-input { width: 100%; min-width: 0; }
+  .pm-search-filters {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+    gap: 7px;
+    width: 100%;
+  }
+  .pm-search-filters .pm-select {
+    width: 100%;
+    min-width: 0;
+    height: 38px;
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+  .pm-search-filters .pm-select:nth-child(1),
+  .pm-search-filters .pm-select:nth-child(2) {
+    grid-column: 1 / -1;
+  }
+  .pm-search-row {
+    width: 100%;
+    gap: 8px;
+    padding: 10px 0;
+  }
+  .pm-search-row .pm-avatar { flex: 0 0 34px; }
+  .pm-search-info { overflow: hidden; }
+  .pm-search-info .pm-card-name,
+  .pm-search-info .pm-card-bio {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pm-search-row .pm-btn-primary,
+  .pm-search-row .pm-btn-secondary,
+  .pm-search-row .pm-btn-connected {
+    flex: 0 0 auto;
+    padding: 7px 10px;
+    font-size: 10px;
+  }
+}
+@media (max-width: 380px) {
+  .pm-search-filters { grid-template-columns: 1fr; }
+  .pm-search-filters .pm-select { grid-column: 1 / -1 !important; }
+  .pm-search-row { flex-wrap: wrap; }
+  .pm-search-info { min-width: calc(100% - 50px); }
+  .pm-search-row .pm-btn-primary,
+  .pm-search-row .pm-btn-secondary,
+  .pm-search-row .pm-btn-connected { margin-left: 42px; }
 }

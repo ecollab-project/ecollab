@@ -30,10 +30,13 @@ $identifier = trim((string)($body['identifier'] ?? ''));
 $password   = (string)($body['password']   ?? '');
 $remember   = !empty($body['remember']);
 
-// Rate limit by IP + identifier
-$limiter = new RateLimiter();
-$ip      = RateLimiter::getIP();
-$result  = $limiter->attempt('login', $ip, RATE_LIMIT_LOGIN, RATE_LIMIT_WINDOW);
+// Rate limit this specific login identity.
+// Do NOT use the IP alone here: users on the same school/home/public network
+// must not share the 3-attempt login lockout.
+$limiter  = new RateLimiter();
+$ip       = RateLimiter::getIP();
+$loginKey = hash('sha256', $ip . '|' . strtolower($identifier));
+$result   = $limiter->attempt('login', $loginKey, RATE_LIMIT_LOGIN, RATE_LIMIT_WINDOW);
 if (!$result['allowed']) {
     http_response_code(429);
     echo json_encode([
@@ -46,10 +49,28 @@ if (!$result['allowed']) {
 
 try {
     $service = new AuthService();
-    $outcome = $service->login($identifier, $password, $remember);
+    $outcome = $service->login($identifier, $password, $remember, false);
 
     if ($outcome['success']) {
-        $limiter->clear('login', $ip);
+        // Password was accepted and the authenticated session is created immediately.
+        // Signup email verification is handled once during registration; normal
+        // password login does not repeat that verification step.
+        if (!empty($outcome['otp_required'])) {
+            $response = [
+                'success'      => true,
+                'otp_required' => true,
+                'message'      => 'A verification code has been sent to your email.',
+                'user_id'      => (int)$outcome['user']['id'],
+            ];
+            if (APP_DEBUG && isset($outcome['otp_debug'])) {
+                $response['otp_debug'] = $outcome['otp_debug'];
+            }
+            echo json_encode($response);
+            exit;
+        }
+
+        // Only clear the password-login limiter after the full authentication flow.
+        $limiter->clear('login', $loginKey);
         CSRF::regenerate();
 
         $role     = $outcome['role'];

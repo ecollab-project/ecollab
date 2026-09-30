@@ -6,6 +6,7 @@ require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 require_once dirname(__DIR__, 2) . '/services/PeerMatchingService.php';
+require_once dirname(__DIR__, 2) . '/services/PeerSemanticClient.php';
 
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
@@ -15,10 +16,18 @@ try {
     $db = Database::getInstance();
     $uid = (int)$user['id'];
 
+    $prefStmt = $db->prepare('SELECT ai_matching FROM user_settings WHERE user_id = :id LIMIT 1');
+    $prefStmt->execute([':id' => $uid]);
+    $aiMatching = $prefStmt->fetchColumn();
+    if ($aiMatching !== false && (int)$aiMatching === 0) {
+        echo json_encode(['success' => true, 'matches' => [], 'ai_matching_disabled' => true]);
+        exit;
+    }
+
     $stmt = $db->prepare("
         SELECT DISTINCT
             u.id, u.username, u.full_name, u.role,
-            u.avatar_color_gradient, u.bio, u.is_online
+            u.avatar_url, u.avatar_color_gradient, u.bio, u.is_online
         FROM users u
         LEFT JOIN friendships f
           ON (f.requester_id = :uid1 AND f.addressee_id = u.id)
@@ -26,6 +35,8 @@ try {
         WHERE u.id != :uid3
           AND u.deleted_at IS NULL
           AND u.status != 'banned'
+          AND COALESCE(u.is_system, 0) = 0
+          AND NOT EXISTS (SELECT 1 FROM user_settings us WHERE us.user_id=u.id AND us.ai_matching=0)
           AND (f.id IS NULL OR f.status = 'rejected')
         ORDER BY u.is_online DESC, u.last_active_at DESC
         LIMIT 50
@@ -37,10 +48,6 @@ try {
     ]);
 
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    $prefsStmt = $db->prepare('SELECT * FROM pm_user_study_prefs WHERE user_id = ?');
-    $subjectsStmt = $db->prepare('SELECT subject_id, role, proficiency FROM pm_user_subjects WHERE user_id = ?');
-    $interestsStmt = $db->prepare('SELECT interest_id FROM pm_user_interests WHERE user_id = ?');
-    $hobbiesStmt = $db->prepare('SELECT hobby_id FROM pm_user_hobbies WHERE user_id = ?');
     $cacheStmt = $db->prepare("
         INSERT INTO pm_compatibility
             (user_a_id, user_b_id, score_total, score_subjects, score_interests,
@@ -60,33 +67,9 @@ try {
             computed_at = CURRENT_TIMESTAMP
     ");
 
-    $loadProfile = static function (
-        int $userId,
-        PDOStatement $prefsStmt,
-        PDOStatement $subjectsStmt,
-        PDOStatement $interestsStmt,
-        PDOStatement $hobbiesStmt
-    ): array {
-        $prefsStmt->execute([$userId]);
-        $subjectsStmt->execute([$userId]);
-        $interestsStmt->execute([$userId]);
-        $hobbiesStmt->execute([$userId]);
-
-        return [
-            'prefs' => $prefsStmt->fetch(PDO::FETCH_ASSOC) ?: [],
-            'subjects' => $subjectsStmt->fetchAll(PDO::FETCH_ASSOC),
-            'interests' => $interestsStmt->fetchAll(PDO::FETCH_ASSOC),
-            'hobbies' => $hobbiesStmt->fetchAll(PDO::FETCH_ASSOC),
-        ];
-    };
-
     $service = new PeerMatchingService();
-    $currentProfile = $loadProfile($uid, $prefsStmt, $subjectsStmt, $interestsStmt, $hobbiesStmt);
+    $currentProfile = $service->loadProfile($db, $uid);
 
-    // A match should be based on real peer-profile data. Previously, users
-    // with completely empty profiles could receive 13% because the study
-    // preference scorer returned a neutral 50/100 value for missing data.
-    // That made every unconfigured account look like a real match.
     $currentProfileReady = !empty($currentProfile['subjects'])
         || !empty($currentProfile['interests'])
         || !empty($currentProfile['hobbies']);
@@ -94,13 +77,12 @@ try {
     $matches = [];
 
     if ($currentProfileReady) {
-        foreach ($users as $candidate) {
+        $profiles = array_map(static fn($candidate) => $service->loadProfile($db, (int)$candidate['id']), $users);
+        $semantic = (new PeerSemanticClient())->scores($currentProfile, $profiles);
+        foreach ($users as $index => $candidate) {
             $candidateId = (int)$candidate['id'];
-            $candidateProfile = $loadProfile($candidateId, $prefsStmt, $subjectsStmt, $interestsStmt, $hobbiesStmt);
+            $candidateProfile = $profiles[$index];
 
-            // Do not advertise users who have not configured any matcher
-            // dimensions yet. They cannot produce a meaningful compatibility
-            // score and were the source of the misleading 13% cards.
             $candidateReady = !empty($candidateProfile['subjects'])
                 || !empty($candidateProfile['interests'])
                 || !empty($candidateProfile['hobbies']);
@@ -109,14 +91,14 @@ try {
                 continue;
             }
 
-            $score = $service->scoreProfiles($currentProfile, $candidateProfile);
+            $score = $service->scoreProfiles($currentProfile, $candidateProfile, $semantic[$index]);
 
             $a = min($uid, $candidateId);
             $b = max($uid, $candidateId);
             $cacheStmt->execute([
                 $a,
                 $b,
-                $score['total'],
+                $score['rule_total'],
                 $score['subjects'],
                 $score['interests'],
                 $score['hobbies'],
@@ -124,7 +106,7 @@ try {
                 $score['shared_subjects'],
                 $score['shared_interests'],
                 $score['shared_hobbies'],
-                json_encode($score['tags'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+                json_encode($service->scoreProfiles($currentProfile, $candidateProfile)['tags'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
             ]);
 
             $name = (string)($candidate['full_name'] ?: $candidate['username']);
@@ -138,7 +120,10 @@ try {
                 'type' => in_array($role, ['facilitator', 'admin', 'super_admin', 'moderator'], true) ? 'professor' : 'student',
                 'online' => (bool)$candidate['is_online'],
                 'tags' => $score['tags'],
+                'engine' => $score['engine'],
+                'weights' => $score['weights'],
                 'components' => [
+                    'semantic' => $score['semantic'],
                     'subjects' => $score['subjects'],
                     'style' => $score['style'],
                     'interests' => $score['interests'],
@@ -147,6 +132,7 @@ try {
                 'shared_subjects' => $score['shared_subjects'],
                 'shared_interests' => $score['shared_interests'],
                 'shared_hobbies' => $score['shared_hobbies'],
+                'avatar_url' => (string)($candidate['avatar_url'] ?? ''),
                 'grad' => (string)($candidate['avatar_color_gradient'] ?? '#a855f7,#ec4899'),
             ];
         }
@@ -168,3 +154,4 @@ try {
         'message' => (defined('APP_DEBUG') && APP_DEBUG) ? $e->getMessage() : 'Unable to load peer matches.',
     ]);
 }
+
