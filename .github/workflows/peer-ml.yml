@@ -1,0 +1,27 @@
+name: Peer ML regression
+on:
+  push:
+    branches: [ml-peer-matching-integration]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: PHP syntax and fallback contract
+        run: |
+          php -l services/PeerMatchingService.php
+          php -l services/PeerSemanticClient.php
+          php -l API/chat/get-matches.php
+          php -l API/chat/peer-match.php
+          php tests/peer-ml-regression.php
+      - name: JavaScript syntax
+        run: node --check assets/js/chat/peer-matching.js
+      - name: Python similarity and HTTP contract
+        run: |
+          python3 -m venv /tmp/peer-ml-test
+          /tmp/peer-ml-test/bin/pip install 'numpy>=1.26,<3' 'scikit-learn>=1.7,<2'
+          cd ml/peer_matching
+          /tmp/peer-ml-test/bin/python -m unittest -v
