@@ -9,7 +9,7 @@ AuthMiddleware::startSession(); $user = AuthMiddleware::requireAuth(true);
 header('Content-Type: application/json'); header('Cache-Control: no-store');
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new RuntimeException('POST required.',405);
-    AuthMiddleware::verifyCsrf();
+    AuthMiddleware::csrfToken(); AuthMiddleware::verifyCsrf();
     if (env('DOCUMENT_ML_ENABLED','false') !== 'true') throw new RuntimeException('Related documents disabled.',503);
     $body = json_decode(file_get_contents('php://input'),true) ?: [];
     $db = Database::getInstance(); $uid = (int)$user['id'];
@@ -22,8 +22,10 @@ try {
     }
     $profile = static fn(array $doc): array => ['subjects'=>[['name'=>$doc['title']]]];
     $scores = (new PeerSemanticClient())->scores($profile($d),array_map($profile,$docs)); $related=[];
+    DocumentAccessService::get($db,(int)$d['id'],$uid);
     foreach($docs as $i=>$doc) {
         if($scores[$i]===null) continue;
+        try { DocumentAccessService::get($db,(int)$doc['id'],$uid); } catch(RuntimeException $e) { if(in_array($e->getCode(),[403,404],true))continue;throw $e; }
         $related[]=['id'=>(int)$doc['id'],'title'=>$doc['title'],'score'=>$scores[$i], 'url'=>BASE_URL.'/modules/collaboration/document.php?id='.(int)$doc['id'].'&workspace_id='.(int)$doc['workspace_id']];
     }
     usort($related,static fn($a,$b)=>$b['score']<=>$a['score']);

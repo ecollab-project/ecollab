@@ -9,7 +9,7 @@ header('Content-Type: application/json'); header('Cache-Control: no-store');
 $path=null;$committed=false;
 try {
     if ($_SERVER['REQUEST_METHOD']!=='POST') throw new RuntimeException('POST required.',405);
-    AuthMiddleware::verifyCsrf(); $db=Database::getInstance(); $uid=(int)$user['id'];
+    AuthMiddleware::csrfToken(); AuthMiddleware::verifyCsrf(); $db=Database::getInstance(); $uid=(int)$user['id'];
     $data=$_POST ?: (json_decode(file_get_contents('php://input'),true) ?: []);
     $title=trim((string)($data['title']??''));
     $title=trim(preg_replace('~[\\\\/:*?"<>|\x00-\x1f]+~u',' ',$title)??'');

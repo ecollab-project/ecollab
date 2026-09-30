@@ -10,7 +10,7 @@ $user = AuthMiddleware::requireAuth(true);
 header('Content-Type: application/json'); header('Cache-Control: no-store');
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new RuntimeException('POST required.', 405);
-    AuthMiddleware::verifyCsrf();
+    AuthMiddleware::csrfToken(); AuthMiddleware::verifyCsrf();
     if (env('DOCUMENT_AI_ENABLED', 'false') !== 'true') throw new RuntimeException('Document AI is disabled.', 503);
     $data = json_decode(file_get_contents('php://input', false, null, 0, 20000), true, 16, JSON_THROW_ON_ERROR);
     $a = DocumentAccessService::get(Database::getInstance(), (int)($data['id'] ?? 0), (int)$user['id']);

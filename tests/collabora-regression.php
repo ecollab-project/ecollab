@@ -20,6 +20,7 @@ try {
     file_put_contents($root.'/uploads/collab-docs/original.docx','old contents');
     check(DocumentAccessService::get($db,1,2)['permission']==='view','explicit viewer overrides public edit');
     denied(fn()=>DocumentAccessService::get($db,2,2),403,'private document excluded');
+    check(CollaboraService::sameTimestamp('2026-09-30T10:00:00.000001+00:00','2026-09-30T10:00:00.000001Z'),'equivalent timestamp formats');
     $viewer=CollaboraService::issue($db,1,2);$editor=CollaboraService::issue($db,1,3);
     check(!CollaboraService::authorize($db,1,$viewer['token'])['write'],'viewer token cannot write');
     denied(fn()=>CollaboraService::authorize($db,2,$editor['token']),401,'token bound to document');

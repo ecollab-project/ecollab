@@ -22,6 +22,13 @@ final class CollaboraService
         return $time->format('Y-m-d\TH:i:s') . sprintf('.%06dZ', (int)$d['version'] % 1000000);
     }
 
+    public static function sameTimestamp(string $received, string $expected): bool
+    {
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,7})?(?:Z|[+-]\d{2}:\d{2})$/D', $received)) return false;
+        try { return (new DateTimeImmutable($received))->format('U.u') === (new DateTimeImmutable($expected))->format('U.u'); }
+        catch (Throwable) { return false; }
+    }
+
     public static function issue(PDO $db, int $id, int $uid): array
     {
         $a = DocumentAccessService::get($db, $id, $uid);
@@ -89,7 +96,7 @@ final class CollaboraService
             $a = self::authorize($db, $id, $token);
             if (!$a['write']) throw new RuntimeException('Read-only document.', 403);
             $d = $a['document'];
-            if ($timestamp !== null && $timestamp !== self::timestamp($d)) throw new RuntimeException('Document changed in storage.', 409);
+            if ($timestamp !== null && !self::sameTimestamp($timestamp, self::timestamp($d))) throw new RuntimeException('Document changed in storage.', 409);
             $old = DocumentAccessService::path($d);
             $relative = 'uploads/collab-docs/' . bin2hex(random_bytes(24)) . '.' . $d['file_type'];
             $destination = ROOT_PATH . '/' . $relative;
