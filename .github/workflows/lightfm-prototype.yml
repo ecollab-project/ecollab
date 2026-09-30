@@ -1,0 +1,57 @@
+name: LightFM prototype
+on:
+  push:
+    branches: [lightfm-recommendation-prototype]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: test-only-password
+          MARIADB_DATABASE: book_events_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Isolated LightFM build
+        run: |
+          python -m pip install 'pip==24.0' 'setuptools==69.5.1' 'wheel==0.43.0' 'numpy==1.26.4'
+          python -m pip install --no-build-isolation -r ml/lightfm/requirements.txt
+      - name: Actual LightFM training and evaluation regression
+        run: |
+          cd ml/lightfm
+          python -m unittest -v
+      - name: PHP syntax
+        run: |
+          php -l API/library/books.php
+          php -l API/library/book-event.php
+          php -l services/BookRecommendationEvents.php
+          php -l modules/library/library.php
+          php -l scripts/audit-recommendations.php
+          php -l scripts/export-book-recommendations.php
+      - name: Database event regression
+        env:
+          BOOK_EVENTS_TEST_DSN: mysql:host=127.0.0.1;port=3306;dbname=book_events_test
+        run: php tests/book-events-regression.php
+      - name: Inline JavaScript syntax
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          source = Path('modules/library/library.php').read_text()
+          js = re.findall(r'<script>(.*?)</script>', source, re.S)[0]
+          js = re.sub(r'<\?=.*?\?>', '0', js)
+          Path('/tmp/library.js').write_text(js)
+          PY
+          node --check /tmp/library.js
