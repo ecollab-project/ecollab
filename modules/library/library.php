@@ -61,6 +61,8 @@ $serverName = (string)($currentServer['name'] ?? 'Current Server');
 const LIB_BASE = <?= json_encode(BASE_URL) ?>;
 const LIB_SERVER_ID = <?= $serverId ?>;
 let libMode = 'server';
+let trackingEnabled = false;
+let loadVersion = 0;
 const grid = document.getElementById('libraryGrid');
 const search = document.querySelector('.lib-search');
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
@@ -71,21 +73,45 @@ function renderBooks(books){
     <div style="padding:14px"><strong style="display:block;line-height:1.35">${esc(b.title)}</strong>
     <div style="font-size:12px;color:var(--muted);margin:7px 0">${esc((b.authors||[]).slice(0,2).join(', ')||'Unknown author')}${b.year?' · '+esc(b.year):''}</div>
     <div style="font-size:11px;color:var(--muted)">${esc(b.source||'Open Library')}</div>
-    ${b.url?`<a href="${esc(b.url)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;color:#c084fc;text-decoration:none;font-weight:700">${esc(b.action||'View book')} →</a>`:''}</div></article>`).join('');
+    ${b.url?`<a data-work-key="${esc(b.work_key||'')}" href="${esc(b.url)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;color:#c084fc;text-decoration:none;font-weight:700">${esc(b.action||'View book')} →</a>`:''}
+    ${trackingEnabled && b.work_key ? `<button type="button" data-useful="${esc(b.work_key)}" style="margin-left:8px">Useful</button>` : ''}</div></article>`).join('');
 }
 async function loadBooks(q=''){
+  const version = ++loadVersion;
+  trackingEnabled=false;
+  document.getElementById('libraryDescription').textContent=libMode==='me'?'Books selected using your course, year level and interests.':'Books selected using this server’s academic context.';
   grid.innerHTML='<div class="lib-placeholder">Loading books…</div>';
   const u=new URL(LIB_BASE+'/API/library/books.php',location.origin);
   u.searchParams.set('server_id',LIB_SERVER_ID);u.searchParams.set('mode',libMode);if(q)u.searchParams.set('q',q);
-  try{const r=await fetch(u);const d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'Unable to load books');renderBooks(d.books||[]);
+  try{const r=await fetch(u);const d=await r.json();if(version!==loadVersion)return;if(!r.ok||!d.success)throw new Error(d.error||'Unable to load books');trackingEnabled=d.tracking_enabled===true;renderBooks(d.books||[]);
+    if(trackingEnabled)document.getElementById('libraryDescription').textContent='Your book clicks and Useful feedback help evaluate future recommendations. Turn off AI matching in Settings to stop collection.';
     if(d.context?.label)document.getElementById('libraryHeading').textContent=libMode==='me'?'Recommended for Me':'Recommended for '+d.context.label;
-  }catch(e){grid.innerHTML='<div class="lib-placeholder">'+esc(e.message)+'</div>';}
+  }catch(e){if(version!==loadVersion)return;grid.innerHTML='<div class="lib-placeholder">'+esc(e.message)+'</div>';}
 }
 document.querySelectorAll('.lib-tab').forEach(btn=>btn.addEventListener('click',()=>{
   document.querySelectorAll('.lib-tab').forEach(x=>x.classList.toggle('active',x===btn));libMode=btn.dataset.mode;
   document.getElementById('libraryDescription').textContent=libMode==='me'?'Books ranked using your course, year level and interests.':'Books ranked using this server\'s name, description and academic tags.';
   loadBooks(search.value.trim());
 }));
+async function recordBook(key,type){
+  const response=await fetch(LIB_BASE+'/API/library/book-event.php',{
+    method:'POST',credentials:'same-origin',keepalive:true,
+    headers:{'Content-Type':'application/json','X-CSRF-Token':document.querySelector('meta[name="csrf-token"]').content},
+    body:JSON.stringify({work_key:key,event_type:type})
+  });
+  if(!response.ok)throw new Error('Unable to save feedback');
+}
+grid.addEventListener('click',async event=>{
+  if(!trackingEnabled)return;
+  const link=event.target.closest('a[data-work-key]');
+  if(link?.dataset.workKey)recordBook(link.dataset.workKey,'click').catch(()=>{});
+  const button=event.target.closest('button[data-useful]');
+  if(button){
+    button.disabled=true;
+    try{await recordBook(button.dataset.useful,'useful');button.textContent='Saved';}
+    catch(e){button.disabled=false;button.textContent='Retry feedback';}
+  }
+});
 let timer;search.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>loadBooks(search.value.trim()),450);});
 loadBooks();
 </script>
