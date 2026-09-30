@@ -21,7 +21,8 @@ let _dmCallRemoteStream = null;
 let _dmCallPeerId      = null;
 let _dmCallGroupId     = null;
 let _dmCallLogId       = null;
-let _dmCallIsVideo     = false;
+let _dmCallIsVideo     = false; // local camera state
+let _dmCallRemoteVideo = false; // peer camera state
 let _dmCallPendingCandidates = [];
 let _dmCallState       = 'idle'; // idle | ringing-out | ringing-in | active
 let _dmCallTimeoutTimer = null;
@@ -91,13 +92,22 @@ async function startDmCall(video) {
   if (!targetId && !groupId) return;
 
   if (groupId) {
-    showToast('Group calls aren\'t supported yet — start a 1:1 call instead', 'info');
+    // Group Messages use their own LiveKit room/token flow. Mark this event so
+    // legacy voice-channel UI cannot reinterpret the synthetic group id as a
+    // server voice channel and call /API/chat/livekit-token.php.
+    window.__ecollabStartingDmGroupCall = true;
+    try {
+      await startDmGroupLiveKitCall(groupId, !!video);
+    } finally {
+      window.__ecollabStartingDmGroupCall = false;
+    }
     return;
   }
 
   _dmCallPeerId  = targetId;
   _dmCallGroupId = groupId;
   _dmCallIsVideo = !!video;
+  _dmCallRemoteVideo = !!video;
   _dmCallState   = 'ringing-out';
 
   try {
@@ -139,6 +149,216 @@ async function startDmCall(video) {
 }
 window.startDmCall = startDmCall;
 
+let _dmGroupLiveKitRoom = null;
+
+function _dmCallCsrf() {
+  return document.querySelector('meta[name="csrf-token"]')?.content || '';
+}
+
+async function startDmGroupLiveKitCall(groupId, video) {
+  if (!window.LivekitClient?.Room) {
+    showToast('LiveKit is not available. Refresh eCollab and try again.', 'error');
+    return;
+  }
+  if (_dmGroupLiveKitRoom) {
+    showToast('Already in a group call', 'info');
+    return;
+  }
+
+  try {
+    const response = await fetch((window.ECOLLAB?.baseUrl || '') + '/API/dm/livekit-group-token.php', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': _dmCallCsrf(),
+      },
+      body: JSON.stringify({ group_id: Number(groupId) }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data.error || 'Could not join group call');
+
+    const { Room, RoomEvent } = window.LivekitClient;
+    const room = new Room({ adaptiveStream: false, dynacast: true, disconnectOnPageLeave: true });
+    _dmGroupLiveKitRoom = room;
+
+    room.on(RoomEvent.TrackSubscribed, track => {
+      const el = track.attach();
+      el.dataset.dmGroupCall = '1';
+      if (track.kind === 'audio') {
+        el.autoplay = true;
+        document.body.appendChild(el);
+      } else {
+        const stage = document.getElementById('dmGroupCallVideos');
+        if (stage) stage.appendChild(el);
+      }
+    });
+    room.on(RoomEvent.TrackUnsubscribed, track => track.detach().forEach(el => el.remove()));
+    room.on(RoomEvent.ParticipantConnected, () => _renderDmGroupCallOverlay(data.room_name));
+    room.on(RoomEvent.ParticipantDisconnected, () => _renderDmGroupCallOverlay(data.room_name));
+    room.on(RoomEvent.Disconnected, () => {
+      document.querySelectorAll('[data-dm-group-call="1"]').forEach(el => el.remove());
+      document.getElementById('dmGroupCallOverlay')?.remove();
+      _dmGroupLiveKitRoom = null;
+    });
+
+    // Ring group members as soon as authorization succeeds. Do not wait for
+    // LiveKit media negotiation: a slow/blocked RTC connect must not suppress
+    // the incoming Accept/Decline popup on the other members.
+    if (!window.__joiningDmGroupInvite) {
+      const invite = { type: 'dm_group_call_start', group_id: Number(groupId), is_video: !!video };
+      let attempts = 0;
+      const sendInvite = () => {
+        attempts += 1;
+        const sent = window.wsSend?.(invite) === true;
+        console.log('[DM group call] invite attempt', attempts, sent ? 'sent' : 'not sent', invite);
+        return sent;
+      };
+      if (!sendInvite()) {
+        const retryInvite = setInterval(() => {
+          if (sendInvite() || attempts >= 12) {
+            clearInterval(retryInvite);
+            if (attempts >= 12) console.error('[DM group call] invite signal could not be sent');
+          }
+        }, 250);
+      }
+    }
+
+    await room.connect(data.url, data.token);
+    await room.localParticipant.setMicrophoneEnabled(true);
+    if (video) await room.localParticipant.setCameraEnabled(true);
+    _renderDmGroupCallOverlay(data.room_name);
+  } catch (e) {
+    console.error('[DM group call] LiveKit join failed:', e);
+    _dmGroupLiveKitRoom?.disconnect();
+    _dmGroupLiveKitRoom = null;
+    showToast(e.message || 'Could not establish group call', 'error');
+  }
+}
+
+function _renderDmGroupCallOverlay(name) {
+  if (!_dmGroupLiveKitRoom) return;
+  let overlay = document.getElementById('dmGroupCallOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'dmGroupCallOverlay';
+    overlay.style.cssText = 'position:fixed;bottom:0;right:376px;z-index:9002;width:360px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px 12px 0 0;box-shadow:0 -4px 32px rgba(0,0,0,.5);overflow:hidden;';
+    document.body.appendChild(overlay);
+  }
+  const count = 1 + _dmGroupLiveKitRoom.remoteParticipants.size;
+  overlay.innerHTML = `
+    <div id="dmGroupCallVideos" style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px;background:#000;"></div>
+    <div style="padding:12px;display:flex;align-items:center;gap:8px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(name || 'Group Call')}</div>
+        <div style="font-size:11px;color:#22c55e;">${count} connected · LiveKit</div>
+      </div>
+      <button type="button" onclick="_dmGroupToggleMic()" title="Mute/unmute">🎤</button>
+      <button type="button" onclick="_dmGroupToggleCam()" title="Camera">📷</button>
+      <button type="button" onclick="endDmGroupCall()" title="Leave" style="background:#ef4444;color:#fff;">☎</button>
+    </div>`;
+
+  _dmGroupLiveKitRoom.remoteParticipants.forEach(p => {
+    p.trackPublications.forEach(pub => {
+      if (pub.isSubscribed && pub.track?.kind === 'video') {
+        const el = pub.track.attach();
+        el.dataset.dmGroupCall = '1';
+        el.autoplay = true;
+        el.playsInline = true;
+        el.style.cssText = 'width:100%;height:140px;object-fit:cover;';
+        document.getElementById('dmGroupCallVideos')?.appendChild(el);
+      }
+    });
+  });
+}
+
+async function _dmGroupToggleMic() {
+  if (!_dmGroupLiveKitRoom) return;
+  const p = _dmGroupLiveKitRoom.localParticipant;
+  await p.setMicrophoneEnabled(!p.isMicrophoneEnabled);
+}
+window._dmGroupToggleMic = _dmGroupToggleMic;
+
+async function _dmGroupToggleCam() {
+  if (!_dmGroupLiveKitRoom) return;
+  const p = _dmGroupLiveKitRoom.localParticipant;
+  await p.setCameraEnabled(!p.isCameraEnabled);
+  _renderDmGroupCallOverlay('Group Call');
+}
+window._dmGroupToggleCam = _dmGroupToggleCam;
+
+function endDmGroupCall() {
+  if (!_dmGroupLiveKitRoom) return;
+  _dmGroupLiveKitRoom.disconnect();
+}
+window.endDmGroupCall = endDmGroupCall;
+window.startDmGroupLiveKitCall = startDmGroupLiveKitCall;
+
+let _dmGroupIncomingPopup = null;
+
+function _closeDmGroupIncomingPopup() {
+  document.getElementById('dmGroupIncomingCallPopup')?.remove();
+  _dmGroupIncomingPopup = null;
+}
+
+window._onDmGroupCallStart = function (data) {
+  const groupId = Number(data.group_id || 0);
+  if (!groupId) return;
+
+  const unavailable = _dmCallState !== 'idle' || !!_dmGroupLiveKitRoom || !!window.vcActive;
+  if (unavailable) {
+    window.wsSend?.({
+      type: 'dm_group_call_busy',
+      group_id: groupId,
+      target_user_id: Number(data.from_user_id),
+    });
+    return;
+  }
+
+  _closeDmGroupIncomingPopup();
+  const caller = data.from_username || 'Someone';
+  const kind = data.is_video ? 'video' : 'voice';
+  const popup = document.createElement('div');
+  popup.id = 'dmGroupIncomingCallPopup';
+  popup.style.cssText = 'position:fixed;top:18px;right:18px;z-index:10050;width:330px;padding:16px;background:var(--bg-secondary,#202225);border:1px solid var(--border,#3a3d42);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.45);';
+  popup.innerHTML = `
+    <div style="font-weight:800;font-size:14px;margin-bottom:4px;">${data.is_video ? '🎥' : '📞'} Incoming group ${kind} call</div>
+    <div style="font-size:13px;color:var(--text-muted,#b5bac1);margin-bottom:14px;">${escHtml(caller)} started a group call</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button id="dmGroupDeclineCall" type="button" style="padding:8px 14px;border:0;border-radius:8px;background:#ef4444;color:#fff;font-weight:700;cursor:pointer;">Decline</button>
+      <button id="dmGroupAcceptCall" type="button" style="padding:8px 14px;border:0;border-radius:8px;background:#22c55e;color:#fff;font-weight:700;cursor:pointer;">Accept</button>
+    </div>`;
+  document.body.appendChild(popup);
+  _dmGroupIncomingPopup = popup;
+
+  popup.querySelector('#dmGroupDeclineCall')?.addEventListener('click', _closeDmGroupIncomingPopup);
+  popup.querySelector('#dmGroupAcceptCall')?.addEventListener('click', async () => {
+    _closeDmGroupIncomingPopup();
+    window.__joiningDmGroupInvite = true;
+    try {
+      await startDmGroupLiveKitCall(groupId, !!data.is_video);
+    } finally {
+      window.__joiningDmGroupInvite = false;
+    }
+  });
+};
+
+if (window.__pendingDmGroupCallInvite) {
+  const pending = window.__pendingDmGroupCallInvite;
+  delete window.__pendingDmGroupCallInvite;
+  setTimeout(() => window._onDmGroupCallStart?.(pending), 0);
+}
+
+window._onDmGroupCallBusy = function (data) {
+  const who = data.from_username || 'User';
+  if (typeof showToast === 'function') {
+    showToast(escHtml(who) + ' is busy', 'info');
+  }
+  const toast = document.querySelector('.toast:last-child, .toast-notification:last-child');
+  if (toast) setTimeout(() => toast.remove(), 2000);
+};
+
+
 window._onDmCallOfferSent = function (data) {
   if (data.log_id) _dmCallLogId = data.log_id;
 };
@@ -174,6 +394,7 @@ async function _acceptDmCall() {
   _dmCallPeerId  = data.from_user_id;
   _dmCallGroupId = data.group_id || null;
   _dmCallIsVideo = !!data.is_video;
+  _dmCallRemoteVideo = !!data.is_video;
 
   try {
     _dmCallLocalStream = await navigator.mediaDevices.getUserMedia({
@@ -367,6 +588,8 @@ function _resetDmCallState() {
   _dmCallLocalStream = null;
   _dmCallRemoteStream = null;
   _dmCallDeafened = false;
+  _dmCallIsVideo = false;
+  _dmCallRemoteVideo = false;
   _dmCallCameraBusy = false;
   _dmCallPeerId = null;
   _dmCallGroupId = null;
@@ -420,19 +643,19 @@ async function _dmCallToggleCam() {
     const existingTrack = _dmCallLocalStream.getVideoTracks()[0];
 
     if (existingTrack && existingTrack.readyState === 'live') {
-      const sender = _dmCallPc.getSenders().find(s => s.track === existingTrack);
-
-      if (sender) {
-        await sender.replaceTrack(null);
+      // A retained video track can be toggled without renegotiating the call.
+      // Check enabled FIRST: getVideoTracks()[0] returns the same live track
+      // whether it is currently publishing frames or disabled.
+      if (!existingTrack.enabled) {
+        existingTrack.enabled = true;
+        _dmCallIsVideo = true;
+        _renderDmCallOverlay('active');
+        return;
       }
 
-      _dmCallLocalStream.removeTrack(existingTrack);
-      existingTrack.stop();
-
+      existingTrack.enabled = false;
       _dmCallIsVideo = false;
       _renderDmCallOverlay('active');
-
-      await _dmCallRenegotiate();
       return;
     }
 
@@ -503,7 +726,8 @@ window._onDmCallRenegotiate = async function(data) {
       sdp: _dmCallPc.localDescription,
     });
 
-    _dmCallIsVideo = !!data.is_video;
+    // Keep the peer camera state separate from this user's local camera.
+    _dmCallRemoteVideo = !!data.is_video;
     _renderDmCallOverlay('active');
   } catch (e) {
     console.error('[DM call] renegotiation offer failed:', e);
@@ -552,11 +776,9 @@ function _renderDmCallOverlay(state) {
   } else if (state === 'active') {
     overlay.innerHTML = `
       <audio id="dmCallRemoteAudio" autoplay playsinline></audio>
-      <div style="position:relative;background:#000;height:${_dmCallIsVideo ? '220px' : '0'};">
-        ${_dmCallIsVideo ? `
-          <video id="dmCallRemoteVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>
-          <video id="dmCallLocalVideo" autoplay playsinline muted style="position:absolute;bottom:8px;right:8px;width:70px;height:52px;border-radius:6px;object-fit:cover;transform:scaleX(-1);border:1px solid rgba(255,255,255,0.3);"></video>
-        ` : ''}
+      <div style="position:relative;background:#000;height:${(_dmCallIsVideo || _dmCallRemoteVideo) ? '220px' : '0'};">
+        ${_dmCallRemoteVideo ? `<video id="dmCallRemoteVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>` : ''}
+        ${_dmCallIsVideo ? `<video id="dmCallLocalVideo" autoplay playsinline muted style="position:absolute;bottom:8px;right:8px;width:70px;height:52px;border-radius:6px;object-fit:cover;transform:scaleX(-1);border:1px solid rgba(255,255,255,0.3);"></video>` : ''}
       </div>
       <div style="padding:12px;display:flex;align-items:center;gap:10px;">
         <div style="flex:1;min-width:0;">
