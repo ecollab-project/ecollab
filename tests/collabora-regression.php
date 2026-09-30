@@ -12,7 +12,7 @@ function check(bool $ok, string $label): void { if (!$ok) throw new RuntimeExcep
 function denied(callable $fn, int $code, string $label): void { try {$fn();} catch(RuntimeException $e) { check($e->getCode()===$code,$label);return;}throw new RuntimeException('FAIL: '.$label); }
 try {
     foreach(['collab_wopi_tokens','collab_document_versions','collab_resource_permissions','collab_workspace_members','collab_documents','collab_workspaces','server_members','servers','users'] as $t) $db->exec('DROP TABLE IF EXISTS '.$t);
-    $db->exec('CREATE TABLE users(id INT PRIMARY KEY,status VARCHAR(20)); INSERT INTO users VALUES(1,"active"),(2,"active"),(3,"active"),(4,"active"); CREATE TABLE servers(id INT PRIMARY KEY,status VARCHAR(20)); INSERT INTO servers VALUES(1,"active"); CREATE TABLE server_members(server_id INT,user_id INT,status VARCHAR(20)); INSERT INTO server_members VALUES(1,1,"active"),(1,2,"active"),(1,3,"active"),(1,4,"active")');
+    $db->exec('CREATE TABLE users(id INT PRIMARY KEY,status VARCHAR(20)); INSERT INTO users VALUES(1,"active"),(2,"active"),(3,"active"),(4,"active"); CREATE TABLE servers(id INT PRIMARY KEY,status VARCHAR(20)); INSERT INTO servers VALUES(1,"active"); CREATE TABLE server_members(server_id INT,user_id INT); INSERT INTO server_members VALUES(1,1),(1,2),(1,3),(1,4)');
     $db->exec('CREATE TABLE collab_workspaces(id INT PRIMARY KEY,server_id INT,host_id INT,visibility VARCHAR(20),archived INT); INSERT INTO collab_workspaces VALUES(1,1,1,"public",0); CREATE TABLE collab_workspace_members(workspace_id INT,user_id INT,role VARCHAR(20)); CREATE TABLE collab_resource_permissions(resource_type VARCHAR(20),resource_id INT,workspace_id INT,user_id INT,permission VARCHAR(20)); INSERT INTO collab_resource_permissions VALUES("document",1,1,2,"view"),("document",1,1,3,"edit")');
     $db->exec('CREATE TABLE collab_documents(id BIGINT UNSIGNED PRIMARY KEY,workspace_id INT,created_by INT,updated_by INT,visibility VARCHAR(20),public_permission VARCHAR(20),storage_path VARCHAR(500),file_type VARCHAR(20),version INT,updated_at DATETIME) ENGINE=InnoDB');
     $db->exec('INSERT INTO collab_documents VALUES(1,1,1,1,"public","edit","uploads/collab-docs/original.docx","docx",1,UTC_TIMESTAMP()),(2,1,1,1,"private","view","uploads/collab-docs/original.docx","docx",1,UTC_TIMESTAMP())');
@@ -37,8 +37,10 @@ try {
     check(!CollaboraService::authorize($db,1,$editor['token'])['write'],'live downgrade honored');
     $db->exec('UPDATE collab_resource_permissions SET permission="edit" WHERE user_id=2');
     check(!CollaboraService::authorize($db,1,$viewer['token'])['write'],'old viewer token cannot upgrade');
-    $db->exec('UPDATE server_members SET status="banned" WHERE user_id=3');
+    $db->exec('DELETE FROM server_members WHERE user_id=3');
     denied(fn()=>CollaboraService::authorize($db,1,$editor['token']),403,'removed server access honored');
+    $db->exec('INSERT INTO server_members VALUES(1,3); UPDATE users SET status="suspended" WHERE id=3');
+    denied(fn()=>CollaboraService::authorize($db,1,$editor['token']),403,'suspended account denied despite membership');
     $db->exec('UPDATE collab_wopi_tokens SET expires_at="2000-01-01"');
     denied(fn()=>CollaboraService::authorize($db,1,$viewer['token']),401,'expired token rejected');
     denied(fn()=>DocumentAccessService::path(['storage_path'=>'../outside.docx']),404,'file path confined to storage');

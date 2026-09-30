@@ -22,7 +22,7 @@ try {
     }
     if(($data['action']??'')!=='upload') throw new RuntimeException('Unknown action.',400);
     $w=CoworkspaceService::get($db,(int)($data['workspace_id']??0),$uid);
-    $s=$db->prepare('SELECT 1 FROM server_members sm JOIN users u ON u.id=sm.user_id WHERE sm.server_id=? AND sm.user_id=? AND sm.status="active" AND u.status IN ("active","offline","idle")');$s->execute([$w['server_id'],$uid]);
+    $s=$db->prepare('SELECT 1 FROM server_members sm JOIN users u ON u.id=sm.user_id WHERE sm.server_id=? AND sm.user_id=? AND u.status IN ("active","offline","idle")');$s->execute([$w['server_id'],$uid]);
     if(!$s->fetchColumn() || ((int)$w['allow_create_documents']!==1 && !in_array($w['member_role'],['host','editor'],true))) throw new RuntimeException('Upload not allowed.',403);
     $file=$_FILES['file']??[];
     if(($file['error']??UPLOAD_ERR_NO_FILE)!==UPLOAD_ERR_OK || ($file['size']??0)>25*1024*1024 || !is_uploaded_file($file['tmp_name']??'')) throw new RuntimeException('Upload a DOCX, XLSX or PPTX file up to 25 MB.',400);

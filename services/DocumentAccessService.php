@@ -19,7 +19,7 @@ final class DocumentAccessService
         $d = $s->fetch(PDO::FETCH_ASSOC);
         if (!$d) throw new RuntimeException('Document not found.', 404);
         $w = CoworkspaceService::get($db, (int)$d['workspace_id'], $uid);
-        $s = $db->prepare('SELECT 1 FROM server_members sm JOIN users u ON u.id=sm.user_id WHERE sm.server_id=? AND sm.user_id=? AND sm.status="active" AND u.status IN ("active","offline","idle")');
+        $s = $db->prepare('SELECT 1 FROM server_members sm JOIN users u ON u.id=sm.user_id WHERE sm.server_id=? AND sm.user_id=? AND u.status IN ("active","offline","idle")');
         $s->execute([(int)$w['server_id'], $uid]);
         if (!$s->fetchColumn()) throw new RuntimeException('Document access denied.', 403);
         $s = $db->prepare('SELECT permission FROM collab_resource_permissions WHERE resource_type="document" AND resource_id=? AND workspace_id=? AND user_id=?');
