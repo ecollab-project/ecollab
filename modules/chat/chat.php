@@ -200,7 +200,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     </div>
     <div class="workspace-sep workspace-brand-sep"></div>
     <?php foreach ($servers as $idx => $srv): ?>
-      <div class="workspace-icon<?= $idx === 0 ? ' active' : '' ?>"
+      <div class="workspace-icon<?= (int)$srv['id'] === (int)($firstServer['id'] ?? 0) ? ' active' : '' ?>"
         data-server-id="<?= (int)$srv['id'] ?>"
         data-ws="<?= $idx ?>"
         data-server-type="<?= htmlspecialchars((string)($srv['type'] ?? 'community')) ?>"
@@ -1098,8 +1098,8 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     7. dm-notifications.js — DM badge polling
   -->
   <script src="<?= BASE_URL ?>/assets/js/chat/socket.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=avatar-sync-3" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=avatar-sync-3" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=nav-state-2" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=nav-state-2" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=voice-isolation-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/whiteboard.js" defer></script>
@@ -3435,7 +3435,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <script src="<?= BASE_URL ?>/assets/js/chat/functionality-overrides.js" defer></script>
   <!-- Thread enhancements are loaded by functionality-overrides.js after threads-v2.js is ready. -->
   <script src="<?= BASE_URL ?>/assets/js/chat/collabs-ui.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/nav-persistence.js?v=1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/nav-persistence.js?v=2" defer></script>
 </body>
 
 <!-- ── FLASHCARD MODALS ── -->

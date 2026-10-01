@@ -880,7 +880,7 @@ window._notifyDraftChange = function () {
 function _restoreChatNavView() {
   let saved = null;
   try {
-    saved = localStorage.getItem(ECOLLAB_CHAT_NAV_STATE_KEY);
+    saved = new URLSearchParams(window.location.search).get('view') || localStorage.getItem(ECOLLAB_CHAT_NAV_STATE_KEY);
   } catch (_) {}
 
   if (!saved || saved === 'home') {
@@ -908,6 +908,7 @@ const ECOLLAB_CHAT_NAV_STATE_KEY = 'ecollab.chat.activeView';
 function _saveChatNavView(viewName) {
   const view = String(viewName || '').trim();
   if (!view) return;
+  window.saveChatLocation?.({view});
   try {
     localStorage.setItem(ECOLLAB_CHAT_NAV_STATE_KEY, view);
   } catch (_) {}
