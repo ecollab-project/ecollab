@@ -134,6 +134,8 @@ class ChatServer implements MessageComponentInterface
             'dm_typing' => $this->handleDmTyping($from, $data, $meta),
             'dm_group_message' => $this->handleDmGroupMessage($from, $data, $meta),
             'dm_group_typing' => $this->handleDmGroupTyping($from, $data, $meta),
+            'dm_group_call_start' => DmHandler::handleDmGroupCallSignal($from, $data, $meta, $this->userConns, $this->db, 'dm_group_call_start'),
+            'dm_group_call_busy' => DmHandler::handleDmGroupCallSignal($from, $data, $meta, $this->userConns, $this->db, 'dm_group_call_busy'),
             'notify_conn_req' => $this->handleNotifyConnReq($from, $data, $meta),
             'notify_conn_accepted' => $this->handleNotifyConnAccepted($from, $data, $meta),
             'voice_invite' => $this->handleVoiceInvite($from, $data, $meta),
@@ -477,3 +479,4 @@ class ChatServer implements MessageComponentInterface
 }
 
 if(PHP_SAPI==='cli'&&isset($_SERVER['SCRIPT_FILENAME'])&&realpath($_SERVER['SCRIPT_FILENAME'])===realpath(__FILE__)){$options=getopt('',['port::','host::']);$port=(int)($options['port']??getenv('WS_PORT')?:8080);$host=$options['host']??getenv('WS_HOST')?:'0.0.0.0';$loop=\React\EventLoop\Loop::get();$chat=new ChatServer();$server=\Ratchet\Server\IoServer::factory(new \Ratchet\Http\HttpServer(new \Ratchet\WebSocket\WsServer($chat)),$port,$host);$loop->addPeriodicTimer(0.2,static function()use($chat):void{$chat->drainRelayTable();$chat->persistDirtyCodeSessions();});echo "Ecollab WebSocket server running on {$host}:{$port}\n";$server->run();}
+

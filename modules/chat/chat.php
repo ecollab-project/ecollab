@@ -763,6 +763,13 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         </div>
       </div>
       <div class="vc-bar-grp center">
+        <button class="vc-ctrl-btn vc-unwatch-btn" id="vcUnwatchBtn" type="button" onclick="unwatchAllScreens()" title="Unwatch Screen Share" style="display:none;">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2H4C2.9 4 2 4.9 2 6v10c0 1.1.9 2 2 2h6v2H7v2h10v-2h-3v-2h6ZM4 6h16v10H4V6Z"/>
+            <path d="M7.4 7.4 16.6 16.6M16.6 7.4 7.4 16.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <span class="vc-ctrl-tooltip">Unwatch</span>
+        </button>
         <div class="vc-btn-lg mic-btn" id="vcMicBtn" onclick="toggleVcMic()">
           <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
@@ -1100,11 +1107,13 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     6. whiteboard.js — collaborative whiteboard
     7. dm-notifications.js — DM badge polling
   -->
-  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=livekit-merge-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=nav-state-2" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=nav-state-2" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=voice-isolation-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=livekit-merge-1" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/livekit-voice.js?v=livekit-merge-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/whiteboard.js" defer></script>
   <!-- ── Private Channel Manager Modal ────────────────────────────────── -->
   <div id="privateChannelManagerModal" style="display:none!important;position:fixed;inset:0;z-index:11000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this)closePrivateChannelManager()">
@@ -1152,7 +1161,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </div>
 
   <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/dm-call.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/dm-call.js?v=livekit-merge-1" defer></script>
   <!--
     Collab tools load order:
     ot-engine.js        — pure OT algorithm (no deps, must come first)
@@ -3542,3 +3551,4 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 </body>
 
 </html>
+
