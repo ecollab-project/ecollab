@@ -32,7 +32,8 @@ function h($v){return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8');}
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <?php if($scope==='facilitator'):?><link rel="stylesheet" href="<?=BASE_URL?>/assets/css/desktop/facilitator-dashboard.css"><?php else:?><link rel="stylesheet" href="<?=BASE_URL?>/assets/css/desktop/admin-dashboard.css"><?php endif;?>
-<link rel="stylesheet" href="<?=BASE_URL?>/assets/css/desktop/server-monitor.css"><link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=2">
+<link rel="stylesheet" href="<?=BASE_URL?>/assets/css/desktop/server-monitor.css"><link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=1">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=2">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 </head>
 <body data-mobile-surface="dashboard" class="server-monitor-page <?= $scope==='facilitator'?'facilitator-monitor':'admin-monitor' ?>">

@@ -51,6 +51,7 @@ $stats = $dashData['stats'] ?? [
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/admin-dashboard.css">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/dashboard-mobile.css">
   <script>window.ECOLLAB_BASE = <?= json_encode(BASE_URL) ?>;</script>
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=1">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=2">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 </head>

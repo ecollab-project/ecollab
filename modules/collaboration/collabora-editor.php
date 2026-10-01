@@ -32,7 +32,8 @@ try {
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?=coEscape($d['title'])?> · eCollab</title>
 <style nonce="<?=$nonce?>">
 *{box-sizing:border-box}body{margin:0;background:#111827;color:#eef2ff;font:14px system-ui}header{display:flex;align-items:center;gap:16px;padding:12px 18px;flex-wrap:wrap}h1{font-size:17px;margin:0;flex:1}a{color:#a5b4fc}button,select,textarea,input{font:inherit;padding:9px;border:1px solid #475569;border-radius:6px}button{cursor:pointer;background:#818cf8;color:#111827}main{display:flex;height:calc(100dvh - 70px)}iframe{flex:1;border:0;background:white;min-width:0}aside{width:320px;overflow:auto;padding:16px;background:#1e293b}textarea{width:100%;min-height:160px;background:#0f172a;color:white;margin:12px 0}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit}small{color:#cbd5e1}details{margin:20px 0}#notice{padding:8px;color:#fcd34d}@media(max-width:750px){main{flex-direction:column;height:auto}iframe{height:75dvh;flex:auto}aside{width:100%}}
-</style><link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=2">
+</style><link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=1">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=2">
 <script nonce="<?=$nonce?>" defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 </head><body data-mobile-surface="editor">
 <header><a href="<?=coEscape($backUrl)?>">← Coworkspace</a><h1><?=coEscape($d['title'])?></h1><span><?=coEscape($a['permission'])?></span><a href="<?=coEscape(BASE_URL)?>/API/collaboration/document-download.php?id=<?=$id?>">Download</a></header>
