@@ -32,8 +32,9 @@ function h($v){return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8');}
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <?php if($scope==='facilitator'):?><link rel="stylesheet" href="<?=BASE_URL?>/assets/css/desktop/facilitator-dashboard.css"><?php else:?><link rel="stylesheet" href="<?=BASE_URL?>/assets/css/desktop/admin-dashboard.css"><?php endif;?>
-<link rel="stylesheet" href="<?=BASE_URL?>/assets/css/desktop/server-monitor.css"></head>
-<body class="server-monitor-page <?= $scope==='facilitator'?'facilitator-monitor':'admin-monitor' ?>">
+<link rel="stylesheet" href="<?=BASE_URL?>/assets/css/desktop/server-monitor.css"><link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=1">
+</head>
+<body data-mobile-surface="dashboard" class="server-monitor-page <?= $scope==='facilitator'?'facilitator-monitor':'admin-monitor' ?>">
 <?php $activePage=$scope==='facilitator'?'servermonitoring':'servers'; if($scope==='facilitator'){include ROOT_PATH.'/includes/layout/sidebar-facilitator.php';}else{include ROOT_PATH.'/includes/layout/sidebar-admin.php';} ?>
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <div class="main-content monitor-main">

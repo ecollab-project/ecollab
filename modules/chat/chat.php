@@ -173,9 +173,10 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       }
     }
   </style>
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=1">
 </head>
 
-<body>
+<body data-mobile-surface="chat">
 
   <!-- MOBILE OVERLAY -->
   <div class="mobile-overlay" id="mobileOverlay" onclick="closeSidebar()"></div>

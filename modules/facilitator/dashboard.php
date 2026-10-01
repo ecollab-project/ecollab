@@ -64,9 +64,10 @@ $facOwnedServers = array_values(array_filter(
   <script>
     window.ECOLLAB_BASE = <?= json_encode(BASE_URL) ?>;
   </script>
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=1">
 </head>
 
-<body>
+<body data-mobile-surface="dashboard">
 
   <?php $activePage = $activePage;
   include ROOT_PATH . '/includes/layout/sidebar-facilitator.php'; ?>

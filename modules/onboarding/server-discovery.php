@@ -36,8 +36,9 @@ $initials = strtoupper(mb_substr($firstName, 0, 1));
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/variables.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/onboarding.css">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=1">
 </head>
-<body>
+<body data-mobile-surface="forms">
 
   <canvas id="particles"></canvas>
   <div class="orb orb1"></div>

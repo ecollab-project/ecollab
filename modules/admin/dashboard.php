@@ -51,8 +51,9 @@ $stats = $dashData['stats'] ?? [
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/admin-dashboard.css">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/dashboard-mobile.css">
   <script>window.ECOLLAB_BASE = <?= json_encode(BASE_URL) ?>;</script>
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=1">
 </head>
-<body>
+<body data-mobile-surface="dashboard">
 
 <?php include ROOT_PATH . '/includes/layout/sidebar-admin.php'; ?>
 

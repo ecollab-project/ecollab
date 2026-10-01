@@ -23,7 +23,7 @@ try {
     }
     $nonce = bin2hex(random_bytes(16));
     $origin = CollaboraService::origin($url);
-    header("Content-Security-Policy: default-src 'self'; script-src 'nonce-$nonce'; style-src 'nonce-$nonce'; frame-src $origin; form-action $origin; object-src 'none'; base-uri 'none'; frame-ancestors 'self'");
+    header("Content-Security-Policy: default-src 'self'; script-src 'nonce-$nonce'; style-src 'self' 'nonce-$nonce'; frame-src $origin; form-action $origin; object-src 'none'; base-uri 'none'; frame-ancestors 'self'");
 } catch (Throwable $e) {
     http_response_code(in_array($e->getCode(), [403,404], true) ? $e->getCode() : 503);
     exit('The editor is unavailable. Check document access and the Collabora configuration.');
@@ -32,7 +32,8 @@ try {
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?=coEscape($d['title'])?> · eCollab</title>
 <style nonce="<?=$nonce?>">
 *{box-sizing:border-box}body{margin:0;background:#111827;color:#eef2ff;font:14px system-ui}header{display:flex;align-items:center;gap:16px;padding:12px 18px;flex-wrap:wrap}h1{font-size:17px;margin:0;flex:1}a{color:#a5b4fc}button,select,textarea,input{font:inherit;padding:9px;border:1px solid #475569;border-radius:6px}button{cursor:pointer;background:#818cf8;color:#111827}main{display:flex;height:calc(100dvh - 70px)}iframe{flex:1;border:0;background:white;min-width:0}aside{width:320px;overflow:auto;padding:16px;background:#1e293b}textarea{width:100%;min-height:160px;background:#0f172a;color:white;margin:12px 0}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit}small{color:#cbd5e1}details{margin:20px 0}#notice{padding:8px;color:#fcd34d}@media(max-width:750px){main{flex-direction:column;height:auto}iframe{height:75dvh;flex:auto}aside{width:100%}}
-</style></head><body>
+</style><link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=1">
+</head><body data-mobile-surface="editor">
 <header><a href="<?=coEscape($backUrl)?>">← Coworkspace</a><h1><?=coEscape($d['title'])?></h1><span><?=coEscape($a['permission'])?></span><a href="<?=coEscape(BASE_URL)?>/API/collaboration/document-download.php?id=<?=$id?>">Download</a></header>
 <?php if ($a['permission'] === 'comment'): ?><div id="notice">Comment permission currently opens as view-only in Collabora.</div><?php endif ?>
 <main><iframe name="office" title="Collaborative document editor" allow="clipboard-read; clipboard-write; fullscreen"></iframe><aside>

@@ -29,9 +29,10 @@ $resetSuccess = ($_GET['reset'] ?? '') === '1';
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/variables.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/auth.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/auth-mobile.css">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=1">
 </head>
 
-<body>
+<body data-mobile-surface="forms">
 
   <!-- Blobs -->
   <div class="orb orb1"></div>
