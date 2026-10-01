@@ -12,6 +12,7 @@ try {
     if (!CollaboraService::enabled()) throw new RuntimeException('Collabora is disabled.', 404);
     $db = Database::getInstance(); $id = (int)($_GET['id'] ?? 0);
     $a = DocumentAccessService::get($db, $id, (int)$user['id']); $d = $a['document'];
+    $backUrl = BASE_URL . '/modules/collaboration/server-coworkspaces.php?server_id=' . (int)$a['workspace']['server_id'] . '&channel_id=' . (int)$a['workspace']['channel_id'];
     $url = CollaboraService::editorUrl($d['file_type'], $a['permission'] === 'edit', $id);
     $issued = CollaboraService::issue($db, $id, (int)$user['id']);
     $csrf = AuthMiddleware::csrfToken();
@@ -32,7 +33,7 @@ try {
 <style nonce="<?=$nonce?>">
 *{box-sizing:border-box}body{margin:0;background:#111827;color:#eef2ff;font:14px system-ui}header{display:flex;align-items:center;gap:16px;padding:12px 18px;flex-wrap:wrap}h1{font-size:17px;margin:0;flex:1}a{color:#a5b4fc}button,select,textarea,input{font:inherit;padding:9px;border:1px solid #475569;border-radius:6px}button{cursor:pointer;background:#818cf8;color:#111827}main{display:flex;height:calc(100dvh - 70px)}iframe{flex:1;border:0;background:white;min-width:0}aside{width:320px;overflow:auto;padding:16px;background:#1e293b}textarea{width:100%;min-height:160px;background:#0f172a;color:white;margin:12px 0}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit}small{color:#cbd5e1}details{margin:20px 0}#notice{padding:8px;color:#fcd34d}@media(max-width:750px){main{flex-direction:column;height:auto}iframe{height:75dvh;flex:auto}aside{width:100%}}
 </style></head><body>
-<header><a href="<?=coEscape(BASE_URL)?>/modules/collaboration/coworkspace.php?id=<?=(int)$d['workspace_id']?>">eCollab</a><h1><?=coEscape($d['title'])?></h1><span><?=coEscape($a['permission'])?></span><a href="<?=coEscape(BASE_URL)?>/API/collaboration/document-download.php?id=<?=$id?>">Download</a></header>
+<header><a href="<?=coEscape($backUrl)?>">← Coworkspace</a><h1><?=coEscape($d['title'])?></h1><span><?=coEscape($a['permission'])?></span><a href="<?=coEscape(BASE_URL)?>/API/collaboration/document-download.php?id=<?=$id?>">Download</a></header>
 <?php if ($a['permission'] === 'comment'): ?><div id="notice">Comment permission currently opens as view-only in Collabora.</div><?php endif ?>
 <main><iframe name="office" title="Collaborative document editor" allow="clipboard-read; clipboard-write; fullscreen"></iframe><aside>
 <?php if (env('DOCUMENT_ML_ENABLED','false')==='true'): ?><details><summary>Related documents</summary><small>Compare titles of documents you can access in this workspace.</small><p><button id="related">Find related files</button></p><div id="related-result" role="status"></div></details><?php endif ?>
