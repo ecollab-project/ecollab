@@ -68,6 +68,9 @@ function initWebSocket() {
       if (chatSocket !== socket) return;
       let data;
       try { data = JSON.parse(event.data); } catch { return; }
+      if (typeof data?.type === 'string' && data.type.startsWith('dm_group_call_')) {
+        console.log('[DM group call] received WS event', data);
+      }
       handleSocketMessage(data);
     };
 
@@ -145,7 +148,7 @@ function handleSocketMessage(data) {
       _socketAuthenticated = true;
       console.log('[WS] Authenticated as user', data.user_id);
       // Join current channel if any
-      if (window.ECOLLAB?.currentChannelId) {
+      if (window.ECOLLAB?.currentChannelId && !window.ECOLLAB?.whiteboardStandalone) {
         chatSocket.send(JSON.stringify({
           type: 'join_channel',
           channel_id: window.ECOLLAB.currentChannelId,
@@ -202,6 +205,20 @@ function handleSocketMessage(data) {
     // ── DM group voice (reuses the real voice-channel mesh) ──
     case 'dm_group_voice_start':
       if (window._onDmGroupVoiceStart) window._onDmGroupVoiceStart(data);
+      break;
+    case 'dm_group_call_start':
+      if (window._onDmGroupCallStart) {
+        window._onDmGroupCallStart(data);
+      } else {
+        console.error('[DM group call] invite arrived before popup handler loaded; queueing it', data);
+        window.__pendingDmGroupCallInvite = data;
+      }
+      break;
+    case 'dm_group_call_busy':
+      if (window._onDmGroupCallBusy) window._onDmGroupCallBusy(data);
+      break;
+    case 'dm_group_call_invite_sent':
+      console.log('[DM group call] server delivered invite to', Number(data.delivered || 0), 'socket(s)', data);
       break;
 
     // ── DM voice/video call signaling ──
@@ -781,6 +798,7 @@ let pollInterval    = null;
 let lastMessageId   = 0;
 
 function startPollingFallback() {
+  if (window.ECOLLAB?.whiteboardStandalone) return;
   if (pollInterval) return;
   console.info('[WS] Starting polling fallback (3 s interval)');
   pollInterval = setInterval(async () => {
@@ -864,3 +882,4 @@ if (document.readyState === 'loading') {
 } else {
   connectWebSocket();
 }
+

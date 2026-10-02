@@ -69,7 +69,7 @@
   }
 
   function restore() {
-    const savedView = get(VIEW_KEY);
+    const savedView = new URLSearchParams(window.location.search).get('view') || get(VIEW_KEY);
 
     // The global chat view is authoritative. Do not let the old Threads-only
     // restore state override Home, Mentions, Bookmarks, or Drafts.

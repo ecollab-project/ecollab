@@ -1,0 +1,125 @@
+:root { --app-viewport-height: 100vh; --app-viewport-top: 0px; }
+@supports (height: 100dvh) { :root { --app-viewport-height: 100dvh; } }
+/* Shared mobile finish. Desktop layout and feature visibility stay with each page. */
+@media (max-width: 860px) {
+  body[data-mobile-surface] { --mobile-gap: 12px; -webkit-text-size-adjust: 100%; }
+  body[data-mobile-surface] :is(button, input, select, textarea) { box-sizing: border-box; }
+  body[data-mobile-surface] :is(button, [role="button"], .btn, .navbtn, .nav-item, .sidebar-nav-item, .channel-item, .voice-channel) { min-height: 44px; touch-action: manipulation; }
+  body[data-mobile-surface] :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea) { font-size: 16px; max-width: 100%; }
+  body[data-mobile-surface] :is(button, a, input, select, textarea):focus-visible { outline: 2px solid #a78bfa; outline-offset: 3px; }
+  body[data-mobile-surface] :is(.card, .panel, .form-group, .field, .main, .main-content, .page-content) { min-width: 0; }
+  body[data-mobile-surface] :is(.modal-overlay, .modal-backdrop) { padding: max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom)) !important; }
+  body[data-mobile-surface] :is(.modal, .modal-box, .modal-card, .pm-shell, .wb-manage-box) { box-sizing: border-box; width: min(100%, 620px) !important; max-width: 100% !important; max-height: calc(var(--app-viewport-height, 100vh) - 32px) !important; margin: 0; border-radius: 20px !important; overflow-y: auto; overscroll-behavior: contain; }
+  body[data-mobile-surface] :is(.modal-body, .modal-content, #pmModalBody) { min-height: 0; overflow-y: auto; }
+  body[data-mobile-surface] :is(.modal-header, .modal-footer, .pm-header) { flex-shrink: 0; padding: 14px; gap: 10px; }
+  body[data-mobile-surface] :is(.modal-footer, .form-row, .actions) { flex-wrap: wrap; }
+  body[data-mobile-surface] :is(.modal-close, .header-icon-btn) { min-width: 44px; min-height: 44px; }
+  body[data-mobile-surface] :is(.tabs, .filter-tabs, .pm-tab-bar, .collab-tab-bar) { overflow-x: auto; max-width: 100%; flex-wrap: nowrap; scrollbar-width: thin; }
+  body[data-mobile-surface] :is(.tab, .filter-tab, .pm-tab-btn, .collab-tab-btn) { flex: 0 0 auto; min-width: 76px; min-height: 44px; font-size: 12px; white-space: nowrap; }
+  body[data-mobile-surface] :is(.table-wrap, .act-table-wrap, .responsive-table) { overflow-x: auto; max-width: 100%; overscroll-behavior-x: contain; }
+
+  /* Chat: drawer navigation, two-row toolbar, and a composer with every action. */
+  body[data-mobile-surface="chat"] { height: var(--app-viewport-height, 100vh); overflow: hidden; --workspace-width: 60px; }
+  body[data-mobile-surface="chat"] .mobile-topbar { height: calc(52px + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); box-sizing: border-box; }
+  body[data-mobile-surface="chat"] :is(.workspace-switcher, .sidebar-left) { top: calc(52px + env(safe-area-inset-top)); height: calc(var(--app-viewport-height, 100vh) - 52px - env(safe-area-inset-top)); padding-bottom: env(safe-area-inset-bottom); box-sizing: border-box; }
+  body[data-mobile-surface="chat"] .sidebar-left { width: min(280px, calc(100vw - 60px)); }
+  body[data-mobile-surface="chat"] .workspace-switcher { width: 60px; }
+  body[data-mobile-surface="chat"] .workspace-icon { flex-shrink: 0; }
+  body[data-mobile-surface="chat"] :is(.chat-main, #navViewOverlay) { min-width: 0; width: 100%; height: calc(var(--app-viewport-height, 100vh) - 52px - env(safe-area-inset-top)) !important; margin-top: calc(52px + env(safe-area-inset-top)); }
+  body[data-mobile-surface="chat"] .chat-header { height: auto; min-height: 100px; flex-wrap: wrap; padding: 10px 12px; gap: 8px; flex-shrink: 0; }
+  body[data-mobile-surface="chat"] .chat-header > div:first-child { flex-basis: 100% !important; }
+  body[data-mobile-surface="chat"] .chat-header > div:last-child { flex-wrap: wrap; gap: 4px; }
+  body[data-mobile-surface="chat"] :is(.header-search, .header-members, .ai-assist-btn, .find-partner-btn) { display: inline-flex; align-items: center; justify-content: center; }
+  body[data-mobile-surface="chat"] .messages-area { flex: 1; min-height: 0; padding: 14px 12px; overscroll-behavior: contain; }
+  body[data-mobile-surface="chat"] :is(.msg-content, .msg-text, .message-content) { min-width: 0; overflow-wrap: anywhere; }
+  body[data-mobile-surface="chat"] .msg-text { font-size: 14px; line-height: 1.6; }
+  body[data-mobile-surface="chat"] .chat-input-wrapper { flex-shrink: 0; padding: 8px 10px max(10px, env(safe-area-inset-bottom)); }
+  body[data-mobile-surface="chat"] .chat-input-actions { flex-wrap: wrap; gap: 6px; padding: 8px; }
+  body[data-mobile-surface="chat"] :is(.ai-assist-btn, .find-partner-btn, .send-btn) { font-size: 12px; padding: 8px 12px; border-radius: 12px; }
+  body[data-mobile-surface="chat"] .notif-dropdown { position: fixed; top: calc(160px + env(safe-area-inset-top)); left: 10px; right: 10px; width: auto; max-height: calc(var(--app-viewport-height, 100vh) - 190px); overflow-y: auto; }
+  body[data-mobile-surface="chat"] :is(.emoji-picker, .attach-menu, .extras-menu) { max-width: calc(100vw - 24px); max-height: calc(var(--app-viewport-height, 100vh) * .5); overflow-y: auto; }
+  body[data-mobile-surface="chat"] #collabHub { width: 100%; max-width: 100%; height: var(--app-viewport-height, 100vh); padding-bottom: env(safe-area-inset-bottom); box-sizing: border-box; }
+  body[data-mobile-surface="chat"] .pm-search-filters { grid-template-columns: minmax(0, 1fr); }
+  body[data-mobile-surface="chat"] .pm-search-row { flex-wrap: wrap; }
+  body[data-mobile-surface="chat"] .pm-search-info { flex: 1; min-width: 120px; }
+  body[data-mobile-surface="chat"] .voice-channel-view:not(.vc-minimized) { height: var(--app-viewport-height, 100vh); }
+  body[data-mobile-surface="chat"] .voice-channel-view:not(.vc-minimized) .vc-controls-bar { height: auto; min-height: 76px; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 10px 8px max(10px, env(safe-area-inset-bottom)); }
+  body[data-mobile-surface="chat"] .voice-channel-view:not(.vc-minimized) :is(#vcBoostBtnNew, #vcHandBtnNew) { display: inline-flex; }
+  body[data-mobile-surface="chat"] .vc-ctrl-btn { min-width: 44px; min-height: 44px; }
+  body[data-mobile-surface="chat"] .voice-channel-view.vc-minimized { max-width: calc(100vw - 24px); right: 12px; }
+
+  /* Dashboards: keep search and data reachable, give dense cards room to breathe. */
+  body[data-mobile-surface="dashboard"] :is(.header, .topbar) { flex-wrap: wrap; height: auto; gap: 10px; padding: 12px 16px; }
+  body[data-mobile-surface="dashboard"] :is(.search-wrap, .tb-search) { display: flex; order: 3; flex: 1 0 100%; width: 100%; }
+  body[data-mobile-surface="dashboard"] :is(.content, .page-content) { padding: 18px 14px max(24px, env(safe-area-inset-bottom)); }
+  body[data-mobile-surface="dashboard"] :is(.card, .sc-card, .stat-card) { border-radius: 18px; }
+  body[data-mobile-surface="dashboard"] :is(.main-grid, .grid-2, .analytics-grid, .info-grid, .roles-grid) { grid-template-columns: minmax(0, 1fr) !important; gap: 14px; }
+  body[data-mobile-surface="dashboard"] :is(.card-header, .filter-bar, .srv-right) { flex-wrap: wrap; gap: 10px; }
+  body[data-mobile-surface="dashboard"] .sidebar { max-width: calc(100vw - 44px); padding-bottom: env(safe-area-inset-bottom); }
+
+  /* Coworkspaces, personal files, and library. */
+  body[data-mobile-surface="coworkspace"] .shell { padding: 16px 12px max(24px, env(safe-area-inset-bottom)); }
+  body[data-mobile-surface="coworkspace"] .top { flex-wrap: wrap; gap: 12px; }
+  body[data-mobile-surface="coworkspace"] .layout { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  body[data-mobile-surface="coworkspace"] .side { display: flex; gap: 6px; overflow-x: auto; padding: 8px; }
+  body[data-mobile-surface="coworkspace"] .side :is(.label, .server) { display: none; }
+  body[data-mobile-surface="coworkspace"] .nav-item { flex: 0 0 auto; width: auto; white-space: nowrap; border-radius: 12px; }
+  body[data-mobile-surface="coworkspace"] .main { padding: 16px; border-radius: 20px; }
+  body[data-mobile-surface="coworkspace"] .title { flex-wrap: wrap; gap: 10px; }
+  body[data-mobile-surface="coworkspace"] :is(.grid, .access-grid) { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  body[data-mobile-surface="coworkspace"] .card { padding: 18px; border-radius: 16px; }
+  body[data-mobile-surface="coworkspace"] :is(.doc-title, .meta, .perm-row span) { overflow-wrap: anywhere; }
+  body[data-mobile-surface="coworkspace"] :is(.invite, .perm-row, .invite-item) { flex-wrap: wrap; gap: 10px; }
+  body[data-mobile-surface="coworkspace"] .perm-row > span:first-child { flex-basis: 100%; }
+  body[data-mobile-surface="library"] .lib-shell { padding: 18px 14px max(28px, env(safe-area-inset-bottom)); }
+  body[data-mobile-surface="library"] .lib-top { align-items: flex-start; flex-wrap: wrap; gap: 12px; }
+  body[data-mobile-surface="library"] .lib-tabs { overflow-x: auto; padding-bottom: 4px; }
+  body[data-mobile-surface="library"] .lib-tab { flex-shrink: 0; }
+  body[data-mobile-surface="library"] .lib-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  body[data-mobile-surface="library"] .lib-placeholder { min-width: 0; overflow-wrap: anywhere; border-radius: 16px; }
+  body[data-mobile-surface="library"] .lib-placeholder img { height: 180px !important; object-fit: contain !important; }
+  body[data-mobile-surface="library"] .lib-placeholder a { display: inline-flex !important; align-items: center; min-height: 44px; }
+
+  /* Settings: scrollable navigation followed by full-width settings. */
+  body[data-mobile-surface="settings"] .shell { flex-direction: column; }
+  body[data-mobile-surface="settings"] .nav { position: static; width: 100%; height: auto; flex: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 12px; }
+  body[data-mobile-surface="settings"] .nav .brand { width: 100%; padding: 4px 8px 10px; }
+  body[data-mobile-surface="settings"] .navbtn { width: auto; flex: 1 0 auto; text-align: center; border: 1px solid var(--line); }
+  body[data-mobile-surface="settings"] .nav :is(.group, .divider) { width: 100%; }
+  body[data-mobile-surface="settings"] .inner { padding: 22px 14px; }
+  body[data-mobile-surface="settings"] .grid { grid-template-columns: minmax(0, 1fr); }
+  body[data-mobile-surface="settings"] .row { flex-wrap: wrap; gap: 12px; }
+
+  /* Editor shell only; Collabora owns the responsive document toolbar. */
+  body[data-mobile-surface="editor"] { overflow-y: auto; }
+  body[data-mobile-surface="editor"] > header { gap: 10px; padding: 12px; }
+  body[data-mobile-surface="editor"] > header h1 { flex: 1 0 55%; overflow-wrap: anywhere; }
+  body[data-mobile-surface="editor"] > header a { min-height: 44px; display: inline-flex; align-items: center; }
+  body[data-mobile-surface="editor"] > main { display: flex; flex-direction: column; height: auto; }
+  body[data-mobile-surface="editor"] > main > iframe { width: 100%; height: calc(var(--app-viewport-height, 100vh) * .75); min-height: 340px; flex: none; }
+  body[data-mobile-surface="editor"] > main > aside { width: 100%; box-sizing: border-box; padding: 20px 16px max(24px, env(safe-area-inset-bottom)); }
+  body[data-mobile-surface="editor"] aside :is(input, select, button) { max-width: 100%; }
+  body[data-mobile-surface="whiteboard"] .wb-hdr { height: 60px; min-height: 60px; gap: 6px; }
+  body[data-mobile-surface="whiteboard"] #excalidraw-root { inset: 60px 0 28px !important; }
+  body[data-mobile-surface="whiteboard"] .wb-page-back { width: 44px; height: 44px; flex-shrink: 0; }
+  body[data-mobile-surface="whiteboard"] .wb-page-btn { min-height: 44px; font-size: 12px; }
+  body[data-mobile-surface="whiteboard"] .wb-hdr-titles { display: block; min-width: 0; max-width: none; flex: 1; }
+  body[data-mobile-surface="whiteboard"] .wb-hdr-logo { display: none; }
+  body[data-mobile-surface="whiteboard"] .wb-hdr-right { flex-shrink: 0; }
+}
+@media (max-width: 380px) {
+  body[data-mobile-surface="library"] .lib-grid { grid-template-columns: minmax(0, 1fr); }
+  body[data-mobile-surface="chat"] .chat-header { padding-inline: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body[data-mobile-surface] :is(.sidebar, .sidebar-left, .workspace-switcher, .modal, .pm-shell) { transition: none !important; animation: none !important; }
+}
+
+@media (max-width: 860px) {
+  body[data-mobile-surface="chat"] { position: fixed; top: var(--app-viewport-top); left: 0; right: 0; margin: 0; }
+  body[data-mobile-surface="chat"] .mobile-topbar { top: var(--app-viewport-top); }
+  body[data-mobile-surface="chat"] :is(.workspace-switcher, .sidebar-left) { top: calc(var(--app-viewport-top) + 52px + env(safe-area-inset-top)); }
+  body[data-mobile-surface] :is(.modal-overlay, .modal-backdrop, .wb-manage-modal) { top: var(--app-viewport-top); bottom: auto; height: var(--app-viewport-height); box-sizing: border-box; }
+  body[data-mobile-surface="chat"] :is(#collabHub, .voice-channel-view:not(.vc-minimized)) { top: var(--app-viewport-top); bottom: auto; }
+  body[data-mobile-surface="whiteboard"] #wbOverlay { height: var(--app-viewport-height) !important; top: var(--app-viewport-top) !important; }
+}

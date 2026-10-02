@@ -50,9 +50,12 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
   <script>
     window.ECOLLAB_BASE = <?= json_encode(BASE_URL) ?>;
   </script>
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=1">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=2">
+<script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 </head>
 
-<body>
+<body data-mobile-surface="dashboard">
 
   <?php include ROOT_PATH . '/includes/layout/sidebar-student.php'; ?>
 

@@ -95,7 +95,7 @@ class ChatServer implements MessageComponentInterface
             'join_channel','message','message_edited','message_deleted','message_pinned',
             'collab_note_cursor','collab_note_presence','typing','presence','channel_seen',
             'draft_save','thread_reply','mention','join_voice','whiteboard_sync','wb_join',
-            'wb_op','wb_cursor','wb_state_save','wb_request_state','screen_share_notify',
+            'wb_op','wb_cursor','wb_leave','wb_state_save','wb_request_state','screen_share_notify',
             'webrtc_offer','webrtc_answer','webrtc_candidate',
         ];
         if (in_array($type, $channelScopedTypes, true) && !$this->authorizeChannelMessage($from, $data, $meta)) return;
@@ -134,6 +134,8 @@ class ChatServer implements MessageComponentInterface
             'dm_typing' => $this->handleDmTyping($from, $data, $meta),
             'dm_group_message' => $this->handleDmGroupMessage($from, $data, $meta),
             'dm_group_typing' => $this->handleDmGroupTyping($from, $data, $meta),
+            'dm_group_call_start' => DmHandler::handleDmGroupCallSignal($from, $data, $meta, $this->userConns, $this->db, 'dm_group_call_start'),
+            'dm_group_call_busy' => DmHandler::handleDmGroupCallSignal($from, $data, $meta, $this->userConns, $this->db, 'dm_group_call_busy'),
             'notify_conn_req' => $this->handleNotifyConnReq($from, $data, $meta),
             'notify_conn_accepted' => $this->handleNotifyConnAccepted($from, $data, $meta),
             'voice_invite' => $this->handleVoiceInvite($from, $data, $meta),
@@ -263,6 +265,16 @@ class ChatServer implements MessageComponentInterface
         $channelId=$isWb?(int)($meta['wb_channel_id']??0):(int)($data['channel_id']??$meta['channel_id']??$meta['voice_channel_id']??$meta['wb_channel_id']??0);
         $userId=(int)($meta['user_id']??0);
         if($channelId<=0||$userId<=0){$conn->send(json_encode(['type'=>'error','message'=>'Channel access denied']));return false;}
+        // Coworkspace boards are resources, not subscriptions to the parent chat.
+        // After joining, trust only the room bound to this connection.
+        $whiteboardId=$isWb?(int)($meta['wb_whiteboard_id']??0):(int)($data['whiteboard_id']??0);
+        if(($isWb||($data['type']??'')==='wb_join')&&$whiteboardId>0){
+            try{
+                if($this->wbHandler->authorize($channelId,$userId,$whiteboardId)!==null)return true;
+            }catch(\Throwable $e){error_log('[WS] whiteboard authorization failed: '.$e->getMessage());}
+            $conn->send(json_encode(['type'=>'error','message'=>'Whiteboard access denied','whiteboard_id'=>$whiteboardId]));
+            return false;
+        }
         try{$stmt=$this->db->prepare("SELECT c.is_private,c.is_locked,u.role,sm.user_id AS server_member_id,cm.user_id AS channel_member_id FROM channels c JOIN users u ON u.id=:uid_user AND u.deleted_at IS NULL LEFT JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid_server LEFT JOIN channel_members cm ON cm.channel_id=c.id AND cm.user_id=:uid_channel WHERE c.id=:cid AND c.type IN ('text','announcement','voice','whiteboard','study_room') LIMIT 1");$stmt->execute([':uid_user'=>$userId,':uid_server'=>$userId,':uid_channel'=>$userId,':cid'=>$channelId]);$channel=$stmt->fetch();}catch(\Throwable $e){error_log('[WS] channel authorization failed: '.$e->getMessage());$conn->send(json_encode(['type'=>'error','message'=>'Channel access denied']));return false;}
         if(!$channel){$conn->send(json_encode(['type'=>'error','message'=>'Channel access denied']));return false;}
         $priv=in_array($channel['role'],['admin','super_admin'],true);$server=$channel['server_member_id']!==null;$private=!$channel['is_private']||$channel['channel_member_id']!==null;$usable=!$channel['is_locked']||$priv;
@@ -467,3 +479,4 @@ class ChatServer implements MessageComponentInterface
 }
 
 if(PHP_SAPI==='cli'&&isset($_SERVER['SCRIPT_FILENAME'])&&realpath($_SERVER['SCRIPT_FILENAME'])===realpath(__FILE__)){$options=getopt('',['port::','host::']);$port=(int)($options['port']??getenv('WS_PORT')?:8080);$host=$options['host']??getenv('WS_HOST')?:'0.0.0.0';$loop=\React\EventLoop\Loop::get();$chat=new ChatServer();$server=\Ratchet\Server\IoServer::factory(new \Ratchet\Http\HttpServer(new \Ratchet\WebSocket\WsServer($chat)),$port,$host);$loop->addPeriodicTimer(0.2,static function()use($chat):void{$chat->drainRelayTable();$chat->persistDirtyCodeSessions();});echo "Ecollab WebSocket server running on {$host}:{$port}\n";$server->run();}
+

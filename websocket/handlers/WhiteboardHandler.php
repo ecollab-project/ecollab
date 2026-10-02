@@ -36,7 +36,11 @@ class WhiteboardHandler
                 ? ['channel_id'=>$channelId,'whiteboard_id'=>null,'permission'=>'edit','is_owner'=>true]
                 : ['channel_id'=>$channelId,'whiteboard_id'=>null,'permission'=>'view','is_owner'=>false];
         }
-        if(isset($this->accessCache[$whiteboardId][$userId]))return $this->accessCache[$whiteboardId][$userId];
+        // Recheck grants and membership on each operation, including after reconnect.
+        $this->db=Database::getLiveInstance();
+        $stmt=$this->db->prepare("SELECT 1 FROM users WHERE id=:uid AND deleted_at IS NULL AND status IN ('active','offline','idle')");
+        $stmt->execute([':uid'=>$userId]);
+        if(!$stmt->fetchColumn())return $this->accessCache[$whiteboardId][$userId]=null;
         return $this->accessCache[$whiteboardId][$userId]=CoworkspaceService::resolveWhiteboardAccess($this->db,$whiteboardId,$channelId,$userId);
     }
 
@@ -70,7 +74,7 @@ class WhiteboardHandler
     public function getRoomUserIds(int $channelId,int $excludeId=0,?int $whiteboardId=null):array
     {
         $key=$this->roomKey($channelId,$whiteboardId);
-        return array_values(array_filter(array_keys($this->rooms[$key]??[]),fn($id)=>(int)$id!==$excludeId));
+        return array_values(array_filter(array_keys($this->rooms[$key]??[]),fn($id)=>(int)$id!==$excludeId&&($whiteboardId===null||$this->authorize($channelId,(int)$id,$whiteboardId)!==null)));
     }
     public function getUserMeta(int $channelId,int $userId,?int $whiteboardId=null):?array{return $this->rooms[$this->roomKey($channelId,$whiteboardId)][$userId]??null;}
     public function getMembers(int $channelId,?int $whiteboardId=null):array{return array_values($this->rooms[$this->roomKey($channelId,$whiteboardId)]??[]);}
@@ -78,7 +82,7 @@ class WhiteboardHandler
     public function canEdit(int $channelId,int $userId,?int $whiteboardId=null):bool
     {
         if($whiteboardId!==null){
-            $access=$this->accessCache[$whiteboardId][$userId]??$this->authorize($channelId,$userId,$whiteboardId);
+            $access=$this->authorize($channelId,$userId,$whiteboardId);
             return is_array($access)&&($access['permission']??'view')==='edit';
         }
         try{$stmt=$this->db->prepare('SELECT created_by,locked FROM whiteboards WHERE channel_id=:cid ORDER BY updated_at DESC LIMIT 1');$stmt->execute([':cid'=>$channelId]);$board=$stmt->fetch();return !$board||!(bool)$board['locked']||(int)$board['created_by']===$userId;}catch(\Throwable){return false;}
@@ -87,7 +91,7 @@ class WhiteboardHandler
     public function canPerformOp(int $channelId,int $userId,string $opType,?int $whiteboardId):bool
     {
         if($whiteboardId===null)return $this->canEdit($channelId,$userId,null);
-        $access=$this->accessCache[$whiteboardId][$userId]??null;
+        $access=$this->authorize($channelId,$userId,$whiteboardId);
         if($access===null)return false;
         return match($access['permission']??'view'){
             'edit'=>true,

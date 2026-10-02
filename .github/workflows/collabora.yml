@@ -1,0 +1,41 @@
+name: Collabora integration
+on:
+  push:
+    branches: [collabora-document-integration]
+  pull_request:
+    paths: ['services/*Document*', 'services/CollaboraService.php', 'API/collaboration/**', 'modules/collaboration/**', 'tests/collabora*', '.github/workflows/collabora.yml']
+permissions:
+  contents: read
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: test
+          MARIADB_DATABASE: collabora_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_mysql, zip, curl, simplexml
+      - name: PHP syntax
+        run: find services API/collaboration modules/collaboration modules/whiteboard websocket tests -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Authorization, token and version regression
+        env:
+          COLLABORA_TEST_DSN: mysql:host=127.0.0.1;port=3306;dbname=collabora_test
+          COLLABORA_TEST_PASSWORD: test
+        run: php tests/collabora-regression.php
+      - name: Whiteboard permission regression
+        env:
+          COLLABORA_TEST_DSN: mysql:host=127.0.0.1;port=3306;dbname=collabora_test
+          COLLABORA_TEST_PASSWORD: test
+        run: php tests/whiteboard-realtime-regression.php
+      - name: Whiteboard socket routing
+        run: node tests/whiteboard-socket-regression.cjs

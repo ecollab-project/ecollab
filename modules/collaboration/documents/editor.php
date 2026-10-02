@@ -1,6 +1,12 @@
 <?php
 
 declare(strict_types=1);
+require_once dirname(__DIR__, 3) . '/config.php';
+if (env('DOCUMENT_EDITOR', 'onlyoffice') === 'collabora') {
+    header('Location: ' . BASE_URL . '/modules/collaboration/collabora-editor.php?id=' . (int)($_GET['id'] ?? 0));
+    exit;
+}
+
 
 require_once dirname(__DIR__, 3) . '/config.php';
 require_once ROOT_PATH . '/database/config/db.php';
@@ -104,8 +110,11 @@ header('Cache-Control: no-store, private');
 html,body,#placeholder{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,sans-serif} body{background:#f5f5f5}.top{height:44px;display:flex;align-items:center;gap:12px;padding:0 16px;background:#fff;border-bottom:1px solid #ddd;box-sizing:border-box}.top a{color:#555;text-decoration:none}.top strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.editor{height:calc(100% - 44px)}
 </style>
 <script nonce="<?= htmlspecialchars($nonce, ENT_QUOTES, 'UTF-8') ?>" src="<?= htmlspecialchars($apiUrl, ENT_QUOTES, 'UTF-8') ?>"></script>
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=1">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=2">
+<script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 </head>
-<body>
+<body data-mobile-surface="coworkspace">
 <div class="top"><a href="<?= BASE_URL ?>/modules/collaboration/coworkspaces.php?channel_id=<?= $channelId ?><?= $workspace ? '&workspace_id=' . (int)$workspace['id'] : '' ?>">← Back</a><strong><?= htmlspecialchars((string)$doc['title']) ?></strong><span>• <?= htmlspecialchars((string)$channel['name']) ?></span><?php if ($workspace): ?><span>• <?= htmlspecialchars((string)$workspace['name']) ?></span><?php endif; ?></div>
 <div id="placeholder" class="editor"></div>
 <script nonce="<?= htmlspecialchars($nonce, ENT_QUOTES, 'UTF-8') ?>">
@@ -116,3 +125,4 @@ window.addEventListener('load', function () {
 </script>
 </body>
 </html>
+

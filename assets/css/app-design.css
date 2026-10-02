@@ -1,0 +1,92 @@
+/* Shared eCollab surfaces. Feature layouts and visibility remain page-owned. */
+:root {
+  --ec-page: #0b0f1a;
+  --ec-surface: #111827;
+  --ec-raised: #182235;
+  --ec-input: #0f1726;
+  --ec-line: #2b374b;
+  --ec-text: #f1f5f9;
+  --ec-muted: #a0aec0;
+  --ec-accent: #a855f7;
+  --ec-accent-soft: rgba(168,85,247,.14);
+  --ec-focus: #c084fc;
+  --ec-danger: #fca5a5;
+  --ec-card-radius: 16px;
+  --ec-control-radius: 10px;
+  --ec-dialog-shadow: 0 24px 64px rgba(0,0,0,.32);
+}
+html[data-theme="light"] {
+  --ec-page: #f4f6fb;
+  --ec-surface: #ffffff;
+  --ec-raised: #edf1f8;
+  --ec-input: #ffffff;
+  --ec-line: #cbd5e1;
+  --ec-text: #172033;
+  --ec-muted: #526176;
+  --ec-accent: #7e22ce;
+  --ec-accent-soft: #f3e8ff;
+  --ec-focus: #7e22ce;
+  --ec-danger: #b91c1c;
+  --ec-dialog-shadow: 0 24px 64px rgba(15,23,42,.16);
+}
+html.high-contrast {
+  --ec-page: #000;
+  --ec-surface: #000;
+  --ec-raised: #111;
+  --ec-input: #000;
+  --ec-line: #fff;
+  --ec-text: #fff;
+  --ec-muted: #fff;
+  --ec-focus: #fde047;
+}
+body[data-mobile-surface] {
+  --bg: var(--ec-page); --nav: var(--ec-surface); --sidebar: var(--ec-surface);
+  --panel: var(--ec-surface); --card: var(--ec-surface); --card2: var(--ec-raised);
+  --input: var(--ec-input); --line: var(--ec-line); --border: var(--ec-line);
+  --text: var(--ec-text); --muted: var(--ec-muted); --muted2: var(--ec-muted);
+  --bg-deepest: var(--ec-page); --bg-primary: var(--ec-page);
+  --bg-secondary: var(--ec-surface); --bg-tertiary: var(--ec-raised);
+  --bg-card: var(--ec-raised); --text-primary: var(--ec-text); --text-secondary: var(--ec-muted);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+body:is([data-mobile-surface="coworkspace"], [data-mobile-surface="settings"], [data-mobile-surface="library"], [data-mobile-surface="editor"]) {
+  background: var(--ec-page); color: var(--ec-text); font-size: .875rem; line-height: 1.5;
+}
+body[data-mobile-surface] :is(.btn, .navbtn, .tab, .lib-tab, .form-input, .form-select, .form-textarea, .lib-search, .sort) {
+  font-family: inherit; border-radius: var(--ec-control-radius);
+}
+body[data-mobile-surface] :is(.btn, .navbtn, .tab, .lib-tab) { font-weight: 600; }
+body[data-mobile-surface] :is(.card, .panel, .stat-card, .sc-card, .lib-note, .lib-placeholder) { border-radius: var(--ec-card-radius); }
+body[data-mobile-surface] :is(.modal-box, .modal-card, .pm-shell, .wb-manage-box) { border-radius: 20px; box-shadow: var(--ec-dialog-shadow); }
+body[data-mobile-surface] :is(button, a, input, select, textarea):focus-visible { outline: 2px solid var(--ec-focus); outline-offset: 3px; }
+body[data-mobile-surface] :is(button, input, select, textarea):disabled { cursor: not-allowed; }
+body:is([data-mobile-surface="coworkspace"], [data-mobile-surface="settings"], [data-mobile-surface="library"]) :is(.card, .panel, .modal, .lib-note, .lib-placeholder, .access-card) {
+  background: var(--ec-surface); border-color: var(--ec-line); color: var(--ec-text);
+}
+body:is([data-mobile-surface="coworkspace"], [data-mobile-surface="settings"], [data-mobile-surface="library"]) :is(.muted, .meta, .desc, .help, .hint, .lib-sub, .form-label, .perm-help, .back, .lib-back) { color: var(--ec-muted); }
+body:is([data-mobile-surface="coworkspace"], [data-mobile-surface="settings"], [data-mobile-surface="library"]) :is(.form-input, .form-select, .form-textarea, .lib-search, .field input, .field textarea, .field select) {
+  background: var(--ec-input); color: var(--ec-text); border: 1px solid var(--ec-line);
+}
+body:is([data-mobile-surface="coworkspace"], [data-mobile-surface="settings"], [data-mobile-surface="library"]) :is(.nav-item.active, .navbtn.active, .tab.active, .lib-tab.active) {
+  background: var(--ec-accent-soft); color: var(--ec-accent); border-color: var(--ec-accent);
+}
+body[data-mobile-surface="coworkspace"] :is(.btn:not(.danger):not(.delete-btn), .sort, .tab:not(.active), .nav-item:not(.active)) {
+  background: var(--ec-raised); color: var(--ec-text); border-color: var(--ec-line);
+}
+body[data-mobile-surface="coworkspace"] :is(.danger, .delete-btn) { color: var(--ec-danger); }
+body[data-mobile-surface="coworkspace"] :is(.empty, .notice) { color: var(--ec-muted); border-color: var(--ec-line); border-radius: var(--ec-card-radius); line-height: 1.6; }
+body[data-mobile-surface="settings"] .secondary { background: var(--ec-raised); color: var(--ec-text); border-color: var(--ec-line); }
+body[data-mobile-surface="settings"] .nav { background: var(--ec-surface); }
+body[data-mobile-surface="settings"] .navbtn:not(.active):not(.logout) { color: var(--ec-muted); }
+body[data-mobile-surface="editor"] > header { background: var(--ec-surface); border-bottom: 1px solid var(--ec-line); }
+body[data-mobile-surface="editor"] > main > aside { background: var(--ec-surface); border-left: 1px solid var(--ec-line); }
+body[data-mobile-surface="editor"] :is(input, textarea, select) { background: var(--ec-input); color: var(--ec-text); border-color: var(--ec-line); border-radius: var(--ec-control-radius); }
+body[data-mobile-surface="editor"] button { background: #7e22ce; color: #fff; border-color: #7e22ce; border-radius: var(--ec-control-radius); font-weight: 600; }
+body[data-mobile-surface="editor"] :is(a, small) { color: var(--ec-muted); }
+@media (hover: hover) {
+  body[data-mobile-surface="coworkspace"] :is(.btn:not(.delete-btn):not(.danger), .nav-item, .tab):hover { border-color: var(--ec-accent); }
+  body[data-mobile-surface="settings"] .navbtn:hover { background: var(--ec-raised); color: var(--ec-text); }
+}
+@media (forced-colors: active) {
+  body[data-mobile-surface] { --ec-line: CanvasText; --ec-text: CanvasText; --ec-muted: CanvasText; --ec-page: Canvas; --ec-surface: Canvas; --ec-raised: Canvas; --ec-input: Canvas; --ec-focus: Highlight; }
+}

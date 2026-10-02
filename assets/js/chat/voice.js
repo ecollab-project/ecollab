@@ -103,16 +103,16 @@ function joinVoice(channelSlug, el, channelId, roomNameOverride) {
   showToast('🔊 Joined ' + vcRoomName, 'success');
 }
 
-// ── DM group voice — reuses the exact same mesh/UI as a real voice channel,
-// just with a synthetic channel_id (see DM_GROUP_VOICE_ID_OFFSET server-side)
-// so no real `channels` row is needed. Everyone in the group can join or
-// ignore it — it's not a ring-everyone-at-once call like 1:1 DM calling.
-const DM_GROUP_VOICE_ID_OFFSET = 2000000000;
-
+// ── DM group voice — LiveKit room authorized by DM group membership.
+// Do not synthesize a server channel_id: /API/chat/livekit-token.php correctly
+// rejects those IDs because they are not rows in channels.
 function startDmGroupVoice(groupId, groupName) {
   if (vcActive) { showToast('Already in a voice channel', 'info'); return; }
-  const channelId = DM_GROUP_VOICE_ID_OFFSET + parseInt(groupId);
-  joinVoice('dm-group-' + groupId, null, channelId, groupName || 'Group Voice Call');
+  if (typeof window.startDmGroupLiveKitCall !== 'function') {
+    showToast('Group call service is not ready. Refresh eCollab and try again.', 'error');
+    return;
+  }
+  return window.startDmGroupLiveKitCall(parseInt(groupId), false, groupName || 'Group Voice Call');
 }
 window.startDmGroupVoice = startDmGroupVoice;
 
@@ -1690,14 +1690,18 @@ function handleVoiceJoin(data) {
       role: user.role || 'Student',
       avatar_color_gradient: user.avatar_color_gradient || '#3b82f6,#6366f1',
       muted: !!user.muted,
-    }, !user.muted);
+    }, true);
   }
 
-  setTimeout(() => {
-    if (vcActive && Number(vcChannelId) === Number(data.channel_id)) {
-      _initiateWebRtcOffer(userId, user.username);
-    }
-  }, 100);
+  // LiveKit owns media/signaling when its adapter is loaded. Keep this
+  // WebSocket event only for eCollab roster/presence.
+  if (!window.EcollabLiveKit) {
+    setTimeout(() => {
+      if (vcActive && Number(vcChannelId) === Number(data.channel_id)) {
+        _initiateWebRtcOffer(userId, user.username);
+      }
+    }, 100);
+  }
 }
 
 function handleVoiceLeave(data) {
@@ -1752,11 +1756,14 @@ function handleVoicePeers(data) {
         role: peer.role || 'Student',
         avatar_color_gradient: peer.avatar_color_gradient || '#3b82f6,#6366f1',
         muted: !!peer.muted,
-      }, !peer.muted); // muted peers go to Listening, unmuted to Speaking
+      }, true); // mic mute is not a Listening-role change
     }
 
-    // Initiate WebRTC offer to each existing peer
-    setTimeout(() => _initiateWebRtcOffer(peer.user_id, peer.username), 100);
+    // LiveKit replaces the legacy peer-to-peer media mesh. Preserve this
+    // event for roster data only while the LiveKit adapter is present.
+    if (!window.EcollabLiveKit) {
+      setTimeout(() => _initiateWebRtcOffer(peer.user_id, peer.username), 100);
+    }
   });
 }
 
@@ -1792,7 +1799,30 @@ function _applyScreenWatchState(userId) {
   const vid = card.querySelector('.vc-screen-card-video');
   if (vid) vid.style.objectFit = watched ? 'contain' : 'cover';
   const btn = card.querySelector('.vc-screen-watch-btn');
-  if (btn) btn.textContent = watched ? 'Unwatch' : 'Watch';
+  if (btn) {
+    // Discord-style behavior: the card action starts watching. Once watched,
+    // stopping is handled by the persistent control in the bottom call bar.
+    btn.textContent = 'Watch';
+    btn.setAttribute('aria-label', 'Watch screen share');
+    btn.setAttribute('title', watched ? 'Currently watching' : 'Watch this screen');
+    btn.classList.toggle('is-watching', watched);
+    btn.style.display = watched ? 'none' : '';
+  }
+  _syncScreenUnwatchControl();
+}
+function _syncScreenUnwatchControl() {
+  const btn = document.getElementById('vcUnwatchBtn');
+  if (!btn) return;
+  const watching = _watchedScreenUsers.size > 0;
+  btn.style.display = watching ? '' : 'none';
+  btn.classList.toggle('active', watching);
+}
+function unwatchAllScreens() {
+  [..._watchedScreenUsers].forEach(uid => {
+    _watchedScreenUsers.delete(uid);
+    _applyScreenWatchState(uid);
+  });
+  _syncScreenUnwatchControl();
 }
 function toggleScreenWatch(userId) {
   const uid = Number(userId);
@@ -1806,6 +1836,7 @@ function toggleScreenExpand(userId) {
   if (uid) toggleScreenWatch(uid);
 }
 window.toggleScreenWatch = toggleScreenWatch;
+window.unwatchAllScreens = unwatchAllScreens;
 window.toggleScreenExpand = toggleScreenExpand;
 window.toggleCamera = toggleCamera;
 window.toggleScreenShare = toggleScreenShare;
@@ -1990,3 +2021,4 @@ window._onVoiceInvite = function(data) {
 window.openVcInviteModal = openVcInviteModal;
 window._filterVcInviteList = _filterVcInviteList;
 window._sendVoiceInvite = _sendVoiceInvite;
+

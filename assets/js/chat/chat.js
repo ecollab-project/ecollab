@@ -90,6 +90,20 @@ let hasMoreMessages = true;
 let oldestMessageId = null;
 let typingTimeout = null;
 
+// Keep navigation in this tab's URL so F5 restores the same server/channel.
+// PHP validates server membership and the rendered list validates channel IDs.
+function saveChatLocation(changes) {
+  const url = new URL(window.location.href);
+  Object.entries(changes).forEach(([key, value]) => {
+    if (value == null || value === '') url.searchParams.delete(key);
+    else url.searchParams.set(key, String(value));
+  });
+  window.history.replaceState(window.history.state, '', url);
+}
+window.saveChatLocation = saveChatLocation;
+const lastServerChannels = new Map();
+let channelListRequest = 0;
+
 // ── Init ──
 document.addEventListener('DOMContentLoaded', () => {
   // Deep-link: if navigated here from a dashboard with a specific
@@ -116,13 +130,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (target) {
     switchChannel(target, parseInt(target.dataset.channelId));
+  } else {
+    saveChatLocation({channel_id: null});
   }
 
-  // Clean the URL so reloading/sharing doesn't re-trigger the deep link
-  if (wantedId || wantedName) {
-    const cleanUrl = window.location.pathname;
-    window.history.replaceState({}, '', cleanUrl);
-  }
+  // Keep the resolved destination in the URL for refresh.
+  saveChatLocation({server_id: currentServerId || null, channel_name: null});
 
   // Keyboard shortcut: Cmd/Ctrl + K → focus search
   document.addEventListener('keydown', (e) => {
@@ -168,7 +181,9 @@ async function updatePresence() {
 // ── Workspace switch ──
 function switchWorkspace(wsIdx, serverId) {
   if (!serverId) return;
+  if (currentChannelId) lastServerChannels.set(Number(currentServerId), currentChannelId);
   currentServerId = serverId;
+  saveChatLocation({server_id: serverId, channel_id: null, channel_name: null});
   // Keep ECOLLAB object in sync so chat-features.js can read it
   if (window.ECOLLAB) window.ECOLLAB.currentServerId = serverId;
 
@@ -187,8 +202,10 @@ function switchWorkspace(wsIdx, serverId) {
 }
 
 async function loadServerChannels(serverId) {
+  const request = ++channelListRequest;
   try {
     const data = await apiFetch(`${API_BASE}/get-channels.php?server_id=${serverId}`);
+    if (request !== channelListRequest || Number(serverId) !== Number(currentServerId)) return;
     if (!data.success) return;
 
     const server = data.servers?.find(s => parseInt(s.id) === parseInt(serverId));
@@ -280,13 +297,25 @@ function renderChannelList(channels) {
   // Show/hide whiteboard section based on whether channels exist
   if (wbSection) wbSection.style.display = hasWhiteboard ? '' : 'none';
 
-  // Auto-select first text channel
-  const first = textList.querySelector('.channel-item');
+  // Return to this server's last channel when possible.
+  const wanted = lastServerChannels.get(Number(currentServerId));
+  const first = Array.from(textList.querySelectorAll('.channel-item'))
+    .find(item => Number(item.dataset.channelId) === Number(wanted))
+    || textList.querySelector('.channel-item');
   if (first) switchChannel(first, parseInt(first.dataset.channelId));
+  else {
+    if (currentChannelId) window.unsubscribeFromChannel?.(currentChannelId);
+    currentChannelId = null;
+    window.ECOLLAB.currentChannelId = null;
+    saveChatLocation({channel_id: null});
+    renderMessages([], false);
+  }
 }
 
 // ── Channel switch ──
 async function switchChannel(el, channelId) {
+  saveChatLocation({server_id: currentServerId, channel_id: channelId, channel_name: null});
+  lastServerChannels.set(Number(currentServerId), channelId);
   if (channelId === currentChannelId) return;
 
   // Save draft of current input before switching
@@ -341,6 +370,7 @@ async function switchChannel(el, channelId) {
       apiFetch(`${API_BASE}/get-channel.php?id=${channelId}`),
       apiFetch(`${API_BASE}/get-messages.php?channel_id=${channelId}`),
     ]);
+    if (Number(channelId) !== Number(currentChannelId)) return;
 
     if (chanData.channel) {
       const ch = chanData.channel;
