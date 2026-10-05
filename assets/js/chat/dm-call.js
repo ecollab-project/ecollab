@@ -1,805 +1,164 @@
-/**
- * dm-call.js — Direct voice/video calls from a DM conversation.
- *
- * Reuses the ICE_SERVERS config already defined in voice.js. Signaling goes
- * through dm_call_offer / dm_call_answer / dm_call_candidate / dm_call_end /
- * dm_call_decline, relayed server-side by DmHandler::handleDmCallSignal,
- * which verifies a real DM (or shared group) relationship before relaying,
- * and logs every call attempt to dm_call_history for the chat-log entries
- * this file renders (missed/answered/declined/ended, with duration).
- *
- * Group calls are intentionally not supported (mesh WebRTC for 3+ people is
- * a meaningfully bigger feature) — attempting one shows a clear message
- * rather than silently failing.
- */
-
-const DM_CALL_TIMEOUT_MS = 45000; // ring for 45s before giving up
-
-let _dmCallPc          = null;
-let _dmCallLocalStream = null;
-let _dmCallRemoteStream = null;
-let _dmCallPeerId      = null;
-let _dmCallGroupId     = null;
-let _dmCallLogId       = null;
-let _dmCallIsVideo     = false; // local camera state
-let _dmCallRemoteVideo = false; // peer camera state
-let _dmCallPendingCandidates = [];
-let _dmCallState       = 'idle'; // idle | ringing-out | ringing-in | active
-let _dmCallTimeoutTimer = null;
-let _dmCallStartedAt    = null;
-let _dmRingAudio        = null;
-let _dmCallDeafened     = false;
-let _dmCallCameraBusy   = false;
-
-function _dmIceServers() {
-  return (typeof ICE_SERVERS !== 'undefined') ? ICE_SERVERS : [{ urls: 'stun:stun.l.google.com:19302' }];
-}
-
-// ── Ringtone playback ───────────────────────────────────────────────────────
-function _dmPlayRing(which) {
-  _dmStopRing();
-  const base = window.ECOLLAB?.baseUrl || '';
-  const src = which === 'out' ? `${base}/assets/sounds/ringback.mp3` : `${base}/assets/sounds/incoming-ring.mp3`;
-  _dmRingAudio = new Audio(src);
-  _dmRingAudio.loop = true;
-  _dmRingAudio.volume = 0.6;
-  _dmRingAudio.play().catch(() => {}); // blocked until a user gesture on some browsers — call buttons are themselves a gesture, so outgoing works; incoming may need the accept click to unlock, degrades to silent ring which is fine
-}
-
-function _dmStopRing() {
-  if (_dmRingAudio) {
-    _dmRingAudio.pause();
-    _dmRingAudio.currentTime = 0;
-    _dmRingAudio = null;
+/** Shared LiveKit calls. Loaded on every authenticated page, with chat's socket reused. */
+'use strict';
+(() => {
+  if (window.EcollabCalls || window.top !== window.self) return;
+  const config = window.ECOLLAB_CALLS_CONFIG || window.ECOLLAB || {};
+  const base = config.baseUrl || '';
+  let call=null, socket=null, authed=false, reconnect=0, timer=null, sdkPromise=null, releaseLock=null;
+  const tabId=crypto.randomUUID();
+  const bus=typeof BroadcastChannel==='function'?new BroadcastChannel('ecollab-calls-'+config.userId):null;
+  const notice=message=>{if(typeof window.showToast==='function')window.showToast(message,'info');else {const el=document.createElement('div');el.className='ec-call';el.setAttribute('role','status');el.textContent=message;el.style.padding='20px';document.body.appendChild(el);setTimeout(()=>el.remove(),7000);}};
+  const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const media=()=>window.EcollabMediaSettings;
+  const busy=()=>!!call || !!window.EcollabLiveKit?.room;
+  async function claim() {
+    if(!navigator.locks) return true;
+    return new Promise(resolve=>navigator.locks.request('ecollab-active-call-'+config.userId,{ifAvailable:true},lock=>{
+      if(!lock){resolve(false);return;}
+      return new Promise(release=>{releaseLock=release;resolve(true);});
+    }));
   }
-}
-
-// ── Call history chat-log entries ──────────────────────────────────────────
-function _appendCallLogEntry({ status, isVideo, isOutgoing, durationSeconds }) {
-  const area = document.getElementById('dmMessagesArea');
-  if (!area) return;
-
-  const icon = isVideo ? '🎥' : '📞';
-  let label;
-  if (status === 'answered' || status === 'ended') {
-    const mins = Math.floor((durationSeconds || 0) / 60);
-    const secs = (durationSeconds || 0) % 60;
-    label = `${isVideo ? 'Video' : 'Voice'} call · ${mins}:${String(secs).padStart(2, '0')}`;
-  } else if (status === 'missed') {
-    label = isOutgoing ? 'No answer' : `Missed ${isVideo ? 'video' : 'voice'} call`;
-  } else if (status === 'declined') {
-    label = isOutgoing ? 'Call declined' : `You declined a ${isVideo ? 'video' : 'voice'} call`;
-  } else {
-    label = `${isVideo ? 'Video' : 'Voice'} call`;
+  function send(data) {
+    if(typeof window.wsSend==='function') return window.wsSend(data);
+    if(socket?.readyState===WebSocket.OPEN&&authed){socket.send(JSON.stringify(data));return true;}
+    return false;
   }
-
-  const el = document.createElement('div');
-  el.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:6px;margin:6px 0;font-size:11px;color:var(--text-muted);';
-  el.innerHTML = `<span>${icon}</span><span>${escHtml(label)}</span><span style="opacity:0.6;">· ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>`;
-  area.appendChild(el);
-  area.scrollTop = area.scrollHeight;
-}
-
-function _clearDmCallTimeout() {
-  if (_dmCallTimeoutTimer) { clearTimeout(_dmCallTimeoutTimer); _dmCallTimeoutTimer = null; }
-}
-
-// ── Starting a call (outgoing) ─────────────────────────────────────────────
-async function startDmCall(video) {
-  if (_dmCallState !== 'idle') { showToast('Already in a call', 'info'); return; }
-  const targetId = DM.activeGroupId ? null : DM.activePartnerId;
-  const groupId  = DM.activeGroupId || null;
-  if (!targetId && !groupId) return;
-
-  if (groupId) {
-    // Group Messages use their own LiveKit room/token flow. Mark this event so
-    // legacy voice-channel UI cannot reinterpret the synthetic group id as a
-    // server voice channel and call /API/chat/livekit-token.php.
-    window.__ecollabStartingDmGroupCall = true;
-    try {
-      await startDmGroupLiveKitCall(groupId, !!video);
-    } finally {
-      window.__ecollabStartingDmGroupCall = false;
-    }
-    return;
+  function announce(c){bus?.postMessage({tabId,key:c.groupId?'group-'+c.groupId:'call-'+c.logId});}
+  if(bus)bus.onmessage=({data})=>{if(data.tabId!==tabId&&call?.state==='incoming'&&data.key===(call.groupId?'group-'+call.groupId:'call-'+call.logId))cleanup(call);};
+  function ring(c) {
+    c.ringer=new Audio(base+'/assets/sounds/'+(c.state==='incoming'?'incoming-ring.mp3':'ringback.mp3'));
+    c.ringer.loop=true;c.ringer.volume=.5;c.ringer.play().catch(()=>{});
+    c.timeout=setTimeout(()=>{if(call===c&&['incoming','outgoing'].includes(c.state))end();},45000);
   }
-
-  _dmCallPeerId  = targetId;
-  _dmCallGroupId = groupId;
-  _dmCallIsVideo = !!video;
-  _dmCallRemoteVideo = !!video;
-  _dmCallState   = 'ringing-out';
-
-  try {
-    _dmCallLocalStream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-      video: video ? { width: { ideal: 640 }, height: { ideal: 480 } } : false,
-    });
-  } catch (e) {
-    showToast('Could not access ' + (video ? 'camera/microphone' : 'microphone'), 'error');
-    _dmCallState = 'idle';
-    return;
+  function stopRing(c){clearTimeout(c.timeout);c.ringer?.pause();c.ringer=null;}
+  function cleanup(c) {
+    if(!c)return;
+    if(call===c)call=null;
+    stopRing(c); c.closed=true;
+    c.room?.disconnect();
+    for(const [track,el] of c.audio||[]){track.detach(el);el.remove();}
+    for(const [track,el] of c.videos||[]){track.detach(el);el.remove();}
+    c.panel?.remove();
+    releaseLock?.();releaseLock=null;
   }
-
-  _dmCallPc = _buildDmPeerConnection();
-  _dmCallLocalStream.getTracks().forEach(t => _dmCallPc.addTrack(t, _dmCallLocalStream));
-
-  const offer = await _dmCallPc.createOffer();
-  await _dmCallPc.setLocalDescription(offer);
-
-  window.wsSend({
-    type: 'dm_call_offer',
-    target_user_id: targetId,
-    group_id: groupId,
-    is_video: _dmCallIsVideo,
-    sdp: offer,
-  });
-
-  _dmPlayRing('out');
-  _renderDmCallOverlay('ringing-out');
-
-  _dmCallTimeoutTimer = setTimeout(() => {
-    if (_dmCallState === 'ringing-out') {
-      showToast('No answer', 'info');
-      _sendCallEnd();
-      _appendCallLogEntry({ status: 'missed', isVideo: _dmCallIsVideo, isOutgoing: true });
-      _resetDmCallState();
-    }
-  }, DM_CALL_TIMEOUT_MS);
-}
-window.startDmCall = startDmCall;
-
-let _dmGroupLiveKitRoom = null;
-
-function _dmCallCsrf() {
-  return document.querySelector('meta[name="csrf-token"]')?.content || '';
-}
-
-async function startDmGroupLiveKitCall(groupId, video) {
-  if (!window.LivekitClient?.Room) {
-    showToast('LiveKit is not available. Refresh eCollab and try again.', 'error');
-    return;
+  async function sdk() {
+    if(window.LivekitClient)return window.LivekitClient;
+    if(!sdkPromise)sdkPromise=new Promise((resolve,reject)=>{const s=document.createElement('script');s.nonce=config.scriptNonce||'';s.crossOrigin='anonymous';s.src='https://cdn.jsdelivr.net/npm/livekit-client@2.22.3/dist/livekit-client.umd.min.js';s.onload=()=>resolve(window.LivekitClient);s.onerror=()=>{sdkPromise=null;reject(Error('Call media library could not load.'));};document.head.appendChild(s);});
+    return sdkPromise;
   }
-  if (_dmGroupLiveKitRoom) {
-    showToast('Already in a group call', 'info');
-    return;
+  async function token(c) {
+    const res=await fetch(base+'/API/dm/'+(c.groupId?'livekit-group-token.php':'livekit-call-token.php'),{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':config.csrfToken||document.querySelector('meta[name=csrf-token]')?.content||''},body:JSON.stringify(c.groupId?{group_id:c.groupId}:{call_id:c.logId})});
+    const data=await res.json();if(!res.ok||!data.success)throw Error(data.error||'Call authorization failed.');return data;
   }
-
-  try {
-    const response = await fetch((window.ECOLLAB?.baseUrl || '') + '/API/dm/livekit-group-token.php', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': _dmCallCsrf(),
-      },
-      body: JSON.stringify({ group_id: Number(groupId) }),
-    });
-    const data = await response.json();
-    if (!response.ok || !data.success) throw new Error(data.error || 'Could not join group call');
-
-    const { Room, RoomEvent } = window.LivekitClient;
-    const room = new Room({ adaptiveStream: false, dynacast: true, disconnectOnPageLeave: true });
-    _dmGroupLiveKitRoom = room;
-
-    room.on(RoomEvent.TrackSubscribed, track => {
-      const el = track.attach();
-      el.dataset.dmGroupCall = '1';
-      if (track.kind === 'audio') {
-        el.autoplay = true;
-        document.body.appendChild(el);
-      } else {
-        const stage = document.getElementById('dmGroupCallVideos');
-        if (stage) stage.appendChild(el);
-      }
-    });
-    room.on(RoomEvent.TrackUnsubscribed, track => track.detach().forEach(el => el.remove()));
-    room.on(RoomEvent.ParticipantConnected, () => _renderDmGroupCallOverlay(data.room_name));
-    room.on(RoomEvent.ParticipantDisconnected, () => _renderDmGroupCallOverlay(data.room_name));
-    room.on(RoomEvent.Disconnected, () => {
-      document.querySelectorAll('[data-dm-group-call="1"]').forEach(el => el.remove());
-      document.getElementById('dmGroupCallOverlay')?.remove();
-      _dmGroupLiveKitRoom = null;
-    });
-
-    // Ring group members as soon as authorization succeeds. Do not wait for
-    // LiveKit media negotiation: a slow/blocked RTC connect must not suppress
-    // the incoming Accept/Decline popup on the other members.
-    if (!window.__joiningDmGroupInvite) {
-      const invite = { type: 'dm_group_call_start', group_id: Number(groupId), is_video: !!video };
-      let attempts = 0;
-      const sendInvite = () => {
-        attempts += 1;
-        const sent = window.wsSend?.(invite) === true;
-        console.log('[DM group call] invite attempt', attempts, sent ? 'sent' : 'not sent', invite);
-        return sent;
-      };
-      if (!sendInvite()) {
-        const retryInvite = setInterval(() => {
-          if (sendInvite() || attempts >= 12) {
-            clearInterval(retryInvite);
-            if (attempts >= 12) console.error('[DM group call] invite signal could not be sent');
-          }
-        }, 250);
-      }
-    }
-
-    await room.connect(data.url, data.token);
-    await room.localParticipant.setMicrophoneEnabled(true);
-    if (video) await room.localParticipant.setCameraEnabled(true);
-    _renderDmGroupCallOverlay(data.room_name);
-  } catch (e) {
-    console.error('[DM group call] LiveKit join failed:', e);
-    _dmGroupLiveKitRoom?.disconnect();
-    _dmGroupLiveKitRoom = null;
-    showToast(e.message || 'Could not establish group call', 'error');
+  function attachAudio(c,track){if(track.kind!=='audio'||c.audio.has(track))return;const el=track.attach();el.autoplay=true;el.muted=c.deafened;el.hidden=true;document.body.appendChild(el);c.audio.set(track,el);el.play().catch(()=>{c.message='Tap Enable audio to hear the call.';render(c);});}
+  function reconcileAudio(c){for(const p of c.room.remoteParticipants.values())for(const pub of p.trackPublications.values())if(pub.track?.kind==='audio')attachAudio(c,pub.track);}
+  async function connect(c) {
+    const [LK,auth]=await Promise.all([sdk(),token(c)]);if(call!==c)return;
+    if(c.groupId)c.name=auth.room_name||c.name;
+    const room=new LK.Room({adaptiveStream:true,dynacast:true,audioCaptureDefaults:media().audio(),videoCaptureDefaults:media().video(),disconnectOnPageLeave:true});c.room=room;
+    const update=()=>{if(call===c){reconcileAudio(c);render(c);}};
+    for(const event of ['ParticipantConnected','ParticipantDisconnected','TrackMuted','TrackUnmuted','LocalTrackPublished','LocalTrackUnpublished','ActiveSpeakersChanged','TrackSubscribed'])room.on(LK.RoomEvent[event],update);
+    room.on(LK.RoomEvent.TrackUnsubscribed,track=>{const el=c.audio.get(track);if(el){track.detach(el);el.remove();c.audio.delete(track);}update();});
+    room.on(LK.RoomEvent.Reconnecting,()=>{c.message='Reconnecting…';render(c);});
+    room.on(LK.RoomEvent.Reconnected,()=>{c.message='';render(c);});
+    room.on(LK.RoomEvent.Disconnected,()=>{if(call===c){notice('Call disconnected.');end();}});
+    await room.connect(auth.url,auth.token);if(call!==c){room.disconnect();return;}
+    // Camera failure must not destroy a successfully connected audio call.
+    try{await room.localParticipant.setMicrophoneEnabled(true,media().audio());}catch(e){c.message='Microphone unavailable. Choose a microphone in Settings.';}
+    if(c.video)try{await room.localParticipant.setCameraEnabled(true,media().video());}catch(e){c.message='Camera unavailable. You joined with audio only.';}
+    if(call!==c){room.disconnect();return;}
+    c.state='active';stopRing(c);announce(c);reconcileAudio(c);render(c);
+    await room.startAudio().catch(()=>{c.message='Tap Enable audio to hear the call.';render(c);});
   }
-}
-
-function _renderDmGroupCallOverlay(name) {
-  if (!_dmGroupLiveKitRoom) return;
-  let overlay = document.getElementById('dmGroupCallOverlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'dmGroupCallOverlay';
-    overlay.style.cssText = 'position:fixed;bottom:0;right:376px;z-index:9002;width:360px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px 12px 0 0;box-shadow:0 -4px 32px rgba(0,0,0,.5);overflow:hidden;';
-    document.body.appendChild(overlay);
-  }
-  const count = 1 + _dmGroupLiveKitRoom.remoteParticipants.size;
-  overlay.innerHTML = `
-    <div id="dmGroupCallVideos" style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px;background:#000;"></div>
-    <div style="padding:12px;display:flex;align-items:center;gap:8px;">
-      <div style="flex:1;min-width:0;">
-        <div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(name || 'Group Call')}</div>
-        <div style="font-size:11px;color:#22c55e;">${count} connected · LiveKit</div>
-      </div>
-      <button type="button" onclick="_dmGroupToggleMic()" title="Mute/unmute">🎤</button>
-      <button type="button" onclick="_dmGroupToggleCam()" title="Camera">📷</button>
-      <button type="button" onclick="endDmGroupCall()" title="Leave" style="background:#ef4444;color:#fff;">☎</button>
-    </div>`;
-
-  _dmGroupLiveKitRoom.remoteParticipants.forEach(p => {
-    p.trackPublications.forEach(pub => {
-      if (pub.isSubscribed && pub.track?.kind === 'video') {
-        const el = pub.track.attach();
-        el.dataset.dmGroupCall = '1';
-        el.autoplay = true;
-        el.playsInline = true;
-        el.style.cssText = 'width:100%;height:140px;object-fit:cover;';
-        document.getElementById('dmGroupCallVideos')?.appendChild(el);
-      }
-    });
-  });
-}
-
-async function _dmGroupToggleMic() {
-  if (!_dmGroupLiveKitRoom) return;
-  const p = _dmGroupLiveKitRoom.localParticipant;
-  await p.setMicrophoneEnabled(!p.isMicrophoneEnabled);
-}
-window._dmGroupToggleMic = _dmGroupToggleMic;
-
-async function _dmGroupToggleCam() {
-  if (!_dmGroupLiveKitRoom) return;
-  const p = _dmGroupLiveKitRoom.localParticipant;
-  await p.setCameraEnabled(!p.isCameraEnabled);
-  _renderDmGroupCallOverlay('Group Call');
-}
-window._dmGroupToggleCam = _dmGroupToggleCam;
-
-function endDmGroupCall() {
-  if (!_dmGroupLiveKitRoom) return;
-  _dmGroupLiveKitRoom.disconnect();
-}
-window.endDmGroupCall = endDmGroupCall;
-window.startDmGroupLiveKitCall = startDmGroupLiveKitCall;
-
-let _dmGroupIncomingPopup = null;
-
-function _closeDmGroupIncomingPopup() {
-  document.getElementById('dmGroupIncomingCallPopup')?.remove();
-  _dmGroupIncomingPopup = null;
-}
-
-window._onDmGroupCallStart = function (data) {
-  const groupId = Number(data.group_id || 0);
-  if (!groupId) return;
-
-  const unavailable = _dmCallState !== 'idle' || !!_dmGroupLiveKitRoom || !!window.vcActive;
-  if (unavailable) {
-    window.wsSend?.({
-      type: 'dm_group_call_busy',
-      group_id: groupId,
-      target_user_id: Number(data.from_user_id),
-    });
-    return;
-  }
-
-  _closeDmGroupIncomingPopup();
-  const caller = data.from_username || 'Someone';
-  const kind = data.is_video ? 'video' : 'voice';
-  const popup = document.createElement('div');
-  popup.id = 'dmGroupIncomingCallPopup';
-  popup.style.cssText = 'position:fixed;top:18px;right:18px;z-index:10050;width:330px;padding:16px;background:var(--bg-secondary,#202225);border:1px solid var(--border,#3a3d42);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.45);';
-  popup.innerHTML = `
-    <div style="font-weight:800;font-size:14px;margin-bottom:4px;">${data.is_video ? '🎥' : '📞'} Incoming group ${kind} call</div>
-    <div style="font-size:13px;color:var(--text-muted,#b5bac1);margin-bottom:14px;">${escHtml(caller)} started a group call</div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;">
-      <button id="dmGroupDeclineCall" type="button" style="padding:8px 14px;border:0;border-radius:8px;background:#ef4444;color:#fff;font-weight:700;cursor:pointer;">Decline</button>
-      <button id="dmGroupAcceptCall" type="button" style="padding:8px 14px;border:0;border-radius:8px;background:#22c55e;color:#fff;font-weight:700;cursor:pointer;">Accept</button>
-    </div>`;
-  document.body.appendChild(popup);
-  _dmGroupIncomingPopup = popup;
-
-  popup.querySelector('#dmGroupDeclineCall')?.addEventListener('click', _closeDmGroupIncomingPopup);
-  popup.querySelector('#dmGroupAcceptCall')?.addEventListener('click', async () => {
-    _closeDmGroupIncomingPopup();
-    window.__joiningDmGroupInvite = true;
-    try {
-      await startDmGroupLiveKitCall(groupId, !!data.is_video);
-    } finally {
-      window.__joiningDmGroupInvite = false;
-    }
-  });
-};
-
-if (window.__pendingDmGroupCallInvite) {
-  const pending = window.__pendingDmGroupCallInvite;
-  delete window.__pendingDmGroupCallInvite;
-  setTimeout(() => window._onDmGroupCallStart?.(pending), 0);
-}
-
-window._onDmGroupCallBusy = function (data) {
-  const who = data.from_username || 'User';
-  if (typeof showToast === 'function') {
-    showToast(escHtml(who) + ' is busy', 'info');
-  }
-  const toast = document.querySelector('.toast:last-child, .toast-notification:last-child');
-  if (toast) setTimeout(() => toast.remove(), 2000);
-};
-
-
-window._onDmCallOfferSent = function (data) {
-  if (data.log_id) _dmCallLogId = data.log_id;
-};
-
-// ── Receiving a call (incoming) ────────────────────────────────────────────
-let _incomingCallData = null;
-
-window._onDmCallOffer = function (data) {
-  if (_dmCallState !== 'idle') {
-    window.wsSend({ type: 'dm_call_decline', target_user_id: data.from_user_id, group_id: data.group_id, log_id: data.log_id });
-    return;
-  }
-  _incomingCallData = data;
-  _dmCallLogId = data.log_id || null;
-  _dmCallState = 'ringing-in';
-  _dmPlayRing('in');
-  _renderDmCallOverlay('ringing-in');
-
-  _dmCallTimeoutTimer = setTimeout(() => {
-    if (_dmCallState === 'ringing-in') {
-      _appendCallLogEntry({ status: 'missed', isVideo: data.is_video, isOutgoing: false });
-      _resetDmCallState(); // let it simply time out — the caller's own timer sends the actual dm_call_end
-    }
-  }, DM_CALL_TIMEOUT_MS);
-};
-
-async function _acceptDmCall() {
-  const data = _incomingCallData;
-  if (!data) return;
-  _clearDmCallTimeout();
-  _dmStopRing();
-
-  _dmCallPeerId  = data.from_user_id;
-  _dmCallGroupId = data.group_id || null;
-  _dmCallIsVideo = !!data.is_video;
-  _dmCallRemoteVideo = !!data.is_video;
-
-  try {
-    _dmCallLocalStream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-      video: _dmCallIsVideo ? { width: { ideal: 640 }, height: { ideal: 480 } } : false,
-    });
-  } catch (e) {
-    showToast('Could not access ' + (_dmCallIsVideo ? 'camera/microphone' : 'microphone'), 'error');
-    _declineDmCall();
-    return;
-  }
-
-  _dmCallPc = _buildDmPeerConnection();
-  _dmCallLocalStream.getTracks().forEach(t => _dmCallPc.addTrack(t, _dmCallLocalStream));
-
-  await _dmCallPc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-  _dmCallPendingCandidates.forEach(c => _dmCallPc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {}));
-  _dmCallPendingCandidates = [];
-
-  const answer = await _dmCallPc.createAnswer();
-  await _dmCallPc.setLocalDescription(answer);
-
-  window.wsSend({
-    type: 'dm_call_answer',
-    target_user_id: _dmCallPeerId,
-    group_id: _dmCallGroupId,
-    log_id: _dmCallLogId,
-    sdp: answer,
-  });
-
-  _dmCallState = 'active';
-  _dmCallStartedAt = Date.now();
-  _renderDmCallOverlay('active');
-}
-window._acceptDmCall = _acceptDmCall;
-
-function _declineDmCall() {
-  _clearDmCallTimeout();
-  _dmStopRing();
-  if (_incomingCallData) {
-    window.wsSend({ type: 'dm_call_decline', target_user_id: _incomingCallData.from_user_id, group_id: _incomingCallData.group_id, log_id: _dmCallLogId });
-    _appendCallLogEntry({ status: 'declined', isVideo: _incomingCallData.is_video, isOutgoing: false });
-  }
-  _resetDmCallState();
-}
-window._declineDmCall = _declineDmCall;
-
-// ── Shared peer connection setup ───────────────────────────────────────────
-function _buildDmPeerConnection() {
-  const pc = new RTCPeerConnection({ iceServers: _dmIceServers() });
-
-  pc.onicecandidate = (e) => {
-    if (e.candidate) {
-      window.wsSend({
-        type: 'dm_call_candidate',
-        target_user_id: _dmCallPeerId,
-        group_id: _dmCallGroupId,
-        log_id: _dmCallLogId,
-        candidate: e.candidate,
-      });
-    }
-  };
-
-  pc.ontrack = (e) => {
-    if (e.streams && e.streams[0]) {
-      _dmCallRemoteStream = e.streams[0];
-    } else {
-      if (!_dmCallRemoteStream) _dmCallRemoteStream = new MediaStream();
-      _dmCallRemoteStream.addTrack(e.track);
-    }
-
-    _attachDmRemoteMedia();
-  };
-
-  pc.onconnectionstatechange = () => {
-    if (['disconnected', 'failed', 'closed'].includes(pc.connectionState) && _dmCallState !== 'idle') {
-      _finishActiveCall('ended');
-    }
-  };
-
-  return pc;
-}
-
-function _attachDmRemoteMedia() {
-  if (!_dmCallRemoteStream) return;
-
-  const remoteVideo = document.getElementById('dmCallRemoteVideo');
-  const remoteAudio = document.getElementById('dmCallRemoteAudio');
-
-  if (remoteVideo && remoteVideo.srcObject !== _dmCallRemoteStream) {
-    remoteVideo.srcObject = _dmCallRemoteStream;
-    remoteVideo.play().catch(() => {});
-  }
-
-  if (remoteAudio) {
-    remoteAudio.muted = _dmCallDeafened;
-
-    if (remoteAudio.srcObject !== _dmCallRemoteStream) {
-      remoteAudio.srcObject = _dmCallRemoteStream;
-      remoteAudio.play().catch(() => {});
+  function make(data){return {...data,deafened:false,minimized:false,audio:new Map(),videos:[],message:'',closed:false};}
+  async function start(video) {
+    if(busy()){notice('Leave your current call before starting another.');return;}
+    const dm=typeof DM!=='undefined'?DM:{};
+    const groupId=Number(dm.activeGroupId)||null,peerId=Number(dm.activePartnerId)||null;
+    if(!groupId&&!peerId)return;
+    if(!await claim()){notice('You already have a call open in another tab.');return;}
+    const c=make({groupId,peerId,video:!!video,name:groupId?(dm.activeGroupName||'Group call'):(dm.activePartnerName||'Direct call'),state:'outgoing'});call=c;render(c);
+    if(groupId){
+      try{await connect(c);if(call===c&&!send({type:'dm_group_call_start',group_id:groupId,is_video:!!video})){c.message='Connected, but invitations could not be sent. Reconnect chat to invite members.';render(c);}}catch(e){cleanup(c);notice(e.message);}
+    }else{
+      if(!send({type:'dm_call_offer',target_user_id:peerId,is_video:!!video,media:'livekit'})){cleanup(c);notice('Chat is reconnecting. Try the call again.');return;}
+      ring(c);
     }
   }
-
-  if (remoteVideo) {
-    remoteVideo.muted = true;
+  async function accept(audioOnly=false) {
+    const c=call;if(!c||c.state!=='incoming'||c.busy)return;
+    c.busy=true;render(c);
+    if(!await claim()){c.busy=false;c.message='Another tab already has an active call.';render(c);return;}
+    announce(c);c.video=c.video&&!audioOnly;c.state='connecting';stopRing(c);render(c);
+    try{await connect(c);if(call!==c)return;if(!c.groupId&&!send({type:'dm_call_answer',target_user_id:c.peerId,log_id:c.logId,media:'livekit'}))throw Error('Signaling disconnected. Please call again.');}catch(e){end();notice(e.message);}finally{c.busy=false;if(call===c)render(c);}
   }
-}
-
-// ── WS signal handlers ─────────────────────────────────────────────────────
-window._onDmCallAnswer = async function (data) {
-  if (!_dmCallPc || _dmCallState !== 'ringing-out') return;
-  _clearDmCallTimeout();
-  _dmStopRing();
-  await _dmCallPc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-  _dmCallPendingCandidates.forEach(c => _dmCallPc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {}));
-  _dmCallPendingCandidates = [];
-  _dmCallState = 'active';
-  _dmCallStartedAt = Date.now();
-  _renderDmCallOverlay('active');
-};
-
-window._onDmCallCandidate = function (data) {
-  if (!data.candidate) return;
-  if (_dmCallPc && _dmCallPc.remoteDescription) {
-    _dmCallPc.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(() => {});
-  } else {
-    _dmCallPendingCandidates.push(data.candidate);
+  function end(){const c=call;if(!c)return;if(!c.groupId&&c.peerId&&c.logId)send({type:c.state==='incoming'?'dm_call_decline':'dm_call_end',target_user_id:c.peerId,log_id:c.logId});cleanup(c);}
+  async function action(name){const c=call;if(!c||c.busy)return;const p=c.room?.localParticipant;
+    if(name==='minimize'){c.minimized=!c.minimized;render(c);return;}
+    if(name==='end'){end();return;}if(name==='accept'||name==='audio'){accept(name==='audio');return;}
+    if(name==='settings'){media().open(c.room);return;}if(!p)return;
+    c.busy=true;render(c);
+    try{if(name==='mic')await p.setMicrophoneEnabled(!p.isMicrophoneEnabled,media().audio());
+      if(name==='camera')await p.setCameraEnabled(!p.isCameraEnabled,media().video());
+      if(name==='screen'){const opts=media().screenOptions();await p.setScreenShareEnabled(!p.isScreenShareEnabled,opts.capture,opts.publish);}
+      if(name==='deafen'){c.deafened=!c.deafened;for(const el of c.audio.values())el.muted=c.deafened;}
+      if(name==='resume'){await c.room.startAudio();for(const el of c.audio.values())await el.play();c.message='';}
+    }catch(e){c.message=e.message||'Could not change this setting.';}finally{c.busy=false;if(call===c)render(c);}
   }
-};
-
-window._onDmCallDecline = function () {
-  _clearDmCallTimeout();
-  _dmStopRing();
-  showToast('Call declined', 'info');
-  _appendCallLogEntry({ status: 'declined', isVideo: _dmCallIsVideo, isOutgoing: true });
-  _resetDmCallState();
-};
-
-window._onDmCallEnd = function () {
-  if (_dmCallState === 'idle') return;
-  const wasActive = _dmCallState === 'active';
-  _dmStopRing();
-  showToast(wasActive ? 'Call ended' : 'Missed call', 'info');
-  _appendCallLogEntry({
-    status: wasActive ? 'ended' : 'missed',
-    isVideo: _dmCallIsVideo,
-    isOutgoing: false,
-    durationSeconds: wasActive && _dmCallStartedAt ? Math.round((Date.now() - _dmCallStartedAt) / 1000) : 0,
-  });
-  _resetDmCallState();
-};
-
-function _sendCallEnd() {
-  if (_dmCallPeerId) {
-    window.wsSend({ type: 'dm_call_end', target_user_id: _dmCallPeerId, group_id: _dmCallGroupId, log_id: _dmCallLogId });
-  }
-}
-
-function _finishActiveCall(reason) {
-  const durationSeconds = _dmCallStartedAt ? Math.round((Date.now() - _dmCallStartedAt) / 1000) : 0;
-  _sendCallEnd();
-  _appendCallLogEntry({ status: reason, isVideo: _dmCallIsVideo, isOutgoing: true, durationSeconds });
-  _resetDmCallState();
-}
-
-function endDmCall() {
-  _clearDmCallTimeout();
-  _dmStopRing();
-  if (_dmCallState === 'active') {
-    _finishActiveCall('ended');
-  } else {
-    _sendCallEnd();
-    _resetDmCallState();
-  }
-}
-window.endDmCall = endDmCall;
-
-function _resetDmCallState() {
-  _clearDmCallTimeout();
-  _dmStopRing();
-  if (_dmCallPc) {
-    // Detach before closing — closing a peer connection can re-fire
-    // onconnectionstatechange synchronously on some browsers, which would
-    // otherwise re-enter this same cleanup mid-execution and double-send
-    // dm_call_end / double-append the call-log entry.
-    _dmCallPc.onconnectionstatechange = null;
-    try { _dmCallPc.close(); } catch (e) {}
-  }
-  if (_dmCallLocalStream) { _dmCallLocalStream.getTracks().forEach(t => t.stop()); }
-  _dmCallPc = null;
-  _dmCallLocalStream = null;
-  _dmCallRemoteStream = null;
-  _dmCallDeafened = false;
-  _dmCallIsVideo = false;
-  _dmCallRemoteVideo = false;
-  _dmCallCameraBusy = false;
-  _dmCallPeerId = null;
-  _dmCallGroupId = null;
-  _dmCallLogId = null;
-  _dmCallStartedAt = null;
-  _incomingCallData = null;
-  _dmCallPendingCandidates = [];
-  _dmCallState = 'idle';
-  const overlay = document.getElementById('dmCallOverlay');
-  if (overlay) overlay.remove();
-}
-
-// ── Call UI ─────────────────────────────────────────────────────────────────
-function _dmCallToggleMic() {
-  if (!_dmCallLocalStream) return;
-  const track = _dmCallLocalStream.getAudioTracks()[0];
-  if (!track) return;
-  track.enabled = !track.enabled;
-  const btn = document.getElementById('dmCallMicBtn');
-  if (btn) btn.classList.toggle('muted-state', !track.enabled);
-}
-window._dmCallToggleMic = _dmCallToggleMic;
-
-function _dmCallToggleDeafen() {
-  _dmCallDeafened = !_dmCallDeafened;
-
-  const remoteAudio = document.getElementById('dmCallRemoteAudio');
-  const remoteVideo = document.getElementById('dmCallRemoteVideo');
-
-  if (remoteAudio) remoteAudio.muted = _dmCallDeafened;
-
-  // Remote video may also carry audio. Keep it muted because audio playback
-  // is handled by dmCallRemoteAudio to avoid duplicate/echoed playback.
-  if (remoteVideo) remoteVideo.muted = true;
-
-  const btn = document.getElementById('dmCallDeafenBtn');
-  if (btn) {
-    btn.classList.toggle('muted-state', _dmCallDeafened);
-    btn.textContent = _dmCallDeafened ? '🔇' : '🔊';
-    btn.title = _dmCallDeafened ? 'Undeafen' : 'Deafen';
-  }
-}
-window._dmCallToggleDeafen = _dmCallToggleDeafen;
-
-async function _dmCallToggleCam() {
-  if (!_dmCallPc || !_dmCallLocalStream || _dmCallState !== 'active' || _dmCallCameraBusy) return;
-
-  _dmCallCameraBusy = true;
-
-  try {
-    const existingTrack = _dmCallLocalStream.getVideoTracks()[0];
-
-    if (existingTrack && existingTrack.readyState === 'live') {
-      // A retained video track can be toggled without renegotiating the call.
-      // Check enabled FIRST: getVideoTracks()[0] returns the same live track
-      // whether it is currently publishing frames or disabled.
-      if (!existingTrack.enabled) {
-        existingTrack.enabled = true;
-        _dmCallIsVideo = true;
-        _renderDmCallOverlay('active');
-        return;
-      }
-
-      existingTrack.enabled = false;
-      _dmCallIsVideo = false;
-      _renderDmCallOverlay('active');
-      return;
+  function button(actionName,label,pressed=false,extra=''){return `<button type="button" data-action="${actionName}" ${['mic','camera','screen','deafen'].includes(actionName)?`aria-pressed="${pressed}"`:''} class="${extra}">${label}</button>`;}
+  function render(c){
+    if(call!==c)return;
+    let panel=c.panel;if(!panel){panel=document.createElement('section');panel.className='ec-call';panel.setAttribute('role','region');panel.setAttribute('aria-label','Call');document.body.appendChild(panel);c.panel=panel;panel.onclick=e=>{const b=e.target.closest('[data-action]');if(b)action(b.dataset.action);};}
+    const focused=panel.contains(document.activeElement)?document.activeElement.dataset.action:null;
+    for(const [track,el]of c.videos){track.detach(el);el.remove();}c.videos=[];
+    panel.classList.toggle('is-ringing',['incoming','outgoing'].includes(c.state));panel.classList.toggle('is-minimized',c.minimized);
+    const p=c.room?.localParticipant,active=c.state==='active';
+    const count=c.room?c.room.remoteParticipants.size+1:0;
+    const status=active?`${count} connected${c.groupId?' · up to 50':''}`:c.state==='incoming'?`Incoming ${c.video?'video':'voice'} call`:c.state==='outgoing'?'Calling…':'Connecting…';
+    panel.innerHTML=`<header><div><strong>${escape(c.name)}</strong><small>${status}</small></div>${button('minimize',c.minimized?'Expand':'Minimize')}</header><div class="ec-call-screen"></div><div class="ec-call-grid"></div><div class="ec-call-actions">${c.state==='incoming'?button('accept','Accept',false,'accept')+(c.video?button('audio','Audio only'):'')+button('end','Decline',false,'danger'):active?button('mic',p.isMicrophoneEnabled?'Mute':'Unmute',!p.isMicrophoneEnabled)+button('camera',p.isCameraEnabled?'Camera off':'Camera on',p.isCameraEnabled)+button('screen',p.isScreenShareEnabled?'Stop sharing':'Share screen',p.isScreenShareEnabled)+button('deafen',c.deafened?'Hear audio':'Deafen',c.deafened)+button('settings','Settings')+button('resume','Enable audio')+button('end','Leave',false,'danger'):button('end','Cancel',false,'danger')}</div><div class="ec-call-status" role="status">${escape(c.message)}</div>`;
+    panel.querySelectorAll('button').forEach(b=>{if(c.busy&&!['end','minimize'].includes(b.dataset.action))b.disabled=true;});
+    if(active){
+      const participants=[p,...c.room.remoteParticipants.values()];
+      const speakers=c.room.activeSpeakers||[];
+      const sorted=participants.slice().sort((a,b)=>{const ai=speakers.indexOf(a),bi=speakers.indexOf(b);return (ai<0?999:ai)-(bi<0?999:bi);});
+      // Keep local preview visible and prioritize dominant speakers for the five remote tiles.
+      const visible=[p,...sorted.filter(x=>x!==p).slice(0,5)];
+      for(const participant of visible){const tile=document.createElement('div');tile.className='ec-call-tile';tile.dataset.local=String(participant===p);tile.classList.toggle('is-speaking',participant.isSpeaking&&participant.isMicrophoneEnabled);const name=participant===p?'You':participant.name||'Participant';tile.innerHTML=`<em>${escape(name.charAt(0).toUpperCase())}</em><span>${escape(name)} · ${participant.isMicrophoneEnabled?'Mic on':'Muted'}</span>`;panel.querySelector('.ec-call-grid').appendChild(tile);const pub=participant.getTrackPublication('camera');if(pub?.track&&!pub.isMuted){const el=document.createElement('video');el.autoplay=true;el.playsInline=true;el.muted=true;pub.track.attach(el);tile.prepend(el);c.videos.push([pub.track,el]);el.play().catch(()=>{});}}
+      for(const participant of participants){const pub=participant.getTrackPublication('screen_share');if(pub?.track&&!pub.isMuted){const el=document.createElement('video');el.autoplay=true;el.playsInline=true;el.muted=true;pub.track.attach(el);panel.querySelector('.ec-call-screen').appendChild(el);c.videos.push([pub.track,el]);el.play().catch(()=>{});break;}}
+      if(count>6){const label=document.createElement('small');label.textContent=`Showing you and five participants, prioritizing active speakers. ${count} in this call.`;panel.querySelector('.ec-call-status').appendChild(label);}
+      if(!navigator.mediaDevices?.getDisplayMedia)panel.querySelector('[data-action=screen]').disabled=true;
     }
-
-    const camStream = await navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 640 }, height: { ideal: 480 } },
-      audio: false,
-    });
-
-    const videoTrack = camStream.getVideoTracks()[0];
-    if (!videoTrack) throw new Error('No camera track available');
-
-    _dmCallLocalStream.addTrack(videoTrack);
-
-    const reusableSender = _dmCallPc.getSenders().find(
-      sender => !sender.track && sender.transceiver?.receiver?.track?.kind === 'video'
-    );
-
-    if (reusableSender) {
-      await reusableSender.replaceTrack(videoTrack);
-    } else {
-      _dmCallPc.addTrack(videoTrack, _dmCallLocalStream);
+    if(focused)panel.querySelector(`[data-action="${focused}"]`)?.focus({preventScroll:true});
+  }
+  async function handle(data){
+    if(!/^dm_(?:call_|group_call_)/.test(data.type||''))return false;
+    if(data.type==='dm_call_offer'||data.type==='dm_group_call_start'){
+      if(call && ((data.type==='dm_call_offer' && call.logId===Number(data.log_id)) || (data.type==='dm_group_call_start' && call.groupId===Number(data.group_id)))) return true;
+      if(busy()){if(!data.group_id)send({type:'dm_call_decline',target_user_id:data.from_user_id,log_id:data.log_id});else send({type:'dm_group_call_busy',group_id:data.group_id,target_user_id:data.from_user_id});return true;}
+      if(data.type==='dm_call_offer'&&data.media!=='livekit'){send({type:'dm_call_decline',target_user_id:data.from_user_id,log_id:data.log_id});notice('The caller needs to refresh eCollab before calling.');return true;}
+      call=make({state:'incoming',peerId:Number(data.from_user_id),groupId:data.type==='dm_group_call_start'?Number(data.group_id):null,logId:Number(data.log_id)||null,name:data.from_username||'Incoming call',video:!!data.is_video});ring(call);render(call);return true;
     }
-
-    _dmCallIsVideo = true;
-    _renderDmCallOverlay('active');
-
-    await _dmCallRenegotiate();
-  } catch (e) {
-    console.error('[DM call] camera toggle failed:', e);
-    showToast('Could not change camera', 'error');
-  } finally {
-    _dmCallCameraBusy = false;
+    const c=call;
+    if(data.type==='dm_call_offer_sent'){if(c&&!c.groupId&&c.state==='outgoing'){c.logId=Number(data.log_id);announce(c);}else if(data.log_id&&data.target_user_id)send({type:'dm_call_end',log_id:data.log_id,target_user_id:data.target_user_id});return true;}
+    if(data.type==='dm_group_call_busy'){if(c?.groupId===Number(data.group_id)){c.message=(data.from_username||'A member')+' is busy.';render(c);}return true;}
+    if(!c||c.groupId||Number(data.log_id)!==c.logId||Number(data.from_user_id)!==c.peerId)return true;
+    if(data.type==='dm_call_answer'&&c.state==='outgoing'){stopRing(c);c.state='connecting';render(c);try{await connect(c);}catch(e){end();notice(e.message);}}
+    if(['dm_call_end','dm_call_decline'].includes(data.type)){cleanup(c);notice(data.type==='dm_call_decline'?'Call declined.':'Call ended.');}
+    return true;
   }
-}
-window._dmCallToggleCam = _dmCallToggleCam;
-
-async function _dmCallRenegotiate() {
-  if (!_dmCallPc || !_dmCallPeerId) return;
-
-  const offer = await _dmCallPc.createOffer();
-  await _dmCallPc.setLocalDescription(offer);
-
-  window.wsSend({
-    type: 'dm_call_renegotiate',
-    target_user_id: _dmCallPeerId,
-    group_id: _dmCallGroupId,
-    log_id: _dmCallLogId,
-    is_video: _dmCallIsVideo,
-    sdp: _dmCallPc.localDescription,
-  });
-}
-
-window._onDmCallRenegotiate = async function(data) {
-  if (!_dmCallPc || _dmCallState !== 'active' || !data.sdp) return;
-
-  try {
-    await _dmCallPc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-
-    const answer = await _dmCallPc.createAnswer();
-    await _dmCallPc.setLocalDescription(answer);
-
-    window.wsSend({
-      type: 'dm_call_renegotiate_answer',
-      target_user_id: _dmCallPeerId,
-      group_id: _dmCallGroupId,
-      log_id: _dmCallLogId,
-      is_video: !!data.is_video,
-      sdp: _dmCallPc.localDescription,
-    });
-
-    // Keep the peer camera state separate from this user's local camera.
-    _dmCallRemoteVideo = !!data.is_video;
-    _renderDmCallOverlay('active');
-  } catch (e) {
-    console.error('[DM call] renegotiation offer failed:', e);
+  // On chat/whiteboard pages socket-core calls handle; other pages use this minimal authenticated socket.
+  async function connectSignals(){
+    if(document.querySelector('script[src*="/chat/socket.js"],script[src*="/chat/socket-core.js"]'))return;
+    if(!config.wsUrl||!config.userId)return;
+    try{const res=await fetch(base+'/API/auth/ws-token.php',{credentials:'same-origin'});if(res.status===401)return;if(!res.ok)throw Error('Signaling unavailable');const data=await res.json();socket=new WebSocket(config.wsUrl);socket.onopen=()=>socket.send(JSON.stringify({type:'auth',ws_token:data.token}));socket.onmessage=e=>{try{const d=JSON.parse(e.data);if(d.type==='auth_ok'){authed=true;reconnect=0;}else handle(d).catch(console.error);}catch(_){}};socket.onclose=()=>{authed=false;clearTimeout(timer);timer=setTimeout(connectSignals,Math.min(30000,2000*2**reconnect++));};socket.onerror=()=>{};}catch(_){timer=setTimeout(connectSignals,10000);}
   }
-};
-
-window._onDmCallRenegotiateAnswer = async function(data) {
-  if (!_dmCallPc || _dmCallState !== 'active' || !data.sdp) return;
-
-  try {
-    await _dmCallPc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-  } catch (e) {
-    console.error('[DM call] renegotiation answer failed:', e);
-  }
-};
-
-function _renderDmCallOverlay(state) {
-  let overlay = document.getElementById('dmCallOverlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'dmCallOverlay';
-    overlay.style.cssText = 'position:fixed;bottom:0;right:376px;z-index:9001;width:300px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px 12px 0 0;box-shadow:0 -4px 32px rgba(0,0,0,0.5);overflow:hidden;';
-    document.body.appendChild(overlay);
-  }
-
-  const partnerName = DM.activePartnerName || _incomingCallData?.from_username || 'User';
-
-  if (state === 'ringing-out') {
-    overlay.innerHTML = `
-      <div style="padding:20px;text-align:center;">
-        <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px;">Calling…</div>
-        <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:16px;">${escHtml(partnerName)}</div>
-        <button onclick="endDmCall()" style="width:44px;height:44px;border-radius:50%;background:#ef4444;border:none;color:#fff;font-size:18px;cursor:pointer;">☎</button>
-      </div>`;
-  } else if (state === 'ringing-in') {
-    const isVideo = _incomingCallData?.is_video;
-    overlay.innerHTML = `
-      <div style="padding:20px;text-align:center;">
-        <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px;">Incoming ${isVideo ? 'video' : 'voice'} call</div>
-        <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:16px;">${escHtml(partnerName)}</div>
-        <div style="display:flex;gap:16px;justify-content:center;">
-          <button onclick="_declineDmCall()" style="width:44px;height:44px;border-radius:50%;background:#ef4444;border:none;color:#fff;font-size:18px;cursor:pointer;">✕</button>
-          <button onclick="_acceptDmCall()" style="width:44px;height:44px;border-radius:50%;background:#22c55e;border:none;color:#fff;font-size:18px;cursor:pointer;">✓</button>
-        </div>
-      </div>`;
-  } else if (state === 'active') {
-    overlay.innerHTML = `
-      <audio id="dmCallRemoteAudio" autoplay playsinline></audio>
-      <div style="position:relative;background:#000;height:${(_dmCallIsVideo || _dmCallRemoteVideo) ? '220px' : '0'};">
-        ${_dmCallRemoteVideo ? `<video id="dmCallRemoteVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>` : ''}
-        ${_dmCallIsVideo ? `<video id="dmCallLocalVideo" autoplay playsinline muted style="position:absolute;bottom:8px;right:8px;width:70px;height:52px;border-radius:6px;object-fit:cover;transform:scaleX(-1);border:1px solid rgba(255,255,255,0.3);"></video>` : ''}
-      </div>
-      <div style="padding:12px;display:flex;align-items:center;gap:10px;">
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(partnerName)}</div>
-          <div style="font-size:11px;color:#22c55e;">Connected</div>
-        </div>
-        <button id="dmCallMicBtn" onclick="_dmCallToggleMic()" title="Mute" style="width:32px;height:32px;border-radius:50%;background:var(--bg-tertiary);border:none;color:var(--text-primary);cursor:pointer;">🎤</button>
-        <button id="dmCallDeafenBtn" onclick="_dmCallToggleDeafen()" title="${_dmCallDeafened ? 'Undeafen' : 'Deafen'}" class="${_dmCallDeafened ? 'muted-state' : ''}" style="width:32px;height:32px;border-radius:50%;background:var(--bg-tertiary);border:none;color:var(--text-primary);cursor:pointer;">${_dmCallDeafened ? '🔇' : '🔊'}</button>
-        <button id="dmCallCamBtn" onclick="_dmCallToggleCam()" title="${_dmCallIsVideo ? 'Turn camera off' : 'Turn camera on'}" class="${_dmCallIsVideo ? '' : 'muted-state'}" style="width:32px;height:32px;border-radius:50%;background:var(--bg-tertiary);border:none;color:var(--text-primary);cursor:pointer;">📷</button>
-        <button onclick="endDmCall()" title="End call" style="width:32px;height:32px;border-radius:50%;background:#ef4444;border:none;color:#fff;cursor:pointer;">☎</button>
-      </div>`;
-
-    if (_dmCallIsVideo && _dmCallLocalStream) {
-      const localVid = document.getElementById('dmCallLocalVideo');
-      if (localVid) {
-        localVid.srcObject = _dmCallLocalStream;
-        localVid.play().catch(() => {});
-      }
-    }
-
-    _attachDmRemoteMedia();
-  }
-}
-
+  window.EcollabCalls={handle,busy:()=>!!call,get room(){return call?.room;}};
+  window.startDmCall=start;window.endDmCall=end;
+  for(const data of window.__ecollabPendingCalls || []) handle(data).catch(console.error);
+  delete window.__ecollabPendingCalls;
+  window.startDmGroupLiveKitCall=async(groupId,video)=>{if(busy())return notice('Leave your current call first.');if(!await claim())return notice('A call is active in another tab.');const c=make({groupId:Number(groupId),video:!!video,name:'Group call',state:'connecting'});call=c;render(c);try{await connect(c);if(call===c)send({type:'dm_group_call_start',group_id:c.groupId,is_video:c.video});}catch(e){cleanup(c);notice(e.message);}};
+  window.addEventListener('pagehide',()=>{if(call)end();clearTimeout(timer);if(socket){socket.onclose=null;socket.close();}});
+  window.addEventListener('pageshow',e=>{if(e.persisted)connectSignals();});
+  // Defer until all page scripts have run, avoiding a second chat connection.
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',connectSignals,{once:true});else connectSignals();
+})();

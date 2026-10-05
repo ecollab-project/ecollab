@@ -140,6 +140,14 @@ window.wsSend = wsSend;
 
 // ── Message dispatcher ───────────────────────────────────────────────────────
 function handleSocketMessage(data) {
+  if (/^dm_(?:call_|group_call_)/.test(data.type || '')) {
+    if (window.EcollabCalls) window.EcollabCalls.handle(data).catch(console.error);
+    else (window.__ecollabPendingCalls ||= []).push(data);
+    return;
+  }
+  // LiveKit is authoritative for media and the roster; legacy socket events must not replace it.
+  if (window.EcollabLiveKit && /^(voice_join|voice_leave|voice_peers|webrtc_offer|webrtc_answer|webrtc_candidate|screen_share_notify)$/.test(data.type || '')) return;
+
   switch (data.type) {
 
     // ── Auth ──

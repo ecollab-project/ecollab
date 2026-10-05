@@ -119,5 +119,6 @@ if(state.workspaces.length){const requested=new URLSearchParams(location.search)
 let heartbeatTimer=null;function startPresence(){const w=selected();if(!w)return;const beat=()=>request(PRESENCE,{workspace_id:w.id}).catch(()=>{});beat();clearInterval(heartbeatTimer);heartbeatTimer=setInterval(beat,20000)}
 setInterval(async()=>{const w=selected();if(!w)return;try{const p=await request(PRESENCE,{workspace_id:w.id},'GET');state.active=p.active||[];w.active_count=state.active.length;render()}catch(e){}},30000);
 </script>
+<?php require_once dirname(__DIR__, 2) . '/includes/calls/bootstrap.php'; ?>
 </body>
 </html>

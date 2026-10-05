@@ -118,5 +118,6 @@ grid.addEventListener('click',async event=>{
 let timer;search.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>loadBooks(search.value.trim()),450);});
 loadBooks();
 </script>
+<?php require_once dirname(__DIR__, 2) . '/includes/calls/bootstrap.php'; ?>
 </body>
 </html>

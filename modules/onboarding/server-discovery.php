@@ -130,5 +130,6 @@ $initials = strtoupper(mb_substr($firstName, 0, 1));
     const CHAT_URL    = BASE_URL + '/modules/chat/chat.php';
   </script>
   <script src="<?= BASE_URL ?>/assets/js/onboarding/server-discovery.js" defer></script>
+<?php require_once dirname(__DIR__, 2) . '/includes/calls/bootstrap.php'; ?>
 </body>
 </html>

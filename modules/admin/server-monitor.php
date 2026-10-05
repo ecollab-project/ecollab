@@ -64,4 +64,5 @@ function showPage(page){window.location.href=(<?= json_encode($scope==='facilita
 function goToChat(){window.location.href=<?= json_encode(BASE_URL.'/modules/chat/chat.php') ?>;}
 function toggleSidebar(){document.querySelector('.sidebar')?.classList.toggle('open');document.getElementById('sidebarOverlay')?.classList.toggle('open');}
 function closeSidebar(){document.querySelector('.sidebar')?.classList.remove('open');document.getElementById('sidebarOverlay')?.classList.remove('open');}
-</script></main></div></body></html>
+</script></main></div><?php require_once dirname(__DIR__, 2) . '/includes/calls/bootstrap.php'; ?>
+</body></html>

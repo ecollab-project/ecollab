@@ -23,7 +23,9 @@ try {
     }
     $nonce = bin2hex(random_bytes(16));
     $origin = CollaboraService::origin($url);
-    header("Content-Security-Policy: default-src 'self'; script-src 'nonce-$nonce'; style-src 'self' 'nonce-$nonce'; frame-src $origin; form-action $origin; object-src 'none'; base-uri 'none'; frame-ancestors 'self'");
+    require_once dirname(__DIR__, 2) . '/includes/calls/origins.php';
+$callOrigins = ecollabCallOrigins();
+header("Content-Security-Policy: default-src 'self'; connect-src 'self' $callOrigins; media-src 'self' blob:; script-src 'nonce-$nonce'; style-src 'self' 'nonce-$nonce'; frame-src $origin; form-action $origin; object-src 'none'; base-uri 'none'; frame-ancestors 'self'");
 } catch (Throwable $e) {
     http_response_code(in_array($e->getCode(), [403,404], true) ? $e->getCode() : 503);
     exit('The editor is unavailable. Check document access and the Collabora configuration.');
@@ -60,4 +62,5 @@ document.getElementById('ask').addEventListener('click',async()=>{const b=docume
 document.getElementById('upload').addEventListener('click',async()=>{const out=document.getElementById('upload-result'),f=new FormData();f.set('action','upload');f.set('workspace_id',wid);f.set('title',document.getElementById('upload-title').value);const file=document.getElementById('upload-file').files[0];if(!file){out.textContent='Choose a file.';return;}f.set('file',file);out.textContent='Uploading…';try{const res=await fetch(base+'/API/collaboration/document-manage.php',{method:'POST',headers:{'X-CSRF-Token':csrf},body:f});const data=await res.json();out.textContent=data.error||'Imported. ';if(data.url){const a=document.createElement('a');a.href=data.url;a.textContent='Open imported file';a.target='_blank';a.rel='noopener';out.append(a);}}catch{out.textContent='Upload failed.';}});
 document.getElementById('rename')?.addEventListener('click',async()=>{const out=document.getElementById('rename-result');try{const res=await fetch(base+'/API/collaboration/document-manage.php',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({action:'rename',id,title:document.getElementById('new-title').value})});const data=await res.json();out.textContent=data.success?'Renamed. Reopen after saving to update the editor title.':data.error;}catch{out.textContent='Rename failed.';}});
 document.getElementById('sharing')?.addEventListener('click',async()=>{const r=document.getElementById('sharing-result');try{const res=await fetch(base+'/API/collaboration/resource-access.php',{method:'PATCH',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({workspace_id:wid,resource_type:'document',resource_id:id,visibility:document.getElementById('visibility').value,public_permission:document.getElementById('public-permission').value})});const data=await res.json();r.textContent=data.success?'Sharing updated.':data.error||'Update failed.';}catch{r.textContent='Update failed.';}});
-</script></body></html>
+</script><?php require_once dirname(__DIR__, 2) . '/includes/calls/bootstrap.php'; ?>
+</body></html>

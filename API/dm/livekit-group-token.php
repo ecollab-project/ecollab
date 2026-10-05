@@ -51,10 +51,13 @@ try {
         $roomName = 'Group Call';
     }
 
+    session_write_close();
     $livekit = new LiveKitService();
+    $room = 'ecollab-dm-group-v2-' . $groupId;
+    $livekit->ensureRoom($room, 50);
     $result = $livekit->issueNamedRoomToken(
         $user,
-        'ecollab-dm-group-' . $groupId,
+        $room,
         $roomName,
         ['ecollab_dm_group_id' => $groupId, 'call_type' => 'dm_group']
     );

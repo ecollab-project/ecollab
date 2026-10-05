@@ -96,6 +96,41 @@ final class LiveKitService
         ];
     }
 
+    /** Server-only room API. Credentials never leave PHP. */
+    public function roomRequest(string $method, array $body, array $grant): array
+    {
+        $now = time();
+        $token = $this->jwt(['alg'=>'HS256','typ'=>'JWT'], [
+            'iss'=>$this->apiKey, 'nbf'=>$now-5, 'exp'=>$now+60, 'video'=>$grant,
+        ]);
+        $url = preg_replace('/^ws/', 'http', rtrim($this->wsUrl, '/'));
+        $ch = curl_init($url . '/twirp/livekit.RoomService/' . $method);
+        curl_setopt_array($ch, [CURLOPT_POST=>true, CURLOPT_RETURNTRANSFER=>true,
+            CURLOPT_CONNECTTIMEOUT=>3, CURLOPT_TIMEOUT=>8,
+            CURLOPT_HTTPHEADER=>['Content-Type: application/json', 'Authorization: Bearer '.$token],
+            CURLOPT_POSTFIELDS=>json_encode($body, JSON_THROW_ON_ERROR)]);
+        try {
+            $response = curl_exec($ch);
+            $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            if ($response === false || $status < 200 || $status >= 300) {
+                throw new RuntimeException('LiveKit room service unavailable (HTTP '.$status.').');
+            }
+            return json_decode($response, true, 512, JSON_THROW_ON_ERROR);
+        } finally { curl_close($ch); }
+    }
+
+    public function ensureRoom(string $room, int $limit): void
+    {
+        if (!preg_match('/^ecollab-[a-z0-9-]+$/', $room) || $limit < 2 || $limit > 50) {
+            throw new InvalidArgumentException('Invalid room configuration.');
+        }
+        $created = $this->roomRequest('CreateRoom', ['name'=>$room, 'max_participants'=>$limit,
+            'empty_timeout'=>120, 'departure_timeout'=>20], ['roomCreate'=>true]);
+        if ((int)($created['max_participants'] ?? $created['maxParticipants'] ?? 0) !== $limit) {
+            throw new RuntimeException('This room must be emptied before its participant limit can change.');
+        }
+    }
+
     private function jwt(array $header, array $payload): string
     {
         $h = $this->b64(json_encode($header, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));

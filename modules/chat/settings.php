@@ -70,4 +70,5 @@ document.getElementById('testMic').onclick=async()=>{try{if(!navigator.mediaDevi
 document.getElementById('openPassword').onclick=()=>document.getElementById('passwordModal').classList.add('open');document.getElementById('closePassword').onclick=()=>document.getElementById('passwordModal').classList.remove('open');document.getElementById('passwordForm').onsubmit=async e=>{e.preventDefault();const a=document.getElementById('newPassword').value,b=document.getElementById('confirmPassword').value;if(a!==b){msg('passwordStatus','New passwords do not match.');return}try{await api(BASE+'/API/auth/change-password.php',{method:'POST',body:JSON.stringify({current_password:document.getElementById('currentPassword').value,new_password:a})});msg('passwordStatus','Password changed successfully.',true);e.target.reset();setTimeout(()=>document.getElementById('passwordModal').classList.remove('open'),900)}catch(x){msg('passwordStatus',x.message)}};
 load();loadEditableProfile();
 const requestedSection=new URLSearchParams(location.search).get('section');if(requestedSection&&titles[requestedSection])document.querySelector('.navbtn[data-section="'+requestedSection+'"]')?.click();
-</script></body></html>
+</script><?php require_once dirname(__DIR__, 2) . '/includes/calls/bootstrap.php'; ?>
+</body></html>

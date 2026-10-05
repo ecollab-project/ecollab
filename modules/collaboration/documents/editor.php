@@ -96,7 +96,9 @@ $config['token'] = OnlyOfficeService::sign($config);
 $nonce = base64_encode(random_bytes(16));
 $origin = parse_url($serverUrl, PHP_URL_SCHEME) . '://' . parse_url($serverUrl, PHP_URL_HOST);
 if (parse_url($serverUrl, PHP_URL_PORT)) $origin .= ':' . (int)parse_url($serverUrl, PHP_URL_PORT);
-header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{$nonce}' {$origin}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: {$origin}; font-src 'self' data: {$origin}; connect-src 'self' {$origin}; frame-src {$origin}; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'");
+require_once dirname(__DIR__, 3) . '/includes/calls/origins.php';
+$callOrigins = ecollabCallOrigins();
+header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{$nonce}' {$origin}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: {$origin}; font-src 'self' data: {$origin}; connect-src 'self' {$origin} {$callOrigins}; media-src 'self' blob:; frame-src {$origin}; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'");
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header('Cache-Control: no-store, private');
@@ -123,6 +125,7 @@ window.addEventListener('load', function () {
     new DocsAPI.DocEditor('placeholder', config);
 });
 </script>
+<?php require_once dirname(__DIR__, 3) . '/includes/calls/bootstrap.php'; ?>
 </body>
 </html>
 

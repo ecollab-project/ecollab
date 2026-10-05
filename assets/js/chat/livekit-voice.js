@@ -7,6 +7,9 @@
 (() => {
   let room = null;
   let activeChannelId = null;
+  let screenQuality = "1080p";
+  let mediaBusy = false;
+  let countFetchBusy = false;
 
   function csrf() {
     return document.querySelector('meta[name="csrf-token"]')?.content || '';
@@ -46,10 +49,10 @@
     return {
       id,
       user_id: id,
-      full_name: name,
-      username: metadata.username || name,
-      role: metadata.role || '',
-      avatar_color_gradient: metadata.avatar_color_gradient || '#3b82f6,#6366f1',
+      full_name: escHtml(name),
+      username: escHtml(metadata.username || name),
+      role: escHtml(metadata.role || ''),
+      avatar_color_gradient: '#3b82f6,#6366f1',
       muted: !participant.isMicrophoneEnabled,
     };
   }
@@ -65,6 +68,10 @@
     const speaking = document.querySelectorAll('.vc-speaker-card').length;
     const listening = document.querySelectorAll('.vc-listener-card').length;
     updateVcCounts(speaking, listening);
+    if (activeChannelId && room) {
+      const badge = document.querySelector('.voice-channel[data-channel-id="'+activeChannelId+'"] .vc-count');
+      if (badge) badge.textContent = String(room.remoteParticipants.size + 1);
+    }
     if (typeof _refreshVoiceLayout === 'function') _refreshVoiceLayout();
   }
 
@@ -75,12 +82,15 @@
     const muted = !participant.isMicrophoneEnabled;
     let card = participantCard(participant);
 
-    // Muting is a microphone state, not a listening-role change. Normal voice
-    // participants stay in the Speaking section even while their mic is muted.
-    if (card?.classList.contains('vc-listener-card')) {
-      card.remove();
-      addVcParticipant({ ...participantUser(participant), muted }, true);
+    // Both devices use the same publication state. Reattach the live video
+    // after changing card layout; never stop another participant's track.
+    if (!card || card.classList.contains('vc-listener-card') !== muted) {
+      const camera = participant.getTrackPublication('camera');
+      if (camera?.track) camera.track.detach().forEach(el => el.remove());
+      card?.remove();
+      addVcParticipant(participantUser(participant), !muted);
       card = participantCard(participant);
+      if (camera?.track && !camera.isMuted) attach(camera.track, camera, participant);
     }
 
     if (card) {
@@ -102,7 +112,7 @@
     if (!participantCard(participant)) {
       // A normal LiveKit room participant is a voice participant regardless of
       // whether their microphone is currently muted.
-      addVcParticipant(participantUser(participant), true);
+      addVcParticipant(participantUser(participant), participant.isMicrophoneEnabled);
     }
     syncParticipantState(participant);
   }
@@ -116,6 +126,8 @@
   }
 
   function attach(track, publication, participant) {
+    // Repeated unmute/subscription events must not duplicate audio elements.
+    track.detach().forEach(el => el.remove());
     const el = track.attach();
     el.autoplay = true;
     el.dataset.livekitParticipant = participant.identity;
@@ -123,6 +135,7 @@
     el.classList.add('livekit-media-track');
     if (track.kind === 'audio') {
       el.style.display = 'none';
+      el.muted = vcDeafened;
       document.body.appendChild(el);
     } else {
       const uid = participantId(participant);
@@ -136,6 +149,7 @@
         // video element. Do not clone mediaStreamTrack into a new MediaStream:
         // doing so bypasses LiveKit's remote-track lifecycle and can freeze on
         // mobile browsers.
+        track.detach(el);
         el.remove();
         if (typeof _removeRemoteCamera === 'function') _removeRemoteCamera(uid);
         const card = participantCard(participant);
@@ -156,6 +170,7 @@
       }
 
       if (source === 'screen_share' && mediaTrack) {
+        track.detach(el);
         el.remove();
         const stream = new MediaStream([mediaTrack]);
         const username = participant.name || participant.identity || 'Participant';
@@ -216,7 +231,8 @@
 
   async function disconnect() {
     if (!room) return;
-    try { await room.disconnect(); } catch (_) {}
+    const previous = room; room = null;
+    try { await previous.disconnect(); } catch (_) {}
     document.querySelectorAll('.livekit-media-track').forEach(el => el.remove());
     room = null;
     activeChannelId = null;
@@ -236,6 +252,8 @@
       adaptiveStream: false,
       dynacast: true,
       disconnectOnPageLeave: true,
+      audioCaptureDefaults: window.EcollabMediaSettings?.audio(),
+      videoCaptureDefaults: window.EcollabMediaSettings?.video(),
     });
 
     room.on(RoomEvent.ParticipantConnected, participant => {
@@ -318,6 +336,10 @@
     room.on(RoomEvent.Disconnected, () => {
       document.querySelectorAll('.livekit-media-track').forEach(el => el.remove());
       activeChannelId = null;
+      if (vcActive) { vcActive=false; disconnectVoice(); }
+    });
+    room.on(RoomEvent.LocalTrackUnpublished, publication => {
+      if (publication.source === 'screen_share') { vcScreenOn=false; syncScreenControls(); const uid=Number(window.ECOLLAB?.userId); _removeRemoteScreenShare(uid); _hideRemoteScreenShareSection(uid); }
     });
 
     await room.connect(auth.url, auth.token);
@@ -343,12 +365,12 @@
 
   async function setMic(enabled) {
     if (!room) throw new Error('Not connected to voice.');
-    await room.localParticipant.setMicrophoneEnabled(Boolean(enabled));
+    await room.localParticipant.setMicrophoneEnabled(Boolean(enabled), window.EcollabMediaSettings?.audio());
   }
 
   async function setCamera(enabled) {
     if (!room) throw new Error('Not connected to voice.');
-    await room.localParticipant.setCameraEnabled(Boolean(enabled));
+    await room.localParticipant.setCameraEnabled(Boolean(enabled), window.EcollabMediaSettings?.video());
 
     const uid = Number(window.ECOLLAB?.userId || 0);
     if (!uid) return;
@@ -369,7 +391,10 @@
 
   async function setScreen(enabled) {
     if (!room) throw new Error('Not connected to voice.');
-    await room.localParticipant.setScreenShareEnabled(Boolean(enabled));
+    const options = window.EcollabMediaSettings.screenOptions(screenQuality);
+    await room.localParticipant.setScreenShareEnabled(Boolean(enabled), options.capture, options.publish);
+    vcScreenOn = room.localParticipant.isScreenShareEnabled;
+    syncScreenControls();
 
     const uid = Number(window.ECOLLAB?.userId || 0);
     if (!uid) return;
@@ -384,6 +409,8 @@
       .find(pub => (pub.source || pub.track?.source) === 'screen_share');
     const mediaTrack = publication?.track?.mediaStreamTrack;
     if (mediaTrack) {
+      mediaTrack.contentHint = 'detail';
+      mediaTrack.addEventListener('ended', () => { vcScreenOn = false; syncScreenControls(); }, {once:true});
       const stream = new MediaStream([mediaTrack]);
       const username = window.ECOLLAB?.fullName || window.ECOLLAB?.username || 'You';
       if (typeof _attachRemoteScreenShare === 'function') _attachRemoteScreenShare(uid, username, stream);
@@ -410,7 +437,12 @@
       console.warn('[LiveKit] Ignored server voice join during DM group call flow.');
       return;
     }
-    if (vcActive && Number(vcChannelId) !== Number(channelId)) await disconnect();
+    if (window.EcollabCalls?.busy()) { showToast('Leave your current call first.', 'info'); return; }
+    if (vcActive && Number(vcChannelId) === Number(channelId)) { toggleVcMinimize(); return; }
+    if (vcActive) await disconnectVoice();
+    vcMicMuted = true; vcCamOn = false; vcScreenOn = false; vcDeafened = false;
+    document.getElementById('vcSpeakingGrid')?.replaceChildren();
+    document.getElementById('vcListeningGrid')?.replaceChildren();
 
     document.querySelectorAll('.voice-channel').forEach(v => v.classList.remove('connected'));
     if (el) el.classList.add('connected');
@@ -436,10 +468,12 @@
     try {
       await connect(channelId);
       if (typeof _reportVoiceStatus === 'function') _reportVoiceStatus('join', channelId);
-      if (typeof _bumpSidebarVcCount === 'function') _bumpSidebarVcCount(channelId, 1);
+      window.wsSend?.({type:'join_voice',channel_id:Number(channelId)});
+      refreshParticipantCounts();
       showToast('🔊 Joined ' + vcRoomName, 'success');
     } catch (err) {
       console.error('[LiveKit] join failed', err);
+      await disconnectVoice();
       vcActive = false;
       view?.classList.remove('active');
       document.body.classList.remove('vc-active');
@@ -450,8 +484,8 @@
 
   disconnectVoice = async function () {
     const leavingChannel = vcChannelId;
-    await disconnect();
     vcActive = false;
+    await disconnect();
     vcMinimized = false;
     vcCamOn = false;
     vcScreenOn = false;
@@ -460,13 +494,15 @@
     document.body.classList.remove('vc-active', 'vc-pip');
     document.querySelectorAll('.voice-channel').forEach(v => v.classList.remove('connected'));
     _updateConnectedBar(false);
-    if (typeof _bumpSidebarVcCount === 'function') _bumpSidebarVcCount(leavingChannel, -1);
+    window.wsSend?.({type:'leave_voice',channel_id:Number(leavingChannel)});
+    refreshSidebarCounts();
     if (typeof _reportVoiceStatus === 'function') _reportVoiceStatus('leave', leavingChannel);
     showToast('Disconnected from voice', 'info');
   };
 
   toggleVcMic = async function () {
-    if (!room) return;
+    if (!room || mediaBusy) return;
+    mediaBusy = true;
     const nextMuted = !vcMicMuted;
     try {
       await setMic(!nextMuted);
@@ -474,27 +510,75 @@
       document.getElementById('vcMicBtn')?.classList.toggle('muted-state', vcMicMuted);
       document.getElementById('vcMicBtn')?.classList.toggle('unmuted', !vcMicMuted);
       _moveUserCardOnMute(vcMicMuted);
-    } catch (err) { showToast('Microphone error: ' + err.message, 'info'); }
+      refreshParticipantCounts();
+    } catch (err) { showToast('Microphone error: ' + err.message, 'info'); } finally { mediaBusy = false; }
   };
 
   toggleCamera = async function () {
-    if (!room) return;
+    if (!room || mediaBusy) return;
+    mediaBusy = true;
     try {
       await setCamera(!vcCamOn);
-      vcCamOn = !vcCamOn;
+      vcCamOn = room.localParticipant.isCameraEnabled;
       document.getElementById('vcCamBtn')?.classList.toggle('active', vcCamOn);
       document.getElementById('vcQuickCam')?.classList.toggle('active', vcCamOn);
-    } catch (err) { showToast('Camera error: ' + err.message, 'info'); }
+    } catch (err) { showToast('Camera error: ' + err.message, 'info'); } finally { mediaBusy = false; }
   };
 
-  toggleScreenShare = async function () {
+  function syncScreenControls() {
+    document.getElementById('vcScreenBtn')?.classList.toggle('active', vcScreenOn);
+    document.getElementById('vcQuickScreen')?.classList.toggle('active', vcScreenOn);
+    const start = document.getElementById('vcScreenStartBtn');
+    if (start) start.textContent = vcScreenOn ? 'Stop Sharing' : 'Start Sharing';
+  }
+  toggleScreenShare = function () {
     if (!room) return;
-    try {
-      await setScreen(!vcScreenOn);
-      vcScreenOn = !vcScreenOn;
-      document.getElementById('vcScreenBtn')?.classList.toggle('active', vcScreenOn);
-      document.getElementById('vcQuickScreen')?.classList.toggle('active', vcScreenOn);
-    } catch (err) { showToast('Screen share error: ' + err.message, 'info'); }
+    if (!navigator.mediaDevices?.getDisplayMedia) { showToast('Screen sharing is unavailable in this browser.', 'info'); return; }
+    if (vcScreenOn) stopScreenShare(); else openModal('vcScreenModal');
   };
-})();
+  selectScreenQuality = function (button, quality) {
+    screenQuality = ['720p','1080p','source'].includes(quality) ? quality : '1080p';
+    document.querySelectorAll('.screen-quality-btn').forEach(el=>el.classList.toggle('active',el===button));
+  };
+  startStopScreenShare = async function () {
+    if (!room || mediaBusy) return;
+    mediaBusy = true;
+    try { await setScreen(!vcScreenOn); closeModal('vcScreenModal'); }
+    catch (e) { showToast('Screen share: '+e.message,'info'); }
+    finally { mediaBusy = false; }
+  };
+  stopScreenShare = async function () {
+    if (!room) return;
+    try { await setScreen(false); } catch(e) { showToast(e.message,'info'); }
+  };
+  toggleVcDeafen = function () {
+    vcDeafened = !vcDeafened;
+    document.querySelectorAll('audio.livekit-media-track').forEach(el=>el.muted=vcDeafened);
+    document.getElementById('vcDeafenBtn')?.classList.toggle('muted-state',vcDeafened);
+  };
+  toggleMute = function () { if(room) toggleVcMic(); };
+  toggleDeafen = function () { if(room) toggleVcDeafen(); };
+  openAudioSettings = function () { if(room) window.EcollabMediaSettings.open(room); };
+  openNoiseCancelModal = openAudioSettings;
+  // Keep deferred inline event stubs aligned with the media adapter.
+  for (const name of ['joinVoice','disconnectVoice','toggleVcMic','toggleCamera','toggleScreenShare','startStopScreenShare','stopScreenShare','selectScreenQuality','toggleVcDeafen','toggleMute','toggleDeafen','openAudioSettings','openNoiseCancelModal']) window['__real_'+name]=window[name];
 
+  async function refreshSidebarCounts() {
+    if (countFetchBusy || document.hidden) return;
+    const ids = [...document.querySelectorAll('.voice-channel[data-channel-id]')].map(el=>Number(el.dataset.channelId)).filter(Boolean).slice(0,100);
+    if (!ids.length) return;
+    countFetchBusy = true;
+    try {
+      const res = await fetch((window.ECOLLAB?.baseUrl||'')+'/API/chat/livekit-counts.php?channel_ids='+ids.join(','),{credentials:'same-origin'});
+      if(!res.ok) return;
+      const data = await res.json();
+      for(const [id,count] of Object.entries(data.counts||{})) {
+        const badge=document.querySelector('.voice-channel[data-channel-id="'+Number(id)+'"] .vc-count');
+        if(badge)badge.textContent=String(Number(id)===activeChannelId&&room?room.remoteParticipants.size+1:count);
+      }
+    } catch (_) {} finally { countFetchBusy=false; }
+  }
+  setInterval(refreshSidebarCounts,10000);
+  document.addEventListener('visibilitychange',refreshSidebarCounts);
+  setTimeout(refreshSidebarCounts,1000);
+})();

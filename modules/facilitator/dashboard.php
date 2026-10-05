@@ -1271,6 +1271,7 @@ try {
       if (o) o.classList.remove('open');
     }
   </script>
+<?php require_once dirname(__DIR__, 2) . '/includes/calls/bootstrap.php'; ?>
 </body>
 
 </html>
