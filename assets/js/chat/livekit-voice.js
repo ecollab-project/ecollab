@@ -7,7 +7,7 @@
 (() => {
   let room = null;
   let activeChannelId = null;
-  let screenQuality = "1080p";
+  let screenQuality = null;
   let mediaBusy = false;
   let countFetchBusy = false;
 
@@ -85,11 +85,13 @@
     // Both devices use the same publication state. Reattach the live video
     // after changing card layout; never stop another participant's track.
     if (!card || card.classList.contains('vc-listener-card') !== muted) {
+      const focused = card?.classList.contains('vc-camera-focus');
       const camera = participant.getTrackPublication('camera');
       if (camera?.track) camera.track.detach().forEach(el => el.remove());
       card?.remove();
       addVcParticipant(participantUser(participant), !muted);
       card = participantCard(participant);
+      card?.classList.toggle('vc-camera-focus', !!focused);
       if (camera?.track && !camera.isMuted) attach(camera.track, camera, participant);
     }
 
@@ -137,6 +139,7 @@
       el.style.display = 'none';
       el.muted = vcDeafened;
       document.body.appendChild(el);
+      window.EcollabMediaSettings?.playback(room);
     } else {
       const uid = participantId(participant);
       const source = publication?.source || track.source || '';
@@ -165,6 +168,7 @@
         }
         track.attach(video);
         card.classList.add('has-camera');
+        decorateCamera(card, uid);
         video.play().catch(() => {});
         return;
       }
@@ -359,6 +363,7 @@
       });
     });
     refreshParticipantCounts();
+    try { await window.EcollabMediaSettings.initialize(room); } catch(e) { showToast(e.message,'info'); }
 
     return room;
   }
@@ -383,15 +388,20 @@
     const publication = room.localParticipant.getTrackPublication?.('camera')
       || Array.from(room.localParticipant.trackPublications?.values?.() || [])
         .find(pub => (pub.source || pub.track?.source) === 'camera');
-    const mediaTrack = publication?.track?.mediaStreamTrack;
-    if (mediaTrack && typeof _attachRemoteCamera === 'function') {
-      _attachRemoteCamera(uid, new MediaStream([mediaTrack]));
-    }
+    if (publication?.track) attach(publication.track, publication, room.localParticipant);
+  }
+
+  function decorateCamera(card, uid) {
+    card.dataset.local=String(uid===Number(window.ECOLLAB?.userId));
+    let button=card.querySelector('.vc-camera-size');
+    if(!button){button=document.createElement('button');button.type='button';button.className='vc-camera-size';card.appendChild(button);}
+    const update=()=>{const expanded=card.classList.contains('vc-camera-focus');button.textContent=expanded?'Restore camera':'Expand camera';button.setAttribute('aria-pressed',String(expanded));};
+    button.onclick=event=>{event.stopPropagation();card.classList.toggle('vc-camera-focus');update();};update();
   }
 
   async function setScreen(enabled) {
     if (!room) throw new Error('Not connected to voice.');
-    const options = window.EcollabMediaSettings.screenOptions(screenQuality);
+    const options = window.EcollabMediaSettings.screenOptions(screenQuality || window.EcollabMediaSettings.preferences.quality);
     await room.localParticipant.setScreenShareEnabled(Boolean(enabled), options.capture, options.publish);
     vcScreenOn = room.localParticipant.isScreenShareEnabled;
     syncScreenControls();
@@ -509,7 +519,12 @@
       vcMicMuted = nextMuted;
       document.getElementById('vcMicBtn')?.classList.toggle('muted-state', vcMicMuted);
       document.getElementById('vcMicBtn')?.classList.toggle('unmuted', !vcMicMuted);
+      const localCard=participantCard(room.localParticipant);
+      const focused=localCard?.classList.contains('vc-camera-focus');
       _moveUserCardOnMute(vcMicMuted);
+      participantCard(room.localParticipant)?.classList.toggle('vc-camera-focus',!!focused);
+      const camera=room.localParticipant.getTrackPublication('camera');
+      if(camera?.track&&!camera.isMuted)attach(camera.track,camera,room.localParticipant);
       refreshParticipantCounts();
     } catch (err) { showToast('Microphone error: ' + err.message, 'info'); } finally { mediaBusy = false; }
   };
@@ -534,7 +549,11 @@
   toggleScreenShare = function () {
     if (!room) return;
     if (!navigator.mediaDevices?.getDisplayMedia) { showToast('Screen sharing is unavailable in this browser.', 'info'); return; }
-    if (vcScreenOn) stopScreenShare(); else openModal('vcScreenModal');
+    if (vcScreenOn) stopScreenShare(); else {
+      const selected=screenQuality||window.EcollabMediaSettings.preferences.quality;
+      document.querySelectorAll('.screen-quality-btn').forEach(button=>button.classList.toggle('active',button.getAttribute('onclick')?.includes("'"+selected+"'")));
+      openModal('vcScreenModal');
+    }
   };
   selectScreenQuality = function (button, quality) {
     screenQuality = ['720p','1080p','source'].includes(quality) ? quality : '1080p';
@@ -578,6 +597,7 @@
       }
     } catch (_) {} finally { countFetchBusy=false; }
   }
+  window.addEventListener('ecollab-media-settings-changed',()=>{screenQuality=null;window.EcollabMediaSettings.playback(room);});
   setInterval(refreshSidebarCounts,10000);
   document.addEventListener('visibilitychange',refreshSidebarCounts);
   setTimeout(refreshSidebarCounts,1000);

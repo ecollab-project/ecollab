@@ -34,6 +34,7 @@
   function cleanup(c) {
     if(!c)return;
     if(call===c)call=null;
+    if(c.room) document.getElementById('ecMediaSettings')?.remove();
     stopRing(c); c.closed=true;
     c.room?.disconnect();
     for(const [track,el] of c.audio||[]){track.detach(el);el.remove();}
@@ -50,7 +51,7 @@
     const res=await fetch(base+'/API/dm/'+(c.groupId?'livekit-group-token.php':'livekit-call-token.php'),{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':config.csrfToken||document.querySelector('meta[name=csrf-token]')?.content||''},body:JSON.stringify(c.groupId?{group_id:c.groupId}:{call_id:c.logId})});
     const data=await res.json();if(!res.ok||!data.success)throw Error(data.error||'Call authorization failed.');return data;
   }
-  function attachAudio(c,track){if(track.kind!=='audio'||c.audio.has(track))return;const el=track.attach();el.autoplay=true;el.muted=c.deafened;el.hidden=true;document.body.appendChild(el);c.audio.set(track,el);el.play().catch(()=>{c.message='Tap Enable audio to hear the call.';render(c);});}
+  function attachAudio(c,track){if(track.kind!=='audio'||c.audio.has(track))return;const el=track.attach();el.autoplay=true;el.muted=c.deafened;el.hidden=true;document.body.appendChild(el);c.audio.set(track,el);media().playback(c.room);el.play().catch(()=>{c.message='Tap Enable audio to hear the call.';render(c);});}
   function reconcileAudio(c){for(const p of c.room.remoteParticipants.values())for(const pub of p.trackPublications.values())if(pub.track?.kind==='audio')attachAudio(c,pub.track);}
   async function connect(c) {
     const [LK,auth]=await Promise.all([sdk(),token(c)]);if(call!==c)return;
@@ -67,10 +68,11 @@
     try{await room.localParticipant.setMicrophoneEnabled(true,media().audio());}catch(e){c.message='Microphone unavailable. Choose a microphone in Settings.';}
     if(c.video)try{await room.localParticipant.setCameraEnabled(true,media().video());}catch(e){c.message='Camera unavailable. You joined with audio only.';}
     if(call!==c){room.disconnect();return;}
+    try{await media().initialize(room);}catch(e){c.message=e.message;}
     c.state='active';stopRing(c);announce(c);reconcileAudio(c);render(c);
     await room.startAudio().catch(()=>{c.message='Tap Enable audio to hear the call.';render(c);});
   }
-  function make(data){return {...data,deafened:false,minimized:false,audio:new Map(),videos:[],message:'',closed:false};}
+  function make(data){return {...data,deafened:false,minimized:false,expanded:false,audio:new Map(),videos:[],message:'',closed:false};}
   async function start(video) {
     if(busy()){notice('Leave your current call before starting another.');return;}
     const dm=typeof DM!=='undefined'?DM:{};
@@ -94,7 +96,8 @@
   }
   function end(){const c=call;if(!c)return;if(!c.groupId&&c.peerId&&c.logId)send({type:c.state==='incoming'?'dm_call_decline':'dm_call_end',target_user_id:c.peerId,log_id:c.logId});cleanup(c);}
   async function action(name){const c=call;if(!c||c.busy)return;const p=c.room?.localParticipant;
-    if(name==='minimize'){c.minimized=!c.minimized;render(c);return;}
+    if(name==='minimize'){c.minimized=!c.minimized;layout(c);return;}
+    if(name==='expand'){c.expanded=!c.expanded;c.minimized=false;layout(c);return;}
     if(name==='end'){end();return;}if(name==='accept'||name==='audio'){accept(name==='audio');return;}
     if(name==='settings'){media().open(c.room);return;}if(!p)return;
     c.busy=true;render(c);
@@ -106,6 +109,15 @@
     }catch(e){c.message=e.message||'Could not change this setting.';}finally{c.busy=false;if(call===c)render(c);}
   }
   function button(actionName,label,pressed=false,extra=''){return `<button type="button" data-action="${actionName}" ${['mic','camera','screen','deafen'].includes(actionName)?`aria-pressed="${pressed}"`:''} class="${extra}">${label}</button>`;}
+  function layout(c) {
+    const panel=c.panel;if(!panel)return;
+    panel.classList.toggle('is-minimized',c.minimized);
+    panel.classList.toggle('is-expanded',c.expanded&&!c.minimized&&c.state==='active');
+    const mini=panel.querySelector('[data-action=minimize]');
+    if(mini){mini.textContent=c.minimized?'Restore':'Minimize';mini.setAttribute('aria-expanded',String(!c.minimized));}
+    const expand=panel.querySelector('[data-action=expand]');
+    if(expand){expand.textContent=c.expanded?'Dock':'Expand';expand.hidden=c.minimized;expand.setAttribute('aria-expanded',String(c.expanded));}
+  }
   function render(c){
     if(call!==c)return;
     let panel=c.panel;if(!panel){panel=document.createElement('section');panel.className='ec-call';panel.setAttribute('role','region');panel.setAttribute('aria-label','Call');document.body.appendChild(panel);c.panel=panel;panel.onclick=e=>{const b=e.target.closest('[data-action]');if(b)action(b.dataset.action);};}
@@ -115,8 +127,8 @@
     const p=c.room?.localParticipant,active=c.state==='active';
     const count=c.room?c.room.remoteParticipants.size+1:0;
     const status=active?`${count} connected${c.groupId?' · up to 50':''}`:c.state==='incoming'?`Incoming ${c.video?'video':'voice'} call`:c.state==='outgoing'?'Calling…':'Connecting…';
-    panel.innerHTML=`<header><div><strong>${escape(c.name)}</strong><small>${status}</small></div>${button('minimize',c.minimized?'Expand':'Minimize')}</header><div class="ec-call-screen"></div><div class="ec-call-grid"></div><div class="ec-call-actions">${c.state==='incoming'?button('accept','Accept',false,'accept')+(c.video?button('audio','Audio only'):'')+button('end','Decline',false,'danger'):active?button('mic',p.isMicrophoneEnabled?'Mute':'Unmute',!p.isMicrophoneEnabled)+button('camera',p.isCameraEnabled?'Camera off':'Camera on',p.isCameraEnabled)+button('screen',p.isScreenShareEnabled?'Stop sharing':'Share screen',p.isScreenShareEnabled)+button('deafen',c.deafened?'Hear audio':'Deafen',c.deafened)+button('settings','Settings')+button('resume','Enable audio')+button('end','Leave',false,'danger'):button('end','Cancel',false,'danger')}</div><div class="ec-call-status" role="status">${escape(c.message)}</div>`;
-    panel.querySelectorAll('button').forEach(b=>{if(c.busy&&!['end','minimize'].includes(b.dataset.action))b.disabled=true;});
+    panel.innerHTML=`<header><div><strong>${escape(c.name)}</strong><small>${status}</small></div><div class="ec-call-window-actions">${active?button('expand',c.expanded?'Dock':'Expand'):''}${button('minimize',c.minimized?'Restore':'Minimize')}</div></header><div class="ec-call-screen"></div><div class="ec-call-grid"></div><div class="ec-call-actions">${c.state==='incoming'?button('accept','Accept',false,'accept')+(c.video?button('audio','Audio only'):'')+button('end','Decline',false,'danger'):active?button('mic',p.isMicrophoneEnabled?'Mute':'Unmute',!p.isMicrophoneEnabled)+button('camera',p.isCameraEnabled?'Camera off':'Camera on',p.isCameraEnabled)+button('screen',p.isScreenShareEnabled?'Stop sharing':'Share screen',p.isScreenShareEnabled)+button('deafen',c.deafened?'Hear audio':'Deafen',c.deafened)+button('settings','Settings')+button('resume','Enable audio')+button('end','Leave',false,'danger'):button('end','Cancel',false,'danger')}</div><div class="ec-call-status" role="status">${escape(c.message)}</div>`;
+    panel.querySelectorAll('button').forEach(b=>{if(c.busy&&!['end','minimize','expand'].includes(b.dataset.action))b.disabled=true;});
     if(active){
       const participants=[p,...c.room.remoteParticipants.values()];
       const speakers=c.room.activeSpeakers||[];
@@ -128,6 +140,7 @@
       if(count>6){const label=document.createElement('small');label.textContent=`Showing you and five participants, prioritizing active speakers. ${count} in this call.`;panel.querySelector('.ec-call-status').appendChild(label);}
       if(!navigator.mediaDevices?.getDisplayMedia)panel.querySelector('[data-action=screen]').disabled=true;
     }
+    layout(c);
     if(focused)panel.querySelector(`[data-action="${focused}"]`)?.focus({preventScroll:true});
   }
   async function handle(data){
@@ -152,6 +165,7 @@
     if(!config.wsUrl||!config.userId)return;
     try{const res=await fetch(base+'/API/auth/ws-token.php',{credentials:'same-origin'});if(res.status===401)return;if(!res.ok)throw Error('Signaling unavailable');const data=await res.json();socket=new WebSocket(config.wsUrl);socket.onopen=()=>socket.send(JSON.stringify({type:'auth',ws_token:data.token}));socket.onmessage=e=>{try{const d=JSON.parse(e.data);if(d.type==='auth_ok'){authed=true;reconnect=0;}else handle(d).catch(console.error);}catch(_){}};socket.onclose=()=>{authed=false;clearTimeout(timer);timer=setTimeout(connectSignals,Math.min(30000,2000*2**reconnect++));};socket.onerror=()=>{};}catch(_){timer=setTimeout(connectSignals,10000);}
   }
+  window.addEventListener('ecollab-media-settings-changed',()=>{if(call?.room)media().playback(call.room);});
   window.EcollabCalls={handle,busy:()=>!!call,get room(){return call?.room;}};
   window.startDmCall=start;window.endDmCall=end;
   for(const data of window.__ecollabPendingCalls || []) handle(data).catch(console.error);

@@ -20,6 +20,7 @@ php -l websocket/handlers/DmHandler.php
 npm install --prefix /tmp/ecollab-call-tests jsdom
 NODE_PATH=/tmp/ecollab-call-tests/node_modules node tests/livekit-calls-regression.cjs
 NODE_PATH=/tmp/ecollab-call-tests/node_modules node tests/livekit-voice-regression.cjs
+NODE_PATH=/tmp/ecollab-call-tests/node_modules node tests/call-settings-regression.cjs
 ```
 
 The browser-state tests use mocked media/signaling. They check independent cameras, local group preview, foreign call-id rejection, six-tile selection, cleanup, cancellation, quality options, matching mute sections and participant counts. They do not prove real device media connectivity or 50-user performance.
@@ -40,3 +41,12 @@ Use two separate accounts, one desktop browser and one phone.
 ## Boundaries
 
 The page must remain open for incoming web calls. This is not native push calling when a phone/browser is suspended. A full page navigation or refresh ends the active call; minimizing the panel preserves it on the current page. Ringtone autoplay can be blocked until the user interacts; the visual notification still appears. Noise suppression is the browser's supported boolean control, not an advertised proprietary AI cancellation mode. Screen-share quality is a capture/encoding target, not a guaranteed resolution under congestion.
+
+
+## Shared settings and layout follow-up
+
+- Direct/group call panels have distinct Dock, Expand, Minimize and Restore states. Restore returns to the previous size, without replacing video elements or changing published media.
+- Voice camera tiles keep a consistent aspect ratio in Speaking and Listening, with per-camera Expand/Restore controls. The minimized voice dock no longer hides muted participants and scrolls instead of clipping cameras.
+- Shared settings include device selection, playback volume, browser noise suppression, echo cancellation, automatic gain, 360p/720p/1080p camera targets, 15/30 fps, fit/fill, local-only mirroring, and screen-share quality. Unsupported controls are disabled.
+- Check that changing appearance or volume does not restart the microphone. Change audio processing while muted and confirm the microphone stays muted. An unavailable device must show an error and attempt to restore previous devices.
+- Camera targets depend on hardware/network support. Mobile output volume can remain controlled by the device buttons.

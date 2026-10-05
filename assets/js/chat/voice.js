@@ -296,7 +296,10 @@ function _updateConnectedBar(visible) {
 function _ensureMinimizeBtn() {
   const header = document.querySelector('.vc-header-right');
   if (!header || header.querySelector('.vc-minimize-btn')) return;
-  const btn = document.createElement('div');
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.setAttribute('aria-label','Minimize voice panel');
+  btn.setAttribute('aria-expanded','true');
   btn.className = 'vc-minimize-btn';
   btn.title = 'Minimize';
   btn.onclick = toggleVcMinimize;
@@ -353,7 +356,9 @@ function toggleVcMinimize() {
   // Update minimize btn icon
   const btn = vcView.querySelector('.vc-minimize-btn');
   if (btn) {
-    btn.title = vcMinimized ? 'Expand' : 'Minimize';
+    btn.title = vcMinimized ? 'Restore' : 'Minimize';
+    btn.setAttribute('aria-label',vcMinimized ? 'Restore voice panel' : 'Minimize voice panel');
+    btn.setAttribute('aria-expanded',String(!vcMinimized));
     btn.innerHTML = vcMinimized
       ? `<svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
            <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>

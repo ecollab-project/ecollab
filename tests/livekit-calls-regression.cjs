@@ -38,6 +38,14 @@ function client(id){
  assert.equal(ar.localParticipant.isCameraEnabled,false);assert.equal(br.localParticipant.isCameraEnabled,true);assert.equal(remote.isCameraEnabled,true);
  assert.equal(a.w.document.querySelectorAll('.ec-call-tile video').length,1);
  await a.w.EcollabCalls.handle({type:'dm_call_end',log_id:999,from_user_id:2});assert(a.w.EcollabCalls.room,'foreign call end ignored');
+ const retained=a.w.document.querySelector('.ec-call-tile video');
+ a.w.document.querySelector('[data-action=expand]').click();assert(a.w.document.querySelector('.is-expanded'));
+ a.w.document.querySelector('[data-action=minimize]').click();assert(a.w.document.querySelector('.is-minimized'));
+ assert.equal(a.w.document.querySelector('[data-action=minimize]').textContent,'Restore');
+ a.w.document.querySelector('[data-action=minimize]').click();assert(a.w.document.querySelector('.is-expanded'),'restore previous expanded size');
+ assert.equal(a.w.document.querySelector('.ec-call-tile video'),retained,'resizing does not rebuild video');
+ a.w.document.querySelector('[data-action=expand]').click();assert(!a.w.document.querySelector('.is-expanded'));
+ assert.equal(ar.localParticipant.isCameraEnabled,false,'layout does not change camera');
  a.w.endDmCall();b.w.endDmCall();
  assert.equal(a.w.document.querySelectorAll('.ec-call, audio').length,0);
  a.w.DM.activeGroupId=7;await a.w.startDmCall(true);const group=a.w.EcollabCalls.room;
