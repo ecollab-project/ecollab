@@ -14,6 +14,8 @@
   --ec-card-radius: 16px;
   --ec-control-radius: 10px;
   --ec-dialog-shadow: 0 24px 64px rgba(0,0,0,.32);
+  --ec-primary: #7e22ce;
+  --ec-primary-end: #a21caf;
 }
 html[data-theme="light"] {
   --ec-page: #f4f6fb;
@@ -90,3 +92,63 @@ body[data-mobile-surface="editor"] :is(a, small) { color: var(--ec-muted); }
 @media (forced-colors: active) {
   body[data-mobile-surface] { --ec-line: CanvasText; --ec-text: CanvasText; --ec-muted: CanvasText; --ec-page: Canvas; --ec-surface: Canvas; --ec-raised: Canvas; --ec-input: Canvas; --ec-focus: Highlight; }
 }
+
+/* Shared chat/dashboard/settings controls, without changing feature visibility. */
+body:is([data-mobile-surface="chat"], [data-mobile-surface="dashboard"], [data-mobile-surface="settings"]) {
+  color-scheme: dark;
+}
+html[data-theme="light"] body[data-mobile-surface] { color-scheme: light; }
+body[data-mobile-surface="dashboard"] :is(.btn-primary, .btn-sec, .btn-secondary),
+body[data-mobile-surface="settings"] .btn {
+  font-family: inherit; font-size: .8125rem; font-weight: 600; line-height: 1.4;
+  border-radius: var(--ec-control-radius); padding: 9px 14px; min-height: 38px;
+}
+body[data-mobile-surface="dashboard"] .btn-primary,
+body[data-mobile-surface="settings"] .btn.primary {
+  background: linear-gradient(135deg, var(--ec-primary), var(--ec-primary-end));
+  color: #fff; box-shadow: none;
+}
+body[data-mobile-surface="dashboard"] :is(.btn-sec, .btn-secondary) {
+  background: var(--ec-raised); color: var(--ec-text); border: 1px solid var(--ec-line);
+}
+body[data-mobile-surface="dashboard"] .nav-item.active,
+body[data-mobile-surface="chat"] .sidebar-nav-item.active {
+  background: var(--ec-accent-soft); color: var(--ec-text);
+  box-shadow: inset 3px 0 var(--ec-accent); font-weight: 600;
+}
+body[data-mobile-surface="dashboard"] :is(.md, .modal) {
+  border-radius: 20px; box-shadow: var(--ec-dialog-shadow);
+  background: var(--ec-surface); border-color: var(--ec-line);
+  max-height: calc(var(--app-viewport-height, 100dvh) - 32px);
+}
+body[data-mobile-surface="settings"] :is(.hero, .modalbox, .choice button) {
+  background: var(--ec-surface); color: var(--ec-text); border-color: var(--ec-line);
+  border-radius: var(--ec-card-radius);
+}
+body[data-mobile-surface="settings"] .choice button.active {
+  background: var(--ec-accent-soft); border-color: var(--ec-accent);
+}
+body[data-mobile-surface="settings"] .nav { overflow-y: auto; height: var(--app-viewport-height, 100dvh); }
+body[data-mobile-surface="settings"] .settings-backdrop {
+  top: var(--app-viewport-top, 0px); bottom: auto; height: var(--app-viewport-height, 100dvh);
+  background: rgb(0 0 0 / .6); padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  overflow-y: auto; z-index: 1000;
+}
+body[data-mobile-surface="settings"] .modalbox {
+  max-height: 100%; overflow-y: auto; overscroll-behavior: contain; box-shadow: var(--ec-dialog-shadow);
+}
+/* A full-size hit area around the compact switch track. */
+body[data-mobile-surface="settings"] .switch,
+body[data-mobile-surface="settings"] .switch.on {
+  width: 44px; height: 44px; min-height: 44px; padding: 0; border: 0;
+  background: transparent; border-radius: 10px;
+}
+body[data-mobile-surface="settings"] .switch::before {
+  content: ''; position: absolute; width: 43px; height: 24px; top: 10px; left: 0;
+  border: 1px solid var(--ec-line); border-radius: 99px; background: var(--ec-raised);
+}
+body[data-mobile-surface="settings"] .switch::after { top: 14px; left: 4px; background: var(--ec-muted); }
+body[data-mobile-surface="settings"] .switch.on::before { background: var(--ec-primary); border-color: var(--ec-primary); }
+body[data-mobile-surface="settings"] .switch.on::after { left: 24px; background: #fff; }
+body[data-mobile-surface="settings"] .title { margin-top: 0; }
+body[data-mobile-surface="settings"] :is(.field label, .range output, .group) { color: var(--ec-muted); }

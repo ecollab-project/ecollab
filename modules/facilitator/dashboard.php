@@ -64,8 +64,8 @@ $facOwnedServers = array_values(array_filter(
   <script>
     window.ECOLLAB_BASE = <?= json_encode(BASE_URL) ?>;
   </script>
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=1">
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=2">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=2">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=3">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 </head>
 
@@ -298,7 +298,7 @@ $facOwnedServers = array_values(array_filter(
         <div class="main-grid">
           <div class="card">
             <div class="ch-bar">
-              <div class="ch-title">Upcoming Sessions</div><button class="btn-primary" style="font-size:10.5px;padding:5px 10px" onclick="openModal('startSessionModal')">+ Schedule</button>
+              <div class="ch-title">Upcoming Sessions</div><button class="btn-primary" onclick="openModal('startSessionModal')">+ Schedule</button>
             </div>
             <?php foreach (array_slice($dashData['upcoming_sessions'] ?? [], 0, 3) as $sess):
               $sd = !empty($sess['start_time']) ? date('d', strtotime($sess['start_time'])) : '24';

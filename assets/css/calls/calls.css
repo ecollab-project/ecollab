@@ -61,3 +61,21 @@
 #voiceChannelView.vc-minimized .vc-speaking-grid,#voiceChannelView.vc-minimized .vc-listening-grid{display:contents!important}
 #voiceChannelView.vc-minimized #vcScreenSection{grid-column:1/-1}
 @media(max-width:1024px),(pointer:coarse){#voiceChannelView.vc-minimized{height:auto!important;max-height:55dvh!important}}
+
+/* Call chrome follows the same account theme; video overlays stay legible. */
+.ec-call, .ec-media-settings {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--ec-text, #f1f5f9); color-scheme: dark;
+}
+html[data-theme="light"] :is(.ec-call, .ec-media-settings) { color-scheme: light; }
+.ec-call { background: var(--ec-surface, #111827); border-color: var(--ec-line, #2b374b); }
+.ec-call small, .ec-call .ec-call-status, .ec-media-settings p { color: var(--ec-muted, #a0aec0); }
+.ec-media-settings form, .ec-media-settings .actions { background: var(--ec-surface, #111827); }
+.ec-media-settings :is(form, header, fieldset, .actions) { border-color: var(--ec-line, #2b374b); }
+.ec-media-settings select {
+  background: var(--ec-input, #0f1726); color: var(--ec-text, #f1f5f9); border-color: var(--ec-line, #2b374b);
+}
+.ec-media-settings legend, .ec-media-settings output { color: var(--ec-accent, #a855f7); }
+.ec-media-settings [type=submit] { background: var(--ec-primary, #7e22ce); border-color: var(--ec-primary, #7e22ce); color: #fff; }
+.ec-call button[aria-pressed=true] { background: var(--ec-accent-soft, #51469a); color: var(--ec-text, #fff); border-color: var(--ec-accent, #a855f7); }
+.ec-call-tile span { color: #fff; }

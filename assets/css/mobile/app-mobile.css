@@ -123,3 +123,27 @@
   body[data-mobile-surface="chat"] :is(#collabHub, .voice-channel-view:not(.vc-minimized)) { top: var(--app-viewport-top); bottom: auto; }
   body[data-mobile-surface="whiteboard"] #wbOverlay { height: var(--app-viewport-height) !important; top: var(--app-viewport-top) !important; }
 }
+
+
+@media (max-width: 860px) {
+  /* Keep every section reachable without turning the navigation into a tall grid. */
+  body[data-mobile-surface="settings"] .nav {
+    flex-wrap: nowrap; align-items: center; height: auto; overflow-x: auto;
+    overflow-y: hidden; scrollbar-width: thin; padding: 10px 12px;
+  }
+  body[data-mobile-surface="settings"] .nav .brand {
+    width: auto; flex: 0 0 auto; padding: 0 8px 0 0; white-space: nowrap;
+  }
+  body[data-mobile-surface="settings"] .navbtn {
+    display: inline-flex; align-items: center; justify-content: center;
+    flex: 0 0 auto; white-space: nowrap;
+  }
+  body[data-mobile-surface="settings"] .nav :is(.group, .divider) { display: none; }
+  body[data-mobile-surface="dashboard"] :is(.btn-primary, .btn-sec, .btn-secondary),
+  body[data-mobile-surface="settings"] .btn { min-height: 44px; }
+  body[data-mobile-surface="dashboard"] .mo {
+    top: var(--app-viewport-top, 0px); bottom: auto; height: var(--app-viewport-height, 100dvh);
+    padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+  }
+  body[data-mobile-surface="dashboard"] .md { margin: 0; width: 100% !important; max-height: 100%; }
+}
