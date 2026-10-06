@@ -173,7 +173,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       }
     }
   </style>
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=3">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=notifications-2">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=3">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 </head>
@@ -484,7 +484,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           <div class="notif-dropdown" id="notifDropdown" style="display:none;">
             <div class="notif-header">
               <div class="notif-title">Notifications</div>
-              <div class="notif-mark-read" onclick="markAllRead()">Mark all read</div>
+              <button type="button" class="notif-mark-read" onclick="markAllRead(event)">Mark all read</button>
             </div>
             <div id="notifList"><div style="padding:24px 16px;color:var(--text-muted)">Loading notifications…</div>
             </div>
@@ -1147,7 +1147,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     </button>
   </div>
 
-  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=notification-hub-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=notification-hub-2" defer></script>
   <!--
     Collab tools load order:
     ot-engine.js        — pure OT algorithm (no deps, must come first)

@@ -189,3 +189,58 @@ body[data-mobile-surface="forms"] .input-row input:autofill {
     -webkit-text-fill-color: CanvasText; box-shadow: none;
   }
 }
+
+/* Notification menu: fixed header, bounded list and consistent event icons. */
+body[data-mobile-surface="chat"] #notifDropdown {
+  width: min(380px, calc(100vw - 24px));
+  max-height: min(560px, calc(var(--app-viewport-height, 100dvh) - 96px));
+  overflow: hidden; flex-direction: column; padding: 0;
+  border: 1px solid var(--ec-line); border-radius: 16px;
+  background: var(--ec-surface); color: var(--ec-text);
+  box-shadow: var(--ec-dialog-shadow); z-index: 1000;
+}
+body[data-mobile-surface="chat"] #notifDropdown.open { display: flex !important; }
+body[data-mobile-surface="chat"] #notifDropdown .notif-header {
+  flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 14px 16px; background: var(--ec-surface);
+  border-bottom: 1px solid var(--ec-line);
+}
+body[data-mobile-surface="chat"] #notifDropdown .notif-title { font-size: 14px; font-weight: 700; color: var(--ec-text); }
+body[data-mobile-surface="chat"] #notifDropdown .notif-mark-read {
+  border: 0; background: transparent; padding: 6px 0;
+  font-family: inherit; font-size: 12px; font-weight: 600; line-height: 1.4; color: var(--ec-accent); cursor: pointer;
+}
+body[data-mobile-surface="chat"] #notifList { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--ec-line) transparent; }
+body[data-mobile-surface="chat"] #notifList .notif-item {
+  position: relative; display: flex; align-items: flex-start; gap: 12px;
+  padding: 14px 28px 14px 16px; min-height: 76px; box-sizing: border-box;
+  border-bottom: 1px solid var(--ec-line); background: transparent; cursor: pointer;
+}
+body[data-mobile-surface="chat"] #notifList .notif-item.unread { background: var(--ec-accent-soft); }
+body[data-mobile-surface="chat"] #notifList .notif-item:hover { background: var(--ec-raised); }
+body[data-mobile-surface="chat"] #notifList .notif-item:focus-visible { outline: 2px solid var(--ec-focus); outline-offset: -3px; }
+body[data-mobile-surface="chat"] #notifList .notif-icon {
+  width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center;
+  border-radius: 10px; background: var(--ec-raised); color: var(--ec-muted);
+}
+body[data-mobile-surface="chat"] #notifList .notif-icon svg { width: 19px; height: 19px; }
+body[data-mobile-surface="chat"] #notifList .notif-icon--call { color: var(--ec-danger); }
+body[data-mobile-surface="chat"] #notifList .notif-icon--accepted { color: var(--ec-accent); }
+body[data-mobile-surface="chat"] #notifList .notif-content { flex: 1; min-width: 0; }
+body[data-mobile-surface="chat"] #notifList .notif-text { font-size: 13px; font-weight: 500; line-height: 1.45; color: var(--ec-text); }
+body[data-mobile-surface="chat"] #notifList .unread .notif-text { font-weight: 600; }
+body[data-mobile-surface="chat"] #notifList .notif-body {
+  margin-top: 3px; font-size: 12px; line-height: 1.45; color: var(--ec-muted);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+body[data-mobile-surface="chat"] #notifList :is(.notif-text,.notif-body) { overflow-wrap: anywhere; }
+body[data-mobile-surface="chat"] #notifList .notif-time { margin-top: 5px; font-size: 11px; line-height: 1.4; color: var(--ec-muted); }
+body[data-mobile-surface="chat"] #notifList .notif-dot { position: absolute; right: 12px; top: 20px; width: 6px; height: 6px; margin: 0; background: var(--ec-accent); border-radius: 50%; }
+body[data-mobile-surface="chat"] #notifList .notif-load-more { width: 100%; min-height: 44px; padding: 12px; border: 0; background: var(--ec-surface); color: var(--ec-accent); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+@media (max-width: 768px) {
+  body[data-mobile-surface="chat"] #notifDropdown {
+    position: fixed; top: calc(var(--app-viewport-top, 0px) + env(safe-area-inset-top) + 64px);
+    left: 12px; right: 12px; width: auto;
+    max-height: calc(var(--app-viewport-height, 100dvh) - 88px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+}

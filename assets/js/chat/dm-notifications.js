@@ -297,14 +297,27 @@ function _updateNotifBadge() {
   }
 }
 
-function _notifIcon(type) {
-  const icons = {
-    dm:                 '💬',
-    connection_request: '🤝',
-    connection_accepted:'✅',
-    mention:            '@',
+function _notifIcon(notif) {
+  const type = String(notif.type || '');
+  const link = String(notif.link_url || '');
+  let kind = 'bell';
+  if (/missed_call/.test(link) || type === 'missed_call') kind = 'call';
+  else if (/thread/.test(link) || /thread/.test(type)) kind = 'thread';
+  else if (/group_id=/.test(link) || type === 'group_message') kind = 'group';
+  else if (/invite/.test(type) || /[?&](?:invite|channel_invite)=/.test(link)) kind = 'invite';
+  else if (type === 'connection_accepted') kind = 'accepted';
+  else if (type === 'connection_request') kind = 'group';
+  else if (['dm','message','dm_message'].includes(type)) kind = 'message';
+  const paths = {
+    bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/>',
+    message: '<path d="M21 11a8 8 0 0 1-8 8H8l-5 3v-6a8 8 0 0 1-1-5 8 8 0 0 1 8-8h3a8 8 0 0 1 8 8Z"/><path d="M7 10h9M7 14h6"/>',
+    thread: '<path d="M4 4h16v11H9l-5 4V4Z"/><path d="M8 8h8M8 11h5"/>',
+    group: '<circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M18 21v-3a6 6 0 0 0-2-4"/>',
+    invite: '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4M12 14v3"/>',
+    accepted: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
+    call: '<path d="m6 3 3 4-2 3a15 15 0 0 0 7 7l3-2 4 3c-1 5-5 4-8 2A24 24 0 0 1 4 11C2 8 1 4 6 3Z"/><path d="m16 3 5 5m0-5-5 5"/>'
   };
-  return icons[type] || '🔔';
+  return '<span class="notif-icon notif-icon--' + kind + '" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + paths[kind] + '</svg></span>';
 }
 
 function _renderNotifDropdown() {
@@ -317,17 +330,15 @@ function _renderNotifDropdown() {
   }
 
   list.innerHTML = NOTIF.items.map(n => `
-    <div class="notif-item ${n.is_read ? '' : 'unread'}" data-notif-id="${_esc(n.id)}" role="button" tabindex="0" style="cursor:pointer;">
-      <div class="notif-dot" style="${n.is_read ? 'opacity:0' : ''}"></div>
-      <div style="display:flex;align-items:flex-start;gap:10px;flex:1;">
-        <div style="font-size:18px;flex-shrink:0;margin-top:1px;">${_esc(n.icon || _notifIcon(n.type))}</div>
-        <div class="notif-content">
-          <div class="notif-text">${_esc(n.title)}</div>
-          ${n.body ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${_esc(String(n.body).slice(0,80))}</div>` : ''}
-          <div class="notif-time">${_timeAgo(n.created_at)}</div>
-        </div>
+    <div class="notif-item ${n.is_read ? '' : 'unread'}" data-notif-id="${_esc(n.id)}" role="button" tabindex="0">
+      ${_notifIcon(n)}
+      <div class="notif-content">
+        <div class="notif-text">${_esc(n.title)}</div>
+        ${n.body ? `<div class="notif-body">${_esc(String(n.body).slice(0,160))}</div>` : ''}
+        <div class="notif-time">${_timeAgo(n.created_at)}</div>
       </div>
-    </div>`).join('') + (NOTIF.hasMore ? '<button type="button" data-notif-more style="width:100%;padding:12px;border:0;background:transparent;color:var(--text-primary);cursor:pointer">Load more notifications</button>' : '');
+      ${n.is_read ? '' : '<span class="notif-dot" aria-label="Unread"></span>'}
+    </div>`).join('') + (NOTIF.hasMore ? '<button type="button" class="notif-load-more" data-notif-more>Load more notifications</button>' : '');
 }
 
 function _notificationUrl(link) {
