@@ -66,7 +66,7 @@ $facOwnedServers = array_values(array_filter(
   </script>
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=notifications-2">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=3">
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/dashboard-design.css?v=1">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/dashboard-design.css?v=2">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 </head>
 

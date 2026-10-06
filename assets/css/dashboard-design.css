@@ -61,3 +61,33 @@ body[data-mobile-surface="dashboard"] :is(.ndrop,.n-drop) .dashboard-empty-state
 @media (prefers-reduced-motion: reduce) {
   body[data-mobile-surface="dashboard"] :is(.stat-card,.btn-primary,.btn-join,.ndrop,.n-drop) { transition: none; animation: none; transform: none; }
 }
+
+/* Quick Actions adapt to their card width, including narrow desktop sidebars. */
+body[data-mobile-surface="dashboard"] .qa-grid {
+  display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,150px),1fr)) !important;
+  gap: 10px !important; padding: 16px;
+}
+body[data-mobile-surface="dashboard"] .qa-btn {
+  display: flex; align-items: center; justify-content: flex-start; gap: 10px;
+  width: 100%; min-width: 0; min-height: 64px; padding: 12px;
+  border: 1px solid var(--ec-line); border-radius: var(--ec-control-radius);
+  background: var(--ec-raised); color: var(--ec-text); box-shadow: none;
+  font-family: inherit; font-size: 13px; font-weight: 600; line-height: 1.4;
+  text-align: left; white-space: normal; cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+body[data-mobile-surface="dashboard"] .qa-btn:hover {
+  background: var(--ec-accent-soft); border-color: var(--ec-accent); transform: none;
+}
+body[data-mobile-surface="dashboard"] .qa-btn:active { background: var(--ec-accent-soft); }
+body[data-mobile-surface="dashboard"] .qa-icon {
+  display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 30px;
+  background: var(--ec-accent-soft); color: var(--ec-accent); border-radius: 8px;
+}
+body[data-mobile-surface="dashboard"] .qa-icon svg { width: 18px; height: 18px; }
+body[data-mobile-surface="dashboard"] .qa-label { min-width: 0; overflow-wrap: anywhere; }
+body[data-mobile-surface="dashboard"] .sch { padding: 16px 18px; border-bottom: 1px solid var(--ec-line); }
+body[data-mobile-surface="dashboard"] .sct { color: var(--ec-text); font-size: 14px; line-height: 1.4; font-weight: 700; }
+@media (prefers-reduced-motion: reduce) {
+  body[data-mobile-surface="dashboard"] .qa-btn { transition: none; }
+}

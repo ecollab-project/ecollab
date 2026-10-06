@@ -52,7 +52,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
   </script>
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=notifications-2">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=3">
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/dashboard-design.css?v=1">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/dashboard-design.css?v=2">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 </head>
 
@@ -403,12 +403,12 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
               <div class="sct">Quick Actions</div>
             </div>
             <div class="qa-grid">
-              <button class="qa-btn qa-pink" onclick="openModal('joinRoomModal')">🏠 Join Study Room</button>
-              <button class="qa-btn qa-purple" onclick="openModal('createRoomModal')">✦ Create Study Room</button>
-              <button class="qa-btn qa-blue" onclick="openModal('uploadModal')">📤 Upload Resource</button>
-              <button class="qa-btn qa-green" onclick="openModal('aiModal')">🤖 Ask AI Assistant</button>
-              <button class="qa-btn qa-yellow" onclick="openModal('quizModal')">📝 Take Quiz</button>
-              <button class="qa-btn qa-teal" onclick="openModal('findBuddiesModal')">👫 Find Study Buddies</button>
+              <button type="button" class="qa-btn qa-pink" onclick="openModal('joinRoomModal')"><span class="qa-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z"/><path d="M9 21v-8h6v8"/></svg></span><span class="qa-label">Join Study Room</span></button>
+              <button type="button" class="qa-btn qa-purple" onclick="openModal('createRoomModal')"><span class="qa-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span><span class="qa-label">Create Study Room</span></button>
+              <button type="button" class="qa-btn qa-blue" onclick="openModal('uploadModal')"><span class="qa-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V3m-5 5 5-5 5 5M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"/></svg></span><span class="qa-label">Upload Resource</span></button>
+              <button type="button" class="qa-btn qa-green" onclick="openModal('aiModal')"><span class="qa-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="14" rx="3"/><path d="M12 7V3m-4 10h.01M16 13h.01M9 17h6M1 12v5m22-5v5"/></svg></span><span class="qa-label">Ask AI Assistant</span></button>
+              <button type="button" class="qa-btn qa-yellow" onclick="openModal('quizModal')"><span class="qa-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2h6v2M9 10h6M9 14h6M9 18h3"/></svg></span><span class="qa-label">Take Quiz</span></button>
+              <button type="button" class="qa-btn qa-teal" onclick="openModal('findBuddiesModal')"><span class="qa-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 21v-2a6 6 0 0 1 12 0v2m1-16a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 4v2"/></svg></span><span class="qa-label">Find Study Buddies</span></button>
             </div>
           </div>
         </div>
