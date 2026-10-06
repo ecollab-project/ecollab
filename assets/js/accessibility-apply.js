@@ -40,7 +40,7 @@
   }
 
   function run() {
-    const base = window.ECOLLAB?.baseUrl || window.BASE_URL || '';
+    const base = window.ECOLLAB?.baseUrl || window.ECOLLAB_BASE || window.ECOLLAB_CALLS_CONFIG?.baseUrl || window.BASE_URL || '';
     fetch(base + '/API/profile/settings.php', { credentials: 'same-origin' })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d && d.settings) applyClasses(d.settings); })
@@ -53,3 +53,4 @@
     run();
   }
 })();
+

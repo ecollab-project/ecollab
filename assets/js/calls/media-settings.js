@@ -16,6 +16,12 @@
     return p;
   }
   let prefs=normalize(saved), applying=false;
+  const accountKeys={input_device:'microphone',output_device:'speaker',noise_suppression:'noise',echo_cancellation:'echo',auto_gain_control:'gain',output_volume:'volume'};
+  function fromAccount(settings){const value={};for(const [key,local] of Object.entries(accountKeys)){if(settings[key]!==undefined)value[local]=settings[key];}prefs=normalize({...prefs,...value});decorate();}
+  window.addEventListener('ecollab:settings-applied',e=>fromAccount(e.detail||{}));
+  const base=window.ECOLLAB_CALLS_CONFIG?.baseUrl||window.ECOLLAB_BASE||'';
+  const ready=(typeof fetch==='function'?fetch(base+'/API/profile/settings.php',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(d=>{if(d?.settings)fromAccount(d.settings);}):Promise.resolve()).catch(()=>{});
+  if(window._userSettings)fromAccount(window._userSettings);
   const audio=(p=prefs)=>({echoCancellation:p.echo,noiseSuppression:p.noise,autoGainControl:p.gain,...(p.microphone?{deviceId:p.microphone}:{})});
   const video=(p=prefs)=>({resolution:{width:p.cameraQuality==='360p'?640:p.cameraQuality==='1080p'?1920:1280,height:p.cameraQuality==='360p'?360:p.cameraQuality==='1080p'?1080:720,frameRate:p.cameraFps},...(p.camera?{deviceId:p.camera}:{})});
   function screenOptions(quality=prefs.quality) {
@@ -32,7 +38,7 @@
     }));
   }
   async function initialize(room) {
-    decorate(); playback(room);
+    await ready; decorate(); playback(room);
     if(prefs.speaker && 'setSinkId' in HTMLMediaElement.prototype) {
       const success=await room.switchActiveDevice('audiooutput',prefs.speaker);
       if(success===false)throw Error('Saved speaker is unavailable. Select another speaker in Settings.');
@@ -65,6 +71,13 @@
       if(camera&&room.localParticipant.isCameraEnabled&&['cameraQuality','cameraFps'].some(key=>next[key]!==old[key])){
         undo.push(()=>restartMuted(camera,video(old)));
         await restartMuted(camera,video(next));
+      }
+      const account={};for(const [key,local] of Object.entries(accountKeys)){if(next[local]!==old[local])account[key]=next[local];}
+      if(Object.keys(account).length){
+        const csrf=window.ECOLLAB_CALLS_CONFIG?.csrfToken||document.querySelector('meta[name="csrf-token"]')?.content||'';
+        const response=await fetch(base+'/API/profile/settings.php',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify(account)});
+        const data=await response.json().catch(()=>({}));if(!response.ok)throw Error(data.error||'Unable to save account audio settings.');
+        window._userSettings={...window._userSettings,...account};
       }
       prefs=next;decorate();playback(room);
       try{localStorage.setItem('ec_media_settings',JSON.stringify(prefs));}catch(_){}
@@ -140,5 +153,6 @@
     };
   }
   decorate();
-  window.EcollabMediaSettings={audio,video,screenOptions,apply,open,initialize,playback,get preferences(){return {...prefs};}};
+  window.EcollabMediaSettings={ready,audio,video,screenOptions,apply,open,initialize,playback,get preferences(){return {...prefs};}};
 })();
+

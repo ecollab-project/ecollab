@@ -51,7 +51,7 @@ $stats = $dashData['stats'] ?? [
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/admin-dashboard.css">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/dashboard-mobile.css">
   <script>window.ECOLLAB_BASE = <?= json_encode(BASE_URL) ?>;</script>
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=2">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=3">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=3">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 </head>
@@ -156,7 +156,7 @@ $stats = $dashData['stats'] ?? [
                 <td><div class="action-btns"><button class="btn-view" onclick="openUserProfile('<?= $ruN ?>','<?= htmlspecialchars($ruI) ?>','<?= htmlspecialchars($ruG) ?>','<?= $ruR ?>','<?= $ruC ?>','Active','<?= $ruJ ?>')">View</button><button class="btn-more" onclick="openContextMenu(event,'<?= $ruN ?>')">More ▾</button></div></td>
               </tr>
 <?php endforeach; ?>
-<tr><td colspan="6" class="dashboard-empty-state">No recent users found.</td></tr>
+<?php if (empty($dashData['recent_users'])): ?><tr><td colspan="6" class="dashboard-empty-state">No recent users found.</td></tr><?php endif; ?>
             </tbody>
           </table>
         </div>
@@ -170,11 +170,7 @@ $stats = $dashData['stats'] ?? [
 <?php foreach ($dashData['study_rooms'] ?? [] as $room): ?>
             <div class="room-item"><span class="room-hash">#</span><span class="room-name"><?= htmlspecialchars($room['name'] ?? '') ?></span><span class="room-count"><?= (int)($room['active_members'] ?? 0) ?>/<?= (int)($room['max_members'] ?? 25) ?></span><button class="btn-join" onclick="joinRoom('<?= htmlspecialchars($room['name'] ?? '') ?>')">Join</button></div>
 <?php endforeach; ?>
-<?php if (empty($dashData['study_rooms'])): ?>
-            <div class="room-item"><span class="room-hash">#</span><span class="room-name">toastDEV#zWw9Rm</span><span class="room-count">12/25</span><button class="btn-join" onclick="joinRoom('toastDEV#zWw9Rm')">Join</button></div>
-            <div class="room-item"><span class="room-hash">#</span><span class="room-name">Data-Structures-Discuss</span><span class="room-count">15/30</span><button class="btn-join" onclick="joinRoom('Data-Structures-Discuss')">Join</button></div>
-            <div class="room-item"><span class="room-hash">#</span><span class="room-name">AI Study Group</span><span class="room-count">10/20</span><button class="btn-join" onclick="joinRoom('AI Study Group')">Join</button></div>
-<?php endif; ?>
+<?php if (empty($dashData['study_rooms'])): ?><div class="dashboard-empty-state">No active study rooms.</div><?php endif; ?>
           </div>
         </div>
         <div class="card">
@@ -221,7 +217,7 @@ $stats = $dashData['stats'] ?? [
 ?>
             <div class="log-item"><div class="log-dot <?= $dotColor ?>"></div><div class="log-time"><?= htmlspecialchars($log['timestamp'] ?? '') ?></div><div class="log-msg"><?= htmlspecialchars($log['message'] ?? '') ?></div></div>
 <?php endforeach; ?>
-<div class="dashboard-empty-state">No system log entries available.</div>
+<?php if (empty($dashData['system_logs'])): ?><div class="dashboard-empty-state">No system log entries available.</div><?php endif; ?>
           </div>
         </div>
       </div>
@@ -555,7 +551,9 @@ ADMIN_DATA.sessData = Array.isArray(ADMIN_DATA.sessData) ? ADMIN_DATA.sessData :
 ADMIN_DATA.engData = Array.isArray(ADMIN_DATA.engData) ? ADMIN_DATA.engData : [];
 ADMIN_DATA.dauData = Array.isArray(ADMIN_DATA.dauData) ? ADMIN_DATA.dauData : [];
 </script>
-<script src="<?= BASE_URL ?>/assets/js/admin/dashboard.js" defer></script>
+<script src="<?= BASE_URL ?>/assets/js/dashboard-state.js?v=1" defer></script>
+<script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js?v=2" defer></script>
+<script src="<?= BASE_URL ?>/assets/js/admin/dashboard.js?v=2" defer></script>
 
 <script>
 // ── Mobile sidebar ─────────────────────────────────────────────────

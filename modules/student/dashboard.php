@@ -50,7 +50,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
   <script>
     window.ECOLLAB_BASE = <?= json_encode(BASE_URL) ?>;
   </script>
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=2">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=3">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=3">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 </head>
@@ -153,7 +153,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
               <div class="sc-icon">📖</div>
             </div>
             <div class="sc-val"><?= $dashData['total_sessions'] ?? 0 ?></div>
-            <div class="sc-ch">+8 this week</div>
+            <div class="sc-ch">Recorded sessions</div>
           </div>
           <div class="stat-card c3" onclick="openModal('hoursModal')">
             <div class="sc-top">
@@ -215,7 +215,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
                   </div>
                 </div>
               <?php endforeach; ?>
-              <div class="dashboard-empty-state">No recommended servers available yet.</div>
+              <?php if (empty($dashData['recommended_servers'])): ?><div class="dashboard-empty-state">No recommended servers available yet.</div><?php endif; ?>
             </div>
             <div class="explore-more" onclick="showPage('discover')"><span>Explore More Servers</span><span>›</span></div>
           </div>
@@ -234,7 +234,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
                   $pct  = (int)($course['progress_percentage'] ?? 0);
                   $clr  = $courseColors[$ci % count($courseColors)];
                   $grad = $courseGrads[$ci % count($courseGrads)];
-                  $name = htmlspecialchars(($course['course_code'] ?? '') . ' - ' . ($course['name'] ?? 'Course'));
+                  $courseName = (string)($course['name'] ?? 'Course'); $courseCode = (string)($course['course_code'] ?? ''); $name = htmlspecialchars($courseCode !== '' && $courseCode !== $courseName ? $courseCode . ' - ' . $courseName : $courseName);
                 ?>
                   <div class="course-row" onclick="openModal('courseDetailModal','<?= $name ?>')">
                     <div class="cr-left">
@@ -248,7 +248,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
                     <div class="cr-arr">›</div>
                   </div>
                 <?php endforeach; ?>
-                <div class="dashboard-empty-state">No courses found for your account yet.</div>
+                <?php if (empty($dashData['courses'])): ?><div class="dashboard-empty-state">No courses found for your account yet.</div><?php endif; ?>
               </div>
             </div>
 
@@ -276,7 +276,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
                   <button class="fr-btn" onclick="event.stopPropagation();openModal('dmModal','<?= $fName ?>')">Message</button>
                 </div>
               <?php endforeach; ?>
-              <div class="dashboard-empty-state">No friends are online right now.</div>
+              <?php if (empty($dashData['friends_online'])): ?><div class="dashboard-empty-state">No friends are online right now.</div><?php endif; ?>
             </div>
 
             <!-- MY SERVERS & CHANNELS -->
@@ -340,21 +340,21 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
             <div class="act-stats">
               <div class="as-card">
                 <div class="as-label">🔥 Study Streak</div>
-                <div class="as-val" style="color:#fb923c"><?= (int)($dashData['study_streak'] ?? 7) ?> days</div>
+                <div class="as-val" style="color:#fb923c"><?= (int)($dashData['study_streak'] ?? 0) ?> days</div>
                 <div class="as-sub">Keep it up!</div>
               </div>
               <div class="as-card">
                 <div class="as-label">🎯 Weekly Goal</div>
-                <div class="as-val" style="color:var(--green)"><?= number_format((float)($dashData['hours_studied'] ?? 18), 1) ?> / 20 hrs</div>
+                <div class="as-val" style="color:var(--green)"><?= number_format((float)($dashData['hours_studied'] ?? 0), 1) ?> / 20 hrs</div>
                 <div class="prog-mini">
-                  <div class="prog-fill" style="width:<?= min(100, (int)(($dashData['hours_studied'] ?? 18) / 20 * 100)) ?>%;background:linear-gradient(90deg,var(--green),var(--teal))"></div>
+                  <div class="prog-fill" style="width:<?= min(100, (int)(($dashData['hours_studied'] ?? 0) / 20 * 100)) ?>%;background:linear-gradient(90deg,var(--green),var(--teal))"></div>
                 </div>
-                <div class="as-sub"><?= min(100, (int)(($dashData['hours_studied'] ?? 18) / 20 * 100)) ?>% completed</div>
+                <div class="as-sub"><?= min(100, (int)(($dashData['hours_studied'] ?? 0) / 20 * 100)) ?>% completed</div>
               </div>
               <div class="as-card">
                 <div class="as-label">⏱ Focus Time</div>
-                <div class="as-val" style="color:var(--cyan)"><?= number_format((float)($dashData['focus_time'] ?? 14.2), 1) ?> hrs</div>
-                <div class="as-sub">+2.1 hrs vs last week</div>
+                <div class="as-val" style="color:var(--cyan)"><?= number_format((float)($dashData['focus_time'] ?? 0), 1) ?> hrs</div>
+                <div class="as-sub">Recorded focus time</div>
               </div>
             </div>
           </div>
@@ -385,38 +385,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
                 </div>
               </div>
             <?php endforeach; ?>
-            <?php if (empty($dashData['upcoming_sessions'])): ?>
-              <div class="sess-row" onclick="openModal('sessionDetailModal','CS 305 Study Session')">
-                <div class="sr-date">
-                  <div class="sr-day">24</div>
-                  <div class="sr-month">MAY</div>
-                </div>
-                <div class="sr-body">
-                  <div class="sr-name">CS 305 Study Session</div>
-                  <div class="sr-sub">Neural Networks · Chapter 4</div>
-                  <div class="sr-time">3:00 PM – 5:00 PM</div>
-                </div>
-                <div class="sr-right">
-                  <div class="sr-avs">
-                    <div class="sr-av" style="background:linear-gradient(135deg,#ff4fd8,#7c3aed)">F</div>
-                    <div class="sr-av" style="background:linear-gradient(135deg,#2563eb,#06b6d4)">A</div>
-                    <div class="sr-more">+8</div>
-                  </div><button class="btn-join" style="font-size:10px;padding:4px 10px" onclick="event.stopPropagation();joinClass('CS 305 Session')">Join</button>
-                </div>
-              </div>
-              <div class="sess-row" onclick="openModal('sessionDetailModal','Group Project Meeting')">
-                <div class="sr-date">
-                  <div class="sr-day">25</div>
-                  <div class="sr-month">MAY</div>
-                </div>
-                <div class="sr-body">
-                  <div class="sr-name">Group Project Meeting</div>
-                  <div class="sr-sub">AI Chatbot Development</div>
-                  <div class="sr-time">10:00 AM – 12:00 PM</div>
-                </div>
-                <div class="sr-right"><button class="btn-join" style="font-size:10px;padding:4px 10px" onclick="event.stopPropagation();joinClass('Project Meeting')">Join</button></div>
-              </div>
-            <?php endif; ?>
+            <?php if (empty($dashData['upcoming_sessions'])): ?><div class="dashboard-empty-state">No upcoming study sessions.</div><?php endif; ?>
           </div>
         </div>
 
@@ -426,32 +395,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
             <div class="sch">
               <div class="sct">Recent Achievements</div><button class="view-all" onclick="showPage('achievements')">View All</button>
             </div>
-            <div class="ach-grid">
-              <div class="ach-card" onclick="openModal('achModal','Neural Explorer')">
-                <div class="ach-bg" style="background:linear-gradient(135deg,rgba(124,58,237,.25),rgba(124,58,237,.08))">🧠</div>
-                <div class="ach-name">Neural Explorer</div>
-                <div class="ach-desc">Complete 10 Neural Networks sessions</div>
-                <div class="ach-date">May 20, 2025</div>
-              </div>
-              <div class="ach-card" onclick="openModal('achModal','Consistent Learner')">
-                <div class="ach-bg" style="background:linear-gradient(135deg,rgba(220,38,38,.2),rgba(220,38,38,.06))">🔥</div>
-                <div class="ach-name">Consistent Learner</div>
-                <div class="ach-desc">Study for 7 days in a row</div>
-                <div class="ach-date">May 19, 2025</div>
-              </div>
-              <div class="ach-card" onclick="openModal('achModal','Active Participant')">
-                <div class="ach-bg" style="background:linear-gradient(135deg,rgba(37,99,235,.2),rgba(37,99,235,.06))">💬</div>
-                <div class="ach-name">Active Participant</div>
-                <div class="ach-desc">Send 50 messages in study rooms</div>
-                <div class="ach-date">May 18, 2025</div>
-              </div>
-              <div class="ach-card" onclick="openModal('achModal','Team Player')">
-                <div class="ach-bg" style="background:linear-gradient(135deg,rgba(22,163,74,.2),rgba(22,163,74,.06))">👫</div>
-                <div class="ach-name">Team Player</div>
-                <div class="ach-desc">Join 10 group sessions</div>
-                <div class="ach-date">May 17, 2025</div>
-              </div>
-            </div>
+            <div class="dashboard-empty-state">Achievement history is not available from the current data source.</div>
           </div>
           <div class="sc-card">
             <div class="sch">
@@ -541,7 +485,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
         <div class="g2" style="display:none;">
           <?php foreach ($dashData['courses'] ?? [] as $ci => $course):
             $pct  = (int)($course['progress_percentage'] ?? 65);
-            $name = htmlspecialchars(($course['course_code'] ?? '') . ' — ' . ($course['name'] ?? ''));
+            $courseName = (string)($course['name'] ?? ''); $courseCode = (string)($course['course_code'] ?? ''); $name = htmlspecialchars($courseCode !== '' && $courseCode !== $courseName ? $courseCode . ' — ' . $courseName : $courseName);
             $clr  = $courseColors[$ci % count($courseColors)];
             $grd  = $courseGrads[$ci % count($courseGrads)];
           ?>
@@ -608,28 +552,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
               </div>
             </div>
           <?php endforeach; ?>
-          <?php if (empty($dashData['study_rooms'])): ?>
-            <div class="server-row" onclick="openModal('roomDetailModal','CS 305 Neural Networks Study Group')">
-              <div class="srv-av" style="background:rgba(233,30,140,.15)">🧠</div>
-              <div class="srv-body">
-                <div class="srv-name">CS 305 - Neural Networks Study Group</div>
-                <div class="srv-desc">Discuss algorithms, backpropagation, and more</div>
-              </div>
-              <div class="srv-right">
-                <div class="srv-online">12 online</div><button class="btn-join" onclick="event.stopPropagation();joinServer(this,'CS 305 Room')">Join</button>
-              </div>
-            </div>
-            <div class="server-row" onclick="openModal('roomDetailModal','DSA Practice Group')">
-              <div class="srv-av" style="background:rgba(6,182,212,.15)">💻</div>
-              <div class="srv-body">
-                <div class="srv-name">Data Structures & Algorithms</div>
-                <div class="srv-desc">Practice problems and share solutions</div>
-              </div>
-              <div class="srv-right">
-                <div class="srv-online">18 online</div><button class="btn-join" onclick="event.stopPropagation();joinServer(this,'DSA Room')">Join</button>
-              </div>
-            </div>
-          <?php endif; ?>
+          <?php if (empty($dashData['study_rooms'])): ?><div class="dashboard-empty-state">No active study rooms.</div><?php endif; ?>
         </div>
       </div>
 
@@ -697,32 +620,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
               </div>
             </div>
           <?php endforeach; ?>
-          <?php if (empty($dashData['notifications'])): ?>
-            <div class="ndi unread" onclick="handleNotif(this,'Fatima replied')">
-              <div class="ndd"></div>
-              <div class="ndico" style="background:rgba(233,30,140,.15)">💬</div>
-              <div>
-                <div class="ndmsg">Fatima_Student replied to your post in AI & ML Hub</div>
-                <div class="ndtime">2 hours ago</div>
-              </div>
-            </div>
-            <div class="ndi unread" onclick="handleNotif(this,'Quiz available')">
-              <div class="ndd"></div>
-              <div class="ndico" style="background:rgba(22,163,74,.15)">✅</div>
-              <div>
-                <div class="ndmsg">New quiz available: Neural Networks Basics</div>
-                <div class="ndtime">3 hours ago</div>
-              </div>
-            </div>
-            <div class="ndi unread" onclick="handleNotif(this,'Achievement')">
-              <div class="ndd"></div>
-              <div class="ndico" style="background:rgba(217,119,6,.15)">🏆</div>
-              <div>
-                <div class="ndmsg">Achievement Unlocked: Consistent Learner!</div>
-                <div class="ndtime">1 day ago</div>
-              </div>
-            </div>
-          <?php endif; ?>
+          <?php if (empty($dashData['notifications'])): ?><div class="dashboard-empty-state">No notifications.</div><?php endif; ?>
         </div>
       </div>
 
@@ -775,19 +673,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
                 <button class="btn-join" style="font-size:10px;padding:4px 10px" onclick="event.stopPropagation();joinClass('<?= htmlspecialchars($sess['name'] ?? '') ?>')">Join</button>
               </div>
             <?php endforeach; ?>
-            <?php if (empty($dashData['upcoming_sessions'])): ?>
-              <div class="sess-row">
-                <div class="sr-date">
-                  <div class="sr-day">24</div>
-                  <div class="sr-month">MAY</div>
-                </div>
-                <div class="sr-body">
-                  <div class="sr-name">CS 305 Study Session</div>
-                  <div class="sr-sub">Neural Networks - Chapter 4</div>
-                  <div class="sr-time">3:00 PM – 5:00 PM</div>
-                </div><button class="btn-join" style="font-size:10px;padding:4px 10px" onclick="joinClass('CS 305')">Join</button>
-              </div>
-            <?php endif; ?>
+            <?php if (empty($dashData['upcoming_sessions'])): ?><div class="dashboard-empty-state">No upcoming study sessions.</div><?php endif; ?>
           </div>
         </div>
       </div>
@@ -834,20 +720,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
                 <button class="btn-sm btn-outline" onclick="toast('Downloading...','info','⬇')">Download</button>
               </div>
             <?php endforeach; ?>
-            <?php if (empty($dashData['files'])): ?>
-              <div class="file-row">
-                <div class="fi-ico" style="background:rgba(220,38,38,.15)">📄</div>
-                <div class="fi-name">lecture_notes_ch5.pdf</div>
-                <div class="fi-meta">CS 305 · You</div>
-                <div class="fi-size">2.4 MB</div><button class="btn-sm btn-outline" onclick="toast('Downloading...','info','⬇')">Download</button>
-              </div>
-              <div class="file-row">
-                <div class="fi-ico" style="background:rgba(37,99,235,.15)">📊</div>
-                <div class="fi-name">DSA_cheatsheet.xlsx</div>
-                <div class="fi-meta">CS 201 · Fatima</div>
-                <div class="fi-size">845 KB</div><button class="btn-sm btn-outline" onclick="toast('Downloading...','info','⬇')">Download</button>
-              </div>
-            <?php endif; ?>
+            <?php if (empty($dashData['files'])): ?><div class="dashboard-empty-state">No shared files available.</div><?php endif; ?>
           </div>
         </div>
       </div>
@@ -868,20 +741,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
               <div class="note-meta"><span><?= htmlspecialchars($note['course_code'] ?? '') ?> · <?= htmlspecialchars($note['updated_label'] ?? 'Today') ?></span></div>
             </div>
           <?php endforeach; ?>
-          <?php if (empty($dashData['notes'])): ?>
-            <div class="note-card" onclick="openModal('viewNoteModal','Neural Networks - Key Concepts')">
-              <div class="note-title">Neural Networks — Key Concepts</div>
-              <div class="note-preview">Backpropagation, gradient descent, activation functions. ReLU vs Sigmoid comparison...</div>
-              <div class="note-meta"><span>CS 305 · Today</span>
-                <div style="display:flex;gap:5px"><button class="btn-sm btn-outline" style="padding:3px 7px" onclick="event.stopPropagation();openModal('editNoteModal','Neural Networks')">Edit</button></div>
-              </div>
-            </div>
-            <div class="note-card" onclick="openModal('viewNoteModal','DSA - Two Pointers')">
-              <div class="note-title">DSA — Two Pointers Technique</div>
-              <div class="note-preview">Use two pointers for O(n) solutions on sorted arrays. Start from both ends...</div>
-              <div class="note-meta"><span>CS 201 · Yesterday</span></div>
-            </div>
-          <?php endif; ?>
+          <?php if (empty($dashData['notes'])): ?><div class="dashboard-empty-state">No saved notes.</div><?php endif; ?>
         </div>
       </div>
 
@@ -903,7 +763,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
           </div>
           <div class="ins-card">
             <div class="ins-label">Study Streak</div>
-            <div class="ins-val" style="color:#fb923c"><?= (int)($dashData['study_streak'] ?? 7) ?> days 🔥</div>
+            <div class="ins-val" style="color:#fb923c"><?= (int)($dashData['study_streak'] ?? 0) ?> days 🔥</div>
           </div>
           <div class="ins-card">
             <div class="ins-label">Messages Sent</div>
@@ -928,11 +788,11 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
         <div class="ins-grid">
           <div class="ins-card">
             <div class="ins-label">Study Streak</div>
-            <div class="ins-val" style="color:#fb923c"><?= (int)($dashData['study_streak'] ?? 7) ?> days 🔥</div>
+            <div class="ins-val" style="color:#fb923c"><?= (int)($dashData['study_streak'] ?? 0) ?> days 🔥</div>
           </div>
           <div class="ins-card">
             <div class="ins-label">Weekly Goal</div>
-            <div class="ins-val" style="color:var(--green)"><?= min(100, (int)(($dashData['hours_studied'] ?? 18) / 20 * 100)) ?>%</div>
+            <div class="ins-val" style="color:var(--green)"><?= min(100, (int)(($dashData['hours_studied'] ?? 0) / 20 * 100)) ?>%</div>
           </div>
           <div class="ins-card">
             <div class="ins-label">Quiz Accuracy</div>
@@ -956,11 +816,11 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
         <div class="page-title-row">
           <div>
             <div class="page-title">Achievements</div>
-            <div class="page-sub"><?= (int)($dashData['achievement_count'] ?? 12) ?> earned</div>
+            <div class="page-sub"><?= (int)($dashData['achievement_count'] ?? 0) ?> earned</div>
           </div>
         </div>
         <div class="card" style="padding:14px">
-          <div class="acp-grid">
+          <p class="dashboard-empty-state">Badge requirements are shown below. This catalog does not indicate which badges you have earned.</p><div class="acp-grid">
             <div class="acp" onclick="openModal('achModal','Neural Explorer')">
               <div style="font-size:24px;margin-bottom:7px">🧠</div>
               <div style="font-size:10.5px;font-weight:700;margin-bottom:2px">Neural Explorer</div>
@@ -1430,7 +1290,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
       </div>
       <div class="mb">
         <div style="text-align:center;margin-bottom:13px">
-          <div style="font-size:46px;font-weight:800;color:var(--green)"><?= number_format((float)($dashData['hours_studied'] ?? 18.6), 1) ?></div>
+          <div style="font-size:46px;font-weight:800;color:var(--green)"><?= number_format((float)($dashData['hours_studied'] ?? 0), 1) ?></div>
           <div style="color:var(--muted2)">Hours this week</div>
         </div>
       </div>
@@ -1683,7 +1543,9 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
     if (!DASH_DATA.courseHours.length) DASH_DATA.courseHours = [7.2, 4.1, 3.5, 2.8, 1.0];
   </script>
 
-  <script src="<?= BASE_URL ?>/assets/js/student/dashboard.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/dashboard-state.js?v=1" defer></script>
+<script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js?v=2" defer></script>
+<script src="<?= BASE_URL ?>/assets/js/student/dashboard.js?v=2" defer></script>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/ai-markdown.css">
 
   <script src="https://cdn.jsdelivr.net/npm/marked@18.0.9/lib/marked.umd.js" defer></script>

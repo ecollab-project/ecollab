@@ -56,6 +56,7 @@
   async function connect(c) {
     const [LK,auth]=await Promise.all([sdk(),token(c)]);if(call!==c)return;
     if(c.groupId)c.name=auth.room_name||c.name;
+    await media().ready;if(call!==c)return;
     const room=new LK.Room({adaptiveStream:true,dynacast:true,audioCaptureDefaults:media().audio(),videoCaptureDefaults:media().video(),disconnectOnPageLeave:true});c.room=room;
     const update=()=>{if(call===c){reconcileAudio(c);render(c);}};
     for(const event of ['ParticipantConnected','ParticipantDisconnected','TrackMuted','TrackUnmuted','LocalTrackPublished','LocalTrackUnpublished','ActiveSpeakersChanged','TrackSubscribed'])room.on(LK.RoomEvent[event],update);

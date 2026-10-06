@@ -249,6 +249,7 @@
 
     const auth = await tokenFor(channelId);
     const { Room, RoomEvent, Track } = window.LivekitClient;
+    await window.EcollabMediaSettings?.ready;
     room = new Room({
       // eCollab dynamically removes/recreates participant video elements.
       // Adaptive stream observes element visibility and may pause a remote

@@ -6,6 +6,7 @@ Chart.defaults.font.size = 10;
 const bc = {overview:'Overview',users:'Users',roles:'Roles & Permissions',courses:'Course & Tags',aimatching:'AI Matching',reports:'Reports',servers:'Servers',channels:'Channels',settings:'Settings',moderation:'Moderation',analytics:'Analytics',activitylogs:'Activity Logs',syshealth:'System Health',announcements:'Announcements',feedback:'Feedback & Reports'};
 
 function showPage(id, navEl) {
+  if (window.EcollabDashboardState && !window.EcollabDashboardState.select(id)) return;
   document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const p = document.getElementById('page-'+id);
@@ -718,3 +719,4 @@ async function loadReportLogs(){
  const box=document.getElementById('modLogContainer');if(!box)return;box.innerHTML='<div class="dashboard-empty-state">Loading report logs…</div>';
  try{const r=await fetch((window.ECOLLAB_BASE||'')+'/API/admin/dashboard-data.php?action=get_reports&status=all',{credentials:'same-origin'}),d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'Failed');box.innerHTML=(d.reports||[]).length?d.reports.map(x=>'<div class="log-entry"><div class="log-type-badge '+(x.status==='resolved'?'':'warn')+'">'+escHtml(x.status||'pending').toUpperCase()+'</div><div class="le-info"><div class="le-main">'+escHtml(x.reason||'Report')+'</div><div class="le-sub">'+escHtml(x.reporter_username||'Unknown')+' · '+escHtml(x.server_name||'Unknown server')+'</div></div><div class="le-time">'+escHtml(x.created_at||'')+'</div></div>').join(''):'<div class="dashboard-empty-state">No report logs recorded.</div>';}catch(e){box.innerHTML='<div class="dashboard-empty-state">Unable to load report logs.</div>';}
 }
+

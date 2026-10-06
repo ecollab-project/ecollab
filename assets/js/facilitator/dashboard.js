@@ -4,6 +4,7 @@ Chart.defaults.font.size=10;
 
 // ═══ NAV ═══
 function showPage(id, navEl) {
+  if (window.EcollabDashboardState && !window.EcollabDashboardState.select(id)) return;
   document.querySelectorAll('.page-section').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>{n.classList.remove('active');n.classList.remove('active-soft');});
   const p=document.getElementById('page-'+id);
@@ -246,7 +247,7 @@ function switchChannel(channelIdOrName, serverId){
   window.location.href = `${base}/modules/chat/chat.php?${params.toString()}`;
 }
 
-window.addEventListener('DOMContentLoaded',()=>{const p=new URLSearchParams(location.search).get('page');if(p)showPage(p);});
+
 
 async function saveChannelSettings(){
   const serverId=Number(document.getElementById('settingsServer')?.value||0);
@@ -333,3 +334,4 @@ async function saveFacPermissions(){
 }
 async function initFacilitatorServerPages(){try{const s=await facOwnedServers();facServerPicker('page-announcements',s,loadFacAnnouncements);facServerPicker('page-resources',s,loadFacResources);facServerPicker('page-files',s,loadFacWorkspace);facServerPicker('page-useractivity',s,loadFacActivity);facServerPicker('page-reports',s,loadFacReports);facServerPicker('page-banned',s,loadFacBanned);facServerPicker('page-polls',s,()=>toast('Polls and quizzes will use channels from the selected server','info','📊'));}catch(e){console.error('Facilitator server pages:',e);}}
 window.addEventListener('DOMContentLoaded',initFacilitatorServerPages);
+

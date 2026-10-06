@@ -4,6 +4,8 @@ Chart.defaults.font.size=10;
 
 // ═══ NAV ═══
 function showPage(id, navEl) {
+  if(id==='messages'||id==='chat'){goToChat();return;}
+  if (window.EcollabDashboardState && !window.EcollabDashboardState.select(id)) return;
   document.querySelectorAll('.page-section').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const p=document.getElementById('page-'+id);
@@ -137,3 +139,4 @@ window.addEventListener('load',startStudentDashboardLive);
 
 // ═══ DASHBOARD → CHAT / COLLAB ROUTING ═══
 document.addEventListener('click',e=>{const el=e.target.closest('a,button,.sc-card,.stat-card');if(!el)return;const text=String(el.textContent||'').trim().toLowerCase();if(text==='messages'||text.startsWith('messages')){e.preventDefault();e.stopPropagation();goToChat();return;}if(text.includes('whiteboard')&&!text.includes('whiteboard tools')){e.preventDefault();e.stopPropagation();window.location.href=(window.ECOLLAB_BASE||'')+'/modules/collaboration/coworkspaces.php';return;}});
+

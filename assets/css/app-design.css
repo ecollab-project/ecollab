@@ -152,3 +152,7 @@ body[data-mobile-surface="settings"] .switch.on::before { background: var(--ec-p
 body[data-mobile-surface="settings"] .switch.on::after { left: 24px; background: #fff; }
 body[data-mobile-surface="settings"] .title { margin-top: 0; }
 body[data-mobile-surface="settings"] :is(.field label, .range output, .group) { color: var(--ec-muted); }
+
+/* Empty table cells keep table layout and span every column. */
+td.dashboard-empty-state{display:table-cell!important;text-align:center;padding:24px!important;}
+div.dashboard-empty-state{width:100%;box-sizing:border-box;}
