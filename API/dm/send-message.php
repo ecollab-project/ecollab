@@ -8,6 +8,8 @@ require_once dirname(__DIR__, 2) . '/services/OllamaService.php';
 require_once dirname(__DIR__, 2) . '/services/JarredTools.php';
 require_once dirname(__DIR__, 2) . '/services/JarredActionService.php';
 
+require_once dirname(__DIR__, 2) . '/services/NotificationService.php';
+
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
 $me = AuthMiddleware::requireAuth(true);
@@ -122,11 +124,13 @@ try {
                 ':actor'     => (int)$me['id'],
                 ':title'     => ($me['full_name'] ?: $me['username']) . ' sent you a message',
                 ':body2'     => mb_substr($text, 0, 500),
-                ':link'      => BASE_URL . '/modules/chat/chat.php?dm=' . $convId,
+                ':link'      => BASE_URL . '/modules/chat/chat.php?dm=' . $convId . '&partner_id=' . (int)$me['id'] . '&message_id=' . $msgId,
             ]);
         } catch (Throwable $e) {
             error_log('[dm/send-message] notification insert skipped: ' . $e->getMessage());
         }
+
+        NotificationService::invitationsFromMessage($db,$recipientId,(int)$me['id'],$text);
 
         echo json_encode([
             'success'      => true,
@@ -309,3 +313,4 @@ JARRED_SYSTEM_PROMPT,
     http_response_code(500);
     echo json_encode(['error' => 'Server error']);
 }
+

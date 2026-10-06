@@ -28,7 +28,7 @@
   function ring(c) {
     c.ringer=new Audio(base+'/assets/sounds/'+(c.state==='incoming'?'incoming-ring.mp3':'ringback.mp3'));
     c.ringer.loop=true;c.ringer.volume=.5;c.ringer.play().catch(()=>{});
-    c.timeout=setTimeout(()=>{if(call===c&&['incoming','outgoing'].includes(c.state))end();},45000);
+    c.timeout=setTimeout(()=>{if(call===c&&['incoming','outgoing'].includes(c.state))end(true);},45000);
   }
   function stopRing(c){clearTimeout(c.timeout);c.ringer?.pause();c.ringer=null;}
   function cleanup(c) {
@@ -95,7 +95,7 @@
     announce(c);c.video=c.video&&!audioOnly;c.state='connecting';stopRing(c);render(c);
     try{await connect(c);if(call!==c)return;if(!c.groupId&&!send({type:'dm_call_answer',target_user_id:c.peerId,log_id:c.logId,media:'livekit'}))throw Error('Signaling disconnected. Please call again.');}catch(e){end();notice(e.message);}finally{c.busy=false;if(call===c)render(c);}
   }
-  function end(){const c=call;if(!c)return;if(!c.groupId&&c.peerId&&c.logId)send({type:c.state==='incoming'?'dm_call_decline':'dm_call_end',target_user_id:c.peerId,log_id:c.logId});cleanup(c);}
+  function end(timedOut=false){const c=call;if(!c)return;if(!c.groupId&&c.peerId&&c.logId)send({type:c.state==='incoming'&&!timedOut?'dm_call_decline':'dm_call_end',target_user_id:c.peerId,log_id:c.logId});cleanup(c);}
   async function action(name){const c=call;if(!c||c.busy)return;const p=c.room?.localParticipant;
     if(name==='minimize'){c.minimized=!c.minimized;layout(c);return;}
     if(name==='expand'){c.expanded=!c.expanded;c.minimized=false;layout(c);return;}
@@ -177,3 +177,4 @@
   // Defer until all page scripts have run, avoiding a second chat connection.
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',connectSignals,{once:true});else connectSignals();
 })();
+

@@ -15,6 +15,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+AuthMiddleware::verifyCsrf();
+
 $body = json_decode(file_get_contents('php://input'), true) ?? [];
 $ids  = $body['ids'] ?? null;
 
@@ -39,3 +41,4 @@ try {
     http_response_code(500);
     echo json_encode(['error' => 'Server error']);
 }
+

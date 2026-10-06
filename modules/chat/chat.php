@@ -486,14 +486,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
               <div class="notif-title">Notifications</div>
               <div class="notif-mark-read" onclick="markAllRead()">Mark all read</div>
             </div>
-            <div id="notifList">
-              <div class="notif-item unread">
-                <div class="notif-dot"></div>
-                <div class="notif-content">
-                  <div class="notif-text"><strong>John Doe</strong> replied to your message</div>
-                  <div class="notif-time">2 min ago</div>
-                </div>
-              </div>
+            <div id="notifList"><div style="padding:24px 16px;color:var(--text-muted)">Loading notifications…</div>
             </div>
           </div>
         </div>
@@ -1154,7 +1147,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     </button>
   </div>
 
-  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=notification-hub-1" defer></script>
   <!--
     Collab tools load order:
     ot-engine.js        — pure OT algorithm (no deps, must come first)
@@ -3545,4 +3538,5 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 </body>
 
 </html>
+
 

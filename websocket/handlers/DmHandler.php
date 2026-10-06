@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use Ratchet\ConnectionInterface;
 
+require_once dirname(__DIR__, 2) . '/services/NotificationService.php';
+
 class DmHandler
 {
     public static function handleDmMessage(ConnectionInterface $from, array $data, array $meta, array $userConns, PDO $db): void {
@@ -218,13 +220,21 @@ class DmHandler
                 $db->prepare('UPDATE dm_call_history SET status="declined", ended_at=NOW() WHERE id=:id AND status="ringing"')
                     ->execute([':id' => $logId]);
             } elseif ($type === 'dm_call_end') {
-                $db->prepare("
+                $ended = $db->prepare("
                     UPDATE dm_call_history
                     SET duration_seconds = IF(status = 'answered', TIMESTAMPDIFF(SECOND, answered_at, NOW()), NULL),
                         ended_at = NOW(),
                         status = IF(status = 'answered', 'ended', 'missed')
                     WHERE id = :id AND status IN ('ringing','answered')
-                ")->execute([':id' => $logId]);
+                ");
+                $ended->execute([':id' => $logId]);
+                $finalState = $db->prepare('SELECT status FROM dm_call_history WHERE id=?');
+                $finalState->execute([$logId]);
+                if ($ended->rowCount() === 1 && $finalState->fetchColumn() === 'missed') {
+                    NotificationService::create($db,(int)$log['callee_id'],(int)$log['caller_id'],'system','Missed call',
+                        'You missed a call. Open the conversation to respond.',
+                        '/modules/chat/chat.php?partner_id='.(int)$log['caller_id'].'&missed_call='.$logId,'📞');
+                }
             }
         }
 
@@ -258,4 +268,5 @@ class DmHandler
         $stmt->execute([':cid'=>$conversationId,':uid_a'=>$userId,':peer_a'=>$peerId,':uid_b'=>$userId,':peer_b'=>$peerId]); return (bool)$stmt->fetchColumn();
     }
 }
+
 

@@ -1,0 +1,20 @@
+name: Notification regression
+on:
+  push:
+    paths: ['API/notifications/**', 'API/dm/**', 'API/threads/**', 'API/server/members.php', 'API/chat/channel-members.php', 'services/NotificationService.php', 'assets/js/chat/dm-notifications.js', 'assets/js/chat/threads-v2.js', 'assets/js/chat/dm-call.js', 'includes/calls/bootstrap.php', 'websocket/handlers/DmHandler.php', 'tests/notification-*', '.github/workflows/notifications.yml']
+  pull_request:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - uses: shivammathur/setup-php@v2
+        with: {php-version: '8.3', extensions: mbstring, coverage: none}
+      - run: npm install --no-save --ignore-scripts jsdom@30.1.2
+      - run: node tests/notification-routing-regression.cjs
+      - run: node tests/livekit-calls-regression.cjs
+      - run: php tests/notification-service-regression.php
+      - run: |
+          for file in API/notifications/get.php API/notifications/mark-read.php API/dm/send-message.php API/dm/group-message.php API/threads/index.php API/server/members.php API/chat/channel-members.php services/NotificationService.php websocket/handlers/DmHandler.php modules/chat/chat.php; do php -l "$file" || exit 1; done

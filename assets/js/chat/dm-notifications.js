@@ -83,6 +83,9 @@ const NOTIF = {
   items: [],               // [{id, type, title, body, is_read, created_at}]
   unreadCount: 0,
   pollInterval: null,
+  hasMore: false,
+  nextOffset: 0,
+  loadingMore: false,
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -161,16 +164,7 @@ function _onWsDmMessage(data) {
     showDesktopNotification('notification_messages', data.sender_name || 'New message', String(data.body || '').slice(0, 100));
   }
 
-  // Add notification badge
-  if (data.sender_id !== ME_ID()) {
-    _addInlineNotification({
-      type: 'dm',
-      title: (data.sender_name || 'Someone') + ' sent you a message',
-      body: String(data.body || '').slice(0, 80),
-      ref_id: data.message_id,
-      created_at: data.created_at,
-    });
-  }
+  if (Number(data.sender_id) !== Number(ME_ID())) _pollNotifications();
 }
 
 function _onWsDmTyping(data) {
@@ -219,6 +213,7 @@ function _onWsDmGroupMessage(data) {
     const groupName = grp ? grp.display_name : 'Group';
     showDesktopNotification('notification_messages', `${data.sender_name || 'Someone'} (${groupName})`, String(data.body || '').slice(0, 100));
   }
+  if (Number(data.sender_id) !== Number(ME_ID())) _pollNotifications();
 }
 
 function _onWsDmGroupTyping(data) {
@@ -282,6 +277,8 @@ function _addInlineNotification(notif) {
     created_at: notif.created_at || new Date().toISOString(),
     ref_id:     notif.ref_id || 0,
     link_url:   notif.link_url || '',
+    actor_id:   notif.actor_id || 0,
+    icon:       notif.icon || '',
   });
   if (NOTIF.items.length > 30) NOTIF.items.pop();
   NOTIF.unreadCount++;
@@ -320,21 +317,36 @@ function _renderNotifDropdown() {
   }
 
   list.innerHTML = NOTIF.items.map(n => `
-    <div class="notif-item ${n.is_read ? '' : 'unread'}" data-notif-id="${n.id}" onclick="_handleNotifClick(${n.id},'${_esc(n.type)}',${n.ref_id || 0})" style="cursor:pointer;">
+    <div class="notif-item ${n.is_read ? '' : 'unread'}" data-notif-id="${_esc(n.id)}" role="button" tabindex="0" style="cursor:pointer;">
       <div class="notif-dot" style="${n.is_read ? 'opacity:0' : ''}"></div>
       <div style="display:flex;align-items:flex-start;gap:10px;flex:1;">
-        <div style="font-size:18px;flex-shrink:0;margin-top:1px;">${_notifIcon(n.type)}</div>
+        <div style="font-size:18px;flex-shrink:0;margin-top:1px;">${_esc(n.icon || _notifIcon(n.type))}</div>
         <div class="notif-content">
           <div class="notif-text">${_esc(n.title)}</div>
           ${n.body ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${_esc(String(n.body).slice(0,80))}</div>` : ''}
           <div class="notif-time">${_timeAgo(n.created_at)}</div>
         </div>
       </div>
-    </div>`).join('');
+    </div>`).join('') + (NOTIF.hasMore ? '<button type="button" data-notif-more style="width:100%;padding:12px;border:0;background:transparent;color:var(--text-primary);cursor:pointer">Load more notifications</button>' : '');
 }
 
-window._handleNotifClick = async function(notifId, type, refId) {
-  const notif = NOTIF.items.find(n => String(n.id) === String(notifId));
+function _notificationUrl(link) {
+  if (!link || !/^(?:\/|https?:\/\/)/i.test(link)) return null;
+  try {
+    const url = new URL(link, window.location.origin);
+    const root = new URL(BASE() || '/', window.location.origin);
+    if (url.origin !== root.origin || url.username || url.password) return null;
+    const prefix = root.pathname.replace(/\/$/, '');
+    return url.pathname.startsWith(prefix + '/modules/') ? url : null;
+  } catch (_) { return null; }
+}
+function _focusNotificationMessage(id) {
+  const messageId = Number(id);
+  if (messageId > 0) document.querySelector('[data-msg-id="' + messageId + '"]')?.scrollIntoView({block:'center'});
+}
+
+window._handleNotifClick = async function(notifId, type, refId, destination = null) {
+  const notif = destination || NOTIF.items.find(n => String(n.id) === String(notifId));
   if (notif && !notif.is_read) {
     notif.is_read = 1;
     NOTIF.unreadCount = Math.max(0, NOTIF.unreadCount - 1);
@@ -376,57 +388,40 @@ window._handleNotifClick = async function(notifId, type, refId) {
     return;
   }
 
-  // Thread notifications open Threads; when ref_id is a thread id, open it.
-  if (t === 'thread' || t === 'thread_reply' || t === 'thread_mention' ||
-      /thread/i.test(link)) {
-    const threadNav = [...document.querySelectorAll('[onclick]')].find(el =>
-      /switchView\(['"]threads['"]/.test(el.getAttribute('onclick') || '')
-    );
-    if (typeof window.switchView === 'function') {
-      window.switchView('threads', threadNav || null);
-    } else if (threadNav) {
-      threadNav.click();
-    }
-    if (Number(refId) > 0 && typeof window._openThreadDetail === 'function') {
-      setTimeout(() => window._openThreadDetail(Number(refId)), 120);
-    }
+  const url = _notificationUrl(link);
+  if (link && !url) { showToast('This notification has an invalid destination.', 'error'); return; }
+  const params = url?.searchParams || new URLSearchParams();
+  const groupId = Number(params.get('group_id') || params.get('group') || (t === 'group_message' ? refId : 0));
+  const threadId = Number(params.get('thread_id') || params.get('thread') || (['thread','thread_reply','thread_mention'].includes(t) ? refId : 0));
+  if (groupId > 0) {
+    await window.openGroupConversation?.(groupId);
+    _focusNotificationMessage(params.get('message_id'));
     return;
   }
-
-  // DM notifications: prefer an explicit partner/conversation encoded by the
-  // notification; otherwise resolve the referenced message against loaded DMs.
-  if (t === 'dm' || t === 'dm_message' || t === 'message' || /\/dm\b|conversation/i.test(link)) {
-    let conv = null;
-    const partnerMatch = link.match(/[?&](?:partner_id|user_id)=(\d+)/i);
-    if (partnerMatch) {
-      conv = DM.conversations.find(c => Number(c.partner_id) === Number(partnerMatch[1]));
-    }
-    if (!conv && Number(refId) > 0) {
-      conv = DM.conversations.find(c =>
-        Number(c.last_message_id || c.message_id || 0) === Number(refId)
-      );
-    }
-    if (!conv) conv = DM.conversations.find(c => (parseInt(c.unread_count) || 0) > 0);
-    if (conv) {
-      await window.openDmConversation?.(
-        Number(conv.partner_id),
-        conv.partner_name || conv.partner_username || 'User',
-        conv.partner_gradient || ''
-      );
-      return;
-    }
+  if (threadId > 0) {
+    window.switchView?.('threads', document.querySelector('[onclick*="threads"]'));
+    await window.openThreadDetail?.(threadId);
+    const replyId = Number(params.get('reply_id'));
+    if (replyId > 0) document.querySelector('[data-reply-id="' + replyId + '"]')?.scrollIntoView({block:'center'});
+    return;
+  }
+  const conversationId = Number(params.get('dm') || params.get('conversation_id'));
+  const explicitPartner = Number(params.get('partner_id') || params.get('user_id'));
+  if (conversationId > 0 || explicitPartner > 0 || ['dm','dm_message','message','missed_call'].includes(t)) {
     await loadDmList();
-    conv = DM.conversations.find(c => (parseInt(c.unread_count) || 0) > 0);
-    if (conv) {
-      await window.openDmConversation?.(Number(conv.partner_id), conv.partner_name || conv.partner_username || 'User', conv.partner_gradient || '');
-    }
+    const conv = DM.conversations.find(c => conversationId > 0 && Number(c.conversation_id) === conversationId);
+    const partnerId = explicitPartner || Number(conv?.partner_id) ||
+      (['dm','dm_message','message','missed_call'].includes(t) ? Number(notif?.actor_id) : 0);
+    if (partnerId > 0) {
+      const partner = conv || DM.conversations.find(c => Number(c.partner_id) === partnerId);
+      await window.openDmConversation?.(partnerId, partner?.partner_name || 'User', partner?.partner_gradient || '');
+      _focusNotificationMessage(params.get('message_id'));
+    } else showToast('This conversation is no longer available.', 'info');
     return;
   }
+  if (url) window.location.href = url.href;
+  else showToast('This notification has no destination.', 'info');
 
-  // Mentions/bookmarks and other notifications can use their stored internal URL.
-  if (link && link.startsWith('/')) {
-    window.location.href = BASE() + link;
-  }
 };
 
 // Poll notifications from DB on a slow cadence (backup to WebSocket)
@@ -434,12 +429,32 @@ async function _pollNotifications() {
   try {
     const data = await apiFetch(BASE() + '/API/notifications/get.php');
     if (data.notifications) {
-      NOTIF.items        = data.notifications;
-      NOTIF.unreadCount  = data.unread_count;
+      const old = NOTIF.items.slice(30);
+      const freshIds = new Set(data.notifications.map(n=>String(n.id)));
+      NOTIF.items = data.notifications.concat(old.filter(n=>!freshIds.has(String(n.id))));
+      NOTIF.unreadCount = data.unread_count;
+      NOTIF.nextOffset = NOTIF.items.length;
+      NOTIF.hasMore = data.total_count ? NOTIF.items.length < data.total_count : !!data.has_more;
       _updateNotifBadge();
       _renderNotifDropdown();
     }
   } catch (_) {}
+}
+
+async function _loadMoreNotifications() {
+  if (NOTIF.loadingMore || !NOTIF.hasMore) return;
+  NOTIF.loadingMore = true;
+  try {
+    const data = await apiFetch(BASE() + '/API/notifications/get.php?offset=' + NOTIF.nextOffset);
+    if (data.success === false) throw new Error(data.error);
+    const ids = new Set(NOTIF.items.map(n=>String(n.id)));
+    NOTIF.items.push(...(data.notifications || []).filter(n=>!ids.has(String(n.id))));
+    NOTIF.nextOffset = data.next_offset;
+    NOTIF.hasMore = !!data.has_more;
+    NOTIF.unreadCount = data.unread_count;
+    _updateNotifBadge(); _renderNotifDropdown();
+  } catch (_) { showToast('Could not load older notifications. Try again.', 'error'); }
+  finally { NOTIF.loadingMore = false; }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -454,6 +469,7 @@ window.toggleNotifications = function() {
   dd.classList.toggle('open', !isOpen);
   if (!isOpen) {
     _renderNotifDropdown();
+    _pollNotifications();
   }
 };
 
@@ -469,6 +485,9 @@ window.markAllRead = function(event) {
   }).catch(() => {});
   if (window.showToast) showToast('✓ All notifications marked as read', 'info');
 };
+
+window.__real_toggleNotifications = window.toggleNotifications;
+window.__real_markAllRead = window.markAllRead;
 
 // ═══════════════════════════════════════════════════════════════
 //  DM LIST
@@ -1135,8 +1154,27 @@ function _init() {
   }, 500);
 
   // Load initial data
-  loadDmList();
+  loadDmList().then(async () => {
+    const p = new URL(window.location.href).searchParams;
+    if (p.has('dm') || p.has('partner_id') || p.has('group_id') || p.has('thread_id')) {
+      await window._handleNotifClick('deep-link','system',0, {is_read:1,link_url:window.location.href,type:'system'});
+      const clean = new URL(window.location.href);
+      ['dm','partner_id','group_id','thread_id','reply_id','message_id','missed_call'].forEach(k => clean.searchParams.delete(k));
+      history.replaceState({},'',clean.href);
+    }
+  });
   _pollNotifications();
+  const list = document.getElementById('notifList');
+  const activate = event => {
+    if (event.type === 'click' && event.target.closest('[data-notif-more]')) { _loadMoreNotifications(); return; }
+    const row = event.target.closest('[data-notif-id]');
+    if (!row || (event.type === 'keydown' && !['Enter',' '].includes(event.key))) return;
+    event.preventDefault();
+    const n = NOTIF.items.find(n => String(n.id) === row.dataset.notifId);
+    if (n) window._handleNotifClick(n.id,n.type,n.ref_id);
+  };
+  list?.addEventListener('click',activate);
+  list?.addEventListener('keydown',activate);
 
   // Poll notifications every 30 seconds as backup
   NOTIF.pollInterval = setInterval(_pollNotifications, 30_000);
@@ -1165,3 +1203,4 @@ Object.assign(window, {
   loadDmList,
   sendDmMessage,
 });
+
