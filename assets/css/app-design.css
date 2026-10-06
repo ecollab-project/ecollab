@@ -156,3 +156,36 @@ body[data-mobile-surface="settings"] :is(.field label, .range output, .group) { 
 /* Empty table cells keep table layout and span every column. */
 td.dashboard-empty-state{display:table-cell!important;text-align:center;padding:24px!important;}
 div.dashboard-empty-state{width:100%;box-sizing:border-box;}
+
+/* Auth fields use their rounded container as the single focus indicator. */
+body[data-mobile-surface="forms"] { color-scheme: dark; }
+body[data-mobile-surface="forms"] .input-row { min-width: 0; }
+body[data-mobile-surface="forms"] .input-row :is(input, select) {
+  min-width: 0; width: 100%; padding: 0; border-radius: 0;
+}
+body[data-mobile-surface="forms"] .input-row :is(input, select):focus,
+body[data-mobile-surface="forms"] .input-row :is(input, select):focus-visible {
+  outline: none; box-shadow: none;
+}
+body[data-mobile-surface="forms"] .input-row:focus-within {
+  border-color: var(--ec-focus);
+  box-shadow: 0 0 0 3px var(--ec-accent-soft);
+}
+body[data-mobile-surface="forms"] .input-row input:-webkit-autofill,
+body[data-mobile-surface="forms"] .input-row input:-webkit-autofill:hover,
+body[data-mobile-surface="forms"] .input-row input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fff; caret-color: #fff;
+  -webkit-box-shadow: 0 0 0 1000px #191523 inset;
+  box-shadow: 0 0 0 1000px #191523 inset;
+}
+body[data-mobile-surface="forms"] .input-row input:autofill {
+  color: #fff; caret-color: #fff; background-color: #191523;
+}
+@media (forced-colors: active) {
+  body[data-mobile-surface="forms"] .input-row:focus-within {
+    outline: 2px solid Highlight; outline-offset: 3px; box-shadow: none;
+  }
+  body[data-mobile-surface="forms"] .input-row input:-webkit-autofill {
+    -webkit-text-fill-color: CanvasText; box-shadow: none;
+  }
+}
