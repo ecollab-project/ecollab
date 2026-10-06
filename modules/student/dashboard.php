@@ -1552,7 +1552,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
   <script src="https://cdn.jsdelivr.net/npm/marked@18.0.9/lib/marked.umd.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.4.13/dist/purify.min.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/ai-markdown.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/ai-session.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/ai-session.js?v=modal-init-2" defer></script>
   <script>
     async function openFacilitatorRequest(){openModal('facilitatorRequestModal');const box=document.getElementById('facReqStatus'),btn=document.getElementById('facReqSubmit');try{const r=await fetch(window.ECOLLAB_BASE+'/API/facilitator/status.php',{credentials:'same-origin'}),d=await r.json();const q=d.request;if(!q){box.textContent='No facilitator request submitted yet.';btn.disabled=false;return}box.innerHTML='<strong>Status: '+String(q.status).toUpperCase()+'</strong><br>Submitted: '+q.created_at+(q.review_note?'<br>Admin note: '+q.review_note:'');btn.disabled=q.status==='pending'||q.status==='approved';btn.textContent=q.status==='pending'?'Request Pending':q.status==='approved'?'Approved':'Submit New Request'}catch(e){box.textContent='Unable to load request status.'}}
     async function submitFacilitatorRequest(e){e.preventDefault();const btn=document.getElementById('facReqSubmit'),fd=new FormData(e.target);btn.disabled=true;btn.textContent='Submitting…';try{const r=await fetch(window.ECOLLAB_BASE+'/API/facilitator/request.php',{method:'POST',credentials:'same-origin',headers:{'X-CSRF-Token':DASH_DATA.csrfToken},body:fd}),d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'Request failed');toast('Facilitator request submitted for admin review.','success','🛡️');await openFacilitatorRequest()}catch(err){toast(err.message||'Could not submit request.','error','⚠️');btn.disabled=false;btn.textContent='Submit Request'}}
@@ -1601,3 +1601,4 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
 </body>
 
 </html>
+

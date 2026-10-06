@@ -9,6 +9,8 @@
   const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content || '';
   let currentSessionId = null;
   let initialized = false;
+  let sessionLoad = null;
+  let sending = false;
 
   async function request(path, options = {}) {
     const headers = Object.assign({
@@ -19,7 +21,7 @@
 
     const response = await fetch(base + path, Object.assign({}, options, { headers }));
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
+    if (!response.ok || data.success === false) throw new Error(data.error || `Request failed (${response.status})`);
     return data;
   }
 
@@ -268,52 +270,59 @@
   }
 
   async function sendPersistentAI() {
-    const input = document.getElementById('ecAiInput');
-    if (!input) return;
-
-    const prompt = input.value.trim();
+    if (sending) return;
+    const legacyInput = document.getElementById('aiInput');
+    const prompt = (document.getElementById('ecAiInput') || legacyInput)?.value.trim();
     if (!prompt) return;
-
-    if (!currentSessionId) {
-      await newSession(false);
-    }
-
-    if (!currentSessionId) return;
-
-    const log = document.getElementById('ecAiLog');
-    if (log?.querySelector('.ec-ai-empty')) log.innerHTML = '';
-
-    appendMessage('user', prompt);
-    input.value = '';
+    sending = true;
+    buildUI();
+    const input = document.getElementById('ecAiInput');
+    const button = document.getElementById('ecAiSend');
+    if (!input) { sending = false; return; }
+    input.value = prompt;
     input.disabled = true;
-
-    const loading = document.createElement('div');
-    loading.id = 'ecAiLoading';
-    loading.className = 'ec-ai-loading';
-    loading.innerHTML = '<div style="font-size:9.5px;font-weight:700;color:var(--purple,#a78bfa)">AI Assistant</div><div style="font-size:11px;color:var(--muted2)">Thinking…</div>';
-    log?.appendChild(loading);
-    log.scrollTop = log.scrollHeight;
-
+    if (button) { button.disabled = true; button.textContent = 'Sending…'; }
+    let loading;
     try {
+      await initPersistentAI();
+      if (!currentSessionId) throw new Error('Could not start an AI conversation. Try New chat or reopen the assistant.');
+      const log = document.getElementById('ecAiLog');
+      if (log?.querySelector('.ec-ai-empty')) log.innerHTML = '';
+      appendMessage('user', prompt);
+      input.value = '';
+      loading = document.createElement('div');
+      loading.className = 'ec-ai-loading';
+      loading.setAttribute('role', 'status');
+      loading.textContent = 'Jarred is thinking…';
+      log?.appendChild(loading);
+      if (log) log.scrollTop = log.scrollHeight;
       const data = await request('/API/ai/message.php', {
-        method: 'POST',
-        body: JSON.stringify({
-          session_id: currentSessionId,
-          prompt: prompt
-        })
+        method: 'POST', body: JSON.stringify({ session_id: currentSessionId, prompt })
       });
-
+      if (!data.message || typeof data.message.content !== 'string') throw new Error('The assistant returned an invalid response. Please try again.');
       loading.remove();
       appendMessage('assistant', data.message.content);
       await loadSessions(false);
       markActive();
     } catch (error) {
-      loading.remove();
-      toast(error.message, 'error', '❌');
+      loading?.remove();
+      const log = document.getElementById('ecAiLog');
+      if (log) {
+        const notice = document.createElement('div');
+        notice.className = 'ec-ai-error';
+        notice.setAttribute('role', 'alert');
+        notice.style.cssText = 'color:var(--ec-danger,#fca5a5);padding:12px;font-size:13px';
+        notice.textContent = error.message;
+        log.appendChild(notice);
+      }
+      input.value = prompt;
     } finally {
+      sending = false;
       input.disabled = false;
+      if (button) { button.disabled = false; button.textContent = 'Send →'; }
       input.focus();
-      log.scrollTop = log.scrollHeight;
+      const log = document.getElementById('ecAiLog');
+      if (log) log.scrollTop = log.scrollHeight;
     }
   }
 
@@ -365,13 +374,16 @@
 
   function initPersistentAI() {
     buildUI();
-    loadSessions(true);
+    if (!initialized) return Promise.resolve();
+    if (!sessionLoad) sessionLoad = loadSessions(true).finally(() => { sessionLoad = null; });
+    return sessionLoad;
   }
 
   // Preserve the existing dashboard entry points.
   window.initPersistentAI = initPersistentAI;
   window.sendAI = sendPersistentAI;
   window.aiQP = function (prompt) {
+    buildUI();
     const input = document.getElementById('ecAiInput');
     if (input) {
       input.value = prompt;
@@ -379,15 +391,19 @@
     }
   };
 
-  document.addEventListener('DOMContentLoaded', () => {
+  function watchModal() {
     const modal = getModal();
     if (!modal) return;
     // The dashboards currently call openModal('aiModal'). Observe visibility
     // changes so existing buttons keep working without a full dashboard rewrite.
     const observer = new MutationObserver(() => {
-      const visible = modal.classList.contains('open') || modal.style.display === 'flex';
+      const visible = modal.classList.contains('show') || modal.classList.contains('open') || modal.style.display === 'flex';
       if (visible) initPersistentAI();
     });
     observer.observe(modal, { attributes: true, attributeFilter: ['class', 'style'] });
-  });
+    if (modal.classList.contains('show') || modal.classList.contains('open') || modal.style.display === 'flex') initPersistentAI();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', watchModal, { once: true });
+  else watchModal();
 })();
+

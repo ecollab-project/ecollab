@@ -8,6 +8,7 @@ require_once dirname(__DIR__, 2) . '/security/SecurityHeaders.php';
 require_once dirname(__DIR__, 2) . '/security/rate-limit/RateLimiter.php';
 require_once dirname(__DIR__, 2) . '/services/AiSessionService.php';
 require_once dirname(__DIR__, 2) . '/services/GeminiService.php';
+require_once dirname(__DIR__, 2) . '/services/OllamaService.php';
 
 header('Content-Type: application/json; charset=utf-8');
 SecurityHeaders::send(isApi: true);
@@ -28,7 +29,6 @@ try {
     if (mb_strlen($prompt) > 4000) aiJson(['success'=>false,'error'=>'Prompt must be 4000 characters or fewer.'],400);
 
     $apiKey = (string)env('GEMINI_API_KEY','');
-    if ($apiKey === '' || $apiKey === 'your_gemini_api_key_here') aiJson(['success'=>false,'error'=>'AI assist is not configured. Add GEMINI_API_KEY to your .env.'],503);
 
     $limiter = new RateLimiter();
     $rl = $limiter->attempt('ai_assist',(string)$user['id'],20,3600);
@@ -46,9 +46,23 @@ try {
         ? 'You are Ecollab AI, an academic assistant for facilitators. Help with class activity analysis, announcements, study materials, quizzes, and teaching workflows. Be accurate, concise, and practical.'
         : 'You are Ecollab AI, a study assistant for students. Help with explanations, study plans, quizzes, programming, and academic concepts. Be accurate, concise, friendly, and educational.';
 
-    $result = (new GeminiService($apiKey,(string)env('GEMINI_MODEL','gemini-flash-latest')))->generate($messages,$systemPrompt,700);
-    $inputTokens = (int)($result['input_tokens'] ?: aiApproxTokens($prompt));
-    $outputTokens = (int)$result['output_tokens'];
+    // The VPS local model remains available when Gemini is absent or unavailable.
+    if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
+    $result = null;
+    if ($apiKey !== '' && $apiKey !== 'your_gemini_api_key_here') {
+        try {
+            $result = (new GeminiService($apiKey,(string)env('GEMINI_MODEL','gemini-flash-latest')))->generate($messages,$systemPrompt,700);
+            if (trim((string)($result['text'] ?? '')) === '') $result = null;
+        } catch (Throwable $providerError) {
+            error_log('[ai/message] Gemini unavailable; trying local model.');
+        }
+    }
+    if ($result === null) {
+        $result = (new OllamaService((string)env('OLLAMA_URL','http://127.0.0.1:11434'),(string)env('OLLAMA_MODEL','qwen3:1.7b')))->generate($messages,$systemPrompt,700);
+    }
+    if (trim((string)($result['text'] ?? '')) === '') throw new RuntimeException('The assistant returned an empty response.');
+    $inputTokens = (int)(($result['input_tokens'] ?? null) ?: aiApproxTokens($prompt));
+    $outputTokens = (int)($result['output_tokens'] ?? aiApproxTokens($result['text']));
     $service->appendMessage((int)$user['id'],(int)$sessionId,'user',$prompt,aiApproxTokens($prompt));
     $assistantMessage = $service->appendMessage((int)$user['id'],(int)$sessionId,'assistant',$result['text'],$outputTokens);
 
@@ -63,3 +77,4 @@ try {
     $status = $e->getCode(); if ($status < 400 || $status > 599) $status = 500;
     aiJson(['success'=>false,'error'=>defined('APP_DEBUG') && APP_DEBUG ? $e->getMessage() : 'AI service error.'],$status);
 }
+

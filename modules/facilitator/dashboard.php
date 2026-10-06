@@ -1124,7 +1124,7 @@ try {
   <script src="https://cdn.jsdelivr.net/npm/marked@18.0.9/lib/marked.umd.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.4.13/dist/purify.min.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/ai-markdown.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/ai-session.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/ai-session.js?v=modal-init-2" defer></script>
 
   <script>
     // ── Mobile sidebar ─────────────────────────────────────────────────
@@ -1171,3 +1171,4 @@ try {
 </body>
 
 </html>
+
