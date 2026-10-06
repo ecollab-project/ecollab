@@ -50,8 +50,9 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
   <script>
     window.ECOLLAB_BASE = <?= json_encode(BASE_URL) ?>;
   </script>
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=3">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=notifications-2">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=3">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/dashboard-design.css?v=1">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 </head>
 
@@ -83,7 +84,7 @@ $unreadCount  = $dashData['unread_notifications'] ?? 0;
           <div class="ndrop" id="ndrop">
             <div class="ndhead">
               <div class="ndtitle">Notifications</div>
-              <div class="ndclear" onclick="clearNotifs()">Mark all read</div>
+              <button type="button" class="ndclear" onclick="event.stopPropagation();clearNotifs()">Mark all read</button>
             </div>
             <?php foreach (array_slice($dashData['notifications'] ?? [], 0, 4) as $notif): ?>
               <div class="ndi <?= $notif['is_read'] ? '' : 'unread' ?>" data-notif-id="<?= (int)($notif['id'] ?? 0) ?>" data-link="<?= htmlspecialchars($notif['link_url'] ?? '', ENT_QUOTES, 'UTF-8') ?>" onclick="handleNotif(this,'<?= htmlspecialchars($notif['title'] ?? '') ?>')">

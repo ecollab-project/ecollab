@@ -51,8 +51,9 @@ $stats = $dashData['stats'] ?? [
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/admin-dashboard.css">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/dashboard-mobile.css">
   <script>window.ECOLLAB_BASE = <?= json_encode(BASE_URL) ?>;</script>
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=3">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=notifications-2">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=3">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/dashboard-design.css?v=1">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 </head>
 <body data-mobile-surface="dashboard">
@@ -76,7 +77,7 @@ $stats = $dashData['stats'] ?? [
           <span class="n-badge" id="nBadge"><?= (int)($stats['reports_pending'] ?? 0) ?></span>
         </button>
         <div class="n-drop" id="nDrop">
-          <div class="n-head"><span>Notifications</span><span class="n-clear" onclick="clearNotifs()">Mark all read</span></div>
+          <div class="n-head"><span>Notifications</span><button type="button" class="n-clear" onclick="event.stopPropagation();clearNotifs()">Mark all read</button></div>
           <div class="dashboard-empty-state">No new notifications.</div>
         </div>
       </div>
