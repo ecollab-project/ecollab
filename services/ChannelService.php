@@ -224,7 +224,7 @@ class ChannelService
     }
 
     /**
-     * Get online members for a server.
+     * Get server members with an explicit online flag.
      */
     public function getOnlineMembers(int $serverId): array
     {
@@ -236,14 +236,14 @@ class ChannelService
                        WHEN u.avatar_url LIKE '/%' THEN CONCAT(TRIM(TRAILING '/' FROM :base_url), u.avatar_url)
                        ELSE CONCAT(TRIM(TRAILING '/' FROM :base_url2), '/', u.avatar_url)
                    END AS avatar_url,
-                   u.avatar_color_gradient, u.status, u.is_online, u.role,
+                   u.avatar_color_gradient, u.status, CASE WHEN u.is_online=1 THEN 1 ELSE 0 END AS is_online, u.role,
                    sm.server_role, sm.nickname
             FROM users u
             JOIN server_members sm ON sm.user_id = u.id AND sm.server_id = :sid
-            WHERE u.is_online = 1
+            WHERE u.deleted_at IS NULL
               AND u.role NOT IN ('admin','super_admin')
               AND u.status NOT IN ('banned','suspended','deactivated')
-            ORDER BY sm.server_role ASC, u.full_name ASC
+            ORDER BY is_online DESC, sm.server_role ASC, u.full_name ASC
         ");
         $stmt->execute([
             ':sid' => $serverId,
@@ -266,3 +266,4 @@ class ChannelService
         $stmt->execute([':uid' => $userId, ':cid' => $channelId]);
     }
 }
+

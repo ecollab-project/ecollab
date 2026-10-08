@@ -120,6 +120,7 @@
   }
 
   function removeParticipant(participant) {
+    if(typeof _hideRemoteScreenShareSection === "function")_hideRemoteScreenShareSection(participantId(participant));
     participantCard(participant)?.remove();
     document.querySelectorAll(
       '.livekit-media-track[data-livekit-participant="' + participant.identity + '"]'
@@ -178,11 +179,6 @@
         el.remove();
         const stream = new MediaStream([mediaTrack]);
         const username = participant.name || participant.identity || 'Participant';
-        if (typeof _removeRemoteScreenShare === 'function') _removeRemoteScreenShare(uid);
-        if (typeof _hideRemoteScreenShareSection === 'function') _hideRemoteScreenShareSection(uid);
-        if (typeof _attachRemoteScreenShare === 'function') {
-          _attachRemoteScreenShare(uid, username, stream);
-        }
         if (typeof _showRemoteScreenShareSection === 'function') {
           _showRemoteScreenShareSection(uid, username, stream);
         }
@@ -285,7 +281,6 @@
         _removeRemoteCamera(uid);
       }
       if (uid && source === 'screen_share') {
-        if (typeof _removeRemoteScreenShare === 'function') _removeRemoteScreenShare(uid);
         if (typeof _hideRemoteScreenShareSection === 'function') _hideRemoteScreenShareSection(uid);
       }
     });
@@ -332,7 +327,6 @@
         _removeRemoteCamera(uid);
       }
       if (uid && source === 'screen_share') {
-        if (typeof _removeRemoteScreenShare === 'function') _removeRemoteScreenShare(uid);
         if (typeof _hideRemoteScreenShareSection === 'function') _hideRemoteScreenShareSection(uid);
       }
       detach(track);
@@ -603,3 +597,4 @@
   document.addEventListener('visibilitychange',refreshSidebarCounts);
   setTimeout(refreshSidebarCounts,1000);
 })();
+

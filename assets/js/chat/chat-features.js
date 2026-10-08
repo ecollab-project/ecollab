@@ -975,7 +975,7 @@ function switchView(viewName, el) {
       </div>`;
   }
   // Fetch real data then render
-  _fetchNavViewData(viewName).then(() => _renderNavView(viewName, overlay));
+  _fetchNavViewData(viewName).then(() => { if (window._currentNavView === viewName) _renderNavView(viewName, overlay); });
 }
 
 function _renderNavView(viewName, overlay) {
@@ -2802,3 +2802,4 @@ window._voteOnThread = _voteOnThread;
 window._openThreadDetail = _openThreadDetail;
 window._submitThreadReply = _submitThreadReply;
 window._voteOnReply = _voteOnReply;
+

@@ -348,6 +348,7 @@ window.addEventListener('resize',()=>{ if(vcActive) _refreshVoiceLayout(); });
 function toggleVcMinimize() {
   const vcView = document.getElementById('voiceChannelView');
   if (!vcView || !vcActive) return;
+  if (vcView.parentNode !== document.body) document.body.appendChild(vcView);
   vcMinimized = !vcMinimized;
   vcView.classList.toggle('vc-minimized', vcMinimized);
   _refreshVoiceLayout();
@@ -374,6 +375,7 @@ function toggleVcPanelFromBar() {
   if (!vcActive) return;
   const vcView = document.getElementById('voiceChannelView');
   if (!vcView) return;
+  if (vcView.parentNode !== document.body) document.body.appendChild(vcView);
 
   if (!vcView.classList.contains('active')) {
     // Panel was closed (shouldn't happen) — re-open
@@ -1475,22 +1477,9 @@ function _removeRemoteCamera(userId) {
   if (!card.querySelector('.vc-screen-preview')) card.classList.remove('has-camera');
 }
 
-// ── Attach remote screen share into their speaker card ────────────────────
+// Screen sharing has its own section; cameras remain in participant tiles.
 function _attachRemoteScreenShare(userId, username, stream) {
-  const card = document.querySelector(`.vc-speaker-card[data-user-id="${userId}"]`);
-  if (!card) return;
-  let vid = card.querySelector('.vc-screen-preview');
-  if (!vid) {
-    vid = document.createElement('video');
-    vid.className = 'vc-cam-preview vc-screen-preview';
-    vid.autoplay = true;
-    vid.muted = true;
-    vid.playsInline = true;
-    card.insertBefore(vid, card.firstChild);
-  }
-  vid.srcObject = stream;
-  card.classList.add('has-camera', 'has-screen');
-  showToast(`${username} is sharing their screen`, 'info');
+  _showRemoteScreenShareSection(userId, username, stream);
 }
 
 function _removeRemoteScreenShare(userId) {
@@ -2026,4 +2015,5 @@ window._onVoiceInvite = function(data) {
 window.openVcInviteModal = openVcInviteModal;
 window._filterVcInviteList = _filterVcInviteList;
 window._sendVoiceInvite = _sendVoiceInvite;
+
 

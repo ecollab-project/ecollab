@@ -13,6 +13,8 @@ require_once dirname(__DIR__, 2) . '/services/NotificationService.php';
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
 $me = AuthMiddleware::requireAuth(true);
+// Release the user session before local inference or network calls.
+if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -313,4 +315,5 @@ JARRED_SYSTEM_PROMPT,
     http_response_code(500);
     echo json_encode(['error' => 'Server error']);
 }
+
 

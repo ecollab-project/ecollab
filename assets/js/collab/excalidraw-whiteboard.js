@@ -7,6 +7,21 @@ const host = document.getElementById("excalidraw-root");
 const canEdit = cfg.permission === "edit";
 const endpoint = `${window.ECOLLAB?.baseUrl || ""}/API/collaboration/whiteboards.php?workspace_id=${encodeURIComponent(cfg.workspaceId)}&whiteboard_id=${encodeURIComponent(cfg.whiteboardId)}`;
 
+// Merge per-element revisions instead of replacing a peer's whole scene.
+function mergeSceneElements(local, incoming) {
+  const map = new Map(local.map(e => [e.id, e]));
+  for (const element of incoming) {
+    if (!element || typeof element.id !== 'string') continue;
+    const previous = map.get(element.id);
+    if (!previous || Number(element.version || 0) > Number(previous.version || 0) ||
+        (Number(element.version || 0) === Number(previous.version || 0) && Number(element.versionNonce || 0) < Number(previous.versionNonce || 0))) map.set(element.id, element);
+  }
+  return [...map.values()];
+}
+function sceneFingerprint(elements, background) {
+  return JSON.stringify([elements.map(e => [e.id,e.version,e.versionNonce,!!e.isDeleted]).sort((a,b)=>String(a[0]).localeCompare(String(b[0]))),background||'#fff']);
+}
+
 async function loadBoard() {
   const r = await fetch(endpoint, {credentials:"same-origin"});
   const d = await r.json();
@@ -23,10 +38,10 @@ async function persist(scene) {
   const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.error||"Save failed");
 }
 function App(){
-  const api=useRef(null), remote=useRef(false), timer=useRef(null), last=useRef("");
+  const api=useRef(null), timer=useRef(null), broadcast=useRef(null), latest=useRef(null), saving=useRef(false), last=useRef("");
   const getTheme=()=>document.documentElement.dataset.theme==="light"?"light":"dark";
   const [initial,setInitial]=useState(null), [status,setStatus]=useState("Loading…"), [theme,setTheme]=useState(getTheme);
-  useEffect(()=>{loadBoard().then(s=>{last.current=JSON.stringify(s);setInitial(s);setStatus(canEdit?"Saved":"View only")}).catch(e=>setStatus(e.message))},[]);
+  useEffect(()=>{loadBoard().then(s=>{last.current=sceneFingerprint(s.elements,s.appState.viewBackgroundColor);setInitial(s);setStatus(canEdit?"Saved":"View only")}).catch(e=>setStatus(e.message))},[]);
   useEffect(()=>{
     const sync=()=>setTheme(getTheme());
     window.addEventListener("ecollab:settings-applied",sync);
@@ -42,25 +57,49 @@ function App(){
     if(msg.type==="wb_state"&&msg.state_json){try{scene=JSON.parse(msg.state_json)}catch{}}
     if(msg.type==="wb_op"&&msg.op==="excalidraw_scene")scene=msg.scene;
     if(!scene||!Array.isArray(scene.elements)||!api.current)return;
-    remote.current=true;
-    api.current.updateScene({elements:scene.elements,appState:scene.appState||{}});
+    if (Number(msg.user_id) === Number(window.ECOLLAB?.userId)) return;
+    const local=api.current.getSceneElementsIncludingDeleted?.()||[];
+    const elements=mergeSceneElements(local,scene.elements);
+    const background=scene.appState?.viewBackgroundColor||api.current.getAppState?.().viewBackgroundColor||"#fff";
+    const fingerprint=sceneFingerprint(elements,background);
+    if(fingerprint===last.current)return;
+    last.current=fingerprint;
+    if(latest.current)latest.current={...latest.current,elements,appState:{...latest.current.appState,viewBackgroundColor:background},files:{...latest.current.files,...scene.files}};
+    api.current.updateScene({elements,appState:{viewBackgroundColor:background}});
     if(scene.files&&api.current.addFiles)api.current.addFiles(Object.values(scene.files));
-    last.current=JSON.stringify(scene);
-    queueMicrotask(()=>remote.current=false);
+
   },[]);
   useEffect(()=>{
     const old=window.wbHandleWsMessage;
-    window.wbHandleWsMessage=msg=>{apply(msg);if(typeof old==="function")old(msg)};
+    window.ecollabWhiteboardSave=async()=>{
+      if(!canEdit||!api.current)return;
+      clearTimeout(timer.current);
+      const state=api.current.getAppState();
+      const scene={format:'excalidraw',version:1,elements:api.current.getSceneElementsIncludingDeleted(),appState:{viewBackgroundColor:state.viewBackgroundColor,gridSize:state.gridSize??null},files:api.current.getFiles()};
+      setStatus('Saving…');try{await persist(scene);setStatus('Saved');}catch(error){setStatus(error.message);throw error;}
+    };
+    window.wbHandleWsMessage=apply; // Do not also replay Excalidraw state through the legacy canvas renderer.
     window.wbRejoinRoom=()=>window.wsSend?.({type:"wb_join",channel_id:Number(cfg.channelId),whiteboard_id:Number(cfg.whiteboardId)});
     const join=setInterval(()=>{if(window.wsSend?.({type:"wb_join",channel_id:Number(cfg.channelId),whiteboard_id:Number(cfg.whiteboardId)}))clearInterval(join)},500);
-    return()=>{clearInterval(join);window.wsSend?.({type:"wb_leave",channel_id:Number(cfg.channelId),whiteboard_id:Number(cfg.whiteboardId)});window.wbHandleWsMessage=old};
+    return()=>{clearInterval(join);clearTimeout(broadcast.current);clearTimeout(timer.current);window.wsSend?.({type:"wb_leave",channel_id:Number(cfg.channelId),whiteboard_id:Number(cfg.whiteboardId)});window.wbHandleWsMessage=old};
   },[apply]);
   const change=useCallback((elements,appState,files)=>{
-    if(!canEdit||remote.current)return;
+    if(!canEdit)return;
     const scene={format:"excalidraw",version:1,elements:Array.from(elements),appState:{viewBackgroundColor:appState.viewBackgroundColor||"#fff",gridSize:appState.gridSize??null},files:files||{}};
-    const raw=JSON.stringify(scene);if(raw===last.current)return;last.current=raw;setStatus("Unsaved");
-    window.wsSend?.({type:"wb_op",op:"excalidraw_scene",channel_id:Number(cfg.channelId),whiteboard_id:Number(cfg.whiteboardId),scene});
-    clearTimeout(timer.current);timer.current=setTimeout(()=>persist(scene).then(()=>setStatus("Saved")).catch(e=>setStatus(e.message)),900);
+    const raw=sceneFingerprint(scene.elements,scene.appState.viewBackgroundColor);if(raw===last.current)return;last.current=raw;latest.current=scene;setStatus("Unsaved");
+    if(!broadcast.current)broadcast.current=setTimeout(()=>{
+      broadcast.current=null;
+      window.wsSend?.({type:"wb_op",op:"excalidraw_scene",channel_id:Number(cfg.channelId),whiteboard_id:Number(cfg.whiteboardId),scene:latest.current});
+    },100);
+    const save=async()=>{
+      if(saving.current){timer.current=setTimeout(save,200);return;}
+      saving.current=true;
+      const snapshot=latest.current;
+      try{await persist(snapshot);if(snapshot===latest.current)setStatus("Saved");}
+      catch(e){setStatus(e.message);}
+      finally{saving.current=false;}
+    };
+    clearTimeout(timer.current);timer.current=setTimeout(save,900);
   },[]);
   if(!initial)return React.createElement("div",{style:{padding:"30px",color:"#fff"}},status);
   return React.createElement("div",{style:{height:"100%",position:"relative"}},
@@ -69,3 +108,4 @@ function App(){
   );
 }
 if(host)createRoot(host).render(React.createElement(App));
+

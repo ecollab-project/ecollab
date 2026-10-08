@@ -39,9 +39,14 @@ function client(id){
  assert.equal(a.w.document.querySelectorAll('.ec-call-tile video').length,1);
  await a.w.EcollabCalls.handle({type:'dm_call_end',log_id:999,from_user_id:2});assert(a.w.EcollabCalls.room,'foreign call end ignored');
  const retained=a.w.document.querySelector('.ec-call-tile video');
+ ar.emit('ActiveSpeakersChanged');assert.equal(a.w.document.querySelector('.ec-call-tile video'),retained,'speaking updates preserve live video');assert(!a.w.document.querySelector('[data-action=resume]'),'no Enable audio button');
  a.w.document.querySelector('[data-action=expand]').click();assert(a.w.document.querySelector('.is-expanded'));
  a.w.document.querySelector('[data-action=minimize]').click();assert(a.w.document.querySelector('.is-minimized'));
  assert.equal(a.w.document.querySelector('[data-action=minimize]').textContent,'Restore');
+ const panel=a.w.document.querySelector('.ec-call');panel.getBoundingClientRect=()=>({left:20,top:20,width:260,height:80});
+ function pointer(type,x,y){const event=new a.w.Event(type,{bubbles:true,cancelable:true});Object.assign(event,{pointerId:7,button:0,clientX:x,clientY:y});panel.querySelector('header').dispatchEvent(event);}
+ pointer('pointerdown',30,30);pointer('pointermove',180,150);assert.equal(panel.style.left,'170px');assert.equal(panel.style.top,'140px');pointer('pointerup',180,150);
+ 
  a.w.document.querySelector('[data-action=minimize]').click();assert(a.w.document.querySelector('.is-expanded'),'restore previous expanded size');
  assert.equal(a.w.document.querySelector('.ec-call-tile video'),retained,'resizing does not rebuild video');
  a.w.document.querySelector('[data-action=expand]').click();assert(!a.w.document.querySelector('.is-expanded'));
@@ -63,3 +68,4 @@ function client(id){
  for(const c of clients)c.dom.window.close();
  console.log('PASS: independent cameras, local group preview, call-id isolation, six tiles, cleanup, quality and cancellation');
 })().catch(e=>{console.error(e);for(const c of clients)c.dom.window.close();process.exitCode=1;});
+

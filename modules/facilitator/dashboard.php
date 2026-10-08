@@ -1118,7 +1118,7 @@ try {
   </script>
   <script src="<?= BASE_URL ?>/assets/js/dashboard-state.js?v=1" defer></script>
 <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js?v=2" defer></script>
-<script src="<?= BASE_URL ?>/assets/js/facilitator/dashboard.js?v=2" defer></script>
+<script src="<?= BASE_URL ?>/assets/js/facilitator/dashboard.js?v=team-audit-1" defer></script>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/ai-markdown.css">
 
   <script src="https://cdn.jsdelivr.net/npm/marked@18.0.9/lib/marked.umd.js" defer></script>
@@ -1171,4 +1171,5 @@ try {
 </body>
 
 </html>
+
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__,2).'/database/config/db.php';
 require_once dirname(__DIR__,2).'/services/CoworkspaceService.php';
+require_once dirname(__DIR__,2).'/services/WhiteboardSceneService.php';
 
 class WhiteboardHandler
 {
@@ -67,7 +68,7 @@ class WhiteboardHandler
         $key=$this->roomKey($channelId,$whiteboardId);if(!isset($this->rooms[$key]))return [];
         unset($this->rooms[$key][$userId]);
         if($whiteboardId!==null)unset($this->accessCache[$whiteboardId][$userId]);
-        if(empty($this->rooms[$key])){unset($this->rooms[$key],$this->opLog[$key]);}
+        if(empty($this->rooms[$key])){unset($this->rooms[$key],$this->opLog[$key],$this->stateCache[$key]);}
         return $this->getRoomUserIds($channelId,0,$whiteboardId);
     }
 
@@ -104,7 +105,7 @@ class WhiteboardHandler
     {
         if (($op['op'] ?? '') === 'excalidraw_scene') {
             $scene = $op['scene'] ?? null;
-            if (!is_array($scene) || !is_array($scene['elements'] ?? null)) {
+            if (!is_array($scene) || !is_array($scene['elements'] ?? null) || !is_array($scene['files'] ?? []) || !is_array($scene['appState'] ?? [])) {
                 throw new \InvalidArgumentException('Invalid Excalidraw scene.');
             }
             $encoded = json_encode($scene, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
@@ -115,6 +116,11 @@ class WhiteboardHandler
         $key=$this->roomKey($channelId,$whiteboardId);$meta=$this->rooms[$key][$userId]??[];
         $stamped=array_merge($op,['user_id'=>$userId,'username'=>$meta['username']??'','color'=>$meta['color']??'#a855f7','grad'=>$meta['grad']??'','initial'=>$meta['initial']??'?','ts'=>round(microtime(true)*1000)]);
         if(($op['op']??'')==='cursor')return $stamped;
+        if (($op['op'] ?? '') === 'excalidraw_scene') {
+            $current = json_decode($this->getState($channelId,$whiteboardId) ?? '{}', true);
+            $this->stateCache[$key] = json_encode(WhiteboardSceneService::merge(is_array($current) ? $current : [], $op['scene']), JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+            return $stamped; // Keep one merged scene instead of an unbounded log of full scenes.
+        }
         $this->opLog[$key]??=[];$this->opLog[$key][]=$stamped;
         if($whiteboardId===null&&count($this->opLog[$key])%20===0)$this->persistSnapshot($channelId,$userId,'',null);
         return $stamped;
@@ -152,3 +158,4 @@ class WhiteboardHandler
         return null;
     }
 }
+

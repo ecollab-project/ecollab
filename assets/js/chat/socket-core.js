@@ -525,10 +525,13 @@ function _renderTypingIndicator(indicator, textEl) {
 
 // ── Presence / Active status ─────────────────────────────────────────────────
 function handlePresenceUpdate(data) {
+  data = {...data, online: data.online === true || data.online === 1 || data.online === "1"};
+  document.querySelectorAll(`.member-item[data-user-id="${data.user_id}"]`).forEach(item=>{const label=item.querySelector(".member-sub");if(label){label.textContent=data.online?"Online":"Offline";label.style.color=data.online?"var(--accent-green)":"var(--text-muted)";}const status=item.querySelector(".member-status");if(status){status.textContent="● "+(data.online?"Online":"Offline");status.classList.toggle("online",data.online);}});
   // Update every online-dot that references this user
   document.querySelectorAll(`[data-user-id="${data.user_id}"] .online-dot`).forEach(dot => {
     dot.style.background = data.online ? 'var(--accent-green)' : 'var(--text-muted)';
     dot.title = data.online ? 'Online' : 'Offline';
+    dot.classList.toggle('offline', !data.online);
   });
   // Also update member list avatars with a status ring
   document.querySelectorAll(`.member-avatar[data-uid="${data.user_id}"]`).forEach(av => {
@@ -890,4 +893,5 @@ if (document.readyState === 'loading') {
 } else {
   connectWebSocket();
 }
+
 

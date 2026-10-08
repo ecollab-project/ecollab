@@ -37,7 +37,9 @@ final class OllamaService
                 'tools' => $tools,
                 'stream' => false,
                 'think' => false,
-                'options' => ['temperature' => 0.3, 'num_predict' => max(1, $maxTokens)],
+                'options' => ['temperature' => 0.3, 'num_thread' => max(1, min(2, (int)(getenv('OLLAMA_NUM_THREADS') ?: 1))),
+                'num_ctx' => 4096,
+                'num_predict' => max(1, $maxTokens)],
             ];
             $data = $this->requestChat($payload);
             $inputTokens += (int)($data['prompt_eval_count'] ?? 0);
@@ -85,25 +87,29 @@ final class OllamaService
 
     private function requestChat(array $payload): array
     {
-        $ch = curl_init($this->baseUrl . '/api/chat');
-        curl_setopt_array($ch, [
-            CURLOPT_POST => true,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-            CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
-            CURLOPT_CONNECTTIMEOUT => 5,
-            CURLOPT_TIMEOUT => 120,
-        ]);
-        $raw = curl_exec($ch);
-        if ($raw === false) {
-            $error = curl_error($ch);
-            curl_close($ch);
-            throw new RuntimeException('Ollama request failed: ' . $error);
+        $lock = @fopen(sys_get_temp_dir() . '/ecollab-ollama-inference.lock', 'c');
+        if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) {
+            if (is_resource($lock)) fclose($lock);
+            throw new RuntimeException('Jarred is busy with another request. Please try again shortly.', 503);
         }
-        $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        if ($status < 200 || $status >= 300) throw new RuntimeException('Ollama returned HTTP ' . $status);
-        return json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+        $ch = null;
+        try {
+            $ch = curl_init($this->baseUrl . '/api/chat');
+            curl_setopt_array($ch, [
+                CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+                CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+                CURLOPT_CONNECTTIMEOUT => 5, CURLOPT_TIMEOUT => 90,
+            ]);
+            $raw = curl_exec($ch);
+            if ($raw === false) throw new RuntimeException('Ollama request failed: ' . curl_error($ch));
+            $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            if ($status < 200 || $status >= 300) throw new RuntimeException('Ollama returned HTTP ' . $status);
+            return json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+        } finally {
+            if ($ch !== null) curl_close($ch);
+            flock($lock, LOCK_UN); fclose($lock);
+        }
     }
 
     public function generate(array $messages, string $systemPrompt = '', int $maxTokens = 400): array
@@ -132,35 +138,13 @@ final class OllamaService
             'think' => false,
             'options' => [
                 'temperature' => 0.4,
+                'num_thread' => max(1, min(2, (int)(getenv('OLLAMA_NUM_THREADS') ?: 1))),
+                'num_ctx' => 4096,
                 'num_predict' => max(1, $maxTokens),
             ],
         ];
 
-        $ch = curl_init($this->baseUrl . '/api/chat');
-        curl_setopt_array($ch, [
-            CURLOPT_POST => true,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-            CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
-            CURLOPT_CONNECTTIMEOUT => 5,
-            CURLOPT_TIMEOUT => 120,
-        ]);
-
-        $raw = curl_exec($ch);
-        if ($raw === false) {
-            $error = curl_error($ch);
-            curl_close($ch);
-            throw new RuntimeException('Ollama request failed: ' . $error);
-        }
-
-        $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($status < 200 || $status >= 300) {
-            throw new RuntimeException('Ollama returned HTTP ' . $status);
-        }
-
-        $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+        $data = $this->requestChat($payload);
 
         return [
             'text' => (string)($data['message']['content'] ?? ''),
@@ -170,3 +154,4 @@ final class OllamaService
         ];
     }
 }
+

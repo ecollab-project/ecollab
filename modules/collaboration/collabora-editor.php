@@ -38,7 +38,7 @@ header("Content-Security-Policy: default-src 'self'; connect-src 'self' $callOri
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=2">
 <script nonce="<?=$nonce?>" defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 </head><body data-mobile-surface="editor">
-<header><a href="<?=coEscape($backUrl)?>">← Coworkspace</a><h1><?=coEscape($d['title'])?></h1><span><?=coEscape($a['permission'])?></span><a href="<?=coEscape(BASE_URL)?>/API/collaboration/document-download.php?id=<?=$id?>">Download</a></header>
+<header><a href="<?=coEscape($backUrl)?>">← Coworkspace</a><h1><?=coEscape($d['title'])?></h1><span><?=coEscape($a['permission'])?></span><a href="<?=coEscape(BASE_URL)?>/API/collaboration/document-download.php?id=<?=$id?>">Download</a><?php if ((int)$d['created_by'] !== (int)$user['id']): ?><a target="_blank" rel="noopener" href="<?=coEscape(BASE_URL)?>/modules/collaboration/report-document.php?id=<?=$id?>">Report</a><?php endif ?></header>
 <?php if ($a['permission'] === 'comment'): ?><div id="notice">Comment permission currently opens as view-only in Collabora.</div><?php endif ?>
 <main><iframe name="office" title="Collaborative document editor" allow="clipboard-read; clipboard-write; fullscreen"></iframe><aside>
 <?php if (env('DOCUMENT_ML_ENABLED','false')==='true'): ?><details><summary>Related documents</summary><small>Compare titles of documents you can access in this workspace.</small><p><button id="related">Find related files</button></p><div id="related-result" role="status"></div></details><?php endif ?>
@@ -64,3 +64,4 @@ document.getElementById('rename')?.addEventListener('click',async()=>{const out=
 document.getElementById('sharing')?.addEventListener('click',async()=>{const r=document.getElementById('sharing-result');try{const res=await fetch(base+'/API/collaboration/resource-access.php',{method:'PATCH',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({workspace_id:wid,resource_type:'document',resource_id:id,visibility:document.getElementById('visibility').value,public_permission:document.getElementById('public-permission').value})});const data=await res.json();r.textContent=data.success?'Sharing updated.':data.error||'Update failed.';}catch{r.textContent='Update failed.';}});
 </script><?php require_once dirname(__DIR__, 2) . '/includes/calls/bootstrap.php'; ?>
 </body></html>
+

@@ -51,7 +51,7 @@
     const res=await fetch(base+'/API/dm/'+(c.groupId?'livekit-group-token.php':'livekit-call-token.php'),{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':config.csrfToken||document.querySelector('meta[name=csrf-token]')?.content||''},body:JSON.stringify(c.groupId?{group_id:c.groupId}:{call_id:c.logId})});
     const data=await res.json();if(!res.ok||!data.success)throw Error(data.error||'Call authorization failed.');return data;
   }
-  function attachAudio(c,track){if(track.kind!=='audio'||c.audio.has(track))return;const el=track.attach();el.autoplay=true;el.muted=c.deafened;el.hidden=true;document.body.appendChild(el);c.audio.set(track,el);media().playback(c.room);el.play().catch(()=>{c.message='Tap Enable audio to hear the call.';render(c);});}
+  function attachAudio(c,track){if(track.kind!=='audio'||c.audio.has(track))return;const el=track.attach();el.autoplay=true;el.muted=c.deafened;el.hidden=true;document.body.appendChild(el);c.audio.set(track,el);media().playback(c.room);el.play().catch(()=>{c.message='Tap the call window to hear audio.';render(c);});}
   function reconcileAudio(c){for(const p of c.room.remoteParticipants.values())for(const pub of p.trackPublications.values())if(pub.track?.kind==='audio')attachAudio(c,pub.track);}
   async function connect(c) {
     const [LK,auth]=await Promise.all([sdk(),token(c)]);if(call!==c)return;
@@ -59,7 +59,8 @@
     await media().ready;if(call!==c)return;
     const room=new LK.Room({adaptiveStream:true,dynacast:true,audioCaptureDefaults:media().audio(),videoCaptureDefaults:media().video(),disconnectOnPageLeave:true});c.room=room;
     const update=()=>{if(call===c){reconcileAudio(c);render(c);}};
-    for(const event of ['ParticipantConnected','ParticipantDisconnected','TrackMuted','TrackUnmuted','LocalTrackPublished','LocalTrackUnpublished','ActiveSpeakersChanged','TrackSubscribed'])room.on(LK.RoomEvent[event],update);
+    for(const event of ['ParticipantConnected','ParticipantDisconnected','TrackMuted','TrackUnmuted','LocalTrackPublished','LocalTrackUnpublished','TrackSubscribed'])room.on(LK.RoomEvent[event],update);
+    room.on(LK.RoomEvent.ActiveSpeakersChanged,()=>{if(call===c)syncSpeaking(c);});
     room.on(LK.RoomEvent.TrackUnsubscribed,track=>{const el=c.audio.get(track);if(el){track.detach(el);el.remove();c.audio.delete(track);}update();});
     room.on(LK.RoomEvent.Reconnecting,()=>{c.message='Reconnecting…';render(c);});
     room.on(LK.RoomEvent.Reconnected,()=>{c.message='';render(c);});
@@ -71,7 +72,7 @@
     if(call!==c){room.disconnect();return;}
     try{await media().initialize(room);}catch(e){c.message=e.message;}
     c.state='active';stopRing(c);announce(c);reconcileAudio(c);render(c);
-    await room.startAudio().catch(()=>{c.message='Tap Enable audio to hear the call.';render(c);});
+    await room.startAudio().catch(()=>{c.message='Tap the call window to hear audio.';render(c);});
   }
   function make(data){return {...data,deafened:false,minimized:false,expanded:false,audio:new Map(),videos:[],message:'',closed:false};}
   async function start(video) {
@@ -113,36 +114,71 @@
   function layout(c) {
     const panel=c.panel;if(!panel)return;
     panel.classList.toggle('is-minimized',c.minimized);
+    for(const prop of ['left','top','right','bottom','transform'])panel.style.removeProperty(prop);
+    if(c.minimized&&c.position){const box=panel.getBoundingClientRect();c.position.left=Math.max(8,Math.min(innerWidth-box.width-8,c.position.left));c.position.top=Math.max(8,Math.min(innerHeight-box.height-8,c.position.top));Object.assign(panel.style,{left:c.position.left+'px',top:c.position.top+'px',right:'auto',bottom:'auto',transform:'none'});}
     panel.classList.toggle('is-expanded',c.expanded&&!c.minimized&&c.state==='active');
     const mini=panel.querySelector('[data-action=minimize]');
     if(mini){mini.textContent=c.minimized?'Restore':'Minimize';mini.setAttribute('aria-expanded',String(!c.minimized));}
     const expand=panel.querySelector('[data-action=expand]');
     if(expand){expand.textContent=c.expanded?'Dock':'Expand';expand.hidden=c.minimized;expand.setAttribute('aria-expanded',String(c.expanded));}
   }
+  function syncSpeaking(c) { render(c); }
+  function installDrag(c, panel) {
+    let drag=null;
+    panel.addEventListener('pointerdown',e=>{
+      if(!c.minimized||!e.target.closest('header')||e.target.closest('button')||e.button>0)return;
+      const box=panel.getBoundingClientRect();drag={id:e.pointerId,x:e.clientX,y:e.clientY,left:box.left,top:box.top};
+      panel.setPointerCapture?.(e.pointerId);e.preventDefault();
+    });
+    panel.addEventListener('pointermove',e=>{
+      if(!drag||drag.id!==e.pointerId)return;
+      const box=panel.getBoundingClientRect();
+      c.position={left:Math.max(8,Math.min(innerWidth-box.width-8,drag.left+e.clientX-drag.x)),top:Math.max(8,Math.min(innerHeight-box.height-8,drag.top+e.clientY-drag.y))};
+      layout(c);
+    });
+    const stop=()=>{drag=null;};panel.addEventListener('pointerup',stop);panel.addEventListener('pointercancel',stop);
+  }
   function render(c){
     if(call!==c)return;
-    let panel=c.panel;if(!panel){panel=document.createElement('section');panel.className='ec-call';panel.setAttribute('role','region');panel.setAttribute('aria-label','Call');document.body.appendChild(panel);c.panel=panel;panel.onclick=e=>{const b=e.target.closest('[data-action]');if(b)action(b.dataset.action);};}
+    let panel=c.panel;
+    if(!panel){
+      panel=document.createElement('section');panel.className='ec-call';panel.setAttribute('role','region');panel.setAttribute('aria-label','Call');document.body.appendChild(panel);c.panel=panel;
+      panel.innerHTML='<header><div class="ec-call-heading"></div><div class="ec-call-window-actions"></div></header><div class="ec-call-screen"></div><div class="ec-call-grid"></div><div class="ec-call-actions"></div><div class="ec-call-status" role="status"></div>';
+      panel.onclick=e=>{const b=e.target.closest('[data-action]');if(b)action(b.dataset.action);else c.room?.startAudio().then(()=>{c.message='';panel.querySelector('.ec-call-status').textContent='';}).catch(()=>{});};
+      installDrag(c,panel);c.tiles=new Map();
+    }
     const focused=panel.contains(document.activeElement)?document.activeElement.dataset.action:null;
-    for(const [track,el]of c.videos){track.detach(el);el.remove();}c.videos=[];
-    panel.classList.toggle('is-ringing',['incoming','outgoing'].includes(c.state));panel.classList.toggle('is-minimized',c.minimized);
-    const p=c.room?.localParticipant,active=c.state==='active';
-    const count=c.room?c.room.remoteParticipants.size+1:0;
+    panel.classList.toggle('is-ringing',['incoming','outgoing'].includes(c.state));
+    const p=c.room?.localParticipant,active=c.state==='active',count=c.room?c.room.remoteParticipants.size+1:0;
     const status=active?`${count} connected${c.groupId?' · up to 50':''}`:c.state==='incoming'?`Incoming ${c.video?'video':'voice'} call`:c.state==='outgoing'?'Calling…':'Connecting…';
-    panel.innerHTML=`<header><div><strong>${escape(c.name)}</strong><small>${status}</small></div><div class="ec-call-window-actions">${active?button('expand',c.expanded?'Dock':'Expand'):''}${button('minimize',c.minimized?'Restore':'Minimize')}</div></header><div class="ec-call-screen"></div><div class="ec-call-grid"></div><div class="ec-call-actions">${c.state==='incoming'?button('accept','Accept',false,'accept')+(c.video?button('audio','Audio only'):'')+button('end','Decline',false,'danger'):active?button('mic',p.isMicrophoneEnabled?'Mute':'Unmute',!p.isMicrophoneEnabled)+button('camera',p.isCameraEnabled?'Camera off':'Camera on',p.isCameraEnabled)+button('screen',p.isScreenShareEnabled?'Stop sharing':'Share screen',p.isScreenShareEnabled)+button('deafen',c.deafened?'Hear audio':'Deafen',c.deafened)+button('settings','Settings')+button('resume','Enable audio')+button('end','Leave',false,'danger'):button('end','Cancel',false,'danger')}</div><div class="ec-call-status" role="status">${escape(c.message)}</div>`;
+    panel.querySelector('.ec-call-heading').innerHTML=`<strong>${escape(c.name)}</strong><small>${status}</small>`;
+    panel.querySelector('.ec-call-window-actions').innerHTML=(active?button('expand',c.expanded?'Dock':'Expand'):'')+button('minimize',c.minimized?'Restore':'Minimize');
+    panel.querySelector('.ec-call-actions').innerHTML=c.state==='incoming'?button('accept','Accept',false,'accept')+(c.video?button('audio','Audio only'):'')+button('end','Decline',false,'danger'):active?button('mic',p.isMicrophoneEnabled?'Mute':'Unmute',!p.isMicrophoneEnabled)+button('camera',p.isCameraEnabled?'Camera off':'Camera on',p.isCameraEnabled)+button('screen',p.isScreenShareEnabled?'Stop sharing':'Share screen',p.isScreenShareEnabled)+button('deafen',c.deafened?'Hear audio':'Deafen',c.deafened)+button('settings','Settings')+button('end','Leave',false,'danger'):button('end','Cancel',false,'danger');
+    panel.querySelector('.ec-call-status').textContent=c.message||'';
     panel.querySelectorAll('button').forEach(b=>{if(c.busy&&!['end','minimize','expand'].includes(b.dataset.action))b.disabled=true;});
     if(active){
-      const participants=[p,...c.room.remoteParticipants.values()];
-      const speakers=c.room.activeSpeakers||[];
-      const sorted=participants.slice().sort((a,b)=>{const ai=speakers.indexOf(a),bi=speakers.indexOf(b);return (ai<0?999:ai)-(bi<0?999:bi);});
-      // Keep local preview visible and prioritize dominant speakers for the five remote tiles.
-      const visible=[p,...sorted.filter(x=>x!==p).slice(0,5)];
-      for(const participant of visible){const tile=document.createElement('div');tile.className='ec-call-tile';tile.dataset.local=String(participant===p);tile.classList.toggle('is-speaking',participant.isSpeaking&&participant.isMicrophoneEnabled);const name=participant===p?'You':participant.name||'Participant';tile.innerHTML=`<em>${escape(name.charAt(0).toUpperCase())}</em><span>${escape(name)} · ${participant.isMicrophoneEnabled?'Mic on':'Muted'}</span>`;panel.querySelector('.ec-call-grid').appendChild(tile);const pub=participant.getTrackPublication('camera');if(pub?.track&&!pub.isMuted){const el=document.createElement('video');el.autoplay=true;el.playsInline=true;el.muted=true;pub.track.attach(el);tile.prepend(el);c.videos.push([pub.track,el]);el.play().catch(()=>{});}}
-      for(const participant of participants){const pub=participant.getTrackPublication('screen_share');if(pub?.track&&!pub.isMuted){const el=document.createElement('video');el.autoplay=true;el.playsInline=true;el.muted=true;pub.track.attach(el);panel.querySelector('.ec-call-screen').appendChild(el);c.videos.push([pub.track,el]);el.play().catch(()=>{});break;}}
-      if(count>6){const label=document.createElement('small');label.textContent=`Showing you and five participants, prioritizing active speakers. ${count} in this call.`;panel.querySelector('.ec-call-status').appendChild(label);}
+      const participants=[p,...c.room.remoteParticipants.values()],speakers=c.room.activeSpeakers||[];
+      const sorted=participants.filter(x=>x!==p).sort((a,b)=>(speakers.indexOf(a)<0?999:speakers.indexOf(a))-(speakers.indexOf(b)<0?999:speakers.indexOf(b)));
+      const visible=[p,...sorted.slice(0,5)],keys=new Set(visible.map(x=>x.identity));
+      for(const [key,tile] of c.tiles){if(!keys.has(key)){if(tile.track)tile.track.detach(tile.video);tile.remove();c.tiles.delete(key);}}
+      const grid=panel.querySelector('.ec-call-grid');
+      visible.forEach((participant,index)=>{
+        let tile=c.tiles.get(participant.identity);
+        if(!tile){tile=document.createElement('div');tile.className='ec-call-tile';tile.innerHTML='<em></em><span></span>';c.tiles.set(participant.identity,tile);}
+        tile.dataset.local=String(participant===p);tile.classList.toggle('is-speaking',participant.isSpeaking&&participant.isMicrophoneEnabled);
+        const name=participant===p?'You':participant.name||'Participant';tile.querySelector('em').textContent=name.charAt(0).toUpperCase();tile.querySelector('span').textContent=name+' · '+(participant.isMicrophoneEnabled?'Mic on':'Muted');
+        const pub=participant.getTrackPublication('camera'),track=pub?.track&&!pub.isMuted?pub.track:null;
+        if(tile.track!==track){if(tile.track)tile.track.detach(tile.video);tile.video?.remove();tile.track=track;tile.video=null;if(track){const el=document.createElement('video');el.autoplay=true;el.playsInline=true;el.muted=true;track.attach(el);tile.prepend(el);tile.video=el;el.play().catch(()=>{});}}
+        tile.classList.toggle('has-video',!!track);
+        if(grid.children[index]!==tile)grid.insertBefore(tile,grid.children[index]||null);
+      });
+      const share=participants.map(x=>x.getTrackPublication('screen_share')).find(pub=>pub?.track&&!pub.isMuted)?.track||null;
+      if(c.screenTrack!==share){if(c.screenTrack)c.screenTrack.detach(c.screenVideo);c.screenVideo?.remove();c.screenTrack=share;c.screenVideo=null;if(share){const el=document.createElement('video');el.autoplay=true;el.playsInline=true;el.muted=true;share.attach(el);panel.querySelector('.ec-call-screen').appendChild(el);c.screenVideo=el;el.play().catch(()=>{});}}
+      c.videos=[...c.tiles.values()].filter(t=>t.track).map(t=>[t.track,t.video]);if(c.screenTrack)c.videos.push([c.screenTrack,c.screenVideo]);
+      if(count>6)panel.querySelector('.ec-call-status').append(' Showing you and five participants, prioritizing active speakers.');
       if(!navigator.mediaDevices?.getDisplayMedia)panel.querySelector('[data-action=screen]').disabled=true;
     }
-    layout(c);
-    if(focused)panel.querySelector(`[data-action="${focused}"]`)?.focus({preventScroll:true});
+    layout(c);if(focused)panel.querySelector(`[data-action="${focused}"]`)?.focus({preventScroll:true});
   }
   async function handle(data){
     if(!/^dm_(?:call_|group_call_)/.test(data.type||''))return false;
@@ -177,4 +213,5 @@
   // Defer until all page scripts have run, avoiding a second chat connection.
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',connectSignals,{once:true});else connectSignals();
 })();
+
 

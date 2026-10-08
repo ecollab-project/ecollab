@@ -75,6 +75,7 @@ try {
 } catch (Throwable $e) {
     error_log('[ai/message] '.$e->getMessage());
     $status = $e->getCode(); if ($status < 400 || $status > 599) $status = 500;
-    aiJson(['success'=>false,'error'=>defined('APP_DEBUG') && APP_DEBUG ? $e->getMessage() : 'AI service error.'],$status);
+    aiJson(['success'=>false,'error'=>defined('APP_DEBUG') && APP_DEBUG ? $e->getMessage() : ($status === 503 ? 'Jarred is temporarily busy or unavailable. Please try again shortly.' : 'AI service error.')],$status);
 }
+
 

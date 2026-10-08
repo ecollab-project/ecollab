@@ -314,6 +314,11 @@ function renderChannelList(channels) {
 
 // ── Channel switch ──
 async function switchChannel(el, channelId) {
+  if (window._currentNavView && window._currentNavView !== 'home') {
+    window.switchView?.('home', document.querySelector('.sidebar-nav-item'));
+  }
+  document.getElementById('navViewOverlay')?.style.setProperty('display','none');
+  document.querySelector('.chat-main')?.style.removeProperty('display');
   saveChatLocation({server_id: currentServerId, channel_id: channelId, channel_name: null});
   lastServerChannels.set(Number(currentServerId), channelId);
   if (channelId === currentChannelId) return;
@@ -1262,6 +1267,7 @@ function selectChannelType(el, type) {
 }
 
 // ── Members panel ──
+function chatMemberOnline(m) { return m.is_online === true || m.is_online === 1 || m.is_online === "1"; }
 function renderMembersPanel(members) {
   const list = document.getElementById('membersList');
   const activeList = document.getElementById('activeMembersList');
@@ -1276,18 +1282,18 @@ function renderMembersPanel(members) {
     const memberAvatarUrl = chatAvatarUrl(m.avatar_url);
     const memberAvatar = memberAvatarUrl ? `url("${escHtml(memberAvatarUrl)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
     const memberInitial = memberAvatarUrl ? '' : init;
-    const online = m.is_online ? 'online' : '';
+    const online = chatMemberOnline(m) ? 'online' : '';
     return `
       <div class="member-item" data-user-id="${m.id || m.user_id || 0}" data-user-grad="${grad}" onclick="openMiniProfile(event, '${escHtml(m.full_name || m.username)}', '${escHtml(m.role || 'Student')}', '', '${init}', ${m.id || m.user_id || 0})">
         <div class="user-avatar">
           <div class="avatar-placeholder" style="width:28px;height:28px;font-size:11px;border-radius:50%;background:${memberAvatar};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;">${memberInitial}</div>
-          <div class="online-dot ${m.is_online ? '' : 'offline'}"></div>
+          <div class="online-dot ${chatMemberOnline(m) ? '' : 'offline'}"></div>
         </div>
         <div class="member-info">
           <div class="member-name">${escHtml(m.full_name || m.nickname || m.username)}${m.server_role === 'owner' ? ' <span class="member-badge">👑</span>' : ''}</div>
-          <div class="member-sub" style="color:${m.is_online ? 'var(--accent-green)' : 'var(--text-muted)'};font-size:10px;">${m.is_online ? 'Online' : 'Offline'}</div>
+          <div class="member-sub" style="color:${chatMemberOnline(m) ? 'var(--accent-green)' : 'var(--text-muted)'};font-size:10px;">${chatMemberOnline(m) ? 'Online' : 'Offline'}</div>
         </div>
-        <div class="member-status ${online}">● ${m.is_online ? 'Online' : ''}</div>
+        <div class="member-status ${online}">● ${chatMemberOnline(m) ? 'Online' : 'Offline'}</div>
       </div>
     `;
   }).join('');
@@ -1296,7 +1302,7 @@ function renderMembersPanel(members) {
 
   // Active now panel
   if (activeList) {
-    const online = members.filter(m => m.is_online).slice(0, 5);
+    const online = members.filter(chatMemberOnline).slice(0, 5);
     activeList.innerHTML = online.map(m => {
       const grad = m.avatar_color_gradient || '#3b82f6,#6366f1';
       const [c1, c2] = grad.split(',');
@@ -1714,3 +1720,4 @@ window.lastMessageId = 0;
     if (typeof window[name] === 'function') window['__real_' + name] = window[name];
   });
 })();
+
