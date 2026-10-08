@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Excalidraw } from "https://esm.sh/@excalidraw/excalidraw@0.18.0/dist/dev/index.js?external=react,react-dom";
 
+import {createWhiteboardPresence} from "./yjs-presence.js?v=yjs-presence-1";
+
 const cfg = window.ECOLLAB_EXCALIDRAW || {};
 const host = document.getElementById("excalidraw-root");
 const canEdit = cfg.permission === "edit";
@@ -38,6 +40,7 @@ async function persist(scene) {
   const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.error||"Save failed");
 }
 function App(){
+  const presence=useRef(null);
   const api=useRef(null), timer=useRef(null), broadcast=useRef(null), latest=useRef(null), saving=useRef(false), last=useRef("");
   const getTheme=()=>document.documentElement.dataset.theme==="light"?"light":"dark";
   const [initial,setInitial]=useState(null), [status,setStatus]=useState("Loading…"), [theme,setTheme]=useState(getTheme);
@@ -52,6 +55,7 @@ function App(){
   },[]);
   const apply=useCallback(msg=>{
     if(Number(msg.whiteboard_id)!==Number(cfg.whiteboardId))return;
+    if(presence.current?.receive(msg))return;
     let scene=null;
     if(msg.type==="wb_joined"&&msg.state_json){try{scene=JSON.parse(msg.state_json)}catch{}}
     if(msg.type==="wb_state"&&msg.state_json){try{scene=JSON.parse(msg.state_json)}catch{}}
@@ -70,6 +74,21 @@ function App(){
 
   },[]);
   useEffect(()=>{
+    presence.current=createWhiteboardPresence(cfg,{send:message=>window.wsSend?.(message),changed:(states,localId,connected)=>{
+      const collaborators=new Map();
+      const unique=new Map();
+      for(const [clientId,state] of states){
+        if(!state.user)continue;
+        unique.set(state.user.id,state);
+        if(clientId!==localId)collaborators.set(String(clientId),{username:state.user.name,pointer:state.pointer||undefined,button:state.button,selectedElementIds:state.selectedElementIds||{},color:{background:state.user.color,stroke:state.user.color},userState:state.status==='idle'?'idle':'active'});
+      }
+      api.current?.updateScene({collaborators});
+      // Include this authenticated user before the first server echo arrives.
+      if(!unique.has(Number(window.ECOLLAB?.userId)))unique.set(Number(window.ECOLLAB?.userId),{user:{name:'You',color:'#a855f7'},status:document.hidden?'idle':'active'});
+      const stack=document.getElementById('wbAvStack');
+      if(stack){stack.replaceChildren();for(const state of unique.values()){const avatar=document.createElement('span');avatar.className='wb-yjs-avatar';avatar.textContent=(state.user.name||'?').slice(0,1).toUpperCase();avatar.title=state.user.name+' · '+state.status;avatar.style.background=state.user.color;stack.append(avatar);}}
+      const label=document.getElementById('wbSessionStatus');if(label)label.textContent=unique.size+' collaborator'+(unique.size===1?'':'s')+(connected?' · live presence':' · connecting…');
+    }});
     const old=window.wbHandleWsMessage;
     window.ecollabWhiteboardSave=async()=>{
       if(!canEdit||!api.current)return;
@@ -81,9 +100,10 @@ function App(){
     window.wbHandleWsMessage=apply; // Do not also replay Excalidraw state through the legacy canvas renderer.
     window.wbRejoinRoom=()=>window.wsSend?.({type:"wb_join",channel_id:Number(cfg.channelId),whiteboard_id:Number(cfg.whiteboardId)});
     const join=setInterval(()=>{if(window.wsSend?.({type:"wb_join",channel_id:Number(cfg.channelId),whiteboard_id:Number(cfg.whiteboardId)}))clearInterval(join)},500);
-    return()=>{clearInterval(join);clearTimeout(broadcast.current);clearTimeout(timer.current);window.wsSend?.({type:"wb_leave",channel_id:Number(cfg.channelId),whiteboard_id:Number(cfg.whiteboardId)});window.wbHandleWsMessage=old};
+    return()=>{presence.current?.dispose();presence.current=null;clearInterval(join);clearTimeout(broadcast.current);clearTimeout(timer.current);window.wsSend?.({type:"wb_leave",channel_id:Number(cfg.channelId),whiteboard_id:Number(cfg.whiteboardId)});window.wbHandleWsMessage=old};
   },[apply]);
   const change=useCallback((elements,appState,files)=>{
+    presence.current?.selection(appState.selectedElementIds);
     if(!canEdit)return;
     const scene={format:"excalidraw",version:1,elements:Array.from(elements),appState:{viewBackgroundColor:appState.viewBackgroundColor||"#fff",gridSize:appState.gridSize??null},files:files||{}};
     const raw=sceneFingerprint(scene.elements,scene.appState.viewBackgroundColor);if(raw===last.current)return;last.current=raw;latest.current=scene;setStatus("Unsaved");
@@ -103,9 +123,10 @@ function App(){
   },[]);
   if(!initial)return React.createElement("div",{style:{padding:"30px",color:"#fff"}},status);
   return React.createElement("div",{style:{height:"100%",position:"relative"}},
-    React.createElement(Excalidraw,{initialData:initial,excalidrawAPI:x=>api.current=x,onChange:change,viewModeEnabled:!canEdit,isCollaborating:true,theme}),
+    React.createElement(Excalidraw,{initialData:initial,excalidrawAPI:x=>{api.current=x;presence.current?.refresh();},onPointerUpdate:event=>presence.current?.pointer(event),onChange:change,viewModeEnabled:!canEdit,isCollaborating:true,theme}),
     React.createElement("div",{style:{position:"absolute",right:"12px",bottom:"12px",zIndex:10,padding:"5px 9px",borderRadius:"8px",background:"#151923",color:"#cbd5e1",fontSize:"11px"}},status)
   );
 }
 if(host)createRoot(host).render(React.createElement(App));
+
 

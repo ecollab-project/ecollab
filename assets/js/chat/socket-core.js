@@ -78,6 +78,7 @@ function initWebSocket() {
       if (chatSocket !== socket) return;
       chatSocket = null;
       _authed = false;
+      window.dispatchEvent(new CustomEvent('ecollab:realtime-disconnected'));
       console.info(`[WS] Closed (code ${event.code}${event.reason ? ', reason: ' + event.reason : ''})`);
 
       // Code 1000 is a deliberate normal close. Reconnecting forever on a
@@ -334,6 +335,8 @@ function handleSocketMessage(data) {
     case 'wb_peer_joined':
     case 'wb_peer_left':
     case 'wb_op':
+    case 'wb_presence':
+    case 'wb_presence_remove':
     case 'wb_cursor':
     case 'wb_state':
     case 'wb_state_saved':
@@ -893,5 +896,6 @@ if (document.readyState === 'loading') {
 } else {
   connectWebSocket();
 }
+
 
 
