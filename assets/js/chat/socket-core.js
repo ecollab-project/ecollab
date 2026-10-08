@@ -177,6 +177,12 @@ function handleSocketMessage(data) {
       }
       break;
 
+    case 'joined_channel':
+    case 'chat_presence':
+    case 'chat_presence_remove':
+      window.dispatchEvent(new CustomEvent('ecollab:chat-presence',{detail:data}));
+      break;
+
     // ── Messages ──
     case 'message':
       handleIncomingMessage(data.message);
@@ -770,6 +776,7 @@ let _typingThrottle = null;
 let _typingState    = false;
 
 function sendTypingEvent(isTyping) {
+  if(window.EcollabChatPresence?.typing(isTyping))return;
   if (!window.ECOLLAB?.currentChannelId) return;
   if (isTyping === _typingState) return; // no-op if state unchanged
   _typingState = isTyping;
@@ -804,6 +811,7 @@ function subscribeToChannel(channelId) {
   wsSend({ type: 'join_channel', channel_id: channelId });
 }
 function unsubscribeFromChannel(channelId) {
+  window.EcollabChatPresence?.disconnect();
   wsSend({ type: 'leave_channel', channel_id: channelId });
 }
 

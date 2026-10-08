@@ -40,6 +40,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 <html lang="en">
 
 <head>
+<script type="importmap">{"imports":{"yjs":"https://esm.sh/yjs@13.6.27","y-protocols/awareness":"https://esm.sh/y-protocols@1.0.6/awareness?external=yjs"}}</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ecollab — Chat</title>
@@ -1094,7 +1095,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     6. whiteboard.js — collaborative whiteboard
     7. dm-notifications.js — DM badge polling
   -->
-  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=calls-2" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=yjs-chat-1-calls-2" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=team-audit-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=team-audit-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js" defer></script>
@@ -3434,6 +3435,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <!-- Thread enhancements are loaded by functionality-overrides.js after threads-v2.js is ready. -->
   <script src="<?= BASE_URL ?>/assets/js/chat/collabs-ui.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/nav-persistence.js?v=2" defer></script>
+<script type="module" src="<?= BASE_URL ?>/assets/js/chat/yjs-channel-presence.js?v=yjs-chat-1"></script>
 </body>
 
 <!-- ── FLASHCARD MODALS ── -->
@@ -3535,9 +3537,11 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 <div id="resourceCommentsModal" class="collab-modal-overlay" style="display:none"></div>
 
 <?php require_once dirname(__DIR__, 2) . '/includes/calls/bootstrap.php'; ?>
+<script type="module" src="<?= BASE_URL ?>/assets/js/chat/yjs-channel-presence.js?v=yjs-chat-1"></script>
 </body>
 
 </html>
+
 
 
 

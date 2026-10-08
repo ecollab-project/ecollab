@@ -89,6 +89,10 @@ class ChatServer implements MessageComponentInterface
         $data = json_decode($rawMsg, true);
         if (!is_array($data) || empty($data['type'])) return;
         $type = $data['type'];
+        if($type==='chat_presence'){
+            $data['channel_id']=(int)($meta['channel_id']??0);unset($data['whiteboard_id']);
+            if(strlen($rawMsg)>4096)return;
+        }
         if ($type === 'wb_presence') {
             if (strlen($rawMsg) > 16384 || microtime(true)-(float)($meta['wb_presence_at']??0)<0.08) return;
             $meta['wb_presence_at']=microtime(true);
@@ -100,7 +104,7 @@ class ChatServer implements MessageComponentInterface
 
         $channelScopedTypes = [
             'join_channel','message','message_edited','message_deleted','message_pinned',
-            'collab_note_cursor','collab_note_presence','typing','presence','channel_seen',
+            'collab_note_cursor','collab_note_presence','typing','presence','chat_presence','channel_seen',
             'draft_save','thread_reply','mention','join_voice','whiteboard_sync','wb_join',
             'wb_op','wb_cursor','wb_presence','wb_leave','wb_state_save','wb_request_state','screen_share_notify',
             'webrtc_offer','webrtc_answer','webrtc_candidate',
@@ -117,6 +121,7 @@ class ChatServer implements MessageComponentInterface
             'message_pinned' => $this->handlePinnedBroadcast($from, $data, $meta),
             'collab_note_cursor' => $this->handleNoteRelay($from, $data, $meta),
             'collab_note_presence' => $this->handleNoteRelay($from, $data, $meta),
+            'chat_presence' => $this->handleChatPresence($from,$data,$meta),
             'typing' => $this->handleTyping($from, $data, $meta),
             'presence' => $this->handlePresence($from, $data, $meta),
             'channel_seen' => $this->handleChannelSeen($from, $data, $meta),
@@ -290,7 +295,7 @@ class ChatServer implements MessageComponentInterface
         if(!$priv&&(!$server||!$private||!$usable)){$conn->send(json_encode(['type'=>'error','message'=>'Channel access denied']));return false;}return true;
     }
 
-    private function handleJoinChannel(ConnectionInterface $conn,array $data,array &$meta):void{$channelId=(int)($data['channel_id']??0);if($channelId<=0)return;if($meta['channel_id'])$this->removeFromChannel($conn,(int)$meta['channel_id']);$meta['channel_id']=$channelId;$this->channelSubs[$channelId][]=$conn;$conn->send(json_encode(['type'=>'joined_channel','channel_id'=>$channelId]));}
+    private function handleJoinChannel(ConnectionInterface $conn,array $data,array &$meta):void{$channelId=(int)($data['channel_id']??0);if($channelId<=0)return;if($meta['channel_id'])$this->removeFromChannel($conn,(int)$meta['channel_id']);$meta['channel_id']=$channelId;$this->channelSubs[$channelId][]=$conn;$conn->send(json_encode(['type'=>'joined_channel','channel_id'=>$channelId,'presence'=>$this->wbPresence->snapshot('chat:'.$channelId)]));}
     private function handleLeaveChannel(ConnectionInterface $conn,array $data,array &$meta):void{$channelId=(int)($data['channel_id']??$meta['channel_id']??0);if($channelId){$this->removeFromChannel($conn,$channelId);$meta['channel_id']=null;}}
     private function handleMessage(ConnectionInterface $from,array $data,array $meta):void{$channelId=(int)($data['channel_id']??$meta['channel_id']??0);if(!$channelId||empty($data['message']))return;$this->broadcastToChannel($channelId,json_encode(['type'=>'message','message'=>$data['message']]),$from);}
     private function handleTyping(ConnectionInterface $from,array $data,array $meta):void{$channelId=(int)($data['channel_id']??$meta['channel_id']??0);if(!$channelId)return;$this->broadcastToChannel($channelId,json_encode(['type'=>'typing','channel_id'=>$channelId,'user_id'=>$meta['user_id'],'username'=>$meta['username'],'typing'=>(bool)($data['typing']??false)]),$from);}
@@ -417,7 +422,10 @@ class ChatServer implements MessageComponentInterface
     private function handleMentionRelay(ConnectionInterface $from,array $data,array $meta):void{$target=(int)($data['target_user_id']??0);if(!$target)return;foreach($this->userConns[$target]??[] as $conn)try{$conn->send(json_encode(['type'=>'mention','entry'=>$data['entry']??[]]));}catch(\Exception){}}
     private function broadcastToChannel(int $cid,string $payload,?ConnectionInterface $exclude=null):void{foreach($this->channelSubs[$cid]??[] as $conn){if($exclude&&$conn===$exclude)continue;try{$conn->send($payload);}catch(\Exception $e){echo "[WS] Send error: {$e->getMessage()}\n";}}}
     private function broadcastToAll(string $payload,?ConnectionInterface $exclude=null):void{foreach($this->clients as $client){if($exclude&&$client===$exclude)continue;$rid=$client->resourceId;if(empty($this->connMeta[$rid]['authed']))continue;try{$client->send($payload);}catch(\Exception){}}}
-    private function removeFromChannel(ConnectionInterface $conn,int $cid):void{if(!isset($this->channelSubs[$cid]))return;$this->channelSubs[$cid]=array_values(array_filter($this->channelSubs[$cid],fn($c)=>$c!==$conn));if(empty($this->channelSubs[$cid]))unset($this->channelSubs[$cid]);}
+    private function removeFromChannel(ConnectionInterface $conn,int $cid):void{
+        $id=$this->wbPresence->leave('chat:'.$cid,$conn->resourceId);
+        if($id!==null)$this->broadcastToChannel($cid,json_encode(['type'=>'chat_presence_remove','channel_id'=>$cid,'client_ids'=>[$id]]),$conn);
+        if(!isset($this->channelSubs[$cid]))return;$this->channelSubs[$cid]=array_values(array_filter($this->channelSubs[$cid],fn($c)=>$c!==$conn));if(empty($this->channelSubs[$cid]))unset($this->channelSubs[$cid]);}
     private function setUserOnline(int $uid,bool $online):void{try{$stmt=$this->db->prepare("UPDATE users SET is_online=:o,last_active_at=NOW() WHERE id=:id");$stmt->execute([':o'=>(int)$online,':id'=>$uid]);}catch(\Exception $e){echo "[WS] DB error: {$e->getMessage()}\n";}}
     private function broadcastPresence(int $uid,bool $online,string $username):void{$payload=json_encode(['type'=>'presence','user_id'=>$uid,'username'=>$username,'online'=>$online]);foreach($this->clients as $client)try{$client->send($payload);}catch(\Exception){}}
 
@@ -446,6 +454,20 @@ class ChatServer implements MessageComponentInterface
         if($channel<1||$board<1)return;
         $id=$this->wbPresence->leave($channel.':'.$board,$connection->resourceId);
         if($id!==null)$this->broadcastWbPresence(['type'=>'wb_presence_remove','channel_id'=>$channel,'whiteboard_id'=>$board,'client_ids'=>[$id]],$connection);
+    }
+
+    private function handleChatPresence(ConnectionInterface $from,array $data,array $meta):void
+    {
+        $channel=(int)($meta['channel_id']??0);if($channel<1)return;
+        try {
+            $presence=$this->wbPresence->publish('chat:'.$channel,$from->resourceId,$data,['id'=>(int)$meta['user_id'],'name'=>(string)$meta['username']],null,'chat');
+            if(!$presence)return;
+            foreach($this->channelSubs[$channel]??[] as $peer){
+                if($peer===$from)continue;
+                $peerMeta=$this->connMeta[$peer->resourceId]??[];
+                if($this->authorizeChannelMessage($peer,['type'=>'chat_presence','channel_id'=>$channel],$peerMeta))$peer->send(json_encode(['type'=>'chat_presence','channel_id'=>$channel,'presence'=>$presence]));
+            }
+        }catch(\InvalidArgumentException $e){$from->send(json_encode(['type'=>'error','message'=>$e->getMessage()]));}
     }
 
     private function handleWbJoin(ConnectionInterface $from,array $data,array &$meta):void

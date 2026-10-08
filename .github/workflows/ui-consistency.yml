@@ -36,3 +36,4 @@ jobs:
 
           node tests/yjs-presence-regression.cjs
           php tests/whiteboard-presence-regression.php
+          node tests/yjs-channel-presence-regression.cjs

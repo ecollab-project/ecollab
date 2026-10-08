@@ -18,4 +18,7 @@ checkPresence($p->leave($room,100)===12,'Disconnect removes only this client');
 checkPresence(count($p->snapshot($room,100))===1,'Other tab remains present');
 checkPresence($p->publish($room,101,['client_id'=>14,'clock'=>2,'state'=>null],$user,102)['state']===null,'Explicit removal accepted');
 checkPresence($p->snapshot($room,102)===[],'Removed states are not advertised');
+$chat=$p->publish('chat:20',200,['client_id'=>20,'clock'=>1,'state'=>['typing'=>true,'text'=>'SECRET DRAFT']],$user,100,'chat');
+checkPresence($chat['state']['typing']===true && !isset($chat['state']['text']),'Chat presence shares only typing state, never draft content');
+checkPresence($p->snapshot('chat:21',100)===[],'Chat channels remain isolated');
 echo "Presence checks passed: authenticated identity, room isolation, clocks, validation, expiry and multiple tabs.\n";

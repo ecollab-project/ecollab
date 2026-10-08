@@ -4,7 +4,7 @@
 final class WhiteboardPresenceService
 {
     private array $rooms = [];
-    public function publish(string $room, int $connection, array $packet, array $user, ?float $now = null): ?array
+    public function publish(string $room, int $connection, array $packet, array $user, ?float $now = null, string $surface = 'whiteboard'): ?array
     {
         $now ??= microtime(true);
         $id = $packet['client_id'] ?? null; $clock = $packet['clock'] ?? null;
@@ -30,7 +30,9 @@ final class WhiteboardPresenceService
             $uid = (int)$user['id'];
             $state = ['user'=>['id'=>$uid,'name'=>(string)$user['name'],'color'=>$colors[$uid % count($colors)]],
                 'pointer'=>$pointer,'button'=>($state['button'] ?? '') === 'down' ? 'down' : 'up',
-                'selectedElementIds'=>(object)$selection, 'status'=>($state['status'] ?? '') === 'idle' ? 'idle' : 'active'];
+                'selectedElementIds'=>(object)$selection, 'status'=>($state['status'] ?? '') === 'idle' ? 'idle' : 'active',
+                'typing'=>$surface==='chat' && ($state['typing']??false)===true];
+            if($surface==='chat')$state=['user'=>$state['user'],'status'=>$state['status'],'typing'=>$state['typing']];
         }
         $entry = ['client_id'=>$id,'clock'=>$clock,'state'=>$state,'updated_at'=>$now];
         $this->rooms[$room][$connection] = $entry;
