@@ -39,3 +39,8 @@ jobs:
         run: php tests/whiteboard-realtime-regression.php
       - name: Whiteboard socket routing
         run: node tests/whiteboard-socket-regression.cjs
+      - name: Existing-schema migration reruns
+        env:
+          COLLABORA_TEST_DSN: mysql:host=127.0.0.1;port=3306;dbname=collabora_test
+          COLLABORA_TEST_PASSWORD: test
+        run: php tests/migration-rerun-regression.php
