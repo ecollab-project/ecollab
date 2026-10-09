@@ -11,10 +11,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo json_
 AuthMiddleware::verifyCsrf();
 
 try {
-    if (empty($_FILES['file'])) { http_response_code(400); echo json_encode(['error'=>'No file uploaded']); exit; }
+    if (empty($_FILES['file'])) {
+        $tooLarge = (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 20 * 1024 * 1024;
+        http_response_code($tooLarge ? 413 : 400);
+        echo json_encode(['error' => $tooLarge ? 'Upload exceeds the server limit. Max 20 MB.' : 'No file received. Check the PHP and proxy upload limits.']);
+        exit;
+    }
     $file = $_FILES['file'];
     $maxBytes = 20 * 1024 * 1024;
-    if ($file['error'] !== UPLOAD_ERR_OK) throw new RuntimeException('Upload failed.', 400);
+    if ($file['error'] !== UPLOAD_ERR_OK) throw new RuntimeException(in_array($file['error'],[UPLOAD_ERR_INI_SIZE,UPLOAD_ERR_FORM_SIZE],true) ? 'File exceeds the PHP upload limit.' : 'Upload failed. Please retry.', 400);
     if ((int)$file['size'] > $maxBytes) throw new RuntimeException('File too large. Max 20 MB.', 400);
 
     $allowed = [
@@ -30,6 +35,8 @@ try {
 
     $name = preg_replace('/[^a-zA-Z0-9._\-]/', '_', basename((string)$file['name']));
     $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+    $imageExtensions = ['image/jpeg'=>'jpg','image/png'=>'png','image/gif'=>'gif','image/webp'=>'webp'];
+    if (isset($imageExtensions[$mime])) $ext = $imageExtensions[$mime];
     $stored = 'dm_' . date('Ymd_His') . '_' . bin2hex(random_bytes(6)) . ($ext !== '' ? '.' . $ext : '');
     $dir = UPLOAD_DIR;
     if (!is_dir($dir) && !mkdir($dir, 0750, true)) throw new RuntimeException('Upload directory creation failed', 500);
@@ -45,3 +52,4 @@ try {
 } catch (Throwable $e) {
     http_response_code(500); echo json_encode(['error'=>'Server error']);
 }
+

@@ -64,6 +64,28 @@ async function apiFetch(url, options = {}, _retried = false) {
   return res.json();
 }
 
+async function uploadChatAttachment(endpoint, form, retried = false) {
+  const response = await fetch(endpoint, {
+    method: 'POST', credentials: 'same-origin',
+    headers: { 'X-CSRF-Token': window.ECOLLAB?.csrfToken || '' }, body: form,
+  });
+  const data = await response.json().catch(() => null);
+  if (response.status === 403 && !retried) {
+    const refresh = await fetch((window.ECOLLAB?.baseUrl || '') + '/API/auth/csrf-token.php', { cache: 'no-store', credentials: 'same-origin' });
+    const token = await refresh.json();
+    if (refresh.ok && token.token) {
+      window.ECOLLAB.csrfToken = token.token;
+      return uploadChatAttachment(endpoint, form, true);
+    }
+  }
+  if (!response.ok || !data?.success) {
+    throw new Error(data?.error || (response.status === 413
+      ? 'This file exceeds the server upload limit.' : 'Upload failed (HTTP ' + response.status + ').'));
+  }
+  return data;
+}
+window.uploadChatAttachment = uploadChatAttachment;
+
 function chatAvatarUrl(url) {
   const raw = String(url || '').trim();
   if (!raw) return '';
@@ -350,6 +372,8 @@ async function switchChannel(el, channelId) {
 
   currentChannelId = channelId;
   window.ECOLLAB.currentChannelId = channelId;
+  renderMessages([], false);
+  if (window.subscribeToChannel) window.subscribeToChannel(channelId);
   oldestMessageId = null;
   hasMoreMessages = true;
   lastMessageId = 0;
@@ -441,11 +465,11 @@ async function switchChannel(el, channelId) {
     }
 
     if (msgData.messages) {
-      renderMessages(msgData.messages, false);
+      renderMessages(msgData.messages, false, true);
       hasMoreMessages = msgData.has_more;
       if (msgData.messages.length) {
         oldestMessageId = msgData.messages[0].id;
-        lastMessageId = msgData.messages[msgData.messages.length - 1].id;
+        lastMessageId = Math.max(Number(lastMessageId) || 0, Number(msgData.messages[msgData.messages.length - 1].id));
       }
     }
   } catch (err) {
@@ -454,16 +478,18 @@ async function switchChannel(el, channelId) {
   }
 
   // Subscribe via WebSocket
-  if (window.subscribeToChannel) window.subscribeToChannel(channelId);
 }
 
 // ── Render messages ──
-function renderMessages(messages, prepend = false) {
+function renderMessages(messages, prepend = false, preserveLive = false) {
   const area = document.getElementById('messagesArea');
   if (!area) return;
 
   // Remove typing indicator temporarily
   const typing = document.getElementById('typingIndicator');
+  const latestId = Math.max(0, ...messages.map(msg => Number(msg.id) || 0));
+  const retained = !prepend && preserveLive ? [...area.querySelectorAll('[data-msg-id]')]
+    .filter(el => String(el.dataset.msgId).startsWith('opt_') || Number(el.dataset.msgId) > latestId) : [];
   if (!prepend) {
     area.innerHTML = '';
     if (typing) area.appendChild(typing);
@@ -487,6 +513,7 @@ function renderMessages(messages, prepend = false) {
   } else {
     if (typing) area.insertBefore(fragment, typing);
     else area.appendChild(fragment);
+    retained.forEach(el => { if (typing) area.insertBefore(el, typing); else area.appendChild(el); });
     scrollToBottom();
   }
 }
@@ -525,6 +552,8 @@ function buildMessageElement(msg) {
     msg.attachments.forEach(att => {
       if (att.mime_type && att.mime_type.startsWith('image/')) {
         attachHtml += `<img src="${(window.ECOLLAB?.baseUrl || '')}/${escHtml(att.file_path)}" style="max-width:300px;max-height:220px;border-radius:8px;margin-top:6px;display:block;cursor:pointer;" onclick="window.open('${(window.ECOLLAB?.baseUrl || '')}/${escHtml(att.file_path)}','_blank')" alt="${escHtml(att.file_name)}">`;
+      } else if (att.mime_type?.startsWith('video/')) {
+        attachHtml += `<video controls playsinline preload="metadata" src="${(window.ECOLLAB?.baseUrl || '')}/${escHtml(att.file_path)}" style="max-width:100%;width:300px;border-radius:8px;margin-top:6px;"></video>`;
       } else {
         attachHtml += `
           <div style="display:flex;align-items:center;gap:10px;margin-top:6px;padding:10px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;max-width:300px;">
@@ -622,6 +651,7 @@ function appendMessageToUI(msg) {
   const area = document.getElementById('messagesArea');
   const typing = document.getElementById('typingIndicator');
   if (!area) return;
+  if (area.querySelector(`[data-msg-id="${CSS.escape(String(msg.id))}"]`)) return;
   const el = buildMessageElement(msg);
   if (typing && typing.parentNode === area) {
     area.insertBefore(el, typing);
@@ -629,7 +659,7 @@ function appendMessageToUI(msg) {
     area.appendChild(el);
   }
   scrollToBottom();
-  lastMessageId = Math.max(lastMessageId || 0, msg.id);
+  if (Number.isFinite(Number(msg.id))) lastMessageId = Math.max(Number(lastMessageId) || 0, Number(msg.id));
 }
 window.appendMessageToUI = appendMessageToUI;
 window.buildPollWidget = buildPollWidget;
@@ -678,6 +708,8 @@ async function sendMessage() {
     body.attachment_mime = pendingAttachment.mime_type;
   }
 
+  const sentAttachment = pendingAttachment;
+  const sentParentId = replyParentId;
   input.value = '';
   clearAttachmentPreview();
   cancelReply();
@@ -695,9 +727,9 @@ async function sendMessage() {
     is_verified: false,
     is_pinned: false,
     is_edited: false,
-    parent_id: replyParentId,
+    parent_id: sentParentId,
     reactions: [],
-    attachments: pendingAttachment ? [pendingAttachment] : [],
+    attachments: sentAttachment ? [sentAttachment] : [],
     created_at: new Date().toISOString(),
   };
   appendMessageToUI(optimisticMsg);
@@ -719,11 +751,8 @@ async function sendMessage() {
         const realEl = buildMessageElement(data.message);
         optEl.replaceWith(realEl);
       }
-      // Broadcast via WebSocket
-      if (window.chatSocket && window.chatSocket.readyState === WebSocket.OPEN) {
-        window.chatSocket.send(JSON.stringify({ type: 'message', message: data.message }));
-      }
-      lastMessageId = data.message.id;
+      window.sendPersistedChatMessage?.({ type: 'message', channel_id: body.channel_id, message: data.message });
+      if (Number(body.channel_id) === Number(currentChannelId)) lastMessageId = Math.max(Number(lastMessageId) || 0, Number(data.message.id));
     }
   } catch (err) {
     // Remove optimistic message on failure
@@ -1156,12 +1185,7 @@ async function handleFileUpload(input, type) {
   fd.append('file', file);
   try {
     showToast('📎 Uploading…', 'info');
-    const resp = await fetch((window.ECOLLAB?.baseUrl || '') + '/API/chat/upload-file.php', {
-      method: 'POST',
-      headers: { 'X-CSRF-Token': window.ECOLLAB?.csrfToken || '' },
-      body: fd,
-    });
-    const data = await resp.json();
+    const data = await uploadChatAttachment(UPLOAD_ENDPOINT, fd);
     if (data.success) {
       pendingAttachment = data;
       showAttachmentPreview(data, type);
@@ -1170,7 +1194,7 @@ async function handleFileUpload(input, type) {
       showToast('Upload failed: ' + (data.error || 'unknown error'), 'info');
     }
   } catch (err) {
-    showToast('Upload failed', 'info');
+    showToast('Upload failed: ' + err.message, 'error');
     console.error(err);
   }
   input.value = '';
@@ -1738,6 +1762,7 @@ window.lastMessageId = 0;
     if (typeof window[name] === 'function') window['__real_' + name] = window[name];
   });
 })();
+
 
 
 

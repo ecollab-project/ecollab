@@ -1824,6 +1824,10 @@ function toggleScreenWatch(userId) {
   if (_watchedScreenUsers.has(uid)) _watchedScreenUsers.delete(uid);
   else _watchedScreenUsers.add(uid);
   _applyScreenWatchState(uid);
+  if (_watchedScreenUsers.has(uid)) {
+    if (vcMinimized) toggleVcMinimize();
+    document.getElementById('vcScreenSection')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
 }
 function toggleScreenExpand(userId) {
   const uid = Number(userId || document.querySelector('#vcScreenGrid .vc-screen-card')?.dataset.screenUser || 0);
@@ -2015,5 +2019,6 @@ window._onVoiceInvite = function(data) {
 window.openVcInviteModal = openVcInviteModal;
 window._filterVcInviteList = _filterVcInviteList;
 window._sendVoiceInvite = _sendVoiceInvite;
+
 
 

@@ -20,6 +20,9 @@ try {
     }
 
     $before     = filter_input(INPUT_GET, 'before', FILTER_VALIDATE_INT) ?: null;
+    $after      = filter_input(INPUT_GET, 'after', FILTER_VALIDATE_INT);
+    $after      = $after !== false && $after !== null && $after >= 0 ? $after : null;
+    if ($after !== null) $before = null;
     $limit      = filter_input(INPUT_GET, 'limit', FILTER_VALIDATE_INT) ?: 50;
     $pinnedOnly = filter_input(INPUT_GET, 'pinned', FILTER_VALIDATE_INT) === 1;
 
@@ -79,7 +82,7 @@ try {
         exit;
     }
 
-    $messages = $service->getMessages((int)$channelId, $user['id'], $before, $limit);
+    $messages = $service->getMessages((int)$channelId, $user['id'], $before, $limit, $after);
 
     // Mark as read
     $cs = new ChannelService();
@@ -95,3 +98,4 @@ try {
     http_response_code($code);
     echo json_encode(['error' => $e->getMessage()]);
 }
+

@@ -71,6 +71,7 @@ function initWebSocket() {
       if (typeof data?.type === 'string' && data.type.startsWith('dm_group_call_')) {
         console.log('[DM group call] received WS event', data);
       }
+      window.dispatchEvent(new CustomEvent('ecollab:socket-message', { detail: data }));
       handleSocketMessage(data);
     };
 
@@ -138,6 +139,17 @@ function wsSend(payload) {
   return false;
 }
 window.wsSend = wsSend;
+window.isChatRealtimeReady = () => Boolean(_authed && chatSocket && chatSocket.readyState === WebSocket.OPEN);
+
+// Messages are already persisted by HTTP. Queue their relay during reconnect/auth.
+const pendingChatRelays = new Map();
+function sendPersistedChatMessage(payload) {
+  if (wsSend(payload)) return true;
+  const key = payload.type + ':' + (payload.message_id || payload.message?.id);
+  pendingChatRelays.set(key, payload);
+  return false;
+}
+window.sendPersistedChatMessage = sendPersistedChatMessage;
 
 // ── Message dispatcher ───────────────────────────────────────────────────────
 function handleSocketMessage(data) {
@@ -163,6 +175,7 @@ function handleSocketMessage(data) {
           channel_id: window.ECOLLAB.currentChannelId,
         }));
       }
+      pendingChatRelays.forEach((payload, key) => { if (wsSend(payload)) pendingChatRelays.delete(key); });
       // Restore the voice-room membership after a WS reconnect.
       // The server intentionally keeps voice rooms in memory per socket.
       if (window.vcChannelId != null && window.vcActive !== false) {
@@ -823,23 +836,24 @@ function startPollingFallback() {
   if (window.ECOLLAB?.whiteboardStandalone) return;
   if (pollInterval) return;
   console.info('[WS] Starting polling fallback (3 s interval)');
+  let pollingBusy = false;
   pollInterval = setInterval(async () => {
     const channelId = window.ECOLLAB?.currentChannelId;
-    if (!channelId) return;
+    if (!channelId || pollingBusy) return;
+    pollingBusy = true;
     try {
       const base = window.ECOLLAB?.baseUrl || '';
       const data = await apiFetch(
         `${base}/API/chat/get-messages.php?channel_id=${channelId}&after=${lastMessageId}`
       );
+      if (Number(channelId) !== Number(window.ECOLLAB?.currentChannelId)) return;
       if (data.messages?.length) {
         data.messages.forEach(msg => {
-          if (parseInt(msg.sender_id) !== parseInt(window.ECOLLAB?.userId)) {
-            if (typeof appendMessageToUI === 'function') appendMessageToUI(msg);
-          }
+          if (typeof appendMessageToUI === 'function') appendMessageToUI(msg);
           lastMessageId = Math.max(lastMessageId, msg.id);
         });
       }
-    } catch { /* ignore */ }
+    } catch { /* ignore */ } finally { pollingBusy = false; }
   }, 3000);
 }
 
@@ -904,6 +918,7 @@ if (document.readyState === 'loading') {
 } else {
   connectWebSocket();
 }
+
 
 
 

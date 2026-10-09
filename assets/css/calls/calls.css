@@ -85,8 +85,11 @@ html[data-theme="light"] :is(.ec-call, .ec-media-settings) { color-scheme: light
 .ec-call-tile.has-video em{visibility:hidden}
 .ec-call.is-minimized header{cursor:grab;touch-action:none;user-select:none}
 .ec-call.is-minimized header:active{cursor:grabbing}
-body.vc-active #voiceChannelView.active:not(.vc-minimized){position:fixed!important;inset:var(--app-viewport-top,0px) 0 auto 0!important;width:100vw!important;height:var(--app-viewport-height,100dvh)!important;max-width:none!important;max-height:none!important;transform:none!important;z-index:10050!important;border-radius:0!important;display:grid!important;grid-template-rows:auto minmax(0,1fr) auto!important}
-#voiceChannelView.active:not(.vc-minimized) .vc-body{min-height:0;overflow:auto}
+body.vc-active #voiceChannelView.active:not(.vc-minimized){position:fixed!important;inset:var(--app-viewport-top,0px) 0 auto 0!important;width:100vw!important;height:var(--app-viewport-height,100dvh)!important;max-width:none!important;max-height:none!important;transform:none!important;z-index:10050!important;border-radius:0!important;display:flex!important;flex-direction:column!important}
+#voiceChannelView.active:not(.vc-minimized) .vc-body{flex:1;min-height:0;overflow:auto}
+#voiceChannelView .vc-header,#voiceChannelView .vc-controls-bar{flex-shrink:0}
+body.vc-active .modal-overlay{z-index:10100!important}
+body.vc-active .ec-media-settings{z-index:10110!important}
 #voiceChannelView .vc-screen-card.vc-screen-expanded{grid-column:1/-1;width:100%!important;aspect-ratio:16/9;min-height:280px}
 #voiceChannelView .vc-screen-card.vc-screen-expanded .vc-screen-card-inner{height:100%;width:100%}
 #voiceChannelView .vc-screen-card.vc-screen-expanded video{object-fit:contain!important}
@@ -112,3 +115,4 @@ body.vc-active #voiceChannelView.active:not(.vc-minimized){position:fixed!import
 .ec-call button.ec-call-compact-name{display:block;width:100%;text-align:left;min-height:0;padding:0;border:0;border-radius:0;background:transparent;color:var(--text-secondary,#b8c1d5);margin:3px 0 8px}
 .ec-call button.ec-call-compact-name:hover{color:var(--text-primary,#f2f4fa);text-decoration:underline}
 .ec-call .ec-call-compact-actions button[aria-pressed=true]{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35);color:#f87171}
+

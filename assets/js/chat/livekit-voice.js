@@ -502,6 +502,13 @@
     window.wsSend?.({type:'leave_voice',channel_id:Number(leavingChannel)});
     refreshSidebarCounts();
     if (typeof _reportVoiceStatus === 'function') _reportVoiceStatus('leave', leavingChannel);
+    vcChannelId = null;
+    Object.keys(_remoteCameraStreams).forEach(key => delete _remoteCameraStreams[key]);
+    Object.keys(_remoteScreenStreams).forEach(key => delete _remoteScreenStreams[key]);
+    _watchedScreenUsers.clear();
+    document.getElementById('vcScreenGrid')?.replaceChildren();
+    document.getElementById('vcScreenSection')?.style.setProperty('display', 'none');
+    _syncScreenUnwatchControl();
     showToast('Disconnected from voice', 'info');
   };
 
@@ -597,4 +604,5 @@
   document.addEventListener('visibilitychange',refreshSidebarCounts);
   setTimeout(refreshSidebarCounts,1000);
 })();
+
 

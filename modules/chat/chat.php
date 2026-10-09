@@ -1097,13 +1097,13 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     6. whiteboard.js — collaborative whiteboard
     7. dm-notifications.js — DM badge polling
   -->
-  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=yjs-chat-1-calls-2" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=general-navigation-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=chat-delivery-1-yjs-chat-1-calls-2" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=chat-delivery-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=presence-consistency-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=team-audit-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=chat-delivery-1" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.22.3/dist/livekit-client.umd.min.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/livekit-voice.js?v=team-audit-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/livekit-voice.js?v=chat-delivery-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/whiteboard.js" defer></script>
   <!-- ── Private Channel Manager Modal ────────────────────────────────── -->
   <div id="privateChannelManagerModal" style="display:none!important;position:fixed;inset:0;z-index:11000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this)closePrivateChannelManager()">
@@ -1150,7 +1150,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     </button>
   </div>
 
-  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=notification-hub-2" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=chat-delivery-1" defer></script>
   <!--
     Collab tools load order:
     ot-engine.js        — pure OT algorithm (no deps, must come first)
@@ -3543,6 +3543,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 </body>
 
 </html>
+
 
 
 

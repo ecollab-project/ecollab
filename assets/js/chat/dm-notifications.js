@@ -97,34 +97,41 @@ const NOTIF = {
  * We piggyback on the existing _wsSocket.
  */
 function _hookWebSocket() {
-  const ws = window._wsSocket;
-  if (!ws) return;
-
-  const original = ws.onmessage;
-  ws.onmessage = function(event) {
-    // Let the original handler run first
-    if (typeof original === 'function') original.call(ws, event);
-
-    try {
-      const data = JSON.parse(event.data);
-      switch (data.type) {
-        case 'dm_message':          _onWsDmMessage(data);       break;
-        case 'dm_typing':           _onWsDmTyping(data);        break;
-        case 'dm_group_message':    _onWsDmGroupMessage(data);  break;
-        case 'dm_group_typing':     _onWsDmGroupTyping(data);   break;
-        case 'connection_request':  _onWsConnRequest(data);     break;
-        case 'connection_accepted': _onWsConnAccepted(data);    break;
-        case 'notification':        _onWsNotification(data);    break;
-      }
-    } catch (_) {}
-  };
+  window.addEventListener('ecollab:socket-message', event => {
+    const data = event.detail;
+    switch (data.type) {
+      case 'auth_ok': _syncOpenDmMessages(); break;
+      case 'dm_message': _onWsDmMessage(data); break;
+      case 'dm_typing': _onWsDmTyping(data); break;
+      case 'dm_group_message': _onWsDmGroupMessage(data); break;
+      case 'dm_group_typing': _onWsDmGroupTyping(data); break;
+      case 'connection_request': _onWsConnRequest(data); break;
+      case 'connection_accepted': _onWsConnAccepted(data); break;
+      case 'notification': _onWsNotification(data); break;
+    }
+  });
+}
+function _wsSend(payload) {
+  if (['dm_message', 'dm_group_message'].includes(payload.type)) {
+    return window.sendPersistedChatMessage?.(payload);
+  }
+  return window.wsSend?.(payload);
 }
 
-function _wsSend(payload) {
-  const ws = window._wsSocket;
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify(payload));
-  }
+let dmSyncBusy = false;
+async function _syncOpenDmMessages() {
+  if (dmSyncBusy || document.hidden) return;
+  const groupId = DM.activeGroupId;
+  const partnerId = DM.activePartnerId;
+  if (!groupId && !partnerId) return;
+  dmSyncBusy = true;
+  try {
+    const url = groupId ? `/API/dm/group-message.php?group_id=${groupId}`
+      : `/API/dm/open-conversation.php?partner_id=${partnerId}`;
+    const data = await apiFetch(BASE() + url);
+    if (groupId !== DM.activeGroupId || partnerId !== DM.activePartnerId) return;
+    (data.messages || []).forEach(_appendDmMessage);
+  } catch (_) {} finally { dmSyncBusy = false; }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -132,7 +139,7 @@ function _wsSend(payload) {
 // ═══════════════════════════════════════════════════════════════
 
 function _onWsDmMessage(data) {
-  const convId = data.conversation_id;
+  const convId = Number(data.conversation_id);
 
   // Update conversation list preview
   const conv = DM.conversations.find(c => c.conversation_id == convId);
@@ -140,7 +147,7 @@ function _onWsDmMessage(data) {
     conv.last_message = data.body;
     conv.last_msg_at  = data.created_at;
     // Increment unread if not viewing this conversation
-    if (DM.activeConvId !== convId) {
+    if (Number(DM.activeConvId) !== convId) {
       conv.unread_count = (parseInt(conv.unread_count) || 0) + 1;
     }
     _renderDmList();
@@ -150,7 +157,7 @@ function _onWsDmMessage(data) {
   }
 
   // If this conversation is open, append message
-  if (DM.activeConvId === convId) {
+  if (Number(DM.activeConvId) === convId) {
     _appendDmMessage(data);
   } else {
     // Show floating toast
@@ -782,7 +789,8 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
 
   try {
     const data = await apiFetch(BASE() + `/API/dm/open-conversation.php?partner_id=${partnerId}`);
-    DM.activeConvId = data.conversation_id;
+    if (DM.activePartnerId !== partnerId || DM.activeGroupId) return;
+    DM.activeConvId = Number(data.conversation_id);
 
     // Clear unread from list
     const conv = DM.conversations.find(c => c.conversation_id === DM.activeConvId);
@@ -811,6 +819,7 @@ window.openGroupConversation = async function(groupId) {
 
   try {
     const data = await apiFetch(BASE() + `/API/dm/group-message.php?group_id=${groupId}`);
+    if (DM.activeGroupId !== groupId) return;
     const displayName = data.group?.name || (DM.groups.find(g => g.id === groupId)?.display_name) || 'Group';
 
     document.getElementById('dmPanelTitle').innerHTML = `
@@ -896,8 +905,7 @@ window._dmFileChosen=function(input){
 window._dmClearFile=function(){_dmPendingFile=null;const i=document.getElementById('dmFileInput');if(i)i.value='';const p=document.getElementById('dmAttachmentPreview');if(p){p.innerHTML='';p.style.display='none';}};
 async function _dmUploadPending(){
   if(!_dmPendingFile)return null;const form=new FormData();form.append('file',_dmPendingFile);
-  const res=await fetch(BASE()+'/API/dm/upload-file.php',{method:'POST',credentials:'same-origin',headers:{'X-CSRF-Token':window.ECOLLAB?.csrfToken||document.querySelector('meta[name="csrf-token"]')?.content||''},body:form});
-  const data=await res.json().catch(()=>({}));if(!res.ok||!data.success)throw new Error(data.error||'Upload failed');return data;
+  return window.uploadChatAttachment(BASE()+'/API/dm/upload-file.php', form);
 }
 function _dmAttachmentHTML(m){
   if(!m.attachment_path)return '';
@@ -924,6 +932,8 @@ function _dmMessageHTML(m) {
 function _appendDmMessage(m) {
   const area = document.getElementById('dmMessagesArea');
   if (!area) return;
+  m = { ...m, id: m.id ?? m.message_id };
+  if (m.id == null || area.querySelector(`[data-msg-id="${CSS.escape(String(m.id))}"]`)) return;
   const el = document.createElement('div');
   el.innerHTML = _dmMessageHTML(m);
   area.appendChild(el.firstElementChild);
@@ -990,7 +1000,12 @@ window.sendDmMessage = async function() {
         method: 'POST',
         body: JSON.stringify({ group_id: DM.activeGroupId, body: text, attachment_path:uploaded?.file_path||'', attachment_name:uploaded?.file_name||'', attachment_size:uploaded?.file_size||0, attachment_mime:uploaded?.mime_type||'' }),
       });
-      _wsSend({ type: 'dm_group_message', group_id: DM.activeGroupId, message_id: data.message_id, body: text, created_at: new Date().toISOString() });
+      const optimisticEl = document.querySelector(`[data-msg-id="${optimistic.id}"]`);
+      if (optimisticEl && data.message_id) {
+        const existing = document.querySelector(`#dmMessagesArea [data-msg-id="${CSS.escape(String(data.message_id))}"]`);
+        if (existing) optimisticEl.remove(); else optimisticEl.dataset.msgId = String(data.message_id);
+      }
+      _wsSend({ type: 'dm_group_message' , group_id: DM.activeGroupId, message_id: data.message_id, body: text, created_at: new Date().toISOString() });
       const grp = DM.groups.find(g => g.id === DM.activeGroupId);
       if (grp) { grp.last_message = (text || (uploaded ? '📎 '+uploaded.file_name : '')).slice(0, 120); grp.last_msg_at = new Date().toISOString(); _renderGroupList(); }
       input.disabled = false;
@@ -1021,7 +1036,8 @@ window.sendDmMessage = async function() {
     // Replace optimistic ID with the real DB message ID.
     const optimisticEl = document.querySelector(`[data-msg-id="${optimistic.id}"]`);
     if (optimisticEl && data.message_id) {
-      optimisticEl.dataset.msgId = String(data.message_id);
+      const existing = document.querySelector(`#dmMessagesArea [data-msg-id="${CSS.escape(String(data.message_id))}"]`);
+      if (existing) optimisticEl.remove(); else optimisticEl.dataset.msgId = String(data.message_id);
     }
 
     // Human DMs still use WebSocket. The AI reply is returned directly
@@ -1156,13 +1172,10 @@ window.closeDmPanel = function() {
 // ═══════════════════════════════════════════════════════════════
 
 function _init() {
-  // Wait for socket.js to set window._wsSocket
-  const interval = setInterval(() => {
-    if (window._wsSocket) {
-      clearInterval(interval);
-      _hookWebSocket();
-    }
-  }, 500);
+  _hookWebSocket();
+  setInterval(() => {
+    if (!window.isChatRealtimeReady?.()) _syncOpenDmMessages();
+  }, 3000);
 
   // Load initial data
   loadDmList().then(async () => {
@@ -1214,4 +1227,5 @@ Object.assign(window, {
   loadDmList,
   sendDmMessage,
 });
+
 

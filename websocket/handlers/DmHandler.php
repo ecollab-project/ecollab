@@ -11,10 +11,10 @@ class DmHandler
     public static function handleDmMessage(ConnectionInterface $from, array $data, array $meta, array $userConns, PDO $db): void {
         $recipientId=(int)($data['recipient_id']??0); $conversationId=(int)($data['conversation_id']??0); $messageId=(int)($data['message_id']??0);
         if (!$recipientId||!$conversationId||!$messageId) return;
-        $messageStmt=$db->prepare('SELECT dm.body,dm.created_at FROM dm_messages dm JOIN dm_conversations dc ON dc.id=dm.conversation_id WHERE dm.id=:mid AND dm.conversation_id=:cid AND dm.sender_id=:sender AND dm.is_deleted=0 AND ((dc.user_a=:sender_a AND dc.user_b=:recipient_a) OR (dc.user_b=:sender_b AND dc.user_a=:recipient_b)) LIMIT 1');
+        $messageStmt=$db->prepare('SELECT dm.body,dm.created_at,dm.attachment_path,dm.attachment_name,dm.attachment_size,dm.attachment_mime FROM dm_messages dm JOIN dm_conversations dc ON dc.id=dm.conversation_id WHERE dm.id=:mid AND dm.conversation_id=:cid AND dm.sender_id=:sender AND dm.is_deleted=0 AND ((dc.user_a=:sender_a AND dc.user_b=:recipient_a) OR (dc.user_b=:sender_b AND dc.user_a=:recipient_b)) LIMIT 1');
         $messageStmt->execute([':mid'=>$messageId,':cid'=>$conversationId,':sender'=>(int)$meta['user_id'],':sender_a'=>(int)$meta['user_id'],':recipient_a'=>$recipientId,':sender_b'=>(int)$meta['user_id'],':recipient_b'=>$recipientId]);
         $message=$messageStmt->fetch(PDO::FETCH_ASSOC); if (!$message) return;
-        $payload=json_encode(['type'=>'dm_message','conversation_id'=>$conversationId,'message_id'=>$messageId,'sender_id'=>$meta['user_id'],'sender_name'=>$meta['full_name']??$meta['username'],'sender_gradient'=>$meta['gradient']??'','body'=>$message['body'],'created_at'=>$message['created_at']]);
+        $payload=json_encode(['type'=>'dm_message','conversation_id'=>$conversationId,'message_id'=>$messageId,'sender_id'=>$meta['user_id'],'sender_name'=>$meta['full_name']??$meta['username'],'sender_gradient'=>$meta['gradient']??'','body'=>$message['body'],'created_at'=>$message['created_at'],'attachment_path'=>$message['attachment_path'],'attachment_name'=>$message['attachment_name'],'attachment_size'=>$message['attachment_size'],'attachment_mime'=>$message['attachment_mime']]);
         if(isset($userConns[$recipientId])){foreach($userConns[$recipientId] as $conn){try{$conn->send($payload);}catch(\Throwable){}}}
         try{$from->send($payload);}catch(\Throwable){}
     }
@@ -25,7 +25,7 @@ class DmHandler
 
         // Verify the message exists, belongs to this group, and was actually sent by the caller —
         // same verification discipline as handleDmMessage, not trusted client input.
-        $messageStmt=$db->prepare('SELECT dm.body,dm.created_at FROM dm_messages dm JOIN dm_group_members gm ON gm.group_id=dm.group_id AND gm.user_id=:caller WHERE dm.id=:mid AND dm.group_id=:gid AND dm.sender_id=:sender AND dm.is_deleted=0 LIMIT 1');
+        $messageStmt=$db->prepare('SELECT dm.body,dm.created_at,dm.attachment_path,dm.attachment_name,dm.attachment_size,dm.attachment_mime FROM dm_messages dm JOIN dm_group_members gm ON gm.group_id=dm.group_id AND gm.user_id=:caller WHERE dm.id=:mid AND dm.group_id=:gid AND dm.sender_id=:sender AND dm.is_deleted=0 LIMIT 1');
         $messageStmt->execute([':mid'=>$messageId,':gid'=>$groupId,':sender'=>$callerId,':caller'=>$callerId]);
         $message=$messageStmt->fetch(PDO::FETCH_ASSOC); if (!$message) return;
 
@@ -33,7 +33,7 @@ class DmHandler
         $memStmt->execute([':gid'=>$groupId,':caller'=>$callerId]);
         $memberIds=$memStmt->fetchAll(PDO::FETCH_COLUMN);
 
-        $payload=json_encode(['type'=>'dm_group_message','group_id'=>$groupId,'message_id'=>$messageId,'sender_id'=>$callerId,'sender_name'=>$meta['full_name']??$meta['username'],'sender_gradient'=>$meta['gradient']??'','body'=>$message['body'],'created_at'=>$message['created_at']]);
+        $payload=json_encode(['type'=>'dm_group_message','group_id'=>$groupId,'message_id'=>$messageId,'sender_id'=>$callerId,'sender_name'=>$meta['full_name']??$meta['username'],'sender_gradient'=>$meta['gradient']??'','body'=>$message['body'],'created_at'=>$message['created_at'],'attachment_path'=>$message['attachment_path'],'attachment_name'=>$message['attachment_name'],'attachment_size'=>$message['attachment_size'],'attachment_mime'=>$message['attachment_mime']]);
         foreach ($memberIds as $memberId) {
             $memberId=(int)$memberId;
             if (isset($userConns[$memberId])) { foreach($userConns[$memberId] as $conn){try{$conn->send($payload);}catch(\Throwable){}} }
@@ -268,5 +268,6 @@ class DmHandler
         $stmt->execute([':cid'=>$conversationId,':uid_a'=>$userId,':peer_a'=>$peerId,':uid_b'=>$userId,':peer_b'=>$peerId]); return (bool)$stmt->fetchColumn();
     }
 }
+
 
 
