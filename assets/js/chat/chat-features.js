@@ -478,6 +478,7 @@ async function _fetchActiveNow() {
     const res = await fetch(`${base}/API/chat/active-now.php?server_id=${serverId}&_=${Date.now()}`);
     if (!res.ok) return;
     const data = await res.json();
+    if (serverId !== window.ECOLLAB?.currentServerId) return;
     if (data.success && Array.isArray(data.users)) {
       _activeMembersData = data.users;
 
@@ -494,7 +495,7 @@ async function _fetchActiveNow() {
             style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:7px;cursor:pointer;transition:background 0.1s;"
             onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
             <div style="position:relative;flex-shrink:0;">
-              <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,${u.grad || '#3b82f6,#6366f1'});display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;">${u.name[0].toUpperCase()}</div>
+              ${window.chatSidebarAvatar(u.name, u.avatar_url, u.grad, 30)}
               <div style="position:absolute;bottom:0;right:0;width:9px;height:9px;border-radius:50%;border:2px solid var(--bg-secondary);background:${u.status === 'voice' ? '#22c55e' : u.status === 'idle' ? '#f59e0b' : '#22c55e'};"></div>
             </div>
             <div style="flex:1;min-width:0;">
@@ -2802,4 +2803,5 @@ window._voteOnThread = _voteOnThread;
 window._openThreadDetail = _openThreadDetail;
 window._submitThreadReply = _submitThreadReply;
 window._voteOnReply = _voteOnReply;
+
 

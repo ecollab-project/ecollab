@@ -1267,6 +1267,18 @@ function selectChannelType(el, type) {
 }
 
 // ── Members panel ──
+// Keep initials visible when an external avatar is missing or fails to load.
+function chatSidebarAvatar(name, url, gradient, size = 28) {
+  const colors = String(gradient || '').split(',').map(c => c.trim());
+  const valid = colors.length === 2 && colors.every(c => /^#[0-9a-f]{3,8}$/i.test(c));
+  const background = valid ? colors.join(',') : '#3b82f6,#6366f1';
+  const initial = escHtml(String(name || '?').trim().charAt(0).toUpperCase() || '?');
+  const source = chatAvatarUrl(url);
+  const image = source ? `<img src="${escHtml(source)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : '';
+  return `<span class="avatar-placeholder sidebar-avatar" style="width:${size}px;height:${size}px;background:linear-gradient(135deg,${background})">${initial}${image}</span>`;
+}
+window.chatSidebarAvatar = chatSidebarAvatar;
+
 function chatMemberOnline(m) { return m.is_online === true || m.is_online === 1 || m.is_online === "1"; }
 function renderMembersPanel(members) {
   const list = document.getElementById('membersList');
@@ -1286,12 +1298,11 @@ function renderMembersPanel(members) {
     return `
       <div class="member-item" data-user-id="${m.id || m.user_id || 0}" data-user-grad="${grad}" onclick="openMiniProfile(event, '${escHtml(m.full_name || m.username)}', '${escHtml(m.role || 'Student')}', '', '${init}', ${m.id || m.user_id || 0})">
         <div class="user-avatar">
-          <div class="avatar-placeholder" style="width:28px;height:28px;font-size:11px;border-radius:50%;background:${memberAvatar};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;">${memberInitial}</div>
+          ${chatSidebarAvatar(m.full_name || m.username, m.avatar_url, grad, 28)}
           <div class="online-dot ${chatMemberOnline(m) ? '' : 'offline'}"></div>
         </div>
         <div class="member-info">
           <div class="member-name">${escHtml(m.full_name || m.nickname || m.username)}${m.server_role === 'owner' ? ' <span class="member-badge">👑</span>' : ''}</div>
-          <div class="member-sub" style="color:${chatMemberOnline(m) ? 'var(--accent-green)' : 'var(--text-muted)'};font-size:10px;">${chatMemberOnline(m) ? 'Online' : 'Offline'}</div>
         </div>
         <div class="member-status ${online}">● ${chatMemberOnline(m) ? 'Online' : 'Offline'}</div>
       </div>
@@ -1313,7 +1324,7 @@ function renderMembersPanel(members) {
       return `
         <div class="active-user" onclick="openMiniProfile(event, '${escHtml(m.full_name || m.username)}', '${escHtml(m.role)}', '', '${init}', ${m.id || m.user_id || 0})">
           <div class="user-avatar">
-            <div class="avatar-placeholder" style="width:34px;height:34px;font-size:13px;border-radius:50%;background:${memberAvatar};background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;">${memberInitial}</div>
+            ${chatSidebarAvatar(m.full_name || m.username, m.avatar_url, grad, 34)}
             <div class="online-dot"></div>
           </div>
           <div class="active-user-info">
@@ -1720,4 +1731,5 @@ window.lastMessageId = 0;
     if (typeof window[name] === 'function') window['__real_' + name] = window[name];
   });
 })();
+
 

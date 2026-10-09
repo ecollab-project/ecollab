@@ -6400,3 +6400,13 @@ body.vc-active:not(.vc-pip) .sidebar-icons {
 @media(max-width:860px){
   .workspace-brand-mark{width:38px;height:38px;flex-basis:38px;margin-top:7px}
 }
+
+
+/* Consistent sidebar avatars and one readable presence label per member. */
+.sidebar-avatar { position:relative; overflow:hidden; font-size:12px; }
+.sidebar-avatar img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+#membersList .user-avatar { flex:0 0 28px; width:28px; height:28px; }
+#membersList .member-item { gap:9px; padding:7px 0; }
+#membersList .member-name { overflow-wrap:anywhere; line-height:1.35; }
+#membersList .member-status { flex-shrink:0; color:var(--text-muted); white-space:nowrap; }
+#membersList .member-status.online { color:var(--accent-green); }

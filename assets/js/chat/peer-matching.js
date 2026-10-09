@@ -793,8 +793,8 @@ window.refreshMatches = async function(btn) {
         const avatarText = pmAvatarUrl(m.avatar_url) ? '' : (m.name||'?')[0];
         return `
           <div class="match-item" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
-            <div style="position:relative;width:36px;height:36px;border-radius:50%;background:${avatarBg};background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">
-              ${avatarText}
+            <div class="sidebar-match-avatar" style="position:relative;flex-shrink:0;">
+              ${window.chatSidebarAvatar(m.name, m.avatar_url, m.grad, 36)}
               ${m.is_online?'<span style="position:absolute;bottom:0;right:0;width:9px;height:9px;background:#22c55e;border-radius:50%;border:2px solid var(--bg-secondary)"></span>':''}
             </div>
             <div style="flex:1;min-width:0;">
@@ -811,3 +811,4 @@ window.refreshMatches = async function(btn) {
   } catch { if (_origRefreshMatches && btn) _origRefreshMatches(btn); }
   finally { if (btn) { btn.classList.remove('spinning'); btn.disabled = false; } }
 };
+
