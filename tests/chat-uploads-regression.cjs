@@ -67,5 +67,17 @@ const file={name:'a.png',size:40,type:'image/png',lastModified:10};
   const operation=vm.runInContext('handleFileUpload(inputStub,"image")',dom.getInternalVMContext());
   vm.runInContext('currentChannelId=21',dom.getInternalVMContext());resolveUpload(result);await operation;
   assert.equal(vm.runInContext('pendingAttachment',dom.getInternalVMContext()),null);
+  // A DM/group upload also stops before persistence when its conversation changes.
+  const dmSource=fs.readFileSync(path.join(root,'assets/js/chat/dm-notifications.js'),'utf8');
+  const pendingFn=dmSource.slice(dmSource.indexOf('async function _dmUploadPending('),dmSource.indexOf('\nfunction _dmAttachmentHTML'));
+  const sendFn=dmSource.slice(dmSource.indexOf('window.sendDmMessage ='),dmSource.indexOf('\nwindow.closeDmPanel'));
+  const input=w.document.createElement('input');input.id='dmInputField';input.value='Original draft';w.document.body.append(input);
+  w.fileStub=file;w._dmClearFile=()=>{throw new Error('Wrong conversation cleared');};
+  w.apiFetch=()=>{throw new Error('Message sent after conversation changed');};
+  vm.runInContext('const DM={activeConvId:3,activeGroupId:null,activePartnerId:5};let _dmPendingFile=fileStub;const BASE=()=>"https://example.test";'+pendingFn+sendFn,dom.getInternalVMContext());
+  const send=w.sendDmMessage();
+  vm.runInContext('DM.activeConvId=4;DM.activePartnerId=6;',dom.getInternalVMContext());
+  resolveUpload(result);await send;
+  assert.equal(input.disabled,false);
   console.log('Chat upload controls and navigation regression checks passed');
 })().catch(error=>{console.error(error);process.exitCode=1;});
