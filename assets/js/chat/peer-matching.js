@@ -197,8 +197,8 @@ function _pmMatchCard(m) {
   return `
     <div class="pm-card" data-uid="${m.id}">
       <div class="pm-card-top">
-        <div class="pm-avatar" style="background:${avatarBg}">
-          ${avatarText}${onlineDot}
+        <div class="pm-avatar">
+          ${window.chatSidebarAvatar(m.name, m.avatar_url, m.grad, 42)}${onlineDot}
         </div>
         <div class="pm-card-info">
           <div class="pm-card-name">${pmEsc(m.name)}
@@ -308,8 +308,8 @@ async function _pmRunSearch() {
       const avatarText = pmAvatarUrl(u.avatar_url) ? '' : (u.full_name||u.username||'?')[0].toUpperCase();
       return `
         <div class="pm-search-row">
-          <div class="pm-avatar pm-avatar-sm" style="background:${avatarBg}">
-            ${avatarText}
+          <div class="pm-avatar pm-avatar-sm">
+            ${window.chatSidebarAvatar(u.full_name || u.username, u.avatar_url, u.avatar_color_gradient, 34)}
             ${u.is_online ? '<span class="pm-online-dot"></span>' : ''}
           </div>
           <div class="pm-search-info">
@@ -357,8 +357,8 @@ function _pmRequestCard(r, dir) {
 
   return `
     <div class="pm-request-card">
-      <div class="pm-avatar pm-avatar-sm" style="background:${avatarBg}">
-        ${avatarText}
+      <div class="pm-avatar pm-avatar-sm">
+        ${window.chatSidebarAvatar(name, r.avatar_url, r.avatar_color_gradient, 34)}
       </div>
       <div class="pm-request-info">
         <div class="pm-card-name">${pmEsc(name)}</div>
@@ -409,8 +409,8 @@ async function _pmRenderLeaderboard(body) {
           return `
             <div class="pm-leaderboard-row">
               <span class="pm-lb-rank">${medals[i] || `#${i+1}`}</span>
-              <div class="pm-avatar pm-avatar-sm" style="background:${avatarBg}">
-                ${avatarText}
+              <div class="pm-avatar pm-avatar-sm">
+                ${window.chatSidebarAvatar(p.full_name || p.username, p.avatar_url, p.avatar_color_gradient, 34)}
                 ${p.is_online?'<span class="pm-online-dot"></span>':''}
               </div>
               <div class="pm-lb-info">
@@ -793,8 +793,8 @@ window.refreshMatches = async function(btn) {
         const avatarText = pmAvatarUrl(m.avatar_url) ? '' : (m.name||'?')[0];
         return `
           <div class="match-item" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
-            <div style="position:relative;width:36px;height:36px;border-radius:50%;background:${avatarBg};background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">
-              ${avatarText}
+            <div class="sidebar-match-avatar" style="position:relative;flex-shrink:0;">
+              ${window.chatSidebarAvatar(m.name, m.avatar_url, m.grad, 36)}
               ${m.is_online?'<span style="position:absolute;bottom:0;right:0;width:9px;height:9px;background:#22c55e;border-radius:50%;border:2px solid var(--bg-secondary)"></span>':''}
             </div>
             <div style="flex:1;min-width:0;">
@@ -811,3 +811,5 @@ window.refreshMatches = async function(btn) {
   } catch { if (_origRefreshMatches && btn) _origRefreshMatches(btn); }
   finally { if (btn) { btn.classList.remove('spinning'); btn.disabled = false; } }
 };
+
+

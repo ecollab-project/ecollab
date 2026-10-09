@@ -17,7 +17,7 @@ class MessageService
     /**
      * Fetch paginated messages for a channel.
      */
-    public function getMessages(int $channelId, int $userId, ?int $before = null, int $limit = self::PAGE_SIZE): array
+    public function getMessages(int $channelId, int $userId, ?int $before = null, int $limit = self::PAGE_SIZE, ?int $after = null): array
     {
         // Verify user has access to this channel's server
         // Admins/moderators can read any channel
@@ -52,6 +52,9 @@ class MessageService
             $params[':before'] = $before;
         }
 
+        if ($after !== null) $beforeClause = 'AND m.id > :after';
+        $messageOrder = $after !== null ? 'ASC' : 'DESC';
+
         $stmt = $this->db->prepare("
             SELECT m.id, m.channel_id, m.sender_id, m.content, m.content_type,
                    m.parent_id, m.is_edited, m.is_pinned, m.reaction_count,
@@ -65,7 +68,7 @@ class MessageService
             LEFT JOIN messages pm ON pm.id = m.parent_id AND pm.is_deleted = 0
             LEFT JOIN users pu ON pu.id = pm.sender_id
             WHERE m.channel_id = :cid AND m.is_deleted = 0 $beforeClause
-            ORDER BY m.id DESC
+            ORDER BY m.id $messageOrder
             LIMIT :limit
         ");
         $stmt->bindValue(':cid',   $channelId, PDO::PARAM_INT);
@@ -73,8 +76,10 @@ class MessageService
         if ($before !== null) {
             $stmt->bindValue(':before', $before, PDO::PARAM_INT);
         }
+        if ($after !== null) $stmt->bindValue(':after', $after, PDO::PARAM_INT);
         $stmt->execute();
-        $messages = array_reverse($stmt->fetchAll());
+        $messages = $stmt->fetchAll();
+        if ($after === null) $messages = array_reverse($messages);
 
         // Attach reactions per message
         if (!empty($messages)) {
@@ -425,7 +430,9 @@ class MessageService
         }
 
         $msg['reactions']  = [];
-        $msg['attachments'] = [];
+        $attachments = $this->db->prepare('SELECT id, file_name, file_path, file_size, mime_type FROM message_attachments WHERE message_id=:mid ORDER BY id');
+        $attachments->execute([':mid' => $id]);
+        $msg['attachments'] = $attachments->fetchAll(PDO::FETCH_ASSOC);
         $msg['poll']        = null;
 
         if ($msg['content_type'] === 'poll') {
@@ -453,3 +460,4 @@ class MessageService
         return $msg;
     }
 }
+

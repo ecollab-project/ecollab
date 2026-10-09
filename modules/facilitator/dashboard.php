@@ -64,9 +64,13 @@ $facOwnedServers = array_values(array_filter(
   <script>
     window.ECOLLAB_BASE = <?= json_encode(BASE_URL) ?>;
   </script>
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=notifications-2">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=3">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/dashboard-design.css?v=2">
+<script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 </head>
 
-<body>
+<body data-mobile-surface="dashboard">
 
   <?php $activePage = $activePage;
   include ROOT_PATH . '/includes/layout/sidebar-facilitator.php'; ?>
@@ -85,7 +89,7 @@ $facOwnedServers = array_values(array_filter(
           <div class="ndrop" id="ndrop">
             <div class="ndhead">
               <div class="ndtitle">Notifications</div>
-              <div class="ndclear" onclick="clearNotifs()">Mark all read</div>
+              <button type="button" class="ndclear" onclick="event.stopPropagation();clearNotifs()">Mark all read</button>
             </div>
             <div class="ndi unread" onclick="handleNotif(this,'New report')">
               <div class="ndd"></div>
@@ -237,7 +241,7 @@ $facOwnedServers = array_values(array_filter(
                       <td><span class="status-pill <?= $statusClass ?>"><?= $statusLabel ?></span></td>
                     </tr>
                   <?php endforeach; ?>
-                  <tr><td colspan="7" class="dashboard-empty-state">No member activity recorded yet.</td></tr>
+                  <?php if (empty($dashData['activity'])): ?><tr><td colspan="7" class="dashboard-empty-state">No member activity recorded yet.</td></tr><?php endif; ?>
                 </tbody>
               </table>
             </div>
@@ -286,7 +290,7 @@ $facOwnedServers = array_values(array_filter(
                   <div class="ract-time"><?= htmlspecialchars($act['time_ago'] ?? '') ?></div>
                 </div>
               <?php endforeach; ?>
-              <div class="dashboard-empty-state">No recent activity recorded yet.</div>
+              <?php if (empty($dashData['recent_activity'])): ?><div class="dashboard-empty-state">No recent activity recorded yet.</div><?php endif; ?>
             </div>
           </div>
         </div>
@@ -295,7 +299,7 @@ $facOwnedServers = array_values(array_filter(
         <div class="main-grid">
           <div class="card">
             <div class="ch-bar">
-              <div class="ch-title">Upcoming Sessions</div><button class="btn-primary" style="font-size:10.5px;padding:5px 10px" onclick="openModal('startSessionModal')">+ Schedule</button>
+              <div class="ch-title">Upcoming Sessions</div><button class="btn-primary" onclick="openModal('startSessionModal')">+ Schedule</button>
             </div>
             <?php foreach (array_slice($dashData['upcoming_sessions'] ?? [], 0, 3) as $sess):
               $sd = !empty($sess['start_time']) ? date('d', strtotime($sess['start_time'])) : '24';
@@ -314,50 +318,14 @@ $facOwnedServers = array_values(array_filter(
                 <button class="btn-sm btn-outline" onclick="openModal('sessionDetailModal','<?= htmlspecialchars($sess['name'] ?? '') ?>')">View</button>
               </div>
             <?php endforeach; ?>
-            <?php if (empty($dashData['upcoming_sessions'])): ?>
-              <div class="ract-row">
-                <div style="text-align:center;width:36px;flex-shrink:0">
-                  <div style="font-size:16px;font-weight:800;color:var(--pink)">24</div>
-                  <div style="font-size:9px;text-transform:uppercase;color:var(--muted2)">MAY</div>
-                </div>
-                <div style="flex:1;margin-left:10px">
-                  <div style="font-size:12.5px;font-weight:700">Backpropagation Study Group</div>
-                  <div style="font-size:10.5px;color:var(--muted2)">3:00 PM · 8 RSVPs</div>
-                </div><button class="btn-sm btn-outline" onclick="openModal('sessionDetailModal','Backpropagation Study Group')">View</button>
-              </div>
-              <div class="ract-row">
-                <div style="text-align:center;width:36px;flex-shrink:0">
-                  <div style="font-size:16px;font-weight:800;color:var(--pink)">26</div>
-                  <div style="font-size:9px;text-transform:uppercase;color:var(--muted2)">MAY</div>
-                </div>
-                <div style="flex:1;margin-left:10px">
-                  <div style="font-size:12.5px;font-weight:700">Chapter 5 Q&A</div>
-                  <div style="font-size:10.5px;color:var(--muted2)">4:00 PM · 14 RSVPs</div>
-                </div><button class="btn-sm btn-outline" onclick="openModal('sessionDetailModal','Chapter 5 QA')">View</button>
-              </div>
-            <?php endif; ?>
+            <?php if (empty($dashData['upcoming_sessions'])): ?><div class="dashboard-empty-state">No upcoming study sessions.</div><?php endif; ?>
           </div>
 
           <div class="card">
             <div class="ch-bar">
-              <div class="ch-title">Pending Reports</div><span style="background:rgba(220,38,38,.15);color:var(--red);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700">2 pending</span>
+              <div class="ch-title">Pending Reports</div><button class="period-btn" onclick="showPage('reports')">View Reports</button>
             </div>
-            <div class="report-item">
-              <div class="ri-header">
-                <div class="ri-ico" style="background:rgba(220,38,38,.15)">🚩</div>
-                <div class="ri-title">Flagged Message: "Inappropriate..."</div>
-              </div>
-              <div class="ri-meta">Reported by Mia_Wong · #general · 1h ago</div>
-              <div class="ri-actions"><button class="btn-sm" style="background:rgba(22,163,74,.15);color:var(--green);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="resolveReport(this,'approved')">Approve</button><button class="btn-sm" style="background:rgba(220,38,38,.1);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="resolveReport(this,'dismissed')">Dismiss</button></div>
-            </div>
-            <div class="report-item">
-              <div class="ri-header">
-                <div class="ri-ico" style="background:rgba(217,119,6,.15)">⚠</div>
-                <div class="ri-title">Reported User: spam_user99</div>
-              </div>
-              <div class="ri-meta">Reported by Alex_Chen · 3h ago</div>
-              <div class="ri-actions"><button class="btn-sm" style="background:rgba(220,38,38,.15);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="openModal('kickModal','spam_user99')">Kick</button><button class="btn-sm btn-outline" onclick="openModal('reportDetailModal','Reported User')">Detail</button></div>
-            </div>
+            <div class="dashboard-empty-state">Open Reports to review current reports.</div>
           </div>
         </div>
       </div>
@@ -528,25 +496,7 @@ try {
                     <td>
                       <div style="display:flex;gap:5px"><button class="btn-sm btn-outline" onclick="event.stopPropagation();openModal('memberDetailModal','<?= htmlspecialchars($m['username'] ?? '') ?>')">View</button><button class="btn-sm" style="background:rgba(220,38,38,.1);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="event.stopPropagation();openModal('kickModal','<?= htmlspecialchars($m['username'] ?? '') ?>')">Kick</button></div>
                     </td>
-                  </tr><?php endforeach; ?><?php if (empty($dashData['activity'])): ?><tr onclick="openModal('memberDetailModal','Fatima_Student')">
-                    <td>
-                      <div class="user-cell">
-                        <div class="u-av" style="background:linear-gradient(135deg,#e91e8c,#7c3aed)">F</div>
-                        <div>
-                          <div class="u-name">Fatima_Student</div>
-                          <div class="u-handle">@fatima.student</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td><span class="status-pill sp-a">Student</span></td>
-                    <td>142</td>
-                    <td>8</td>
-                    <td style="color:var(--muted2)">Jan 15</td>
-                    <td><span class="status-pill sp-va">Very Active</span></td>
-                    <td>
-                      <div style="display:flex;gap:5px"><button class="btn-sm btn-outline" onclick="event.stopPropagation()">View</button><button class="btn-sm" style="background:rgba(220,38,38,.1);color:var(--red);border:none;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:10.5px" onclick="event.stopPropagation()">Kick</button></div>
-                    </td>
-                  </tr><?php endif; ?></tbody>
+                  </tr><?php endforeach; ?><?php if (empty($dashData['activity'])): ?><tr><td colspan="7" class="dashboard-empty-state">No member activity recorded yet.</td></tr><?php endif; ?></tbody>
             </table>
           </div>
           <div class="view-all-row" onclick="toast('Loading...','info','👥')">Load More ↓</div>
@@ -604,23 +554,7 @@ try {
                     <td><?= (int)($a['files_uploaded'] ?? 0) ?></td>
                     <td style="color:var(--muted2)"><?= htmlspecialchars($a['last_active'] ?? '—') ?></td>
                     <td><span class="status-pill <?= $sc ?>"><?= $sl ?></span></td>
-                  </tr><?php endforeach; ?><?php if (empty($dashData['activity'])): ?><tr>
-                    <td>
-                      <div class="user-cell">
-                        <div class="u-av" style="background:linear-gradient(135deg,#e91e8c,#7c3aed)">F</div>
-                        <div>
-                          <div class="u-name">Fatima_Student</div>
-                          <div class="u-handle">@fatima</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td>42 <span class="delta pos">+12%</span></td>
-                    <td>3 <span class="delta pos">+1</span></td>
-                    <td>8</td>
-                    <td>4</td>
-                    <td style="color:var(--muted2)">10m ago</td>
-                    <td><span class="status-pill sp-va">Very Active</span></td>
-                  </tr><?php endif; ?></tbody>
+                  </tr><?php endforeach; ?><?php if (empty($dashData['activity'])): ?><tr><td colspan="7" class="dashboard-empty-state">No member activity recorded yet.</td></tr><?php endif; ?></tbody>
             </table>
           </div>
         </div>
@@ -679,21 +613,7 @@ try {
               <div class="ract-av" style="background:linear-gradient(135deg,<?= htmlspecialchars($rG) ?>"><?= htmlspecialchars($rI) ?></div>
               <div class="ract-msg" style="flex:1"><?= htmlspecialchars($act['message'] ?? '') ?></div>
               <div class="ract-time"><?= htmlspecialchars($act['time_ago'] ?? '') ?></div>
-            </div><?php endforeach; ?><?php if (empty($dashData['recent_activity'])): ?><div class="ract-row">
-              <div class="ract-av" style="background:linear-gradient(135deg,#e91e8c,#7c3aed)">F</div>
-              <div class="ract-msg" style="flex:1">Fatima_Student posted in <span class="ract-link">#general</span></div>
-              <div class="ract-time">10m ago</div>
-            </div>
-            <div class="ract-row">
-              <div class="ract-av" style="background:linear-gradient(135deg,#16a34a,#0d9488)">A</div>
-              <div class="ract-msg" style="flex:1">Alex Chen edited whiteboard</div>
-              <div class="ract-time">25m ago</div>
-            </div>
-            <div class="ract-row">
-              <div class="ract-av" style="background:linear-gradient(135deg,#2563eb,#06b6d4)">J</div>
-              <div class="ract-msg" style="flex:1">John_Doe uploaded <span class="ract-link">lecture_notes_ch5.pdf</span></div>
-              <div class="ract-time">2h ago</div>
-            </div><?php endif; ?><div class="view-all-row" onclick="toast('Loading more logs...','info','📋')">Load More ↓</div>
+            </div><?php endforeach; ?><?php if (empty($dashData['recent_activity'])): ?><div class="dashboard-empty-state">No recent activity recorded yet.</div><?php endif; ?><div class="view-all-row" onclick="toast('Loading more logs...','info','📋')">Load More ↓</div>
         </div>
       </div>
       <div class="page-section" id="page-sessions">
@@ -760,24 +680,7 @@ try {
                 <div class="contrib-meta">Messages: <?= (int)($m['messages'] ?? 0) ?> · Sessions: <?= (int)($m['sessions'] ?? 0) ?></div>
               </div>
               <div class="contrib-pts"><?= max(10, (int)($m['messages'] ?? 0) + (int)($m['sessions'] ?? 0) * 15) ?> <span class="pts-label">pts</span></div>
-            </div><?php endforeach; ?><?php if (empty($dashData['activity'])): ?><div class="contrib-row">
-              <div class="contrib-rank r1">🥇</div>
-              <div class="contrib-av" style="background:linear-gradient(135deg,#e91e8c,#7c3aed)">F</div>
-              <div class="contrib-body">
-                <div class="contrib-name">Fatima_Student</div>
-                <div class="contrib-meta">Messages: 142 · Sessions: 8</div>
-              </div>
-              <div class="contrib-pts">245 <span class="pts-label">pts</span></div>
-            </div>
-            <div class="contrib-row">
-              <div class="contrib-rank r2">🥈</div>
-              <div class="contrib-av" style="background:linear-gradient(135deg,#2563eb,#06b6d4)">J</div>
-              <div class="contrib-body">
-                <div class="contrib-name">John_Doe</div>
-                <div class="contrib-meta">Messages: 98 · Sessions: 6</div>
-              </div>
-              <div class="contrib-pts">176 <span class="pts-label">pts</span></div>
-            </div><?php endif; ?>
+            </div><?php endforeach; ?><?php if (empty($dashData['activity'])): ?><div class="dashboard-empty-state">No member activity recorded yet.</div><?php endif; ?>
         </div>
       </div>
       <div class="page-section" id="page-resources">
@@ -1196,13 +1099,7 @@ try {
                 <div style="font-size:12.5px;font-weight:600"><?= htmlspecialchars($ch['name'] ?? '') ?></div>
                 <div style="font-size:10.5px;color:var(--muted2)"><?= (int)($ch['member_count'] ?? 0) ?> members</div>
               </div>
-            </div><?php endforeach; ?><?php if (empty($dashData['my_channels'])): ?><div style="padding:10px 12px;background:rgba(233,30,140,.08);border:1px solid rgba(233,30,140,.2);border-radius:9px;cursor:pointer;display:flex;align-items:center;gap:9px" onclick="closeModal('channelSwitchModal')">
-              <div style="font-size:14px">🧠</div>
-              <div>
-                <div style="font-size:12.5px;font-weight:700;color:var(--pink)">CS 305 – Neural Networks ✓</div>
-                <div style="font-size:10.5px;color:var(--muted2)">72 members · Active</div>
-              </div>
-            </div><?php endif; ?></div>
+            </div><?php endforeach; ?><?php if (empty($dashData['my_channels'])): ?><div class="dashboard-empty-state">No channels available.</div><?php endif; ?></div>
       </div>
       <div class="mf"><button class="btn-sec" onclick="closeModal('channelSwitchModal')">Close</button></div>
     </div>
@@ -1219,13 +1116,15 @@ try {
                     ], JSON_HEX_TAG) ?>;
     if (!FAC_DATA.engData.length) FAC_DATA.engData = [38, 42, 35, 48, 52, 45, 38];
   </script>
-  <script src="<?= BASE_URL ?>/assets/js/facilitator/dashboard.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/dashboard-state.js?v=1" defer></script>
+<script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js?v=2" defer></script>
+<script src="<?= BASE_URL ?>/assets/js/facilitator/dashboard.js?v=team-audit-1" defer></script>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/ai-markdown.css">
 
   <script src="https://cdn.jsdelivr.net/npm/marked@18.0.9/lib/marked.umd.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.4.13/dist/purify.min.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/ai-markdown.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/ai-session.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/ai-session.js?v=modal-init-2" defer></script>
 
   <script>
     // ── Mobile sidebar ─────────────────────────────────────────────────
@@ -1268,6 +1167,9 @@ try {
       if (o) o.classList.remove('open');
     }
   </script>
+<?php require_once dirname(__DIR__, 2) . '/includes/calls/bootstrap.php'; ?>
 </body>
 
 </html>
+
+

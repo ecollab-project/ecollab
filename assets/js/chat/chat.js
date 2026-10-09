@@ -64,6 +64,28 @@ async function apiFetch(url, options = {}, _retried = false) {
   return res.json();
 }
 
+async function uploadChatAttachment(endpoint, form, retried = false) {
+  const response = await fetch(endpoint, {
+    method: 'POST', credentials: 'same-origin',
+    headers: { 'X-CSRF-Token': window.ECOLLAB?.csrfToken || '' }, body: form,
+  });
+  const data = await response.json().catch(() => null);
+  if (response.status === 403 && !retried) {
+    const refresh = await fetch((window.ECOLLAB?.baseUrl || '') + '/API/auth/csrf-token.php', { cache: 'no-store', credentials: 'same-origin' });
+    const token = await refresh.json();
+    if (refresh.ok && token.token) {
+      window.ECOLLAB.csrfToken = token.token;
+      return uploadChatAttachment(endpoint, form, true);
+    }
+  }
+  if (!response.ok || !data?.success) {
+    throw new Error(data?.error || (response.status === 413
+      ? 'This file exceeds the server upload limit.' : 'Upload failed (HTTP ' + response.status + ').'));
+  }
+  return data;
+}
+window.uploadChatAttachment = uploadChatAttachment;
+
 function chatAvatarUrl(url) {
   const raw = String(url || '').trim();
   if (!raw) return '';
@@ -90,6 +112,29 @@ let hasMoreMessages = true;
 let oldestMessageId = null;
 let typingTimeout = null;
 
+// Keep navigation in this tab's URL so F5 restores the same server/channel.
+// PHP validates server membership and the rendered list validates channel IDs.
+function saveChatLocation(changes) {
+  const url = new URL(window.location.href);
+  Object.entries(changes).forEach(([key, value]) => {
+    if (value == null || value === '') url.searchParams.delete(key);
+    else url.searchParams.set(key, String(value));
+  });
+  window.history.replaceState(window.history.state, '', url);
+}
+window.saveChatLocation = saveChatLocation;
+const lastServerChannels = new Map();
+let channelListRequest = 0;
+
+// Server entry defaults to General; explicit refresh/deep-link state wins.
+function defaultChatChannel(container) {
+  const items = [...container.querySelectorAll('.channel-item[data-channel-id]')]
+    .filter(item => !['voice', 'whiteboard'].includes(item.dataset.channelType));
+  return items.find(item => String(item.dataset.channelName || '').trim().replace(/^#/, '').toLowerCase() === 'general')
+    || items.find(item => item.dataset.channelType === 'text')
+    || items[0] || null;
+}
+
 // ── Init ──
 document.addEventListener('DOMContentLoaded', () => {
   // Deep-link: if navigated here from a dashboard with a specific
@@ -109,20 +154,19 @@ document.addEventListener('DOMContentLoaded', () => {
       .find(el => el.dataset.channelName === wantedName);
   }
 
-  // Auto-select first channel if no deep-link target found
+  // A valid URL channel survives refresh; a fresh entry starts at General.
   if (!target) {
-    target = document.querySelector('.channel-item[data-channel-id]');
+    target = defaultChatChannel(document.getElementById('channelList') || document);
   }
 
   if (target) {
     switchChannel(target, parseInt(target.dataset.channelId));
+  } else {
+    saveChatLocation({channel_id: null});
   }
 
-  // Clean the URL so reloading/sharing doesn't re-trigger the deep link
-  if (wantedId || wantedName) {
-    const cleanUrl = window.location.pathname;
-    window.history.replaceState({}, '', cleanUrl);
-  }
+  // Keep the resolved destination in the URL for refresh.
+  saveChatLocation({server_id: currentServerId || null, channel_name: null});
 
   // Keyboard shortcut: Cmd/Ctrl + K → focus search
   document.addEventListener('keydown', (e) => {
@@ -168,7 +212,10 @@ async function updatePresence() {
 // ── Workspace switch ──
 function switchWorkspace(wsIdx, serverId) {
   if (!serverId) return;
+  const serverChanged = Number(serverId) !== Number(currentServerId);
+  if (currentChannelId) lastServerChannels.set(Number(currentServerId), currentChannelId);
   currentServerId = serverId;
+  saveChatLocation({server_id: serverId, channel_id: null, channel_name: null});
   // Keep ECOLLAB object in sync so chat-features.js can read it
   if (window.ECOLLAB) window.ECOLLAB.currentServerId = serverId;
 
@@ -183,12 +230,14 @@ function switchWorkspace(wsIdx, serverId) {
     icon.classList.toggle('active', i === wsIdx);
   });
 
-  loadServerChannels(serverId);
+  loadServerChannels(serverId, serverChanged);
 }
 
-async function loadServerChannels(serverId) {
+async function loadServerChannels(serverId, startAtGeneral = false) {
+  const request = ++channelListRequest;
   try {
     const data = await apiFetch(`${API_BASE}/get-channels.php?server_id=${serverId}`);
+    if (request !== channelListRequest || Number(serverId) !== Number(currentServerId)) return;
     if (!data.success) return;
 
     const server = data.servers?.find(s => parseInt(s.id) === parseInt(serverId));
@@ -198,14 +247,14 @@ async function loadServerChannels(serverId) {
 
     }
 
-    renderChannelList(data.channels || []);
+    renderChannelList(data.channels || [], startAtGeneral);
   } catch (err) {
     showToast('Failed to load channels', 'info');
     console.error(err);
   }
 }
 
-function renderChannelList(channels) {
+function renderChannelList(channels, startAtGeneral = false) {
   const textList = document.getElementById('channelList');
   const voiceList = document.getElementById('voiceChannelList');
   const wbList = document.getElementById('whiteboardChannelList');
@@ -241,6 +290,7 @@ function renderChannelList(channels) {
       el.className = 'channel-item wb-channel-item';
       el.dataset.channelId = ch.id;
       el.dataset.channelName = ch.name;
+      el.dataset.channelType = ch.type;
       el.innerHTML = `
         <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24" style="color:var(--accent-purple);flex-shrink:0;">
           <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
@@ -256,6 +306,7 @@ function renderChannelList(channels) {
       el.className = 'channel-item';
       el.dataset.channelId = ch.id;
       el.dataset.channelName = ch.name;
+      el.dataset.channelType = ch.type;
       el.dataset.isPrivate = (ch.is_private == 1 || ch.is_private === true) ? '1' : '0';
       if (ch.is_new == 1 || ch.is_new === true) el.dataset.isNew = '1';
       const isAnnouncement = ch.type === 'announcement';
@@ -280,13 +331,30 @@ function renderChannelList(channels) {
   // Show/hide whiteboard section based on whether channels exist
   if (wbSection) wbSection.style.display = hasWhiteboard ? '' : 'none';
 
-  // Auto-select first text channel
-  const first = textList.querySelector('.channel-item');
+  // Changing servers starts at General. Same-server list updates retain selection.
+  const wanted = startAtGeneral ? null : lastServerChannels.get(Number(currentServerId));
+  const first = (wanted && Array.from(textList.querySelectorAll('.channel-item'))
+    .find(item => Number(item.dataset.channelId) === Number(wanted)))
+    || defaultChatChannel(textList);
   if (first) switchChannel(first, parseInt(first.dataset.channelId));
+  else {
+    if (currentChannelId) window.unsubscribeFromChannel?.(currentChannelId);
+    currentChannelId = null;
+    window.ECOLLAB.currentChannelId = null;
+    saveChatLocation({channel_id: null});
+    renderMessages([], false);
+  }
 }
 
 // ── Channel switch ──
 async function switchChannel(el, channelId) {
+  if (window._currentNavView && window._currentNavView !== 'home') {
+    window.switchView?.('home', document.querySelector('.sidebar-nav-item'));
+  }
+  document.getElementById('navViewOverlay')?.style.setProperty('display','none');
+  document.querySelector('.chat-main')?.style.removeProperty('display');
+  saveChatLocation({server_id: currentServerId, channel_id: channelId, channel_name: null});
+  lastServerChannels.set(Number(currentServerId), channelId);
   if (channelId === currentChannelId) return;
 
   // Save draft of current input before switching
@@ -304,6 +372,8 @@ async function switchChannel(el, channelId) {
 
   currentChannelId = channelId;
   window.ECOLLAB.currentChannelId = channelId;
+  renderMessages([], false);
+  if (window.subscribeToChannel) window.subscribeToChannel(channelId);
   oldestMessageId = null;
   hasMoreMessages = true;
   lastMessageId = 0;
@@ -341,6 +411,7 @@ async function switchChannel(el, channelId) {
       apiFetch(`${API_BASE}/get-channel.php?id=${channelId}`),
       apiFetch(`${API_BASE}/get-messages.php?channel_id=${channelId}`),
     ]);
+    if (Number(channelId) !== Number(currentChannelId)) return;
 
     if (chanData.channel) {
       const ch = chanData.channel;
@@ -394,11 +465,11 @@ async function switchChannel(el, channelId) {
     }
 
     if (msgData.messages) {
-      renderMessages(msgData.messages, false);
+      renderMessages(msgData.messages, false, true);
       hasMoreMessages = msgData.has_more;
       if (msgData.messages.length) {
         oldestMessageId = msgData.messages[0].id;
-        lastMessageId = msgData.messages[msgData.messages.length - 1].id;
+        lastMessageId = Math.max(Number(lastMessageId) || 0, Number(msgData.messages[msgData.messages.length - 1].id));
       }
     }
   } catch (err) {
@@ -407,16 +478,18 @@ async function switchChannel(el, channelId) {
   }
 
   // Subscribe via WebSocket
-  if (window.subscribeToChannel) window.subscribeToChannel(channelId);
 }
 
 // ── Render messages ──
-function renderMessages(messages, prepend = false) {
+function renderMessages(messages, prepend = false, preserveLive = false) {
   const area = document.getElementById('messagesArea');
   if (!area) return;
 
   // Remove typing indicator temporarily
   const typing = document.getElementById('typingIndicator');
+  const latestId = Math.max(0, ...messages.map(msg => Number(msg.id) || 0));
+  const retained = !prepend && preserveLive ? [...area.querySelectorAll('[data-msg-id]')]
+    .filter(el => String(el.dataset.msgId).startsWith('opt_') || Number(el.dataset.msgId) > latestId) : [];
   if (!prepend) {
     area.innerHTML = '';
     if (typing) area.appendChild(typing);
@@ -440,6 +513,7 @@ function renderMessages(messages, prepend = false) {
   } else {
     if (typing) area.insertBefore(fragment, typing);
     else area.appendChild(fragment);
+    retained.forEach(el => { if (typing) area.insertBefore(el, typing); else area.appendChild(el); });
     scrollToBottom();
   }
 }
@@ -478,6 +552,8 @@ function buildMessageElement(msg) {
     msg.attachments.forEach(att => {
       if (att.mime_type && att.mime_type.startsWith('image/')) {
         attachHtml += `<img src="${(window.ECOLLAB?.baseUrl || '')}/${escHtml(att.file_path)}" style="max-width:300px;max-height:220px;border-radius:8px;margin-top:6px;display:block;cursor:pointer;" onclick="window.open('${(window.ECOLLAB?.baseUrl || '')}/${escHtml(att.file_path)}','_blank')" alt="${escHtml(att.file_name)}">`;
+      } else if (att.mime_type?.startsWith('video/')) {
+        attachHtml += `<video controls playsinline preload="metadata" src="${(window.ECOLLAB?.baseUrl || '')}/${escHtml(att.file_path)}" style="max-width:100%;width:300px;border-radius:8px;margin-top:6px;"></video>`;
       } else {
         attachHtml += `
           <div style="display:flex;align-items:center;gap:10px;margin-top:6px;padding:10px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;max-width:300px;">
@@ -575,6 +651,7 @@ function appendMessageToUI(msg) {
   const area = document.getElementById('messagesArea');
   const typing = document.getElementById('typingIndicator');
   if (!area) return;
+  if (area.querySelector(`[data-msg-id="${CSS.escape(String(msg.id))}"]`)) return;
   const el = buildMessageElement(msg);
   if (typing && typing.parentNode === area) {
     area.insertBefore(el, typing);
@@ -582,7 +659,7 @@ function appendMessageToUI(msg) {
     area.appendChild(el);
   }
   scrollToBottom();
-  lastMessageId = Math.max(lastMessageId || 0, msg.id);
+  if (Number.isFinite(Number(msg.id))) lastMessageId = Math.max(Number(lastMessageId) || 0, Number(msg.id));
 }
 window.appendMessageToUI = appendMessageToUI;
 window.buildPollWidget = buildPollWidget;
@@ -631,6 +708,8 @@ async function sendMessage() {
     body.attachment_mime = pendingAttachment.mime_type;
   }
 
+  const sentAttachment = pendingAttachment;
+  const sentParentId = replyParentId;
   input.value = '';
   clearAttachmentPreview();
   cancelReply();
@@ -648,9 +727,9 @@ async function sendMessage() {
     is_verified: false,
     is_pinned: false,
     is_edited: false,
-    parent_id: replyParentId,
+    parent_id: sentParentId,
     reactions: [],
-    attachments: pendingAttachment ? [pendingAttachment] : [],
+    attachments: sentAttachment ? [sentAttachment] : [],
     created_at: new Date().toISOString(),
   };
   appendMessageToUI(optimisticMsg);
@@ -672,11 +751,8 @@ async function sendMessage() {
         const realEl = buildMessageElement(data.message);
         optEl.replaceWith(realEl);
       }
-      // Broadcast via WebSocket
-      if (window.chatSocket && window.chatSocket.readyState === WebSocket.OPEN) {
-        window.chatSocket.send(JSON.stringify({ type: 'message', message: data.message }));
-      }
-      lastMessageId = data.message.id;
+      window.sendPersistedChatMessage?.({ type: 'message', channel_id: body.channel_id, message: data.message });
+      if (Number(body.channel_id) === Number(currentChannelId)) lastMessageId = Math.max(Number(lastMessageId) || 0, Number(data.message.id));
     }
   } catch (err) {
     // Remove optimistic message on failure
@@ -1109,12 +1185,7 @@ async function handleFileUpload(input, type) {
   fd.append('file', file);
   try {
     showToast('📎 Uploading…', 'info');
-    const resp = await fetch((window.ECOLLAB?.baseUrl || '') + '/API/chat/upload-file.php', {
-      method: 'POST',
-      headers: { 'X-CSRF-Token': window.ECOLLAB?.csrfToken || '' },
-      body: fd,
-    });
-    const data = await resp.json();
+    const data = await uploadChatAttachment(UPLOAD_ENDPOINT, fd);
     if (data.success) {
       pendingAttachment = data;
       showAttachmentPreview(data, type);
@@ -1123,7 +1194,7 @@ async function handleFileUpload(input, type) {
       showToast('Upload failed: ' + (data.error || 'unknown error'), 'info');
     }
   } catch (err) {
-    showToast('Upload failed', 'info');
+    showToast('Upload failed: ' + err.message, 'error');
     console.error(err);
   }
   input.value = '';
@@ -1232,9 +1303,35 @@ function selectChannelType(el, type) {
 }
 
 // ── Members panel ──
+// Keep initials visible when an external avatar is missing or fails to load.
+function chatSidebarAvatar(name, url, gradient, size = 28) {
+  const colors = String(gradient || '').split(',').map(c => c.trim());
+  const valid = colors.length === 2 && colors.every(c => /^#[0-9a-f]{3,8}$/i.test(c));
+  const background = valid ? colors.join(',') : '#3b82f6,#6366f1';
+  const initial = escHtml(String(name || '?').trim().charAt(0).toUpperCase() || '?');
+  const source = chatAvatarUrl(url);
+  const image = source ? `<img src="${escHtml(source)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : '';
+  return `<span class="avatar-placeholder sidebar-avatar" style="width:${size}px;height:${size}px;background:linear-gradient(135deg,${background})">${initial}${image}</span>`;
+}
+window.chatSidebarAvatar = chatSidebarAvatar;
+
+function chatMemberOnline(m) { return m.is_online === true || m.is_online === 1 || m.is_online === "1"; }
+// Keep all member rows aligned with the latest server presence snapshot.
+let chatPresenceSnapshot = null;
+function applyChatMemberPresence(serverId, users) {
+  if (String(serverId) !== String(window.ECOLLAB?.currentServerId)) return;
+  chatPresenceSnapshot = { serverId: String(serverId), ids: new Set(users.map(u => String(u.id))) };
+  document.querySelectorAll('#membersList .member-item').forEach(row => {
+    const online = chatPresenceSnapshot.ids.has(row.dataset.userId);
+    const dot = row.querySelector('.online-dot');
+    if (dot) { dot.classList.toggle('offline', !online); dot.style.background = ''; }
+    const label = row.querySelector('.member-status');
+    if (label) { label.classList.toggle('online', online); label.textContent = '● ' + (online ? 'Online' : 'Offline'); }
+  });
+}
+window.applyChatMemberPresence = applyChatMemberPresence;
 function renderMembersPanel(members) {
   const list = document.getElementById('membersList');
-  const activeList = document.getElementById('activeMembersList');
   const badge = document.getElementById('memberCountBadge');
   if (badge) badge.textContent = '— ' + members.length;
   if (!list) return;
@@ -1246,55 +1343,36 @@ function renderMembersPanel(members) {
     const memberAvatarUrl = chatAvatarUrl(m.avatar_url);
     const memberAvatar = memberAvatarUrl ? `url("${escHtml(memberAvatarUrl)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
     const memberInitial = memberAvatarUrl ? '' : init;
-    const online = m.is_online ? 'online' : '';
+    const online = chatMemberOnline(m) ? 'online' : '';
     return `
       <div class="member-item" data-user-id="${m.id || m.user_id || 0}" data-user-grad="${grad}" onclick="openMiniProfile(event, '${escHtml(m.full_name || m.username)}', '${escHtml(m.role || 'Student')}', '', '${init}', ${m.id || m.user_id || 0})">
         <div class="user-avatar">
-          <div class="avatar-placeholder" style="width:28px;height:28px;font-size:11px;border-radius:50%;background:${memberAvatar};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;">${memberInitial}</div>
-          <div class="online-dot ${m.is_online ? '' : 'offline'}"></div>
+          ${chatSidebarAvatar(m.full_name || m.username, m.avatar_url, grad, 28)}
+          <div class="online-dot ${chatMemberOnline(m) ? '' : 'offline'}"></div>
         </div>
         <div class="member-info">
           <div class="member-name">${escHtml(m.full_name || m.nickname || m.username)}${m.server_role === 'owner' ? ' <span class="member-badge">👑</span>' : ''}</div>
-          <div class="member-sub" style="color:${m.is_online ? 'var(--accent-green)' : 'var(--text-muted)'};font-size:10px;">${m.is_online ? 'Online' : 'Offline'}</div>
         </div>
-        <div class="member-status ${online}">● ${m.is_online ? 'Online' : ''}</div>
+        <div class="member-status ${online}">● ${chatMemberOnline(m) ? 'Online' : 'Offline'}</div>
       </div>
     `;
   }).join('');
 
   list.innerHTML = html + (members.length > 20 ? `<div class="members-more">+${members.length - 20} more members</div>` : '');
 
-  // Active now panel
-  if (activeList) {
-    const online = members.filter(m => m.is_online).slice(0, 5);
-    activeList.innerHTML = online.map(m => {
-      const grad = m.avatar_color_gradient || '#3b82f6,#6366f1';
-      const [c1, c2] = grad.split(',');
-      const init = (m.full_name || m.username || '?').charAt(0).toUpperCase();
-      const memberAvatarUrl = chatAvatarUrl(m.avatar_url);
-    const memberAvatar = memberAvatarUrl ? `url("${escHtml(memberAvatarUrl)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
-      const memberInitial = memberAvatarUrl ? '' : init;
-      return `
-        <div class="active-user" onclick="openMiniProfile(event, '${escHtml(m.full_name || m.username)}', '${escHtml(m.role)}', '', '${init}', ${m.id || m.user_id || 0})">
-          <div class="user-avatar">
-            <div class="avatar-placeholder" style="width:34px;height:34px;font-size:13px;border-radius:50%;background:${memberAvatar};background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;">${memberInitial}</div>
-            <div class="online-dot"></div>
-          </div>
-          <div class="active-user-info">
-            <div class="active-user-name">${escHtml(m.full_name || m.username)}</div>
-            <div class="active-user-status">${escHtml(m.role || 'Student')}</div>
-          </div>
-          <div class="activity-bars"><div class="activity-bar"></div><div class="activity-bar"></div><div class="activity-bar"></div></div>
-        </div>
-      `;
-    }).join('');
+  if (chatPresenceSnapshot?.serverId === String(window.ECOLLAB?.currentServerId)) {
+    applyChatMemberPresence(chatPresenceSnapshot.serverId, [...chatPresenceSnapshot.ids].map(id => ({ id })));
   }
+
 }
 
 async function refreshMembersPanel() {
   if (!currentChannelId) return;
   try {
-    const data = await apiFetch(`${API_BASE}/get-channel.php?id=${currentChannelId}`);
+    const channelId = currentChannelId;
+    const serverId = window.ECOLLAB?.currentServerId;
+    const data = await apiFetch(`${API_BASE}/get-channel.php?id=${channelId}`);
+    if (channelId !== currentChannelId || serverId !== window.ECOLLAB?.currentServerId) return;
     if (data.members) renderMembersPanel(data.members);
   } catch { /* silent */ }
 }
@@ -1684,3 +1762,8 @@ window.lastMessageId = 0;
     if (typeof window[name] === 'function') window['__real_' + name] = window[name];
   });
 })();
+
+
+
+
+

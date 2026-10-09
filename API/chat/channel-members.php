@@ -3,6 +3,8 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
+require_once dirname(__DIR__, 2) . '/services/NotificationService.php';
+
 header('Content-Type: application/json; charset=utf-8');
 AuthMiddleware::startSession(); $me=AuthMiddleware::requireAuth(true); $db=Database::getInstance();
 function cmJson(array $d,int $s=200):never{http_response_code($s);echo json_encode(['success'=>$s<400,...$d],JSON_UNESCAPED_UNICODE);exit;}
@@ -19,5 +21,6 @@ try{
  }
  if($method!=='POST')cmJson(['error'=>'Method not allowed'],405);AuthMiddleware::verifyCsrf();$b=json_decode(file_get_contents('php://input'),true)?:$_POST;$action=(string)($b['action']??'');$cid=(int)($b['channel_id']??0);$tid=(int)($b['user_id']??0);if(!$cid||!$tid||!in_array($action,['add','remove'],true))cmJson(['error'=>'action, channel_id, and user_id required'],400);$ch=cmChannel($db,$cid);if(!$ch)cmJson(['error'=>'Channel not found'],404);if(!cmCanManage($db,$ch,(int)$me['id']))cmJson(['error'=>'Insufficient permissions'],403);
  $sm=$db->prepare('SELECT 1 FROM server_members WHERE server_id=? AND user_id=? LIMIT 1');$sm->execute([(int)$ch['server_id'],$tid]);if(!$sm->fetchColumn())cmJson(['error'=>'User must be a member of this server first'],409);
- if($action==='add'){$db->prepare('INSERT IGNORE INTO channel_members(channel_id,user_id) VALUES(?,?)')->execute([$cid,$tid]);cmJson(['message'=>'Channel access granted']);}$db->prepare('DELETE FROM channel_members WHERE channel_id=? AND user_id=?')->execute([$cid,$tid]);cmJson(['message'=>'Channel access revoked']);
+ if($action==='add'){$db->prepare('INSERT IGNORE INTO channel_members(channel_id,user_id) VALUES(?,?)')->execute([$cid,$tid]);NotificationService::create($db,$tid,(int)$me['id'],'room_invite','You were added to #'.$ch['name'],'You now have access to this channel.','/modules/chat/chat.php?server_id='.(int)$ch['server_id'].'&channel_id='.$cid,'🔒');cmJson(['message'=>'Channel access granted']);}$db->prepare('DELETE FROM channel_members WHERE channel_id=? AND user_id=?')->execute([$cid,$tid]);cmJson(['message'=>'Channel access revoked']);
 }catch(Throwable $e){error_log('[chat/channel-members] '.$e->getMessage());cmJson(['error'=>defined('APP_DEBUG')&&APP_DEBUG?$e->getMessage():'Channel member service unavailable'],500);}
+

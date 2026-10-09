@@ -83,6 +83,9 @@ const NOTIF = {
   items: [],               // [{id, type, title, body, is_read, created_at}]
   unreadCount: 0,
   pollInterval: null,
+  hasMore: false,
+  nextOffset: 0,
+  loadingMore: false,
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -94,34 +97,41 @@ const NOTIF = {
  * We piggyback on the existing _wsSocket.
  */
 function _hookWebSocket() {
-  const ws = window._wsSocket;
-  if (!ws) return;
-
-  const original = ws.onmessage;
-  ws.onmessage = function(event) {
-    // Let the original handler run first
-    if (typeof original === 'function') original.call(ws, event);
-
-    try {
-      const data = JSON.parse(event.data);
-      switch (data.type) {
-        case 'dm_message':          _onWsDmMessage(data);       break;
-        case 'dm_typing':           _onWsDmTyping(data);        break;
-        case 'dm_group_message':    _onWsDmGroupMessage(data);  break;
-        case 'dm_group_typing':     _onWsDmGroupTyping(data);   break;
-        case 'connection_request':  _onWsConnRequest(data);     break;
-        case 'connection_accepted': _onWsConnAccepted(data);    break;
-        case 'notification':        _onWsNotification(data);    break;
-      }
-    } catch (_) {}
-  };
+  window.addEventListener('ecollab:socket-message', event => {
+    const data = event.detail;
+    switch (data.type) {
+      case 'auth_ok': _syncOpenDmMessages(); break;
+      case 'dm_message': _onWsDmMessage(data); break;
+      case 'dm_typing': _onWsDmTyping(data); break;
+      case 'dm_group_message': _onWsDmGroupMessage(data); break;
+      case 'dm_group_typing': _onWsDmGroupTyping(data); break;
+      case 'connection_request': _onWsConnRequest(data); break;
+      case 'connection_accepted': _onWsConnAccepted(data); break;
+      case 'notification': _onWsNotification(data); break;
+    }
+  });
+}
+function _wsSend(payload) {
+  if (['dm_message', 'dm_group_message'].includes(payload.type)) {
+    return window.sendPersistedChatMessage?.(payload);
+  }
+  return window.wsSend?.(payload);
 }
 
-function _wsSend(payload) {
-  const ws = window._wsSocket;
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify(payload));
-  }
+let dmSyncBusy = false;
+async function _syncOpenDmMessages() {
+  if (dmSyncBusy || document.hidden) return;
+  const groupId = DM.activeGroupId;
+  const partnerId = DM.activePartnerId;
+  if (!groupId && !partnerId) return;
+  dmSyncBusy = true;
+  try {
+    const url = groupId ? `/API/dm/group-message.php?group_id=${groupId}`
+      : `/API/dm/open-conversation.php?partner_id=${partnerId}`;
+    const data = await apiFetch(BASE() + url);
+    if (groupId !== DM.activeGroupId || partnerId !== DM.activePartnerId) return;
+    (data.messages || []).forEach(_appendDmMessage);
+  } catch (_) {} finally { dmSyncBusy = false; }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -129,7 +139,7 @@ function _wsSend(payload) {
 // ═══════════════════════════════════════════════════════════════
 
 function _onWsDmMessage(data) {
-  const convId = data.conversation_id;
+  const convId = Number(data.conversation_id);
 
   // Update conversation list preview
   const conv = DM.conversations.find(c => c.conversation_id == convId);
@@ -137,7 +147,7 @@ function _onWsDmMessage(data) {
     conv.last_message = data.body;
     conv.last_msg_at  = data.created_at;
     // Increment unread if not viewing this conversation
-    if (DM.activeConvId !== convId) {
+    if (Number(DM.activeConvId) !== convId) {
       conv.unread_count = (parseInt(conv.unread_count) || 0) + 1;
     }
     _renderDmList();
@@ -147,9 +157,9 @@ function _onWsDmMessage(data) {
   }
 
   // If this conversation is open, append message
-  if (DM.activeConvId === convId) {
+  if (Number(DM.activeConvId) === convId) {
     _appendDmMessage(data);
-  } else {
+  } else if (window.EcollabDmSettings?.alertsEnabled('dm', conv?.partner_id) !== false) {
     // Show floating toast
     const name = data.sender_name || 'Someone';
     showToast(`💬 ${name}: ${String(data.body || '').slice(0, 60)}`, 'info');
@@ -157,20 +167,11 @@ function _onWsDmMessage(data) {
 
   // Don't notify yourself about your own message (this event fires for
   // both sender and recipient)
-  if (typeof showDesktopNotification === 'function' && data.sender_id != ME_ID()) {
+  if (typeof showDesktopNotification === 'function' && data.sender_id != ME_ID() && window.EcollabDmSettings?.alertsEnabled('dm', conv?.partner_id) !== false) {
     showDesktopNotification('notification_messages', data.sender_name || 'New message', String(data.body || '').slice(0, 100));
   }
 
-  // Add notification badge
-  if (data.sender_id !== ME_ID()) {
-    _addInlineNotification({
-      type: 'dm',
-      title: (data.sender_name || 'Someone') + ' sent you a message',
-      body: String(data.body || '').slice(0, 80),
-      ref_id: data.message_id,
-      created_at: data.created_at,
-    });
-  }
+  if (Number(data.sender_id) !== Number(ME_ID())) _pollNotifications();
 }
 
 function _onWsDmTyping(data) {
@@ -208,17 +209,18 @@ function _onWsDmGroupMessage(data) {
 
   if (DM.activeGroupId == groupId) {
     _appendDmMessage(data);
-  } else {
+  } else if (window.EcollabDmSettings?.alertsEnabled('group', groupId) !== false) {
     const name = data.sender_name || 'Someone';
     showToast(`💬 ${name} (${grp ? grp.display_name : 'Group'}): ${String(data.body || '').slice(0, 60)}`, 'info');
   }
 
   // Don't notify yourself about your own message (this event fires for
   // every group member, including the sender)
-  if (typeof showDesktopNotification === 'function' && data.sender_id != ME_ID()) {
+  if (typeof showDesktopNotification === 'function' && data.sender_id != ME_ID() && window.EcollabDmSettings?.alertsEnabled('group', groupId) !== false) {
     const groupName = grp ? grp.display_name : 'Group';
     showDesktopNotification('notification_messages', `${data.sender_name || 'Someone'} (${groupName})`, String(data.body || '').slice(0, 100));
   }
+  if (Number(data.sender_id) !== Number(ME_ID())) _pollNotifications();
 }
 
 function _onWsDmGroupTyping(data) {
@@ -282,6 +284,8 @@ function _addInlineNotification(notif) {
     created_at: notif.created_at || new Date().toISOString(),
     ref_id:     notif.ref_id || 0,
     link_url:   notif.link_url || '',
+    actor_id:   notif.actor_id || 0,
+    icon:       notif.icon || '',
   });
   if (NOTIF.items.length > 30) NOTIF.items.pop();
   NOTIF.unreadCount++;
@@ -300,14 +304,27 @@ function _updateNotifBadge() {
   }
 }
 
-function _notifIcon(type) {
-  const icons = {
-    dm:                 '💬',
-    connection_request: '🤝',
-    connection_accepted:'✅',
-    mention:            '@',
+function _notifIcon(notif) {
+  const type = String(notif.type || '');
+  const link = String(notif.link_url || '');
+  let kind = 'bell';
+  if (/missed_call/.test(link) || type === 'missed_call') kind = 'call';
+  else if (/thread/.test(link) || /thread/.test(type)) kind = 'thread';
+  else if (/group_id=/.test(link) || type === 'group_message') kind = 'group';
+  else if (/invite/.test(type) || /[?&](?:invite|channel_invite)=/.test(link)) kind = 'invite';
+  else if (type === 'connection_accepted') kind = 'accepted';
+  else if (type === 'connection_request') kind = 'group';
+  else if (['dm','message','dm_message'].includes(type)) kind = 'message';
+  const paths = {
+    bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/>',
+    message: '<path d="M21 11a8 8 0 0 1-8 8H8l-5 3v-6a8 8 0 0 1-1-5 8 8 0 0 1 8-8h3a8 8 0 0 1 8 8Z"/><path d="M7 10h9M7 14h6"/>',
+    thread: '<path d="M4 4h16v11H9l-5 4V4Z"/><path d="M8 8h8M8 11h5"/>',
+    group: '<circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M18 21v-3a6 6 0 0 0-2-4"/>',
+    invite: '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4M12 14v3"/>',
+    accepted: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
+    call: '<path d="m6 3 3 4-2 3a15 15 0 0 0 7 7l3-2 4 3c-1 5-5 4-8 2A24 24 0 0 1 4 11C2 8 1 4 6 3Z"/><path d="m16 3 5 5m0-5-5 5"/>'
   };
-  return icons[type] || '🔔';
+  return '<span class="notif-icon notif-icon--' + kind + '" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + paths[kind] + '</svg></span>';
 }
 
 function _renderNotifDropdown() {
@@ -320,21 +337,34 @@ function _renderNotifDropdown() {
   }
 
   list.innerHTML = NOTIF.items.map(n => `
-    <div class="notif-item ${n.is_read ? '' : 'unread'}" data-notif-id="${n.id}" onclick="_handleNotifClick(${n.id},'${_esc(n.type)}',${n.ref_id || 0})" style="cursor:pointer;">
-      <div class="notif-dot" style="${n.is_read ? 'opacity:0' : ''}"></div>
-      <div style="display:flex;align-items:flex-start;gap:10px;flex:1;">
-        <div style="font-size:18px;flex-shrink:0;margin-top:1px;">${_notifIcon(n.type)}</div>
-        <div class="notif-content">
-          <div class="notif-text">${_esc(n.title)}</div>
-          ${n.body ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${_esc(String(n.body).slice(0,80))}</div>` : ''}
-          <div class="notif-time">${_timeAgo(n.created_at)}</div>
-        </div>
+    <div class="notif-item ${n.is_read ? '' : 'unread'}" data-notif-id="${_esc(n.id)}" role="button" tabindex="0">
+      ${_notifIcon(n)}
+      <div class="notif-content">
+        <div class="notif-text">${_esc(n.title)}</div>
+        ${n.body ? `<div class="notif-body">${_esc(String(n.body).slice(0,160))}</div>` : ''}
+        <div class="notif-time">${_timeAgo(n.created_at)}</div>
       </div>
-    </div>`).join('');
+      ${n.is_read ? '' : '<span class="notif-dot" aria-label="Unread"></span>'}
+    </div>`).join('') + (NOTIF.hasMore ? '<button type="button" class="notif-load-more" data-notif-more>Load more notifications</button>' : '');
 }
 
-window._handleNotifClick = async function(notifId, type, refId) {
-  const notif = NOTIF.items.find(n => String(n.id) === String(notifId));
+function _notificationUrl(link) {
+  if (!link || !/^(?:\/|https?:\/\/)/i.test(link)) return null;
+  try {
+    const url = new URL(link, window.location.origin);
+    const root = new URL(BASE() || '/', window.location.origin);
+    if (url.origin !== root.origin || url.username || url.password) return null;
+    const prefix = root.pathname.replace(/\/$/, '');
+    return url.pathname.startsWith(prefix + '/modules/') ? url : null;
+  } catch (_) { return null; }
+}
+function _focusNotificationMessage(id) {
+  const messageId = Number(id);
+  if (messageId > 0) document.querySelector('[data-msg-id="' + messageId + '"]')?.scrollIntoView({block:'center'});
+}
+
+window._handleNotifClick = async function(notifId, type, refId, destination = null) {
+  const notif = destination || NOTIF.items.find(n => String(n.id) === String(notifId));
   if (notif && !notif.is_read) {
     notif.is_read = 1;
     NOTIF.unreadCount = Math.max(0, NOTIF.unreadCount - 1);
@@ -376,57 +406,40 @@ window._handleNotifClick = async function(notifId, type, refId) {
     return;
   }
 
-  // Thread notifications open Threads; when ref_id is a thread id, open it.
-  if (t === 'thread' || t === 'thread_reply' || t === 'thread_mention' ||
-      /thread/i.test(link)) {
-    const threadNav = [...document.querySelectorAll('[onclick]')].find(el =>
-      /switchView\(['"]threads['"]/.test(el.getAttribute('onclick') || '')
-    );
-    if (typeof window.switchView === 'function') {
-      window.switchView('threads', threadNav || null);
-    } else if (threadNav) {
-      threadNav.click();
-    }
-    if (Number(refId) > 0 && typeof window._openThreadDetail === 'function') {
-      setTimeout(() => window._openThreadDetail(Number(refId)), 120);
-    }
+  const url = _notificationUrl(link);
+  if (link && !url) { showToast('This notification has an invalid destination.', 'error'); return; }
+  const params = url?.searchParams || new URLSearchParams();
+  const groupId = Number(params.get('group_id') || params.get('group') || (t === 'group_message' ? refId : 0));
+  const threadId = Number(params.get('thread_id') || params.get('thread') || (['thread','thread_reply','thread_mention'].includes(t) ? refId : 0));
+  if (groupId > 0) {
+    await window.openGroupConversation?.(groupId);
+    _focusNotificationMessage(params.get('message_id'));
     return;
   }
-
-  // DM notifications: prefer an explicit partner/conversation encoded by the
-  // notification; otherwise resolve the referenced message against loaded DMs.
-  if (t === 'dm' || t === 'dm_message' || t === 'message' || /\/dm\b|conversation/i.test(link)) {
-    let conv = null;
-    const partnerMatch = link.match(/[?&](?:partner_id|user_id)=(\d+)/i);
-    if (partnerMatch) {
-      conv = DM.conversations.find(c => Number(c.partner_id) === Number(partnerMatch[1]));
-    }
-    if (!conv && Number(refId) > 0) {
-      conv = DM.conversations.find(c =>
-        Number(c.last_message_id || c.message_id || 0) === Number(refId)
-      );
-    }
-    if (!conv) conv = DM.conversations.find(c => (parseInt(c.unread_count) || 0) > 0);
-    if (conv) {
-      await window.openDmConversation?.(
-        Number(conv.partner_id),
-        conv.partner_name || conv.partner_username || 'User',
-        conv.partner_gradient || ''
-      );
-      return;
-    }
+  if (threadId > 0) {
+    window.switchView?.('threads', document.querySelector('[onclick*="threads"]'));
+    await window.openThreadDetail?.(threadId);
+    const replyId = Number(params.get('reply_id'));
+    if (replyId > 0) document.querySelector('[data-reply-id="' + replyId + '"]')?.scrollIntoView({block:'center'});
+    return;
+  }
+  const conversationId = Number(params.get('dm') || params.get('conversation_id'));
+  const explicitPartner = Number(params.get('partner_id') || params.get('user_id'));
+  if (conversationId > 0 || explicitPartner > 0 || ['dm','dm_message','message','missed_call'].includes(t)) {
     await loadDmList();
-    conv = DM.conversations.find(c => (parseInt(c.unread_count) || 0) > 0);
-    if (conv) {
-      await window.openDmConversation?.(Number(conv.partner_id), conv.partner_name || conv.partner_username || 'User', conv.partner_gradient || '');
-    }
+    const conv = DM.conversations.find(c => conversationId > 0 && Number(c.conversation_id) === conversationId);
+    const partnerId = explicitPartner || Number(conv?.partner_id) ||
+      (['dm','dm_message','message','missed_call'].includes(t) ? Number(notif?.actor_id) : 0);
+    if (partnerId > 0) {
+      const partner = conv || DM.conversations.find(c => Number(c.partner_id) === partnerId);
+      await window.openDmConversation?.(partnerId, partner?.partner_name || 'User', partner?.partner_gradient || '');
+      _focusNotificationMessage(params.get('message_id'));
+    } else showToast('This conversation is no longer available.', 'info');
     return;
   }
+  if (url) window.location.href = url.href;
+  else showToast('This notification has no destination.', 'info');
 
-  // Mentions/bookmarks and other notifications can use their stored internal URL.
-  if (link && link.startsWith('/')) {
-    window.location.href = BASE() + link;
-  }
 };
 
 // Poll notifications from DB on a slow cadence (backup to WebSocket)
@@ -434,12 +447,32 @@ async function _pollNotifications() {
   try {
     const data = await apiFetch(BASE() + '/API/notifications/get.php');
     if (data.notifications) {
-      NOTIF.items        = data.notifications;
-      NOTIF.unreadCount  = data.unread_count;
+      const old = NOTIF.items.slice(30);
+      const freshIds = new Set(data.notifications.map(n=>String(n.id)));
+      NOTIF.items = data.notifications.concat(old.filter(n=>!freshIds.has(String(n.id))));
+      NOTIF.unreadCount = data.unread_count;
+      NOTIF.nextOffset = NOTIF.items.length;
+      NOTIF.hasMore = data.total_count ? NOTIF.items.length < data.total_count : !!data.has_more;
       _updateNotifBadge();
       _renderNotifDropdown();
     }
   } catch (_) {}
+}
+
+async function _loadMoreNotifications() {
+  if (NOTIF.loadingMore || !NOTIF.hasMore) return;
+  NOTIF.loadingMore = true;
+  try {
+    const data = await apiFetch(BASE() + '/API/notifications/get.php?offset=' + NOTIF.nextOffset);
+    if (data.success === false) throw new Error(data.error);
+    const ids = new Set(NOTIF.items.map(n=>String(n.id)));
+    NOTIF.items.push(...(data.notifications || []).filter(n=>!ids.has(String(n.id))));
+    NOTIF.nextOffset = data.next_offset;
+    NOTIF.hasMore = !!data.has_more;
+    NOTIF.unreadCount = data.unread_count;
+    _updateNotifBadge(); _renderNotifDropdown();
+  } catch (_) { showToast('Could not load older notifications. Try again.', 'error'); }
+  finally { NOTIF.loadingMore = false; }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -454,6 +487,7 @@ window.toggleNotifications = function() {
   dd.classList.toggle('open', !isOpen);
   if (!isOpen) {
     _renderNotifDropdown();
+    _pollNotifications();
   }
 };
 
@@ -469,6 +503,9 @@ window.markAllRead = function(event) {
   }).catch(() => {});
   if (window.showToast) showToast('✓ All notifications marked as read', 'info');
 };
+
+window.__real_toggleNotifications = window.toggleNotifications;
+window.__real_markAllRead = window.markAllRead;
 
 // ═══════════════════════════════════════════════════════════════
 //  DM LIST
@@ -746,13 +783,16 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
       <button onclick="startDmCall(true)" title="Video call" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;flex-shrink:0;">🎥</button>`;
   }
 
+  window.EcollabDmSettings?.opened({ type: 'dm', id: partnerId, name: partnerName });
+
   // Load messages
   const msgArea = document.getElementById('dmMessagesArea');
   msgArea.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">Loading…</div>';
 
   try {
     const data = await apiFetch(BASE() + `/API/dm/open-conversation.php?partner_id=${partnerId}`);
-    DM.activeConvId = data.conversation_id;
+    if (DM.activePartnerId !== partnerId || DM.activeGroupId) return;
+    DM.activeConvId = Number(data.conversation_id);
 
     // Clear unread from list
     const conv = DM.conversations.find(c => c.conversation_id === DM.activeConvId);
@@ -771,6 +811,8 @@ window.openGroupConversation = async function(groupId) {
   DM.activeGroupId   = groupId;
 
   _ensureDmPanel();
+  document.getElementById('dmPanelTitle').textContent = 'Loading group…';
+  window.EcollabDmSettings?.opened({ type: 'group', id: groupId, name: 'Group', members: [] });
 
   const panel = document.getElementById('dmConversationPanel');
   panel.style.display = 'flex';
@@ -781,6 +823,7 @@ window.openGroupConversation = async function(groupId) {
 
   try {
     const data = await apiFetch(BASE() + `/API/dm/group-message.php?group_id=${groupId}`);
+    if (DM.activeGroupId !== groupId) return;
     const displayName = data.group?.name || (DM.groups.find(g => g.id === groupId)?.display_name) || 'Group';
 
     document.getElementById('dmPanelTitle').innerHTML = `
@@ -790,6 +833,7 @@ window.openGroupConversation = async function(groupId) {
       </span>
       <button onclick="window.startDmGroupVoice(${groupId}, '${_esc(displayName).replace(/'/g, "\\'")}')" title="Start voice call — anyone in the group can join" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;flex-shrink:0;">📞</button>`;
 
+    window.EcollabDmSettings?.opened({ type: 'group', id: groupId, name: displayName, members: data.members || [] });
     _renderDmMessages(data.messages || []);
   } catch (err) {
     msgArea.innerHTML = `<div style="text-align:center;padding:20px;color:#f87171;font-size:13px;">Failed to load: ${_esc(err.message)}</div>`;
@@ -850,6 +894,7 @@ function _renderDmMessages(messages) {
     return;
   }
 
+  window.EcollabDmSettings?.record(messages, true);
   area.innerHTML = messages.map(m => _dmMessageHTML(m)).join('');
   area.scrollTop = area.scrollHeight;
 }
@@ -866,8 +911,7 @@ window._dmFileChosen=function(input){
 window._dmClearFile=function(){_dmPendingFile=null;const i=document.getElementById('dmFileInput');if(i)i.value='';const p=document.getElementById('dmAttachmentPreview');if(p){p.innerHTML='';p.style.display='none';}};
 async function _dmUploadPending(){
   if(!_dmPendingFile)return null;const form=new FormData();form.append('file',_dmPendingFile);
-  const res=await fetch(BASE()+'/API/dm/upload-file.php',{method:'POST',credentials:'same-origin',headers:{'X-CSRF-Token':window.ECOLLAB?.csrfToken||document.querySelector('meta[name="csrf-token"]')?.content||''},body:form});
-  const data=await res.json().catch(()=>({}));if(!res.ok||!data.success)throw new Error(data.error||'Upload failed');return data;
+  return window.uploadChatAttachment(BASE()+'/API/dm/upload-file.php', form);
 }
 function _dmAttachmentHTML(m){
   if(!m.attachment_path)return '';
@@ -883,10 +927,10 @@ function _dmMessageHTML(m) {
   return `
     <div style="display:flex;flex-direction:${isMine ? 'row-reverse' : 'row'};align-items:flex-end;gap:8px;" data-msg-id="${m.id}">
       ${!isMine ? _avatar(name, grad, 26, avatarUrl) : ''}
-      <div style="max-width:72%;background:${isMine ? 'var(--accent-purple)' : 'var(--bg-tertiary)'};color:${isMine ? '#fff' : 'var(--text-primary)'};padding:8px 12px;border-radius:${isMine ? '12px 12px 4px 12px' : '12px 12px 12px 4px'};font-size:13px;line-height:1.5;word-break:break-word;">
+      <div class="dm-message-bubble" style="max-width:72%;background:${isMine ? 'var(--accent-purple)' : 'var(--bg-tertiary)'};color:${isMine ? '#fff' : 'var(--text-primary)'};padding:8px 12px;border-radius:${isMine ? '12px 12px 4px 12px' : '12px 12px 12px 4px'};font-size:13px;line-height:1.5;word-break:break-word;">
         ${_dmAttachmentHTML(m)}
         ${m.body ? _esc(m.body) : ''}
-        <div style="font-size:10px;opacity:0.65;margin-top:4px;text-align:${isMine ? 'right' : 'left'};">${_timeAgo(m.created_at)}</div>
+        <div class="dm-message-time" style="font-size:10px;opacity:0.65;margin-top:4px;text-align:${isMine ? 'right' : 'left'};">${_timeAgo(m.created_at)}</div>
       </div>
     </div>`;
 }
@@ -894,6 +938,9 @@ function _dmMessageHTML(m) {
 function _appendDmMessage(m) {
   const area = document.getElementById('dmMessagesArea');
   if (!area) return;
+  m = { ...m, id: m.id ?? m.message_id };
+  window.EcollabDmSettings?.record([m]);
+  if (m.id == null || area.querySelector(`[data-msg-id="${CSS.escape(String(m.id))}"]`)) return;
   const el = document.createElement('div');
   el.innerHTML = _dmMessageHTML(m);
   area.appendChild(el.firstElementChild);
@@ -960,7 +1007,12 @@ window.sendDmMessage = async function() {
         method: 'POST',
         body: JSON.stringify({ group_id: DM.activeGroupId, body: text, attachment_path:uploaded?.file_path||'', attachment_name:uploaded?.file_name||'', attachment_size:uploaded?.file_size||0, attachment_mime:uploaded?.mime_type||'' }),
       });
-      _wsSend({ type: 'dm_group_message', group_id: DM.activeGroupId, message_id: data.message_id, body: text, created_at: new Date().toISOString() });
+      const optimisticEl = document.querySelector(`[data-msg-id="${optimistic.id}"]`);
+      if (optimisticEl && data.message_id) {
+        const existing = document.querySelector(`#dmMessagesArea [data-msg-id="${CSS.escape(String(data.message_id))}"]`);
+        if (existing) optimisticEl.remove(); else optimisticEl.dataset.msgId = String(data.message_id);
+      }
+      _wsSend({ type: 'dm_group_message' , group_id: DM.activeGroupId, message_id: data.message_id, body: text, created_at: new Date().toISOString() });
       const grp = DM.groups.find(g => g.id === DM.activeGroupId);
       if (grp) { grp.last_message = (text || (uploaded ? '📎 '+uploaded.file_name : '')).slice(0, 120); grp.last_msg_at = new Date().toISOString(); _renderGroupList(); }
       input.disabled = false;
@@ -991,7 +1043,8 @@ window.sendDmMessage = async function() {
     // Replace optimistic ID with the real DB message ID.
     const optimisticEl = document.querySelector(`[data-msg-id="${optimistic.id}"]`);
     if (optimisticEl && data.message_id) {
-      optimisticEl.dataset.msgId = String(data.message_id);
+      const existing = document.querySelector(`#dmMessagesArea [data-msg-id="${CSS.escape(String(data.message_id))}"]`);
+      if (existing) optimisticEl.remove(); else optimisticEl.dataset.msgId = String(data.message_id);
     }
 
     // Human DMs still use WebSocket. The AI reply is returned directly
@@ -1126,17 +1179,33 @@ window.closeDmPanel = function() {
 // ═══════════════════════════════════════════════════════════════
 
 function _init() {
-  // Wait for socket.js to set window._wsSocket
-  const interval = setInterval(() => {
-    if (window._wsSocket) {
-      clearInterval(interval);
-      _hookWebSocket();
-    }
-  }, 500);
+  _hookWebSocket();
+  setInterval(() => {
+    if (!window.isChatRealtimeReady?.()) _syncOpenDmMessages();
+  }, 3000);
 
   // Load initial data
-  loadDmList();
+  loadDmList().then(async () => {
+    const p = new URL(window.location.href).searchParams;
+    if (p.has('dm') || p.has('partner_id') || p.has('group_id') || p.has('thread_id')) {
+      await window._handleNotifClick('deep-link','system',0, {is_read:1,link_url:window.location.href,type:'system'});
+      const clean = new URL(window.location.href);
+      ['dm','partner_id','group_id','thread_id','reply_id','message_id','missed_call'].forEach(k => clean.searchParams.delete(k));
+      history.replaceState({},'',clean.href);
+    }
+  });
   _pollNotifications();
+  const list = document.getElementById('notifList');
+  const activate = event => {
+    if (event.type === 'click' && event.target.closest('[data-notif-more]')) { _loadMoreNotifications(); return; }
+    const row = event.target.closest('[data-notif-id]');
+    if (!row || (event.type === 'keydown' && !['Enter',' '].includes(event.key))) return;
+    event.preventDefault();
+    const n = NOTIF.items.find(n => String(n.id) === row.dataset.notifId);
+    if (n) window._handleNotifClick(n.id,n.type,n.ref_id);
+  };
+  list?.addEventListener('click',activate);
+  list?.addEventListener('keydown',activate);
 
   // Poll notifications every 30 seconds as backup
   NOTIF.pollInterval = setInterval(_pollNotifications, 30_000);
@@ -1165,3 +1234,6 @@ Object.assign(window, {
   loadDmList,
   sendDmMessage,
 });
+
+
+

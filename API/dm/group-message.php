@@ -4,6 +4,8 @@ require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 
+require_once dirname(__DIR__, 2) . '/services/NotificationService.php';
+
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
 $me = AuthMiddleware::requireAuth(true);
@@ -91,6 +93,15 @@ try {
         $db->prepare('UPDATE dm_groups SET last_message = :msg, last_msg_at = NOW() WHERE id = :gid')
             ->execute([':msg' => mb_substr($text !== '' ? $text : ('📎 ' . ($attachmentName ?: 'Attachment')), 0, 200), ':gid' => $groupId]);
 
+        $members = $db->prepare('SELECT user_id FROM dm_group_members WHERE group_id=? AND user_id<>?');
+        $members->execute([$groupId,$uid]);
+        foreach ($members->fetchAll(PDO::FETCH_COLUMN) as $recipient) {
+            NotificationService::invitationsFromMessage($db,(int)$recipient,$uid,$text);
+            NotificationService::create($db,(int)$recipient,$uid,'message',($me['full_name'] ?: $me['username']).' sent a group message',
+                $text !== '' ? $text : 'Shared an attachment',
+                '/modules/chat/chat.php?group_id='.$groupId.'&message_id='.$msgId,'👥');
+        }
+
         echo json_encode(['success' => true, 'message_id' => $msgId, 'attachment_path' => $attachmentPath, 'attachment_name' => $attachmentName, 'attachment_size' => $attachmentSize, 'attachment_mime' => $attachmentMime]);
         exit;
     }
@@ -102,3 +113,4 @@ try {
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => (defined('APP_DEBUG') && APP_DEBUG) ? $e->getMessage() : 'Server error']);
 }
+

@@ -40,18 +40,19 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 <html lang="en">
 
 <head>
+<script type="importmap">{"imports":{"yjs":"https://esm.sh/yjs@13.6.27","y-protocols/awareness":"https://esm.sh/y-protocols@1.0.6/awareness?external=yjs"}}</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ecollab — Chat</title>
   <link rel="icon" type="image/webp" href="<?= BASE_URL ?>/assets/ecollab-icon.webp">
   <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken) ?>">
-  <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js?v=2" defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat.css">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat.css?v=sidebar-consistency-1">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/whiteboard.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/whiteboard-mobile.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/collab-tools.css">
-  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/peer-matching.css">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/peer-matching.css?v=matching-avatars-1">
   <style>
     #wbOverlay {
       display: none !important;
@@ -173,9 +174,12 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       }
     }
   </style>
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=notifications-2">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=3">
+<script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 </head>
 
-<body>
+<body data-mobile-surface="chat">
 
   <!-- MOBILE OVERLAY -->
   <div class="mobile-overlay" id="mobileOverlay" onclick="closeSidebar()"></div>
@@ -200,7 +204,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     </div>
     <div class="workspace-sep workspace-brand-sep"></div>
     <?php foreach ($servers as $idx => $srv): ?>
-      <div class="workspace-icon<?= $idx === 0 ? ' active' : '' ?>"
+      <div class="workspace-icon<?= (int)$srv['id'] === (int)($firstServer['id'] ?? 0) ? ' active' : '' ?>"
         data-server-id="<?= (int)$srv['id'] ?>"
         data-ws="<?= $idx ?>"
         data-server-type="<?= htmlspecialchars((string)($srv['type'] ?? 'community')) ?>"
@@ -281,6 +285,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
               <div class="channel-item <?= $ch === reset($channels) ? 'active' : '' ?>"
                 data-channel-id="<?= (int)$ch['id'] ?>"
                 data-channel-name="<?= htmlspecialchars($ch['name']) ?>"
+                data-channel-type="<?= htmlspecialchars($ch['type']) ?>"
                 data-is-private="<?= !empty($ch['is_private']) ? '1' : '0' ?>"
                 <?= $isNew ? 'data-is-new="1"' : '' ?>
                 onclick="switchChannel(this, <?= (int)$ch['id'] ?>)">
@@ -340,6 +345,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <div id="whiteboardChannelList">
           <?php foreach ($channels as $ch): if ($ch['type'] === 'whiteboard'): ?>
               <div class="channel-item wb-channel-item" data-channel-id="<?= (int)$ch['id'] ?>" data-channel-name="<?= htmlspecialchars($ch['name']) ?>"
+                data-channel-type="<?= htmlspecialchars($ch['type']) ?>"
                 onclick="openWhiteboardChannel(<?= (int)$ch['id'] ?>, '<?= htmlspecialchars($ch['name']) ?>')" title="Open <?= htmlspecialchars($ch['name']) ?>">
                 <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24" style="color:var(--accent-purple);flex-shrink:0;">
                   <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
@@ -393,8 +399,8 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     </div>
 
     <!-- USER PROFILE FOOTER -->
-    <div class="user-profile-footer" onclick="openUserSettings()">
-      <div class="user-avatar">
+    <div class="user-profile-footer">
+      <div class="user-avatar" onclick="openUserSettings()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openUserSettings()}">
         <div class="avatar-placeholder avatar-lg" style="<?= $avatarStyle ?>;border-radius:50%;">
           <?= htmlspecialchars($initials) ?>
         </div>
@@ -406,28 +412,28 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         </div>
         <div style="font-size:11px;color:var(--accent-green);">● Online</div>
       </div>
-      <div style="display:flex;gap:6px;">
-        <div class="footer-icon-btn" onclick="toggleMute(event)" title="Mute" id="muteBtn">
+      <div class="footer-controls">
+        <button type="button" class="footer-icon-btn" onclick="event.stopPropagation();toggleMute(event)" title="Mute" id="muteBtn">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
             <path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
-        </div>
-        <div class="footer-icon-btn" onclick="toggleDeafen(event)" title="Deafen" id="deafenBtn">
+        </button>
+        <button type="button" class="footer-icon-btn" onclick="event.stopPropagation();toggleDeafen(event)" title="Deafen" id="deafenBtn">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" />
           </svg>
-        </div>
-        <div class="footer-icon-btn" onclick="openUserSettings()" title="Settings">
+        </button>
+        <button type="button" class="footer-icon-btn" onclick="event.stopPropagation();openUserSettings()" title="Settings" aria-label="Settings">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z" />
           </svg>
-        </div>
-        <div class="footer-icon-btn" onclick="handleLogout()" title="Log Out" style="color:#ef4444;">
+        </button>
+        <button type="button" class="footer-icon-btn" onclick="event.stopPropagation();handleLogout()" aria-label="Log out" title="Log Out" style="color:#ef4444;">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" />
           </svg>
-        </div>
+        </button>
       </div>
     </div>
   </div>
@@ -481,16 +487,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           <div class="notif-dropdown" id="notifDropdown" style="display:none;">
             <div class="notif-header">
               <div class="notif-title">Notifications</div>
-              <div class="notif-mark-read" onclick="markAllRead()">Mark all read</div>
+              <button type="button" class="notif-mark-read" onclick="markAllRead(event)">Mark all read</button>
             </div>
-            <div id="notifList">
-              <div class="notif-item unread">
-                <div class="notif-dot"></div>
-                <div class="notif-content">
-                  <div class="notif-text"><strong>John Doe</strong> replied to your message</div>
-                  <div class="notif-time">2 min ago</div>
-                </div>
-              </div>
+            <div id="notifList"><div style="padding:24px 16px;color:var(--text-muted)">Loading notifications…</div>
             </div>
           </div>
         </div>
@@ -752,14 +751,15 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           </svg>
           <span class="vc-ctrl-tooltip">Camera</span>
         </div>
-        <div class="vc-ctrl-btn" id="vcWbBtn" onclick="openWhiteboard()" title="Whiteboard">
-          <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-          </svg>
-          <span class="vc-ctrl-tooltip">Whiteboard</span>
-        </div>
       </div>
       <div class="vc-bar-grp center">
+        <button class="vc-ctrl-btn vc-unwatch-btn" id="vcUnwatchBtn" type="button" onclick="unwatchAllScreens()" title="Unwatch Screen Share" style="display:none;">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2H4C2.9 4 2 4.9 2 6v10c0 1.1.9 2 2 2h6v2H7v2h10v-2h-3v-2h6ZM4 6h16v10H4V6Z"/>
+            <path d="M7.4 7.4 16.6 16.6M16.6 7.4 7.4 16.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <span class="vc-ctrl-tooltip">Unwatch</span>
+        </button>
         <div class="vc-btn-lg mic-btn" id="vcMicBtn" onclick="toggleVcMic()">
           <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
@@ -1097,11 +1097,13 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     6. whiteboard.js — collaborative whiteboard
     7. dm-notifications.js — DM badge polling
   -->
-  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=avatar-sync-3" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=avatar-sync-3" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=chat-delivery-1-yjs-chat-1-calls-2" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=chat-delivery-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=presence-consistency-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=voice-isolation-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=voice-state-1" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.22.3/dist/livekit-client.umd.min.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/livekit-voice.js?v=footer-controls-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/whiteboard.js" defer></script>
   <!-- ── Private Channel Manager Modal ────────────────────────────────── -->
   <div id="privateChannelManagerModal" style="display:none!important;position:fixed;inset:0;z-index:11000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this)closePrivateChannelManager()">
@@ -1148,8 +1150,8 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     </button>
   </div>
 
-  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/dm-call.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=dm-settings-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/dm-chat-settings.js?v=dm-settings-1" defer></script>
   <!--
     Collab tools load order:
     ot-engine.js        — pure OT algorithm (no deps, must come first)
@@ -1160,7 +1162,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-tools.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-liveeditor.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-extra.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/peer-matching.js?v=avatar-sync-4" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/peer-matching.js?v=matching-avatars-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/server-channel-management.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/server-discovery.js?v=privacy1" defer></script>
 
@@ -3435,7 +3437,8 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <script src="<?= BASE_URL ?>/assets/js/chat/functionality-overrides.js" defer></script>
   <!-- Thread enhancements are loaded by functionality-overrides.js after threads-v2.js is ready. -->
   <script src="<?= BASE_URL ?>/assets/js/chat/collabs-ui.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/nav-persistence.js?v=1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/nav-persistence.js?v=2" defer></script>
+<script type="module" src="<?= BASE_URL ?>/assets/js/chat/yjs-channel-presence.js?v=yjs-chat-1"></script>
 </body>
 
 <!-- ── FLASHCARD MODALS ── -->
@@ -3536,6 +3539,21 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 </div>
 <div id="resourceCommentsModal" class="collab-modal-overlay" style="display:none"></div>
 
+<?php require_once dirname(__DIR__, 2) . '/includes/calls/bootstrap.php'; ?>
+<script type="module" src="<?= BASE_URL ?>/assets/js/chat/yjs-channel-presence.js?v=yjs-chat-1"></script>
 </body>
 
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -103,16 +103,16 @@ function joinVoice(channelSlug, el, channelId, roomNameOverride) {
   showToast('🔊 Joined ' + vcRoomName, 'success');
 }
 
-// ── DM group voice — reuses the exact same mesh/UI as a real voice channel,
-// just with a synthetic channel_id (see DM_GROUP_VOICE_ID_OFFSET server-side)
-// so no real `channels` row is needed. Everyone in the group can join or
-// ignore it — it's not a ring-everyone-at-once call like 1:1 DM calling.
-const DM_GROUP_VOICE_ID_OFFSET = 2000000000;
-
+// ── DM group voice — LiveKit room authorized by DM group membership.
+// Do not synthesize a server channel_id: /API/chat/livekit-token.php correctly
+// rejects those IDs because they are not rows in channels.
 function startDmGroupVoice(groupId, groupName) {
   if (vcActive) { showToast('Already in a voice channel', 'info'); return; }
-  const channelId = DM_GROUP_VOICE_ID_OFFSET + parseInt(groupId);
-  joinVoice('dm-group-' + groupId, null, channelId, groupName || 'Group Voice Call');
+  if (typeof window.startDmGroupLiveKitCall !== 'function') {
+    showToast('Group call service is not ready. Refresh eCollab and try again.', 'error');
+    return;
+  }
+  return window.startDmGroupLiveKitCall(parseInt(groupId), false, groupName || 'Group Voice Call');
 }
 window.startDmGroupVoice = startDmGroupVoice;
 
@@ -296,7 +296,10 @@ function _updateConnectedBar(visible) {
 function _ensureMinimizeBtn() {
   const header = document.querySelector('.vc-header-right');
   if (!header || header.querySelector('.vc-minimize-btn')) return;
-  const btn = document.createElement('div');
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.setAttribute('aria-label','Minimize voice panel');
+  btn.setAttribute('aria-expanded','true');
   btn.className = 'vc-minimize-btn';
   btn.title = 'Minimize';
   btn.onclick = toggleVcMinimize;
@@ -322,6 +325,21 @@ function _ensureVoiceQuickActions() {
   header.insertBefore(wrap, invite || header.firstChild);
 }
 function _syncVoiceQuickActions() {
+  const controls = [
+    [['vcMicBtn','vcQuickMic','muteBtn'], !vcMicMuted, 'Microphone'],
+    [['vcDeafBtn','deafenBtn'], !vcDeafened, 'Audio playback'],
+    [['vcCamBtn','vcQuickCam'], vcCamOn, 'Camera'],
+    [['vcScreenBtn','vcQuickScreen'], vcScreenOn, 'Screen share'],
+  ];
+  controls.forEach(([ids, enabled, name]) => ids.forEach(id => {
+    const button = document.getElementById(id);
+    if (!button) return;
+    button.classList.toggle('media-on', enabled);
+    button.classList.toggle('media-off', !enabled);
+    button.setAttribute('aria-pressed', String(enabled));
+    button.setAttribute('aria-label', name + (enabled ? ' on' : ' off'));
+    button.title = name + (enabled ? ' on' : ' off');
+  }));
   document.getElementById('vcQuickMic')?.classList.toggle('danger', vcMicMuted);
   document.getElementById('vcQuickCam')?.classList.toggle('active', vcCamOn);
   document.getElementById('vcQuickScreen')?.classList.toggle('active', vcScreenOn);
@@ -345,6 +363,7 @@ window.addEventListener('resize',()=>{ if(vcActive) _refreshVoiceLayout(); });
 function toggleVcMinimize() {
   const vcView = document.getElementById('voiceChannelView');
   if (!vcView || !vcActive) return;
+  if (vcView.parentNode !== document.body) document.body.appendChild(vcView);
   vcMinimized = !vcMinimized;
   vcView.classList.toggle('vc-minimized', vcMinimized);
   _refreshVoiceLayout();
@@ -353,7 +372,9 @@ function toggleVcMinimize() {
   // Update minimize btn icon
   const btn = vcView.querySelector('.vc-minimize-btn');
   if (btn) {
-    btn.title = vcMinimized ? 'Expand' : 'Minimize';
+    btn.title = vcMinimized ? 'Restore' : 'Minimize';
+    btn.setAttribute('aria-label',vcMinimized ? 'Restore voice panel' : 'Minimize voice panel');
+    btn.setAttribute('aria-expanded',String(!vcMinimized));
     btn.innerHTML = vcMinimized
       ? `<svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
            <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
@@ -369,6 +390,7 @@ function toggleVcPanelFromBar() {
   if (!vcActive) return;
   const vcView = document.getElementById('voiceChannelView');
   if (!vcView) return;
+  if (vcView.parentNode !== document.body) document.body.appendChild(vcView);
 
   if (!vcView.classList.contains('active')) {
     // Panel was closed (shouldn't happen) — re-open
@@ -441,7 +463,8 @@ function renderVcUser() {
   `;
 
   listeningGrid.innerHTML = '';
-  updateVcCounts(1, 0);
+  _moveUserCardOnMute(vcMicMuted);
+  _syncVoiceQuickActions();
 }
 
 function updateVcCounts(speaking, listening) {
@@ -1470,22 +1493,9 @@ function _removeRemoteCamera(userId) {
   if (!card.querySelector('.vc-screen-preview')) card.classList.remove('has-camera');
 }
 
-// ── Attach remote screen share into their speaker card ────────────────────
+// Screen sharing has its own section; cameras remain in participant tiles.
 function _attachRemoteScreenShare(userId, username, stream) {
-  const card = document.querySelector(`.vc-speaker-card[data-user-id="${userId}"]`);
-  if (!card) return;
-  let vid = card.querySelector('.vc-screen-preview');
-  if (!vid) {
-    vid = document.createElement('video');
-    vid.className = 'vc-cam-preview vc-screen-preview';
-    vid.autoplay = true;
-    vid.muted = true;
-    vid.playsInline = true;
-    card.insertBefore(vid, card.firstChild);
-  }
-  vid.srcObject = stream;
-  card.classList.add('has-camera', 'has-screen');
-  showToast(`${username} is sharing their screen`, 'info');
+  _showRemoteScreenShareSection(userId, username, stream);
 }
 
 function _removeRemoteScreenShare(userId) {
@@ -1690,14 +1700,18 @@ function handleVoiceJoin(data) {
       role: user.role || 'Student',
       avatar_color_gradient: user.avatar_color_gradient || '#3b82f6,#6366f1',
       muted: !!user.muted,
-    }, !user.muted);
+    }, true);
   }
 
-  setTimeout(() => {
-    if (vcActive && Number(vcChannelId) === Number(data.channel_id)) {
-      _initiateWebRtcOffer(userId, user.username);
-    }
-  }, 100);
+  // LiveKit owns media/signaling when its adapter is loaded. Keep this
+  // WebSocket event only for eCollab roster/presence.
+  if (!window.EcollabLiveKit) {
+    setTimeout(() => {
+      if (vcActive && Number(vcChannelId) === Number(data.channel_id)) {
+        _initiateWebRtcOffer(userId, user.username);
+      }
+    }, 100);
+  }
 }
 
 function handleVoiceLeave(data) {
@@ -1752,11 +1766,14 @@ function handleVoicePeers(data) {
         role: peer.role || 'Student',
         avatar_color_gradient: peer.avatar_color_gradient || '#3b82f6,#6366f1',
         muted: !!peer.muted,
-      }, !peer.muted); // muted peers go to Listening, unmuted to Speaking
+      }, true); // mic mute is not a Listening-role change
     }
 
-    // Initiate WebRTC offer to each existing peer
-    setTimeout(() => _initiateWebRtcOffer(peer.user_id, peer.username), 100);
+    // LiveKit replaces the legacy peer-to-peer media mesh. Preserve this
+    // event for roster data only while the LiveKit adapter is present.
+    if (!window.EcollabLiveKit) {
+      setTimeout(() => _initiateWebRtcOffer(peer.user_id, peer.username), 100);
+    }
   });
 }
 
@@ -1792,7 +1809,30 @@ function _applyScreenWatchState(userId) {
   const vid = card.querySelector('.vc-screen-card-video');
   if (vid) vid.style.objectFit = watched ? 'contain' : 'cover';
   const btn = card.querySelector('.vc-screen-watch-btn');
-  if (btn) btn.textContent = watched ? 'Unwatch' : 'Watch';
+  if (btn) {
+    // Discord-style behavior: the card action starts watching. Once watched,
+    // stopping is handled by the persistent control in the bottom call bar.
+    btn.textContent = 'Watch';
+    btn.setAttribute('aria-label', 'Watch screen share');
+    btn.setAttribute('title', watched ? 'Currently watching' : 'Watch this screen');
+    btn.classList.toggle('is-watching', watched);
+    btn.style.display = watched ? 'none' : '';
+  }
+  _syncScreenUnwatchControl();
+}
+function _syncScreenUnwatchControl() {
+  const btn = document.getElementById('vcUnwatchBtn');
+  if (!btn) return;
+  const watching = _watchedScreenUsers.size > 0;
+  btn.style.display = watching ? '' : 'none';
+  btn.classList.toggle('active', watching);
+}
+function unwatchAllScreens() {
+  [..._watchedScreenUsers].forEach(uid => {
+    _watchedScreenUsers.delete(uid);
+    _applyScreenWatchState(uid);
+  });
+  _syncScreenUnwatchControl();
 }
 function toggleScreenWatch(userId) {
   const uid = Number(userId);
@@ -1800,12 +1840,17 @@ function toggleScreenWatch(userId) {
   if (_watchedScreenUsers.has(uid)) _watchedScreenUsers.delete(uid);
   else _watchedScreenUsers.add(uid);
   _applyScreenWatchState(uid);
+  if (_watchedScreenUsers.has(uid)) {
+    if (vcMinimized) toggleVcMinimize();
+    document.getElementById('vcScreenSection')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
 }
 function toggleScreenExpand(userId) {
   const uid = Number(userId || document.querySelector('#vcScreenGrid .vc-screen-card')?.dataset.screenUser || 0);
   if (uid) toggleScreenWatch(uid);
 }
 window.toggleScreenWatch = toggleScreenWatch;
+window.unwatchAllScreens = unwatchAllScreens;
 window.toggleScreenExpand = toggleScreenExpand;
 window.toggleCamera = toggleCamera;
 window.toggleScreenShare = toggleScreenShare;
@@ -1990,3 +2035,7 @@ window._onVoiceInvite = function(data) {
 window.openVcInviteModal = openVcInviteModal;
 window._filterVcInviteList = _filterVcInviteList;
 window._sendVoiceInvite = _sendVoiceInvite;
+
+
+
+

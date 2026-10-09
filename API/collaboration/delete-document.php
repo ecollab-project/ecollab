@@ -6,6 +6,7 @@ require_once dirname(__DIR__, 2) . '/config.php';
 require_once ROOT_PATH . '/database/config/db.php';
 require_once ROOT_PATH . '/security/middleware/AuthMiddleware.php';
 require_once ROOT_PATH . '/services/CoworkspaceService.php';
+require_once ROOT_PATH . '/services/DocumentAccessService.php';
 
 AuthMiddleware::startSession();
 $user = AuthMiddleware::requireAuth(true);
@@ -28,8 +29,10 @@ try {
     $db = Database::getInstance();
     $uid = (int)$user['id'];
     $workspace = CoworkspaceService::get($db,$wid,$uid);
+    $access = DocumentAccessService::get($db, $id, $uid);
+    if (!$access['owner']) failDelete('Only document owners or workspace hosts can delete documents.',403);
     $role = (string)($workspace['member_role'] ?? '');
-    if (!in_array($role,['host','editor'],true)) failDelete('Only Coworkspace hosts and editors can delete documents.',403);
+
 
     $stmt = $db->prepare('SELECT id,storage_path FROM collab_documents WHERE id=:id AND workspace_id=:wid LIMIT 1');
     $stmt->execute([':id'=>$id,':wid'=>$wid]);
@@ -53,3 +56,4 @@ try {
     error_log('[collaboration/delete-document] '.$e->getMessage());
     failDelete('Unable to delete the document.',500);
 }
+

@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 use Ratchet\ConnectionInterface;
 
+require_once dirname(__DIR__, 2) . '/services/NotificationService.php';
+
 class DmHandler
 {
     public static function handleDmMessage(ConnectionInterface $from, array $data, array $meta, array $userConns, PDO $db): void {
         $recipientId=(int)($data['recipient_id']??0); $conversationId=(int)($data['conversation_id']??0); $messageId=(int)($data['message_id']??0);
         if (!$recipientId||!$conversationId||!$messageId) return;
-        $messageStmt=$db->prepare('SELECT dm.body,dm.created_at FROM dm_messages dm JOIN dm_conversations dc ON dc.id=dm.conversation_id WHERE dm.id=:mid AND dm.conversation_id=:cid AND dm.sender_id=:sender AND dm.is_deleted=0 AND ((dc.user_a=:sender_a AND dc.user_b=:recipient_a) OR (dc.user_b=:sender_b AND dc.user_a=:recipient_b)) LIMIT 1');
+        $messageStmt=$db->prepare('SELECT dm.body,dm.created_at,dm.attachment_path,dm.attachment_name,dm.attachment_size,dm.attachment_mime FROM dm_messages dm JOIN dm_conversations dc ON dc.id=dm.conversation_id WHERE dm.id=:mid AND dm.conversation_id=:cid AND dm.sender_id=:sender AND dm.is_deleted=0 AND ((dc.user_a=:sender_a AND dc.user_b=:recipient_a) OR (dc.user_b=:sender_b AND dc.user_a=:recipient_b)) LIMIT 1');
         $messageStmt->execute([':mid'=>$messageId,':cid'=>$conversationId,':sender'=>(int)$meta['user_id'],':sender_a'=>(int)$meta['user_id'],':recipient_a'=>$recipientId,':sender_b'=>(int)$meta['user_id'],':recipient_b'=>$recipientId]);
         $message=$messageStmt->fetch(PDO::FETCH_ASSOC); if (!$message) return;
-        $payload=json_encode(['type'=>'dm_message','conversation_id'=>$conversationId,'message_id'=>$messageId,'sender_id'=>$meta['user_id'],'sender_name'=>$meta['full_name']??$meta['username'],'sender_gradient'=>$meta['gradient']??'','body'=>$message['body'],'created_at'=>$message['created_at']]);
+        $payload=json_encode(['type'=>'dm_message','conversation_id'=>$conversationId,'message_id'=>$messageId,'sender_id'=>$meta['user_id'],'sender_name'=>$meta['full_name']??$meta['username'],'sender_gradient'=>$meta['gradient']??'','body'=>$message['body'],'created_at'=>$message['created_at'],'attachment_path'=>$message['attachment_path'],'attachment_name'=>$message['attachment_name'],'attachment_size'=>$message['attachment_size'],'attachment_mime'=>$message['attachment_mime']]);
         if(isset($userConns[$recipientId])){foreach($userConns[$recipientId] as $conn){try{$conn->send($payload);}catch(\Throwable){}}}
         try{$from->send($payload);}catch(\Throwable){}
     }
@@ -23,7 +25,7 @@ class DmHandler
 
         // Verify the message exists, belongs to this group, and was actually sent by the caller —
         // same verification discipline as handleDmMessage, not trusted client input.
-        $messageStmt=$db->prepare('SELECT dm.body,dm.created_at FROM dm_messages dm JOIN dm_group_members gm ON gm.group_id=dm.group_id AND gm.user_id=:caller WHERE dm.id=:mid AND dm.group_id=:gid AND dm.sender_id=:sender AND dm.is_deleted=0 LIMIT 1');
+        $messageStmt=$db->prepare('SELECT dm.body,dm.created_at,dm.attachment_path,dm.attachment_name,dm.attachment_size,dm.attachment_mime FROM dm_messages dm JOIN dm_group_members gm ON gm.group_id=dm.group_id AND gm.user_id=:caller WHERE dm.id=:mid AND dm.group_id=:gid AND dm.sender_id=:sender AND dm.is_deleted=0 LIMIT 1');
         $messageStmt->execute([':mid'=>$messageId,':gid'=>$groupId,':sender'=>$callerId,':caller'=>$callerId]);
         $message=$messageStmt->fetch(PDO::FETCH_ASSOC); if (!$message) return;
 
@@ -31,7 +33,7 @@ class DmHandler
         $memStmt->execute([':gid'=>$groupId,':caller'=>$callerId]);
         $memberIds=$memStmt->fetchAll(PDO::FETCH_COLUMN);
 
-        $payload=json_encode(['type'=>'dm_group_message','group_id'=>$groupId,'message_id'=>$messageId,'sender_id'=>$callerId,'sender_name'=>$meta['full_name']??$meta['username'],'sender_gradient'=>$meta['gradient']??'','body'=>$message['body'],'created_at'=>$message['created_at']]);
+        $payload=json_encode(['type'=>'dm_group_message','group_id'=>$groupId,'message_id'=>$messageId,'sender_id'=>$callerId,'sender_name'=>$meta['full_name']??$meta['username'],'sender_gradient'=>$meta['gradient']??'','body'=>$message['body'],'created_at'=>$message['created_at'],'attachment_path'=>$message['attachment_path'],'attachment_name'=>$message['attachment_name'],'attachment_size'=>$message['attachment_size'],'attachment_mime'=>$message['attachment_mime']]);
         foreach ($memberIds as $memberId) {
             $memberId=(int)$memberId;
             if (isset($userConns[$memberId])) { foreach($userConns[$memberId] as $conn){try{$conn->send($payload);}catch(\Throwable){}} }
@@ -115,7 +117,56 @@ class DmHandler
             'server_name'  => $channel['server_name'],
             'from'         => ['id' => $callerId, 'fullName' => $meta['full_name'] ?? $meta['username'], 'gradient' => $meta['gradient'] ?? ''],
         ]);
-        foreach ($userConns[$targetId] as $conn) { try { $conn->send($payload); } catch (\Throwable) {} }
+        foreach ($userConns[$targetId] ?? [] as $conn) { try { $conn->send($payload); } catch (\Throwable) {} }
+    }
+
+    public static function handleDmGroupCallSignal(ConnectionInterface $from, array $data, array $meta, array $userConns, PDO $db, string $type): void {
+        $groupId = (int)($data['group_id'] ?? 0);
+        $callerId = (int)$meta['user_id'];
+        if (!$groupId) return;
+
+        $mem = $db->prepare('SELECT 1 FROM dm_group_members WHERE group_id=:gid AND user_id=:uid');
+        $mem->execute([':gid'=>$groupId, ':uid'=>$callerId]);
+        if (!$mem->fetchColumn()) return;
+
+        if ($type === 'dm_group_call_busy') {
+            $targetId = (int)($data['target_user_id'] ?? 0);
+            if (!$targetId || $targetId === $callerId) return;
+            $target = $db->prepare('SELECT 1 FROM dm_group_members WHERE group_id=:gid AND user_id=:uid');
+            $target->execute([':gid'=>$groupId, ':uid'=>$targetId]);
+            if (!$target->fetchColumn()) return;
+            $payload = json_encode([
+                'type'=>'dm_group_call_busy',
+                'group_id'=>$groupId,
+                'from_user_id'=>$callerId,
+                'from_username'=>$meta['full_name'] ?? $meta['username'],
+            ]);
+            foreach ($userConns[$targetId] ?? [] as $conn) { try { $conn->send($payload); } catch (\Throwable) {} }
+            return;
+        }
+
+        $members = $db->prepare('SELECT user_id FROM dm_group_members WHERE group_id=:gid AND user_id != :uid');
+        $members->execute([':gid'=>$groupId, ':uid'=>$callerId]);
+        $payload = json_encode([
+            'type'=>'dm_group_call_start',
+            'group_id'=>$groupId,
+            'from_user_id'=>$callerId,
+            'from_username'=>$meta['full_name'] ?? $meta['username'],
+            'is_video'=>(bool)($data['is_video'] ?? false),
+        ]);
+        $delivered = 0;
+        foreach ($members->fetchAll(PDO::FETCH_COLUMN) as $memberId) {
+            foreach ($userConns[(int)$memberId] ?? [] as $conn) {
+                try { $conn->send($payload); $delivered++; } catch (\Throwable) {}
+            }
+        }
+        try {
+            $from->send(json_encode([
+                'type'=>'dm_group_call_invite_sent',
+                'group_id'=>$groupId,
+                'delivered'=>$delivered,
+            ]));
+        } catch (\Throwable) {}
     }
 
     public static function handleDmCallSignal(ConnectionInterface $from, array $data, array $meta, array $userConns, PDO $db, string $type): void {
@@ -123,7 +174,7 @@ class DmHandler
         $targetId = (int)($data['target_user_id'] ?? 0);
         $groupId  = (int)($data['group_id'] ?? 0);
         $logId    = (int)($data['log_id'] ?? 0);
-        if (!$targetId || $targetId === $callerId || !isset($userConns[$targetId])) return;
+        if (!$targetId || $targetId === $callerId) return;
 
         // Verify a real relationship exists before relaying any signal — a
         // DM conversation with the target, or shared group membership. Same
@@ -140,6 +191,8 @@ class DmHandler
         }
         if (!$chk->fetchColumn()) return;
 
+        if ($type !== 'dm_call_offer' && !$logId) return;
+
         // Call history logging — kept in the same handler as the signal
         // itself rather than a separate HTTP round trip, so the log always
         // reflects exactly what was actually relayed.
@@ -154,20 +207,34 @@ class DmHandler
             ]);
             $logId = (int)$db->lastInsertId();
         } elseif ($logId) {
+            // Bind the log to both authenticated participants, never just a client-supplied id.
+            $logCheck = $db->prepare('SELECT caller_id, callee_id, status FROM dm_call_history WHERE id=:id AND group_id IS NULL AND ((caller_id=:a AND callee_id=:b) OR (caller_id=:c AND callee_id=:d))');
+            $logCheck->execute([':id'=>$logId, ':a'=>$callerId, ':b'=>$targetId, ':c'=>$targetId, ':d'=>$callerId]);
+            $log = $logCheck->fetch(PDO::FETCH_ASSOC);
+            if (!$log || !in_array($log['status'], ['ringing','answered'], true)) return;
+            if (in_array($type, ['dm_call_answer','dm_call_decline'], true) && (int)$log['callee_id'] !== $callerId) return;
             if ($type === 'dm_call_answer') {
-                $db->prepare('UPDATE dm_call_history SET status="answered", answered_at=NOW() WHERE id=:id')
+                $db->prepare('UPDATE dm_call_history SET status="answered", answered_at=NOW() WHERE id=:id AND status="ringing"')
                     ->execute([':id' => $logId]);
             } elseif ($type === 'dm_call_decline') {
                 $db->prepare('UPDATE dm_call_history SET status="declined", ended_at=NOW() WHERE id=:id AND status="ringing"')
                     ->execute([':id' => $logId]);
             } elseif ($type === 'dm_call_end') {
-                $db->prepare("
+                $ended = $db->prepare("
                     UPDATE dm_call_history
-                    SET status = IF(status = 'answered', 'ended', 'missed'),
+                    SET duration_seconds = IF(status = 'answered', TIMESTAMPDIFF(SECOND, answered_at, NOW()), NULL),
                         ended_at = NOW(),
-                        duration_seconds = IF(status = 'answered', TIMESTAMPDIFF(SECOND, answered_at, NOW()), NULL)
+                        status = IF(status = 'answered', 'ended', 'missed')
                     WHERE id = :id AND status IN ('ringing','answered')
-                ")->execute([':id' => $logId]);
+                ");
+                $ended->execute([':id' => $logId]);
+                $finalState = $db->prepare('SELECT status FROM dm_call_history WHERE id=?');
+                $finalState->execute([$logId]);
+                if ($ended->rowCount() === 1 && $finalState->fetchColumn() === 'missed') {
+                    NotificationService::create($db,(int)$log['callee_id'],(int)$log['caller_id'],'system','Missed call',
+                        'You missed a call. Open the conversation to respond.',
+                        '/modules/chat/chat.php?partner_id='.(int)$log['caller_id'].'&missed_call='.$logId,'📞');
+                }
             }
         }
 
@@ -179,10 +246,11 @@ class DmHandler
             'group_id'      => $groupId ?: null,
             'log_id'        => $logId ?: null,
             'is_video'      => (bool)($data['is_video'] ?? false),
+            'media'         => ($data['media'] ?? '') === 'livekit' ? 'livekit' : 'webrtc',
             'sdp'           => $data['sdp'] ?? null,
             'candidate'     => $data['candidate'] ?? null,
         ]);
-        foreach ($userConns[$targetId] as $conn) {
+        foreach ($userConns[$targetId] ?? [] as $conn) {
             try { $conn->send($payload); } catch (\Throwable) {}
         }
 
@@ -190,7 +258,7 @@ class DmHandler
         // reference it in later signals (answer/decline/end) without a
         // separate round trip.
         if ($type === 'dm_call_offer') {
-            $echo = json_encode(['type' => 'dm_call_offer_sent', 'log_id' => $logId]);
+            $echo = json_encode(['type' => 'dm_call_offer_sent', 'log_id' => $logId, 'target_user_id' => $targetId]);
             try { $from->send($echo); } catch (\Throwable) {}
         }
     }
@@ -200,3 +268,6 @@ class DmHandler
         $stmt->execute([':cid'=>$conversationId,':uid_a'=>$userId,':peer_a'=>$peerId,':uid_b'=>$userId,':peer_b'=>$peerId]); return (bool)$stmt->fetchColumn();
     }
 }
+
+
+

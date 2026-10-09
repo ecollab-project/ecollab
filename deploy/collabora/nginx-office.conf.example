@@ -1,0 +1,16 @@
+# Add to the HTTPS server block for office.ecollab.tech after obtaining its certificate.
+# Keep port 9980 bound to loopback. The editor and eCollab must reach each other over HTTPS.
+location / {
+    proxy_pass http://127.0.0.1:9980;
+    proxy_http_version 1.1;
+    proxy_set_header Host $http_host;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_read_timeout 36000s;
+    proxy_send_timeout 36000s;
+    proxy_buffering off;
+    # URLs may include document identifiers; do not log query strings or tokens.
+    access_log off;
+}
+location = /cool/adminws { return 404; }
+location ~ /admin/ { return 404; }

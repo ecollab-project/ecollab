@@ -68,6 +68,10 @@ function initWebSocket() {
       if (chatSocket !== socket) return;
       let data;
       try { data = JSON.parse(event.data); } catch { return; }
+      if (typeof data?.type === 'string' && data.type.startsWith('dm_group_call_')) {
+        console.log('[DM group call] received WS event', data);
+      }
+      window.dispatchEvent(new CustomEvent('ecollab:socket-message', { detail: data }));
       handleSocketMessage(data);
     };
 
@@ -75,6 +79,7 @@ function initWebSocket() {
       if (chatSocket !== socket) return;
       chatSocket = null;
       _authed = false;
+      window.dispatchEvent(new CustomEvent('ecollab:realtime-disconnected'));
       console.info(`[WS] Closed (code ${event.code}${event.reason ? ', reason: ' + event.reason : ''})`);
 
       // Code 1000 is a deliberate normal close. Reconnecting forever on a
@@ -134,9 +139,28 @@ function wsSend(payload) {
   return false;
 }
 window.wsSend = wsSend;
+window.isChatRealtimeReady = () => Boolean(_authed && chatSocket && chatSocket.readyState === WebSocket.OPEN);
+
+// Messages are already persisted by HTTP. Queue their relay during reconnect/auth.
+const pendingChatRelays = new Map();
+function sendPersistedChatMessage(payload) {
+  if (wsSend(payload)) return true;
+  const key = payload.type + ':' + (payload.message_id || payload.message?.id);
+  pendingChatRelays.set(key, payload);
+  return false;
+}
+window.sendPersistedChatMessage = sendPersistedChatMessage;
 
 // ── Message dispatcher ───────────────────────────────────────────────────────
 function handleSocketMessage(data) {
+  if (/^dm_(?:call_|group_call_)/.test(data.type || '')) {
+    if (window.EcollabCalls) window.EcollabCalls.handle(data).catch(console.error);
+    else (window.__ecollabPendingCalls ||= []).push(data);
+    return;
+  }
+  // LiveKit is authoritative for media and the roster; legacy socket events must not replace it.
+  if (window.EcollabLiveKit && /^(voice_join|voice_leave|voice_peers|webrtc_offer|webrtc_answer|webrtc_candidate|screen_share_notify)$/.test(data.type || '')) return;
+
   switch (data.type) {
 
     // ── Auth ──
@@ -145,12 +169,13 @@ function handleSocketMessage(data) {
       _socketAuthenticated = true;
       console.log('[WS] Authenticated as user', data.user_id);
       // Join current channel if any
-      if (window.ECOLLAB?.currentChannelId) {
+      if (window.ECOLLAB?.currentChannelId && !window.ECOLLAB?.whiteboardStandalone) {
         chatSocket.send(JSON.stringify({
           type: 'join_channel',
           channel_id: window.ECOLLAB.currentChannelId,
         }));
       }
+      pendingChatRelays.forEach((payload, key) => { if (wsSend(payload)) pendingChatRelays.delete(key); });
       // Restore the voice-room membership after a WS reconnect.
       // The server intentionally keeps voice rooms in memory per socket.
       if (window.vcChannelId != null && window.vcActive !== false) {
@@ -163,6 +188,12 @@ function handleSocketMessage(data) {
       if (typeof window.wbRejoinRoom === 'function') {
         setTimeout(() => window.wbRejoinRoom(), 50);
       }
+      break;
+
+    case 'joined_channel':
+    case 'chat_presence':
+    case 'chat_presence_remove':
+      window.dispatchEvent(new CustomEvent('ecollab:chat-presence',{detail:data}));
       break;
 
     // ── Messages ──
@@ -202,6 +233,20 @@ function handleSocketMessage(data) {
     // ── DM group voice (reuses the real voice-channel mesh) ──
     case 'dm_group_voice_start':
       if (window._onDmGroupVoiceStart) window._onDmGroupVoiceStart(data);
+      break;
+    case 'dm_group_call_start':
+      if (window._onDmGroupCallStart) {
+        window._onDmGroupCallStart(data);
+      } else {
+        console.error('[DM group call] invite arrived before popup handler loaded; queueing it', data);
+        window.__pendingDmGroupCallInvite = data;
+      }
+      break;
+    case 'dm_group_call_busy':
+      if (window._onDmGroupCallBusy) window._onDmGroupCallBusy(data);
+      break;
+    case 'dm_group_call_invite_sent':
+      console.log('[DM group call] server delivered invite to', Number(data.delivered || 0), 'socket(s)', data);
       break;
 
     // ── DM voice/video call signaling ──
@@ -309,6 +354,8 @@ function handleSocketMessage(data) {
     case 'wb_peer_joined':
     case 'wb_peer_left':
     case 'wb_op':
+    case 'wb_presence':
+    case 'wb_presence_remove':
     case 'wb_cursor':
     case 'wb_state':
     case 'wb_state_saved':
@@ -500,10 +547,13 @@ function _renderTypingIndicator(indicator, textEl) {
 
 // ── Presence / Active status ─────────────────────────────────────────────────
 function handlePresenceUpdate(data) {
+  data = {...data, online: data.online === true || data.online === 1 || data.online === "1"};
+  document.querySelectorAll(`.member-item[data-user-id="${data.user_id}"]`).forEach(item=>{const label=item.querySelector(".member-sub");if(label){label.textContent=data.online?"Online":"Offline";label.style.color=data.online?"var(--accent-green)":"var(--text-muted)";}const status=item.querySelector(".member-status");if(status){status.textContent="● "+(data.online?"Online":"Offline");status.classList.toggle("online",data.online);}});
   // Update every online-dot that references this user
   document.querySelectorAll(`[data-user-id="${data.user_id}"] .online-dot`).forEach(dot => {
     dot.style.background = data.online ? 'var(--accent-green)' : 'var(--text-muted)';
     dot.title = data.online ? 'Online' : 'Offline';
+    dot.classList.toggle('offline', !data.online);
   });
   // Also update member list avatars with a status ring
   document.querySelectorAll(`.member-avatar[data-uid="${data.user_id}"]`).forEach(av => {
@@ -739,6 +789,7 @@ let _typingThrottle = null;
 let _typingState    = false;
 
 function sendTypingEvent(isTyping) {
+  if(window.EcollabChatPresence?.typing(isTyping))return;
   if (!window.ECOLLAB?.currentChannelId) return;
   if (isTyping === _typingState) return; // no-op if state unchanged
   _typingState = isTyping;
@@ -773,6 +824,7 @@ function subscribeToChannel(channelId) {
   wsSend({ type: 'join_channel', channel_id: channelId });
 }
 function unsubscribeFromChannel(channelId) {
+  window.EcollabChatPresence?.disconnect();
   wsSend({ type: 'leave_channel', channel_id: channelId });
 }
 
@@ -781,25 +833,27 @@ let pollInterval    = null;
 let lastMessageId   = 0;
 
 function startPollingFallback() {
+  if (window.ECOLLAB?.whiteboardStandalone) return;
   if (pollInterval) return;
   console.info('[WS] Starting polling fallback (3 s interval)');
+  let pollingBusy = false;
   pollInterval = setInterval(async () => {
     const channelId = window.ECOLLAB?.currentChannelId;
-    if (!channelId) return;
+    if (!channelId || pollingBusy) return;
+    pollingBusy = true;
     try {
       const base = window.ECOLLAB?.baseUrl || '';
       const data = await apiFetch(
         `${base}/API/chat/get-messages.php?channel_id=${channelId}&after=${lastMessageId}`
       );
+      if (Number(channelId) !== Number(window.ECOLLAB?.currentChannelId)) return;
       if (data.messages?.length) {
         data.messages.forEach(msg => {
-          if (parseInt(msg.sender_id) !== parseInt(window.ECOLLAB?.userId)) {
-            if (typeof appendMessageToUI === 'function') appendMessageToUI(msg);
-          }
+          if (typeof appendMessageToUI === 'function') appendMessageToUI(msg);
           lastMessageId = Math.max(lastMessageId, msg.id);
         });
       }
-    } catch { /* ignore */ }
+    } catch { /* ignore */ } finally { pollingBusy = false; }
   }, 3000);
 }
 
@@ -864,3 +918,7 @@ if (document.readyState === 'loading') {
 } else {
   connectWebSocket();
 }
+
+
+
+

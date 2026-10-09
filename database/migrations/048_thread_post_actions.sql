@@ -1,6 +1,6 @@
 -- Thread post actions: bookmark and report
 ALTER TABLE threads
-  ADD COLUMN is_bookmarked TINYINT(1) NOT NULL DEFAULT 0 AFTER is_pinned;
+  ADD COLUMN IF NOT EXISTS is_bookmarked TINYINT(1) NOT NULL DEFAULT 0 AFTER is_pinned;
 
 CREATE TABLE IF NOT EXISTS thread_reports (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,

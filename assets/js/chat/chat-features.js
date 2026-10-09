@@ -478,6 +478,7 @@ async function _fetchActiveNow() {
     const res = await fetch(`${base}/API/chat/active-now.php?server_id=${serverId}&_=${Date.now()}`);
     if (!res.ok) return;
     const data = await res.json();
+    if (serverId !== window.ECOLLAB?.currentServerId) return;
     if (data.success && Array.isArray(data.users)) {
       _activeMembersData = data.users;
 
@@ -494,7 +495,7 @@ async function _fetchActiveNow() {
             style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:7px;cursor:pointer;transition:background 0.1s;"
             onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
             <div style="position:relative;flex-shrink:0;">
-              <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,${u.grad || '#3b82f6,#6366f1'});display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;">${u.name[0].toUpperCase()}</div>
+              ${window.chatSidebarAvatar(u.name, u.avatar_url, u.grad, 30)}
               <div style="position:absolute;bottom:0;right:0;width:9px;height:9px;border-radius:50%;border:2px solid var(--bg-secondary);background:${u.status === 'voice' ? '#22c55e' : u.status === 'idle' ? '#f59e0b' : '#22c55e'};"></div>
             </div>
             <div style="flex:1;min-width:0;">
@@ -509,14 +510,8 @@ async function _fetchActiveNow() {
         _renderActiveNowList();
       }
 
-      // Update sidebar online dots
-      _activeMembersData.forEach(u => {
-        const dots = document.querySelectorAll(`[data-user-id="${u.id}"] .online-dot`);
-        dots.forEach(d => {
-          d.style.background = u.status === 'voice' ? '#22c55e' :
-            u.online ? '#22c55e' : '#64748b';
-        });
-      });
+      window.applyChatMemberPresence?.(serverId, _activeMembersData);
+
     }
   } catch { }
 }
@@ -706,7 +701,7 @@ function _populateFullMatches(filter) {
     <div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);cursor:pointer;border-radius:8px;transition:background 0.12s;margin:0 -6px;padding-left:6px;padding-right:6px;"
       onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''"
       onclick="openMiniProfile(event,'${_esc(m.name)}','${_esc(m.detail)}','','${_esc(m.name[0].toUpperCase())}',${m.id || 0})">
-      <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,${m.grad});display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;">${m.name[0]}</div>
+      ${window.chatSidebarAvatar(m.name, m.avatar_url, m.grad, 44)}
       <div style="flex:1;min-width:0;">
         <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:2px;">${_esc(m.name)}</div>
         <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">${_esc(m.detail)}</div>
@@ -739,7 +734,7 @@ async function refreshMatches(btn) {
       if (miniList) {
         miniList.innerHTML = data.matches.slice(0, 3).map(m => `
           <div class="match-item" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
-            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,${m.grad || '#a855f7,#ec4899'});display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">${(m.name || '?')[0]}</div>
+            ${window.chatSidebarAvatar(m.name, m.avatar_url, m.grad, 36)}
             <div style="flex:1;min-width:0;">
               <div style="font-size:12px;font-weight:600;color:var(--text-primary);">${_esc(m.name)}</div>
               <div style="font-size:11px;color:var(--text-muted);">${_esc(m.detail || '')}</div>
@@ -772,7 +767,7 @@ async function _autoLoadMatches() {
     if (miniList) {
       miniList.innerHTML = data.matches.slice(0, 3).map(m => `
         <div class="match-item" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
-          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,${m.grad || '#a855f7,#ec4899'});display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">${(m.name || '?')[0]}</div>
+          ${window.chatSidebarAvatar(m.name, m.avatar_url, m.grad, 36)}
           <div style="flex:1;min-width:0;">
             <div style="font-size:12px;font-weight:600;color:var(--text-primary);">${_esc(m.name)}</div>
             <div style="font-size:11px;color:var(--text-muted);">${_esc(m.detail || '')}</div>
@@ -880,7 +875,7 @@ window._notifyDraftChange = function () {
 function _restoreChatNavView() {
   let saved = null;
   try {
-    saved = localStorage.getItem(ECOLLAB_CHAT_NAV_STATE_KEY);
+    saved = new URLSearchParams(window.location.search).get('view') || localStorage.getItem(ECOLLAB_CHAT_NAV_STATE_KEY);
   } catch (_) {}
 
   if (!saved || saved === 'home') {
@@ -908,6 +903,7 @@ const ECOLLAB_CHAT_NAV_STATE_KEY = 'ecollab.chat.activeView';
 function _saveChatNavView(viewName) {
   const view = String(viewName || '').trim();
   if (!view) return;
+  window.saveChatLocation?.({view});
   try {
     localStorage.setItem(ECOLLAB_CHAT_NAV_STATE_KEY, view);
   } catch (_) {}
@@ -974,7 +970,7 @@ function switchView(viewName, el) {
       </div>`;
   }
   // Fetch real data then render
-  _fetchNavViewData(viewName).then(() => _renderNavView(viewName, overlay));
+  _fetchNavViewData(viewName).then(() => { if (window._currentNavView === viewName) _renderNavView(viewName, overlay); });
 }
 
 function _renderNavView(viewName, overlay) {
@@ -2801,3 +2797,7 @@ window._voteOnThread = _voteOnThread;
 window._openThreadDetail = _openThreadDetail;
 window._submitThreadReply = _submitThreadReply;
 window._voteOnReply = _voteOnReply;
+
+
+
+

@@ -102,6 +102,7 @@ $stmt = $db->prepare("
         u.full_name,
         u.role,
         u.avatar_color_gradient AS grad,
+        u.avatar_url,
         u.is_online,
         u.last_active_at,
         u.voice_channel_id,
@@ -116,7 +117,10 @@ $stmt = $db->prepare("
     JOIN server_members sm ON sm.user_id = u.id AND sm.server_id = :sid
     LEFT JOIN channels c ON c.id = u.voice_channel_id
     LEFT JOIN user_settings us ON us.user_id = u.id
-    WHERE u.last_active_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE)
+    WHERE u.deleted_at IS NULL
+      AND u.role NOT IN ('admin','super_admin')
+      AND u.status NOT IN ('banned','suspended','deactivated')
+      AND u.last_active_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE)
       AND (us.activity_status IS NULL OR us.activity_status = 1 OR u.id = :self)
     ORDER BY
         FIELD(CASE
@@ -125,7 +129,6 @@ $stmt = $db->prepare("
             ELSE 'idle'
         END, 'voice','study','idle'),
         u.full_name ASC
-    LIMIT 100
 ");
 $stmt->execute([':sid' => $serverId, ':self' => $userId]);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -155,8 +158,9 @@ foreach ($rows as $r) {
         'role'            => $role,
         'userRole'        => $r['role'],
         'grad'            => $r['grad'] ?: '#3b82f6,#6366f1',
+        'avatar_url'      => (string)($r['avatar_url'] ?? ''),
         'status'          => $r['status'],
-        'online'          => (bool)$r['is_online'],
+        'online'          => true,
         'voice_channel'   => $r['voice_channel_id'] ? (int)$r['voice_channel_id'] : null,
         'is_me'           => (int)$r['id'] === $userId,
     ];
@@ -168,3 +172,5 @@ echo json_encode([
     'count'   => count($users),
     'ts'      => time(),
 ]);
+
+

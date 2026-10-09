@@ -49,7 +49,7 @@ try {
         $hasAccess = $isSysAdmin || (bool)$accStmt->fetchColumn() || $canManage;
     }
 
-    $members = $hasAccess ? $service->getOnlineMembers((int)$channel['server_id']) : [];
+    $members = $hasAccess ? $service->getOnlineMembers((int)$channel['server_id'], (int)$user['id']) : [];
     if ($hasAccess) {
         $service->markRead((int)$channelId, $user['id']);
     }
@@ -91,3 +91,4 @@ try {
     http_response_code($code);
     echo json_encode(['error' => $code < 500 ? $e->getMessage() : 'Server error']);
 }
+

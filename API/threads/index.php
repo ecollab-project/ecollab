@@ -5,6 +5,8 @@ require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 
+require_once dirname(__DIR__, 2) . '/services/NotificationService.php';
+
 header('Content-Type: application/json; charset=utf-8');
 AuthMiddleware::startSession();
 $me = AuthMiddleware::requireAuth(true);
@@ -252,6 +254,19 @@ try {
         $replyId=(int)$db->lastInsertId();
         saveThreadAttachments($db,$threadId,$replyId,is_array($body['attachments'] ?? null)?$body['attachments']:[],$uid);
         $db->prepare('UPDATE threads SET updated_at=NOW() WHERE id=?')->execute([$threadId]);
+        $recipients = [(int)$thread['created_by']];
+        if ($parentId) {
+            $parent = $db->prepare('SELECT created_by FROM thread_replies WHERE id=? AND thread_id=?');
+            $parent->execute([$parentId,$threadId]);
+            $recipients[] = (int)$parent->fetchColumn();
+        }
+        foreach (array_unique($recipients) as $recipient) {
+            if ($recipient !== $uid && canSeeThread($db,$thread,$recipient)) {
+                NotificationService::create($db,$recipient,$uid,'message',($me['full_name'] ?: $me['username']).' replied to your thread',
+                    $content !== '' ? $content : 'Shared an image',
+                    '/modules/chat/chat.php?thread_id='.$threadId.'&reply_id='.$replyId,'🧵');
+            }
+        }
         threadJson(['reply_id'=>$replyId,'message'=>'Reply posted'], 201);
     }
 
@@ -329,3 +344,4 @@ try {
     error_log('[threads] ' . $e->getMessage());
     threadJson(['error' => 'Thread service unavailable'], 500);
 }
+

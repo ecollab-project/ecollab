@@ -224,9 +224,9 @@ class ChannelService
     }
 
     /**
-     * Get online members for a server.
+     * Get server members with an explicit online flag.
      */
-    public function getOnlineMembers(int $serverId): array
+    public function getOnlineMembers(int $serverId, int $viewerId = 0): array
     {
         $stmt = $this->db->prepare("
             SELECT u.id, u.username, u.full_name,
@@ -236,17 +236,21 @@ class ChannelService
                        WHEN u.avatar_url LIKE '/%' THEN CONCAT(TRIM(TRAILING '/' FROM :base_url), u.avatar_url)
                        ELSE CONCAT(TRIM(TRAILING '/' FROM :base_url2), '/', u.avatar_url)
                    END AS avatar_url,
-                   u.avatar_color_gradient, u.status, u.is_online, u.role,
+                   u.avatar_color_gradient, u.status, CASE WHEN u.last_active_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE)
+                       AND (us.activity_status IS NULL OR us.activity_status=1 OR u.id=:viewer)
+                       THEN 1 ELSE 0 END AS is_online, u.role,
                    sm.server_role, sm.nickname
             FROM users u
             JOIN server_members sm ON sm.user_id = u.id AND sm.server_id = :sid
-            WHERE u.is_online = 1
+            LEFT JOIN user_settings us ON us.user_id=u.id
+            WHERE u.deleted_at IS NULL
               AND u.role NOT IN ('admin','super_admin')
               AND u.status NOT IN ('banned','suspended','deactivated')
-            ORDER BY sm.server_role ASC, u.full_name ASC
+            ORDER BY is_online DESC, sm.server_role ASC, u.full_name ASC
         ");
         $stmt->execute([
             ':sid' => $serverId,
+            ':viewer' => $viewerId,
             ':base_url' => (string)BASE_URL,
             ':base_url2' => (string)BASE_URL,
         ]);
@@ -266,3 +270,5 @@ class ChannelService
         $stmt->execute([':uid' => $userId, ':cid' => $channelId]);
     }
 }
+
+
