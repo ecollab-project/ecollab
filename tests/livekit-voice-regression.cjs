@@ -1,9 +1,10 @@
 const {JSDOM}=require('jsdom');const fs=require('fs'),path=require('path'),assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');
 const dom=new JSDOM('<div class="voice-channel" data-channel-id="20"><b class="vc-count">0</b></div><div id="voiceChannelView"></div><div id="vcSpeakingGrid"></div><div id="vcListeningGrid"></div><button id="vcCamBtn"></button><div id="vcScreenGrid"></div><div id="vcScreenSection"></div><span id="vcScreenSectionCount"></span><button id="vcUnwatchBtn"></button>',{url:'https://ecollab.test',runScripts:'outside-only'});const w=dom.window;
+w.HTMLElement.prototype.scrollIntoView=()=>{};
 w.HTMLMediaElement.prototype.play=()=>Promise.resolve();
 w.ECOLLAB={userId:1};w.fetch=async()=>({ok:true,json:async()=>({success:true,token:'x',url:'wss://test'})});w.escHtml=x=>x;w.showToast=()=>{};
-for(const name of ['joinVoice','disconnectVoice','toggleVcMic','toggleCamera','toggleScreenShare','startStopScreenShare','stopScreenShare','selectScreenQuality','toggleVcDeafen','toggleMute','toggleDeafen','openAudioSettings','openNoiseCancelModal','_setVcLabels','_updateConnectedBar','_ensureMinimizeBtn','_ensureVoiceQuickActions','_refreshVoiceLayout','_reportVoiceStatus','updateVcCounts','_removeRemoteScreenShare','_hideRemoteScreenShareSection'])w[name]=()=>{};
+for(const name of ['joinVoice','disconnectVoice','toggleVcMic','toggleCamera','toggleScreenShare','startStopScreenShare','stopScreenShare','selectScreenQuality','toggleVcDeafen','toggleMute','toggleDeafen','openAudioSettings','openNoiseCancelModal','_setVcLabels','_updateConnectedBar','_ensureMinimizeBtn','_ensureVoiceQuickActions','_syncVoiceQuickActions','_refreshVoiceLayout','_reportVoiceStatus','updateVcCounts','_removeRemoteScreenShare','_hideRemoteScreenShareSection'])w[name]=()=>{};
 w.vcActive=false;w.vcChannelId=null;w.vcCamOn=false;w.vcMicMuted=true;w.vcScreenOn=false;w.vcDeafened=false;w.vcMinimized=false;w.vcRoomName='';
 w.addVcParticipant=(p,speaking)=>{const el=w.document.createElement('div');el.className=speaking?'vc-speaker-card':'vc-listener-card';el.dataset.userId=p.id;el.innerHTML='<button class="sc-mic-btn"></button>';w.document.getElementById(speaking?'vcSpeakingGrid':'vcListeningGrid').append(el);};
 w.renderVcUser=()=>w.addVcParticipant({id:1},false);w._moveUserCardOnMute=muted=>{w.document.querySelector('[data-user-id="1"]').remove();w.addVcParticipant({id:1},!muted);};
@@ -11,7 +12,7 @@ w._removeRemoteCamera=id=>w.document.querySelector('[data-user-id="'+id+'"] vide
 w.MediaStream=class{constructor(tracks){this.tracks=tracks;}};w.requestAnimationFrame=fn=>fn();
 const voice=fs.readFileSync(path.join(root,'assets/js/chat/voice.js'),'utf8');
 function section(start,end){const a=voice.indexOf(start),b=voice.indexOf(end,a+start.length);return voice.slice(a,b);}
-w.eval('var _watchedScreenUsers=new Set(),_remoteScreenStreams={};');
+w.eval('var _watchedScreenUsers=new Set(),_remoteScreenStreams={},_remoteCameraStreams={};');
 w.eval(section('function _showRemoteScreenShareSection(', '\nfunction _hideRemoteScreenShareSection'));
 w.eval(section('function _hideRemoteScreenShareSection(', '\nfunction '));
 w.eval(section('function _applyScreenWatchState(', 'window.toggleScreenWatch ='));
@@ -26,4 +27,5 @@ room.emit('TrackStreamStateChanged',{source:'screen_share',track:screen},'active
 room.emit('TrackMuted',{source:'screen_share'},p);assert(!w.document.querySelector('[data-screen-user="2"]'));assert.equal(w.document.querySelector('[data-user-id="2"] video'),cameraEl,'stopping share preserves camera');
 room.emit('TrackSubscribed',screen,{source:'screen_share'},p);room.emit('TrackSubscribed',camera,{source:'camera'},p);assert(w.document.querySelector('[data-screen-user="2"]'));assert.equal(w.document.querySelectorAll('[data-user-id="2"] video').length,1,'reverse publication order keeps camera separate');
 room.remoteParticipants.delete('user-2');room.emit('ParticipantDisconnected',p);assert.equal(w.document.querySelector('.vc-count').textContent,'1');await w.disconnectVoice();dom.window.close();console.log('PASS: local/remote mute agreement, roster uniqueness, exact participant count');})().catch(e=>{console.error(e);dom.window.close();process.exitCode=1;});
+
 

@@ -10,6 +10,7 @@ const events=['ParticipantConnected','ParticipantDisconnected','TrackMuted','Tra
 const clients=[];
 function client(id){
  const dom=new JSDOM('<script src="/assets/js/chat/socket.js"></script>',{url:'https://ecollab.test/modules/chat/chat.php',runScripts:'outside-only'});const w=dom.window;
+ w.matchMedia=()=>({matches:false,addEventListener(){},removeEventListener(){}});
  w.HTMLMediaElement.prototype.play=()=>Promise.resolve();w.HTMLMediaElement.prototype.pause=()=>{};
  w.ECOLLAB_CALLS_CONFIG={userId:id,baseUrl:'',csrfToken:'test',wsUrl:'wss://test'};
  w.DM={activePartnerId:id===1?2:1,activePartnerName:'Peer',activeGroupId:null};
@@ -68,4 +69,5 @@ function client(id){
  for(const c of clients)c.dom.window.close();
  console.log('PASS: independent cameras, local group preview, call-id isolation, six tiles, cleanup, quality and cancellation');
 })().catch(e=>{console.error(e);for(const c of clients)c.dom.window.close();process.exitCode=1;});
+
 
