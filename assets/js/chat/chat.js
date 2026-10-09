@@ -1280,9 +1280,22 @@ function chatSidebarAvatar(name, url, gradient, size = 28) {
 window.chatSidebarAvatar = chatSidebarAvatar;
 
 function chatMemberOnline(m) { return m.is_online === true || m.is_online === 1 || m.is_online === "1"; }
+// Keep all member rows aligned with the latest server presence snapshot.
+let chatPresenceSnapshot = null;
+function applyChatMemberPresence(serverId, users) {
+  if (String(serverId) !== String(window.ECOLLAB?.currentServerId)) return;
+  chatPresenceSnapshot = { serverId: String(serverId), ids: new Set(users.map(u => String(u.id))) };
+  document.querySelectorAll('#membersList .member-item').forEach(row => {
+    const online = chatPresenceSnapshot.ids.has(row.dataset.userId);
+    const dot = row.querySelector('.online-dot');
+    if (dot) { dot.classList.toggle('offline', !online); dot.style.background = ''; }
+    const label = row.querySelector('.member-status');
+    if (label) { label.classList.toggle('online', online); label.textContent = '● ' + (online ? 'Online' : 'Offline'); }
+  });
+}
+window.applyChatMemberPresence = applyChatMemberPresence;
 function renderMembersPanel(members) {
   const list = document.getElementById('membersList');
-  const activeList = document.getElementById('activeMembersList');
   const badge = document.getElementById('memberCountBadge');
   if (badge) badge.textContent = '— ' + members.length;
   if (!list) return;
@@ -1311,37 +1324,19 @@ function renderMembersPanel(members) {
 
   list.innerHTML = html + (members.length > 20 ? `<div class="members-more">+${members.length - 20} more members</div>` : '');
 
-  // Active now panel
-  if (activeList) {
-    const online = members.filter(chatMemberOnline).slice(0, 5);
-    activeList.innerHTML = online.map(m => {
-      const grad = m.avatar_color_gradient || '#3b82f6,#6366f1';
-      const [c1, c2] = grad.split(',');
-      const init = (m.full_name || m.username || '?').charAt(0).toUpperCase();
-      const memberAvatarUrl = chatAvatarUrl(m.avatar_url);
-    const memberAvatar = memberAvatarUrl ? `url("${escHtml(memberAvatarUrl)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
-      const memberInitial = memberAvatarUrl ? '' : init;
-      return `
-        <div class="active-user" onclick="openMiniProfile(event, '${escHtml(m.full_name || m.username)}', '${escHtml(m.role)}', '', '${init}', ${m.id || m.user_id || 0})">
-          <div class="user-avatar">
-            ${chatSidebarAvatar(m.full_name || m.username, m.avatar_url, grad, 34)}
-            <div class="online-dot"></div>
-          </div>
-          <div class="active-user-info">
-            <div class="active-user-name">${escHtml(m.full_name || m.username)}</div>
-            <div class="active-user-status">${escHtml(m.role || 'Student')}</div>
-          </div>
-          <div class="activity-bars"><div class="activity-bar"></div><div class="activity-bar"></div><div class="activity-bar"></div></div>
-        </div>
-      `;
-    }).join('');
+  if (chatPresenceSnapshot?.serverId === String(window.ECOLLAB?.currentServerId)) {
+    applyChatMemberPresence(chatPresenceSnapshot.serverId, [...chatPresenceSnapshot.ids].map(id => ({ id })));
   }
+
 }
 
 async function refreshMembersPanel() {
   if (!currentChannelId) return;
   try {
-    const data = await apiFetch(`${API_BASE}/get-channel.php?id=${currentChannelId}`);
+    const channelId = currentChannelId;
+    const serverId = window.ECOLLAB?.currentServerId;
+    const data = await apiFetch(`${API_BASE}/get-channel.php?id=${channelId}`);
+    if (channelId !== currentChannelId || serverId !== window.ECOLLAB?.currentServerId) return;
     if (data.members) renderMembersPanel(data.members);
   } catch { /* silent */ }
 }
@@ -1731,5 +1726,6 @@ window.lastMessageId = 0;
     if (typeof window[name] === 'function') window['__real_' + name] = window[name];
   });
 })();
+
 
 

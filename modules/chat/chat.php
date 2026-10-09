@@ -1096,8 +1096,8 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     7. dm-notifications.js — DM badge polling
   -->
   <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=yjs-chat-1-calls-2" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=sidebar-consistency-1" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=matching-avatars-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=presence-consistency-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=presence-consistency-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=team-audit-1" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.22.3/dist/livekit-client.umd.min.js" defer></script>
@@ -3541,6 +3541,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 </body>
 
 </html>
+
 
 
 

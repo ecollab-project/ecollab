@@ -510,14 +510,8 @@ async function _fetchActiveNow() {
         _renderActiveNowList();
       }
 
-      // Update sidebar online dots
-      _activeMembersData.forEach(u => {
-        const dots = document.querySelectorAll(`[data-user-id="${u.id}"] .online-dot`);
-        dots.forEach(d => {
-          d.style.background = u.status === 'voice' ? '#22c55e' :
-            u.online ? '#22c55e' : '#64748b';
-        });
-      });
+      window.applyChatMemberPresence?.(serverId, _activeMembersData);
+
     }
   } catch { }
 }
@@ -2803,6 +2797,7 @@ window._voteOnThread = _voteOnThread;
 window._openThreadDetail = _openThreadDetail;
 window._submitThreadReply = _submitThreadReply;
 window._voteOnReply = _voteOnReply;
+
 
 
 
