@@ -399,8 +399,8 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     </div>
 
     <!-- USER PROFILE FOOTER -->
-    <div class="user-profile-footer" onclick="openUserSettings()">
-      <div class="user-avatar">
+    <div class="user-profile-footer">
+      <div class="user-avatar" onclick="openUserSettings()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openUserSettings()}">
         <div class="avatar-placeholder avatar-lg" style="<?= $avatarStyle ?>;border-radius:50%;">
           <?= htmlspecialchars($initials) ?>
         </div>
@@ -412,28 +412,28 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         </div>
         <div style="font-size:11px;color:var(--accent-green);">● Online</div>
       </div>
-      <div style="display:flex;gap:6px;">
-        <div class="footer-icon-btn" onclick="toggleMute(event)" title="Mute" id="muteBtn">
+      <div class="footer-controls">
+        <button type="button" class="footer-icon-btn" onclick="event.stopPropagation();toggleMute(event)" title="Mute" id="muteBtn">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
             <path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
-        </div>
-        <div class="footer-icon-btn" onclick="toggleDeafen(event)" title="Deafen" id="deafenBtn">
+        </button>
+        <button type="button" class="footer-icon-btn" onclick="event.stopPropagation();toggleDeafen(event)" title="Deafen" id="deafenBtn">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" />
           </svg>
-        </div>
-        <div class="footer-icon-btn" onclick="openUserSettings()" title="Settings">
+        </button>
+        <button type="button" class="footer-icon-btn" onclick="event.stopPropagation();openUserSettings()" title="Settings" aria-label="Settings">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z" />
           </svg>
-        </div>
-        <div class="footer-icon-btn" onclick="handleLogout()" title="Log Out" style="color:#ef4444;">
+        </button>
+        <button type="button" class="footer-icon-btn" onclick="event.stopPropagation();handleLogout()" aria-label="Log out" title="Log Out" style="color:#ef4444;">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" />
           </svg>
-        </div>
+        </button>
       </div>
     </div>
   </div>
@@ -1103,7 +1103,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=voice-state-1" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.22.3/dist/livekit-client.umd.min.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/livekit-voice.js?v=voice-state-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/livekit-voice.js?v=footer-controls-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/whiteboard.js" defer></script>
   <!-- ── Private Channel Manager Modal ────────────────────────────────── -->
   <div id="privateChannelManagerModal" style="display:none!important;position:fixed;inset:0;z-index:11000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this)closePrivateChannelManager()">
@@ -3543,6 +3543,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 </body>
 
 </html>
+
 
 
 

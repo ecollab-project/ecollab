@@ -121,3 +121,10 @@ body.vc-active .ec-media-settings{z-index:10110!important}
 /* Explicit media state across full, quick and sidebar voice controls. */
 #voiceChannelView .media-on,.footer-icon-btn.media-on{color:#22c55e!important;background:rgba(34,197,94,.14)!important;border-color:rgba(34,197,94,.5)!important}
 #voiceChannelView .media-off,.footer-icon-btn.media-off{color:#f87171!important;background:rgba(239,68,68,.14)!important;border-color:rgba(239,68,68,.5)!important}
+
+
+.user-profile-footer .footer-controls{display:flex;gap:4px;flex:0 0 auto}
+.user-profile-footer .footer-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:36px;min-width:34px;padding:0;border:1px solid transparent;border-radius:8px;background:transparent;font:inherit;cursor:pointer;touch-action:manipulation;flex:0 0 auto}
+.user-profile-footer .footer-icon-btn svg{pointer-events:none}
+.user-profile-footer .footer-icon-btn:focus-visible{outline:2px solid #a78bfa;outline-offset:2px}
+@media(pointer:coarse){.user-profile-footer .footer-controls{gap:2px}.user-profile-footer .footer-icon-btn{width:44px;min-width:44px;height:44px}.user-profile-footer{flex-wrap:wrap}.user-profile-footer .footer-controls{margin-left:auto}}

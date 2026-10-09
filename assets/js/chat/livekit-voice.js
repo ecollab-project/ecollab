@@ -9,6 +9,8 @@
   let activeChannelId = null;
   let screenQuality = null;
   let mediaBusy = false;
+  let preferredMicMuted = vcMicMuted;
+  let preferredDeafened = vcDeafened;
   let countFetchBusy = false;
 
   function csrf() {
@@ -388,8 +390,8 @@
     await room.connect(auth.url, auth.token);
     activeChannelId = Number(channelId);
 
-    // eCollab joins muted by default.
-    await room.localParticipant.setMicrophoneEnabled(false);
+    // Respect the sidebar microphone choice when entering voice.
+    await room.localParticipant.setMicrophoneEnabled(!preferredMicMuted);
     syncLocalMediaState();
 
     // ParticipantConnected only fires for later arrivals. Synchronize users
@@ -490,7 +492,7 @@
     if (window.EcollabCalls?.busy()) { showToast('Leave your current call first.', 'info'); return; }
     if (vcActive && Number(vcChannelId) === Number(channelId)) { toggleVcMinimize(); return; }
     if (vcActive) await disconnectVoice();
-    vcMicMuted = true; vcCamOn = false; vcScreenOn = false; vcDeafened = false;
+    vcMicMuted = preferredMicMuted; vcCamOn = false; vcScreenOn = false; vcDeafened = preferredDeafened;
     document.getElementById('vcSpeakingGrid')?.replaceChildren();
     document.getElementById('vcListeningGrid')?.replaceChildren();
 
@@ -539,7 +541,9 @@
     vcMinimized = false;
     vcCamOn = false;
     vcScreenOn = false;
-    vcMicMuted = true;
+    vcMicMuted = preferredMicMuted;
+    vcDeafened = preferredDeafened;
+    _syncVoiceQuickActions();
     document.getElementById('voiceChannelView')?.classList.remove('active', 'vc-minimized');
     document.body.classList.remove('vc-active', 'vc-pip');
     document.querySelectorAll('.voice-channel').forEach(v => v.classList.remove('connected'));
@@ -558,11 +562,18 @@
   };
 
   toggleVcMic = async function () {
-    if (!room || mediaBusy) return;
+    if (!room) {
+      preferredMicMuted = !preferredMicMuted;
+      vcMicMuted = preferredMicMuted;
+      _syncVoiceQuickActions();
+      return;
+    }
+    if (mediaBusy) return;
     mediaBusy = true;
     const nextMuted = !vcMicMuted;
     try {
       await setMic(!nextMuted);
+      preferredMicMuted = !room.localParticipant.isMicrophoneEnabled;
       syncLocalMediaState();
     } catch (err) { showToast('Microphone error: ' + err.message, 'info'); } finally { mediaBusy = false; }
   };
@@ -612,16 +623,19 @@
   };
   toggleVcDeafen = function () {
     vcDeafened = !vcDeafened;
+    preferredDeafened = vcDeafened;
     document.querySelectorAll('audio.livekit-media-track').forEach(el=>el.muted=vcDeafened);
     document.getElementById('vcDeafBtn')?.classList.toggle('muted-state',vcDeafened);
     _syncVoiceQuickActions();
   };
-  toggleMute = function () { if(room) toggleVcMic(); };
-  toggleDeafen = function () { if(room) toggleVcDeafen(); };
+  toggleMute = function (event) { event?.stopPropagation(); return toggleVcMic(); };
+  toggleDeafen = function (event) { event?.stopPropagation(); return toggleVcDeafen(); };
   openAudioSettings = function () { if(room) window.EcollabMediaSettings.open(room); };
   openNoiseCancelModal = openAudioSettings;
   // Keep deferred inline event stubs aligned with the media adapter.
   for (const name of ['joinVoice','disconnectVoice','toggleVcMic','toggleCamera','toggleScreenShare','startStopScreenShare','stopScreenShare','selectScreenQuality','toggleVcDeafen','toggleMute','toggleDeafen','openAudioSettings','openNoiseCancelModal']) window['__real_'+name]=window[name];
+
+  _syncVoiceQuickActions();
 
   async function refreshSidebarCounts() {
     if (countFetchBusy || document.hidden) return;
@@ -643,6 +657,7 @@
   document.addEventListener('visibilitychange',refreshSidebarCounts);
   setTimeout(refreshSidebarCounts,1000);
 })();
+
 
 
 
