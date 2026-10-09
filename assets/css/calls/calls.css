@@ -92,3 +92,19 @@ body.vc-active #voiceChannelView.active:not(.vc-minimized){position:fixed!import
 #voiceChannelView .vc-screen-card.vc-screen-expanded video{object-fit:contain!important}
 .reaction:not(.reacted),.thread-reaction:not(.reacted),.post-reaction:not(.reacted){filter:grayscale(1);color:var(--text-muted,#94a3b8)}
 .reaction.reacted,.thread-reaction.reacted,.post-reaction.reacted{filter:none}
+
+
+/* Direct calls share the voice-channel connected-bar layout when minimized. */
+.ec-call-compact{display:none}
+.ec-call.is-compact-direct{width:260px;border-radius:10px;background:var(--bg-secondary,#181c27);border-color:rgba(34,197,94,.2)}
+.ec-call.is-compact-direct>header,.ec-call.is-compact-direct>.ec-call-actions{display:none}
+.ec-call.is-compact-direct .ec-call-compact{display:block;padding:8px 10px;background:rgba(34,197,94,.08)}
+.ec-call-compact-status{display:flex;align-items:center;gap:6px;color:#22c55e;cursor:grab;touch-action:none;user-select:none}
+.ec-call-compact-status strong{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.ec-call-compact-status i{width:7px;height:7px;flex:none;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e70}
+.ec-call-compact-name{font-size:12px;font-weight:600;color:var(--text-secondary,#b8c1d5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:3px 0 8px}
+.ec-call-compact-actions{display:flex;gap:6px}
+.ec-call .ec-call-compact-actions button{display:flex;align-items:center;justify-content:center;flex:1;min-height:30px;padding:6px;border-radius:7px;color:var(--text-muted,#aeb7ca)}
+.ec-call .ec-call-compact-actions .danger{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35);color:#f87171}
+.ec-call.is-sidebar-docked{position:relative!important;inset:auto!important;transform:none!important;width:auto!important;max-width:none!important;max-height:none!important;margin:0 8px 6px;flex-shrink:0;box-shadow:none;overflow:hidden;z-index:auto}
+@media(max-width:1024px),(pointer:coarse){.ec-call.is-compact-direct{top:auto;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));width:auto}}

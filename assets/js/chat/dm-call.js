@@ -114,6 +114,14 @@
   function layout(c) {
     const panel=c.panel;if(!panel)return;
     panel.classList.toggle('is-minimized',c.minimized);
+    const compact=c.minimized && c.state==='active' && !c.groupId;
+    const dock=document.getElementById('vcConnectedBar');
+    const desktop=window.matchMedia('(min-width:1025px) and (pointer:fine)').matches;
+    const sidebar=compact && desktop && dock && !c.position;
+    panel.classList.toggle('is-compact-direct',compact);
+    panel.classList.toggle('is-sidebar-docked',!!sidebar);
+    if(sidebar){if(panel.parentNode!==dock.parentNode)dock.before(panel);}
+    else if(panel.parentNode!==document.body)document.body.appendChild(panel);
     for(const prop of ['left','top','right','bottom','transform'])panel.style.removeProperty(prop);
     if(c.minimized&&c.position){const box=panel.getBoundingClientRect();c.position.left=Math.max(8,Math.min(innerWidth-box.width-8,c.position.left));c.position.top=Math.max(8,Math.min(innerHeight-box.height-8,c.position.top));Object.assign(panel.style,{left:c.position.left+'px',top:c.position.top+'px',right:'auto',bottom:'auto',transform:'none'});}
     panel.classList.toggle('is-expanded',c.expanded&&!c.minimized&&c.state==='active');
@@ -126,8 +134,9 @@
   function installDrag(c, panel) {
     let drag=null;
     panel.addEventListener('pointerdown',e=>{
-      if(!c.minimized||!e.target.closest('header')||e.target.closest('button')||e.button>0)return;
+      if(!c.minimized||!e.target.closest('header,.ec-call-compact-status')||e.target.closest('button')||e.button>0)return;
       const box=panel.getBoundingClientRect();drag={id:e.pointerId,x:e.clientX,y:e.clientY,left:box.left,top:box.top};
+      if(panel.classList.contains('is-sidebar-docked')){c.position={left:box.left,top:box.top};layout(c);}
       panel.setPointerCapture?.(e.pointerId);e.preventDefault();
     });
     panel.addEventListener('pointermove',e=>{
@@ -143,7 +152,7 @@
     let panel=c.panel;
     if(!panel){
       panel=document.createElement('section');panel.className='ec-call';panel.setAttribute('role','region');panel.setAttribute('aria-label','Call');document.body.appendChild(panel);c.panel=panel;
-      panel.innerHTML='<header><div class="ec-call-heading"></div><div class="ec-call-window-actions"></div></header><div class="ec-call-screen"></div><div class="ec-call-grid"></div><div class="ec-call-actions"></div><div class="ec-call-status" role="status"></div>';
+      panel.innerHTML='<header><div class="ec-call-heading"></div><div class="ec-call-window-actions"></div></header><div class="ec-call-screen"></div><div class="ec-call-grid"></div><div class="ec-call-actions"></div><div class="ec-call-status" role="status"></div><div class="ec-call-compact"><div class="ec-call-compact-status"><i></i><strong>Call Connected</strong></div><div class="ec-call-compact-name"></div><div class="ec-call-compact-actions"><button type="button" data-action="minimize" aria-label="Restore call" title="Restore call"><svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg></button><button type="button" class="danger" data-action="end" aria-label="End call" title="End call"><svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 01.99.86c.12 1.25.41 2.45.87 3.57a1 1 0 01-.24 1.01l-2.21 2.35z"/></svg></button></div></div>';
       panel.onclick=e=>{const b=e.target.closest('[data-action]');if(b)action(b.dataset.action);else c.room?.startAudio().then(()=>{c.message='';panel.querySelector('.ec-call-status').textContent='';}).catch(()=>{});};
       installDrag(c,panel);c.tiles=new Map();
     }
@@ -155,6 +164,7 @@
     panel.querySelector('.ec-call-window-actions').innerHTML=(active?button('expand',c.expanded?'Dock':'Expand'):'')+button('minimize',c.minimized?'Restore':'Minimize');
     panel.querySelector('.ec-call-actions').innerHTML=c.state==='incoming'?button('accept','Accept',false,'accept')+(c.video?button('audio','Audio only'):'')+button('end','Decline',false,'danger'):active?button('mic',p.isMicrophoneEnabled?'Mute':'Unmute',!p.isMicrophoneEnabled)+button('camera',p.isCameraEnabled?'Camera off':'Camera on',p.isCameraEnabled)+button('screen',p.isScreenShareEnabled?'Stop sharing':'Share screen',p.isScreenShareEnabled)+button('deafen',c.deafened?'Hear audio':'Deafen',c.deafened)+button('settings','Settings')+button('end','Leave',false,'danger'):button('end','Cancel',false,'danger');
     panel.querySelector('.ec-call-status').textContent=c.message||'';
+    panel.querySelector('.ec-call-compact-name').textContent=c.name+(p&&!p.isMicrophoneEnabled?' · Muted':'');
     panel.querySelectorAll('button').forEach(b=>{if(c.busy&&!['end','minimize','expand'].includes(b.dataset.action))b.disabled=true;});
     if(active){
       const participants=[p,...c.room.remoteParticipants.values()],speakers=c.room.activeSpeakers||[];
@@ -210,8 +220,10 @@
   window.startDmGroupLiveKitCall=async(groupId,video)=>{if(busy())return notice('Leave your current call first.');if(!await claim())return notice('A call is active in another tab.');const c=make({groupId:Number(groupId),video:!!video,name:'Group call',state:'connecting'});call=c;render(c);try{await connect(c);if(call===c)send({type:'dm_group_call_start',group_id:c.groupId,is_video:c.video});}catch(e){cleanup(c);notice(e.message);}};
   window.addEventListener('pagehide',()=>{if(call)end();clearTimeout(timer);if(socket){socket.onclose=null;socket.close();}});
   window.addEventListener('pageshow',e=>{if(e.persisted)connectSignals();});
+  window.addEventListener('resize',()=>{if(call?.panel)layout(call);});
   // Defer until all page scripts have run, avoiding a second chat connection.
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',connectSignals,{once:true});else connectSignals();
 })();
+
 
 
