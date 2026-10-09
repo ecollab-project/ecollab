@@ -5,6 +5,7 @@ const voice=read('assets/js/chat/voice.js'),chat=read('assets/js/chat/chat.js');
 function section(source,start,end){const a=source.indexOf(start),b=source.indexOf(end,a+start.length);assert(a>=0&&b>a);return source.slice(a,b);}
 (async()=>{
  const dom=new JSDOM('<main class="chat-main" style="display:none"><div id="voiceChannelView" class="active"><button class="vc-minimize-btn"></button></div></main><div id="navViewOverlay"></div><div id="vcScreenSection"></div><div id="vcScreenGrid"></div><span id="vcScreenSectionCount"></span><button id="vcUnwatchBtn"></button>',{url:'https://ecollab.test',runScripts:'outside-only'}),w=dom.window;
+ w.HTMLElement.prototype.scrollIntoView=()=>{};
  w.eval('var vcActive=true,vcMinimized=false;var _watchedScreenUsers=new Set();var _remoteScreenStreams={};function _refreshVoiceLayout(){}');
  w.eval(section(voice,'function toggleVcMinimize()','// ── Render current user card'));
  w.toggleVcMinimize();assert.equal(w.document.getElementById('voiceChannelView').parentNode,w.document.body,'active voice must not remain inside a hidden chat section');assert(w.document.body.classList.contains('vc-pip'));
