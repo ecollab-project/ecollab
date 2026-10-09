@@ -94,9 +94,32 @@
     if (typeof _refreshVoiceLayout === 'function') _refreshVoiceLayout();
   }
 
+  function syncLocalMediaState() {
+    if (!room) return;
+    const participant = room.localParticipant;
+    vcMicMuted = !participant.isMicrophoneEnabled;
+    vcCamOn = participant.isCameraEnabled;
+    vcScreenOn = participant.isScreenShareEnabled;
+    const card = participantCard(participant);
+    if (!card || card.classList.contains('vc-listener-card') !== vcMicMuted) {
+      const focused = card?.classList.contains('vc-camera-focus');
+      _moveUserCardOnMute(vcMicMuted);
+      participantCard(participant)?.classList.toggle('vc-camera-focus', !!focused);
+      const camera = participant.getTrackPublication('camera');
+      if (camera?.track && !camera.isMuted) attach(camera.track, camera, participant);
+    }
+    participantCard(participant)?.classList.toggle('speaking', participant.isSpeaking === true && !vcMicMuted);
+    document.getElementById('vcMicBtn')?.classList.toggle('muted-state', vcMicMuted);
+    document.getElementById('vcMicBtn')?.classList.toggle('unmuted', !vcMicMuted);
+    syncScreenControls();
+    _syncVoiceQuickActions();
+    refreshParticipantCounts();
+  }
+
   function syncParticipantState(participant) {
     const uid = participantId(participant);
-    if (!uid || uid === Number(window.ECOLLAB?.userId || 0)) return;
+    if (!uid) return;
+    if (uid === Number(window.ECOLLAB?.userId || 0)) { syncLocalMediaState(); return; }
 
     const muted = !participant.isMicrophoneEnabled;
     let card = participantCard(participant);
@@ -356,7 +379,9 @@
       activeChannelId = null;
       if (vcActive) { vcActive=false; disconnectVoice(); }
     });
+    room.on(RoomEvent.LocalTrackPublished, () => syncLocalMediaState());
     room.on(RoomEvent.LocalTrackUnpublished, publication => {
+      syncLocalMediaState();
       if (publication.source === 'screen_share') { vcScreenOn=false; syncScreenControls(); const uid=Number(window.ECOLLAB?.userId); _removeRemoteScreenShare(uid); _hideRemoteScreenShareSection(uid); }
     });
 
@@ -365,6 +390,7 @@
 
     // eCollab joins muted by default.
     await room.localParticipant.setMicrophoneEnabled(false);
+    syncLocalMediaState();
 
     // ParticipantConnected only fires for later arrivals. Synchronize users
     // who were already present when this browser joined the LiveKit room.
@@ -537,16 +563,7 @@
     const nextMuted = !vcMicMuted;
     try {
       await setMic(!nextMuted);
-      vcMicMuted = nextMuted;
-      document.getElementById('vcMicBtn')?.classList.toggle('muted-state', vcMicMuted);
-      document.getElementById('vcMicBtn')?.classList.toggle('unmuted', !vcMicMuted);
-      const localCard=participantCard(room.localParticipant);
-      const focused=localCard?.classList.contains('vc-camera-focus');
-      _moveUserCardOnMute(vcMicMuted);
-      participantCard(room.localParticipant)?.classList.toggle('vc-camera-focus',!!focused);
-      const camera=room.localParticipant.getTrackPublication('camera');
-      if(camera?.track&&!camera.isMuted)attach(camera.track,camera,room.localParticipant);
-      refreshParticipantCounts();
+      syncLocalMediaState();
     } catch (err) { showToast('Microphone error: ' + err.message, 'info'); } finally { mediaBusy = false; }
   };
 
@@ -558,12 +575,14 @@
       vcCamOn = room.localParticipant.isCameraEnabled;
       document.getElementById('vcCamBtn')?.classList.toggle('active', vcCamOn);
       document.getElementById('vcQuickCam')?.classList.toggle('active', vcCamOn);
+      syncLocalMediaState();
     } catch (err) { showToast('Camera error: ' + err.message, 'info'); } finally { mediaBusy = false; }
   };
 
   function syncScreenControls() {
     document.getElementById('vcScreenBtn')?.classList.toggle('active', vcScreenOn);
     document.getElementById('vcQuickScreen')?.classList.toggle('active', vcScreenOn);
+    _syncVoiceQuickActions();
     const start = document.getElementById('vcScreenStartBtn');
     if (start) start.textContent = vcScreenOn ? 'Stop Sharing' : 'Start Sharing';
   }
@@ -594,7 +613,8 @@
   toggleVcDeafen = function () {
     vcDeafened = !vcDeafened;
     document.querySelectorAll('audio.livekit-media-track').forEach(el=>el.muted=vcDeafened);
-    document.getElementById('vcDeafenBtn')?.classList.toggle('muted-state',vcDeafened);
+    document.getElementById('vcDeafBtn')?.classList.toggle('muted-state',vcDeafened);
+    _syncVoiceQuickActions();
   };
   toggleMute = function () { if(room) toggleVcMic(); };
   toggleDeafen = function () { if(room) toggleVcDeafen(); };
@@ -623,6 +643,7 @@
   document.addEventListener('visibilitychange',refreshSidebarCounts);
   setTimeout(refreshSidebarCounts,1000);
 })();
+
 
 
 

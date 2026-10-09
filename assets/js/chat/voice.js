@@ -325,6 +325,21 @@ function _ensureVoiceQuickActions() {
   header.insertBefore(wrap, invite || header.firstChild);
 }
 function _syncVoiceQuickActions() {
+  const controls = [
+    [['vcMicBtn','vcQuickMic','muteBtn'], !vcMicMuted, 'Microphone'],
+    [['vcDeafBtn','deafenBtn'], !vcDeafened, 'Audio playback'],
+    [['vcCamBtn','vcQuickCam'], vcCamOn, 'Camera'],
+    [['vcScreenBtn','vcQuickScreen'], vcScreenOn, 'Screen share'],
+  ];
+  controls.forEach(([ids, enabled, name]) => ids.forEach(id => {
+    const button = document.getElementById(id);
+    if (!button) return;
+    button.classList.toggle('media-on', enabled);
+    button.classList.toggle('media-off', !enabled);
+    button.setAttribute('aria-pressed', String(enabled));
+    button.setAttribute('aria-label', name + (enabled ? ' on' : ' off'));
+    button.title = name + (enabled ? ' on' : ' off');
+  }));
   document.getElementById('vcQuickMic')?.classList.toggle('danger', vcMicMuted);
   document.getElementById('vcQuickCam')?.classList.toggle('active', vcCamOn);
   document.getElementById('vcQuickScreen')?.classList.toggle('active', vcScreenOn);
@@ -448,7 +463,8 @@ function renderVcUser() {
   `;
 
   listeningGrid.innerHTML = '';
-  updateVcCounts(1, 0);
+  _moveUserCardOnMute(vcMicMuted);
+  _syncVoiceQuickActions();
 }
 
 function updateVcCounts(speaking, listening) {
@@ -2019,6 +2035,7 @@ window._onVoiceInvite = function(data) {
 window.openVcInviteModal = openVcInviteModal;
 window._filterVcInviteList = _filterVcInviteList;
 window._sendVoiceInvite = _sendVoiceInvite;
+
 
 
 
