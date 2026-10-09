@@ -1,0 +1,16 @@
+{
+  "name": "ecollab-chat-uploads",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "@uppy/core": "5.2.0",
+    "@uppy/tus": "5.1.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "jsdom": "26.1.0"
+  }
+}

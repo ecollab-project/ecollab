@@ -107,6 +107,7 @@ let currentChannelId = null;
 let currentServerId = window.ECOLLAB?.currentServerId || 0;
 let replyParentId = null;
 let pendingAttachment = null;
+let attachmentUploadGeneration = 0;
 let isLoadingMessages = false;
 let hasMoreMessages = true;
 let oldestMessageId = null;
@@ -356,6 +357,7 @@ async function switchChannel(el, channelId) {
   saveChatLocation({server_id: currentServerId, channel_id: channelId, channel_name: null});
   lastServerChannels.set(Number(currentServerId), channelId);
   if (channelId === currentChannelId) return;
+  clearAttachmentPreview();
 
   // Save draft of current input before switching
   const inputEl = document.getElementById('chatInputField');
@@ -1181,11 +1183,20 @@ function triggerFileInput(id) {
 async function handleFileUpload(input, type) {
   const file = input.files?.[0];
   if (!file) return;
+  const targetChannel = currentChannelId;
+  const generation = ++attachmentUploadGeneration;
   const fd = new FormData();
   fd.append('file', file);
   try {
     showToast('📎 Uploading…', 'info');
-    const data = await uploadChatAttachment(UPLOAD_ENDPOINT, fd);
+    if (window.ECOLLAB?.resumableUploads && !window.EcollabUploads) throw new Error('Upload controls failed to load. Refresh the page.');
+    const data = window.ECOLLAB?.resumableUploads
+      ? await window.EcollabUploads.upload(file, {kind:'channel',id:targetChannel})
+      : await uploadChatAttachment(UPLOAD_ENDPOINT, fd);
+    if (targetChannel !== currentChannelId || generation !== attachmentUploadGeneration) {
+      showToast('Upload completed for another channel. Select the file in that channel to send it.', 'info');
+      return;
+    }
     if (data.success) {
       pendingAttachment = data;
       showAttachmentPreview(data, type);
@@ -1221,6 +1232,7 @@ function showAttachmentPreview(attachment, type) {
 }
 
 function clearAttachmentPreview() {
+  attachmentUploadGeneration++;
   pendingAttachment = null;
   document.getElementById('_attachPreview')?.remove();
 }
@@ -1762,6 +1774,7 @@ window.lastMessageId = 0;
     if (typeof window[name] === 'function') window['__real_' + name] = window[name];
   });
 })();
+
 
 
 

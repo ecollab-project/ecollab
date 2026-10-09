@@ -1033,6 +1033,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       avatarUrl: <?= json_encode($user['avatar_url'] ?? '') ?>,
       initials: <?= json_encode($initials) ?>,
       csrfToken: <?= json_encode($csrfToken) ?>,
+      resumableUploads: <?= filter_var(env('CHAT_RESUMABLE_UPLOADS', 'false'), FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false' ?>,
       currentServerId: <?= (int)($firstServer['id'] ?? 0) ?>,
       currentChannelId: null,
       wsUrl: '<?= defined("WS_URL") ? WS_URL : "ws://localhost:8080" ?>',
@@ -1098,7 +1099,11 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     7. dm-notifications.js — DM badge polling
   -->
   <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=chat-delivery-1-yjs-chat-1-calls-2" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=chat-delivery-1" defer></script>
+  <?php if (filter_var(env('CHAT_RESUMABLE_UPLOADS', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-uploads.css?v=uppy-1">
+  <script src="<?= BASE_URL ?>/assets/js/chat/resumable-uploads.js?v=uppy-1" defer></script>
+  <?php endif; ?>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=uppy-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=presence-consistency-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=voice-preview-watch-2" defer></script>
@@ -1150,7 +1155,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     </button>
   </div>
 
-  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=dm-settings-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=uppy-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/dm-chat-settings.js?v=dm-settings-1" defer></script>
   <!--
     Collab tools load order:
@@ -3544,6 +3549,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 </body>
 
 </html>
+
 
 
 

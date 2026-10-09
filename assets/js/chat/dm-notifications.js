@@ -909,8 +909,13 @@ window._dmFileChosen=function(input){
   p.style.display='block';p.innerHTML='<div style="display:flex;align-items:center;gap:8px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;padding:8px;">'+(image?'<img src="'+url+'" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">':'<span style="font-size:24px;">📄</span>')+'<div style="min-width:0;flex:1"><div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+_esc(file.name)+'</div><div style="font-size:10px;color:var(--text-muted)">'+_dmFormatBytes(file.size)+'</div></div><button onclick="_dmClearFile()" style="border:0;background:none;color:var(--text-muted);cursor:pointer;font-size:16px;">×</button></div>';
 };
 window._dmClearFile=function(){_dmPendingFile=null;const i=document.getElementById('dmFileInput');if(i)i.value='';const p=document.getElementById('dmAttachmentPreview');if(p){p.innerHTML='';p.style.display='none';}};
-async function _dmUploadPending(){
-  if(!_dmPendingFile)return null;const form=new FormData();form.append('file',_dmPendingFile);
+async function _dmUploadPending(file, target){
+  if(!file)return null;
+  if(window.ECOLLAB?.resumableUploads){
+    if(!window.EcollabUploads)throw new Error('Upload controls failed to load. Refresh the page.');
+    return window.EcollabUploads.upload(file,target);
+  }
+  const form=new FormData();form.append('file',file);
   return window.uploadChatAttachment(BASE()+'/API/dm/upload-file.php', form);
 }
 function _dmAttachmentHTML(m){
@@ -974,16 +979,26 @@ function _dmTypingSignal() {
 
 window.sendDmMessage = async function() {
   const input = document.getElementById('dmInputField');
-  if (!input) return;
+  if (!input || input.disabled) return;
   const text = input.value.trim();
   const pendingFile = _dmPendingFile;
   if ((!text && !pendingFile) || (!DM.activeConvId && !DM.activeGroupId)) return;
+  const targetConv = DM.activeConvId;
+  const targetGroup = DM.activeGroupId;
+  const targetPartner = DM.activePartnerId;
+  const stillInChat = () => targetConv === DM.activeConvId && targetGroup === DM.activeGroupId && targetPartner === DM.activePartnerId && document.getElementById('dmInputField') === input;
 
   input.value    = '';
   input.disabled = true;
   let uploaded=null;
-  try { if(pendingFile){showToast('Uploading attachment…','info');uploaded=await _dmUploadPending();_dmClearFile();} }
-  catch(e){input.disabled=false;showToast('Upload failed: '+e.message,'error');return;}
+  try {
+    if(pendingFile){
+      showToast('Uploading attachment…','info');
+      uploaded=await _dmUploadPending(pendingFile,{kind:targetGroup?'group':'dm',id:targetGroup||targetConv});
+      if(!stillInChat())throw new Error('Chat changed. Return to the original chat and select the attachment again.');
+      if(_dmPendingFile === pendingFile)_dmClearFile();
+    }
+  } catch(e){input.disabled=false;if(stillInChat())input.value=text;showToast('Upload failed: '+e.message,'error');return;}
 
   // Optimistic UI
   const optimistic = {
@@ -1002,21 +1017,21 @@ window.sendDmMessage = async function() {
   _appendDmMessage(optimistic);
 
   try {
-    if (DM.activeGroupId) {
+    if (targetGroup) {
       const data = await apiFetch(BASE() + '/API/dm/group-message.php', {
         method: 'POST',
-        body: JSON.stringify({ group_id: DM.activeGroupId, body: text, attachment_path:uploaded?.file_path||'', attachment_name:uploaded?.file_name||'', attachment_size:uploaded?.file_size||0, attachment_mime:uploaded?.mime_type||'' }),
+        body: JSON.stringify({ group_id: targetGroup, body: text, attachment_path:uploaded?.file_path||'', attachment_name:uploaded?.file_name||'', attachment_size:uploaded?.file_size||0, attachment_mime:uploaded?.mime_type||'' }),
       });
       const optimisticEl = document.querySelector(`[data-msg-id="${optimistic.id}"]`);
       if (optimisticEl && data.message_id) {
         const existing = document.querySelector(`#dmMessagesArea [data-msg-id="${CSS.escape(String(data.message_id))}"]`);
         if (existing) optimisticEl.remove(); else optimisticEl.dataset.msgId = String(data.message_id);
       }
-      _wsSend({ type: 'dm_group_message' , group_id: DM.activeGroupId, message_id: data.message_id, body: text, created_at: new Date().toISOString() });
-      const grp = DM.groups.find(g => g.id === DM.activeGroupId);
+      _wsSend({ type: 'dm_group_message' , group_id: targetGroup, message_id: data.message_id, body: text, created_at: new Date().toISOString() });
+      const grp = DM.groups.find(g => g.id === targetGroup);
       if (grp) { grp.last_message = (text || (uploaded ? '📎 '+uploaded.file_name : '')).slice(0, 120); grp.last_msg_at = new Date().toISOString(); _renderGroupList(); }
       input.disabled = false;
-      input.focus();
+      if (stillInChat()) input.focus();
       return;
     }
 
@@ -1025,7 +1040,7 @@ window.sendDmMessage = async function() {
     const data = await apiFetch(BASE() + '/API/dm/send-message.php', {
       method: 'POST',
       body: JSON.stringify({
-        conversation_id: DM.activeConvId,
+        conversation_id: targetConv,
         body: text,
         attachment_path:uploaded?.file_path||'', attachment_name:uploaded?.file_name||'', attachment_size:uploaded?.file_size||0, attachment_mime:uploaded?.mime_type||'',
         active_server_id: parseInt(window.ECOLLAB?.currentServerId || window.ECOLLAB?.serverId || window.currentServerId || document.querySelector('[data-server-id].active')?.dataset?.serverId || 0) || null,
@@ -1052,7 +1067,7 @@ window.sendDmMessage = async function() {
     if (!data.is_ai) {
       _wsSend({
         type:            'dm_message',
-        conversation_id: DM.activeConvId,
+        conversation_id: targetConv,
         message_id:      data.message_id,
         recipient_id:    data.recipient_id,
         body:            text || (uploaded ? '📎 '+uploaded.file_name : ''),
@@ -1065,12 +1080,12 @@ window.sendDmMessage = async function() {
       }
     }
 
-    if (data.is_ai && data.ai_message) {
+    if (stillInChat() && data.is_ai && data.ai_message) {
       _appendDmMessage(data.ai_message);
     }
 
     // Jarred write actions are explicit backend results, never model-authored JS.
-    if (data.is_ai && data.ai_action) {
+    if (stillInChat() && data.is_ai && data.ai_action) {
       const a = data.ai_action;
       if (a.type === 'open_temporary_voice') {
         if (typeof window.joinVoice === 'function') {
@@ -1096,7 +1111,7 @@ window.sendDmMessage = async function() {
     }
 
     // Update sidebar preview
-    const conv = DM.conversations.find(c => c.conversation_id === DM.activeConvId);
+    const conv = DM.conversations.find(c => c.conversation_id === targetConv);
     if (conv) {
       if (data.is_ai && data.ai_message) {
         conv.last_message = String(data.ai_message.body || '').slice(0, 120);
@@ -1115,7 +1130,7 @@ window.sendDmMessage = async function() {
     document.querySelector(`[data-msg-id="${optimistic.id}"]`)?.remove();
   } finally {
     input.disabled = false;
-    input.focus();
+    if (stillInChat()) input.focus();
   }
 };
 
@@ -1234,6 +1249,7 @@ Object.assign(window, {
   loadDmList,
   sendDmMessage,
 });
+
 
 
 
