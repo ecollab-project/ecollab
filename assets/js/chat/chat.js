@@ -104,6 +104,15 @@ window.saveChatLocation = saveChatLocation;
 const lastServerChannels = new Map();
 let channelListRequest = 0;
 
+// Server entry defaults to General; explicit refresh/deep-link state wins.
+function defaultChatChannel(container) {
+  const items = [...container.querySelectorAll('.channel-item[data-channel-id]')]
+    .filter(item => !['voice', 'whiteboard'].includes(item.dataset.channelType));
+  return items.find(item => String(item.dataset.channelName || '').trim().replace(/^#/, '').toLowerCase() === 'general')
+    || items.find(item => item.dataset.channelType === 'text')
+    || items[0] || null;
+}
+
 // ── Init ──
 document.addEventListener('DOMContentLoaded', () => {
   // Deep-link: if navigated here from a dashboard with a specific
@@ -123,9 +132,9 @@ document.addEventListener('DOMContentLoaded', () => {
       .find(el => el.dataset.channelName === wantedName);
   }
 
-  // Auto-select first channel if no deep-link target found
+  // A valid URL channel survives refresh; a fresh entry starts at General.
   if (!target) {
-    target = document.querySelector('.channel-item[data-channel-id]');
+    target = defaultChatChannel(document.getElementById('channelList') || document);
   }
 
   if (target) {
@@ -181,6 +190,7 @@ async function updatePresence() {
 // ── Workspace switch ──
 function switchWorkspace(wsIdx, serverId) {
   if (!serverId) return;
+  const serverChanged = Number(serverId) !== Number(currentServerId);
   if (currentChannelId) lastServerChannels.set(Number(currentServerId), currentChannelId);
   currentServerId = serverId;
   saveChatLocation({server_id: serverId, channel_id: null, channel_name: null});
@@ -198,10 +208,10 @@ function switchWorkspace(wsIdx, serverId) {
     icon.classList.toggle('active', i === wsIdx);
   });
 
-  loadServerChannels(serverId);
+  loadServerChannels(serverId, serverChanged);
 }
 
-async function loadServerChannels(serverId) {
+async function loadServerChannels(serverId, startAtGeneral = false) {
   const request = ++channelListRequest;
   try {
     const data = await apiFetch(`${API_BASE}/get-channels.php?server_id=${serverId}`);
@@ -215,14 +225,14 @@ async function loadServerChannels(serverId) {
 
     }
 
-    renderChannelList(data.channels || []);
+    renderChannelList(data.channels || [], startAtGeneral);
   } catch (err) {
     showToast('Failed to load channels', 'info');
     console.error(err);
   }
 }
 
-function renderChannelList(channels) {
+function renderChannelList(channels, startAtGeneral = false) {
   const textList = document.getElementById('channelList');
   const voiceList = document.getElementById('voiceChannelList');
   const wbList = document.getElementById('whiteboardChannelList');
@@ -258,6 +268,7 @@ function renderChannelList(channels) {
       el.className = 'channel-item wb-channel-item';
       el.dataset.channelId = ch.id;
       el.dataset.channelName = ch.name;
+      el.dataset.channelType = ch.type;
       el.innerHTML = `
         <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24" style="color:var(--accent-purple);flex-shrink:0;">
           <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
@@ -273,6 +284,7 @@ function renderChannelList(channels) {
       el.className = 'channel-item';
       el.dataset.channelId = ch.id;
       el.dataset.channelName = ch.name;
+      el.dataset.channelType = ch.type;
       el.dataset.isPrivate = (ch.is_private == 1 || ch.is_private === true) ? '1' : '0';
       if (ch.is_new == 1 || ch.is_new === true) el.dataset.isNew = '1';
       const isAnnouncement = ch.type === 'announcement';
@@ -297,11 +309,11 @@ function renderChannelList(channels) {
   // Show/hide whiteboard section based on whether channels exist
   if (wbSection) wbSection.style.display = hasWhiteboard ? '' : 'none';
 
-  // Return to this server's last channel when possible.
-  const wanted = lastServerChannels.get(Number(currentServerId));
-  const first = Array.from(textList.querySelectorAll('.channel-item'))
-    .find(item => Number(item.dataset.channelId) === Number(wanted))
-    || textList.querySelector('.channel-item');
+  // Changing servers starts at General. Same-server list updates retain selection.
+  const wanted = startAtGeneral ? null : lastServerChannels.get(Number(currentServerId));
+  const first = (wanted && Array.from(textList.querySelectorAll('.channel-item'))
+    .find(item => Number(item.dataset.channelId) === Number(wanted)))
+    || defaultChatChannel(textList);
   if (first) switchChannel(first, parseInt(first.dataset.channelId));
   else {
     if (currentChannelId) window.unsubscribeFromChannel?.(currentChannelId);
@@ -1726,6 +1738,7 @@ window.lastMessageId = 0;
     if (typeof window[name] === 'function') window['__real_' + name] = window[name];
   });
 })();
+
 
 
 

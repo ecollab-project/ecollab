@@ -285,6 +285,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
               <div class="channel-item <?= $ch === reset($channels) ? 'active' : '' ?>"
                 data-channel-id="<?= (int)$ch['id'] ?>"
                 data-channel-name="<?= htmlspecialchars($ch['name']) ?>"
+                data-channel-type="<?= htmlspecialchars($ch['type']) ?>"
                 data-is-private="<?= !empty($ch['is_private']) ? '1' : '0' ?>"
                 <?= $isNew ? 'data-is-new="1"' : '' ?>
                 onclick="switchChannel(this, <?= (int)$ch['id'] ?>)">
@@ -344,6 +345,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <div id="whiteboardChannelList">
           <?php foreach ($channels as $ch): if ($ch['type'] === 'whiteboard'): ?>
               <div class="channel-item wb-channel-item" data-channel-id="<?= (int)$ch['id'] ?>" data-channel-name="<?= htmlspecialchars($ch['name']) ?>"
+                data-channel-type="<?= htmlspecialchars($ch['type']) ?>"
                 onclick="openWhiteboardChannel(<?= (int)$ch['id'] ?>, '<?= htmlspecialchars($ch['name']) ?>')" title="Open <?= htmlspecialchars($ch['name']) ?>">
                 <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24" style="color:var(--accent-purple);flex-shrink:0;">
                   <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
@@ -1096,7 +1098,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     7. dm-notifications.js — DM badge polling
   -->
   <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=yjs-chat-1-calls-2" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=presence-consistency-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=general-navigation-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=presence-consistency-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=team-audit-1" defer></script>
@@ -3541,6 +3543,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 </body>
 
 </html>
+
 
 
 
