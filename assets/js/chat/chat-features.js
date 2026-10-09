@@ -707,7 +707,7 @@ function _populateFullMatches(filter) {
     <div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);cursor:pointer;border-radius:8px;transition:background 0.12s;margin:0 -6px;padding-left:6px;padding-right:6px;"
       onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''"
       onclick="openMiniProfile(event,'${_esc(m.name)}','${_esc(m.detail)}','','${_esc(m.name[0].toUpperCase())}',${m.id || 0})">
-      <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,${m.grad});display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;">${m.name[0]}</div>
+      ${window.chatSidebarAvatar(m.name, m.avatar_url, m.grad, 44)}
       <div style="flex:1;min-width:0;">
         <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:2px;">${_esc(m.name)}</div>
         <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">${_esc(m.detail)}</div>
@@ -740,7 +740,7 @@ async function refreshMatches(btn) {
       if (miniList) {
         miniList.innerHTML = data.matches.slice(0, 3).map(m => `
           <div class="match-item" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
-            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,${m.grad || '#a855f7,#ec4899'});display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">${(m.name || '?')[0]}</div>
+            ${window.chatSidebarAvatar(m.name, m.avatar_url, m.grad, 36)}
             <div style="flex:1;min-width:0;">
               <div style="font-size:12px;font-weight:600;color:var(--text-primary);">${_esc(m.name)}</div>
               <div style="font-size:11px;color:var(--text-muted);">${_esc(m.detail || '')}</div>
@@ -773,7 +773,7 @@ async function _autoLoadMatches() {
     if (miniList) {
       miniList.innerHTML = data.matches.slice(0, 3).map(m => `
         <div class="match-item" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
-          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,${m.grad || '#a855f7,#ec4899'});display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">${(m.name || '?')[0]}</div>
+          ${window.chatSidebarAvatar(m.name, m.avatar_url, m.grad, 36)}
           <div style="flex:1;min-width:0;">
             <div style="font-size:12px;font-weight:600;color:var(--text-primary);">${_esc(m.name)}</div>
             <div style="font-size:11px;color:var(--text-muted);">${_esc(m.detail || '')}</div>
@@ -2803,5 +2803,6 @@ window._voteOnThread = _voteOnThread;
 window._openThreadDetail = _openThreadDetail;
 window._submitThreadReply = _submitThreadReply;
 window._voteOnReply = _voteOnReply;
+
 
 

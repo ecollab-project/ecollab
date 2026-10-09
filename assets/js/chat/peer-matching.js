@@ -197,8 +197,8 @@ function _pmMatchCard(m) {
   return `
     <div class="pm-card" data-uid="${m.id}">
       <div class="pm-card-top">
-        <div class="pm-avatar" style="background:${avatarBg}">
-          ${avatarText}${onlineDot}
+        <div class="pm-avatar">
+          ${window.chatSidebarAvatar(m.name, m.avatar_url, m.grad, 42)}${onlineDot}
         </div>
         <div class="pm-card-info">
           <div class="pm-card-name">${pmEsc(m.name)}
@@ -308,8 +308,8 @@ async function _pmRunSearch() {
       const avatarText = pmAvatarUrl(u.avatar_url) ? '' : (u.full_name||u.username||'?')[0].toUpperCase();
       return `
         <div class="pm-search-row">
-          <div class="pm-avatar pm-avatar-sm" style="background:${avatarBg}">
-            ${avatarText}
+          <div class="pm-avatar pm-avatar-sm">
+            ${window.chatSidebarAvatar(u.full_name || u.username, u.avatar_url, u.avatar_color_gradient, 34)}
             ${u.is_online ? '<span class="pm-online-dot"></span>' : ''}
           </div>
           <div class="pm-search-info">
@@ -357,8 +357,8 @@ function _pmRequestCard(r, dir) {
 
   return `
     <div class="pm-request-card">
-      <div class="pm-avatar pm-avatar-sm" style="background:${avatarBg}">
-        ${avatarText}
+      <div class="pm-avatar pm-avatar-sm">
+        ${window.chatSidebarAvatar(name, r.avatar_url, r.avatar_color_gradient, 34)}
       </div>
       <div class="pm-request-info">
         <div class="pm-card-name">${pmEsc(name)}</div>
@@ -409,8 +409,8 @@ async function _pmRenderLeaderboard(body) {
           return `
             <div class="pm-leaderboard-row">
               <span class="pm-lb-rank">${medals[i] || `#${i+1}`}</span>
-              <div class="pm-avatar pm-avatar-sm" style="background:${avatarBg}">
-                ${avatarText}
+              <div class="pm-avatar pm-avatar-sm">
+                ${window.chatSidebarAvatar(p.full_name || p.username, p.avatar_url, p.avatar_color_gradient, 34)}
                 ${p.is_online?'<span class="pm-online-dot"></span>':''}
               </div>
               <div class="pm-lb-info">
@@ -811,4 +811,5 @@ window.refreshMatches = async function(btn) {
   } catch { if (_origRefreshMatches && btn) _origRefreshMatches(btn); }
   finally { if (btn) { btn.classList.remove('spinning'); btn.disabled = false; } }
 };
+
 

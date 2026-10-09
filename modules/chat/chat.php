@@ -52,7 +52,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/whiteboard.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/whiteboard-mobile.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/collab-tools.css">
-  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/peer-matching.css">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/peer-matching.css?v=matching-avatars-1">
   <style>
     #wbOverlay {
       display: none !important;
@@ -1097,7 +1097,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   -->
   <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=yjs-chat-1-calls-2" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=sidebar-consistency-1" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=sidebar-consistency-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=matching-avatars-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=team-audit-1" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.22.3/dist/livekit-client.umd.min.js" defer></script>
@@ -1159,7 +1159,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-tools.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-liveeditor.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-extra.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/peer-matching.js?v=sidebar-consistency-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/peer-matching.js?v=matching-avatars-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/server-channel-management.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/server-discovery.js?v=privacy1" defer></script>
 
@@ -3541,6 +3541,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 </body>
 
 </html>
+
 
 
 

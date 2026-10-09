@@ -499,3 +499,7 @@
   .pm-search-row .pm-btn-secondary,
   .pm-search-row .pm-btn-connected { margin-left: 42px; }
 }
+
+
+/* Photos fill the same avatar slot at every matching-card breakpoint. */
+.pm-avatar > .sidebar-avatar{width:100%!important;height:100%!important;font-size:inherit}
