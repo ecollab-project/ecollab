@@ -11,7 +11,7 @@ header('Cache-Control: no-store');
 
 try {
     AuthMiddleware::startSession();
-    $user = AuthMiddleware::requireAuth();
+    $user = AuthMiddleware::requireAuth(true);
 
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         http_response_code(405);
@@ -73,4 +73,5 @@ try {
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => 'Voice service is temporarily unavailable.']);
 }
+
 

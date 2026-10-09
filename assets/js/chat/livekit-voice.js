@@ -12,10 +12,10 @@
   let countFetchBusy = false;
 
   function csrf() {
-    return document.querySelector('meta[name="csrf-token"]')?.content || '';
+    return window.ECOLLAB?.csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || '';
   }
 
-  async function tokenFor(channelId) {
+  async function tokenFor(channelId, retried = false) {
     const res = await fetch((window.ECOLLAB?.baseUrl || '') + '/API/chat/livekit-token.php', {
       method: 'POST',
       credentials: 'same-origin',
@@ -25,8 +25,27 @@
       },
       body: JSON.stringify({ channel_id: Number(channelId) }),
     });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.success) throw new Error(data.error || 'Unable to join voice channel');
+    const data = await res.json().catch(() => null);
+    if (res.status === 403 && /csrf/i.test(data?.error || '') && !retried) {
+      const refreshed = await fetch((window.ECOLLAB?.baseUrl || '') + '/API/auth/csrf-token.php', {
+        credentials: 'same-origin', cache: 'no-store',
+      });
+      const fresh = await refreshed.json().catch(() => null);
+      if (refreshed.ok && fresh?.token) {
+        if (window.ECOLLAB) window.ECOLLAB.csrfToken = fresh.token;
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) meta.content = fresh.token;
+        return tokenFor(channelId, true);
+      }
+    }
+    if (!res.ok || !data?.success) {
+      const reason = data?.error || (res.status === 401 || res.redirected
+        ? 'Your session expired. Sign in again.'
+        : !data ? 'The voice token endpoint returned a non-JSON response. Check web-server permissions and PHP logs.'
+        : 'The voice token response was unsuccessful.');
+      console.error('[LiveKit] token request rejected', { status: res.status, redirected: res.redirected, channelId: Number(channelId), reason });
+      throw new Error(reason + ' (HTTP ' + res.status + ')');
+    }
     return data;
   }
 
@@ -604,5 +623,6 @@
   document.addEventListener('visibilitychange',refreshSidebarCounts);
   setTimeout(refreshSidebarCounts,1000);
 })();
+
 
 
