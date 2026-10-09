@@ -128,3 +128,23 @@ body.vc-active .ec-media-settings{z-index:10110!important}
 .user-profile-footer .footer-icon-btn svg{pointer-events:none}
 .user-profile-footer .footer-icon-btn:focus-visible{outline:2px solid #a78bfa;outline-offset:2px}
 @media(pointer:coarse){.user-profile-footer .footer-controls{gap:2px}.user-profile-footer .footer-icon-btn{width:44px;min-width:44px;height:44px}.user-profile-footer{flex-wrap:wrap}.user-profile-footer .footer-controls{margin-left:auto}}
+
+
+.dm-chat-settings-button{display:inline-flex;align-items:center;justify-content:center;flex:0 0 32px;width:32px;height:32px;padding:0;border:1px solid var(--border);border-radius:8px;background:var(--bg-tertiary);color:var(--text-secondary);cursor:pointer}
+.dm-chat-settings-button:hover{background:var(--bg-hover);color:var(--text-primary)}
+.dm-chat-settings-dialog{width:min(500px,calc(100vw - 24px));max-height:calc(100dvh - 32px);padding:0;border:1px solid var(--border);border-radius:16px;background:var(--bg-secondary,#121827);color:var(--text-primary,#fff);font-family:inherit;overflow:auto;box-shadow:0 24px 80px #0008}
+.dm-chat-settings-dialog::backdrop{background:#0009}
+.dm-chat-settings-dialog header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 20px;border-bottom:1px solid var(--border)}
+.dm-chat-settings-dialog h2{font-size:18px;margin:0}.dm-chat-settings-dialog h3{font-size:14px;margin:0 0 10px}.dm-chat-settings-dialog h4{font-size:13px;margin:14px 0 8px}
+.dm-chat-settings-dialog p{font-size:12px;color:var(--text-muted);margin:5px 0 12px;overflow-wrap:anywhere}
+.dm-settings-content{padding:18px 20px}.dm-settings-content section+section{margin-top:24px}
+.dm-chat-settings-dialog button{cursor:pointer;font:inherit;color:var(--text-primary);background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;padding:8px 12px}
+.dm-settings-actions{display:flex;flex-wrap:wrap;gap:8px}.dm-chat-settings-dialog label{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:11px 0;font-size:13px}.dm-chat-settings-dialog small{display:block;font-size:11px;color:var(--text-muted);margin-top:4px}
+.dm-chat-settings-dialog input[type=search]{box-sizing:border-box;width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-tertiary);color:var(--text-primary);font:inherit}
+.dm-chat-settings-dialog input[type=checkbox]{accent-color:#a78bfa;width:18px;height:18px;flex-shrink:0}
+.dm-settings-member{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:13px}.dm-settings-file{display:block;padding:8px;color:var(--accent-purple);overflow-wrap:anywhere}
+#dmSettingsResults button{display:block;text-align:left;width:100%;margin-top:8px;overflow-wrap:anywhere;max-height:100px;overflow:auto;font-size:12px}
+.dm-chat-settings-dialog footer{padding:14px 20px;border-top:1px solid var(--border);text-align:right}
+#dmConversationPanel.dm-compact-messages .dm-message-bubble{padding:5px 8px!important;font-size:12px!important}#dmConversationPanel.dm-hide-timestamps .dm-message-time{display:none}
+.dm-message-highlight{outline:2px solid #a78bfa;outline-offset:3px;border-radius:8px}
+@media(pointer:coarse){.dm-chat-settings-button{height:44px;width:44px;flex-basis:44px}.dm-chat-settings-dialog button{min-height:44px}}

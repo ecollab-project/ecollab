@@ -159,7 +159,7 @@ function _onWsDmMessage(data) {
   // If this conversation is open, append message
   if (Number(DM.activeConvId) === convId) {
     _appendDmMessage(data);
-  } else {
+  } else if (window.EcollabDmSettings?.alertsEnabled('dm', conv?.partner_id) !== false) {
     // Show floating toast
     const name = data.sender_name || 'Someone';
     showToast(`💬 ${name}: ${String(data.body || '').slice(0, 60)}`, 'info');
@@ -167,7 +167,7 @@ function _onWsDmMessage(data) {
 
   // Don't notify yourself about your own message (this event fires for
   // both sender and recipient)
-  if (typeof showDesktopNotification === 'function' && data.sender_id != ME_ID()) {
+  if (typeof showDesktopNotification === 'function' && data.sender_id != ME_ID() && window.EcollabDmSettings?.alertsEnabled('dm', conv?.partner_id) !== false) {
     showDesktopNotification('notification_messages', data.sender_name || 'New message', String(data.body || '').slice(0, 100));
   }
 
@@ -209,14 +209,14 @@ function _onWsDmGroupMessage(data) {
 
   if (DM.activeGroupId == groupId) {
     _appendDmMessage(data);
-  } else {
+  } else if (window.EcollabDmSettings?.alertsEnabled('group', groupId) !== false) {
     const name = data.sender_name || 'Someone';
     showToast(`💬 ${name} (${grp ? grp.display_name : 'Group'}): ${String(data.body || '').slice(0, 60)}`, 'info');
   }
 
   // Don't notify yourself about your own message (this event fires for
   // every group member, including the sender)
-  if (typeof showDesktopNotification === 'function' && data.sender_id != ME_ID()) {
+  if (typeof showDesktopNotification === 'function' && data.sender_id != ME_ID() && window.EcollabDmSettings?.alertsEnabled('group', groupId) !== false) {
     const groupName = grp ? grp.display_name : 'Group';
     showDesktopNotification('notification_messages', `${data.sender_name || 'Someone'} (${groupName})`, String(data.body || '').slice(0, 100));
   }
@@ -783,6 +783,8 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
       <button onclick="startDmCall(true)" title="Video call" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;flex-shrink:0;">🎥</button>`;
   }
 
+  window.EcollabDmSettings?.opened({ type: 'dm', id: partnerId, name: partnerName });
+
   // Load messages
   const msgArea = document.getElementById('dmMessagesArea');
   msgArea.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">Loading…</div>';
@@ -809,6 +811,8 @@ window.openGroupConversation = async function(groupId) {
   DM.activeGroupId   = groupId;
 
   _ensureDmPanel();
+  document.getElementById('dmPanelTitle').textContent = 'Loading group…';
+  window.EcollabDmSettings?.opened({ type: 'group', id: groupId, name: 'Group', members: [] });
 
   const panel = document.getElementById('dmConversationPanel');
   panel.style.display = 'flex';
@@ -829,6 +833,7 @@ window.openGroupConversation = async function(groupId) {
       </span>
       <button onclick="window.startDmGroupVoice(${groupId}, '${_esc(displayName).replace(/'/g, "\\'")}')" title="Start voice call — anyone in the group can join" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;flex-shrink:0;">📞</button>`;
 
+    window.EcollabDmSettings?.opened({ type: 'group', id: groupId, name: displayName, members: data.members || [] });
     _renderDmMessages(data.messages || []);
   } catch (err) {
     msgArea.innerHTML = `<div style="text-align:center;padding:20px;color:#f87171;font-size:13px;">Failed to load: ${_esc(err.message)}</div>`;
@@ -889,6 +894,7 @@ function _renderDmMessages(messages) {
     return;
   }
 
+  window.EcollabDmSettings?.record(messages, true);
   area.innerHTML = messages.map(m => _dmMessageHTML(m)).join('');
   area.scrollTop = area.scrollHeight;
 }
@@ -921,10 +927,10 @@ function _dmMessageHTML(m) {
   return `
     <div style="display:flex;flex-direction:${isMine ? 'row-reverse' : 'row'};align-items:flex-end;gap:8px;" data-msg-id="${m.id}">
       ${!isMine ? _avatar(name, grad, 26, avatarUrl) : ''}
-      <div style="max-width:72%;background:${isMine ? 'var(--accent-purple)' : 'var(--bg-tertiary)'};color:${isMine ? '#fff' : 'var(--text-primary)'};padding:8px 12px;border-radius:${isMine ? '12px 12px 4px 12px' : '12px 12px 12px 4px'};font-size:13px;line-height:1.5;word-break:break-word;">
+      <div class="dm-message-bubble" style="max-width:72%;background:${isMine ? 'var(--accent-purple)' : 'var(--bg-tertiary)'};color:${isMine ? '#fff' : 'var(--text-primary)'};padding:8px 12px;border-radius:${isMine ? '12px 12px 4px 12px' : '12px 12px 12px 4px'};font-size:13px;line-height:1.5;word-break:break-word;">
         ${_dmAttachmentHTML(m)}
         ${m.body ? _esc(m.body) : ''}
-        <div style="font-size:10px;opacity:0.65;margin-top:4px;text-align:${isMine ? 'right' : 'left'};">${_timeAgo(m.created_at)}</div>
+        <div class="dm-message-time" style="font-size:10px;opacity:0.65;margin-top:4px;text-align:${isMine ? 'right' : 'left'};">${_timeAgo(m.created_at)}</div>
       </div>
     </div>`;
 }
@@ -933,6 +939,7 @@ function _appendDmMessage(m) {
   const area = document.getElementById('dmMessagesArea');
   if (!area) return;
   m = { ...m, id: m.id ?? m.message_id };
+  window.EcollabDmSettings?.record([m]);
   if (m.id == null || area.querySelector(`[data-msg-id="${CSS.escape(String(m.id))}"]`)) return;
   const el = document.createElement('div');
   el.innerHTML = _dmMessageHTML(m);
@@ -1227,5 +1234,6 @@ Object.assign(window, {
   loadDmList,
   sendDmMessage,
 });
+
 
 
