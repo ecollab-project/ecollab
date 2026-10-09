@@ -123,6 +123,7 @@ final class ChatTusStorage
             'audio/ogg'=>'ogg','audio/webm'=>'webm','audio/mp4'=>'m4a','audio/x-m4a'=>'m4a',
         ];
         if (!isset($extensions[$mime]) || ($meta['kind'] !== 'channel' && (str_starts_with($mime, 'video/') || str_starts_with($mime, 'audio/')))) {
+            $this->terminate($id); // A rejected file must not consume quota until expiry.
             throw new RuntimeException('File type not allowed.', 415);
         }
         // Never preserve a client extension such as .php, .html or .svg.

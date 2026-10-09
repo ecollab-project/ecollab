@@ -36,7 +36,7 @@ try {
     $bad = $store->create(18,'channel',20,strlen($html),'pretend.png');
     $store->withUpload($bad,18,$allow,fn($m,$i) => $store->append($m,$i,0,$html));
     fails(fn() => $store->withUpload($bad,18,$allow,fn($m,$i) => $store->complete($m,$i)),415);
-    $store->withUpload($bad,18,$allow,fn($m,$i) => $store->terminate($i));
+    ensure(!is_file($dir.'/parts/'.$bad.'.part'),'Rejected file must release storage and quota');
     $big = $store->create(18,'channel',20,ChatTusStorage::CHUNK_BYTES+2,'a.txt');
     fails(fn() => $store->withUpload($big,18,$allow,fn($m,$i) => $store->append($m,$i,0,str_repeat('a',ChatTusStorage::CHUNK_BYTES+1))),413);
     $store->withUpload($big,18,$allow,fn($m,$i) => $store->terminate($i));
