@@ -100,15 +100,25 @@
     if (!room) return;
     const participant = room.localParticipant;
     vcMicMuted = !participant.isMicrophoneEnabled;
-    vcCamOn = participant.isCameraEnabled;
+    const camera = participant.getTrackPublication('camera');
+    vcCamOn = !!(participant.isCameraEnabled && camera?.track && !camera.isMuted
+      && camera.track.mediaStreamTrack?.readyState === 'live');
     vcScreenOn = participant.isScreenShareEnabled;
     const card = participantCard(participant);
     if (!card || card.classList.contains('vc-listener-card') !== vcMicMuted) {
       const focused = card?.classList.contains('vc-camera-focus');
       _moveUserCardOnMute(vcMicMuted);
       participantCard(participant)?.classList.toggle('vc-camera-focus', !!focused);
-      const camera = participant.getTrackPublication('camera');
-      if (camera?.track && !camera.isMuted) attach(camera.track, camera, participant);
+    }
+    // Publication and roster events can arrive in either order. Repair a missing
+    // self-preview even when the microphone section did not change.
+    const localCard = participantCard(participant);
+    const preview = localCard?.querySelector('.vc-cam-preview:not(.vc-screen-preview)');
+    if (vcCamOn && localCard) {
+      const visibleTrack = preview?.srcObject?.getVideoTracks?.().includes(camera.track.mediaStreamTrack);
+      if (!visibleTrack) attach(camera.track, camera, participant);
+    } else if (preview && typeof _removeRemoteCamera === 'function') {
+      _removeRemoteCamera(participantId(participant));
     }
     participantCard(participant)?.classList.toggle('speaking', participant.isSpeaking === true && !vcMicMuted);
     document.getElementById('vcMicBtn')?.classList.toggle('muted-state', vcMicMuted);
@@ -657,6 +667,7 @@
   document.addEventListener('visibilitychange',refreshSidebarCounts);
   setTimeout(refreshSidebarCounts,1000);
 })();
+
 
 
 

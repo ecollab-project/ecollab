@@ -90,6 +90,8 @@ body.vc-active #voiceChannelView.active:not(.vc-minimized){position:fixed!import
 #voiceChannelView .vc-header,#voiceChannelView .vc-controls-bar{flex-shrink:0}
 body.vc-active .modal-overlay{z-index:10100!important}
 body.vc-active .ec-media-settings{z-index:10110!important}
+body.vc-active:not(.vc-pip){overflow:hidden}
+body.vc-active #voiceChannelView.active:not(.vc-minimized) .vc-header{position:relative;z-index:5}
 #voiceChannelView .vc-screen-card.vc-screen-expanded{grid-column:1/-1;width:100%!important;aspect-ratio:16/9;min-height:280px}
 #voiceChannelView .vc-screen-card.vc-screen-expanded .vc-screen-card-inner{height:100%;width:100%}
 #voiceChannelView .vc-screen-card.vc-screen-expanded video{object-fit:contain!important}

@@ -1555,6 +1555,7 @@ function _hideRemoteScreenShareSection(userId) {
       if (screenSection) screenSection.style.display = 'none';
     }
   }
+  _syncScreenUnwatchControl();
 }
 
 function _startRemoteVAD(userId, stream) {
@@ -1842,7 +1843,15 @@ function toggleScreenWatch(userId) {
   _applyScreenWatchState(uid);
   if (_watchedScreenUsers.has(uid)) {
     if (vcMinimized) toggleVcMinimize();
-    document.getElementById('vcScreenSection')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    // Scroll only the voice body; scrollIntoView also scrolls outer ancestors.
+    requestAnimationFrame(() => {
+      const body = document.querySelector('#voiceChannelView .vc-body');
+      const section = document.getElementById('vcScreenSection');
+      if (body && section) body.scrollTo({
+        top: Math.max(0, body.scrollTop + section.getBoundingClientRect().top - body.getBoundingClientRect().top),
+        behavior: 'smooth',
+      });
+    });
   }
 }
 function toggleScreenExpand(userId) {
@@ -2035,6 +2044,7 @@ window._onVoiceInvite = function(data) {
 window.openVcInviteModal = openVcInviteModal;
 window._filterVcInviteList = _filterVcInviteList;
 window._sendVoiceInvite = _sendVoiceInvite;
+
 
 
 
