@@ -102,6 +102,7 @@ $stmt = $db->prepare("
         u.full_name,
         u.role,
         u.avatar_color_gradient AS grad,
+        u.avatar_url,
         u.is_online,
         u.last_active_at,
         u.voice_channel_id,
@@ -155,6 +156,7 @@ foreach ($rows as $r) {
         'role'            => $role,
         'userRole'        => $r['role'],
         'grad'            => $r['grad'] ?: '#3b82f6,#6366f1',
+        'avatar_url'      => (string)($r['avatar_url'] ?? ''),
         'status'          => $r['status'],
         'online'          => (bool)$r['is_online'],
         'voice_channel'   => $r['voice_channel_id'] ? (int)$r['voice_channel_id'] : null,
@@ -168,3 +170,4 @@ echo json_encode([
     'count'   => count($users),
     'ts'      => time(),
 ]);
+

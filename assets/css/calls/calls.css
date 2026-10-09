@@ -108,3 +108,7 @@ body.vc-active #voiceChannelView.active:not(.vc-minimized){position:fixed!import
 .ec-call .ec-call-compact-actions .danger{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35);color:#f87171}
 .ec-call.is-sidebar-docked{position:relative!important;inset:auto!important;transform:none!important;width:auto!important;max-width:none!important;max-height:none!important;margin:0 8px 6px;flex-shrink:0;box-shadow:none;overflow:hidden;z-index:auto}
 @media(max-width:1024px),(pointer:coarse){.ec-call.is-compact-direct{top:auto;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));width:auto}}
+
+.ec-call button.ec-call-compact-name{display:block;width:100%;text-align:left;min-height:0;padding:0;border:0;border-radius:0;background:transparent;color:var(--text-secondary,#b8c1d5);margin:3px 0 8px}
+.ec-call button.ec-call-compact-name:hover{color:var(--text-primary,#f2f4fa);text-decoration:underline}
+.ec-call .ec-call-compact-actions button[aria-pressed=true]{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35);color:#f87171}
