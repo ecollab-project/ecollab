@@ -16,8 +16,18 @@ sudo tar -czf "$ECOLLAB_DELIVERY_BACKUP/configuration.tar.gz" -C / etc/nginx etc
 
 git diff --name-only --diff-filter=AM -z "$ECOLLAB_PREVIOUS" HEAD | sudo xargs -0 -r chgrp www-data
 git diff --name-only --diff-filter=AM -z "$ECOLLAB_PREVIOUS" HEAD | sudo xargs -0 -r chmod g+r
-sudo chgrp www-data scripts services API/auth API/dm assets/js/chat
-sudo chmod g+rx scripts services API/auth API/dm assets/js/chat
+# Explicit runtime access also covers retries after an already completed pull.
+ECOLLAB_DELIVERY_FILES=(
+  services/RealtimeOutbox.php services/CentrifugoService.php services/MessageService.php
+  API/auth/realtime-token.php API/dm/send-message.php API/dm/group-message.php API/dm/open-conversation.php
+  assets/js/chat/centrifugo-delivery.js assets/js/chat/dm-notifications.js
+  assets/js/chat/socket.js assets/js/chat/socket-core.js modules/chat/chat.php
+  scripts/realtime-worker.php scripts/check-centrifugo.php
+)
+sudo chgrp www-data "${ECOLLAB_DELIVERY_FILES[@]}"
+sudo chmod g+r "${ECOLLAB_DELIVERY_FILES[@]}"
+sudo chgrp www-data scripts services API/auth API/dm assets/js/chat modules/chat
+sudo chmod g+rx scripts services API/auth API/dm assets/js/chat modules/chat
 sudo chmod 755 deploy deploy/centrifugo
 sudo chmod 644 deploy/centrifugo/config.json
 
