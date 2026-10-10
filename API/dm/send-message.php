@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
+require_once dirname(__DIR__, 2) . '/services/RealtimeOutbox.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 require_once dirname(__DIR__, 2) . '/services/OllamaService.php';
 require_once dirname(__DIR__, 2) . '/services/JarredTools.php';
@@ -85,12 +86,14 @@ try {
         (int)($recipient['is_system'] ?? 0) === 1
         && ($recipient['username'] ?? '') === 'ecollab_ai';
 
-    $ins = $db->prepare(
-        "INSERT INTO dm_messages (conversation_id, sender_id, body, attachment_path, attachment_name, attachment_size, attachment_mime)
-         VALUES (:cid, :uid, :body, :apath, :aname, :asize, :amime)"
-    );
-    $ins->execute([':cid' => $convId, ':uid' => $me['id'], ':body' => $text, ':apath' => $attachmentPath ?: null, ':aname' => $attachmentName ?: null, ':asize' => $attachmentSize ?: null, ':amime' => $attachmentMime ?: null]);
-    $msgId = (int)$db->lastInsertId();
+    $msgId = RealtimeOutbox::record($db, 'dm', $convId, function () use ($db, $convId, $me, $text, $attachmentPath, $attachmentName, $attachmentSize, $attachmentMime) {
+        $ins = $db->prepare(
+            "INSERT INTO dm_messages (conversation_id, sender_id, body, attachment_path, attachment_name, attachment_size, attachment_mime)
+             VALUES (:cid, :uid, :body, :apath, :aname, :asize, :amime)"
+        );
+        $ins->execute([':cid' => $convId, ':uid' => $me['id'], ':body' => $text, ':apath' => $attachmentPath ?: null, ':aname' => $attachmentName ?: null, ':asize' => $attachmentSize ?: null, ':amime' => $attachmentMime ?: null]);
+        return (int)$db->lastInsertId();
+    });
 
     $createdStmt = $db->prepare("SELECT created_at FROM dm_messages WHERE id = :id LIMIT 1");
     $createdStmt->execute([':id' => $msgId]);
@@ -194,9 +197,11 @@ try {
         $actionResult = $jarredActions->handleMessage((int)$me['id'], $convId, $text, $activeServerId, $jarredSurface);
         if ($actionResult !== null) {
             $aiText = (string)$actionResult['reply'];
-            $aiInsert = $db->prepare("INSERT INTO dm_messages (conversation_id, sender_id, body) VALUES (:cid, :uid, :body)");
-            $aiInsert->execute([':cid'=>$convId, ':uid'=>$recipientId, ':body'=>$aiText]);
-            $aiMsgId = (int)$db->lastInsertId();
+            $aiMsgId = RealtimeOutbox::record($db, 'dm', $convId, function () use ($db, $convId, $recipientId, $aiText) {
+                $aiInsert = $db->prepare("INSERT INTO dm_messages (conversation_id, sender_id, body) VALUES (:cid, :uid, :body)");
+                $aiInsert->execute([':cid'=>$convId, ':uid'=>$recipientId, ':body'=>$aiText]);
+                return (int)$db->lastInsertId();
+            });
             $aiCreatedStmt = $db->prepare("SELECT created_at FROM dm_messages WHERE id=:id LIMIT 1");
             $aiCreatedStmt->execute([':id'=>$aiMsgId]);
             $aiCreatedAt = (string)($aiCreatedStmt->fetchColumn() ?: gmdate('Y-m-d H:i:s'));
@@ -249,16 +254,18 @@ JARRED_SYSTEM_PROMPT,
             throw new RuntimeException('AI returned an empty response');
         }
 
-        $aiInsert = $db->prepare(
-            "INSERT INTO dm_messages (conversation_id, sender_id, body)
-             VALUES (:cid, :uid, :body)"
-        );
-        $aiInsert->execute([
-            ':cid' => $convId,
-            ':uid' => $recipientId,
-            ':body' => $aiText,
-        ]);
-        $aiMsgId = (int)$db->lastInsertId();
+        $aiMsgId = RealtimeOutbox::record($db, 'dm', $convId, function () use ($db, $convId, $recipientId, $aiText) {
+            $aiInsert = $db->prepare(
+                "INSERT INTO dm_messages (conversation_id, sender_id, body)
+                 VALUES (:cid, :uid, :body)"
+            );
+            $aiInsert->execute([
+                ':cid' => $convId,
+                ':uid' => $recipientId,
+                ':body' => $aiText,
+            ]);
+            return (int)$db->lastInsertId();
+        });
 
         $aiCreatedStmt = $db->prepare("SELECT created_at FROM dm_messages WHERE id = :id LIMIT 1");
         $aiCreatedStmt->execute([':id' => $aiMsgId]);
@@ -315,5 +322,6 @@ JARRED_SYSTEM_PROMPT,
     http_response_code(500);
     echo json_encode(['error' => 'Server error']);
 }
+
 
 

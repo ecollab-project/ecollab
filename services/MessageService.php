@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/database/config/db.php';
+require_once __DIR__ . '/RealtimeOutbox.php';
 
 class MessageService
 {
@@ -205,6 +206,9 @@ class MessageService
             ? $data['content_type'] : 'text';
         $parentId    = isset($data['parent_id']) ? (int)$data['parent_id'] : null;
 
+        $pollQuestion = null;
+        $pollOptions = [];
+
         // For polls, content = the question
         if ($contentType === 'poll') {
             $pollQuestion = trim($data['poll_question'] ?? $content);
@@ -215,44 +219,48 @@ class MessageService
             $content = $pollQuestion;
         }
 
-        $stmt = $this->db->prepare("
-            INSERT INTO messages (channel_id, sender_id, content, content_type, parent_id, created_at, updated_at)
-            VALUES (:cid, :uid, :content, :type, :parent, NOW(), NOW())
-        ");
-        $stmt->execute([
-            ':cid'     => $channelId,
-            ':uid'     => $senderId,
-            ':content' => $content,
-            ':type'    => $contentType,
-            ':parent'  => $parentId,
-        ]);
-        $messageId = (int)$this->db->lastInsertId();
-
-        // Insert poll rows if needed
-        if ($contentType === 'poll') {
-            $pStmt = $this->db->prepare("INSERT INTO polls (message_id, question) VALUES (:mid, :q)");
-            $pStmt->execute([':mid' => $messageId, ':q' => $pollQuestion]);
-            $pollId = (int)$this->db->lastInsertId();
-            $oStmt = $this->db->prepare("INSERT INTO poll_options (poll_id, option_text, position) VALUES (:pid, :txt, :pos)");
-            foreach ($pollOptions as $i => $opt) {
-                $oStmt->execute([':pid' => $pollId, ':txt' => $opt, ':pos' => $i]);
-            }
-        }
-
-        // Handle attachment
-        if (!empty($data['attachment_path'])) {
-            $aStmt = $this->db->prepare("
-                INSERT INTO message_attachments (message_id, file_name, file_path, file_size, mime_type)
-                VALUES (:mid, :name, :path, :size, :mime)
+        $messageId = RealtimeOutbox::record($this->db, 'channel', $channelId, function () use ($channelId, $senderId, $content, $contentType, $parentId, $data, $pollQuestion, $pollOptions) {
+            $stmt = $this->db->prepare("
+                INSERT INTO messages (channel_id, sender_id, content, content_type, parent_id, created_at, updated_at)
+                VALUES (:cid, :uid, :content, :type, :parent, NOW(), NOW())
             ");
-            $aStmt->execute([
-                ':mid'  => $messageId,
-                ':name' => $data['attachment_name'] ?? basename($data['attachment_path']),
-                ':path' => $data['attachment_path'],
-                ':size' => $data['attachment_size'] ?? 0,
-                ':mime' => $data['attachment_mime'] ?? 'application/octet-stream',
+            $stmt->execute([
+                ':cid'     => $channelId,
+                ':uid'     => $senderId,
+                ':content' => $content,
+                ':type'    => $contentType,
+                ':parent'  => $parentId,
             ]);
-        }
+            $messageId = (int)$this->db->lastInsertId();
+
+            // Insert poll rows if needed
+            if ($contentType === 'poll') {
+                $pStmt = $this->db->prepare("INSERT INTO polls (message_id, question) VALUES (:mid, :q)");
+                $pStmt->execute([':mid' => $messageId, ':q' => $pollQuestion]);
+                $pollId = (int)$this->db->lastInsertId();
+                $oStmt = $this->db->prepare("INSERT INTO poll_options (poll_id, option_text, position) VALUES (:pid, :txt, :pos)");
+                foreach ($pollOptions as $i => $opt) {
+                    $oStmt->execute([':pid' => $pollId, ':txt' => $opt, ':pos' => $i]);
+                }
+            }
+
+            // Handle attachment
+            if (!empty($data['attachment_path'])) {
+                $aStmt = $this->db->prepare("
+                    INSERT INTO message_attachments (message_id, file_name, file_path, file_size, mime_type)
+                    VALUES (:mid, :name, :path, :size, :mime)
+                ");
+                $aStmt->execute([
+                    ':mid'  => $messageId,
+                    ':name' => $data['attachment_name'] ?? basename($data['attachment_path']),
+                    ':path' => $data['attachment_path'],
+                    ':size' => $data['attachment_size'] ?? 0,
+                    ':mime' => $data['attachment_mime'] ?? 'application/octet-stream',
+                ]);
+            }
+
+            return $messageId;
+        });
 
         return $this->getMessageById($messageId);
     }
@@ -460,4 +468,5 @@ class MessageService
         return $msg;
     }
 }
+
 

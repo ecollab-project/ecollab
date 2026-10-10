@@ -922,3 +922,39 @@ if (document.readyState === 'loading') {
 
 
 
+
+
+// Saved-message catch-up is independent of the sender's signaling socket.
+const deliveryChannelCursors = new Map();
+let deliveryChannelBusy = false, deliveryChannelDirty = false;
+async function syncDeliveryChannel() {
+  deliveryChannelDirty = true;
+  if (deliveryChannelBusy || document.hidden) return;
+  deliveryChannelBusy = true;
+  try {
+    do {
+      deliveryChannelDirty = false;
+      const channelId = Number(window.ECOLLAB?.currentChannelId);
+      if (!channelId) break;
+      let cursor = deliveryChannelCursors.get(channelId) ?? Number(lastMessageId || 0);
+      for (let page = 0; page < 20; page++) {
+        const data = await apiFetch((window.ECOLLAB.baseUrl || '') + `/API/chat/get-messages.php?channel_id=${channelId}&after=${cursor}&limit=100`);
+        if (channelId !== Number(window.ECOLLAB.currentChannelId)) {deliveryChannelDirty = true; break;}
+        const messages = data.messages || [];
+        const previous = cursor;
+        messages.forEach(msg => {
+          if (typeof appendMessageToUI === 'function') appendMessageToUI(msg);
+          cursor = Math.max(cursor, Number(msg.id) || 0);
+        });
+        deliveryChannelCursors.set(channelId, cursor);
+        if (!data.has_more || cursor <= previous) break;
+        if (page === 19) {setTimeout(syncDeliveryChannel, 0);}
+      }
+    } while (deliveryChannelDirty && !document.hidden);
+  } catch (_) {setTimeout(syncDeliveryChannel, 3000);}
+  finally {deliveryChannelBusy = false;}
+}
+window.addEventListener('ecollab:delivery-sync', ({detail}) => {
+  if (detail?.kind === 'all' || (detail?.kind === 'channel' && Number(detail.target_id) === Number(window.ECOLLAB?.currentChannelId))) syncDeliveryChannel();
+});
+if (window.EcollabDelivery) syncDeliveryChannel();

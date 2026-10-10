@@ -1,0 +1,40 @@
+name: Chat delivery
+on:
+  push:
+    branches: [ecollab-collabs]
+    paths: ['services/RealtimeOutbox.php', 'services/CentrifugoService.php', 'services/MessageService.php', 'API/auth/realtime-token.php', 'API/dm/**', 'assets/js/chat/**', 'tools/chat-delivery/**', 'deploy/centrifugo/**', 'tests/centrifugo-*', 'database/migrations/052_realtime_outbox.sql', '.github/workflows/chat-delivery.yml']
+  workflow_dispatch:
+jobs:
+  delivery:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env: {MYSQL_ROOT_PASSWORD: root, MYSQL_DATABASE: delivery_test}
+        ports: ['3306:3306']
+        options: --health-cmd="mysqladmin ping -proot" --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: {php-version: '8.3', extensions: pdo_mysql}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: npm ci --ignore-scripts --prefix tools/chat-delivery
+      - run: npm run build --prefix tools/chat-delivery && git diff --exit-code -- assets/js/chat/centrifugo-delivery*
+      - run: node tests/centrifugo-client-regression.cjs
+      - run: |
+          docker run -d --name test-centrifugo -p 127.0.0.1:18001:8000 \
+            -e CENTRIFUGO_CLIENT_TOKEN_HMAC_SECRET_KEY=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
+            -e CENTRIFUGO_HTTP_API_KEY=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb \
+            -v "$PWD/deploy/centrifugo/config.json:/centrifugo/config.json:ro" \
+            centrifugo/centrifugo:v6.9.6 centrifugo --config=/centrifugo/config.json
+          for attempt in {1..30}; do
+            curl -s -o /dev/null http://127.0.0.1:18001/api/info && break
+            sleep 1
+          done
+      - run: php tests/centrifugo-regression.php && node tests/centrifugo-broker-regression.cjs && php tests/centrifugo-database-regression.php
+        env:
+          TEST_BROKER_API: http://127.0.0.1:18001/api
+          TEST_DELIVERY_DSN: mysql:host=127.0.0.1;dbname=delivery_test
+          TEST_DELIVERY_USER: root
+          TEST_DELIVERY_PASSWORD: root

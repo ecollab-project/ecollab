@@ -118,21 +118,37 @@ function _wsSend(payload) {
   return window.wsSend?.(payload);
 }
 
-let dmSyncBusy = false;
+let dmSyncBusy = false, dmSyncDirty = false;
+const dmDeliveryCursors = new Map();
 async function _syncOpenDmMessages() {
+  dmSyncDirty = true;
   if (dmSyncBusy || document.hidden) return;
-  const groupId = DM.activeGroupId;
-  const partnerId = DM.activePartnerId;
-  if (!groupId && !partnerId) return;
   dmSyncBusy = true;
   try {
-    const url = groupId ? `/API/dm/group-message.php?group_id=${groupId}`
-      : `/API/dm/open-conversation.php?partner_id=${partnerId}`;
-    const data = await apiFetch(BASE() + url);
-    if (groupId !== DM.activeGroupId || partnerId !== DM.activePartnerId) return;
-    (data.messages || []).forEach(_appendDmMessage);
-  } catch (_) {} finally { dmSyncBusy = false; }
+    do {
+      dmSyncDirty = false;
+      const groupId = DM.activeGroupId, partnerId = DM.activePartnerId;
+      if (!groupId && !partnerId) break;
+      const key = groupId ? 'group:' + groupId : 'dm:' + partnerId;
+      const visibleIds = [...document.querySelectorAll('#dmMessagesArea [data-msg-id]')].map(el => Number(el.dataset.msgId)).filter(n => Number.isSafeInteger(n) && n > 0);
+      let cursor = dmDeliveryCursors.get(key) ?? Math.max(0, ...visibleIds);
+      for (let page = 0; page < 20; page++) {
+        const url = groupId ? `/API/dm/group-message.php?group_id=${groupId}` : `/API/dm/open-conversation.php?partner_id=${partnerId}`;
+        const data = await apiFetch(BASE() + url + '&after=' + cursor);
+        if (groupId !== DM.activeGroupId || partnerId !== DM.activePartnerId) {dmSyncDirty = true; break;}
+        const previous = cursor;
+        (data.messages || []).forEach(message => {_appendDmMessage(message); cursor = Math.max(cursor, Number(message.id) || 0);});
+        dmDeliveryCursors.set(key, cursor);
+        if (!data.has_more || cursor <= previous) break;
+        if (page === 19) setTimeout(_syncOpenDmMessages, 0);
+      }
+    } while (dmSyncDirty && !document.hidden);
+  } catch (_) {if (window.ECOLLAB?.centrifugoEnabled) setTimeout(_syncOpenDmMessages, 3000);} finally {dmSyncBusy = false;}
 }
+window.addEventListener('ecollab:delivery-sync', ({detail}) => {
+  if (detail?.kind === 'all' || (detail?.kind === 'dm' && Number(detail.target_id) === Number(DM.activeConvId))
+    || (detail?.kind === 'group' && Number(detail.target_id) === Number(DM.activeGroupId))) _syncOpenDmMessages();
+});
 
 // ═══════════════════════════════════════════════════════════════
 //  WEBSOCKET INBOUND HANDLERS

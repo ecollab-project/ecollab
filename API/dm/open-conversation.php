@@ -92,6 +92,10 @@ try {
     $readStmt->execute([':uid' => $me['id'], ':cid' => $convId]);
     $readStmt->closeCursor();
 
+    $after = filter_input(INPUT_GET, 'after', FILTER_VALIDATE_INT);
+    $after = $after !== false && $after !== null && $after >= 0 ? $after : null;
+    $cursorSql = $after !== null ? ' AND dm.id > :after' : '';
+    $orderSql = $after !== null ? 'ASC' : 'DESC';
     $msgs = $db->prepare(
         'SELECT dm.id, dm.sender_id, dm.body, dm.attachment_path, dm.attachment_name, dm.attachment_size, dm.attachment_mime, dm.created_at,
                 u.username AS sender_username,
@@ -101,11 +105,15 @@ try {
          FROM dm_messages dm
          JOIN users u ON u.id = dm.sender_id
          WHERE dm.conversation_id = :cid AND dm.is_deleted = 0
-         ORDER BY dm.created_at DESC
+         ' . $cursorSql . '
+         ORDER BY dm.id ' . $orderSql . '
          LIMIT 50'
     );
-    $msgs->execute([':cid' => $convId]);
-    $messages = array_reverse($msgs->fetchAll(PDO::FETCH_ASSOC));
+    $params = [':cid' => $convId];
+    if ($after !== null) $params[':after'] = $after;
+    $msgs->execute($params);
+    $messages = $msgs->fetchAll(PDO::FETCH_ASSOC);
+    if ($after === null) $messages = array_reverse($messages);
     $msgs->closeCursor();
 
     echo json_encode([
@@ -114,9 +122,11 @@ try {
         'partner' => $partner,
         'friend_status' => $friendStatus ?: 'none',
         'messages' => $messages,
+        'has_more' => count($messages) >= 50,
     ]);
 } catch (Throwable $e) {
     error_log('[dm/open-conversation] ' . $e->getMessage());
     http_response_code(500);
     echo json_encode(['error' => 'Server error']);
 }
+

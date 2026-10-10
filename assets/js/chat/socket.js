@@ -43,7 +43,7 @@
 
   var script = document.createElement('script');
   // Bump the cache key so the browser also gets this bootstrap fix.
-  script.src = (window.ECOLLAB?.baseUrl || '') + '/assets/js/chat/socket-core.js?v=chat-delivery-1';
+  script.src = (window.ECOLLAB?.baseUrl || '') + '/assets/js/chat/socket-core.js?v=centrifugo-1';
   script.onload = function () {
     window.__ECOLLAB_SOCKET_CORE_LOADED = true;
     window.__ECOLLAB_SOCKET_CORE_LOADING = false;
@@ -102,6 +102,7 @@
   };
   document.head.appendChild(script);
 })();
+
 
 
 

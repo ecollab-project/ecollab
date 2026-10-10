@@ -1,0 +1,4 @@
+{
+  "client": {"allowed_origins": ["https://ecollab.tech"]},
+  "channel": {"namespaces": [{"name":"inbox", "history_size":128, "history_ttl":"600s", "force_recovery":true}]}
+}
