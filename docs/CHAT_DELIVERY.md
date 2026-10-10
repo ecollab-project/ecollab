@@ -12,6 +12,17 @@ The database remains authoritative. The outbox retries failed deliveries with bo
 
 For the current VPS layout: `/home/ecollabadmin/ecollab-inspect`, PHP 8.3, www-data, Docker Compose, Nginx. Copy only command blocks into the VPS terminal. No npm build is needed on the VPS; the pinned browser bundle is committed.
 
+The deployment helper performs the steps below and saves a database/configuration backup. Run after pulling:
+
+```bash
+cd ~/ecollab-inspect
+ECOLLAB_PREVIOUS=$(git rev-parse HEAD)
+git switch ecollab-collabs && git pull --ff-only origin ecollab-collabs &&
+bash scripts/deploy-centrifugo.sh "$ECOLLAB_PREVIOUS"
+```
+
+Manual alternative:
+
 1. Pull and grant access to changed tracked files. The previous commit is recorded for returning to code, independently of database backups.
 
 ```bash

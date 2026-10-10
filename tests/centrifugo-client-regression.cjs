@@ -19,5 +19,9 @@ const syncContext=vm.createContext({window:w,document:w.document,DM:{activeGroup
 let dm=fs.readFileSync(root+'/assets/js/chat/dm-notifications.js','utf8');dm=dm.slice(dm.indexOf('let dmSyncBusy = false;')>=0?dm.indexOf('let dmSyncBusy = false;'):dm.indexOf('let dmSyncBusy = false,'),dm.indexOf('// ═',dm.indexOf('let dmSyncBusy = false')));
 vm.runInContext(dm,syncContext);const pending=vm.runInContext('_syncOpenDmMessages()',syncContext);vm.runInContext('_syncOpenDmMessages()',syncContext);release({messages:[{id:11}],has_more:false});await pending;assert.equal(requests,2);assert.deepEqual(appended,[11,12]);
 requests=0;appended=[];const stale=vm.runInContext('_syncOpenDmMessages()',syncContext);syncContext.DM.activeGroupId=null;syncContext.DM.activePartnerId=null;release({messages:[{id:999}],has_more:false});await stale;assert.deepEqual(appended,[]);
+// More than one page of missed messages must be read in order.
+syncContext.DM.activeGroupId=7;syncContext.DM.activePartnerId=null;requests=0;appended=[];
+syncContext.apiFetch=async(url)=>{requests++;const after=Number(new URL('https://ecollab.tech'+url).searchParams.get('after'));return requests===1?{messages:Array.from({length:50},(_,i)=>({id:after+i+1})),has_more:true}:{messages:[{id:after+1}],has_more:false};};
+await vm.runInContext('_syncOpenDmMessages()',syncContext);assert.equal(requests,2);assert.equal(appended.length,51);assert.equal(appended[50],61);
 console.log('Browser adapter: scoped tokens, reconnect sync, duplicate events, queued reads and stale target guards passed');dom.window.close();
 })().catch(e=>{console.error(e);process.exit(1);});
