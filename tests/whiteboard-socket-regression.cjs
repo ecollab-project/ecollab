@@ -6,7 +6,7 @@ for (const standalone of [true, false]) {
   const sent = [];
   let rejoined = false;
   const context = vm.createContext({
-    window: { ECOLLAB: { currentChannelId: 20, whiteboardStandalone: standalone }, wbRejoinRoom() { rejoined = true; } },
+    window: { addEventListener() {}, ECOLLAB: { currentChannelId: 20, whiteboardStandalone: standalone }, wbRejoinRoom() { rejoined = true; } },
     document: { readyState: 'loading', addEventListener() {} },
     console, setInterval() {}, setTimeout(fn) { fn(); }, clearInterval() {},
   });
