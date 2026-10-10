@@ -21,9 +21,12 @@ $servers        = $channelService->getServersForUser($user['id']);
 $requestedServerId = (int)($_GET['server_id'] ?? 0);
 $firstServer = null;
 if ($requestedServerId > 0) {
-    foreach ($servers as $srv) {
-        if ((int)$srv['id'] === $requestedServerId) { $firstServer = $srv; break; }
+  foreach ($servers as $srv) {
+    if ((int)$srv['id'] === $requestedServerId) {
+      $firstServer = $srv;
+      break;
     }
+  }
 }
 $firstServer    = $firstServer ?? ($servers[0] ?? null);
 $channels       = $firstServer ? $channelService->getChannelsForUser((int)$firstServer['id'], $user['id']) : [];
@@ -37,19 +40,146 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 <html lang="en">
 
 <head>
+<script type="importmap">{"imports":{"yjs":"https://esm.sh/yjs@13.6.27","y-protocols/awareness":"https://esm.sh/y-protocols@1.0.6/awareness?external=yjs"}}</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ecollab — Chat</title>
+  <link rel="icon" type="image/webp" href="<?= BASE_URL ?>/assets/ecollab-icon.webp">
   <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken) ?>">
+  <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js?v=2" defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat.css">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat.css?v=sidebar-consistency-1">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/whiteboard.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/whiteboard-mobile.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/collab-tools.css">
-  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/peer-matching.css">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/peer-matching.css?v=matching-avatars-1">
+  <style>
+    #wbOverlay {
+      display: none !important;
+    }
+
+    /* Add-server modal: keep the creation form compact, aligned, and usable
+       on both desktop and small screens. */
+    /* Create-channel modal: keep all three channel types inside the card
+       and prevent long descriptions from overflowing the modal width. */
+    #addChannelModal > .modal {
+      width: min(560px, calc(100vw - 32px)) !important;
+      max-width: 560px !important;
+      max-height: calc(100vh - 32px);
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    #addChannelModal .modal-body {
+      box-sizing: border-box;
+      max-height: calc(100vh - 125px);
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    #addChannelModal .channel-type-opt {
+      min-width: 0 !important;
+      width: auto;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    #addChannelModal .channel-type-opt > div {
+      overflow-wrap: anywhere;
+      word-break: normal;
+      line-height: 1.35;
+    }
+    #addChannelModal .channel-type-opt > div:first-child {
+      white-space: nowrap;
+    }
+    #addChannelModal #channelVisibilityOptions {
+      min-width: 0;
+    }
+    #addChannelModal #channelVisibilityOptions button {
+      min-width: 0;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    #addChannelModal #channelVisibilityOptions button div {
+      overflow-wrap: anywhere;
+      line-height: 1.35;
+    }
+    #addChannelModal .modal-footer {
+      box-sizing: border-box;
+      flex-shrink: 0;
+    }
+    @media (max-width: 600px) {
+      #addChannelModal > .modal {
+        width: calc(100vw - 20px) !important;
+      }
+      #addChannelModal .channel-type-opt {
+        padding: 10px !important;
+      }
+    }
+
+    #addServerModal .modal-md {
+      width: min(560px, calc(100vw - 32px));
+      max-width: 560px;
+      max-height: calc(100vh - 32px);
+      overflow: hidden;
+    }
+    #addServerModal .modal-body {
+      max-height: calc(100vh - 110px);
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
+    #addServerForm {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    #addServerForm > div:first-child {
+      margin-bottom: 14px !important;
+    }
+    #addServerForm #serverFormEmoji {
+      font-size: 32px !important;
+      line-height: 1;
+      margin-bottom: 0 !important;
+    }
+    #addServerForm input[type="text"] {
+      box-sizing: border-box;
+    }
+    #addServerForm #serverVisibilityOptions {
+      gap: 10px !important;
+      margin-bottom: 10px !important;
+    }
+    #addServerForm #serverVisibilityOptions button {
+      min-height: 72px;
+      box-sizing: border-box;
+    }
+    #addServerForm #serverVisibilityHelp {
+      line-height: 1.45;
+      margin-bottom: 12px !important;
+    }
+    #addServerForm > div:last-child {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    #addServerForm > div:last-child button {
+      margin-right: 0 !important;
+    }
+    @media (max-width: 520px) {
+      #addServerModal .modal-md {
+        width: calc(100vw - 20px);
+      }
+      #addServerForm #serverVisibilityOptions {
+        grid-template-columns: 1fr !important;
+      }
+      #addServerForm #serverVisibilityOptions button {
+        min-height: 62px;
+      }
+    }
+  </style>
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=notifications-2">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=3">
+<script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 </head>
 
-<body>
+<body data-mobile-surface="chat">
 
   <!-- MOBILE OVERLAY -->
   <div class="mobile-overlay" id="mobileOverlay" onclick="closeSidebar()"></div>
@@ -63,18 +193,25 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       <span style="color:var(--accent-purple);font-size:16px;">#</span>
       <span class="mob-channel-name" id="mobChannelName">channels</span>
     </div>
-    <div class="mob-right-btn" onclick="toggleNotifications()" title="Notifications">&#x1F514;</div>
+    <div class="mob-right-btn" onclick="openFullMatchesModal()" title="AI Suggested Matches" aria-label="AI Suggested Matches">✨</div>
+    <div class="mob-right-btn" onclick="toggleNotifications()" title="Notifications" aria-label="Notifications">&#x1F514;</div>
   </div>
 
   <!-- WORKSPACE SWITCHER -->
   <div class="workspace-switcher" id="workspaceSwitcher">
+    <div class="workspace-brand-mark" aria-label="eCollab" title="eCollab">
+      <img src="<?= BASE_URL ?>/assets/ecollab-icon.webp" alt="" draggable="false">
+    </div>
+    <div class="workspace-sep workspace-brand-sep"></div>
     <?php foreach ($servers as $idx => $srv): ?>
-      <div class="workspace-icon<?= $idx === 0 ? ' active' : '' ?>"
+      <div class="workspace-icon<?= (int)$srv['id'] === (int)($firstServer['id'] ?? 0) ? ' active' : '' ?>"
         data-server-id="<?= (int)$srv['id'] ?>"
         data-ws="<?= $idx ?>"
+        data-server-type="<?= htmlspecialchars((string)($srv['type'] ?? 'community')) ?>"
         onclick="switchWorkspace(<?= $idx ?>, <?= (int)$srv['id'] ?>)"
         title="<?= htmlspecialchars($srv['name']) ?>">
         <?= htmlspecialchars($srv['icon_emoji'] ?: strtoupper(substr($srv['name'], 0, 1))) ?>
+        <span class="workspace-visibility-indicator <?= in_array(strtolower((string)($srv['type'] ?? 'community')), ['private','academic'], true) ? 'is-private' : 'is-public' ?>" title="<?= in_array(strtolower((string)($srv['type'] ?? 'community')), ['private','academic'], true) ? 'Private server' : 'Public server' ?>"><?= in_array(strtolower((string)($srv['type'] ?? 'community')), ['private','academic'], true) ? '🔒' : '🌐' ?></span>
       </div>
     <?php endforeach; ?>
     <div class="workspace-sep"></div>
@@ -83,7 +220,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
   <!-- LEFT SIDEBAR -->
   <div class="sidebar-left" id="sidebarLeft">
-    <div class="sidebar-workspace-header" id="wsHeader" onclick="openUserSettings()">
+    <div class="sidebar-workspace-header" id="wsHeader" onclick="openServerManager()" title="Server settings">
       <div class="ws-icon" id="wsIcon"><?= htmlspecialchars($firstServer['icon_emoji'] ?? '⭐') ?></div>
       <div class="ws-name" id="wsName"><?= htmlspecialchars($firstServer['name'] ?? 'Ecollab') ?></div>
       <div class="ws-chevron">▾</div>
@@ -129,6 +266,12 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           </svg>
           Drafts
         </div>
+        <a class="sidebar-nav-item" id="serverLibraryNav" href="<?= BASE_URL ?>/modules/library/library.php?server_id=<?= (int)($firstServer['id'] ?? 0) ?>" style="text-decoration:none;color:inherit;">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5v-16zm16 0A2.5 2.5 0 0 0 17.5 3H13v16h4.5a2.5 2.5 0 0 1 2.5 2.5v-16z" />
+          </svg>
+          Library
+        </a>
       </div>
 
       <div class="sidebar-section">
@@ -142,12 +285,18 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
               <div class="channel-item <?= $ch === reset($channels) ? 'active' : '' ?>"
                 data-channel-id="<?= (int)$ch['id'] ?>"
                 data-channel-name="<?= htmlspecialchars($ch['name']) ?>"
+                data-channel-type="<?= htmlspecialchars($ch['type']) ?>"
+                data-is-private="<?= !empty($ch['is_private']) ? '1' : '0' ?>"
                 <?= $isNew ? 'data-is-new="1"' : '' ?>
                 onclick="switchChannel(this, <?= (int)$ch['id'] ?>)">
                 <?php if ($ch['type'] === 'announcement'): ?>
-                  <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24" style="color:var(--accent-yellow);flex-shrink:0;margin-right:2px;"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6V11c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+                  <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24" style="color:var(--accent-yellow);flex-shrink:0;margin-right:2px;">
+                    <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6V11c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
+                  </svg>
                 <?php elseif (!empty($ch['is_private'])): ?>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="color:var(--text-muted);flex-shrink:0;margin-right:2px;" title="Private channel"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="color:var(--text-muted);flex-shrink:0;margin-right:2px;" title="Private channel">
+                    <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+                  </svg>
                 <?php else: ?>
                   <span class="channel-hash">#</span>
                 <?php endif; ?>
@@ -157,6 +306,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
                     <span class="ch-new-badge" style="font-size:9px;background:rgba(168,85,247,0.18);color:#c084fc;border-radius:4px;padding:1px 5px;font-weight:700;vertical-align:middle;">new</span>
                   <?php endif; ?>
                 </span>
+                <span class="channel-visibility-indicator <?= !empty($ch['is_private']) ? 'is-private' : 'is-public' ?>" title="<?= !empty($ch['is_private']) ? 'Private channel' : 'Public channel' ?>"><?= !empty($ch['is_private']) ? '🔒' : '🌐' ?></span>
                 <?php if ((int)$ch['unread_count'] > 0): ?>
                   <span class="channel-unread"><?= (int)$ch['unread_count'] ?></span>
                 <?php endif; ?>
@@ -195,6 +345,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <div id="whiteboardChannelList">
           <?php foreach ($channels as $ch): if ($ch['type'] === 'whiteboard'): ?>
               <div class="channel-item wb-channel-item" data-channel-id="<?= (int)$ch['id'] ?>" data-channel-name="<?= htmlspecialchars($ch['name']) ?>"
+                data-channel-type="<?= htmlspecialchars($ch['type']) ?>"
                 onclick="openWhiteboardChannel(<?= (int)$ch['id'] ?>, '<?= htmlspecialchars($ch['name']) ?>')" title="Open <?= htmlspecialchars($ch['name']) ?>">
                 <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24" style="color:var(--accent-purple);flex-shrink:0;">
                   <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
@@ -215,6 +366,14 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           <span class="sidebar-section-add" onclick="openNewDMModal()">+</span>
         </div>
         <div id="dmList"></div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-header">
+          <span class="sidebar-section-title">Group Messages</span>
+          <span class="sidebar-section-add" onclick="openNewGroupModal()">+</span>
+        </div>
+        <div id="groupList"></div>
       </div>
     </div>
 
@@ -240,8 +399,8 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     </div>
 
     <!-- USER PROFILE FOOTER -->
-    <div class="user-profile-footer" onclick="openUserSettings()">
-      <div class="user-avatar">
+    <div class="user-profile-footer">
+      <div class="user-avatar" onclick="openUserSettings()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openUserSettings()}">
         <div class="avatar-placeholder avatar-lg" style="<?= $avatarStyle ?>;border-radius:50%;">
           <?= htmlspecialchars($initials) ?>
         </div>
@@ -253,28 +412,28 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         </div>
         <div style="font-size:11px;color:var(--accent-green);">● Online</div>
       </div>
-      <div style="display:flex;gap:6px;">
-        <div class="footer-icon-btn" onclick="toggleMute(event)" title="Mute" id="muteBtn">
+      <div class="footer-controls">
+        <button type="button" class="footer-icon-btn" onclick="event.stopPropagation();toggleMute(event)" title="Mute" id="muteBtn">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
             <path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
-        </div>
-        <div class="footer-icon-btn" onclick="toggleDeafen(event)" title="Deafen" id="deafenBtn">
+        </button>
+        <button type="button" class="footer-icon-btn" onclick="event.stopPropagation();toggleDeafen(event)" title="Deafen" id="deafenBtn">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" />
           </svg>
-        </div>
-        <div class="footer-icon-btn" onclick="openUserSettings()" title="Settings">
+        </button>
+        <button type="button" class="footer-icon-btn" onclick="event.stopPropagation();openUserSettings()" title="Settings" aria-label="Settings">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z" />
           </svg>
-        </div>
-        <div class="footer-icon-btn" onclick="handleLogout()" title="Log Out" style="color:#ef4444;">
+        </button>
+        <button type="button" class="footer-icon-btn" onclick="event.stopPropagation();handleLogout()" aria-label="Log out" title="Log Out" style="color:#ef4444;">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" />
           </svg>
-        </div>
+        </button>
       </div>
     </div>
   </div>
@@ -289,13 +448,16 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <div>
           <div style="font-size:15px;font-weight:700;color:var(--text-primary);line-height:1.2;" id="channelTitle">Select a channel</div>
           <div class="channel-desc" id="channelDesc" style="font-size:12px;color:var(--text-muted);"></div>
+          <a id="channelDashboardLink" href="<?= BASE_URL ?>/modules/student/dashboard.php" style="display:none;font-size:11px;color:#c084fc;text-decoration:none;font-weight:700;margin-top:3px;" title="Open dashboard">↗ Dashboard</a>
         </div>
       </div>
       <div class="header-sep"></div>
       <div style="display:flex;align-items:center;gap:4px;">
         <!-- Manage private channel members - shown only when current channel is private and user is owner/admin -->
         <button class="header-icon-btn" id="manageChannelBtn" onclick="openPrivateChannelManager()" title="Manage Channel Members" style="display:none;">
-          <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+          </svg>
         </button>
         <button class="header-icon-btn header-search" onclick="openSearchModal()" title="Search">
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -309,9 +471,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <button class="collab-open-btn" onclick="openCollabHub()" title="Collaboration Tools">
           🤝 <span>Collab</span>
         </button>
-        <button class="collab-open-btn" onclick="openPeerMatchingModal()" title="Find Study Partners" style="background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.25);color:#60a5fa;">
-          🔍 <span>Match</span>
-        </button>
+        
         <button class="header-icon-btn header-members" onclick="openMembersPanel()" title="Members">
           <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
             <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
@@ -327,16 +487,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           <div class="notif-dropdown" id="notifDropdown" style="display:none;">
             <div class="notif-header">
               <div class="notif-title">Notifications</div>
-              <div class="notif-mark-read" onclick="markAllRead()">Mark all read</div>
+              <button type="button" class="notif-mark-read" onclick="markAllRead(event)">Mark all read</button>
             </div>
-            <div id="notifList">
-              <div class="notif-item unread">
-                <div class="notif-dot"></div>
-                <div class="notif-content">
-                  <div class="notif-text"><strong>John Doe</strong> replied to your message</div>
-                  <div class="notif-time">2 min ago</div>
-                </div>
-              </div>
+            <div id="notifList"><div style="padding:24px 16px;color:var(--text-muted)">Loading notifications…</div>
             </div>
           </div>
         </div>
@@ -500,7 +653,6 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
         <div class="chat-input-actions">
           <div class="input-spacer"></div>
-          <button class="find-partner-btn" onclick="openFullMatchesModal()">🔍 Find Study Partner</button>
           <button class="ai-assist-btn" id="aiAssistBtn" onclick="generateAIReply()">✨ AI Assist <span class="ai-assist-chevron">▾</span></button>
           <button class="send-btn" onclick="sendMessage()">Send</button>
         </div>
@@ -537,7 +689,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           </svg>
           <span id="vcMemberCount">0</span>
         </div>
-        <button class="vc-invite-btn" onclick="openModal('vcInviteModal')">
+        <button class="vc-invite-btn" onclick="openVcInviteModal()">
           <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
             <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
           </svg>
@@ -599,14 +751,15 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           </svg>
           <span class="vc-ctrl-tooltip">Camera</span>
         </div>
-        <div class="vc-ctrl-btn" id="vcWbBtn" onclick="openWhiteboard()" title="Whiteboard">
-          <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-          </svg>
-          <span class="vc-ctrl-tooltip">Whiteboard</span>
-        </div>
       </div>
       <div class="vc-bar-grp center">
+        <button class="vc-ctrl-btn vc-unwatch-btn" id="vcUnwatchBtn" type="button" onclick="unwatchAllScreens()" title="Unwatch Screen Share" style="display:none;">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2H4C2.9 4 2 4.9 2 6v10c0 1.1.9 2 2 2h6v2H7v2h10v-2h-3v-2h6ZM4 6h16v10H4V6Z"/>
+            <path d="M7.4 7.4 16.6 16.6M16.6 7.4 7.4 16.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <span class="vc-ctrl-tooltip">Unwatch</span>
+        </button>
         <div class="vc-btn-lg mic-btn" id="vcMicBtn" onclick="toggleVcMic()">
           <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
@@ -637,7 +790,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           </svg>
           <span class="vc-ctrl-tooltip">Mic Test</span>
         </div>
-        <div class="vc-ctrl-btn" onclick="openModal('vcNoiseCancelModal')" title="Noise Cancellation">
+        <div class="vc-ctrl-btn" onclick="openNoiseCancelModal()" title="Noise Cancellation">
           <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
             <path d="M4.5 11h-2C2.5 6.31 6.31 2.5 11 2.5v2C7.41 4.5 4.5 7.41 4.5 11zm17 0h-2c0-5.24-4.26-9.5-9.5-9.5v-2c6.35 0 11.5 5.15 11.5 11.5zM12 22c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm6.5-2.5c0 3.59-2.91 6.5-6.5 6.5s-6.5-2.91-6.5-6.5H7c0 2.76 2.24 5 5 5s5-2.24 5-5h1.5z" />
           </svg>
@@ -727,24 +880,28 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);display:block;margin-bottom:6px;">Description (optional)</label>
           <input type="text" id="newChannelDesc" placeholder="What's this channel about?" style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text-primary);outline:none;font-family:'Inter',sans-serif;">
         </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg-tertiary);border-radius:8px;border:1px solid var(--border);">
-          <div>
-            <div style="font-size:13px;font-weight:600;color:var(--text-primary);">Private Channel</div>
-            <div style="font-size:11px;color:var(--text-muted);">Only selected members can access</div>
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);display:block;margin-bottom:7px;">Channel Visibility</label>
+          <div id="channelVisibilityOptions" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <button type="button" data-channel-visibility="public" onclick="selectChannelVisibility('public')" style="text-align:left;padding:10px;border:1px solid rgba(168,85,247,.5);background:rgba(168,85,247,.1);border-radius:8px;color:var(--text-primary);cursor:pointer;"><div style="font-size:12px;font-weight:800;">🌐 Public</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Everyone in this server can access it.</div></button>
+            <button type="button" data-channel-visibility="private" onclick="selectChannelVisibility('private')" style="text-align:left;padding:10px;border:1px solid var(--border);background:var(--bg-tertiary);border-radius:8px;color:var(--text-primary);cursor:pointer;"><div style="font-size:12px;font-weight:800;">🔒 Private</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Only selected server members can access it.</div></button>
           </div>
-          <div class="toggle-switch" id="privateChannelToggle" onclick="this.classList.toggle('on');togglePrivateMembersSection()">
-            <div class="toggle-thumb"></div>
-          </div>
+          <div id="channelVisibilityHelp" style="font-size:10px;color:var(--text-muted);margin-top:6px;">Public channels are visible to every member of this server.</div>
         </div>
+        <div id="privateChannelToggle" style="display:none;"></div>
         <!-- Private channel member selector (shown only when private is ON) -->
         <div id="privateMembersSection" style="display:none;margin-top:2px;">
           <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:8px;">Select Members with Access</div>
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">
             <span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="#22c55e"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg> Unlocked = can see
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="#22c55e">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+              </svg> Unlocked = can see
             </span>
             <span style="display:inline-flex;align-items:center;gap:4px;">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--text-muted)"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg> Locked = no access
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--text-muted)">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+              </svg> Locked = no access
             </span>
           </div>
           <div id="privateMembersLoading" style="font-size:12px;color:var(--text-muted);text-align:center;padding:12px 0;">Loading members…</div>
@@ -769,7 +926,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <div style="display:flex;gap:8px;">
           <button onclick="openFullProfileCard()" style="flex:1;padding:8px;background:var(--gradient-main);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;">View Profile</button>
           <button id="mpThreadBtn" onclick="openThreadDMFromMiniProfile()" style="padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;color:var(--text-secondary);font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:5px;">
-            <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+            <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
+            </svg>
             Thread
           </button>
         </div>
@@ -787,7 +946,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </div>
 
   <!-- TOAST CONTAINER -->
-  <div id="toastContainer" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;pointer-events:none;"></div>
+  <div id="toastContainer" style="position:fixed;top:20px;bottom:auto;left:50%;transform:translateX(-50%);z-index:10001;display:flex;flex-direction:column;gap:8px;pointer-events:none;"></div>
 
   <!-- CONNECTION REQUEST NOTIFICATION CONTAINER -->
   <!-- Incoming requests appear here as banners (bottom-right) -->
@@ -871,12 +1030,16 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       fullName: <?= json_encode($user['full_name']) ?>,
       role: <?= json_encode($user['role']) ?>,
       avatarGradient: <?= json_encode($user['avatar_color_gradient']) ?>,
+      avatarUrl: <?= json_encode($user['avatar_url'] ?? '') ?>,
       initials: <?= json_encode($initials) ?>,
       csrfToken: <?= json_encode($csrfToken) ?>,
+      centrifugoEnabled: <?= filter_var(env('CENTRIFUGO_ENABLED', 'false'), FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false' ?>,
+      resumableUploads: <?= filter_var(env('CHAT_RESUMABLE_UPLOADS', 'false'), FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false' ?>,
       currentServerId: <?= (int)($firstServer['id'] ?? 0) ?>,
       currentChannelId: null,
       wsUrl: '<?= defined("WS_URL") ? WS_URL : "ws://localhost:8080" ?>',
       baseUrl: <?= json_encode(BASE_URL) ?>,
+      whiteboardStandalone: false,
     };
 
     // Safe stubs for functions defined in defer-loaded scripts.
@@ -936,18 +1099,26 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     6. whiteboard.js — collaborative whiteboard
     7. dm-notifications.js — DM badge polling
   -->
-  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=delivery-1-chat-delivery-1-yjs-chat-1-calls-2" defer></script>
+  <?php if (filter_var(env('CHAT_RESUMABLE_UPLOADS', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-uploads.css?v=uppy-1">
+  <script src="<?= BASE_URL ?>/assets/js/chat/resumable-uploads.js?v=uppy-1" defer></script>
+  <?php endif; ?>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=uppy-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=presence-consistency-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/voice.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=voice-preview-watch-2" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.22.3/dist/livekit-client.umd.min.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/livekit-voice.js?v=voice-preview-watch-2" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/whiteboard.js" defer></script>
   <!-- ── Private Channel Manager Modal ────────────────────────────────── -->
   <div id="privateChannelManagerModal" style="display:none!important;position:fixed;inset:0;z-index:11000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this)closePrivateChannelManager()">
     <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:0;width:520px;max-width:96vw;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.6);">
       <!-- Header -->
       <div style="padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
-        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24" style="color:#a855f7;flex-shrink:0;"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24" style="color:#a855f7;flex-shrink:0;">
+          <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+        </svg>
         <div style="flex:1;">
           <div style="font-size:15px;font-weight:700;color:var(--text-primary);" id="pcmChannelName">Private Channel</div>
           <div style="font-size:11px;color:var(--text-muted);">Manage who can access this channel</div>
@@ -985,7 +1156,11 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     </button>
   </div>
 
-  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=delivery-1" defer></script>
+  <?php if (filter_var(env('CENTRIFUGO_ENABLED', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
+  <script src="<?= BASE_URL ?>/assets/js/chat/centrifugo-delivery.js?v=delivery-1" defer></script>
+  <?php endif; ?>
+  <script src="<?= BASE_URL ?>/assets/js/chat/dm-chat-settings.js?v=dm-settings-1" defer></script>
   <!--
     Collab tools load order:
     ot-engine.js        — pure OT algorithm (no deps, must come first)
@@ -996,8 +1171,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-tools.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-liveeditor.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-extra.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/peer-matching.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/peer-matching.js?v=matching-avatars-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/server-channel-management.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/server-discovery.js?v=privacy1" defer></script>
 
 
   <!-- ── VOICE CHANNEL MODALS ─────────────────────────────────────────────── -->
@@ -1261,6 +1437,10 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
               <div style="font-size:13px;font-weight:600;color:var(--text-primary);">Research Lab</div>
             </div>
           </div>
+          <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div><div style="font-size:13px;font-weight:700;color:var(--text-primary);">🌐 Recommended Public Servers</div><div style="font-size:10px;color:var(--text-muted);">Public communities you can join immediately.</div></div><button type="button" onclick="loadPublicServerRecommendations()" style="background:none;border:none;color:#c084fc;font-size:11px;font-weight:700;cursor:pointer;">Refresh</button></div>
+            <div id="publicServerRecommendations"><div style="text-align:center;color:var(--text-muted);font-size:11px;padding:12px;">Loading…</div></div>
+          </div>
           <div style="text-align:center;margin-top:14px;">
             <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:8px;">Have an invite?</div>
             <div style="display:flex;gap:8px;">
@@ -1277,6 +1457,12 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           <input type="text" id="newServerName" placeholder="My Server" style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:14px;color:var(--text-primary);outline:none;font-family:'Inter',sans-serif;margin-bottom:14px;">
           <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);display:block;margin-bottom:6px;">Description</label>
           <input type="text" id="newServerDesc" placeholder="What's this server about?" style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:14px;color:var(--text-primary);outline:none;font-family:'Inter',sans-serif;margin-bottom:14px;">
+          <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);display:block;margin-bottom:7px;">Server Visibility</label>
+          <div id="serverVisibilityOptions" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+            <button type="button" data-server-visibility="public" onclick="selectServerVisibility('public')" style="text-align:left;padding:11px;border:1px solid rgba(168,85,247,.5);background:rgba(168,85,247,.1);border-radius:9px;color:var(--text-primary);cursor:pointer;"><div style="font-size:13px;font-weight:800;">🌐 Public</div><div style="font-size:10px;color:var(--text-muted);margin-top:3px;">Recommendations + anyone can join.</div></button>
+            <button type="button" data-server-visibility="private" onclick="selectServerVisibility('private')" style="text-align:left;padding:11px;border:1px solid var(--border);background:var(--bg-tertiary);border-radius:9px;color:var(--text-primary);cursor:pointer;"><div style="font-size:13px;font-weight:800;">🔒 Private</div><div style="font-size:10px;color:var(--text-muted);margin-top:3px;">Invite link or direct addition by server management.</div></button>
+          </div>
+          <div id="serverVisibilityHelp" style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">Public servers appear in recommendations and can be joined directly.</div>
           <div>
             <button class="cancel-btn" onclick="backToServerChoices()" style="margin-right:8px;">← Back</button>
             <button class="save-btn" onclick="createServer()">Create Server ✨</button>
@@ -1575,9 +1761,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <button class="modal-close" onclick="closeModal('vcInviteModal')">×</button>
       </div>
       <div class="modal-body">
-        <input type="text" placeholder="Search members..." style="width:100%;padding:10px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:13px;box-sizing:border-box;outline:none;">
+        <input id="vcInviteSearch" type="text" placeholder="Search members..." oninput="_filterVcInviteList(this.value)" style="width:100%;padding:10px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:13px;box-sizing:border-box;outline:none;">
         <div id="vcInviteList" style="margin-top:12px;display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;">
-          <div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">No members to invite</div>
+          <div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">Loading…</div>
         </div>
       </div>
       <div class="modal-footer">
@@ -3103,19 +3289,19 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       <button class="collab-hub-close" onclick="closeCollabHub()" title="Close">✕</button>
     </div>
     <div class="collab-tab-bar">
-      <button class="collab-tab-btn" data-tool="notes"    onclick="_switchCollabTool('notes')">
+      <button class="collab-tab-btn" data-tool="notes" onclick="_switchCollabTool('notes')">
         <span class="tab-icon">📝</span>Notes
       </button>
-      <button class="collab-tab-btn" data-tool="tasks"    onclick="_switchCollabTool('tasks')">
+      <button class="collab-tab-btn" data-tool="tasks" onclick="_switchCollabTool('tasks')">
         <span class="tab-icon">📋</span>Tasks
       </button>
-      <button class="collab-tab-btn" data-tool="code"     onclick="_switchCollabTool('code')">
+      <button class="collab-tab-btn" data-tool="code" onclick="_switchCollabTool('code')">
         <span class="tab-icon">💻</span>Code
       </button>
-      <button class="collab-tab-btn" data-tool="timer"    onclick="_switchCollabTool('timer')">
+      <button class="collab-tab-btn" data-tool="timer" onclick="_switchCollabTool('timer')">
         <span class="tab-icon">⏱</span>Timer
       </button>
-      <button class="collab-tab-btn" data-tool="quiz"     onclick="_switchCollabTool('quiz')">
+      <button class="collab-tab-btn" data-tool="quiz" onclick="_switchCollabTool('quiz')">
         <span class="tab-icon">📝</span>Quiz
       </button>
       <button class="collab-tab-btn" data-tool="calendar" onclick="_switchCollabTool('calendar')">
@@ -3141,18 +3327,18 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       </button>
     </div>
 
-    <div id="collabPane_notes"    class="collab-pane"></div>
-    <div id="collabPane_tasks"    class="collab-pane"></div>
-    <div id="collabPane_code"     class="collab-pane"></div>
-    <div id="collabPane_timer"    class="collab-pane"></div>
-    <div id="collabPane_quiz"     class="collab-pane"></div>
-    <div id="collabPane_calendar"    class="collab-pane"></div>
+    <div id="collabPane_notes" class="collab-pane"></div>
+    <div id="collabPane_tasks" class="collab-pane"></div>
+    <div id="collabPane_code" class="collab-pane"></div>
+    <div id="collabPane_timer" class="collab-pane"></div>
+    <div id="collabPane_quiz" class="collab-pane"></div>
+    <div id="collabPane_calendar" class="collab-pane"></div>
     <div id="collabPane_flashcards" class="collab-pane"></div>
-    <div id="collabPane_mindmap"    class="collab-pane"></div>
-    <div id="collabPane_review"     class="collab-pane"></div>
-    <div id="collabPane_summary"    class="collab-pane"></div>
-    <div id="collabPane_goals"      class="collab-pane"></div>
-    <div id="collabPane_resources"  class="collab-pane"></div>
+    <div id="collabPane_mindmap" class="collab-pane"></div>
+    <div id="collabPane_review" class="collab-pane"></div>
+    <div id="collabPane_summary" class="collab-pane"></div>
+    <div id="collabPane_goals" class="collab-pane"></div>
+    <div id="collabPane_resources" class="collab-pane"></div>
   </div>
 
   <!-- Task detail modal -->
@@ -3163,13 +3349,15 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <button class="modal-close" onclick="closeTaskDetail()">✕</button>
       </div>
       <div class="modal-body">
-        <input  id="tdTitle"    class="collab-input" placeholder="Task title*"/>
-        <textarea id="tdDesc"  class="collab-input" placeholder="Description" rows="3" style="resize:vertical"></textarea>
-        <select   id="tdPriority" class="code-lang-select" style="width:100%">
-          <option value="low">🟢 Low</option><option value="medium" selected>🟡 Medium</option>
-          <option value="high">🔴 High</option><option value="urgent">🟣 Urgent</option>
+        <input id="tdTitle" class="collab-input" placeholder="Task title*" />
+        <textarea id="tdDesc" class="collab-input" placeholder="Description" rows="3" style="resize:vertical"></textarea>
+        <select id="tdPriority" class="code-lang-select" style="width:100%">
+          <option value="low">🟢 Low</option>
+          <option value="medium" selected>🟡 Medium</option>
+          <option value="high">🔴 High</option>
+          <option value="urgent">🟣 Urgent</option>
         </select>
-        <input  id="tdDue"   class="collab-input" type="date" placeholder="Due date"/>
+        <input id="tdDue" class="collab-input" type="date" placeholder="Due date" />
         <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary)">
           <input type="checkbox" id="tdDone"> Mark as done
         </label>
@@ -3190,7 +3378,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <button class="modal-close" onclick="closeCreateQuiz()">✕</button>
       </div>
       <div class="modal-body">
-        <input id="quizTitleInput" class="collab-input" placeholder="Quiz title*" style="margin-bottom:10px"/>
+        <input id="quizTitleInput" class="collab-input" placeholder="Quiz title*" style="margin-bottom:10px" />
         <div id="quizQuestionsContainer"></div>
         <button class="collab-btn-xs" style="width:100%;margin-top:4px" onclick="addQuizQuestion()">+ Add Question</button>
       </div>
@@ -3220,11 +3408,11 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <button class="pm-close" onclick="closePeerMatchingModal()">✕</button>
       </div>
       <div class="pm-tab-bar">
-        <button class="pm-tab-btn pm-active" data-tab="matches"     onclick="_pmShowTab('matches')">✨ Matches</button>
-        <button class="pm-tab-btn"           data-tab="search"      onclick="_pmShowTab('search')">🔍 Search</button>
-        <button class="pm-tab-btn"           data-tab="requests"    onclick="_pmShowTab('requests')">📬 Requests</button>
-        <button class="pm-tab-btn"           data-tab="leaderboard" onclick="_pmShowTab('leaderboard')">🏆 Top</button>
-        <button class="pm-tab-btn"           data-tab="profile"     onclick="_pmShowTab('profile')">⚙ Profile</button>
+        <button class="pm-tab-btn pm-active" data-tab="matches" onclick="_pmShowTab('matches')">✨ Matches</button>
+        <button class="pm-tab-btn" data-tab="search" onclick="_pmShowTab('search')">🔍 Search</button>
+        <button class="pm-tab-btn" data-tab="requests" onclick="_pmShowTab('requests')">📬 Requests</button>
+        <button class="pm-tab-btn" data-tab="leaderboard" onclick="_pmShowTab('leaderboard')">🏆 Top</button>
+        <button class="pm-tab-btn" data-tab="profile" onclick="_pmShowTab('profile')">⚙ Profile</button>
       </div>
       <div id="pmModalBody"></div>
     </div>
@@ -3255,104 +3443,127 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <!-- Compatibility detail modal -->
   <div id="pmCompatModal"></div>
 
-<script src="<?= BASE_URL ?>/assets/js/chat/functionality-overrides.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/functionality-overrides.js" defer></script>
+  <!-- Thread enhancements are loaded by functionality-overrides.js after threads-v2.js is ready. -->
+  <script src="<?= BASE_URL ?>/assets/js/chat/collabs-ui.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/nav-persistence.js?v=2" defer></script>
+<script type="module" src="<?= BASE_URL ?>/assets/js/chat/yjs-channel-presence.js?v=yjs-chat-1"></script>
 </body>
 
-  <!-- ── FLASHCARD MODALS ── -->
-  <div id="createDeckModal" class="collab-modal-overlay" style="display:none">
-    <div class="modal-box" style="max-width:480px;width:92%">
-      <div class="modal-header"><span>🃏 Create Flashcard Deck</span><button class="modal-close" onclick="closeCreateDeckModal()">✕</button></div>
-      <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
-        <input  id="deckTitleInput" class="collab-input" placeholder="Deck title*"/>
-        <input  id="deckDescInput"  class="collab-input" placeholder="Description (optional)"/>
-        <label style="font-size:12px;color:var(--text-muted)">Cards (one per line: <code>front | back | hint</code>)</label>
-        <textarea id="deckCardsInput" class="collab-input" rows="6" placeholder="What is OT? | Operational Transformation | A conflict-free editing algorithm"></textarea>
-      </div>
-      <div class="modal-footer">
-        <button class="timer-reset-btn" onclick="closeCreateDeckModal()">Cancel</button>
-        <button class="timer-start-btn" style="padding:7px 18px;font-size:13px" onclick="submitCreateDeck()">Create Deck</button>
-      </div>
+<!-- ── FLASHCARD MODALS ── -->
+<div id="createDeckModal" class="collab-modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:480px;width:92%">
+    <div class="modal-header"><span>🃏 Create Flashcard Deck</span><button class="modal-close" onclick="closeCreateDeckModal()">✕</button></div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
+      <input id="deckTitleInput" class="collab-input" placeholder="Deck title*" />
+      <input id="deckDescInput" class="collab-input" placeholder="Description (optional)" />
+      <label style="font-size:12px;color:var(--text-muted)">Cards (one per line: <code>front | back | hint</code>)</label>
+      <textarea id="deckCardsInput" class="collab-input" rows="6" placeholder="What is OT? | Operational Transformation | A conflict-free editing algorithm"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="timer-reset-btn" onclick="closeCreateDeckModal()">Cancel</button>
+      <button class="timer-start-btn" style="padding:7px 18px;font-size:13px" onclick="submitCreateDeck()">Create Deck</button>
     </div>
   </div>
+</div>
 
-  <div id="addCardModal" class="collab-modal-overlay" style="display:none">
-    <div class="modal-box" style="max-width:420px;width:92%">
-      <div class="modal-header"><span>🃏 Add Card</span><button class="modal-close" onclick="closeAddCardModal()">✕</button></div>
-      <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
-        <textarea id="cardFrontInput" class="collab-input" rows="3" placeholder="Question / Front*"></textarea>
-        <textarea id="cardBackInput"  class="collab-input" rows="3" placeholder="Answer / Back*"></textarea>
-        <input    id="cardHintInput"  class="collab-input" placeholder="Hint (optional)"/>
-      </div>
-      <div class="modal-footer">
-        <button class="timer-reset-btn" onclick="closeAddCardModal()">Cancel</button>
-        <button class="timer-start-btn" style="padding:7px 18px;font-size:13px" onclick="submitAddCard()">Add Card</button>
-      </div>
+<div id="addCardModal" class="collab-modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:420px;width:92%">
+    <div class="modal-header"><span>🃏 Add Card</span><button class="modal-close" onclick="closeAddCardModal()">✕</button></div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
+      <textarea id="cardFrontInput" class="collab-input" rows="3" placeholder="Question / Front*"></textarea>
+      <textarea id="cardBackInput" class="collab-input" rows="3" placeholder="Answer / Back*"></textarea>
+      <input id="cardHintInput" class="collab-input" placeholder="Hint (optional)" />
+    </div>
+    <div class="modal-footer">
+      <button class="timer-reset-btn" onclick="closeAddCardModal()">Cancel</button>
+      <button class="timer-start-btn" style="padding:7px 18px;font-size:13px" onclick="submitAddCard()">Add Card</button>
     </div>
   </div>
+</div>
 
-  <!-- ── PEER REVIEW MODALS ── -->
-  <div id="createReviewModal" class="collab-modal-overlay" style="display:none">
-    <div class="modal-box" style="max-width:520px;width:92%">
-      <div class="modal-header"><span>📋 Request Peer Review</span><button class="modal-close" onclick="closeCreateReviewModal()">✕</button></div>
-      <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
-        <input    id="reviewTitleInput"   class="collab-input" placeholder="Title*"/>
-        <textarea id="reviewContentInput" class="collab-input" rows="5" placeholder="Paste your work here for review…"></textarea>
-        <input    id="reviewFileUrl"      class="collab-input" placeholder="Link to file/doc (optional)"/>
-      </div>
-      <div class="modal-footer">
-        <button class="timer-reset-btn" onclick="closeCreateReviewModal()">Cancel</button>
-        <button class="timer-start-btn" style="padding:7px 18px;font-size:13px" onclick="submitCreateReview()">Post Request</button>
-      </div>
+<!-- ── PEER REVIEW MODALS ── -->
+<div id="createReviewModal" class="collab-modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:520px;width:92%">
+    <div class="modal-header"><span>📋 Request Peer Review</span><button class="modal-close" onclick="closeCreateReviewModal()">✕</button></div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
+      <input id="reviewTitleInput" class="collab-input" placeholder="Title*" />
+      <textarea id="reviewContentInput" class="collab-input" rows="5" placeholder="Paste your work here for review…"></textarea>
+      <input id="reviewFileUrl" class="collab-input" placeholder="Link to file/doc (optional)" />
+    </div>
+    <div class="modal-footer">
+      <button class="timer-reset-btn" onclick="closeCreateReviewModal()">Cancel</button>
+      <button class="timer-start-btn" style="padding:7px 18px;font-size:13px" onclick="submitCreateReview()">Post Request</button>
     </div>
   </div>
-  <div id="reviewDetailModal" class="collab-modal-overlay" style="display:none"></div>
+</div>
+<div id="reviewDetailModal" class="collab-modal-overlay" style="display:none"></div>
 
-  <!-- ── STUDY GOALS MODAL ── -->
-  <div id="createGoalModal" class="collab-modal-overlay" style="display:none">
-    <div class="modal-box" style="max-width:460px;width:92%">
-      <div class="modal-header"><span>🎯 New Study Goal</span><button class="modal-close" onclick="closeCreateGoalModal()">✕</button></div>
-      <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
-        <input  id="goalTitleInput" class="collab-input" placeholder="Goal title*"/>
-        <textarea id="goalDescInput" class="collab-input" rows="2" placeholder="Description (optional)"></textarea>
-        <select id="goalScopeSelect" class="code-lang-select" style="width:100%">
-          <option value="group">👥 Group goal (visible to channel)</option>
-          <option value="personal">👤 Personal goal (only you)</option>
-        </select>
-        <input id="goalDateInput" class="collab-input" type="date" placeholder="Target date (optional)"/>
-        <label style="font-size:12px;color:var(--text-muted)">Milestones (one per line)</label>
-        <textarea id="goalMilestonesInput" class="collab-input" rows="4" placeholder="Read chapter 1&#10;Complete exercises&#10;Review notes"></textarea>
-      </div>
-      <div class="modal-footer">
-        <button class="timer-reset-btn" onclick="closeCreateGoalModal()">Cancel</button>
-        <button class="timer-start-btn" style="padding:7px 18px;font-size:13px" onclick="submitCreateGoal()">Create Goal</button>
-      </div>
+<!-- ── STUDY GOALS MODAL ── -->
+<div id="createGoalModal" class="collab-modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:460px;width:92%">
+    <div class="modal-header"><span>🎯 New Study Goal</span><button class="modal-close" onclick="closeCreateGoalModal()">✕</button></div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
+      <input id="goalTitleInput" class="collab-input" placeholder="Goal title*" />
+      <textarea id="goalDescInput" class="collab-input" rows="2" placeholder="Description (optional)"></textarea>
+      <select id="goalScopeSelect" class="code-lang-select" style="width:100%">
+        <option value="group">👥 Group goal (visible to channel)</option>
+        <option value="personal">👤 Personal goal (only you)</option>
+      </select>
+      <input id="goalDateInput" class="collab-input" type="date" placeholder="Target date (optional)" />
+      <label style="font-size:12px;color:var(--text-muted)">Milestones (one per line)</label>
+      <textarea id="goalMilestonesInput" class="collab-input" rows="4" placeholder="Read chapter 1&#10;Complete exercises&#10;Review notes"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="timer-reset-btn" onclick="closeCreateGoalModal()">Cancel</button>
+      <button class="timer-start-btn" style="padding:7px 18px;font-size:13px" onclick="submitCreateGoal()">Create Goal</button>
     </div>
   </div>
+</div>
 
-  <!-- ── RESOURCE LIBRARY MODAL ── -->
-  <div id="addResourceModal" class="collab-modal-overlay" style="display:none">
-    <div class="modal-box" style="max-width:460px;width:92%">
-      <div class="modal-header"><span>📚 Add Resource</span><button class="modal-close" onclick="closeAddResourceModal()">✕</button></div>
-      <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
-        <input  id="resTitleInput" class="collab-input" placeholder="Title*"/>
-        <input  id="resUrlInput"   class="collab-input" placeholder="URL (optional)"/>
-        <select id="resTypeSelect" class="code-lang-select" style="width:100%">
-          <option value="link">🔗 Link</option><option value="pdf">📄 PDF</option>
-          <option value="video">🎥 Video</option><option value="image">🖼 Image</option>
-          <option value="file">📁 File</option><option value="note">📝 Note</option>
-          <option value="other">📌 Other</option>
-        </select>
-        <textarea id="resDescInput" class="collab-input" rows="2" placeholder="Description (optional)"></textarea>
-        <input    id="resTagsInput" class="collab-input" placeholder="Tags (comma-separated, optional)"/>
-      </div>
-      <div class="modal-footer">
-        <button class="timer-reset-btn" onclick="closeAddResourceModal()">Cancel</button>
-        <button class="timer-start-btn" style="padding:7px 18px;font-size:13px" onclick="submitAddResource()">Add Resource</button>
-      </div>
+<!-- ── RESOURCE LIBRARY MODAL ── -->
+<div id="addResourceModal" class="collab-modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:460px;width:92%">
+    <div class="modal-header"><span>📚 Add Resource</span><button class="modal-close" onclick="closeAddResourceModal()">✕</button></div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
+      <input id="resTitleInput" class="collab-input" placeholder="Title*" />
+      <input id="resUrlInput" class="collab-input" placeholder="URL (optional)" />
+      <select id="resTypeSelect" class="code-lang-select" style="width:100%">
+        <option value="link">🔗 Link</option>
+        <option value="pdf">📄 PDF</option>
+        <option value="video">🎥 Video</option>
+        <option value="image">🖼 Image</option>
+        <option value="file">📁 File</option>
+        <option value="note">📝 Note</option>
+        <option value="other">📌 Other</option>
+      </select>
+      <textarea id="resDescInput" class="collab-input" rows="2" placeholder="Description (optional)"></textarea>
+      <input id="resTagsInput" class="collab-input" placeholder="Tags (comma-separated, optional)" />
+    </div>
+    <div class="modal-footer">
+      <button class="timer-reset-btn" onclick="closeAddResourceModal()">Cancel</button>
+      <button class="timer-start-btn" style="padding:7px 18px;font-size:13px" onclick="submitAddResource()">Add Resource</button>
     </div>
   </div>
-  <div id="resourceCommentsModal" class="collab-modal-overlay" style="display:none"></div>
+</div>
+<div id="resourceCommentsModal" class="collab-modal-overlay" style="display:none"></div>
 
+<?php require_once dirname(__DIR__, 2) . '/includes/calls/bootstrap.php'; ?>
+<script type="module" src="<?= BASE_URL ?>/assets/js/chat/yjs-channel-presence.js?v=yjs-chat-1"></script>
 </body>
 
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -64,6 +64,37 @@ async function apiFetch(url, options = {}, _retried = false) {
   return res.json();
 }
 
+async function uploadChatAttachment(endpoint, form, retried = false) {
+  const response = await fetch(endpoint, {
+    method: 'POST', credentials: 'same-origin',
+    headers: { 'X-CSRF-Token': window.ECOLLAB?.csrfToken || '' }, body: form,
+  });
+  const data = await response.json().catch(() => null);
+  if (response.status === 403 && !retried) {
+    const refresh = await fetch((window.ECOLLAB?.baseUrl || '') + '/API/auth/csrf-token.php', { cache: 'no-store', credentials: 'same-origin' });
+    const token = await refresh.json();
+    if (refresh.ok && token.token) {
+      window.ECOLLAB.csrfToken = token.token;
+      return uploadChatAttachment(endpoint, form, true);
+    }
+  }
+  if (!response.ok || !data?.success) {
+    throw new Error(data?.error || (response.status === 413
+      ? 'This file exceeds the server upload limit.' : 'Upload failed (HTTP ' + response.status + ').'));
+  }
+  return data;
+}
+window.uploadChatAttachment = uploadChatAttachment;
+
+function chatAvatarUrl(url) {
+  const raw = String(url || '').trim();
+  if (!raw) return '';
+  if (/^(?:https?:)?\/\//i.test(raw) || /^(?:data|blob):/i.test(raw)) return raw;
+  const base = String(window.ECOLLAB?.baseUrl || '').replace(/\/$/, '');
+  if (raw.startsWith('/')) return base + raw;
+  return base + '/' + raw.replace(/^\.\//, '');
+}
+
 const API_BASE = (window.ECOLLAB?.baseUrl || '') + '/API/chat';
 const UPLOAD_ENDPOINT = (window.ECOLLAB?.baseUrl || '') + '/API/chat/upload-file.php';
 
@@ -76,10 +107,34 @@ let currentChannelId = null;
 let currentServerId = window.ECOLLAB?.currentServerId || 0;
 let replyParentId = null;
 let pendingAttachment = null;
+let attachmentUploadGeneration = 0;
 let isLoadingMessages = false;
 let hasMoreMessages = true;
 let oldestMessageId = null;
 let typingTimeout = null;
+
+// Keep navigation in this tab's URL so F5 restores the same server/channel.
+// PHP validates server membership and the rendered list validates channel IDs.
+function saveChatLocation(changes) {
+  const url = new URL(window.location.href);
+  Object.entries(changes).forEach(([key, value]) => {
+    if (value == null || value === '') url.searchParams.delete(key);
+    else url.searchParams.set(key, String(value));
+  });
+  window.history.replaceState(window.history.state, '', url);
+}
+window.saveChatLocation = saveChatLocation;
+const lastServerChannels = new Map();
+let channelListRequest = 0;
+
+// Server entry defaults to General; explicit refresh/deep-link state wins.
+function defaultChatChannel(container) {
+  const items = [...container.querySelectorAll('.channel-item[data-channel-id]')]
+    .filter(item => !['voice', 'whiteboard'].includes(item.dataset.channelType));
+  return items.find(item => String(item.dataset.channelName || '').trim().replace(/^#/, '').toLowerCase() === 'general')
+    || items.find(item => item.dataset.channelType === 'text')
+    || items[0] || null;
+}
 
 // ── Init ──
 document.addEventListener('DOMContentLoaded', () => {
@@ -100,20 +155,19 @@ document.addEventListener('DOMContentLoaded', () => {
       .find(el => el.dataset.channelName === wantedName);
   }
 
-  // Auto-select first channel if no deep-link target found
+  // A valid URL channel survives refresh; a fresh entry starts at General.
   if (!target) {
-    target = document.querySelector('.channel-item[data-channel-id]');
+    target = defaultChatChannel(document.getElementById('channelList') || document);
   }
 
   if (target) {
     switchChannel(target, parseInt(target.dataset.channelId));
+  } else {
+    saveChatLocation({channel_id: null});
   }
 
-  // Clean the URL so reloading/sharing doesn't re-trigger the deep link
-  if (wantedId || wantedName) {
-    const cleanUrl = window.location.pathname;
-    window.history.replaceState({}, '', cleanUrl);
-  }
+  // Keep the resolved destination in the URL for refresh.
+  saveChatLocation({server_id: currentServerId || null, channel_name: null});
 
   // Keyboard shortcut: Cmd/Ctrl + K → focus search
   document.addEventListener('keydown', (e) => {
@@ -159,36 +213,49 @@ async function updatePresence() {
 // ── Workspace switch ──
 function switchWorkspace(wsIdx, serverId) {
   if (!serverId) return;
+  const serverChanged = Number(serverId) !== Number(currentServerId);
+  if (currentChannelId) lastServerChannels.set(Number(currentServerId), currentChannelId);
   currentServerId = serverId;
+  saveChatLocation({server_id: serverId, channel_id: null, channel_name: null});
   // Keep ECOLLAB object in sync so chat-features.js can read it
   if (window.ECOLLAB) window.ECOLLAB.currentServerId = serverId;
+
+  // Keep the server Library link scoped to the workspace the user selected.
+  const libraryNav = document.getElementById('serverLibraryNav');
+  if (libraryNav) {
+    const base = String(window.ECOLLAB?.baseUrl || '').replace(/\/$/, '');
+    libraryNav.href = base + '/modules/library/library.php?server_id=' + encodeURIComponent(serverId);
+  }
 
   document.querySelectorAll('.workspace-icon').forEach((icon, i) => {
     icon.classList.toggle('active', i === wsIdx);
   });
 
-  loadServerChannels(serverId);
+  loadServerChannels(serverId, serverChanged);
 }
 
-async function loadServerChannels(serverId) {
+async function loadServerChannels(serverId, startAtGeneral = false) {
+  const request = ++channelListRequest;
   try {
     const data = await apiFetch(`${API_BASE}/get-channels.php?server_id=${serverId}`);
+    if (request !== channelListRequest || Number(serverId) !== Number(currentServerId)) return;
     if (!data.success) return;
 
     const server = data.servers?.find(s => parseInt(s.id) === parseInt(serverId));
     if (server) {
       document.getElementById('wsIcon').textContent = server.icon_emoji || '⭐';
       document.getElementById('wsName').textContent = server.name;
+
     }
 
-    renderChannelList(data.channels || []);
+    renderChannelList(data.channels || [], startAtGeneral);
   } catch (err) {
     showToast('Failed to load channels', 'info');
     console.error(err);
   }
 }
 
-function renderChannelList(channels) {
+function renderChannelList(channels, startAtGeneral = false) {
   const textList = document.getElementById('channelList');
   const voiceList = document.getElementById('voiceChannelList');
   const wbList = document.getElementById('whiteboardChannelList');
@@ -224,6 +291,7 @@ function renderChannelList(channels) {
       el.className = 'channel-item wb-channel-item';
       el.dataset.channelId = ch.id;
       el.dataset.channelName = ch.name;
+      el.dataset.channelType = ch.type;
       el.innerHTML = `
         <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24" style="color:var(--accent-purple);flex-shrink:0;">
           <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
@@ -239,6 +307,8 @@ function renderChannelList(channels) {
       el.className = 'channel-item';
       el.dataset.channelId = ch.id;
       el.dataset.channelName = ch.name;
+      el.dataset.channelType = ch.type;
+      el.dataset.isPrivate = (ch.is_private == 1 || ch.is_private === true) ? '1' : '0';
       if (ch.is_new == 1 || ch.is_new === true) el.dataset.isNew = '1';
       const isAnnouncement = ch.type === 'announcement';
       const isPrivate = ch.is_private == 1 || ch.is_private === true;
@@ -251,6 +321,7 @@ function renderChannelList(channels) {
             : `<span class="channel-hash">#</span>`
         }
         <span class="channel-name-text" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(ch.name)}${isNew ? ' <span class="ch-new-badge" style="font-size:9px;background:rgba(168,85,247,0.18);color:#c084fc;border-radius:4px;padding:1px 5px;font-weight:700;vertical-align:middle;">new</span>' : ''}</span>
+        <span class="channel-visibility-indicator ${isPrivate?'is-private':'is-public'}" title="${isPrivate?'Private channel':'Public channel'}">${isPrivate?'🔒':'🌐'}</span>
         ${ch.unread_count > 0 ? `<span class="channel-unread">${ch.unread_count}</span>` : ''}
       `;
       el.onclick = () => switchChannel(el, parseInt(ch.id));
@@ -261,14 +332,32 @@ function renderChannelList(channels) {
   // Show/hide whiteboard section based on whether channels exist
   if (wbSection) wbSection.style.display = hasWhiteboard ? '' : 'none';
 
-  // Auto-select first text channel
-  const first = textList.querySelector('.channel-item');
+  // Changing servers starts at General. Same-server list updates retain selection.
+  const wanted = startAtGeneral ? null : lastServerChannels.get(Number(currentServerId));
+  const first = (wanted && Array.from(textList.querySelectorAll('.channel-item'))
+    .find(item => Number(item.dataset.channelId) === Number(wanted)))
+    || defaultChatChannel(textList);
   if (first) switchChannel(first, parseInt(first.dataset.channelId));
+  else {
+    if (currentChannelId) window.unsubscribeFromChannel?.(currentChannelId);
+    currentChannelId = null;
+    window.ECOLLAB.currentChannelId = null;
+    saveChatLocation({channel_id: null});
+    renderMessages([], false);
+  }
 }
 
 // ── Channel switch ──
 async function switchChannel(el, channelId) {
+  if (window._currentNavView && window._currentNavView !== 'home') {
+    window.switchView?.('home', document.querySelector('.sidebar-nav-item'));
+  }
+  document.getElementById('navViewOverlay')?.style.setProperty('display','none');
+  document.querySelector('.chat-main')?.style.removeProperty('display');
+  saveChatLocation({server_id: currentServerId, channel_id: channelId, channel_name: null});
+  lastServerChannels.set(Number(currentServerId), channelId);
   if (channelId === currentChannelId) return;
+  clearAttachmentPreview();
 
   // Save draft of current input before switching
   const inputEl = document.getElementById('chatInputField');
@@ -285,6 +374,8 @@ async function switchChannel(el, channelId) {
 
   currentChannelId = channelId;
   window.ECOLLAB.currentChannelId = channelId;
+  renderMessages([], false);
+  if (window.subscribeToChannel) window.subscribeToChannel(channelId);
   oldestMessageId = null;
   hasMoreMessages = true;
   lastMessageId = 0;
@@ -322,6 +413,7 @@ async function switchChannel(el, channelId) {
       apiFetch(`${API_BASE}/get-channel.php?id=${channelId}`),
       apiFetch(`${API_BASE}/get-messages.php?channel_id=${channelId}`),
     ]);
+    if (Number(channelId) !== Number(currentChannelId)) return;
 
     if (chanData.channel) {
       const ch = chanData.channel;
@@ -333,6 +425,8 @@ async function switchChannel(el, channelId) {
       document.getElementById('channelDesc').textContent = ch.description || '';
       document.getElementById('chatInputField').placeholder = `Message #${ch.name}`;
       document.getElementById('mobChannelName').textContent = ch.name;
+      const dashboardLink = document.getElementById('channelDashboardLink');
+      if (dashboardLink) dashboardLink.style.display = String(ch.name || '').trim().toLowerCase() === 's1.election' ? 'inline-block' : 'none';
 
       // Show/hide manage button for private channels
       const manageBtn = document.getElementById('manageChannelBtn');
@@ -373,11 +467,11 @@ async function switchChannel(el, channelId) {
     }
 
     if (msgData.messages) {
-      renderMessages(msgData.messages, false);
+      renderMessages(msgData.messages, false, true);
       hasMoreMessages = msgData.has_more;
       if (msgData.messages.length) {
         oldestMessageId = msgData.messages[0].id;
-        lastMessageId = msgData.messages[msgData.messages.length - 1].id;
+        lastMessageId = Math.max(Number(lastMessageId) || 0, Number(msgData.messages[msgData.messages.length - 1].id));
       }
     }
   } catch (err) {
@@ -386,16 +480,18 @@ async function switchChannel(el, channelId) {
   }
 
   // Subscribe via WebSocket
-  if (window.subscribeToChannel) window.subscribeToChannel(channelId);
 }
 
 // ── Render messages ──
-function renderMessages(messages, prepend = false) {
+function renderMessages(messages, prepend = false, preserveLive = false) {
   const area = document.getElementById('messagesArea');
   if (!area) return;
 
   // Remove typing indicator temporarily
   const typing = document.getElementById('typingIndicator');
+  const latestId = Math.max(0, ...messages.map(msg => Number(msg.id) || 0));
+  const retained = !prepend && preserveLive ? [...area.querySelectorAll('[data-msg-id]')]
+    .filter(el => String(el.dataset.msgId).startsWith('opt_') || Number(el.dataset.msgId) > latestId) : [];
   if (!prepend) {
     area.innerHTML = '';
     if (typing) area.appendChild(typing);
@@ -419,6 +515,7 @@ function renderMessages(messages, prepend = false) {
   } else {
     if (typing) area.insertBefore(fragment, typing);
     else area.appendChild(fragment);
+    retained.forEach(el => { if (typing) area.insertBefore(el, typing); else area.appendChild(el); });
     scrollToBottom();
   }
 }
@@ -432,6 +529,9 @@ function buildMessageElement(msg) {
   const grad = msg.avatar_color_gradient || '#3b82f6,#6366f1';
   const [c1, c2] = grad.split(',');
   const init = (msg.full_name || msg.username || '?').charAt(0).toUpperCase();
+  const avatarUrl = chatAvatarUrl(msg.avatar_url);
+  const avatarBg = avatarUrl ? `url("${escHtml(avatarUrl)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
+  const avatarText = avatarUrl ? '' : init;
   const isMe = parseInt(msg.sender_id) === parseInt(window.ECOLLAB?.userId);
   const time = formatTime(msg.created_at);
   const edited = msg.is_edited ? '<span class="edited-tag" style="font-size:10px;color:var(--text-muted);margin-left:4px;">(edited)</span>' : '';
@@ -454,6 +554,8 @@ function buildMessageElement(msg) {
     msg.attachments.forEach(att => {
       if (att.mime_type && att.mime_type.startsWith('image/')) {
         attachHtml += `<img src="${(window.ECOLLAB?.baseUrl || '')}/${escHtml(att.file_path)}" style="max-width:300px;max-height:220px;border-radius:8px;margin-top:6px;display:block;cursor:pointer;" onclick="window.open('${(window.ECOLLAB?.baseUrl || '')}/${escHtml(att.file_path)}','_blank')" alt="${escHtml(att.file_name)}">`;
+      } else if (att.mime_type?.startsWith('video/')) {
+        attachHtml += `<video controls playsinline preload="metadata" src="${(window.ECOLLAB?.baseUrl || '')}/${escHtml(att.file_path)}" style="max-width:100%;width:300px;border-radius:8px;margin-top:6px;"></video>`;
       } else {
         attachHtml += `
           <div style="display:flex;align-items:center;gap:10px;margin-top:6px;padding:10px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;max-width:300px;">
@@ -490,19 +592,20 @@ function buildMessageElement(msg) {
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
       </button>
       <button class="msg-action-btn ${msg.is_pinned ? 'pin-active' : ''}" title="${msg.is_pinned ? 'Unpin Message' : 'Pin Message'}" onclick="msgPin(this,'${escHtml(msg.username)}','${escHtml((msg.content || '').substring(0, 60))}', ${msg.id})">📌</button>
+      <button class="msg-action-btn" title="Bookmark" onclick="msgBookmark(this, ${msg.id})">🔖</button>
       <button class="msg-action-btn" title="More Options" onclick="showMsgMenu(event,this,'${escHtml(msg.username)}', ${msg.id}, ${isMe ? 'true' : 'false'})">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
       </button>
     </div>
     <div class="msg-avatar">
-      <div class="avatar-placeholder" style="width:36px;height:36px;font-size:14px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;position:relative;flex-shrink:0;">
-        ${init}
+      <div class="avatar-placeholder" style="width:36px;height:36px;font-size:14px;border-radius:50%;background:${avatarBg};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;position:relative;flex-shrink:0;">
+        ${avatarText}
         <div class="online-dot"></div>
       </div>
     </div>
     <div class="msg-content">
       <div class="msg-header">
-        <span class="msg-username ${roleClass}" onclick="openMiniProfile(event, '${escHtml(msg.full_name || msg.username)}', '${escHtml(msg.role || 'Student')}', '', '${init}', ${msg.sender_id || 0})">${escHtml(msg.username)}</span>
+        <span class="msg-username ${roleClass}" onclick="openMiniProfile(event, '${escHtml(msg.full_name || msg.username)}', '${escHtml(msg.role || 'Student')}', '', '${init}', ${msg.sender_id || 0})">${escHtml(msg.full_name || msg.username)}</span>
         ${msg.role === 'facilitator' ? '<span class="msg-badge">FACULTY</span>' : ''}
         ${msg.is_verified ? '<span style="color:#a855f7;font-size:12px;" title="Verified">✓</span>' : ''}
         <span class="msg-timestamp">${time}</span>
@@ -550,6 +653,7 @@ function appendMessageToUI(msg) {
   const area = document.getElementById('messagesArea');
   const typing = document.getElementById('typingIndicator');
   if (!area) return;
+  if (area.querySelector(`[data-msg-id="${CSS.escape(String(msg.id))}"]`)) return;
   const el = buildMessageElement(msg);
   if (typing && typing.parentNode === area) {
     area.insertBefore(el, typing);
@@ -557,7 +661,7 @@ function appendMessageToUI(msg) {
     area.appendChild(el);
   }
   scrollToBottom();
-  lastMessageId = Math.max(lastMessageId || 0, msg.id);
+  if (Number.isFinite(Number(msg.id))) lastMessageId = Math.max(Number(lastMessageId) || 0, Number(msg.id));
 }
 window.appendMessageToUI = appendMessageToUI;
 window.buildPollWidget = buildPollWidget;
@@ -606,6 +710,8 @@ async function sendMessage() {
     body.attachment_mime = pendingAttachment.mime_type;
   }
 
+  const sentAttachment = pendingAttachment;
+  const sentParentId = replyParentId;
   input.value = '';
   clearAttachmentPreview();
   cancelReply();
@@ -623,9 +729,9 @@ async function sendMessage() {
     is_verified: false,
     is_pinned: false,
     is_edited: false,
-    parent_id: replyParentId,
+    parent_id: sentParentId,
     reactions: [],
-    attachments: pendingAttachment ? [pendingAttachment] : [],
+    attachments: sentAttachment ? [sentAttachment] : [],
     created_at: new Date().toISOString(),
   };
   appendMessageToUI(optimisticMsg);
@@ -647,11 +753,8 @@ async function sendMessage() {
         const realEl = buildMessageElement(data.message);
         optEl.replaceWith(realEl);
       }
-      // Broadcast via WebSocket
-      if (window.chatSocket && window.chatSocket.readyState === WebSocket.OPEN) {
-        window.chatSocket.send(JSON.stringify({ type: 'message', message: data.message }));
-      }
-      lastMessageId = data.message.id;
+      window.sendPersistedChatMessage?.({ type: 'message', channel_id: body.channel_id, message: data.message });
+      if (Number(body.channel_id) === Number(currentChannelId)) lastMessageId = Math.max(Number(lastMessageId) || 0, Number(data.message.id));
     }
   } catch (err) {
     // Remove optimistic message on failure
@@ -866,6 +969,20 @@ async function msgPin(btn, author, text, msgId) {
   }
 }
 
+async function msgBookmark(btn, msgId) {
+  if (!msgId) return;
+  try {
+    const data = await apiFetch(`${API_BASE}/bookmark-message.php`, {
+      method: 'POST',
+      body: JSON.stringify({ message_id: msgId }),
+    });
+    btn?.classList.toggle('bookmark-active', !!data.bookmarked);
+    showToast(data.bookmarked ? '🔖 Bookmarked' : '🔖 Removed bookmark', 'success');
+  } catch (e) {
+    showToast('🔖 ' + (e?.message || 'Could not bookmark message'), 'info');
+  }
+}
+
 // ── Message context menu ──
 function showMsgMenu(event, btn, author, msgId, isMe) {
   event.stopPropagation();
@@ -1066,16 +1183,20 @@ function triggerFileInput(id) {
 async function handleFileUpload(input, type) {
   const file = input.files?.[0];
   if (!file) return;
+  const targetChannel = currentChannelId;
+  const generation = ++attachmentUploadGeneration;
   const fd = new FormData();
   fd.append('file', file);
   try {
     showToast('📎 Uploading…', 'info');
-    const resp = await fetch((window.ECOLLAB?.baseUrl || '') + '/API/chat/upload-file.php', {
-      method: 'POST',
-      headers: { 'X-CSRF-Token': window.ECOLLAB?.csrfToken || '' },
-      body: fd,
-    });
-    const data = await resp.json();
+    if (window.ECOLLAB?.resumableUploads && !window.EcollabUploads) throw new Error('Upload controls failed to load. Refresh the page.');
+    const data = window.ECOLLAB?.resumableUploads
+      ? await window.EcollabUploads.upload(file, {kind:'channel',id:targetChannel})
+      : await uploadChatAttachment(UPLOAD_ENDPOINT, fd);
+    if (targetChannel !== currentChannelId || generation !== attachmentUploadGeneration) {
+      showToast('Upload completed for another channel. Select the file in that channel to send it.', 'info');
+      return;
+    }
     if (data.success) {
       pendingAttachment = data;
       showAttachmentPreview(data, type);
@@ -1084,7 +1205,7 @@ async function handleFileUpload(input, type) {
       showToast('Upload failed: ' + (data.error || 'unknown error'), 'info');
     }
   } catch (err) {
-    showToast('Upload failed', 'info');
+    showToast('Upload failed: ' + err.message, 'error');
     console.error(err);
   }
   input.value = '';
@@ -1111,6 +1232,7 @@ function showAttachmentPreview(attachment, type) {
 }
 
 function clearAttachmentPreview() {
+  attachmentUploadGeneration++;
   pendingAttachment = null;
   document.getElementById('_attachPreview')?.remove();
 }
@@ -1193,9 +1315,35 @@ function selectChannelType(el, type) {
 }
 
 // ── Members panel ──
+// Keep initials visible when an external avatar is missing or fails to load.
+function chatSidebarAvatar(name, url, gradient, size = 28) {
+  const colors = String(gradient || '').split(',').map(c => c.trim());
+  const valid = colors.length === 2 && colors.every(c => /^#[0-9a-f]{3,8}$/i.test(c));
+  const background = valid ? colors.join(',') : '#3b82f6,#6366f1';
+  const initial = escHtml(String(name || '?').trim().charAt(0).toUpperCase() || '?');
+  const source = chatAvatarUrl(url);
+  const image = source ? `<img src="${escHtml(source)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : '';
+  return `<span class="avatar-placeholder sidebar-avatar" style="width:${size}px;height:${size}px;background:linear-gradient(135deg,${background})">${initial}${image}</span>`;
+}
+window.chatSidebarAvatar = chatSidebarAvatar;
+
+function chatMemberOnline(m) { return m.is_online === true || m.is_online === 1 || m.is_online === "1"; }
+// Keep all member rows aligned with the latest server presence snapshot.
+let chatPresenceSnapshot = null;
+function applyChatMemberPresence(serverId, users) {
+  if (String(serverId) !== String(window.ECOLLAB?.currentServerId)) return;
+  chatPresenceSnapshot = { serverId: String(serverId), ids: new Set(users.map(u => String(u.id))) };
+  document.querySelectorAll('#membersList .member-item').forEach(row => {
+    const online = chatPresenceSnapshot.ids.has(row.dataset.userId);
+    const dot = row.querySelector('.online-dot');
+    if (dot) { dot.classList.toggle('offline', !online); dot.style.background = ''; }
+    const label = row.querySelector('.member-status');
+    if (label) { label.classList.toggle('online', online); label.textContent = '● ' + (online ? 'Online' : 'Offline'); }
+  });
+}
+window.applyChatMemberPresence = applyChatMemberPresence;
 function renderMembersPanel(members) {
   const list = document.getElementById('membersList');
-  const activeList = document.getElementById('activeMembersList');
   const badge = document.getElementById('memberCountBadge');
   if (badge) badge.textContent = '— ' + members.length;
   if (!list) return;
@@ -1204,52 +1352,39 @@ function renderMembersPanel(members) {
     const grad = m.avatar_color_gradient || '#3b82f6,#6366f1';
     const [c1, c2] = grad.split(',');
     const init = (m.full_name || m.username || '?').charAt(0).toUpperCase();
-    const online = m.is_online ? 'online' : '';
+    const memberAvatarUrl = chatAvatarUrl(m.avatar_url);
+    const memberAvatar = memberAvatarUrl ? `url("${escHtml(memberAvatarUrl)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
+    const memberInitial = memberAvatarUrl ? '' : init;
+    const online = chatMemberOnline(m) ? 'online' : '';
     return `
       <div class="member-item" data-user-id="${m.id || m.user_id || 0}" data-user-grad="${grad}" onclick="openMiniProfile(event, '${escHtml(m.full_name || m.username)}', '${escHtml(m.role || 'Student')}', '', '${init}', ${m.id || m.user_id || 0})">
         <div class="user-avatar">
-          <div class="avatar-placeholder" style="width:28px;height:28px;font-size:11px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;">${init}</div>
-          <div class="online-dot ${m.is_online ? '' : 'offline'}"></div>
+          ${chatSidebarAvatar(m.full_name || m.username, m.avatar_url, grad, 28)}
+          <div class="online-dot ${chatMemberOnline(m) ? '' : 'offline'}"></div>
         </div>
         <div class="member-info">
-          <div class="member-name">${escHtml(m.nickname || m.username)}${m.server_role === 'owner' ? ' <span class="member-badge">👑</span>' : ''}</div>
-          <div class="member-sub" style="color:${m.is_online ? 'var(--accent-green)' : 'var(--text-muted)'};font-size:10px;">${m.is_online ? 'Online' : 'Offline'}</div>
+          <div class="member-name">${escHtml(m.full_name || m.nickname || m.username)}${m.server_role === 'owner' ? ' <span class="member-badge">👑</span>' : ''}</div>
         </div>
-        <div class="member-status ${online}">● ${m.is_online ? 'Online' : ''}</div>
+        <div class="member-status ${online}">● ${chatMemberOnline(m) ? 'Online' : 'Offline'}</div>
       </div>
     `;
   }).join('');
 
   list.innerHTML = html + (members.length > 20 ? `<div class="members-more">+${members.length - 20} more members</div>` : '');
 
-  // Active now panel
-  if (activeList) {
-    const online = members.filter(m => m.is_online).slice(0, 5);
-    activeList.innerHTML = online.map(m => {
-      const grad = m.avatar_color_gradient || '#3b82f6,#6366f1';
-      const [c1, c2] = grad.split(',');
-      const init = (m.full_name || m.username || '?').charAt(0).toUpperCase();
-      return `
-        <div class="active-user" onclick="openMiniProfile(event, '${escHtml(m.full_name || m.username)}', '${escHtml(m.role)}', '', '${init}')">
-          <div class="user-avatar">
-            <div class="avatar-placeholder" style="width:34px;height:34px;font-size:13px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;">${init}</div>
-            <div class="online-dot"></div>
-          </div>
-          <div class="active-user-info">
-            <div class="active-user-name">${escHtml(m.full_name || m.username)}</div>
-            <div class="active-user-status">${escHtml(m.role || 'Student')}</div>
-          </div>
-          <div class="activity-bars"><div class="activity-bar"></div><div class="activity-bar"></div><div class="activity-bar"></div></div>
-        </div>
-      `;
-    }).join('');
+  if (chatPresenceSnapshot?.serverId === String(window.ECOLLAB?.currentServerId)) {
+    applyChatMemberPresence(chatPresenceSnapshot.serverId, [...chatPresenceSnapshot.ids].map(id => ({ id })));
   }
+
 }
 
 async function refreshMembersPanel() {
   if (!currentChannelId) return;
   try {
-    const data = await apiFetch(`${API_BASE}/get-channel.php?id=${currentChannelId}`);
+    const channelId = currentChannelId;
+    const serverId = window.ECOLLAB?.currentServerId;
+    const data = await apiFetch(`${API_BASE}/get-channel.php?id=${channelId}`);
+    if (channelId !== currentChannelId || serverId !== window.ECOLLAB?.currentServerId) return;
     if (data.members) renderMembersPanel(data.members);
   } catch { /* silent */ }
 }
@@ -1397,32 +1532,36 @@ function filterSidebar(query) {
 
 // ── AI Assist ──
 async function generateAIReply() {
-  const input = document.getElementById('chatInputField');
-  if (!input) return;
   const btn = document.getElementById('aiAssistBtn');
-  if (btn) { btn.textContent = '✨ Generating…'; btn.disabled = true; }
+  if (btn) {
+    btn.textContent = '✨ Opening AI…';
+    btn.disabled = true;
+  }
+
   try {
-    // Gather last 8 messages as context
-    const msgEls = document.querySelectorAll('.msg-text');
-    const context = Array.from(msgEls).slice(-8).map(el => el.textContent.trim()).filter(Boolean).join('\n');
+    const data = await apiFetch((window.ECOLLAB?.baseUrl || '') + '/API/ai/dm-account.php');
+    const ai = data.ai || data.account || data.user || data;
 
-    const data = await apiFetch(`${API_BASE}/ai-assist.php`, {
-      method: 'POST',
-      body: JSON.stringify({
-        prompt: input.value || 'Suggest a helpful reply for this study chat',
-        context,
-      }),
-    });
-
-    if (data.suggestion) {
-      input.value = data.suggestion;
-      input.focus();
-      input.dispatchEvent(new Event('input'));
+    if (!ai?.id) {
+      throw new Error('eCollab AI account is unavailable');
     }
+
+    if (typeof window.openDmConversation !== 'function') {
+      throw new Error('Direct messages are still loading');
+    }
+
+    await window.openDmConversation(
+      parseInt(ai.id),
+      ai.full_name || 'Jarred',
+      ai.avatar_color_gradient || '#6366f1,#8b5cf6'
+    );
   } catch (err) {
-    if (window.showToast) showToast(err.message || 'AI assist unavailable', 'info');
+    if (window.showToast) showToast(err.message || 'eCollab AI unavailable', 'info');
   } finally {
-    if (btn) { btn.innerHTML = '✨ AI Assist <span class="ai-assist-chevron">▾</span>'; btn.disabled = false; }
+    if (btn) {
+      btn.innerHTML = '✨ AI Assist <span class="ai-assist-chevron">▾</span>';
+      btn.disabled = false;
+    }
   }
 }
 
@@ -1461,19 +1600,31 @@ if (typeof switchView !== 'undefined') window.switchView = switchView;
 
 // ── Open whiteboard channel ──
 function openWhiteboardChannel(channelId, channelName) {
-  // Highlight the wb channel item
   document.querySelectorAll('.wb-channel-item').forEach(el => el.classList.remove('active'));
-  const el = document.querySelector(`.wb-channel-item[data-channel-id="${channelId}"]`);
+  const el = document.querySelector('.wb-channel-item[data-channel-id="' + channelId + '"]');
   if (el) el.classList.add('active');
 
-  // Update header
-  const nameEl = document.getElementById('channelName');
-  if (nameEl) nameEl.textContent = channelName;
-  const topicEl = document.getElementById('channelTopic');
-  if (topicEl) topicEl.textContent = 'Collaborative whiteboard';
-
-  // Open the whiteboard view
-  if (window.openWhiteboard) window.openWhiteboard(channelName, channelId);
+  let overlay = document.getElementById('wbIframeOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'wbIframeOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:1200;background:#070b14;display:flex;flex-direction:column;';
+    overlay.innerHTML =
+      '<div style="height:42px;display:flex;align-items:center;gap:10px;padding:0 12px;background:#0d1320;border-bottom:1px solid rgba(255,255,255,.1);">' +
+      '<strong id="wbIframeTitle" style="font-size:13px;color:#e2e8f0;flex:1;"></strong>' +
+      '<button id="wbIframeNewTab" type="button" style="padding:6px 10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#cbd5e1;border-radius:6px;cursor:pointer;">Open tab</button>' +
+      '<button id="wbIframeClose" type="button" style="padding:6px 10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#fff;border-radius:6px;cursor:pointer;">Close</button>' +
+      '</div><iframe id="wbIframe" title="Ecollab Whiteboard" style="width:100%;height:calc(100% - 42px);border:0;background:#0b0f1a;"></iframe>';
+    document.body.appendChild(overlay);
+    document.getElementById('wbIframeClose').onclick = () => overlay.remove();
+    document.getElementById('wbIframeNewTab').onclick = () => {
+      const frame = document.getElementById('wbIframe');
+      if (frame?.src) window.open(frame.src, '_blank', 'noopener');
+    };
+  }
+  const url=(window.ECOLLAB?.baseUrl || '') + '/modules/whiteboard/index.php?channel_id=' + encodeURIComponent(channelId);
+  document.getElementById('wbIframeTitle').textContent = channelName || 'Whiteboard';
+  document.getElementById('wbIframe').src = url;
 }
 window.openWhiteboardChannel = openWhiteboardChannel;
 
@@ -1575,6 +1726,7 @@ window.handleKeyDown = handleKeyDown;
 window.msgReply = msgReply;
 window.cancelReply = cancelReply;
 window.msgPin = msgPin;
+window.msgBookmark = msgBookmark;
 window.showMsgMenu = showMsgMenu;
 window.startEditMsg = startEditMsg;
 window.saveEditMsg = saveEditMsg;
@@ -1622,3 +1774,9 @@ window.lastMessageId = 0;
     if (typeof window[name] === 'function') window['__real_' + name] = window[name];
   });
 })();
+
+
+
+
+
+

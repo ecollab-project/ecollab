@@ -1,0 +1,246 @@
+/* Shared eCollab surfaces. Feature layouts and visibility remain page-owned. */
+:root {
+  --ec-page: #0b0f1a;
+  --ec-surface: #111827;
+  --ec-raised: #182235;
+  --ec-input: #0f1726;
+  --ec-line: #2b374b;
+  --ec-text: #f1f5f9;
+  --ec-muted: #a0aec0;
+  --ec-accent: #a855f7;
+  --ec-accent-soft: rgba(168,85,247,.14);
+  --ec-focus: #c084fc;
+  --ec-danger: #fca5a5;
+  --ec-card-radius: 16px;
+  --ec-control-radius: 10px;
+  --ec-dialog-shadow: 0 24px 64px rgba(0,0,0,.32);
+  --ec-primary: #7e22ce;
+  --ec-primary-end: #a21caf;
+}
+html[data-theme="light"] {
+  --ec-page: #f4f6fb;
+  --ec-surface: #ffffff;
+  --ec-raised: #edf1f8;
+  --ec-input: #ffffff;
+  --ec-line: #cbd5e1;
+  --ec-text: #172033;
+  --ec-muted: #526176;
+  --ec-accent: #7e22ce;
+  --ec-accent-soft: #f3e8ff;
+  --ec-focus: #7e22ce;
+  --ec-danger: #b91c1c;
+  --ec-dialog-shadow: 0 24px 64px rgba(15,23,42,.16);
+}
+html.high-contrast {
+  --ec-page: #000;
+  --ec-surface: #000;
+  --ec-raised: #111;
+  --ec-input: #000;
+  --ec-line: #fff;
+  --ec-text: #fff;
+  --ec-muted: #fff;
+  --ec-focus: #fde047;
+}
+body[data-mobile-surface] {
+  --bg: var(--ec-page); --nav: var(--ec-surface); --sidebar: var(--ec-surface);
+  --panel: var(--ec-surface); --card: var(--ec-surface); --card2: var(--ec-raised);
+  --input: var(--ec-input); --line: var(--ec-line); --border: var(--ec-line);
+  --text: var(--ec-text); --muted: var(--ec-muted); --muted2: var(--ec-muted);
+  --bg-deepest: var(--ec-page); --bg-primary: var(--ec-page);
+  --bg-secondary: var(--ec-surface); --bg-tertiary: var(--ec-raised);
+  --bg-card: var(--ec-raised); --text-primary: var(--ec-text); --text-secondary: var(--ec-muted);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+body:is([data-mobile-surface="coworkspace"], [data-mobile-surface="settings"], [data-mobile-surface="library"], [data-mobile-surface="editor"]) {
+  background: var(--ec-page); color: var(--ec-text); font-size: .875rem; line-height: 1.5;
+}
+body[data-mobile-surface] :is(.btn, .navbtn, .tab, .lib-tab, .form-input, .form-select, .form-textarea, .lib-search, .sort) {
+  font-family: inherit; border-radius: var(--ec-control-radius);
+}
+body[data-mobile-surface] :is(.btn, .navbtn, .tab, .lib-tab) { font-weight: 600; }
+body[data-mobile-surface] :is(.card, .panel, .stat-card, .sc-card, .lib-note, .lib-placeholder) { border-radius: var(--ec-card-radius); }
+body[data-mobile-surface] :is(.modal-box, .modal-card, .pm-shell, .wb-manage-box) { border-radius: 20px; box-shadow: var(--ec-dialog-shadow); }
+body[data-mobile-surface] :is(button, a, input, select, textarea):focus-visible { outline: 2px solid var(--ec-focus); outline-offset: 3px; }
+body[data-mobile-surface] :is(button, input, select, textarea):disabled { cursor: not-allowed; }
+body:is([data-mobile-surface="coworkspace"], [data-mobile-surface="settings"], [data-mobile-surface="library"]) :is(.card, .panel, .modal, .lib-note, .lib-placeholder, .access-card) {
+  background: var(--ec-surface); border-color: var(--ec-line); color: var(--ec-text);
+}
+body:is([data-mobile-surface="coworkspace"], [data-mobile-surface="settings"], [data-mobile-surface="library"]) :is(.muted, .meta, .desc, .help, .hint, .lib-sub, .form-label, .perm-help, .back, .lib-back) { color: var(--ec-muted); }
+body:is([data-mobile-surface="coworkspace"], [data-mobile-surface="settings"], [data-mobile-surface="library"]) :is(.form-input, .form-select, .form-textarea, .lib-search, .field input, .field textarea, .field select) {
+  background: var(--ec-input); color: var(--ec-text); border: 1px solid var(--ec-line);
+}
+body:is([data-mobile-surface="coworkspace"], [data-mobile-surface="settings"], [data-mobile-surface="library"]) :is(.nav-item.active, .navbtn.active, .tab.active, .lib-tab.active) {
+  background: var(--ec-accent-soft); color: var(--ec-accent); border-color: var(--ec-accent);
+}
+body[data-mobile-surface="coworkspace"] :is(.btn:not(.danger):not(.delete-btn), .sort, .tab:not(.active), .nav-item:not(.active)) {
+  background: var(--ec-raised); color: var(--ec-text); border-color: var(--ec-line);
+}
+body[data-mobile-surface="coworkspace"] :is(.danger, .delete-btn) { color: var(--ec-danger); }
+body[data-mobile-surface="coworkspace"] :is(.empty, .notice) { color: var(--ec-muted); border-color: var(--ec-line); border-radius: var(--ec-card-radius); line-height: 1.6; }
+body[data-mobile-surface="settings"] .secondary { background: var(--ec-raised); color: var(--ec-text); border-color: var(--ec-line); }
+body[data-mobile-surface="settings"] .nav { background: var(--ec-surface); }
+body[data-mobile-surface="settings"] .navbtn:not(.active):not(.logout) { color: var(--ec-muted); }
+body[data-mobile-surface="editor"] > header { background: var(--ec-surface); border-bottom: 1px solid var(--ec-line); }
+body[data-mobile-surface="editor"] > main > aside { background: var(--ec-surface); border-left: 1px solid var(--ec-line); }
+body[data-mobile-surface="editor"] :is(input, textarea, select) { background: var(--ec-input); color: var(--ec-text); border-color: var(--ec-line); border-radius: var(--ec-control-radius); }
+body[data-mobile-surface="editor"] button { background: #7e22ce; color: #fff; border-color: #7e22ce; border-radius: var(--ec-control-radius); font-weight: 600; }
+body[data-mobile-surface="editor"] :is(a, small) { color: var(--ec-muted); }
+@media (hover: hover) {
+  body[data-mobile-surface="coworkspace"] :is(.btn:not(.delete-btn):not(.danger), .nav-item, .tab):hover { border-color: var(--ec-accent); }
+  body[data-mobile-surface="settings"] .navbtn:hover { background: var(--ec-raised); color: var(--ec-text); }
+}
+@media (forced-colors: active) {
+  body[data-mobile-surface] { --ec-line: CanvasText; --ec-text: CanvasText; --ec-muted: CanvasText; --ec-page: Canvas; --ec-surface: Canvas; --ec-raised: Canvas; --ec-input: Canvas; --ec-focus: Highlight; }
+}
+
+/* Shared chat/dashboard/settings controls, without changing feature visibility. */
+body:is([data-mobile-surface="chat"], [data-mobile-surface="dashboard"], [data-mobile-surface="settings"]) {
+  color-scheme: dark;
+}
+html[data-theme="light"] body[data-mobile-surface] { color-scheme: light; }
+body[data-mobile-surface="dashboard"] :is(.btn-primary, .btn-sec, .btn-secondary),
+body[data-mobile-surface="settings"] .btn {
+  font-family: inherit; font-size: .8125rem; font-weight: 600; line-height: 1.4;
+  border-radius: var(--ec-control-radius); padding: 9px 14px; min-height: 38px;
+}
+body[data-mobile-surface="dashboard"] .btn-primary,
+body[data-mobile-surface="settings"] .btn.primary {
+  background: linear-gradient(135deg, var(--ec-primary), var(--ec-primary-end));
+  color: #fff; box-shadow: none;
+}
+body[data-mobile-surface="dashboard"] :is(.btn-sec, .btn-secondary) {
+  background: var(--ec-raised); color: var(--ec-text); border: 1px solid var(--ec-line);
+}
+body[data-mobile-surface="dashboard"] .nav-item.active,
+body[data-mobile-surface="chat"] .sidebar-nav-item.active {
+  background: var(--ec-accent-soft); color: var(--ec-text);
+  box-shadow: inset 3px 0 var(--ec-accent); font-weight: 600;
+}
+body[data-mobile-surface="dashboard"] :is(.md, .modal) {
+  border-radius: 20px; box-shadow: var(--ec-dialog-shadow);
+  background: var(--ec-surface); border-color: var(--ec-line);
+  max-height: calc(var(--app-viewport-height, 100dvh) - 32px);
+}
+body[data-mobile-surface="settings"] :is(.hero, .modalbox, .choice button) {
+  background: var(--ec-surface); color: var(--ec-text); border-color: var(--ec-line);
+  border-radius: var(--ec-card-radius);
+}
+body[data-mobile-surface="settings"] .choice button.active {
+  background: var(--ec-accent-soft); border-color: var(--ec-accent);
+}
+body[data-mobile-surface="settings"] .nav { overflow-y: auto; height: var(--app-viewport-height, 100dvh); }
+body[data-mobile-surface="settings"] .settings-backdrop {
+  top: var(--app-viewport-top, 0px); bottom: auto; height: var(--app-viewport-height, 100dvh);
+  background: rgb(0 0 0 / .6); padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  overflow-y: auto; z-index: 1000;
+}
+body[data-mobile-surface="settings"] .modalbox {
+  max-height: 100%; overflow-y: auto; overscroll-behavior: contain; box-shadow: var(--ec-dialog-shadow);
+}
+/* A full-size hit area around the compact switch track. */
+body[data-mobile-surface="settings"] .switch,
+body[data-mobile-surface="settings"] .switch.on {
+  width: 44px; height: 44px; min-height: 44px; padding: 0; border: 0;
+  background: transparent; border-radius: 10px;
+}
+body[data-mobile-surface="settings"] .switch::before {
+  content: ''; position: absolute; width: 43px; height: 24px; top: 10px; left: 0;
+  border: 1px solid var(--ec-line); border-radius: 99px; background: var(--ec-raised);
+}
+body[data-mobile-surface="settings"] .switch::after { top: 14px; left: 4px; background: var(--ec-muted); }
+body[data-mobile-surface="settings"] .switch.on::before { background: var(--ec-primary); border-color: var(--ec-primary); }
+body[data-mobile-surface="settings"] .switch.on::after { left: 24px; background: #fff; }
+body[data-mobile-surface="settings"] .title { margin-top: 0; }
+body[data-mobile-surface="settings"] :is(.field label, .range output, .group) { color: var(--ec-muted); }
+
+/* Empty table cells keep table layout and span every column. */
+td.dashboard-empty-state{display:table-cell!important;text-align:center;padding:24px!important;}
+div.dashboard-empty-state{width:100%;box-sizing:border-box;}
+
+/* Auth fields use their rounded container as the single focus indicator. */
+body[data-mobile-surface="forms"] { color-scheme: dark; }
+body[data-mobile-surface="forms"] .input-row { min-width: 0; }
+body[data-mobile-surface="forms"] .input-row :is(input, select) {
+  min-width: 0; width: 100%; padding: 0; border-radius: 0;
+}
+body[data-mobile-surface="forms"] .input-row :is(input, select):focus,
+body[data-mobile-surface="forms"] .input-row :is(input, select):focus-visible {
+  outline: none; box-shadow: none;
+}
+body[data-mobile-surface="forms"] .input-row:focus-within {
+  border-color: var(--ec-focus);
+  box-shadow: 0 0 0 3px var(--ec-accent-soft);
+}
+body[data-mobile-surface="forms"] .input-row input:-webkit-autofill,
+body[data-mobile-surface="forms"] .input-row input:-webkit-autofill:hover,
+body[data-mobile-surface="forms"] .input-row input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fff; caret-color: #fff;
+  -webkit-box-shadow: 0 0 0 1000px #191523 inset;
+  box-shadow: 0 0 0 1000px #191523 inset;
+}
+body[data-mobile-surface="forms"] .input-row input:autofill {
+  color: #fff; caret-color: #fff; background-color: #191523;
+}
+@media (forced-colors: active) {
+  body[data-mobile-surface="forms"] .input-row:focus-within {
+    outline: 2px solid Highlight; outline-offset: 3px; box-shadow: none;
+  }
+  body[data-mobile-surface="forms"] .input-row input:-webkit-autofill {
+    -webkit-text-fill-color: CanvasText; box-shadow: none;
+  }
+}
+
+/* Notification menu: fixed header, bounded list and consistent event icons. */
+body[data-mobile-surface="chat"] #notifDropdown {
+  width: min(380px, calc(100vw - 24px));
+  max-height: min(560px, calc(var(--app-viewport-height, 100dvh) - 96px));
+  overflow: hidden; flex-direction: column; padding: 0;
+  border: 1px solid var(--ec-line); border-radius: 16px;
+  background: var(--ec-surface); color: var(--ec-text);
+  box-shadow: var(--ec-dialog-shadow); z-index: 1000;
+}
+body[data-mobile-surface="chat"] #notifDropdown.open { display: flex !important; }
+body[data-mobile-surface="chat"] #notifDropdown .notif-header {
+  flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 14px 16px; background: var(--ec-surface);
+  border-bottom: 1px solid var(--ec-line);
+}
+body[data-mobile-surface="chat"] #notifDropdown .notif-title { font-size: 14px; font-weight: 700; color: var(--ec-text); }
+body[data-mobile-surface="chat"] #notifDropdown .notif-mark-read {
+  border: 0; background: transparent; padding: 6px 0;
+  font-family: inherit; font-size: 12px; font-weight: 600; line-height: 1.4; color: var(--ec-accent); cursor: pointer;
+}
+body[data-mobile-surface="chat"] #notifList { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--ec-line) transparent; }
+body[data-mobile-surface="chat"] #notifList .notif-item {
+  position: relative; display: flex; align-items: flex-start; gap: 12px;
+  padding: 14px 28px 14px 16px; min-height: 76px; box-sizing: border-box;
+  border-bottom: 1px solid var(--ec-line); background: transparent; cursor: pointer;
+}
+body[data-mobile-surface="chat"] #notifList .notif-item.unread { background: var(--ec-accent-soft); }
+body[data-mobile-surface="chat"] #notifList .notif-item:hover { background: var(--ec-raised); }
+body[data-mobile-surface="chat"] #notifList .notif-item:focus-visible { outline: 2px solid var(--ec-focus); outline-offset: -3px; }
+body[data-mobile-surface="chat"] #notifList .notif-icon {
+  width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center;
+  border-radius: 10px; background: var(--ec-raised); color: var(--ec-muted);
+}
+body[data-mobile-surface="chat"] #notifList .notif-icon svg { width: 19px; height: 19px; }
+body[data-mobile-surface="chat"] #notifList .notif-icon--call { color: var(--ec-danger); }
+body[data-mobile-surface="chat"] #notifList .notif-icon--accepted { color: var(--ec-accent); }
+body[data-mobile-surface="chat"] #notifList .notif-content { flex: 1; min-width: 0; }
+body[data-mobile-surface="chat"] #notifList .notif-text { font-size: 13px; font-weight: 500; line-height: 1.45; color: var(--ec-text); }
+body[data-mobile-surface="chat"] #notifList .unread .notif-text { font-weight: 600; }
+body[data-mobile-surface="chat"] #notifList .notif-body {
+  margin-top: 3px; font-size: 12px; line-height: 1.45; color: var(--ec-muted);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+body[data-mobile-surface="chat"] #notifList :is(.notif-text,.notif-body) { overflow-wrap: anywhere; }
+body[data-mobile-surface="chat"] #notifList .notif-time { margin-top: 5px; font-size: 11px; line-height: 1.4; color: var(--ec-muted); }
+body[data-mobile-surface="chat"] #notifList .notif-dot { position: absolute; right: 12px; top: 20px; width: 6px; height: 6px; margin: 0; background: var(--ec-accent); border-radius: 50%; }
+body[data-mobile-surface="chat"] #notifList .notif-load-more { width: 100%; min-height: 44px; padding: 12px; border: 0; background: var(--ec-surface); color: var(--ec-accent); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+@media (max-width: 768px) {
+  body[data-mobile-surface="chat"] #notifDropdown {
+    position: fixed; top: calc(var(--app-viewport-top, 0px) + env(safe-area-inset-top) + 64px);
+    left: 12px; right: 12px; width: auto;
+    max-height: calc(var(--app-viewport-height, 100dvh) - 88px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+}

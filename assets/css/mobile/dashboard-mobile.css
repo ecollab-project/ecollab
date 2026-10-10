@@ -166,3 +166,27 @@
   .select-filter { width: 100%; }
 
 }
+
+
+/* ── Dashboard data-safe layout ─────────────────────────────────────────── */
+.dashboard-empty-state{
+  min-height:72px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px 14px;
+  color:var(--muted2,#94a3b8);
+  font-size:12px;
+  text-align:center;
+  border:1px dashed var(--border,rgba(255,255,255,.1));
+  border-radius:10px;
+  background:rgba(255,255,255,.015);
+}
+.main-grid,.grid-2,.stats-row,.stat-row,.stats-grid,.bottom-grid,.qa-grid,.analytics-grid{min-width:0;}
+.main-grid>* ,.grid-2>*{min-width:0;}
+.card,.sc-card,.stat-card{min-width:0;box-sizing:border-box;}
+.table-wrap,.act-table-wrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+
+@media (max-width: 1100px){
+  .main-grid,.grid-2{grid-template-columns:1fr !important;}
+}

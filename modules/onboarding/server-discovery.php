@@ -30,13 +30,17 @@ $initials = strtoupper(mb_substr($firstName, 0, 1));
   <title>Find Your Communities – <?= APP_NAME ?></title>
   <meta name="robots" content="noindex,nofollow">
   <meta name="csrf-token" content="<?= htmlspecialchars(CSRF::token(), ENT_QUOTES, 'UTF-8') ?>">
+  <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js" defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/variables.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/onboarding.css">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=1">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=2">
+<script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 </head>
-<body>
+<body data-mobile-surface="forms">
 
   <canvas id="particles"></canvas>
   <div class="orb orb1"></div>
@@ -126,5 +130,6 @@ $initials = strtoupper(mb_substr($firstName, 0, 1));
     const CHAT_URL    = BASE_URL + '/modules/chat/chat.php';
   </script>
   <script src="<?= BASE_URL ?>/assets/js/onboarding/server-discovery.js" defer></script>
+<?php require_once dirname(__DIR__, 2) . '/includes/calls/bootstrap.php'; ?>
 </body>
 </html>

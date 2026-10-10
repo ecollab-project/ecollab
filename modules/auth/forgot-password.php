@@ -26,9 +26,12 @@ AuthMiddleware::redirectIfAuthed();
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/variables.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/auth.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/auth-mobile.css">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=1">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=2">
+<script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 </head>
 
-<body>
+<body data-mobile-surface="forms">
 
   <div class="orb orb1"></div>
   <div class="orb orb2"></div>
@@ -36,10 +39,7 @@ AuthMiddleware::redirectIfAuthed();
 
   <div class="page">
 
-    <a href="<?= BASE_URL ?>/index.php" class="nav-logo">
-      <div class="ico">🌿</div>
-      <?= APP_NAME ?>
-    </a>
+    <a href="<?= BASE_URL ?>/index.php" class="nav-logo ecollab-auth-brand"><img src="<?= BASE_URL ?>/assets/ecollab-wordmark.webp" alt="eCollab"></a>
 
     <div class="center">
       <div class="card">

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 // ── Catch absolutely everything, including fatal errors ──────────────────────
@@ -9,11 +10,8 @@ register_shutdown_function(function () {
             http_response_code(500);
             header('Content-Type: application/json');
         }
-        $debug = defined('APP_DEBUG') && APP_DEBUG;
         echo json_encode([
-            'error' => $debug
-                ? '[FATAL] ' . $err['message'] . ' in ' . basename($err['file']) . ':' . $err['line']
-                : 'Server error',
+            'error' => 'Server error',
         ]);
     }
 });
@@ -63,7 +61,7 @@ try {
 
     if (!$isPrivileged) {
         $accessStmt = $db->prepare('
-            SELECT c.is_private, c.created_by, sm.server_role,
+            SELECT c.is_private, c.created_by, c.type, sm.server_role,
                    EXISTS(
                        SELECT 1 FROM channel_members cm
                        WHERE cm.channel_id = c.id AND cm.user_id = :uid_access
@@ -91,6 +89,31 @@ try {
         if ((int)$access['is_private'] === 1 && !(bool)$access['has_channel_access'] && !$canManage) {
             throw new RuntimeException('You do not have access to this private channel', 403);
         }
+
+        if (($access['type'] ?? '') === 'announcement' && !$canManage) {
+            throw new RuntimeException('Announcement channels are view-only for members', 403);
+        }
+
+        // Facilitator moderation is server-scoped.
+        // Suspend = view-only everywhere in this server.
+        // Mute = cannot send in chat/announcement channels, but other server features remain available.
+        if (!$canManage) {
+            $modStmt = $db->prepare("SELECT action_type, reason
+                FROM moderation_actions
+                WHERE server_id=(SELECT server_id FROM channels WHERE id=:cid_mod)
+                  AND target_user_id=:uid_mod
+                  AND is_active=1
+                  AND action_type IN ('mute','suspend')
+                  AND (expires_at IS NULL OR expires_at>NOW())
+                ORDER BY action_type='suspend' DESC, created_at DESC");
+            $modStmt->execute([':cid_mod'=>$channelId, ':uid_mod'=>$user['id']]);
+            foreach ($modStmt->fetchAll(PDO::FETCH_ASSOC) as $mod) {
+                if (($mod['action_type'] ?? '') === 'suspend') {
+                    throw new RuntimeException('Your access to this server is suspended. You can view content but cannot interact for now.', 403);
+                }
+                throw new RuntimeException('You are muted in this server for 24 hours.', 403);
+            }
+        }
     }
 
     $service = new MessageService();
@@ -98,23 +121,16 @@ try {
 
     http_response_code(201);
     echo json_encode(['success' => true, 'message' => $message]);
-
 } catch (InvalidArgumentException $e) {
     http_response_code(400);
     echo json_encode(['error' => $e->getMessage()]);
-
 } catch (RuntimeException $e) {
     $code = ($e->getCode() >= 400 && $e->getCode() < 600) ? $e->getCode() : 500;
     http_response_code($code);
     echo json_encode(['error' => $e->getMessage()]);
-
 } catch (Throwable $e) {
     error_log('[Ecollab] send-message Throwable: ' . $e->getMessage()
         . ' in ' . $e->getFile() . ':' . $e->getLine());
     http_response_code(500);
-    echo json_encode([
-        'error' => (defined('APP_DEBUG') && APP_DEBUG)
-            ? $e->getMessage() . ' — ' . basename($e->getFile()) . ':' . $e->getLine()
-            : 'Server error',
-    ]);
+    echo json_encode(['error' => 'Server error']);
 }

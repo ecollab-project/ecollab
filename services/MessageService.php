@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/database/config/db.php';
+require_once __DIR__ . '/RealtimeOutbox.php';
 
 class MessageService
 {
@@ -17,7 +18,7 @@ class MessageService
     /**
      * Fetch paginated messages for a channel.
      */
-    public function getMessages(int $channelId, int $userId, ?int $before = null, int $limit = self::PAGE_SIZE): array
+    public function getMessages(int $channelId, int $userId, ?int $before = null, int $limit = self::PAGE_SIZE, ?int $after = null): array
     {
         // Verify user has access to this channel's server
         // Admins/moderators can read any channel
@@ -52,6 +53,9 @@ class MessageService
             $params[':before'] = $before;
         }
 
+        if ($after !== null) $beforeClause = 'AND m.id > :after';
+        $messageOrder = $after !== null ? 'ASC' : 'DESC';
+
         $stmt = $this->db->prepare("
             SELECT m.id, m.channel_id, m.sender_id, m.content, m.content_type,
                    m.parent_id, m.is_edited, m.is_pinned, m.reaction_count,
@@ -65,7 +69,7 @@ class MessageService
             LEFT JOIN messages pm ON pm.id = m.parent_id AND pm.is_deleted = 0
             LEFT JOIN users pu ON pu.id = pm.sender_id
             WHERE m.channel_id = :cid AND m.is_deleted = 0 $beforeClause
-            ORDER BY m.id DESC
+            ORDER BY m.id $messageOrder
             LIMIT :limit
         ");
         $stmt->bindValue(':cid',   $channelId, PDO::PARAM_INT);
@@ -73,8 +77,10 @@ class MessageService
         if ($before !== null) {
             $stmt->bindValue(':before', $before, PDO::PARAM_INT);
         }
+        if ($after !== null) $stmt->bindValue(':after', $after, PDO::PARAM_INT);
         $stmt->execute();
-        $messages = array_reverse($stmt->fetchAll());
+        $messages = $stmt->fetchAll();
+        if ($after === null) $messages = array_reverse($messages);
 
         // Attach reactions per message
         if (!empty($messages)) {
@@ -200,6 +206,9 @@ class MessageService
             ? $data['content_type'] : 'text';
         $parentId    = isset($data['parent_id']) ? (int)$data['parent_id'] : null;
 
+        $pollQuestion = null;
+        $pollOptions = [];
+
         // For polls, content = the question
         if ($contentType === 'poll') {
             $pollQuestion = trim($data['poll_question'] ?? $content);
@@ -210,44 +219,48 @@ class MessageService
             $content = $pollQuestion;
         }
 
-        $stmt = $this->db->prepare("
-            INSERT INTO messages (channel_id, sender_id, content, content_type, parent_id, created_at, updated_at)
-            VALUES (:cid, :uid, :content, :type, :parent, NOW(), NOW())
-        ");
-        $stmt->execute([
-            ':cid'     => $channelId,
-            ':uid'     => $senderId,
-            ':content' => $content,
-            ':type'    => $contentType,
-            ':parent'  => $parentId,
-        ]);
-        $messageId = (int)$this->db->lastInsertId();
-
-        // Insert poll rows if needed
-        if ($contentType === 'poll') {
-            $pStmt = $this->db->prepare("INSERT INTO polls (message_id, question) VALUES (:mid, :q)");
-            $pStmt->execute([':mid' => $messageId, ':q' => $pollQuestion]);
-            $pollId = (int)$this->db->lastInsertId();
-            $oStmt = $this->db->prepare("INSERT INTO poll_options (poll_id, option_text, position) VALUES (:pid, :txt, :pos)");
-            foreach ($pollOptions as $i => $opt) {
-                $oStmt->execute([':pid' => $pollId, ':txt' => $opt, ':pos' => $i]);
-            }
-        }
-
-        // Handle attachment
-        if (!empty($data['attachment_path'])) {
-            $aStmt = $this->db->prepare("
-                INSERT INTO message_attachments (message_id, file_name, file_path, file_size, mime_type)
-                VALUES (:mid, :name, :path, :size, :mime)
+        $messageId = RealtimeOutbox::record($this->db, 'channel', $channelId, function () use ($channelId, $senderId, $content, $contentType, $parentId, $data, $pollQuestion, $pollOptions) {
+            $stmt = $this->db->prepare("
+                INSERT INTO messages (channel_id, sender_id, content, content_type, parent_id, created_at, updated_at)
+                VALUES (:cid, :uid, :content, :type, :parent, NOW(), NOW())
             ");
-            $aStmt->execute([
-                ':mid'  => $messageId,
-                ':name' => $data['attachment_name'] ?? basename($data['attachment_path']),
-                ':path' => $data['attachment_path'],
-                ':size' => $data['attachment_size'] ?? 0,
-                ':mime' => $data['attachment_mime'] ?? 'application/octet-stream',
+            $stmt->execute([
+                ':cid'     => $channelId,
+                ':uid'     => $senderId,
+                ':content' => $content,
+                ':type'    => $contentType,
+                ':parent'  => $parentId,
             ]);
-        }
+            $messageId = (int)$this->db->lastInsertId();
+
+            // Insert poll rows if needed
+            if ($contentType === 'poll') {
+                $pStmt = $this->db->prepare("INSERT INTO polls (message_id, question) VALUES (:mid, :q)");
+                $pStmt->execute([':mid' => $messageId, ':q' => $pollQuestion]);
+                $pollId = (int)$this->db->lastInsertId();
+                $oStmt = $this->db->prepare("INSERT INTO poll_options (poll_id, option_text, position) VALUES (:pid, :txt, :pos)");
+                foreach ($pollOptions as $i => $opt) {
+                    $oStmt->execute([':pid' => $pollId, ':txt' => $opt, ':pos' => $i]);
+                }
+            }
+
+            // Handle attachment
+            if (!empty($data['attachment_path'])) {
+                $aStmt = $this->db->prepare("
+                    INSERT INTO message_attachments (message_id, file_name, file_path, file_size, mime_type)
+                    VALUES (:mid, :name, :path, :size, :mime)
+                ");
+                $aStmt->execute([
+                    ':mid'  => $messageId,
+                    ':name' => $data['attachment_name'] ?? basename($data['attachment_path']),
+                    ':path' => $data['attachment_path'],
+                    ':size' => $data['attachment_size'] ?? 0,
+                    ':mime' => $data['attachment_mime'] ?? 'application/octet-stream',
+                ]);
+            }
+
+            return $messageId;
+        });
 
         return $this->getMessageById($messageId);
     }
@@ -350,7 +363,7 @@ class MessageService
         $stmt = $this->db->prepare("
             SELECT m.id, m.channel_id, m.sender_id, m.content, m.content_type,
                    m.is_pinned, m.created_at, m.updated_at,
-                   u.username, u.full_name, u.avatar_color_gradient AS grad
+                   u.username, u.full_name, u.avatar_url, u.avatar_color_gradient AS grad
             FROM messages m
             JOIN users u ON u.id = m.sender_id
             WHERE m.channel_id = :cid AND m.is_pinned = 1 AND m.is_deleted = 0
@@ -425,7 +438,9 @@ class MessageService
         }
 
         $msg['reactions']  = [];
-        $msg['attachments'] = [];
+        $attachments = $this->db->prepare('SELECT id, file_name, file_path, file_size, mime_type FROM message_attachments WHERE message_id=:mid ORDER BY id');
+        $attachments->execute([':mid' => $id]);
+        $msg['attachments'] = $attachments->fetchAll(PDO::FETCH_ASSOC);
         $msg['poll']        = null;
 
         if ($msg['content_type'] === 'poll') {
@@ -453,3 +468,5 @@ class MessageService
         return $msg;
     }
 }
+
+

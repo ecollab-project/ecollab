@@ -107,14 +107,15 @@ try {
         $senderName = $me['full_name'] ?: $me['username'];
         $n = $db->prepare(
             "INSERT INTO notifications
-             (user_id, type, title, body, ref_id, is_read, created_at)
-             VALUES (:uid, 'connection_request', :title, :body, :ref_id, 0, NOW())"
+             (recipient_id, actor_id, type, title, body, link_url, icon, is_read, created_at)
+             VALUES (:recipient_id, :actor_id, 'system', :title, :body, :link_url, '+', 0, NOW())"
         );
         $n->execute([
-            ':uid' => $addresseeId,
+            ':recipient_id' => $addresseeId,
+            ':actor_id' => $me['id'],
             ':title' => $senderName . ' wants to connect with you',
-            ':body' => 'Tap Accept or Decline in your notifications',
-            ':ref_id' => $reqId,
+            ':body' => 'Open your connections to accept or decline this request.',
+            ':link_url' => '/modules/chat/chat.php?view=connections',
         ]);
     } catch (Throwable $ne) {
         error_log('[send-request] notification insert failed: ' . $ne->getMessage());
@@ -136,5 +137,9 @@ try {
 } catch (Throwable $e) {
     error_log('[send-request] ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['error' => 'Server error']);
+    echo json_encode([
+        'error' => 'Server error',
+        'code' => 'FRIEND_REQUEST_FAILED',
+        'detail' => null,
+    ]);
 }

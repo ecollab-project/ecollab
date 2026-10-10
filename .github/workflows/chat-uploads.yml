@@ -1,0 +1,28 @@
+name: Chat resumable uploads
+on:
+  push:
+  pull_request:
+jobs:
+  uploads:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: fileinfo, pdo
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          php -l API/chat/resumable-upload.php
+          php -l services/ChatTusStorage.php
+          php -l services/ChatUploadAccess.php
+          php -l modules/chat/chat.php
+          php tests/chat-tus-regression.php
+          php tests/chat-upload-access-regression.php
+      - run: npm ci --prefix tools/chat-uploads
+      - run: npm run --prefix tools/chat-uploads build
+      - run: git diff --exit-code -- assets/js/chat/resumable-uploads.js assets/js/chat/resumable-uploads.js.LEGAL.txt assets/js/chat/resumable-uploads.NOTICES.txt
+      - run: NODE_PATH="$PWD/tools/chat-uploads/node_modules" node tests/chat-uploads-regression.cjs
+      - run: NODE_PATH="$PWD/tools/chat-uploads/node_modules" node tests/chat-tus-http-regression.cjs

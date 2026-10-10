@@ -16,7 +16,11 @@ $defaults = [
     'profile_visibility'=>'everyone','avatar_gradient'=>'#a855f7,#ec4899','theme'=>'dark','compact_mode'=>0,'reduce_motion'=>0,
     'high_contrast'=>0,'screen_reader_mode'=>0,'notification_desktop'=>1,'notification_messages'=>1,'notification_mentions'=>1,
     'notification_matches'=>1,'notification_sound'=>1,'input_device'=>null,'output_device'=>null,'mic_volume'=>100,'output_volume'=>100,
-    'noise_suppression'=>1,'echo_cancellation'=>1,'auto_gain_control'=>1
+    'noise_suppression'=>1,'echo_cancellation'=>1,'auto_gain_control'=>1,
+    'font_scale'=>100,'message_density'=>'cozy','sidebar_scale'=>100,'typing_indicators'=>1,'link_previews'=>1,'media_previews'=>1,
+    'autoplay_gifs'=>1,'show_timestamps'=>1,'enter_to_send'=>1,'notification_groups'=>1,'notification_replies'=>1,'notification_threads'=>1,
+    'notification_reactions'=>1,'notification_connections'=>1,'notification_announcements'=>1,'camera_device'=>null,'voice_mode'=>'voice_activity',
+    'input_sensitivity'=>50,'jarred_enabled'=>1,'jarred_response_style'=>'balanced','jarred_personalization'=>1
 ];
 
 function ensureSettings(PDO $db, int $userId, array $defaults): void {
@@ -52,13 +56,18 @@ try {
         $value=$body[$key];
         if (is_int($defaults[$key])) {
             $value=(int)(bool)$value;
-            if (in_array($key,['mic_volume','output_volume'],true)) $value=max(0,min(100,(int)$body[$key]));
+            if (in_array($key,['mic_volume','output_volume','input_sensitivity'],true)) $value=max(0,min(100,(int)$body[$key]));
+            if ($key==='font_scale') $value=max(80,min(140,(int)$body[$key]));
+            if ($key==='sidebar_scale') $value=max(80,min(130,(int)$body[$key]));
         } else {
             $value=(string)$value;
             if ($key==='profile_visibility' && !in_array($value,['everyone','servers','connections'],true)) continue;
             if ($key==='theme' && !in_array($value,['dark','light','system'],true)) continue;
             if ($key==='avatar_gradient' && !preg_match('/^#[0-9a-fA-F]{6},#[0-9a-fA-F]{6}$/',$value)) continue;
-            if (in_array($key,['input_device','output_device'],true)) $value=mb_substr($value,0,255);
+            if ($key==='message_density' && !in_array($value,['compact','cozy','spacious'],true)) continue;
+            if ($key==='voice_mode' && !in_array($value,['voice_activity','push_to_talk'],true)) continue;
+            if ($key==='jarred_response_style' && !in_array($value,['concise','balanced','detailed'],true)) continue;
+            if (in_array($key,['input_device','output_device','camera_device'],true)) $value=mb_substr($value,0,255);
         }
         $updates[]="`$key` = :$key"; $params[":$key"]=$value;
     }

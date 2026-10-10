@@ -1,0 +1,39 @@
+name: UI behavior regression
+on:
+  push:
+    branches: [collabora-document-integration]
+  pull_request:
+    paths: ['modules/chat/**', 'modules/student/**', 'modules/facilitator/**', 'modules/admin/**', 'assets/js/**', 'assets/css/app-design.css', 'API/collaboration/documents.php', 'API/ai/message.php', 'tests/*regression.cjs', '.github/workflows/ui-consistency.yml']
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - name: PHP syntax
+        run: |
+          for file in modules/admin/dashboard.php modules/student/dashboard.php modules/facilitator/dashboard.php modules/chat/settings.php modules/chat/chat.php API/collaboration/documents.php includes/calls/bootstrap.php API/ai/message.php API/dm/send-message.php services/OllamaService.php services/WhiteboardSceneService.php services/WhiteboardPresenceService.php services/ChannelService.php API/collaboration/whiteboards.php API/collaboration/report-document.php modules/collaboration/report-document.php modules/collaboration/document.php modules/collaboration/collabora-editor.php API/facilitator/server-tools.php websocket/handlers/WhiteboardHandler.php; do php -l "$file" || exit 1; done
+      - name: Install DOM test dependency
+        run: npm install --no-save --ignore-scripts jsdom@30.1.2 yjs@13.6.27 y-protocols@1.0.6
+      - name: Navigation, settings and calls
+        run: |
+          node tests/ai-dashboard-regression.cjs
+          node tests/ui-consistency-regression.cjs
+          node tests/call-settings-regression.cjs
+          node tests/livekit-calls-regression.cjs
+          node tests/livekit-voice-regression.cjs
+
+
+          node tests/team-audit-regression.cjs
+          php tests/whiteboard-scene-regression.php
+
+          node tests/yjs-presence-regression.cjs
+          php tests/whiteboard-presence-regression.php
+          node tests/yjs-channel-presence-regression.cjs

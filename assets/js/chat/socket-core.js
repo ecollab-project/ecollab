@@ -20,6 +20,7 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 const typingUsers          = new Set();
 let _authed                = false;
 let _wsToken               = null;        // server-issued token, fetched before connect
+let _socketAuthenticated    = false;
 
 // ── Token fetch + connect entry point ────────────────────────────────────────
 async function connectWebSocket() {
@@ -42,48 +43,74 @@ async function connectWebSocket() {
 function initWebSocket() {
   const wsUrl = window.ECOLLAB?.wsUrl || 'ws://localhost:8080';
 
+  if (chatSocket && (chatSocket.readyState === WebSocket.CONNECTING || chatSocket.readyState === WebSocket.OPEN)) {
+    return;
+  }
+
   try {
-    chatSocket        = new WebSocket(wsUrl);
-    window.chatSocket = chatSocket;
+    const socket = new WebSocket(wsUrl);
+    chatSocket = socket;
+    window.chatSocket = socket;
+
+    socket.onopen = () => {
+      if (chatSocket !== socket || socket.readyState !== WebSocket.OPEN) return;
+      console.log('[WS] Connected');
+      socketReconnectDelay    = 2000;
+      socketReconnectAttempts = 0;
+      _authed                 = false;
+      _socketAuthenticated    = false;
+
+      // Authenticate this exact socket; a reconnect may have replaced the global.
+      socket.send(JSON.stringify({ type: 'auth', ws_token: _wsToken }));
+    };
+
+    socket.onmessage = (event) => {
+      if (chatSocket !== socket) return;
+      let data;
+      try { data = JSON.parse(event.data); } catch { return; }
+      if (typeof data?.type === 'string' && data.type.startsWith('dm_group_call_')) {
+        console.log('[DM group call] received WS event', data);
+      }
+      window.dispatchEvent(new CustomEvent('ecollab:socket-message', { detail: data }));
+      handleSocketMessage(data);
+    };
+
+    socket.onclose = (event) => {
+      if (chatSocket !== socket) return;
+      chatSocket = null;
+      _authed = false;
+      window.dispatchEvent(new CustomEvent('ecollab:realtime-disconnected'));
+      console.info(`[WS] Closed (code ${event.code}${event.reason ? ', reason: ' + event.reason : ''})`);
+
+      // Code 1000 is a deliberate normal close. Reconnecting forever on a
+      // deliberate close created a tight loop and consumed fresh auth tokens.
+      if (event.code === 1000) {
+        if (!_socketAuthenticated) {
+          console.warn('[WS] Connection closed normally before authentication; polling fallback enabled.');
+          startPollingFallback();
+        }
+        return;
+      }
+
+      if (event.code === 1006 && socketReconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+        console.info('[WS] Server unreachable — switching to polling mode');
+        startPollingFallback();
+        return;
+      }
+      if (socketReconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+        scheduleReconnect();
+      } else {
+        console.info('[WS] Max reconnect attempts — polling mode');
+        startPollingFallback();
+      }
+    };
+
+    socket.onerror = () => { /* onclose fires immediately after */ };
   } catch (err) {
     console.warn('[WS] WebSocket constructor threw — polling mode.');
     startPollingFallback();
     return;
   }
-
-  chatSocket.onopen = () => {
-    console.log('[WS] Connected');
-    socketReconnectDelay    = 2000;
-    socketReconnectAttempts = 0;
-    _authed                 = false;
-
-    // Authenticate using the server-issued token (never trust client-supplied user_id)
-    chatSocket.send(JSON.stringify({ type: 'auth', ws_token: _wsToken }));
-  };
-
-  chatSocket.onmessage = (event) => {
-    let data;
-    try { data = JSON.parse(event.data); } catch { return; }
-    handleSocketMessage(data);
-  };
-
-  chatSocket.onclose = (event) => {
-    _authed = false;
-    console.info(`[WS] Closed (code ${event.code})`);
-    if (event.code === 1006 && socketReconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-      console.info('[WS] Server unreachable — switching to polling mode');
-      startPollingFallback();
-      return;
-    }
-    if (socketReconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-      scheduleReconnect();
-    } else {
-      console.info('[WS] Max reconnect attempts — polling mode');
-      startPollingFallback();
-    }
-  };
-
-  chatSocket.onerror = () => { /* onclose fires immediately after */ };
 }
 
 function scheduleReconnect() {
@@ -112,22 +139,61 @@ function wsSend(payload) {
   return false;
 }
 window.wsSend = wsSend;
+window.isChatRealtimeReady = () => Boolean(_authed && chatSocket && chatSocket.readyState === WebSocket.OPEN);
+
+// Messages are already persisted by HTTP. Queue their relay during reconnect/auth.
+const pendingChatRelays = new Map();
+function sendPersistedChatMessage(payload) {
+  if (wsSend(payload)) return true;
+  const key = payload.type + ':' + (payload.message_id || payload.message?.id);
+  pendingChatRelays.set(key, payload);
+  return false;
+}
+window.sendPersistedChatMessage = sendPersistedChatMessage;
 
 // ── Message dispatcher ───────────────────────────────────────────────────────
 function handleSocketMessage(data) {
+  if (/^dm_(?:call_|group_call_)/.test(data.type || '')) {
+    if (window.EcollabCalls) window.EcollabCalls.handle(data).catch(console.error);
+    else (window.__ecollabPendingCalls ||= []).push(data);
+    return;
+  }
+  // LiveKit is authoritative for media and the roster; legacy socket events must not replace it.
+  if (window.EcollabLiveKit && /^(voice_join|voice_leave|voice_peers|webrtc_offer|webrtc_answer|webrtc_candidate|screen_share_notify)$/.test(data.type || '')) return;
+
   switch (data.type) {
 
     // ── Auth ──
     case 'auth_ok':
       _authed = true;
+      _socketAuthenticated = true;
       console.log('[WS] Authenticated as user', data.user_id);
       // Join current channel if any
-      if (window.ECOLLAB?.currentChannelId) {
+      if (window.ECOLLAB?.currentChannelId && !window.ECOLLAB?.whiteboardStandalone) {
         chatSocket.send(JSON.stringify({
           type: 'join_channel',
           channel_id: window.ECOLLAB.currentChannelId,
         }));
       }
+      pendingChatRelays.forEach((payload, key) => { if (wsSend(payload)) pendingChatRelays.delete(key); });
+      // Restore the voice-room membership after a WS reconnect.
+      // The server intentionally keeps voice rooms in memory per socket.
+      if (window.vcChannelId != null && window.vcActive !== false) {
+        chatSocket.send(JSON.stringify({
+          type: 'join_voice',
+          channel_id: Number(window.vcChannelId),
+        }));
+      }
+      // Rejoin an open whiteboard after WebSocket authentication.
+      if (typeof window.wbRejoinRoom === 'function') {
+        setTimeout(() => window.wbRejoinRoom(), 50);
+      }
+      break;
+
+    case 'joined_channel':
+    case 'chat_presence':
+    case 'chat_presence_remove':
+      window.dispatchEvent(new CustomEvent('ecollab:chat-presence',{detail:data}));
       break;
 
     // ── Messages ──
@@ -159,6 +225,56 @@ function handleSocketMessage(data) {
       handlePresenceUpdate(data);
       break;
 
+    // ── Voice channel invite ──
+    case 'voice_invite':
+      if (window._onVoiceInvite) window._onVoiceInvite(data);
+      break;
+
+    // ── DM group voice (reuses the real voice-channel mesh) ──
+    case 'dm_group_voice_start':
+      if (window._onDmGroupVoiceStart) window._onDmGroupVoiceStart(data);
+      break;
+    case 'dm_group_call_start':
+      if (window._onDmGroupCallStart) {
+        window._onDmGroupCallStart(data);
+      } else {
+        console.error('[DM group call] invite arrived before popup handler loaded; queueing it', data);
+        window.__pendingDmGroupCallInvite = data;
+      }
+      break;
+    case 'dm_group_call_busy':
+      if (window._onDmGroupCallBusy) window._onDmGroupCallBusy(data);
+      break;
+    case 'dm_group_call_invite_sent':
+      console.log('[DM group call] server delivered invite to', Number(data.delivered || 0), 'socket(s)', data);
+      break;
+
+    // ── DM voice/video call signaling ──
+    case 'dm_call_offer':
+      if (window._onDmCallOffer) window._onDmCallOffer(data);
+      break;
+    case 'dm_call_offer_sent':
+      if (window._onDmCallOfferSent) window._onDmCallOfferSent(data);
+      break;
+    case 'dm_call_answer':
+      if (window._onDmCallAnswer) window._onDmCallAnswer(data);
+      break;
+    case 'dm_call_candidate':
+      if (window._onDmCallCandidate) window._onDmCallCandidate(data);
+      break;
+    case 'dm_call_renegotiate':
+      if (window._onDmCallRenegotiate) window._onDmCallRenegotiate(data);
+      break;
+    case 'dm_call_renegotiate_answer':
+      if (window._onDmCallRenegotiateAnswer) window._onDmCallRenegotiateAnswer(data);
+      break;
+    case 'dm_call_decline':
+      if (window._onDmCallDecline) window._onDmCallDecline(data);
+      break;
+    case 'dm_call_end':
+      if (window._onDmCallEnd) window._onDmCallEnd(data);
+      break;
+
     // ── Channel events ──
     case 'channel_created':
       handleChannelCreated(data.channel);
@@ -184,30 +300,50 @@ function handleSocketMessage(data) {
 
     // ── Voice ──
     case 'voice_join':
-      handleVoiceJoin(data);
+      // Never render a participant from another voice room.
+      if (window.vcChannelId != null && Number(data.channel_id) === Number(window.vcChannelId) &&
+          typeof window.handleVoiceJoin === 'function') {
+        window.handleVoiceJoin(data);
+      }
       break;
     case 'voice_leave':
-      handleVoiceLeave(data);
+      // Never remove a participant from the active room because of a stale event.
+      if (window.vcChannelId != null && Number(data.channel_id) === Number(window.vcChannelId) &&
+          typeof window.handleVoiceLeave === 'function') {
+        window.handleVoiceLeave(data);
+      }
       break;
     case 'voice_peers':
-      if (window.handleVoicePeers) window.handleVoicePeers(data);
+      if (window.vcChannelId != null && Number(data.channel_id) === Number(window.vcChannelId) &&
+          typeof window.handleVoicePeers === 'function') {
+        window.handleVoicePeers(data);
+      }
       break;
 
     // ── WebRTC signaling ──
     case 'screen_share_notify':
-      handleScreenShareNotify(data);
+      if (window.vcChannelId != null && Number(data.channel_id) === Number(window.vcChannelId) &&
+          typeof window.handleScreenShareNotify === 'function') {
+        window.handleScreenShareNotify(data);
+      }
       break;
     case 'webrtc_offer':
-      if (window._handleWebRtcOffer)
+      if (window.vcChannelId != null && Number(data.channel_id) === Number(window.vcChannelId) &&
+          typeof window._handleWebRtcOffer === 'function') {
         window._handleWebRtcOffer(data.from_user_id, data.from_username, data.sdp, !!data.is_screen_offer);
+      }
       break;
     case 'webrtc_answer':
-      if (window._handleWebRtcAnswer)
+      if (window.vcChannelId != null && Number(data.channel_id) === Number(window.vcChannelId) &&
+          typeof window._handleWebRtcAnswer === 'function') {
         window._handleWebRtcAnswer(data.from_user_id, data.sdp);
+      }
       break;
     case 'webrtc_candidate':
-      if (window._handleWebRtcCandidate)
+      if (window.vcChannelId != null && Number(data.channel_id) === Number(window.vcChannelId) &&
+          typeof window._handleWebRtcCandidate === 'function') {
         window._handleWebRtcCandidate(data.from_user_id, data.candidate);
+      }
       break;
 
     // ── Whiteboard ──
@@ -218,9 +354,14 @@ function handleSocketMessage(data) {
     case 'wb_peer_joined':
     case 'wb_peer_left':
     case 'wb_op':
+    case 'wb_presence':
+    case 'wb_presence_remove':
     case 'wb_cursor':
     case 'wb_state':
     case 'wb_state_saved':
+    case 'wb_lock_changed':
+    case 'wb_version_saved':
+    case 'wb_state_reverted':
       if (window.wbHandleWsMessage) window.wbHandleWsMessage(data);
       break;
 
@@ -406,10 +547,13 @@ function _renderTypingIndicator(indicator, textEl) {
 
 // ── Presence / Active status ─────────────────────────────────────────────────
 function handlePresenceUpdate(data) {
+  data = {...data, online: data.online === true || data.online === 1 || data.online === "1"};
+  document.querySelectorAll(`.member-item[data-user-id="${data.user_id}"]`).forEach(item=>{const label=item.querySelector(".member-sub");if(label){label.textContent=data.online?"Online":"Offline";label.style.color=data.online?"var(--accent-green)":"var(--text-muted)";}const status=item.querySelector(".member-status");if(status){status.textContent="● "+(data.online?"Online":"Offline");status.classList.toggle("online",data.online);}});
   // Update every online-dot that references this user
   document.querySelectorAll(`[data-user-id="${data.user_id}"] .online-dot`).forEach(dot => {
     dot.style.background = data.online ? 'var(--accent-green)' : 'var(--text-muted)';
     dot.title = data.online ? 'Online' : 'Offline';
+    dot.classList.toggle('offline', !data.online);
   });
   // Also update member list avatars with a status ring
   document.querySelectorAll(`.member-avatar[data-uid="${data.user_id}"]`).forEach(av => {
@@ -493,12 +637,47 @@ function handleThreadReply(data) {
   }
 }
 
+// ── Notification preferences (desktop + sound) ─────────────────────────────
+// Every notification_* setting previously saved correctly but had nothing
+// anywhere that actually checked it — no desktop notification, no sound, for
+// messages or mentions. This is the first real consumer of those settings.
+let _notifAudio = null;
+
+function _notifEnabled(kind) {
+  const s = window._userSettings;
+  if (!s) return true; // settings not loaded yet — default to notifying
+  if (s.notification_desktop === 0) return false; // master switch off
+  if (kind && s[kind] === 0) return false;
+  return true;
+}
+
+function showDesktopNotification(kind, title, body) {
+  if (!_notifEnabled(kind)) return;
+
+  if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+    try {
+      const n = new Notification(title, { body, silent: true });
+      n.onclick = () => { window.focus(); n.close(); };
+    } catch (e) { /* ignore unsupported/blocked notifications */ }
+  }
+
+  if (_notifEnabled('notification_sound')) {
+    try {
+      if (!_notifAudio) _notifAudio = new Audio((window.ECOLLAB?.baseUrl || '') + '/assets/sounds/notification.mp3');
+      _notifAudio.currentTime = 0;
+      _notifAudio.play().catch(() => {}); // browsers block autoplay until first user interaction
+    } catch (e) { /* ignore */ }
+  }
+}
+window.showDesktopNotification = showDesktopNotification;
+
 // ── Mentions ─────────────────────────────────────────────────────────────────
 function handleMentionEvent(data) {
   if (!data.entry) return;
   _storeMention(data.entry);
   if (typeof showToast === 'function')
     showToast(`💬 You were mentioned in #${data.entry.channel || 'a channel'}`, 'info');
+  showDesktopNotification('notification_mentions', 'You were mentioned', `in #${data.entry.channel || 'a channel'}`);
 }
 
 function _storeMention(entry) {
@@ -546,8 +725,18 @@ function handleVoiceJoin(data) {
     }
   }
 
+  _bumpSidebarVcCount(data.channel_id, 1);
+
   if (typeof showToast === 'function')
     showToast(`🔊 ${data.user?.full_name || data.user?.username || 'Someone'} joined voice`, 'info');
+}
+
+function _bumpSidebarVcCount(channelId, delta) {
+  if (!channelId) return;
+  const badge = document.querySelector(`.voice-channel[data-channel-id="${channelId}"] .vc-count`);
+  if (!badge) return;
+  const next = Math.max(0, (parseInt(badge.textContent, 10) || 0) + delta);
+  badge.textContent = next;
 }
 
 function handleVoiceLeave(data) {
@@ -578,6 +767,8 @@ function handleVoiceLeave(data) {
   const listening = document.querySelectorAll('#vcListeningGrid .vc-listener-card').length;
   if (window.updateVcCounts) window.updateVcCounts(speaking, listening);
 
+  _bumpSidebarVcCount(data.channel_id, -1);
+
   // Stop remote audio
   const audio = document.getElementById(`remote-audio-${uid}`);
   if (audio) { audio.srcObject = null; audio.remove(); }
@@ -598,6 +789,7 @@ let _typingThrottle = null;
 let _typingState    = false;
 
 function sendTypingEvent(isTyping) {
+  if(window.EcollabChatPresence?.typing(isTyping))return;
   if (!window.ECOLLAB?.currentChannelId) return;
   if (isTyping === _typingState) return; // no-op if state unchanged
   _typingState = isTyping;
@@ -632,6 +824,7 @@ function subscribeToChannel(channelId) {
   wsSend({ type: 'join_channel', channel_id: channelId });
 }
 function unsubscribeFromChannel(channelId) {
+  window.EcollabChatPresence?.disconnect();
   wsSend({ type: 'leave_channel', channel_id: channelId });
 }
 
@@ -640,25 +833,27 @@ let pollInterval    = null;
 let lastMessageId   = 0;
 
 function startPollingFallback() {
+  if (window.ECOLLAB?.whiteboardStandalone) return;
   if (pollInterval) return;
   console.info('[WS] Starting polling fallback (3 s interval)');
+  let pollingBusy = false;
   pollInterval = setInterval(async () => {
     const channelId = window.ECOLLAB?.currentChannelId;
-    if (!channelId) return;
+    if (!channelId || pollingBusy) return;
+    pollingBusy = true;
     try {
       const base = window.ECOLLAB?.baseUrl || '';
       const data = await apiFetch(
         `${base}/API/chat/get-messages.php?channel_id=${channelId}&after=${lastMessageId}`
       );
+      if (Number(channelId) !== Number(window.ECOLLAB?.currentChannelId)) return;
       if (data.messages?.length) {
         data.messages.forEach(msg => {
-          if (parseInt(msg.sender_id) !== parseInt(window.ECOLLAB?.userId)) {
-            if (typeof appendMessageToUI === 'function') appendMessageToUI(msg);
-          }
+          if (typeof appendMessageToUI === 'function') appendMessageToUI(msg);
           lastMessageId = Math.max(lastMessageId, msg.id);
         });
       }
-    } catch { /* ignore */ }
+    } catch { /* ignore */ } finally { pollingBusy = false; }
   }, 3000);
 }
 
@@ -723,3 +918,43 @@ if (document.readyState === 'loading') {
 } else {
   connectWebSocket();
 }
+
+
+
+
+
+
+// Saved-message catch-up is independent of the sender's signaling socket.
+const deliveryChannelCursors = new Map();
+let deliveryChannelBusy = false, deliveryChannelDirty = false;
+async function syncDeliveryChannel() {
+  deliveryChannelDirty = true;
+  if (deliveryChannelBusy || document.hidden) return;
+  deliveryChannelBusy = true;
+  try {
+    do {
+      deliveryChannelDirty = false;
+      const channelId = Number(window.ECOLLAB?.currentChannelId);
+      if (!channelId) break;
+      let cursor = deliveryChannelCursors.get(channelId) ?? Number(lastMessageId || 0);
+      for (let page = 0; page < 20; page++) {
+        const data = await apiFetch((window.ECOLLAB.baseUrl || '') + `/API/chat/get-messages.php?channel_id=${channelId}&after=${cursor}&limit=100`);
+        if (channelId !== Number(window.ECOLLAB.currentChannelId)) {deliveryChannelDirty = true; break;}
+        const messages = data.messages || [];
+        const previous = cursor;
+        messages.forEach(msg => {
+          if (typeof appendMessageToUI === 'function') appendMessageToUI(msg);
+          cursor = Math.max(cursor, Number(msg.id) || 0);
+        });
+        deliveryChannelCursors.set(channelId, cursor);
+        if (!data.has_more || cursor <= previous) break;
+        if (page === 19) {setTimeout(syncDeliveryChannel, 0);}
+      }
+    } while (deliveryChannelDirty && !document.hidden);
+  } catch (_) {setTimeout(syncDeliveryChannel, 3000);}
+  finally {deliveryChannelBusy = false;}
+}
+window.addEventListener('ecollab:delivery-sync', ({detail}) => {
+  if (detail?.kind === 'all' || (detail?.kind === 'channel' && Number(detail.target_id) === Number(window.ECOLLAB?.currentChannelId))) syncDeliveryChannel();
+});
+if (window.EcollabDelivery) syncDeliveryChannel();
