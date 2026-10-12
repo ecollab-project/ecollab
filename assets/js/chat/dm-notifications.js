@@ -950,7 +950,7 @@ function _dmMessageHTML(m) {
       ${!isMine ? _avatar(name, grad, 26, avatarUrl) : ''}
       <div class="dm-message-bubble" style="max-width:72%;background:${isMine ? 'var(--accent-purple)' : 'var(--bg-tertiary)'};color:${isMine ? '#fff' : 'var(--text-primary)'};padding:8px 12px;border-radius:${isMine ? '12px 12px 4px 12px' : '12px 12px 12px 4px'};font-size:13px;line-height:1.5;word-break:break-word;">
         ${_dmAttachmentHTML(m)}
-        ${m.body ? _esc(m.body) : ''}
+        ${m.body ? (window.EcollabComposer?.render(m.body) ?? _esc(m.body)) : ''}
         <div class="dm-message-time" style="font-size:10px;opacity:0.65;margin-top:4px;text-align:${isMine ? 'right' : 'left'};">${_timeAgo(m.created_at)}</div>
       </div>
     </div>`;
@@ -996,6 +996,7 @@ function _dmTypingSignal() {
 window.sendDmMessage = async function() {
   const input = document.getElementById('dmInputField');
   if (!input || input.disabled) return;
+  if (window.EcollabComposer?.canSend(input) === false) return;
   const text = input.value.trim();
   const pendingFile = _dmPendingFile;
   if ((!text && !pendingFile) || (!DM.activeConvId && !DM.activeGroupId)) return;
@@ -1265,6 +1266,7 @@ Object.assign(window, {
   loadDmList,
   sendDmMessage,
 });
+
 
 
 

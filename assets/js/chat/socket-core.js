@@ -474,7 +474,9 @@ function handleMessageEdited(msg) {
   const el = document.querySelector(`.message-group[data-msg-id="${msg.id}"] .msg-text`);
   if (!el) return;
   el.querySelectorAll('.edited-tag').forEach(t => t.remove());
-  if (el.firstChild) el.firstChild.textContent = msg.content;
+  el.closest('[data-msg-id]').dataset.rawContent = msg.content;
+  if (window.EcollabComposer) el.innerHTML = window.EcollabComposer.render(msg.content);
+  else if (el.firstChild) el.firstChild.textContent = msg.content;
   const tag = document.createElement('span');
   tag.className = 'edited-tag';
   tag.style.cssText = 'font-size:10px;color:var(--text-muted);margin-left:4px;';
@@ -958,3 +960,4 @@ window.addEventListener('ecollab:delivery-sync', ({detail}) => {
   if (detail?.kind === 'all' || (detail?.kind === 'channel' && Number(detail.target_id) === Number(window.ECOLLAB?.currentChannelId))) syncDeliveryChannel();
 });
 if (window.EcollabDelivery) syncDeliveryChannel();
+

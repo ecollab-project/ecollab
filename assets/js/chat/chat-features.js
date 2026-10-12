@@ -63,6 +63,7 @@ function filterGifs(query) {
 function insertEmoji(emoji) {
   const input = document.getElementById('chatInputField');
   if (!input) return;
+  if (window.EcollabComposer?.insert(input, emoji)) return;
   const pos = input.selectionStart ?? input.value.length;
   input.value = input.value.substring(0, pos) + emoji + input.value.substring(pos);
   input.focus();
@@ -2797,6 +2798,7 @@ window._voteOnThread = _voteOnThread;
 window._openThreadDetail = _openThreadDetail;
 window._submitThreadReply = _submitThreadReply;
 window._voteOnReply = _voteOnReply;
+
 
 
 

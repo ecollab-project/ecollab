@@ -1033,6 +1033,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       avatarUrl: <?= json_encode($user['avatar_url'] ?? '') ?>,
       initials: <?= json_encode($initials) ?>,
       csrfToken: <?= json_encode($csrfToken) ?>,
+      richComposerEnabled: <?= filter_var(env('CHAT_RICH_COMPOSER', 'false'), FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false' ?>,
       centrifugoEnabled: <?= filter_var(env('CENTRIFUGO_ENABLED', 'false'), FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false' ?>,
       resumableUploads: <?= filter_var(env('CHAT_RESUMABLE_UPLOADS', 'false'), FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false' ?>,
       currentServerId: <?= (int)($firstServer['id'] ?? 0) ?>,
@@ -1099,13 +1100,17 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     6. whiteboard.js — collaborative whiteboard
     7. dm-notifications.js — DM badge polling
   -->
-  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=delivery-1-chat-delivery-1-yjs-chat-1-calls-2" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=tiptap-1" defer></script>
   <?php if (filter_var(env('CHAT_RESUMABLE_UPLOADS', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-uploads.css?v=uppy-1">
   <script src="<?= BASE_URL ?>/assets/js/chat/resumable-uploads.js?v=uppy-1" defer></script>
   <?php endif; ?>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=uppy-1" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=presence-consistency-1" defer></script>
+  <?php if (filter_var(env('CHAT_RICH_COMPOSER', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-composer.css?v=tiptap-1">
+  <script src="<?= BASE_URL ?>/assets/js/chat/rich-composer.js?v=tiptap-1" defer></script>
+  <?php endif; ?>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=tiptap-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=tiptap-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=voice-preview-watch-2" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.22.3/dist/livekit-client.umd.min.js" defer></script>
@@ -1156,7 +1161,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     </button>
   </div>
 
-  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=delivery-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=tiptap-1" defer></script>
   <?php if (filter_var(env('CENTRIFUGO_ENABLED', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
   <script src="<?= BASE_URL ?>/assets/js/chat/centrifugo-delivery.js?v=delivery-1" defer></script>
   <?php endif; ?>
@@ -3553,6 +3558,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 </body>
 
 </html>
+
 
 
 

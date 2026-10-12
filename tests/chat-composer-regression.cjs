@@ -1,0 +1,40 @@
+const assert=require('node:assert/strict'),fs=require('node:fs');
+const {JSDOM}=require('../tools/chat-composer/node_modules/jsdom');
+const bundle=fs.readFileSync(require('node:path').join(__dirname,'../assets/js/chat/rich-composer.js'),'utf8');
+const tick=()=>new Promise(r=>setTimeout(r,25));
+(async()=>{
+const dom=new JSDOM('<div id="chat"><input id="chatInputField" placeholder="Message #general"></div>',{url:'https://ecollab.tech',runScripts:'outside-only',pretendToBeVisual:true});const w=dom.window;
+w.Range.prototype.getClientRects=()=>[];w.Range.prototype.getBoundingClientRect=()=>({top:0,left:0,bottom:0,right:0,width:0,height:0});w.scrollTo=()=>{};
+w.ECOLLAB={richComposerEnabled:true};let sent=[],typing=0;w.showToast=()=>{};
+const input=w.document.getElementById('chatInputField');input.oninput=()=>typing++;
+w.sendMessage=()=>{if(w.EcollabComposer.canSend(input)){sent.push(input.value);input.value='';}};
+w.handleKeyDown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();w.sendMessage();}};
+w.eval(bundle);const composer=w.EcollabComposer,editor=composer.getEditor(input);assert(editor);assert(input.classList.contains('ec-composer-mirror'));
+input.value='**Study together**\n\n- Databases\n- Networking';assert.match(input.value,/\*\*Study together\*\*/);assert.equal(editor.getJSON().content[1].type,'bulletList');assert(editor.getHTML().includes('<strong>Study together</strong>'));
+const rendered=w.document.createElement('div');rendered.innerHTML=composer.render(input.value);assert.equal(rendered.querySelector('strong').textContent,'Study together');assert.equal(rendered.querySelectorAll('li').length,2);
+input.value='Draft with *italic*';const draft=input.value;input.value='';assert(editor.isEmpty);input.value=draft;assert(editor.getHTML().includes('<em>italic</em>'));
+input.disabled=true;assert.equal(editor.isEditable,false);input.disabled=false;assert.equal(editor.isEditable,true);
+input.value='Hello ';editor.commands.setTextSelection(editor.state.doc.content.size-1);composer.insert(input,'😊');assert(input.value.includes('😊'));assert(typing>0);
+input.value='Hello @jar';editor.commands.setTextSelection(editor.state.doc.content.size-1);assert(composer.mention(input,'jarred_borbon'));assert(editor.getText().includes('@jarred_borbon'));
+assert(input.value.includes('@jarred_borbon'));assert(!input.value.includes('jarred\\_')); 
+input.value='Send me';editor.view.dom.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));assert.equal(sent.at(-1),'Send me');assert(editor.isEmpty);assert.equal(editor.commands.undo(),false);
+input.value='First line';editor.commands.setTextSelection(editor.state.doc.content.size-1);editor.view.dom.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',shiftKey:true,bubbles:true,cancelable:true}));assert.equal(sent.length,1);assert(editor.getJSON().content[0].content.some(n=>n.type==='hardBreak'));
+input.value='```\nconst value = 1;\n```';editor.commands.setTextSelection(2);editor.view.dom.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));assert.equal(sent.length,1);editor.view.dom.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',ctrlKey:true,bubbles:true,cancelable:true}));assert.equal(sent.length,2);
+input.value='a'.repeat(4001);assert.equal(composer.canSend(input),false);
+for(const attack of ['<img src=x onerror=alert(1)>','<script>alert(1)</script>','[click](javascript:alert(1))','[click](data:text/html;base64,PHNjcmlwdD4=)','<svg onload=alert(1)>']){rendered.innerHTML=composer.render(attack);assert.equal(rendered.querySelector('img,script,svg,iframe'),null);assert.equal(rendered.querySelector('[onerror],[onload]'),null);for(const a of rendered.querySelectorAll('a'))assert(!/^(javascript|data):/i.test(a.getAttribute('href')||''));}
+input.value='```\n@keep\\_code\n```';assert(input.value.includes('@keep\\_code'));
+rendered.innerHTML=composer.render('@jarred_borbon **hello**\n\n`@dont_highlight`\n\n[Website](https://ecollab.tech/)');assert.equal(rendered.querySelectorAll('.mention').length,1);assert.equal(rendered.querySelector('a').rel,'noopener noreferrer');assert.equal(rendered.querySelector('a').target,'_blank');
+const panel=w.document.createElement('div');panel.innerHTML='<input id="dmInputField" placeholder="Message…">';w.document.body.append(panel);await tick();const dm=panel.firstChild,dmEditor=composer.getEditor(dm);assert(dmEditor);let privateSent=[];w.sendDmMessage=()=>{privateSent.push(dm.value);dm.value='';};dm.value='**Group update**';dmEditor.view.dom.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));assert.match(privateSent[0],/\*\*Group update\*\*/);assert(dmEditor.isEmpty);
+panel.remove();await tick();assert.equal(composer.getEditor(dm),undefined);assert(dmEditor.isDestroyed);
+// Inline edit/cancel uses raw Markdown, including quotes, without putting it into handlers.
+const source=fs.readFileSync(require('node:path').join(__dirname,'../assets/js/chat/chat.js'),'utf8');
+w.eval(source.slice(source.indexOf('function startEditMsg('),source.indexOf('async function deleteMsg(')));
+w._renderMsgContent=composer.render;w.API_BASE='/API/chat';w.currentChannelId=5;
+const row=w.document.createElement('div');row.className='message-group';row.dataset.msgId='55';row.dataset.rawContent="**Study** and 'quoted' text";
+row.innerHTML='<div class="msg-content"><div class="msg-text"></div></div>';w.document.body.append(row);
+w.startEditMsg(row,'wrong flattened text',55);assert.equal(row.querySelector('.msg-text').textContent,row.dataset.rawContent);assert.equal(row.querySelector('[onclick]'),null);row.querySelector('#_editHint span:nth-child(2)').click();assert(row.querySelector('strong'));assert(row.textContent.includes("'quoted'"));
+w.startEditMsg(row,row.dataset.rawContent,55);row.querySelector('.msg-text').textContent='**Updated**';w.apiFetch=async(_url,opts)=>({message:{id:55,content:JSON.parse(opts.body).content}});await w.saveEditMsg(row.querySelector('#_editHint span'),55);assert.equal(row.dataset.rawContent,'**Updated**');assert.equal(row.querySelector('strong').textContent,'Updated');assert(row.querySelector('.edited-tag'));
+w.dispatchEvent(new w.PageTransitionEvent('pagehide',{persisted:true}));assert(composer.getEditor(input));
+w.dispatchEvent(new w.PageTransitionEvent('pagehide'));assert.equal(composer.getEditor(input),undefined);dom.window.close();
+console.log('Composer checks passed: formats, drafts, mentions, emoji, send/newline, code block, length, disabled state, safe rendering and panel cleanup');
+})().catch(e=>{console.error(e);process.exit(1);});

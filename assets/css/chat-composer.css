@@ -1,0 +1,24 @@
+.ec-composer-mirror{display:none!important}
+.ec-composer{flex:1;min-width:0;align-self:stretch;background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;overflow:hidden;color:var(--text-primary)}
+.ec-composer:focus-within{border-color:var(--accent-purple);box-shadow:0 0 0 2px rgba(168,85,247,.12)}
+.ec-composer-toolbar{display:flex;flex-wrap:wrap;gap:3px;padding:6px 8px;border-bottom:1px solid var(--border);background:var(--bg-tertiary)}
+.ec-composer-tool{display:inline-flex;align-items:center;justify-content:center;width:30px;height:28px;border:0;border-radius:6px;background:transparent;color:var(--text-secondary);font-family:inherit;font-size:13px;font-weight:600;line-height:1;cursor:pointer;touch-action:manipulation}
+.ec-composer-tool:hover{background:var(--bg-hover);color:var(--text-primary)}
+.ec-composer-tool[aria-pressed=true]{background:rgba(168,85,247,.18);color:var(--accent-purple)}
+.ec-composer-tool:focus-visible{outline:2px solid var(--accent-purple);outline-offset:-2px}
+.ec-composer-tool:disabled{opacity:.45;cursor:default}
+.ec-composer-surface .tiptap{min-height:38px;max-height:180px;overflow-y:auto;padding:9px 12px;outline:none;font-size:14px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.ec-composer-surface .tiptap>p:first-child:last-child:empty:before{content:attr(data-placeholder);color:var(--text-muted);pointer-events:none;height:0;float:left}
+.ec-composer-surface .tiptap p{margin:0 0 6px}.ec-composer-surface .tiptap p:last-child{margin-bottom:0}
+.ec-composer-surface ul,.ec-composer-surface ol{padding-left:24px;margin:6px 0}
+.ec-composer-surface pre,.msg-text pre,.dm-message-bubble pre{white-space:pre-wrap;overflow-wrap:anywhere;background:rgba(0,0,0,.2);border-radius:8px;padding:10px;font-size:12px;font-family:monospace}
+.ec-composer-surface code,.msg-text code,.dm-message-bubble code{background:rgba(0,0,0,.15);border-radius:4px;padding:1px 4px;font-family:monospace}
+.ec-composer-surface pre code,.msg-text pre code,.dm-message-bubble pre code{padding:0;background:none}
+.ec-composer-surface blockquote,.msg-text blockquote,.dm-message-bubble blockquote{border-left:3px solid var(--accent-purple);padding-left:10px;margin:8px 0;color:inherit}
+.ec-composer-footer{display:flex;justify-content:space-between;gap:8px;padding:3px 10px 6px;color:var(--text-muted);font-size:10px}
+.ec-composer-count{white-space:nowrap}.ec-composer-too-long .ec-composer-count{color:#ef4444}
+.msg-text p,.dm-message-bubble p{margin:0 0 6px}.msg-text p:last-child,.dm-message-bubble p:last-child{margin-bottom:0}
+.msg-text ul,.msg-text ol,.dm-message-bubble ul,.dm-message-bubble ol{margin:6px 0;padding-left:24px}
+.msg-text a,.dm-message-bubble a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+.msg-text .mention,.dm-message-bubble .mention{color:#c084fc;font-weight:700;background:rgba(168,85,247,.15);border-radius:3px;padding:1px 4px}
+@media(max-width:767px){.ec-composer-surface .tiptap{font-size:16px;max-height:140px}.ec-composer-tool{width:32px;height:32px}.ec-composer-footer>span:first-child{display:none}.ec-composer-footer{justify-content:flex-end}.ec-composer-toolbar{padding:4px;gap:1px}.chat-input-container:has(.ec-composer){gap:5px;align-items:flex-end}}

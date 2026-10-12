@@ -7,6 +7,7 @@
 
 // ── Helpers ──
 function _renderMsgContent(text) {
+  if (window.EcollabComposer) return window.EcollabComposer.render(text);
   const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   // Replace @word or @First Last with a purple mention span using the existing .mention class
   return escaped.replace(/@([A-Za-z0-9_]+(?: [A-Za-z0-9_]+)?)/g, function (match) {
@@ -522,6 +523,7 @@ function renderMessages(messages, prepend = false, preserveLive = false) {
 
 function buildMessageElement(msg) {
   const div = document.createElement('div');
+  div.dataset.rawContent = msg.content || '';
   div.className = 'message-group' + (msg.is_pinned ? ' pinned-msg-highlight' : '');
   div.dataset.msgId = msg.id;
   div.dataset.senderId = msg.sender_id;
@@ -693,6 +695,7 @@ function scrollToBottom() {
 async function sendMessage() {
   const input = document.getElementById('chatInputField');
   if (!input || !currentChannelId) return;
+  if (window.EcollabComposer?.canSend(input) === false) return;
 
   const content = input.value.trim();
   if (!content && !pendingAttachment) return;
@@ -799,10 +802,10 @@ function handleTyping(e) {
   const pos = input.selectionStart;
 
   // Find the last @ before cursor
-  const textBefore = val.substring(0, pos);
+  const textBefore = window.EcollabComposer?.textBefore(input) ?? val.substring(0, pos);
   const atIdx = textBefore.lastIndexOf('@');
 
-  if (atIdx !== -1 && (atIdx === 0 || /\s/.test(val[atIdx - 1]))) {
+  if (atIdx !== -1 && (atIdx === 0 || /\s/.test(textBefore[atIdx - 1]))) {
     const query = textBefore.substring(atIdx + 1);
     if (!/\s/.test(query)) {
       _mentionActive = true;
@@ -909,6 +912,7 @@ function _showMentionDropdown(query) {
 function _insertMention(username) {
   const input = document.getElementById('chatInputField');
   if (!input) return;
+  if (window.EcollabComposer?.mention(input, username)) { _hideMentionDropdown(); return; }
   const val = input.value;
   const before = val.substring(0, _mentionStart);
   const after = val.substring(input.selectionStart);
@@ -1052,6 +1056,8 @@ function showMsgMenu(event, btn, author, msgId, isMe) {
 function startEditMsg(msgGroup, originalText, msgId) {
   const textEl = msgGroup.querySelector('.msg-text');
   if (!textEl) return;
+  originalText = msgGroup.dataset.rawContent ?? originalText;
+  textEl.textContent = originalText;
   textEl.contentEditable = 'true';
   textEl.style.outline = '1px solid var(--accent-purple)';
   textEl.style.borderRadius = '4px';
@@ -1066,7 +1072,12 @@ function startEditMsg(msgGroup, originalText, msgId) {
   const hint = document.createElement('div');
   hint.id = '_editHint';
   hint.style.cssText = 'font-size:11px;color:var(--text-muted);margin-top:4px;';
-  hint.innerHTML = `<span style="color:var(--accent-green);cursor:pointer;" onclick="saveEditMsg(this, ${msgId})">✓ Save</span>  <span style="cursor:pointer;" onclick="cancelEditMsg(this,'${escHtml(originalText)}')">✕ Cancel</span>  <span style="color:var(--text-muted);">· or Enter / Esc</span>`;
+  hint.innerHTML = '<span role="button" tabindex="0" style="color:var(--accent-green);cursor:pointer;">✓ Save</span>  <span role="button" tabindex="0" style="cursor:pointer;">✕ Cancel</span>  <span style="color:var(--text-muted);">· or Enter / Esc</span>';
+  const saveControl = hint.querySelector('span');
+  const cancelControl = hint.querySelector('span:nth-child(2)');
+  saveControl.onclick = () => saveEditMsg(saveControl, msgId);
+  cancelControl.onclick = () => cancelEditMsg(cancelControl, originalText);
+  for (const control of [saveControl, cancelControl]) control.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); control.click(); } };
   textEl.parentNode.insertBefore(hint, textEl.nextSibling);
 
   textEl.onkeydown = (e) => {
@@ -1101,6 +1112,13 @@ async function saveEditMsg(el, msgId) {
       method: 'POST',
       body: JSON.stringify({ message_id: msgId, content: newContent }),
     });
+    const savedContent = updated?.message?.content ?? newContent;
+    textEl.closest('[data-msg-id]').dataset.rawContent = savedContent;
+    textEl.innerHTML = _renderMsgContent(savedContent);
+    const editedTag = document.createElement('span');
+    editedTag.className = 'edited-tag';
+    editedTag.textContent = '(edited)';
+    textEl.appendChild(editedTag);
     showToast('✅ Message updated', 'success');
     // Broadcast edit to all channel members so their UI updates in real time
     if (window.wsSend) window.wsSend({
@@ -1120,7 +1138,7 @@ function cancelEditMsg(el, original) {
     textEl.contentEditable = 'false';
     textEl.style.outline = '';
     textEl.style.padding = '';
-    if (textEl.firstChild) textEl.firstChild.textContent = original;
+    textEl.innerHTML = _renderMsgContent(original);
   }
   hint.remove();
 }
@@ -1774,6 +1792,7 @@ window.lastMessageId = 0;
     if (typeof window[name] === 'function') window['__real_' + name] = window[name];
   });
 })();
+
 
 
 
