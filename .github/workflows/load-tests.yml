@@ -1,0 +1,34 @@
+name: Load test kit
+on:
+  push:
+    branches: [ecollab-collabs]
+    paths: ['tools/load-tests/**','services/LoadTestFixture.php','scripts/*load-test*','tests/load-test-*','.github/workflows/load-tests.yml']
+  workflow_dispatch:
+jobs:
+  kit:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env: {MYSQL_ROOT_PASSWORD: root, MYSQL_DATABASE: load_fixture_test}
+        ports: ['3306:3306']
+        options: --health-cmd="mysqladmin ping -proot" --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - uses: shivammathur/setup-php@v2
+        with: {php-version: '8.3', extensions: pdo_mysql}
+      - run: npm ci --ignore-scripts --prefix tools/load-tests
+      - run: node tests/load-test-plan-regression.cjs
+      - run: |
+          curl -fsSL https://github.com/grafana/k6/releases/download/v2.3.0/k6-v2.3.0-linux-amd64.tar.gz -o /tmp/k6.tar.gz
+          echo '39c3117b6af817592dcd0ce4242105c0a7af10948c2a425306f0be8f7a8a8ab1  /tmp/k6.tar.gz' | sha256sum -c -
+          tar -xzf /tmp/k6.tar.gz -C /tmp
+      - run: node tests/load-test-mock.cjs
+        env: {K6_BIN: /tmp/k6-v2.3.0-linux-amd64/k6}
+      - run: node tests/load-test-mock.cjs
+        env: {K6_BIN: /tmp/k6-v2.3.0-linux-amd64/k6, MOCK_FAIL_WRITES: '1'}
+      - run: php tests/load-test-fixture-regression.php
+        env: {TEST_LOAD_DSN: 'mysql:host=127.0.0.1;dbname=load_fixture_test', TEST_LOAD_USER: root, TEST_LOAD_PASSWORD: root}
+      - run: php -l scripts/load-test-fixture.php && python3 -m py_compile scripts/package-load-tests.py
