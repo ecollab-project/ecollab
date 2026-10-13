@@ -29,13 +29,17 @@ final class RealtimeOutbox
     {
         $target=(int)$event['target_id'];$id=(int)$event['message_id'];
         if ($event['kind']==='channel') {
-            $sql="SELECT DISTINCT u.id FROM messages m JOIN channels c ON c.id=m.channel_id
-                JOIN users u ON u.deleted_at IS NULL
-                LEFT JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=u.id
+            $sql="SELECT u.id FROM messages m JOIN channels c ON c.id=m.channel_id
+                JOIN server_members sm ON sm.server_id=c.server_id
+                JOIN users u ON u.id=sm.user_id AND u.deleted_at IS NULL
                 WHERE m.id=:mid AND c.id=:target AND m.is_deleted=0 AND
-                (u.role IN ('admin','super_admin') OR (sm.user_id IS NOT NULL AND
                 (c.is_private=0 OR sm.server_role IN ('owner','admin') OR c.created_by=u.id OR
-                EXISTS(SELECT 1 FROM channel_members cm WHERE cm.channel_id=c.id AND cm.user_id=u.id))))";
+                EXISTS(SELECT 1 FROM channel_members cm WHERE cm.channel_id=c.id AND cm.user_id=u.id))
+                UNION
+                SELECT u.id FROM users u
+                WHERE u.role IN ('admin','super_admin') AND u.deleted_at IS NULL
+                AND EXISTS(SELECT 1 FROM messages m JOIN channels c ON c.id=m.channel_id
+                    WHERE m.id=:admin_mid AND c.id=:admin_target AND m.is_deleted=0)";
         } elseif ($event['kind']==='dm') {
             $sql='SELECT DISTINCT u.id FROM dm_messages m JOIN dm_conversations c ON c.id=m.conversation_id
                 JOIN users u ON (u.id=c.user_a OR u.id=c.user_b) AND u.deleted_at IS NULL
@@ -45,7 +49,9 @@ final class RealtimeOutbox
                 JOIN users u ON u.id=gm.user_id AND u.deleted_at IS NULL
                 WHERE m.id=:mid AND gm.group_id=:target AND m.is_deleted=0';
         } else { throw new InvalidArgumentException('Unknown delivery kind'); }
-        $stmt=$db->prepare($sql);$stmt->execute([':mid'=>$id,':target'=>$target]);
+        $params=[':mid'=>$id,':target'=>$target];
+        if($event['kind']==='channel')$params+=[':admin_mid'=>$id,':admin_target'=>$target];
+        $stmt=$db->prepare($sql);$stmt->execute($params);
         return array_values(array_unique(array_map('intval',$stmt->fetchAll(PDO::FETCH_COLUMN))));
     }
 

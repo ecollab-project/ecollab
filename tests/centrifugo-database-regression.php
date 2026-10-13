@@ -24,6 +24,11 @@ check(audience($db,'channel',5,1)===[18,19,20,21],'Public channel audience exclu
 check(audience($db,'channel',6,2)===[18,19,20,21],'Private channel member, creator, owner and admin');
 $db->exec('DELETE FROM channel_members WHERE user_id=19');check(audience($db,'channel',6,2)===[18,20,21],'Revoked private membership excluded');
 check(audience($db,'channel',5,3)===[],'Deleted message excluded');
+check(audience($db,'channel',6,1)===[],'Mismatched channel target excluded, including admins');
+$db->exec("INSERT INTO users VALUES(24,'admin',NULL),(25,'super_admin',NULL),(26,'moderator',NULL); INSERT INTO server_members VALUES(2,24,'member')");
+check(audience($db,'channel',6,2)===[18,20,21,24,25],'Admin member deduplicated; super admin included; external moderator excluded');
+$db->exec("UPDATE users SET deleted_at=NOW() WHERE id=24; UPDATE users SET role='student' WHERE id=25");
+check(audience($db,'channel',6,2)===[18,20,21],'Audience reflects deleted admin and revoked global role');
 check(audience($db,'dm',7,4)===[18,19],'DM participants only');check(audience($db,'group',8,5)===[18,19],'Live group participants only');
 $db->exec('DELETE FROM dm_group_members WHERE user_id=19');check(audience($db,'group',8,5)===[18],'Revoked group membership excluded');
 $id=RealtimeOutbox::record($db,'dm',7,function()use($db){$db->exec('INSERT INTO dm_messages VALUES(6,7,NULL,0)');return 6;});check($id===6,'Real transaction records intent');
