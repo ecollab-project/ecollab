@@ -43,3 +43,5 @@ Stop with Ctrl+C. Error/latency thresholds also abort unhealthy runs. JSON repor
 Passing applies only to this workload and dataset. The script does not run browser JavaScript/rendering, fetch every asset, transfer attachment files, exercise AI inference, send video/audio media, or edit Collabora/whiteboards. Test those separately. Increasing virtual users without realistic think time changes the workload and invalidates comparisons. Run with background AI/document workloads only as a separately labeled test and compare results.
 
 `accounts.json` and the ZIP contain generated passwords. Keep them private; do not commit them or use HTTP debug output. Delete your kit credentials after fixture cleanup. Run through the normal HTTPS URL so Nginx/TLS/session/database limits are included.
+
+Timer interruption warnings at scheduled ramp-down/final stop are k6 cancelling unfinished iterations. The runner excludes these planned socket closes from failure metrics; connection/protocol errors and premature closes during ramp-up/hold remain failures. Interrupted-iteration counts are still visible in k6 output.

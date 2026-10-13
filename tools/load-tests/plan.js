@@ -19,3 +19,9 @@ export function validateAccounts(accounts,target){
   if(!Array.isArray(accounts)||!accounts.length)throw new Error('Missing synthetic accounts');
   for(const account of accounts){if(!Number.isSafeInteger(account.id)||account.id<1||ids.has(account.id)||typeof account.email!=='string'||!account.email.startsWith(prefix)||!account.email.endsWith('@example.invalid')||names.has(account.email)||typeof account.password!=='string'||account.password.length<32)throw new Error('Use distinct generated synthetic accounts');ids.add(account.id);names.add(account.email);}
 }
+
+// k6 may force-close active sockets when ramping VUs down or stopping the scenario.
+// These closes are excluded; protocol errors and closes during ramp-up/hold still fail.
+export function plannedClose(localClosing,progress,run){
+  return localClosing || progress >= (run.ramp+run.hold)/(run.ramp+run.hold+10);
+}

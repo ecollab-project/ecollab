@@ -7,3 +7,10 @@ for(const env of [{VUS:'1001'},{VUS:'0'},{VUS:'NaN'},{VUS:'3'},{INTERVAL_SECONDS
 assert.throws(()=>context.validateAccounts([accounts[0],accounts[0]],target));assert.throws(()=>context.validateAccounts([{...accounts[0],email:'real-user@example.com'}],target));
 assert.throws(()=>context.validateTarget({...target,fixture_id:'real-server'}));assert.throws(()=>context.validateTarget({...target,base_url:'http://ecollab.tech'}));assert.throws(()=>context.validateTarget({...target,channel_id:0}));
 console.log('Load-test plan checks passed: distinct synthetic users, target validation, limits and smoke defaults');
+
+const stages={ramp:5,hold:20};
+assert.equal(context.plannedClose(false,0.5,stages),false);
+assert.equal(context.plannedClose(false,25/35,stages),true);
+assert.equal(context.plannedClose(false,1,stages),true);
+assert.equal(context.plannedClose(true,0,stages),true);
+console.log('Planned-close checks passed: active-period failures remain counted; ramp-down closes excluded');

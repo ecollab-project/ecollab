@@ -4,7 +4,7 @@ import exec from 'k6/execution';
 import { SharedArray } from 'k6/data';
 import { WebSocket } from 'k6/websockets';
 import { Rate, Trend, Counter } from 'k6/metrics';
-import { plan, validateTarget, validateAccounts } from './plan.js';
+import { plan, validateTarget, validateAccounts, plannedClose } from './plan.js';
 const target=JSON.parse(open(__ENV.TARGET_FILE||'./target.json'));validateTarget(target);
 const accounts=new SharedArray('synthetic accounts',()=>{const value=JSON.parse(open(__ENV.ACCOUNTS_FILE||'./accounts.json'));validateAccounts(value,target);return value;});
 const run=plan(__ENV,accounts.length),base=target.base_url.replace(/\/$/,'');
@@ -56,13 +56,13 @@ export default async function(){
   const ratchet=new WebSocket(target.ws_url,[],{headers:{Origin:base},tags:{name:'ratchet'}});sockets.push(ratchet);
   ratchet.onopen=()=>ratchet.send(JSON.stringify({type:'auth',ws_token:wsToken}));
   ratchet.onmessage=e=>{let data;try{data=JSON.parse(e.data);}catch(_){socketFailure('ratchet','invalid_json');return;}if(data.type==='auth_ok')ratchet.send(JSON.stringify({type:'join_channel',channel_id:target.channel_id}));if(data.type==='joined_channel')joined=true;if(data.type==='error'){const message=String(data.message||'');socketFailure('ratchet',/token|auth/i.test(message)?'authentication_rejected':/channel|access/i.test(message)?'channel_access_rejected':'server_error');}};
-  ratchet.onerror=()=>socketFailure('ratchet','connection_error');ratchet.onclose=()=>{if(!closing)socketFailure('ratchet','unexpected_close');};
+  ratchet.onerror=()=>socketFailure('ratchet','connection_error');ratchet.onclose=()=>{if(!plannedClose(closing,exec.scenario.progress,run))socketFailure('ratchet','unexpected_close');};
   const delivery=new WebSocket(base.replace(/^http/,'ws')+'/realtime/connection/websocket',[],{headers:{Origin:base},tags:{name:'centrifugo'}});sockets.push(delivery);
   delivery.onopen=()=>delivery.send(JSON.stringify({id:1,connect:{token:connection.token}}));
   delivery.onmessage=e=>{for(const line of String(e.data).split('\n')){if(!line.trim())continue;let data;try{data=JSON.parse(line);}catch(_){socketFailure('centrifugo','invalid_json');continue;}
     if(Object.keys(data).length===0){delivery.send('{}');continue;}if(data.error){socketFailure('centrifugo',data.id===1?'connection_rejected':data.id===2?'subscription_rejected':'command_rejected');continue;}if(data.id===1)delivery.send(JSON.stringify({id:2,subscribe:{channel:inbox,token:subscription.token}}));if(data.id===2)subscribed=true;if(data.push?.pub)publication(data.push.pub.data);if(data.push?.disconnect)socketFailure('centrifugo','server_disconnect');
   }};
-  delivery.onerror=()=>socketFailure('centrifugo','connection_error');delivery.onclose=()=>{if(!closing)socketFailure('centrifugo','unexpected_close');};
+  delivery.onerror=()=>socketFailure('centrifugo','connection_error');delivery.onclose=()=>{if(!plannedClose(closing,exec.scenario.progress,run))socketFailure('centrifugo','unexpected_close');};
   async function activity(){if(readBusy||closing)return;readBusy=true;
     try{ticks++;const response=await http.asyncRequest('GET',base+'/API/chat/get-messages.php?channel_id='+target.channel_id+'&limit=50',null,params('messages'));
       apiOk.add(response.status===200&&json(response).success===true);
