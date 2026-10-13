@@ -103,3 +103,28 @@ JSDOM checks cover the complete rendered PHP layout, navigation, safe text outpu
 user dialogs, CSRF/expected-state payloads, error handling, preferences, the finder,
 and all connected screens. These tests are not a signed-in production MariaDB or
 browser visual smoke test. Verify those after deployment.
+
+
+## Connected admin pages and tools
+
+The admin workspace now includes **Tools & workflows** and **Space monitor**. Tool cards navigate within the shared shell to reports, facilitator approvals, feedback, people/spaces, announcements, AI/matching, audit, activity, capacity, and status. Messages, the collaboration hub, and personal Settings remain dedicated modules with explicit links.
+
+The legacy admin monitor URL (`modules/admin/server-monitor.php?server_id=…`) redirects to `dashboard.php?page=monitor&server_id=…&tab=…`. The `reports.php` and `tools.php` entry routes authenticate and redirect to their canonical workspace views. Facilitator-scoped monitoring retains its existing authorization and route behavior.
+
+Space monitoring shows academic collaboration data, not VPS resource metrics. It supports 7/30/90-day message and contributor activity using Philippines day boundaries, owner identification, channels, current members, recent messages, and reports. The owner is excluded from member/contributor summary counts and contributor chart values. Message counts include owner messages; current member rows identify the owner. Contributors can include former members who sent messages in the selected period. Deleted messages are excluded. Source failures remain null/unavailable rather than fabricated zero counts. Daily values remain readable when the external chart library fails to load.
+
+Monitor channel/member lists are bounded to 200/500 records, with local filtering and 20-row pagination. Recent activity and reports show the latest 30, independently of the chart date range. The space picker searches 25 matches at a time; refine the query for further spaces. CSV exports contain the selected monitor's daily activity values. Browser history preserves monitor space, tab, and date range.
+
+Reports now use `API/admin/reports.php` and `AdminReportService`: database pagination, search, status and space filters, an evidence preview, explicit confirmed decisions, revision checks, and transactional audit logging. Resolution rejects reports that were handled or whose evidence changed since the review was loaded. Resolving a report with message evidence marks that message deleted; resolving a report without message evidence records the decision only. Dismissal does not remove content. The existing student-owned-space moderation scope is retained; facilitator-owned-space monitor reports are visible for inspection and indicate that their facilitator handles review actions.
+
+Deploy with the existing `scripts/deploy-admin-workspace.sh` after pulling with `umask 0022`. It now covers the new routes, API, and services. No new migration is required. Backup: `backup/ecollab-collabs-before-admin-tools-v2-20261013`, including tracked Centrifugo configuration.
+
+Additional checks:
+
+```bash
+php tests/admin-connected-regression.php
+# jsdom must be available to Node. PHP_BIN optionally selects PHP.
+node tests/admin-connected-ui-regression.cjs
+```
+
+The PHP tests use PDO SQLite for report scope, search/pagination, changed evidence, stale decisions, atomic audit rollback, monitor date windows/counts, and unavailable sources. The DOM tests render the actual authenticated PHP page and exercise tools, monitor links/tabs/search/pagination/date ranges/deep links/history, report scope/pagination/confirmation/CSRF/revisions, safe text rendering, and unavailable requests. Production MySQL integration and visual checks in an actual browser remain deployment checks.
