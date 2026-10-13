@@ -35,7 +35,7 @@
     el('capacityPeakAt').textContent=data.history.peak_at ? new Date(data.history.peak_at).toLocaleTimeString('en-PH',{timeZone:'Asia/Manila',hour:'2-digit',minute:'2-digit'})+' · Asia/Manila' : 'No samples yet';
     el('capacityUsageText').textContent=data.capacity_percent === null ? 'No tested reference available' : `${number(data.current.active_users)} / ${number(data.baseline.tested_users)} tested users · ${number(data.capacity_percent)}%`;
     el('capacityUsage').value=Math.min(100,data.capacity_percent ?? 0);
-    el('capacityPresence').textContent=`${number(data.current.presence_users)} unique users with presence in the last 10 minutes. This page refreshes every 30 seconds while visible.`;
+    el('capacityPresence').textContent=`${number(data.current.presence_users)} unique users with presence in the last 10 minutes. Updates follow your workspace refresh preference while this page is visible.`;
     if (document.activeElement !== el('capacityTargetInput')) el('capacityTargetInput').value=data.settings.operational_target ?? '';
     const hours=Array.from({length:24},(_,i)=>String(i).padStart(2,'0')+':00');
     const stale=!data.history.last_sample_at || Date.now()-Date.parse(data.history.last_sample_at)>150000;
@@ -89,5 +89,11 @@
   date.value=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Manila',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); date.max=date.value;
   new MutationObserver(()=>{if(page.classList.contains('active')){chart?.resize();refresh();}}).observe(page,{attributes:true,attributeFilter:['class']});
   document.addEventListener('visibilitychange',refresh);
-  setInterval(refresh,30000); refresh();
+  let refreshTimer = null;
+  function schedule(seconds) {
+    if (refreshTimer) clearInterval(refreshTimer);
+    refreshTimer = seconds ? setInterval(refresh, seconds * 1000) : null;
+  }
+  window.addEventListener('admin-refresh-preference', event => schedule(event.detail));
+  schedule(window.ADMIN_WORKSPACE_REFRESH_INTERVAL ?? 30); refresh();
 })();
