@@ -3,7 +3,7 @@ Chart.defaults.font.family = 'Plus Jakarta Sans';
 Chart.defaults.font.size = 10;
 
 // ═══ NAVIGATION ═══
-const bc = {overview:'Overview',users:'Users',roles:'Roles & Permissions',courses:'Course & Tags',aimatching:'AI Matching',reports:'Reports',servers:'Servers',channels:'Channels',settings:'Settings',moderation:'Moderation',analytics:'Analytics',activitylogs:'Activity Logs',syshealth:'System Health',announcements:'Announcements',feedback:'Feedback & Reports'};
+const bc = {overview:'Overview',users:'Users',roles:'Roles & Permissions',courses:'Course & Tags',aimatching:'AI Matching',reports:'Reports',servers:'Servers',channels:'Channels',settings:'Settings',moderation:'Moderation',analytics:'Analytics',activitylogs:'Activity Logs',capacity:'System Capacity',syshealth:'System Health',announcements:'Announcements',feedback:'Feedback & Reports'};
 
 function showPage(id, navEl) {
   if (window.EcollabDashboardState && !window.EcollabDashboardState.select(id)) return;
