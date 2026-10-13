@@ -9,6 +9,9 @@ const target=JSON.parse(open(__ENV.TARGET_FILE||'./target.json'));validateTarget
 const accounts=new SharedArray('synthetic accounts',()=>{const value=JSON.parse(open(__ENV.ACCOUNTS_FILE||'./accounts.json'));validateAccounts(value,target);return value;});
 const run=plan(__ENV,accounts.length),base=target.base_url.replace(/\/$/,'');
 const apiOk=new Rate('api_ok'),authOk=new Rate('auth_ok'),socketOk=new Rate('socket_ok');
+const ratchetReady=new Rate('ratchet_join_ok'),deliveryReady=new Rate('centrifugo_subscribe_ok'),socketFailures=new Counter('socket_failures');
+const warned=new Set();
+function socketFailure(transport,reason){socketOk.add(false);socketFailures.add(1,{transport,reason});const key=transport+':'+reason;if(!warned.has(key)){warned.add(key);console.warn('[Socket check] '+transport+': '+reason);}}
 const publications=new Counter('inbox_publications'),deliveryOk=new Rate('own_delivery_ok'),deliveryTime=new Trend('own_delivery_ms',true);
 export const options={noCookiesReset:true,summaryTrendStats:['avg','med','p(95)','p(99)','max'],
   scenarios:{students:{executor:'ramping-vus',startVUs:1,stages:run.stages,gracefulRampDown:'5s',gracefulStop:'5s'}},
@@ -51,15 +54,15 @@ export default async function(){
   const pending=new Map(),seen=new Map(),sockets=[];
   function publication(data){if(data?.type!=='chat_changed'||data.kind!=='channel'||data.target_id!==target.channel_id)return;publications.add(1);seen.set(data.message_id,Date.now());const start=pending.get(data.message_id);if(start!==undefined){deliveryTime.add(Date.now()-start);deliveryOk.add(true);pending.delete(data.message_id);}if(seen.size>512)seen.delete(seen.keys().next().value);}
   const ratchet=new WebSocket(target.ws_url,[],{headers:{Origin:base},tags:{name:'ratchet'}});sockets.push(ratchet);
-  ratchet.onopen=()=>ratchet.send(JSON.stringify({type:'auth',token:wsToken}));
-  ratchet.onmessage=e=>{let data;try{data=JSON.parse(e.data);}catch(_){socketOk.add(false);return;}if(data.type==='auth_ok')ratchet.send(JSON.stringify({type:'join_channel',channel_id:target.channel_id}));if(data.type==='joined_channel')joined=true;if(data.type==='error')socketOk.add(false);};
-  ratchet.onerror=()=>socketOk.add(false);ratchet.onclose=()=>{if(!closing)socketOk.add(false);};
+  ratchet.onopen=()=>ratchet.send(JSON.stringify({type:'auth',ws_token:wsToken}));
+  ratchet.onmessage=e=>{let data;try{data=JSON.parse(e.data);}catch(_){socketFailure('ratchet','invalid_json');return;}if(data.type==='auth_ok')ratchet.send(JSON.stringify({type:'join_channel',channel_id:target.channel_id}));if(data.type==='joined_channel')joined=true;if(data.type==='error'){const message=String(data.message||'');socketFailure('ratchet',/token|auth/i.test(message)?'authentication_rejected':/channel|access/i.test(message)?'channel_access_rejected':'server_error');}};
+  ratchet.onerror=()=>socketFailure('ratchet','connection_error');ratchet.onclose=()=>{if(!closing)socketFailure('ratchet','unexpected_close');};
   const delivery=new WebSocket(base.replace(/^http/,'ws')+'/realtime/connection/websocket',[],{headers:{Origin:base},tags:{name:'centrifugo'}});sockets.push(delivery);
   delivery.onopen=()=>delivery.send(JSON.stringify({id:1,connect:{token:connection.token}}));
-  delivery.onmessage=e=>{for(const line of String(e.data).split('\n')){if(!line.trim())continue;let data;try{data=JSON.parse(line);}catch(_){socketOk.add(false);continue;}
-    if(Object.keys(data).length===0){delivery.send('{}');continue;}if(data.error){socketOk.add(false);continue;}if(data.id===1)delivery.send(JSON.stringify({id:2,subscribe:{channel:inbox,token:subscription.token}}));if(data.id===2)subscribed=true;if(data.push?.pub)publication(data.push.pub.data);if(data.push?.disconnect)socketOk.add(false);
+  delivery.onmessage=e=>{for(const line of String(e.data).split('\n')){if(!line.trim())continue;let data;try{data=JSON.parse(line);}catch(_){socketFailure('centrifugo','invalid_json');continue;}
+    if(Object.keys(data).length===0){delivery.send('{}');continue;}if(data.error){socketFailure('centrifugo',data.id===1?'connection_rejected':data.id===2?'subscription_rejected':'command_rejected');continue;}if(data.id===1)delivery.send(JSON.stringify({id:2,subscribe:{channel:inbox,token:subscription.token}}));if(data.id===2)subscribed=true;if(data.push?.pub)publication(data.push.pub.data);if(data.push?.disconnect)socketFailure('centrifugo','server_disconnect');
   }};
-  delivery.onerror=()=>socketOk.add(false);delivery.onclose=()=>{if(!closing)socketOk.add(false);};
+  delivery.onerror=()=>socketFailure('centrifugo','connection_error');delivery.onclose=()=>{if(!closing)socketFailure('centrifugo','unexpected_close');};
   async function activity(){if(readBusy||closing)return;readBusy=true;
     try{ticks++;const response=await http.asyncRequest('GET',base+'/API/chat/get-messages.php?channel_id='+target.channel_id+'&limit=50',null,params('messages'));
       apiOk.add(response.status===200&&json(response).success===true);
@@ -67,10 +70,10 @@ export default async function(){
     }finally{readBusy=false;}
   }
   const work=setInterval(activity,run.interval*1000),heartbeat=setInterval(()=>{if(ratchet.readyState===1)ratchet.send(JSON.stringify({type:'ping'}));},15000);
-  await new Promise(resolve=>setTimeout(()=>{closing=true;clearInterval(work);clearInterval(heartbeat);socketOk.add(joined&&subscribed);for(const _ of pending)deliveryOk.add(false);for(const socket of sockets)socket.close();resolve();},run.connection*1000));
+  await new Promise(resolve=>setTimeout(()=>{closing=true;clearInterval(work);clearInterval(heartbeat);ratchetReady.add(joined);deliveryReady.add(subscribed);socketOk.add(joined&&subscribed);if(!joined)socketFailure('ratchet','channel_join_not_confirmed');if(!subscribed)socketFailure('centrifugo','subscription_not_confirmed');for(const _ of pending)deliveryOk.add(false);for(const socket of sockets)socket.close();resolve();},run.connection*1000));
 }
 export function handleSummary(data){
   const metric=name=>data.metrics[name]?.values||{};const failed=[];for(const [name,m] of Object.entries(data.metrics))for(const [threshold,result] of Object.entries(m.thresholds||{}))if(!result.ok)failed.push(name+': '+threshold);
-  const report={fixture_id:target.fixture_id,configured_vus:run.vus,peak_vus:metric('vus').max??null,profile:{ramp_seconds:run.ramp,hold_seconds:run.hold,read_interval_seconds:run.interval,connection_seconds:run.connection,write_every:run.writeEvery},http:metric('http_req_duration'),requests:metric('http_reqs'),api:metric('api_ok'),authentication:metric('auth_ok'),sockets:metric('socket_ok'),received_publications:metric('inbox_publications'),own_delivery:metric('own_delivery_ok'),own_delivery_ms:metric('own_delivery_ms'),failed_thresholds:failed};
+  const report={fixture_id:target.fixture_id,configured_vus:run.vus,peak_vus:metric('vus').max??null,profile:{ramp_seconds:run.ramp,hold_seconds:run.hold,read_interval_seconds:run.interval,connection_seconds:run.connection,write_every:run.writeEvery},http:metric('http_req_duration'),requests:metric('http_reqs'),api:metric('api_ok'),authentication:metric('auth_ok'),sockets:metric('socket_ok'),ratchet:metric('ratchet_join_ok'),centrifugo:metric('centrifugo_subscribe_ok'),socket_failures:metric('socket_failures'),received_publications:metric('inbox_publications'),own_delivery:metric('own_delivery_ok'),own_delivery_ms:metric('own_delivery_ms'),failed_thresholds:failed};
   return {[__ENV.REPORT_FILE||'results-'+run.vus+'-users.json']:JSON.stringify(report,null,2),stdout:'\nCapacity test completed: '+run.vus+' configured users. '+(failed.length?'Thresholds failed; this load is not validated.':'Thresholds passed for this workload only.')+'\nResults saved as JSON. This test does not measure video/audio media or document editing.\n'};
 }

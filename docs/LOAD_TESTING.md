@@ -87,3 +87,7 @@ If creation fails, the DB transaction rolls back. There is no application rollba
 The load-test-kit workflow runs the real pinned k6 2.3.0 binary against a local mock application, verifying distinct logins/cookies, CSRF, reads, Ratchet joins, broker ping responses, HTTP 201 saves and publication timing. A failure case verifies refused writes fail the test. A disposable MySQL fixture validates account creation, private file modes, cleanup guards and rollback. CI does not send traffic to ecollab.tech and does not establish production capacity.
 
 Primary docs: https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/ and https://grafana.com/docs/k6/latest/javascript-api/k6-websockets/.
+
+## Updating an existing PC kit
+
+Pull the latest branch on the VPS and run `python3 scripts/package-load-tests.py`. This repackages the latest existing fixture; do not create another set of students for a runner update. Download the ZIP again and extract it over your PC kit. Re-run two users before increasing load. Socket failures now identify Ratchet vs Centrifugo and authentication vs channel/subscription failure, without printing tokens.
