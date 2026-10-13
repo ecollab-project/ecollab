@@ -44,6 +44,7 @@ function aNavItem(string $page, string $icon, string $label, string $active): st
     <div class="nav-section-title">Analytics & Insights</div>
     <?= aNavItem('analytics',    '📊', 'Analytics',     $activePage) ?>
     <?= aNavItem('activitylogs', '🕐', 'Activity Logs', $activePage) ?>
+    <?= aNavItem('capacity', '📈', 'System Capacity', $activePage) ?>
     <?= aNavItem('syshealth',    '💗', 'System Health', $activePage) ?>
   </div>
 

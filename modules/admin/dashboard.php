@@ -49,6 +49,7 @@ $stats = $dashData['stats'] ?? [
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/admin-dashboard.css">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/system-capacity.css?v=1">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/dashboard-mobile.css">
   <script>window.ECOLLAB_BASE = <?= json_encode(BASE_URL) ?>;</script>
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=notifications-2">
@@ -430,6 +431,7 @@ $stats = $dashData['stats'] ?? [
     </div>
 
     <!-- ══ SYSTEM HEALTH PAGE ══ -->
+    <?php include ROOT_PATH . '/includes/layout/admin-system-capacity.php'; ?>
     <div class="page-section" id="page-syshealth">
       <div class="page-title-row"><div><div class="page-title">System Health</div></div><button class="btn-secondary" onclick="refreshHealth()">🔄 Refresh</button></div>
       <div class="card" style="margin-bottom:16px"><div class="card-header"><div class="card-title">Live Metrics</div><div class="status-badge"><div class="status-dot"></div>All Systems Operational</div></div>
@@ -554,7 +556,8 @@ ADMIN_DATA.dauData = Array.isArray(ADMIN_DATA.dauData) ? ADMIN_DATA.dauData : []
 </script>
 <script src="<?= BASE_URL ?>/assets/js/dashboard-state.js?v=1" defer></script>
 <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js?v=2" defer></script>
-<script src="<?= BASE_URL ?>/assets/js/admin/dashboard.js?v=2" defer></script>
+<script src="<?= BASE_URL ?>/assets/js/admin/dashboard.js?v=capacity-1" defer></script>
+<script src="<?= BASE_URL ?>/assets/js/admin/system-capacity.js?v=1" defer></script>
 
 <script>
 // ── Mobile sidebar ─────────────────────────────────────────────────
