@@ -2,7 +2,7 @@
 declare(strict_types=1);
 require_once dirname(__DIR__,2).'/config.php';require_once ROOT_PATH.'/database/config/db.php';require_once ROOT_PATH.'/security/middleware/AuthMiddleware.php';require_once ROOT_PATH.'/security/middleware/RoleMiddleware.php';
 header('Content-Type: application/json');AuthMiddleware::startSession();$me=AuthMiddleware::requireAuth(true);RoleMiddleware::requireRole(['admin','super_admin'],true);
-if($_SERVER['REQUEST_METHOD']!=='POST'){http_response_code(405);echo json_encode(['success'=>false,'error'=>'POST required']);exit;}AuthMiddleware::verifyCsrf();
+if($_SERVER['REQUEST_METHOD']!=='POST'){http_response_code(405);echo json_encode(['success'=>false,'error'=>'POST required']);exit;}AuthMiddleware::verifyCsrf();session_write_close();
 $b=json_decode(file_get_contents('php://input'),true)?:[];$topic=trim((string)($b['topic']??''));$task=trim((string)($b['task']??''));$size=max(2,min(8,(int)($b['group_size']??4)));if($topic===''&&$task===''){http_response_code(422);echo json_encode(['success'=>false,'error'=>'Topic or task is required']);exit;}
 $db=Database::getInstance();$cols=[];foreach($db->query('SHOW COLUMNS FROM user_profiles')->fetchAll(PDO::FETCH_ASSOC) as $r)$cols[$r['Field']]=true;$wanted=['bio','program','year_level','study_style','study_goal','goals','interests','hobbies','skills','strengths','weaknesses'];$select=[];foreach($wanted as $c)if(isset($cols[$c]))$select[]="up.`$c`";
 $sql="SELECT u.id,u.username,u.full_name,u.role".($select?','.implode(',',$select):'')." FROM users u LEFT JOIN user_profiles up ON up.user_id=u.id WHERE u.deleted_at IS NULL AND u.status='active' AND u.role IN ('student','facilitator') ORDER BY u.id DESC LIMIT 80";$users=$db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
