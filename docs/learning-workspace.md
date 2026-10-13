@@ -4,7 +4,7 @@ The default student and facilitator dashboards share a responsive learning-focus
 
 Students see joined spaces, discover publicly joinable spaces, accessible study sessions and files, personal notes, a personal planner, message activity, and notifications. Jarred uses the existing conversation interface; study buddies use the existing matching and connection workflow. Joining checks current visibility, active status, and active bans on the server, with an idempotent membership insert.
 
-Facilitators select a space they own. They see members and message participation over 30 days (owner excluded), resources, upcoming sessions, announcements, reports, and member collaboration permissions. Sessions are saved in `study_room_sessions` in a channel belonging to the selected owned space. Announcements save message, delivery intent, and notifications together; private announcement-channel notifications follow channel access. Reports link to the existing moderation workflow. The account shortcut opens the new Preferences section. Profile/account editing opens the current chat Settings page. Student dashboard links stay on the new workspace or open current chat/collaboration modules. Further facilitator space management and moderation tools remain available under `modules/student/tools.php` and `modules/facilitator/tools.php`, with a return link to the new workspace. Selected owned-space context is prioritized in the facilitator tools.
+Facilitators select a space they own. They see members and message participation over 30 days (owner excluded), resources, upcoming sessions, announcements, reports, and member collaboration permissions. Sessions are saved in `study_room_sessions` in a channel belonging to the selected owned space. Announcements save message, delivery intent, and notifications together; private announcement-channel notifications follow channel access. Reports are reviewed inside the workspace through the scoped learning tools API. The account shortcut opens the new Preferences section. Profile/account editing opens the current chat Settings page. Student dashboard links stay on the new workspace or open current chat/collaboration modules. Legacy `modules/student/tools.php` and `modules/facilitator/tools.php` routes now authenticate and redirect to current workspace pages, preserving recognized page aliases and selected-space context.
 
 Personal notes are always scoped to the authenticated actor. Updates require an opaque revision token and reject stale edits, including two edits in the same second. The planner saves personal events; it does not notify other people or create study-session invitations. Session attendance is managed through the existing channel and voice workflows; a schedule entry is not an RSVP or attendance record.
 
@@ -39,3 +39,25 @@ node tests/learning-workspace-ui-regression.cjs
 ```
 
 The PHP test uses PDO SQLite and verifies personal ownership, revision conflicts, private-channel resource filtering, facilitator ownership, session timestamps/channel validation, public-join restrictions, idempotency, announcement transaction rollback, private-channel notifications, and absence of system features in the default dashboards. The DOM test renders both authenticated PHP pages and exercises navigation, forms, CSRF, pagination/search, announcement and session submission, permission scope, theme preferences, text escaping, and unavailable-source handling. It is not a rendered-browser visual test or a production MySQL integration test.
+
+
+## Connected learning tools
+
+Both roles now have a Tools & workflows page, a learning profile editor, public documents/whiteboards catalog, and Help & policy links. Dedicated chat, library, and collaboration editors remain their own modules; dashboard tools no longer open the retained legacy dashboard. Profile edits update only the authenticated user's display name, bio, year, study style and goal. They preserve academic program, weekly goals, links, avatar, and account role. Students can submit reason/proof for facilitator access through the existing approval workflow (JPG/PNG/PDF, up to 5 MB).
+
+Facilitators manage reports, active bans, settings, and participation inside the new shell. Report evidence/revision checks reject stale reviews; staff accounts and the server owner are protected from moderation actions. Actions include dismiss, resolve without removing content, mute/suspend for 24 hours through the platform's existing server restrictions, and ban from the selected space. Restrictions, report decisions, member-count updates and audit entries commit together. Unban restores eligibility; it does not automatically rejoin the former member. Suspension enforcement remains that of the existing platform endpoints; this change does not add restrictions to every independent collaboration editor.
+
+Space settings use a revision check and apply to the selected owner-controlled space. Channel locking affects existing non-announcement channels; announcement channels stay locked. Permission changes can apply to the selected space or, with confirmation, every owned space. Creating a space uses the existing authenticated creation endpoint, includes owner membership, initializes the member counter and locks its announcement channel.
+
+The facilitator monitor supports owned spaces and existing explicit assignments/management relationships. Assigned-only monitors are read-only, show a clearly named space, and hide ownership controls; assignment does not grant settings or report-review authority. The old shared monitor entry route redirects to the current role-specific workspace. Charts show messages and contributors over 30 Philippines-time days, with the owner excluded from contributors. They describe participation, not grades. No host, capacity, service status or infrastructure views are included.
+
+The documents/whiteboards catalog shows up to 200 public items in public workspaces, and applies private-channel authorization. Other private collaboration resources remain reachable through the dedicated collaboration hub. Reports and active bans show up to 200 records with local search/pagination. Unavailable sources show an error and Retry.
+
+Additional validation:
+
+```bash
+php tests/learning-tools-regression.php
+node tests/learning-workspace-ui-regression.cjs
+```
+
+Tests cover personal profile ownership/preservation, private collaboration filtering, assigned-monitor authority, owner/staff protection, stale evidence/settings/bans, mute expiry, unban semantics, transaction rollback, legacy route redirects, and connected profile/settings/review/unban forms. The UI test also checks assigned-monitor navigation. Run the updated `scripts/deploy-learning-workspace.sh`; no new migration is needed. Verify both role dashboards on the VPS in an actual browser, including file-upload requests and database behavior.
