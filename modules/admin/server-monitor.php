@@ -9,6 +9,12 @@ $user=AuthMiddleware::requireAuth();
 $scope=(string)($_GET['scope']??'admin');
 $serverId=filter_input(INPUT_GET,'server_id',FILTER_VALIDATE_INT);
 if(!$serverId){http_response_code(400);exit('Invalid server.');}
+if($scope==='admin'){
+  RoleMiddleware::requireRole(['admin','super_admin']);
+  $tab=(string)($_GET['tab']??'overview');if(!in_array($tab,['overview','channels','members','activity','reports'],true))$tab='overview';
+  header('Location: '.BASE_URL.'/modules/admin/dashboard.php?page=monitor&server_id='.(int)$serverId.'&tab='.$tab);exit;
+}
+if($scope!=='facilitator'){http_response_code(400);exit('Invalid monitor scope.');}
 $svc=new ServerMonitoringService();
 if($scope==='facilitator'){
   RoleMiddleware::requireRole(['facilitator','admin','super_admin','moderator']);

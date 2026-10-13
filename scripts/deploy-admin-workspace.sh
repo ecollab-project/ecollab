@@ -14,14 +14,21 @@ umask 0022
 git pull --ff-only origin ecollab-collabs
 public_files=(
   modules/admin/dashboard.php
+  modules/admin/server-monitor.php
+  modules/admin/reports.php
+  modules/admin/tools.php
   includes/layout/admin-workspace-sidebar.php
   includes/layout/admin-system-capacity.php
   API/admin/workspace.php
+  API/admin/reports.php
+  API/admin/server-monitor.php
   API/admin/service-status.php
   API/admin/system-health.php
   API/admin/group-recommendations.php
   API/admin/system-capacity.php
   services/AdminWorkspaceService.php
+  services/AdminReportService.php
+  services/AdminSpaceMonitorService.php
   services/SystemCapacityService.php
   assets/js/admin/workspace.js
   assets/js/admin/system-capacity.js

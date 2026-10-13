@@ -3,7 +3,7 @@ $workspaceNav=[
  'Workspace'=>[['overview','Overview','grid'],['users','People','users'],['servers','Spaces','layers'],['courses','Courses & interests','book']],
  'Review'=>[['reports','Reports','flag'],['facilitatorrequests','Facilitator requests','check'],['feedback','Feedback','message']],
  'Insights'=>[['analytics','Activity insights','chart'],['aimatching','AI & peer matching','spark'],['capacity','System capacity','gauge'],['syshealth','System status','pulse'],['activitylogs','Audit trail','clock']],
- 'Tools'=>[['announcements','Announcements','megaphone'],['settings','Preferences','settings']]
+ 'Tools'=>[['tools','Tools & workflows','grid'],['monitor','Space monitor','chart'],['announcements','Announcements','megaphone'],['settings','Preferences','settings']]
 ];
 ?>
 <aside class="workspace-sidebar sidebar" id="workspaceSidebar" aria-label="Admin navigation">
