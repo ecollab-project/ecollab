@@ -1,7 +1,7 @@
 name: Code Lab isolation
 on:
   pull_request:
-    paths: ['services/CodeLabService.php', 'API/code-lab/**', 'modules/code-lab/**', 'assets/js/code-lab.js', 'assets/css/code-lab.css', 'tests/code-lab*', 'database/migrations/054_code_lab.sql', '.github/workflows/code-lab.yml']
+    paths: ['services/CodeLab*.php', 'API/code-lab/**', 'modules/code-lab/**', 'assets/js/code-lab.js', 'assets/css/code-lab.css', 'tests/code-lab*', 'database/migrations/*code_lab*.sql', 'deploy/code-lab/**', 'scripts/*code-lab*', 'deploy/code-lab/application.env.example', '.github/workflows/code-lab.yml']
 permissions:
   contents: read
 jobs:
@@ -12,7 +12,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: pdo_sqlite
+          extensions: pdo_sqlite, dom, curl, mbstring
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -21,6 +21,12 @@ jobs:
           php -l API/code-lab/index.php
           php -l modules/code-lab/index.php
           php tests/code-lab-regression.php
+          php -l services/CodeLabRunner.php
+          php -l services/CodeLabExecutionService.php
+          php -l scripts/code-lab-worker.php
+          php -l scripts/check-code-lab-runner.php
+          php tests/code-lab-execution-regression.php
+          bash -n deploy/code-lab/bootstrap-judge0.sh
           node --check assets/js/code-lab.js
       - run: npm install --no-save --ignore-scripts jsdom@30.1.2
       - run: node tests/code-lab-ui-regression.cjs

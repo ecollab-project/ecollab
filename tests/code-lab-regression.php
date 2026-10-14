@@ -9,6 +9,11 @@ $sql=str_replace('BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY','INTEGER PRIMARY K
 $sql=preg_replace('/,\s*INDEX code_lab_server \(server_id, id\)/','',$sql);
 $sql=str_replace(['UNIQUE KEY code_lab_private_attempt','UNIQUE KEY code_lab_private_playground'],['UNIQUE','UNIQUE'],$sql);
 $sql=preg_replace('/\) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;/',');',$sql);$db->exec($sql);
+$executionSql=file_get_contents(dirname(__DIR__).'/database/migrations/055_code_lab_execution.sql');
+$executionSql=str_replace('BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY','INTEGER PRIMARY KEY AUTOINCREMENT',$executionSql);
+$executionSql=preg_replace('/,\s*INDEX code_lab_(?:queue|user_jobs)\([^;]+?\)/','',$executionSql);
+$executionSql=str_replace(['UNIQUE KEY code_lab_case_position','UNIQUE KEY code_lab_grade_once'],['UNIQUE','UNIQUE'],$executionSql);
+$executionSql=preg_replace('/\) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;/',');',$executionSql);$db->exec($executionSql);
 $db->exec('CREATE TABLE users(id INTEGER PRIMARY KEY,role TEXT,deleted_at TEXT,full_name TEXT,username TEXT,status TEXT DEFAULT "active");CREATE TABLE servers(id INTEGER PRIMARY KEY,name TEXT,owner_id INTEGER,status TEXT);CREATE TABLE server_members(server_id INTEGER,user_id INTEGER)');
 $db->exec("INSERT INTO users (id,role,deleted_at,full_name,username) VALUES(1,'facilitator',NULL,'Teacher','teacher'),(2,'student',NULL,'Alice','alice'),(3,'student',NULL,'Bob','bob'),(4,'student',NULL,'Other','other'),(5,'student',NULL,'Owner','owner');INSERT INTO servers VALUES(1,'Course',1,'active'),(2,'Other course',1,'active'),(3,'Student owned',5,'active');INSERT INTO server_members VALUES(1,1),(1,2),(1,3),(2,4),(3,5)");
 $now=strtotime('2026-10-20T00:00:00Z');$service=new CodeLabService($db,fn()=>$GLOBALS['now']);
