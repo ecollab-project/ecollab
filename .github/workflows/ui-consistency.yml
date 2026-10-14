@@ -29,6 +29,7 @@ jobs:
           node tests/call-settings-regression.cjs
           node tests/livekit-calls-regression.cjs
           node tests/livekit-voice-regression.cjs
+          node tests/call-taskbar-regression.cjs
 
 
           node tests/team-audit-regression.cjs

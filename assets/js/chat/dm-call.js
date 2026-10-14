@@ -40,6 +40,7 @@
     for(const [track,el] of c.audio||[]){track.detach(el);el.remove();}
     for(const [track,el] of c.videos||[]){track.detach(el);el.remove();}
     c.panel?.remove();
+    window.EcollabCallDock?.refresh();
     releaseLock?.();releaseLock=null;
   }
   async function sdk() {
@@ -74,7 +75,7 @@
     c.state='active';stopRing(c);announce(c);reconcileAudio(c);render(c);
     await room.startAudio().catch(()=>{c.message='Tap the call window to hear audio.';render(c);});
   }
-  function make(data){return {...data,deafened:false,minimized:false,expanded:false,audio:new Map(),videos:[],message:'',closed:false};}
+  function make(data){return {...data,deafened:false,minimized:false,expanded:false,previewHidden:false,audio:new Map(),videos:[],message:'',closed:false};}
   async function start(video) {
     if(busy()){notice('Leave your current call before starting another.');return;}
     const dm=typeof DM!=='undefined'?DM:{};
@@ -97,7 +98,9 @@
     try{await connect(c);if(call!==c)return;if(!c.groupId&&!send({type:'dm_call_answer',target_user_id:c.peerId,log_id:c.logId,media:'livekit'}))throw Error('Signaling disconnected. Please call again.');}catch(e){end();notice(e.message);}finally{c.busy=false;if(call===c)render(c);}
   }
   function end(timedOut=false){const c=call;if(!c)return;if(!c.groupId&&c.peerId&&c.logId)send({type:c.state==='incoming'&&!timedOut?'dm_call_decline':'dm_call_end',target_user_id:c.peerId,log_id:c.logId});cleanup(c);}
-  async function action(name){const c=call;if(!c||c.busy)return;const p=c.room?.localParticipant;
+  async function action(name){const c=call;if(!c || (c.busy && !['minimize','expand','hide-preview','show-preview','end'].includes(name)))return;const p=c.room?.localParticipant;
+    if(name==='hide-preview'){c.previewHidden=true;layout(c);return;}
+    if(name==='show-preview'){c.previewHidden=false;layout(c);return;}
     if(name==='minimize'){c.minimized=!c.minimized;layout(c);return;}
     if(name==='expand'){c.expanded=!c.expanded;c.minimized=false;layout(c);return;}
     if(name==='end'){end();return;}if(name==='accept'||name==='audio'){accept(name==='audio');return;}
@@ -114,16 +117,16 @@
   function layout(c) {
     const panel=c.panel;if(!panel)return;
     panel.classList.toggle('is-minimized',c.minimized);
-    const compact=c.minimized && c.state==='active' && !c.groupId;
-    const dock=document.getElementById('vcConnectedBar');
-    const desktop=window.matchMedia('(min-width:1025px) and (pointer:fine)').matches;
-    const sidebar=compact && desktop && dock && !c.position;
+    const compact=c.minimized && c.state==='active';
     panel.classList.toggle('is-compact-direct',compact);
-    panel.classList.toggle('is-sidebar-docked',!!sidebar);
-    if(sidebar){if(panel.parentNode!==dock.parentNode)dock.before(panel);}
-    else if(panel.parentNode!==document.body)document.body.appendChild(panel);
+    panel.classList.remove('is-sidebar-docked');
+    panel.classList.toggle('is-taskbar-docked',compact);
+    panel.classList.toggle('is-preview-hidden',c.previewHidden);
+    panel.classList.toggle('has-call-video',!!panel.querySelector('video'));
+    if(compact && window.EcollabCallDock) window.EcollabCallDock.mount(panel);
+    else if(panel.parentNode!==document.body) document.body.appendChild(panel);
     for(const prop of ['left','top','right','bottom','transform'])panel.style.removeProperty(prop);
-    if(c.minimized&&c.position){const box=panel.getBoundingClientRect();c.position.left=Math.max(8,Math.min(innerWidth-box.width-8,c.position.left));c.position.top=Math.max(8,Math.min(innerHeight-box.height-8,c.position.top));Object.assign(panel.style,{left:c.position.left+'px',top:c.position.top+'px',right:'auto',bottom:'auto',transform:'none'});}
+    window.EcollabCallDock?.refresh();
     panel.classList.toggle('is-expanded',c.expanded&&!c.minimized&&c.state==='active');
     const mini=panel.querySelector('[data-action=minimize]');
     if(mini){mini.textContent=c.minimized?'Restore':'Minimize';mini.setAttribute('aria-expanded',String(!c.minimized));}
@@ -131,30 +134,14 @@
     if(expand){expand.textContent=c.expanded?'Dock':'Expand';expand.hidden=c.minimized;expand.setAttribute('aria-expanded',String(c.expanded));}
   }
   function syncSpeaking(c) { render(c); }
-  function installDrag(c, panel) {
-    let drag=null;
-    panel.addEventListener('pointerdown',e=>{
-      if(!c.minimized||!e.target.closest('header,.ec-call-compact-status')||e.target.closest('button')||e.button>0)return;
-      const box=panel.getBoundingClientRect();drag={id:e.pointerId,x:e.clientX,y:e.clientY,left:box.left,top:box.top};
-      if(panel.classList.contains('is-sidebar-docked')){c.position={left:box.left,top:box.top};layout(c);}
-      panel.setPointerCapture?.(e.pointerId);e.preventDefault();
-    });
-    panel.addEventListener('pointermove',e=>{
-      if(!drag||drag.id!==e.pointerId)return;
-      const box=panel.getBoundingClientRect();
-      c.position={left:Math.max(8,Math.min(innerWidth-box.width-8,drag.left+e.clientX-drag.x)),top:Math.max(8,Math.min(innerHeight-box.height-8,drag.top+e.clientY-drag.y))};
-      layout(c);
-    });
-    const stop=()=>{drag=null;};panel.addEventListener('pointerup',stop);panel.addEventListener('pointercancel',stop);
-  }
   function render(c){
     if(call!==c)return;
     let panel=c.panel;
     if(!panel){
       panel=document.createElement('section');panel.className='ec-call';panel.setAttribute('role','region');panel.setAttribute('aria-label','Call');document.body.appendChild(panel);c.panel=panel;
-      panel.innerHTML='<header><div class="ec-call-heading"></div><div class="ec-call-window-actions"></div></header><div class="ec-call-screen"></div><div class="ec-call-grid"></div><div class="ec-call-actions"></div><div class="ec-call-status" role="status"></div><div class="ec-call-compact"><div class="ec-call-compact-status"><i></i><strong>Call Connected</strong></div><button type="button" class="ec-call-compact-name" data-action="minimize" title="Open call" aria-label="Restore call"></button><div class="ec-call-compact-actions"><button type="button" data-action="mic" aria-label="Mute microphone" title="Mute microphone">Mute</button><button type="button" class="danger" data-action="end" aria-label="End call" title="End call"><svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 01.99.86c.12 1.25.41 2.45.87 3.57a1 1 0 01-.24 1.01l-2.21 2.35z"/></svg></button></div></div>';
+      panel.innerHTML='<header><div class="ec-call-heading"></div><div class="ec-call-window-actions"></div></header><div class="ec-call-preview"><button type="button" class="ec-call-preview-close" data-action="hide-preview" aria-label="Close video preview and stay in call">Close video ×</button><div class="ec-call-screen"></div><div class="ec-call-grid"></div></div><div class="ec-call-actions"></div><div class="ec-call-status" role="status"></div><div class="ec-call-compact"><div class="ec-call-compact-status"><i></i><strong>Call Connected</strong></div><button type="button" class="ec-call-compact-name" data-action="minimize" title="Open call" aria-label="Restore call"></button><div class="ec-call-compact-actions"><button type="button" data-action="show-preview" title="Show video preview" aria-label="Show video preview">Video</button><button type="button" data-action="mic" aria-label="Mute microphone" title="Mute microphone">Mute</button><button type="button" class="danger" data-action="end" aria-label="End call" title="End call"><svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 01.99.86c.12 1.25.41 2.45.87 3.57a1 1 0 01-.24 1.01l-2.21 2.35z"/></svg></button></div></div>';
       panel.onclick=e=>{const b=e.target.closest('[data-action]');if(b)action(b.dataset.action);else c.room?.startAudio().then(()=>{c.message='';panel.querySelector('.ec-call-status').textContent='';}).catch(()=>{});};
-      installDrag(c,panel);c.tiles=new Map();
+      c.tiles=new Map();
     }
     const focused=panel.contains(document.activeElement)?document.activeElement.dataset.action:null;
     panel.classList.toggle('is-ringing',['incoming','outgoing'].includes(c.state));
@@ -171,7 +158,7 @@
     compactMic.setAttribute('aria-label',muted?'Unmute microphone':'Mute microphone');
     compactMic.title=muted?'Unmute microphone':'Mute microphone';
     compactMic.setAttribute('aria-pressed',String(muted));
-    panel.querySelectorAll('button').forEach(b=>{if(c.busy&&!['end','minimize','expand'].includes(b.dataset.action))b.disabled=true;});
+    panel.querySelectorAll('button').forEach(b=>{b.disabled=!!c.busy&&!['end','minimize','expand','hide-preview','show-preview'].includes(b.dataset.action);});
     if(active){
       const participants=[p,...c.room.remoteParticipants.values()],speakers=c.room.activeSpeakers||[];
       const sorted=participants.filter(x=>x!==p).sort((a,b)=>(speakers.indexOf(a)<0?999:speakers.indexOf(a))-(speakers.indexOf(b)<0?999:speakers.indexOf(b)));
