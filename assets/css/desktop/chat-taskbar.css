@@ -116,3 +116,43 @@
 .workspace-picker-row span{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.workspace-picker-row small{flex:none;font-size:11px;color:#bba6d7}
 .workspace-picker-row:hover{background:#27304a}.workspace-picker :focus-visible{outline:2px solid #c084fc;outline-offset:2px}
 @media(prefers-reduced-motion:reduce){.workspace-switcher .workspace-icon:hover{transform:none}}
+
+/* Full-width product taskbar: launchers, servers, then call/account controls. */
+.workspace-taskbar-left,.workspace-taskbar-center,.workspace-taskbar-right{display:contents}
+.workspace-pinned,#workspaceAccountDock{display:none}
+#workspaceAccountHome{display:none}
+#workspaceAccount .user-avatar{cursor:default}
+@media(min-width:861px){
+ .workspace-switcher{justify-content:stretch;background:#0c111c;padding:8px 12px}
+ .workspace-dock-shell{display:grid;grid-template-columns:auto minmax(0,1fr) auto;width:100%;max-width:none;padding:0;gap:16px;border:0;border-radius:0;background:transparent;box-shadow:none}
+ .workspace-taskbar-left,.workspace-taskbar-center,.workspace-taskbar-right{display:flex;align-items:center;gap:8px;min-width:0}
+ .workspace-taskbar-center{justify-content:safe center}
+ .workspace-taskbar-right{justify-content:flex-end}
+ .workspace-taskbar-left .workspace-brand-sep{display:none}
+ .workspace-server-list{flex:0 1 auto}
+ .workspace-pinned{display:flex;align-items:center;gap:4px;padding-left:8px;border-left:1px solid #ffffff10}
+ .workspace-switcher .workspace-pin{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:40px;min-width:40px;padding:0 8px;border:1px solid transparent;border-radius:9px;background:transparent;color:#a6b1c5;font:12px Inter,system-ui,sans-serif;cursor:pointer;white-space:nowrap}
+ .workspace-pin:hover{color:#fff;background:#ffffff08;border-color:#ffffff0b}
+ .workspace-taskbar-right .workspace-call-slot{padding-left:0;border-left:0}
+ #workspaceAccountDock{display:block;min-width:0}
+ #workspaceAccountDock .user-profile-footer{display:flex;align-items:center;gap:8px;width:230px;min-width:0;height:44px;margin:0;padding:0 0 0 10px;border-top:0;border-left:1px solid #ffffff10;background:transparent}
+ #workspaceAccountDock .footer-controls{order:0;gap:3px;margin:0}
+ #workspaceAccountDock .user-avatar{order:1;flex:none;width:32px;height:32px}
+ #workspaceAccountDock .avatar-lg{width:32px;height:32px;font-size:12px}
+ #workspaceAccountDock .taskbar-account-details{order:2;min-width:0}
+ #workspaceAccountDock .taskbar-account-details>div:first-child{font-size:11px!important}
+ #workspaceAccountDock .taskbar-account-details>div:last-child{font-size:10px!important}
+ #workspaceAccountDock .footer-icon-btn{width:32px;min-width:32px;height:34px}
+}
+@media(min-width:861px) and (max-width:1450px){.workspace-pin span{display:none}.workspace-switcher .workspace-pin{padding:0;width:36px;min-width:36px}.workspace-dock-shell{gap:10px}}
+@media(min-width:861px) and (max-width:1150px){
+ #workspaceAccountDock .taskbar-account-details{display:none}
+ #workspaceAccountDock .user-profile-footer{width:auto}
+ .workspace-taskbar-right .workspace-call-slot .ec-call.is-taskbar-docked{width:220px!important}
+ .workspace-taskbar-right .workspace-call-slot #vcConnectedBar{width:220px;flex-basis:220px}
+ .workspace-dock-shell{gap:6px}.workspace-taskbar-left,.workspace-taskbar-center,.workspace-taskbar-right{gap:4px}
+}
+@media(min-width:861px){
+ .workspace-taskbar-right #vcDockMic,
+ .workspace-taskbar-right .ec-call-compact-actions [data-action=mic]{display:none!important}
+}

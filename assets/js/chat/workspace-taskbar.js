@@ -7,6 +7,23 @@
   const icons = () => [...list.querySelectorAll('.workspace-icon')];
   const desktop = () => matchMedia('(min-width:861px)').matches;
   const reduced = () => matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const account = document.getElementById('workspaceAccount');
+  const accountHome = document.getElementById('workspaceAccountHome');
+  const accountDock = document.getElementById('workspaceAccountDock');
+  function placeAccount() {
+    if (!account || !accountHome || !accountDock) return;
+    if (desktop()) { if (account.parentNode !== accountDock) accountDock.appendChild(account); }
+    else if (account.previousElementSibling !== accountHome) accountHome.after(account);
+  }
+  dock.querySelectorAll('[data-taskbar-app]').forEach(button => button.addEventListener('click', () => {
+    const app = button.dataset.taskbarApp;
+    if (app === 'messages') {
+      const home = document.querySelector('.sidebar-nav-item[onclick*="home"]');
+      if (home) home.click();
+    } else if (app === 'collabs') window.openCollabHub?.();
+    else if (app === 'library') document.getElementById('serverLibraryNav')?.click();
+  }));
+  placeAccount();
   function reveal(icon) {
     if (!desktop()) return;
     const left = icon.offsetLeft - list.offsetLeft;
@@ -87,6 +104,6 @@
   document.addEventListener('keydown', e => { if (desktop() && e.altKey && !e.ctrlKey && !e.metaKey && e.key.toLowerCase() === 's') { e.preventDefault(); find.click(); } });
   new MutationObserver(sync).observe(list, {subtree:true, childList:true, attributes:true, attributeFilter:['class','title']});
   if (window.ResizeObserver) new ResizeObserver(overflow).observe(list);
-  window.addEventListener('resize', () => { hideTip(); overflow(); });
+  window.addEventListener('resize', () => { hideTip(); placeAccount(); overflow(); });
   sync();
 })();

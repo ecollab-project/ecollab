@@ -42,6 +42,7 @@
     window.EcollabCallDock?.stopClock(c.panel);
     c.panel?.remove();
     window.EcollabCallDock?.refresh();
+    window._syncVoiceQuickActions?.();
     releaseLock?.();releaseLock=null;
   }
   async function sdk() {
@@ -162,6 +163,11 @@
     compactMic.setAttribute('aria-label',muted?'Unmute microphone':'Mute microphone');
     compactMic.title=muted?'Unmute microphone':'Mute microphone';
     compactMic.setAttribute('aria-pressed',String(muted));
+    if(active) for(const [id,enabled,label] of [['muteBtn',!muted,'Microphone'],['deafenBtn',!c.deafened,'Audio playback']]) {
+      const control=document.getElementById(id);if(!control)continue;
+      control.classList.toggle('media-on',enabled);control.classList.toggle('media-off',!enabled);
+      control.setAttribute('aria-pressed',String(enabled));control.setAttribute('aria-label',label+(enabled?' on':' off'));control.title=label+(enabled?' on':' off');
+    }
     panel.querySelectorAll('button').forEach(b=>{b.disabled=!!c.busy&&!['end','minimize','expand','hide-preview','show-preview'].includes(b.dataset.action);});
     if(active){
       const participants=[p,...c.room.remoteParticipants.values()],speakers=c.room.activeSpeakers||[];
@@ -210,7 +216,7 @@
     try{const res=await fetch(base+'/API/auth/ws-token.php',{credentials:'same-origin'});if(res.status===401)return;if(!res.ok)throw Error('Signaling unavailable');const data=await res.json();socket=new WebSocket(config.wsUrl);socket.onopen=()=>socket.send(JSON.stringify({type:'auth',ws_token:data.token}));socket.onmessage=e=>{try{const d=JSON.parse(e.data);if(d.type==='auth_ok'){authed=true;reconnect=0;}else handle(d).catch(console.error);}catch(_){}};socket.onclose=()=>{authed=false;clearTimeout(timer);timer=setTimeout(connectSignals,Math.min(30000,2000*2**reconnect++));};socket.onerror=()=>{};}catch(_){timer=setTimeout(connectSignals,10000);}
   }
   window.addEventListener('ecollab-media-settings-changed',()=>{if(call?.room)media().playback(call.room);});
-  window.EcollabCalls={handle,busy:()=>!!call,get room(){return call?.room;}};
+  window.EcollabCalls={handle,control:action,busy:()=>!!call,get room(){return call?.room;}};
   window.startDmCall=start;window.endDmCall=end;
   for(const data of window.__ecollabPendingCalls || []) handle(data).catch(console.error);
   delete window.__ecollabPendingCalls;

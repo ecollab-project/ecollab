@@ -176,9 +176,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </style>
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=notifications-2">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=3">
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat-taskbar.css?v=refined-dock-1">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat-taskbar.css?v=full-taskbar-1">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
-<script defer src="<?= BASE_URL ?>/assets/js/chat/workspace-taskbar.js?v=1"></script>
+<script defer src="<?= BASE_URL ?>/assets/js/chat/workspace-taskbar.js?v=2"></script>
 </head>
 
 <body data-mobile-surface="chat">
@@ -202,11 +202,19 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <!-- WORKSPACE SWITCHER -->
   <nav class="workspace-switcher" id="workspaceSwitcher" aria-label="Workspaces">
     <div class="workspace-dock-shell">
+    <div class="workspace-taskbar-left">
     <div class="workspace-brand-mark" aria-label="eCollab" title="eCollab">
       <img src="<?= BASE_URL ?>/assets/ecollab-icon.webp" alt="" draggable="false">
     </div>
     <div class="workspace-sep workspace-brand-sep"></div>
     <button type="button" class="workspace-find" id="workspaceFind" aria-label="Find a server" title="Find a server (Alt+S)" aria-haspopup="dialog"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg></button>
+    <div class="workspace-pinned" role="group" aria-label="Pinned shortcuts">
+      <button type="button" class="workspace-pin" data-taskbar-app="messages" title="Messages" aria-label="Messages"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 4h16v12H9l-5 4V4Z"/><path d="M8 8h8M8 12h5"/></svg><span>Messages</span></button>
+      <button type="button" class="workspace-pin" data-taskbar-app="collabs" title="Collabs" aria-label="Collabs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 6h7l2 2h9v12H3V6Z"/><path d="M9 14h6m-3-3v6"/></svg><span>Collabs</span></button>
+      <button type="button" class="workspace-pin" data-taskbar-app="library" title="Library" aria-label="Library"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 4h7v16H3zm11 0h7v16h-7zM6 8h1m10 0h1"/></svg><span>Library</span></button>
+    </div>
+    </div>
+    <div class="workspace-taskbar-center">
     <button type="button" class="workspace-scroll" data-scroll="-1" aria-label="Scroll servers left" hidden>‹</button>
     <div class="workspace-server-list" id="workspaceServerList" role="group" aria-label="Your servers">
     <?php foreach ($servers as $idx => $srv): ?>
@@ -227,7 +235,11 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     <button type="button" class="workspace-scroll" data-scroll="1" aria-label="Scroll servers right" hidden>›</button>
     <div class="workspace-sep"></div>
     <button type="button" class="workspace-add" aria-label="Add workspace" onclick="openModal('addServerModal')" title="Add Workspace">+</button>
+    </div>
+    <div class="workspace-taskbar-right">
     <div class="workspace-call-slot" id="workspaceCallDock" role="group" aria-label="Active call" hidden></div>
+    <div id="workspaceAccountDock"></div>
+    </div>
     </div>
   </nav>
 
@@ -413,27 +425,28 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     </div>
 
     <!-- USER PROFILE FOOTER -->
-    <div class="user-profile-footer">
-      <div class="user-avatar" onclick="openUserSettings()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openUserSettings()}">
+    <div id="workspaceAccountHome"></div>
+    <div class="user-profile-footer" id="workspaceAccount">
+      <div class="user-avatar" aria-label="Your account">
         <div class="avatar-placeholder avatar-lg" style="<?= $avatarStyle ?>;border-radius:50%;">
           <?= htmlspecialchars($initials) ?>
         </div>
         <div class="online-dot"></div>
       </div>
-      <div style="flex:1;min-width:0;">
+      <div class="taskbar-account-details" style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
           <?= htmlspecialchars($user['username']) ?>
         </div>
         <div style="font-size:11px;color:var(--accent-green);">● Online</div>
       </div>
       <div class="footer-controls">
-        <button type="button" class="footer-icon-btn" onclick="event.stopPropagation();toggleMute(event)" title="Mute" id="muteBtn">
+        <button type="button" class="footer-icon-btn" onclick="event.stopPropagation();if(window.EcollabCalls?.busy())window.EcollabCalls.control('mic');else toggleMute(event)" title="Mute" id="muteBtn">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
             <path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
         </button>
-        <button type="button" class="footer-icon-btn" onclick="event.stopPropagation();toggleDeafen(event)" title="Deafen" id="deafenBtn">
+        <button type="button" class="footer-icon-btn" onclick="event.stopPropagation();if(window.EcollabCalls?.busy())window.EcollabCalls.control('deafen');else toggleDeafen(event)" title="Deafen" id="deafenBtn">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" />
           </svg>
@@ -443,11 +456,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
             <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z" />
           </svg>
         </button>
-        <button type="button" class="footer-icon-btn" onclick="event.stopPropagation();handleLogout()" aria-label="Log out" title="Log Out" style="color:#ef4444;">
-          <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" />
-          </svg>
-        </button>
+
       </div>
     </div>
   </div>
@@ -485,7 +494,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <button class="collab-open-btn" onclick="openCollabHub()" title="Collaboration Tools">
           🤝 <span>Collab</span>
         </button>
-        
+
         <button class="header-icon-btn header-members" onclick="openMembersPanel()" title="Members">
           <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
             <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
