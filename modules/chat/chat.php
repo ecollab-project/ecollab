@@ -176,9 +176,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </style>
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=notifications-2">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=3">
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat-taskbar.css?v=account-left-1">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat-taskbar.css?v=separators-tooltips-1">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
-<script defer src="<?= BASE_URL ?>/assets/js/chat/workspace-taskbar.js?v=account-left-1"></script>
+<script defer src="<?= BASE_URL ?>/assets/js/chat/workspace-taskbar.js?v=separators-tooltips-1"></script>
 </head>
 
 <body data-mobile-surface="chat">
@@ -215,6 +215,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       <button type="button" class="workspace-icon<?= (int)$srv['id'] === (int)($firstServer['id'] ?? 0) ? ' active' : '' ?>"
         data-server-id="<?= (int)$srv['id'] ?>"
         data-ws="<?= $idx ?>"
+        data-server-name="<?= htmlspecialchars($srv['name'], ENT_QUOTES) ?>"
         data-server-type="<?= htmlspecialchars((string)($srv['type'] ?? 'community')) ?>"
         onclick="switchWorkspace(<?= $idx ?>, <?= (int)$srv['id'] ?>)"
         title="<?= htmlspecialchars($srv['name']) ?>">

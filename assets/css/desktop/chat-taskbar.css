@@ -114,3 +114,13 @@
 .workspace-logo-menu button:hover,.workspace-logo-menu button:focus-visible{background:#a855f71a;outline:1px solid #a855f755}
 .workspace-logo-menu [data-logo-action=logout]{color:#f87171}
 @media(min-width:861px){.workspace-taskbar-right #vcDockMic,.workspace-taskbar-right .ec-call-compact-actions [data-action=mic]{display:none!important}}
+
+/* Visible group dividers, placed symmetrically around the centered servers. */
+@media(min-width:861px){
+ #workspaceAccountDock{padding-left:10px;border-left:1px solid #94a3b84d}
+ #workspaceSettingsDock{border-left-color:#94a3b84d}
+ .workspace-taskbar-center::before,.workspace-taskbar-center::after{content:'';display:block;flex:0 0 1px;width:1px;height:28px;background:#94a3b84d}
+ .workspace-call-slot:not([hidden]){padding-left:10px;border-left:1px solid #94a3b84d}
+}
+.workspace-server-tooltip[hidden]{display:none}
+.workspace-server-tooltip{position:fixed;z-index:10110;max-width:min(300px,calc(100vw - 16px));padding:8px 12px;border:1px solid #a78bfa55;border-radius:9px;background:#1a2235;color:#f1f5f9;box-shadow:0 8px 24px #0007;font:12px/1.4 Inter,system-ui,sans-serif;overflow-wrap:anywhere;pointer-events:none}
