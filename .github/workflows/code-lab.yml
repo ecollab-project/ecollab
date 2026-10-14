@@ -1,0 +1,26 @@
+name: Code Lab isolation
+on:
+  pull_request:
+    paths: ['services/CodeLabService.php', 'API/code-lab/**', 'modules/code-lab/**', 'assets/js/code-lab.js', 'assets/css/code-lab.css', 'tests/code-lab*', 'database/migrations/054_code_lab.sql', '.github/workflows/code-lab.yml']
+permissions:
+  contents: read
+jobs:
+  private-attempts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_sqlite
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          php -l services/CodeLabService.php
+          php -l API/code-lab/index.php
+          php -l modules/code-lab/index.php
+          php tests/code-lab-regression.php
+          node --check assets/js/code-lab.js
+      - run: npm install --no-save --ignore-scripts jsdom@30.1.2
+      - run: node tests/code-lab-ui-regression.cjs
