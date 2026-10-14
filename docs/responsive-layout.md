@@ -2,7 +2,7 @@
 
 The shared device layer loads after page-specific styles on routed HTML templates and the student/facilitator workspace template. It adds narrow-screen card/form layouts, touch targets, scrollable tables, safe modal sizes, flexible headers and large-screen reading limits. Page-specific desktop layouts and the centered chat server taskbar remain in place.
 
-`assets/js/device-layout.js` adds accessible scroll containers only to tables without an existing scroll parent. It retains original table elements, IDs and event handlers. It measures editor/whiteboard headers so wrapped controls do not cover the editing area. `mobile-viewport.js` tracks usable browser height and retains native pinch zoom.
+`assets/js/device-layout.js` adds accessible scroll containers only to tables without an existing scroll parent. It retains original table elements, IDs and event handlers. It measures editor/whiteboard headers so wrapped controls do not cover the editing area. `mobile-viewport.js` tracks usable browser height on phones and touch devices, including landscape/tablet virtual keyboards, and retains native pinch zoom.
 
 Deploy from the VPS checkout:
 

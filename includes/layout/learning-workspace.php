@@ -11,7 +11,7 @@ $e=static fn($v)=>htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8');
 ?>
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="csrf-token" content="<?= $e($csrfToken) ?>"><title><?= $fac?'Facilitator':'Student' ?> workspace · Ecollab</title><link rel="icon" href="<?= $e(BASE_URL) ?>/assets/ecollab-icon.webp"><link rel="stylesheet" href="<?= $e(BASE_URL) ?>/assets/css/desktop/learning-workspace.css?v=2"><link rel="stylesheet" href="<?= $e(BASE_URL) ?>/assets/css/peer-matching.css?v=1"><link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
 <script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
-<script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
+<script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script>
 </head>
 <body data-learning-mode="<?= $e($learningMode) ?>">
 <button class="lw-scrim" aria-label="Close navigation" hidden></button>

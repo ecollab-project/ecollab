@@ -108,3 +108,10 @@ body.has-call-taskbar:not([data-mobile-surface=chat]):not([data-mobile-surface=w
 @media(max-width:860px){body[data-mobile-surface=whiteboard] #excalidraw-root{top:var(--device-whiteboard-header,60px)!important}}
 .ob-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))}
 @media(max-width:420px){body[data-mobile-surface=landing] .pricing-grid-single{grid-template-columns:minmax(0,1fr)}body[data-mobile-surface=forms] .ob-page{padding-inline:10px}}
+@media(pointer:coarse){
+ :where(button,[role=button],a.btn,a.lw-button,select){min-height:44px;touch-action:manipulation}
+ .lw-check{min-height:44px}
+ .footer-icon-btn{min-width:44px!important;min-height:44px!important}
+ .workspace-switcher .workspace-icon{min-width:44px;min-height:44px}
+}
+@media(min-width:861px) and (pointer:coarse){body[data-mobile-surface=chat]{height:calc(var(--app-viewport-height,100dvh) - var(--server-dock-height,58px))}}

@@ -33,7 +33,7 @@ $dashUrl  = $isAuthed ? match ($_SESSION['role'] ?? 'student') {
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/landing-mobile.css">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
 <script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
-<script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
+<script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script>
 </head>
 
 <body data-mobile-surface="landing">

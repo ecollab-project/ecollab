@@ -14,7 +14,7 @@ function workspacePager(string $id): void { ?><div class="workspace-pager" data-
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script><script defer src="<?=BASE_URL?>/assets/js/admin/workspace.js?v=3"></script><script defer src="<?=BASE_URL?>/assets/js/admin/system-capacity.js?v=1"></script>
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
 <script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
-<script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
+<script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script>
 </head><body class="admin-workspace" data-mobile-surface="dashboard">
 <a class="workspace-skip" href="#workspaceMain">Skip to content</a>
 <?php include ROOT_PATH.'/includes/layout/admin-workspace-sidebar.php'; ?>

@@ -36,7 +36,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0b0f1a}#wbOverlay{dis
 </style><link rel="stylesheet" href="https://esm.sh/@excalidraw/excalidraw@0.18.0/dist/dev/index.css">
 <script type="importmap">{"imports":{"yjs":"https://esm.sh/yjs@13.6.27","y-protocols/awareness":"https://esm.sh/y-protocols@1.0.6/awareness?external=yjs","react":"https://esm.sh/react@19.0.0","react/jsx-runtime":"https://esm.sh/react@19.0.0/jsx-runtime","react-dom":"https://esm.sh/react-dom@19.0.0","react-dom/client":"https://esm.sh/react-dom@19.0.0/client"}}</script><link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=1">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=2">
-<script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
+<script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script>
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
 <script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
 </head><body data-mobile-surface="whiteboard" class="wb-access-<?=htmlspecialchars($accessPermission,ENT_QUOTES,'UTF-8')?>"><div id="wbOverlay" class="wb-visible">

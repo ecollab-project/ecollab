@@ -4,7 +4,7 @@
   if (window.ecollabMobileViewport) return;
   window.ecollabMobileViewport = true;
   const root = document.documentElement;
-  const mobile = window.matchMedia('(max-width: 860px)');
+  const mobile = window.matchMedia('(max-width: 860px), (pointer: coarse)');
   const viewport = window.visualViewport;
   let pending = false;
   function update() {
