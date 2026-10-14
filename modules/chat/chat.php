@@ -176,6 +176,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </style>
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=notifications-2">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=3">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat-taskbar.css?v=bottom-dock-1">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 </head>
 
@@ -198,13 +199,13 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </div>
 
   <!-- WORKSPACE SWITCHER -->
-  <div class="workspace-switcher" id="workspaceSwitcher">
+  <nav class="workspace-switcher" id="workspaceSwitcher" aria-label="Workspaces">
     <div class="workspace-brand-mark" aria-label="eCollab" title="eCollab">
       <img src="<?= BASE_URL ?>/assets/ecollab-icon.webp" alt="" draggable="false">
     </div>
     <div class="workspace-sep workspace-brand-sep"></div>
     <?php foreach ($servers as $idx => $srv): ?>
-      <div class="workspace-icon<?= (int)$srv['id'] === (int)($firstServer['id'] ?? 0) ? ' active' : '' ?>"
+      <button type="button" class="workspace-icon<?= (int)$srv['id'] === (int)($firstServer['id'] ?? 0) ? ' active' : '' ?>"
         data-server-id="<?= (int)$srv['id'] ?>"
         data-ws="<?= $idx ?>"
         data-server-type="<?= htmlspecialchars((string)($srv['type'] ?? 'community')) ?>"
@@ -212,11 +213,11 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         title="<?= htmlspecialchars($srv['name']) ?>">
         <?= htmlspecialchars($srv['icon_emoji'] ?: strtoupper(substr($srv['name'], 0, 1))) ?>
         <span class="workspace-visibility-indicator <?= in_array(strtolower((string)($srv['type'] ?? 'community')), ['private','academic'], true) ? 'is-private' : 'is-public' ?>" title="<?= in_array(strtolower((string)($srv['type'] ?? 'community')), ['private','academic'], true) ? 'Private server' : 'Public server' ?>"><?= in_array(strtolower((string)($srv['type'] ?? 'community')), ['private','academic'], true) ? '🔒' : '🌐' ?></span>
-      </div>
+      </button>
     <?php endforeach; ?>
     <div class="workspace-sep"></div>
-    <div class="workspace-add" onclick="openModal('addServerModal')" title="Add Workspace">+</div>
-  </div>
+    <button type="button" class="workspace-add" aria-label="Add workspace" onclick="openModal('addServerModal')" title="Add Workspace">+</button>
+  </nav>
 
   <!-- LEFT SIDEBAR -->
   <div class="sidebar-left" id="sidebarLeft">

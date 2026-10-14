@@ -1,0 +1,75 @@
+/* Desktop chat composition: navigation, conversation and people above the server dock.
+   Mobile keeps the existing navigation drawer and touch controls. */
+@media (min-width: 861px) {
+  body[data-mobile-surface="chat"] {
+    --server-dock-height: 58px;
+    --sidebar-right-width: 260px;
+    height: calc(100vh - var(--server-dock-height));
+    height: calc(100dvh - var(--server-dock-height));
+  }
+
+  body[data-mobile-surface="chat"] :is(.sidebar-left, .chat-main, .sidebar-right, #navViewOverlay) {
+    height: 100% !important;
+    min-height: 0;
+  }
+
+  .workspace-switcher {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 90;
+    width: 100%;
+    height: var(--server-dock-height);
+    flex-direction: row;
+    justify-content: safe center;
+    gap: 12px;
+    padding: 8px 16px;
+    border-right: 0;
+    border-top: 1px solid var(--border);
+    background: var(--bg-primary);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+  }
+
+  .workspace-switcher :is(.workspace-icon, .workspace-add, .workspace-brand-mark) {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    margin: 0;
+  }
+
+  .workspace-switcher .workspace-icon.active::before {
+    left: 12px;
+    top: auto;
+    bottom: -5px;
+    width: 18px;
+    height: 3px;
+    transform: none;
+    border-radius: 4px;
+  }
+
+  .workspace-switcher .workspace-sep {
+    width: 1px;
+    height: 24px;
+    flex: 0 0 1px;
+    margin: 0 !important;
+  }
+
+  .workspace-switcher .workspace-icon:hover { transform: translateY(-2px); }
+  .workspace-switcher .workspace-icon:focus-visible,
+  .workspace-switcher .workspace-add:focus-visible {
+    outline: 2px solid var(--accent-purple);
+    outline-offset: 2px;
+  }
+
+  #collabHub {
+    height: calc(100vh - var(--server-dock-height));
+    height: calc(100dvh - var(--server-dock-height));
+  }
+}
+
+.workspace-switcher button { font-family: inherit; padding: 0; }
+.workspace-switcher .workspace-add { background: transparent; }
+@media (prefers-reduced-motion: reduce) {
+  .workspace-switcher .workspace-icon:hover { transform: none; }
+}
