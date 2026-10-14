@@ -124,3 +124,15 @@
 }
 .workspace-server-tooltip[hidden]{display:none}
 .workspace-server-tooltip{position:fixed;z-index:10110;max-width:min(300px,calc(100vw - 16px));padding:8px 12px;border:1px solid #a78bfa55;border-radius:9px;background:#1a2235;color:#f1f5f9;box-shadow:0 8px 24px #0007;font:12px/1.4 Inter,system-ui,sans-serif;overflow-wrap:anywhere;pointer-events:none}
+
+/* Logo-colored account capsule, preserving the existing media button states. */
+@media(min-width:861px){
+ #workspaceAccountDock{padding-left:10px}
+ #workspaceAccountDock .user-profile-footer{
+   width:224px;height:42px;padding:4px 8px;gap:8px;
+   border:1px solid transparent;border-radius:11px;
+   background:linear-gradient(#141226,#141226) padding-box,linear-gradient(115deg,#a855f7,#ec4899) border-box;
+   box-shadow:0 0 9px #a855f72e,0 0 14px #ec48991f,inset 0 0 8px #a855f70a;
+ }
+}
+@media(min-width:861px) and (max-width:1200px){#workspaceAccountDock .user-profile-footer{width:auto}}
