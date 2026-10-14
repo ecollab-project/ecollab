@@ -47,6 +47,8 @@ function client(id){
  const panel=a.w.document.querySelector('.ec-call');
  assert.equal(panel.parentNode.id,'workspaceSwitcher','direct call is in server taskbar');
  assert.equal(a.w.document.getElementById('vcConnectedBar').parentNode.id,'workspaceSwitcher');
+ assert.equal(panel.querySelector('.ec-call-connected-label').textContent,'Connected to Peer');
+ assert.equal(panel.querySelector('.ec-call-timer').textContent,'(0:00:00)');
  const signaling=a.sent.length;
  panel.querySelector('[data-action=hide-preview]').click();
  assert(panel.classList.contains('is-preview-hidden'));
@@ -77,6 +79,7 @@ function client(id){
  a.w.document.querySelector('[data-action=screen]').click();await tick();assert.equal(group.localParticipant.lastScreen.publish.screenShareEncoding.maxBitrate,6000000);
  a.w.document.querySelector('[data-action=minimize]').click();assert(a.w.document.querySelector('.is-minimized'));
  assert.equal(a.w.document.querySelector('.ec-call').parentNode.id,'workspaceSwitcher','group call also docks');
+ assert.equal(a.w.document.querySelector('.ec-call-connected-label').textContent,'Connected to Study group');
  a.w.document.querySelector('[data-action=hide-preview]').click();assert.equal(a.w.EcollabCalls.room,group);assert(!group.disconnected);
  assert(group.localParticipant.isScreenShareEnabled,'closing preview does not stop own sharing');
  a.w.endDmCall();

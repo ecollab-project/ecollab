@@ -382,9 +382,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     <div class="vc-connected-bar" id="vcConnectedBar" style="display:none;">
       <div class="vcb-status">
         <span class="vcb-dot"></span>
-        <span class="vcb-label">Voice Connected</span>
+        <span class="vcb-label">Channel Connected</span>
       </div>
-      <div class="vcb-room" id="vcbRoomName">â</div>
+      <div class="vcb-room ec-call-timer" id="vcbRoomName" aria-label="Connection duration">(0:00:00)</div>
       <div class="vcb-actions">
         <button type="button" class="vcb-btn" id="vcDockMic" onclick="toggleVcMic()" aria-label="Toggle microphone" title="Toggle microphone">Mic</button>
         <button type="button" class="vcb-btn" onclick="toggleVcPanelFromBar()" title="Restore voice panel" aria-label="Restore voice panel">
@@ -1114,9 +1114,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=tiptap-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=tiptap-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=call-taskbar-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=call-taskbar-timer-1" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.22.3/dist/livekit-client.umd.min.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/livekit-voice.js?v=call-taskbar-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/livekit-voice.js?v=call-taskbar-timer-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/whiteboard.js" defer></script>
   <!-- ── Private Channel Manager Modal ────────────────────────────────── -->
   <div id="privateChannelManagerModal" style="display:none!important;position:fixed;inset:0;z-index:11000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this)closePrivateChannelManager()">
