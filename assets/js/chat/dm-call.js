@@ -39,6 +39,7 @@
     c.room?.disconnect();
     for(const [track,el] of c.audio||[]){track.detach(el);el.remove();}
     for(const [track,el] of c.videos||[]){track.detach(el);el.remove();}
+    window.EcollabCallDock?.stopClock(c.panel);
     c.panel?.remove();
     window.EcollabCallDock?.refresh();
     releaseLock?.();releaseLock=null;
@@ -139,7 +140,7 @@
     let panel=c.panel;
     if(!panel){
       panel=document.createElement('section');panel.className='ec-call';panel.setAttribute('role','region');panel.setAttribute('aria-label','Call');document.body.appendChild(panel);c.panel=panel;
-      panel.innerHTML='<header><div class="ec-call-heading"></div><div class="ec-call-window-actions"></div></header><div class="ec-call-preview"><button type="button" class="ec-call-preview-close" data-action="hide-preview" aria-label="Close video preview and stay in call">Close video ×</button><div class="ec-call-screen"></div><div class="ec-call-grid"></div></div><div class="ec-call-actions"></div><div class="ec-call-status" role="status"></div><div class="ec-call-compact"><div class="ec-call-compact-status"><i></i><strong>Call Connected</strong></div><button type="button" class="ec-call-compact-name" data-action="minimize" title="Open call" aria-label="Restore call"></button><div class="ec-call-compact-actions"><button type="button" data-action="show-preview" title="Show video preview" aria-label="Show video preview">Video</button><button type="button" data-action="mic" aria-label="Mute microphone" title="Mute microphone">Mute</button><button type="button" class="danger" data-action="end" aria-label="End call" title="End call"><svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 01.99.86c.12 1.25.41 2.45.87 3.57a1 1 0 01-.24 1.01l-2.21 2.35z"/></svg></button></div></div>';
+      panel.innerHTML='<header><div class="ec-call-heading"></div><div class="ec-call-window-actions"></div></header><div class="ec-call-preview"><button type="button" class="ec-call-preview-close" data-action="hide-preview" aria-label="Close video preview and stay in call">Close video ×</button><div class="ec-call-screen"></div><div class="ec-call-grid"></div></div><div class="ec-call-actions"></div><div class="ec-call-status" role="status"></div><div class="ec-call-compact"><div class="ec-call-compact-status"><i></i><strong>Call Connected</strong></div><button type="button" class="ec-call-compact-name" data-action="minimize" title="Open call" aria-label="Restore call"><span class="ec-call-connected-label"></span><span class="ec-call-timer" aria-label="Connection duration">(0:00:00)</span></button><div class="ec-call-compact-actions"><button type="button" data-action="show-preview" title="Show video preview" aria-label="Show video preview">Video</button><button type="button" data-action="mic" aria-label="Mute microphone" title="Mute microphone">Mute</button><button type="button" class="danger" data-action="end" aria-label="End call" title="End call"><svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 01.99.86c.12 1.25.41 2.45.87 3.57a1 1 0 01-.24 1.01l-2.21 2.35z"/></svg></button></div></div>';
       panel.onclick=e=>{const b=e.target.closest('[data-action]');if(b)action(b.dataset.action);else c.room?.startAudio().then(()=>{c.message='';panel.querySelector('.ec-call-status').textContent='';}).catch(()=>{});};
       c.tiles=new Map();
     }
@@ -151,7 +152,10 @@
     panel.querySelector('.ec-call-window-actions').innerHTML=(active?button('expand',c.expanded?'Dock':'Expand'):'')+button('minimize',c.minimized?'Restore':'Minimize');
     panel.querySelector('.ec-call-actions').innerHTML=c.state==='incoming'?button('accept','Accept',false,'accept')+(c.video?button('audio','Audio only'):'')+button('end','Decline',false,'danger'):active?button('mic',p.isMicrophoneEnabled?'Mute':'Unmute',!p.isMicrophoneEnabled)+button('camera',p.isCameraEnabled?'Camera off':'Camera on',p.isCameraEnabled)+button('screen',p.isScreenShareEnabled?'Stop sharing':'Share screen',p.isScreenShareEnabled)+button('deafen',c.deafened?'Hear audio':'Deafen',c.deafened)+button('settings','Settings')+button('end','Leave',false,'danger'):button('end','Cancel',false,'danger');
     panel.querySelector('.ec-call-status').textContent=c.message||'';
-    panel.querySelector('.ec-call-compact-name').textContent=c.name+(p&&!p.isMicrophoneEnabled?' · Muted':'');
+    const connectedLabel=panel.querySelector('.ec-call-connected-label');
+    connectedLabel.textContent='Connected to '+c.name;
+    panel.querySelector('.ec-call-compact-name').title='Connected to '+c.name;
+    if(active) window.EcollabCallDock?.startClock(panel);
     const compactMic=panel.querySelector('.ec-call-compact [data-action=mic]');
     const muted=!!p&&!p.isMicrophoneEnabled;
     compactMic.textContent=muted?'Unmute':'Mute';

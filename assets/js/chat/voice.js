@@ -290,8 +290,9 @@ function _updateConnectedBar(visible) {
   window.EcollabCallDock?.mount(bar);
   bar.style.display = visible ? '' : 'none';
   window.EcollabCallDock?.refresh();
-  const roomEl = document.getElementById('vcbRoomName');
-  if (roomEl) roomEl.textContent = vcRoomName;
+  bar.title = vcRoomName;
+  if (visible) window.EcollabCallDock?.startClock(bar);
+  else window.EcollabCallDock?.stopClock(bar);
 }
 
 // ── Minimize button injection ──────────────────────────────────────────────
