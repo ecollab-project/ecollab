@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Classroom metadata and private source storage; never executes source code. */
+/** Classroom metadata and private source storage. Execution is delegated to a queue. */
 final class CodeLabService
 {
     public const LANGUAGES = ['c','cpp','python','java','javascript','web'];
@@ -52,7 +52,9 @@ final class CodeLabService
             $task['state']=$task['attempt_id']!==null?$this->publicAttempt($task,$task)['state']:($this->timestamp($task['opens_at'])!==null && ($this->clock)()<$this->timestamp($task['opens_at'])?'scheduled':($this->timestamp($task['due_at'])!==null && ($this->clock)()>=$this->timestamp($task['due_at'])?'closed':'available'));
             unset($task['starter_code']);
         }
-        return ['server'=>$server,'tasks'=>$tasks,'server_now'=>($this->clock)(),'runner_available'=>false];
+        require_once __DIR__.'/CodeLabRunner.php';
+        $r=new CodeLabRunner();$languages=[];foreach(['c','cpp','python','java','javascript']as$l)if($r->enabled()&&CodeLabRunner::runtime($l))$languages[]=$l;
+        return ['server'=>$server,'tasks'=>$tasks,'server_now'=>($this->clock)(),'runner_available'=>$r->enabled(),'runnable_languages'=>$languages];
     }
     private static function text(mixed $value,int $max,string $name,bool $required=false): string
     {
@@ -78,8 +80,18 @@ final class CodeLabService
         if ($opens!==null && $due!==null && $due<=$opens) self::fail('Deadline must be after the opening time.');
         $duration=$input['duration_minutes']??null;
         if ($duration!==null && (!is_int($duration) || $duration<1 || $duration>1440)) self::fail('Timer must be 1–1440 minutes or disabled.');
-        $this->query('INSERT INTO code_lab_tasks (server_id,created_by,title,instructions,language,kind,starter_code,opens_at,due_at,duration_minutes) VALUES (?,?,?,?,?,?,?,?,?,?)',[$sid,$uid,$title,$instructions,$language,$kind,$starter,$opens,$due,$duration]);
-        return ['id'=>(int)$this->db->lastInsertId()];
+        require_once __DIR__.'/CodeLabExecutionService.php';
+        $mode=$input['grading_mode']??'manual';if(!in_array($mode,['manual','automatic'],true))self::fail('Invalid grading mode.');
+        $cases=$mode==='automatic'?CodeLabExecutionService::validateCases($input['test_cases']??null,$language):[];
+        $runtime=$language==='web'?null:CodeLabRunner::runtime($language);
+        if($mode==='automatic'&&$language!=='web'&&(!(new CodeLabRunner())->enabled()||!$runtime))self::fail('Configure the runner and language before publishing an automatically graded task.');
+        $this->db->beginTransaction();
+        try {
+            $this->query('INSERT INTO code_lab_tasks (server_id,created_by,title,instructions,language,kind,starter_code,opens_at,due_at,duration_minutes,grading_mode,runtime_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',[$sid,$uid,$title,$instructions,$language,$kind,$starter,$opens,$due,$duration,$mode,$runtime]);
+            $id=(int)$this->db->lastInsertId();
+            foreach($cases as$pos=>$case)$this->query('INSERT INTO code_lab_test_cases(task_id,position,input_data,expected_output,hidden,weight) VALUES(?,?,?,?,?,?)',[$id,$pos,$case['input'],$case['expected_output'],(int)$case['hidden'],$case['weight']]);
+            $this->db->commit();return ['id'=>$id];
+        }catch(Throwable $e){if($this->db->inTransaction())$this->db->rollBack();throw $e;}
     }
     /** Unique (task,user) makes double clicks and refreshes resume the same session. */
     public function start(int $sid,int $uid,int $tid): array
@@ -94,7 +106,11 @@ final class CodeLabService
             catch (PDOException $e) {if (!in_array((string)$e->getCode(),['23000','23505'],true)) throw $e;}
             $existing=$this->query('SELECT * FROM code_lab_attempts WHERE task_id=? AND user_id=?',[$tid,$uid])->fetch(PDO::FETCH_ASSOC);
         }
-        return ['task'=>$task,'attempt'=>$this->publicAttempt($task,$existing),'server_now'=>($this->clock)()];
+        require_once __DIR__.'/CodeLabExecutionService.php';
+        $execution=new CodeLabExecutionService($this->db,new CodeLabRunner());
+        $task['public_cases']=$execution->publicCases($tid);
+        $grade=$this->query('SELECT id,state FROM code_lab_jobs WHERE attempt_id=?',[$existing['id']])->fetch(PDO::FETCH_ASSOC);
+        return ['task'=>$task,'attempt'=>$this->publicAttempt($task,$existing),'grade_job'=>$grade?:null,'server_now'=>($this->clock)()];
     }
     public function save(int $sid,int $uid,int $tid,array $input,bool $submit=false): array
     {
@@ -104,8 +120,16 @@ final class CodeLabService
         if ($this->publicAttempt($task,$attempt)['state']!=='in_progress') self::fail('This attempt is read-only.',403);
         $code=self::text($input['code']??null,100000,'code');$version=$input['version']??null;
         if (!is_int($version)||$version<1) self::fail('Invalid save version.');
+        $this->db->beginTransaction();
+        try {
         $q=$this->query('UPDATE code_lab_attempts SET code=?,version=version+1,submitted_at=? WHERE task_id=? AND user_id=? AND version=? AND submitted_at IS NULL',[$code,$submit?gmdate('Y-m-d H:i:s',($this->clock)()):null,$tid,$uid,$version]);
         if ($q->rowCount()!==1) self::fail('A newer save exists. Reopen your attempt before editing.',409);
+            if($submit&&$task['grading_mode']==='automatic'){
+                require_once __DIR__.'/CodeLabExecutionService.php';
+                (new CodeLabExecutionService($this->db,new CodeLabRunner(),$this->clock))->grade($sid,$uid,$tid);
+            }
+            $this->db->commit();
+        }catch(Throwable $e){if($this->db->inTransaction())$this->db->rollBack();throw $e;}
         return $this->start($sid,$uid,$tid);
     }
     public function submissions(int $sid,int $uid,int $tid): array

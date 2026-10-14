@@ -1,0 +1,19 @@
+[Unit]
+Description=eCollab private Code Lab execution queue
+After=network-online.target mariadb.service
+Wants=network-online.target
+[Service]
+Type=simple
+User=ecollabadmin
+WorkingDirectory=/home/ecollabadmin/ecollab-inspect
+ExecStart=/usr/bin/php /home/ecollabadmin/ecollab-inspect/scripts/code-lab-worker.php --loop
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=15
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+MemoryMax=256M
+[Install]
+WantedBy=multi-user.target

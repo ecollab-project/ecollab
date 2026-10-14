@@ -4,6 +4,7 @@ require_once dirname(__DIR__,2).'/config.php';
 require_once ROOT_PATH.'/database/config/db.php';
 require_once ROOT_PATH.'/security/middleware/AuthMiddleware.php';
 require_once ROOT_PATH.'/services/CodeLabService.php';
+require_once ROOT_PATH.'/services/CodeLabExecutionService.php';
 header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
 $user=AuthMiddleware::requireAuth(true);
 $method=$_SERVER['REQUEST_METHOD'];
@@ -17,7 +18,11 @@ try {
     if (!is_array($input)) throw new RuntimeException('Invalid request.',400);
     $sid=(int)($input['server_id']??0);$tid=(int)($input['task_id']??0);$uid=(int)$user['id'];
     $service=new CodeLabService(Database::getInstance());$action=$input['action']??'overview';
+    $execution=new CodeLabExecutionService(Database::getInstance(),new CodeLabRunner());
     $data=match ($method.':'.$action) {
+        'GET:job'=>$execution->result($sid,$uid,(int)($input['job_id']??0)),
+        'POST:run'=>$execution->run($sid,$uid,$input),
+        'POST:grade'=>$execution->grade($sid,$uid,$tid),
         'GET:overview'=>$service->overview($sid,$uid),
         'GET:submissions'=>['submissions'=>$service->submissions($sid,$uid,$tid)],
         'GET:playground'=>$service->playground($sid,$uid,(string)($input['language']??'')),
@@ -31,6 +36,6 @@ try {
     };
     echo json_encode(['success'=>true,'data'=>$data],JSON_THROW_ON_ERROR);
 } catch (Throwable $e) {
-    $code=$e instanceof RuntimeException && in_array($e->getCode(),[400,403,404,409],true)?$e->getCode():503;
+    $code=$e instanceof RuntimeException && in_array($e->getCode(),[400,403,404,409,429],true)?$e->getCode():503;
     http_response_code($code);echo json_encode(['success'=>false,'error'=>$code===503?'Code Lab unavailable. Check deployment and migration.':$e->getMessage()]);
 }
