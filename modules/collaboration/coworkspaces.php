@@ -50,6 +50,8 @@ body{margin:0;background:#0f1117;color:#f5f7fb;font-family:Inter,system-ui,sans-
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=1">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=2">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
+<script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
 </head>
 <body data-mobile-surface="coworkspace">
 <div class="cw">

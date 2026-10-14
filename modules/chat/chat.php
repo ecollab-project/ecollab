@@ -179,6 +179,8 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat-taskbar.css?v=neon-account-1">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 <script defer src="<?= BASE_URL ?>/assets/js/chat/workspace-taskbar.js?v=separators-tooltips-1"></script>
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
+<script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
 </head>
 
 <body data-mobile-surface="chat">

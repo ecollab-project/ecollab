@@ -37,6 +37,8 @@ header("Content-Security-Policy: default-src 'self'; connect-src 'self' $callOri
 </style><link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=1">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=2">
 <script nonce="<?=$nonce?>" defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
+<script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
 </head><body data-mobile-surface="editor">
 <header><a href="<?=coEscape($backUrl)?>">← Coworkspace</a><h1><?=coEscape($d['title'])?></h1><span><?=coEscape($a['permission'])?></span><a href="<?=coEscape(BASE_URL)?>/API/collaboration/document-download.php?id=<?=$id?>">Download</a><?php if ((int)$d['created_by'] !== (int)$user['id']): ?><a target="_blank" rel="noopener" href="<?=coEscape(BASE_URL)?>/modules/collaboration/report-document.php?id=<?=$id?>">Report</a><?php endif ?></header>
 <?php if ($a['permission'] === 'comment'): ?><div id="notice">Comment permission currently opens as view-only in Collabora.</div><?php endif ?>

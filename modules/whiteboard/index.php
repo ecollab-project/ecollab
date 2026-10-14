@@ -108,9 +108,12 @@ $csrf = AuthMiddleware::csrfToken();
             margin-right: 5px
         }
     </style>
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
+<script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
+<script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 </head>
 
-<body>
+<body data-mobile-surface="whiteboard">
     <div id="wbOverlay" class="wb-visible">
         <div class="wb-hdr"><a class="wb-page-back" href="<?= BASE_URL ?>/modules/chat/chat.php">Back to chat</a>
             <div class="wb-hdr-logo">&#9997;</div>
