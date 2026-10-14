@@ -68,7 +68,8 @@
   }
 }
 
-.workspace-switcher button { font-family: inherit; }
+.workspace-switcher button { font-family: inherit; padding: 0; }
+.workspace-switcher .workspace-add { background: transparent; }
 @media (prefers-reduced-motion: reduce) {
   .workspace-switcher .workspace-icon:hover { transform: none; }
 }
