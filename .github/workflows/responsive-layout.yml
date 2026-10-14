@@ -1,0 +1,29 @@
+name: Responsive page layouts
+on:
+  pull_request:
+    paths: ['index.php', 'terms.php', 'modules/**', 'includes/layout/**', 'assets/css/**', 'assets/js/device-layout.js', 'assets/js/mobile-viewport.js', 'tests/*responsive*', 'tests/device-layout*', '.github/workflows/responsive-layout.yml']
+permissions:
+  contents: read
+jobs:
+  devices:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo, mbstring
+      - run: npm install --no-save --ignore-scripts playwright@1.58.2 jsdom@30.1.2
+      - run: npx playwright install --with-deps chromium
+      - run: node tests/device-layout-regression.cjs
+      - run: node tests/responsive-browser-regression.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: responsive-results
+          path: |
+            responsive-results.json
+            responsive-*.png

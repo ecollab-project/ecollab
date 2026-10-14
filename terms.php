@@ -17,8 +17,11 @@ h1{font-size:30px;margin:0 0 6px}h2{font-size:18px;margin:0 0 12px}h3{font-size:
 .grid{display:grid;grid-template-columns:220px 1fr;gap:20px}.toc,.doc{border:1px solid var(--line);border-radius:14px;background:var(--card)}.toc{padding:15px;height:max-content;position:sticky;top:78px}.toc a{display:block;color:#b9c8df;text-decoration:none;padding:7px 8px;border-radius:6px}.toc a:hover{background:var(--card2);color:#fff}.doc{padding:26px}.section{padding:4px 0 22px;margin-bottom:22px;border-bottom:1px solid var(--line)}.section:last-child{border:0;margin:0}.notice{padding:12px 14px;border-left:3px solid var(--purple);background:rgba(139,61,240,.08);border-radius:6px;color:#cbd5e1}strong{color:#fff}a{color:#c084fc}
 @media(max-width:760px){.grid{grid-template-columns:1fr}.toc{position:static}.wrap{padding-top:24px}.doc{padding:18px}}
 </style>
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
+<script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
+<script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script>
 </head>
-<body>
+<body data-mobile-surface="policy">
 <header class="top"><div class="brand"><span>◆</span> eCollab</div><a class="back" href="<?= htmlspecialchars(BASE_URL,ENT_QUOTES) ?>/modules/auth/signup.php">← Back to Sign Up</a></header>
 <main class="wrap">
 <section class="hero"><h1>Terms of Service & Privacy Policy</h1><div class="updated">Effective: September 24, 2026</div><p>These terms explain the rules for using eCollab and how personal information is handled. By creating or using an eCollab account, you agree to these Terms of Service and acknowledge this Privacy Policy.</p></section>
