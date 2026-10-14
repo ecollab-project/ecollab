@@ -228,6 +228,12 @@ function switchWorkspace(wsIdx, serverId) {
     libraryNav.href = base + '/modules/library/library.php?server_id=' + encodeURIComponent(serverId);
   }
 
+  const codeLabNav = document.getElementById('serverCodeLabNav');
+  if (codeLabNav) {
+    const base = String(window.ECOLLAB?.baseUrl || '').replace(/\/$/, '');
+    codeLabNav.href = base + '/modules/code-lab/index.php?server_id=' + encodeURIComponent(serverId);
+  }
+
   document.querySelectorAll('.workspace-icon').forEach((icon, i) => {
     icon.classList.toggle('active', i === wsIdx);
   });
