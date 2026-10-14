@@ -176,8 +176,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </style>
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=notifications-2">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=3">
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat-taskbar.css?v=original-taskbar-restored-1">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat-taskbar.css?v=account-left-1">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
+<script defer src="<?= BASE_URL ?>/assets/js/chat/workspace-taskbar.js?v=account-left-1"></script>
 </head>
 
 <body data-mobile-surface="chat">
@@ -200,10 +201,16 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
   <!-- WORKSPACE SWITCHER -->
   <nav class="workspace-switcher" id="workspaceSwitcher" aria-label="Workspaces">
-    <div class="workspace-brand-mark" aria-label="eCollab" title="eCollab">
+    <div class="workspace-taskbar-left">
+    <button type="button" class="workspace-brand-mark" id="workspaceLogo" aria-label="Open eCollab menu" aria-haspopup="menu" aria-expanded="false" title="eCollab">
       <img src="<?= BASE_URL ?>/assets/ecollab-icon.webp" alt="" draggable="false">
+    </button>
+    <div id="workspaceAccountDock"></div>
+    <div id="workspaceSettingsDock"></div>
     </div>
-    <div class="workspace-sep workspace-brand-sep"></div>
+    <div class="workspace-taskbar-center">
+    <button type="button" class="workspace-scroll" data-scroll="-1" aria-label="Scroll servers left" hidden>‹</button>
+    <div class="workspace-server-list" id="workspaceServerList">
     <?php foreach ($servers as $idx => $srv): ?>
       <button type="button" class="workspace-icon<?= (int)$srv['id'] === (int)($firstServer['id'] ?? 0) ? ' active' : '' ?>"
         data-server-id="<?= (int)$srv['id'] ?>"
@@ -215,8 +222,12 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <span class="workspace-visibility-indicator <?= in_array(strtolower((string)($srv['type'] ?? 'community')), ['private','academic'], true) ? 'is-private' : 'is-public' ?>" title="<?= in_array(strtolower((string)($srv['type'] ?? 'community')), ['private','academic'], true) ? 'Private server' : 'Public server' ?>"><?= in_array(strtolower((string)($srv['type'] ?? 'community')), ['private','academic'], true) ? '🔒' : '🌐' ?></span>
       </button>
     <?php endforeach; ?>
+    </div>
+    <button type="button" class="workspace-scroll" data-scroll="1" aria-label="Scroll servers right" hidden>›</button>
     <div class="workspace-sep"></div>
     <button type="button" class="workspace-add" aria-label="Add workspace" onclick="openModal('addServerModal')" title="Add Workspace">+</button>
+    </div>
+    <div class="workspace-taskbar-right"><div id="workspaceCallDock" class="workspace-call-slot" role="group" aria-label="Active call" hidden></div></div>
   </nav>
 
   <!-- LEFT SIDEBAR -->
@@ -427,11 +438,11 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
             <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" />
           </svg>
         </button>
-        <button type="button" class="footer-icon-btn" onclick="event.stopPropagation();openUserSettings()" title="Settings" aria-label="Settings">
+        <a class="footer-icon-btn" id="workspaceSettings" href="<?= BASE_URL ?>/modules/chat/settings.php" title="Settings" aria-label="Settings">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z" />
           </svg>
-        </button>
+        </a>
 
       </div>
     </div>

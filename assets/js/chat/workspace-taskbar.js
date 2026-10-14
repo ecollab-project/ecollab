@@ -1,109 +1,47 @@
 'use strict';
 (() => {
-  const dock = document.getElementById('workspaceSwitcher');
-  const list = document.getElementById('workspaceServerList');
-  const find = document.getElementById('workspaceFind');
-  if (!dock || !list || !find) return;
-  const icons = () => [...list.querySelectorAll('.workspace-icon')];
-  const desktop = () => matchMedia('(min-width:861px)').matches;
-  const reduced = () => matchMedia('(prefers-reduced-motion:reduce)').matches;
-  const account = document.getElementById('workspaceAccount');
-  const accountHome = document.getElementById('workspaceAccountHome');
-  const accountDock = document.getElementById('workspaceAccountDock');
-  function placeAccount() {
-    if (!account || !accountHome || !accountDock) return;
-    if (desktop()) { if (account.parentNode !== accountDock) accountDock.appendChild(account); }
-    else if (account.previousElementSibling !== accountHome) accountHome.after(account);
+  const dock=document.getElementById('workspaceSwitcher'),logo=document.getElementById('workspaceLogo'),list=document.getElementById('workspaceServerList');
+  if(!dock||!logo||!list)return;
+  const desktop=()=>matchMedia('(min-width:861px)').matches;
+  const account=document.getElementById('workspaceAccount'),home=document.getElementById('workspaceAccountHome'),accountDock=document.getElementById('workspaceAccountDock');
+  const settings=document.getElementById('workspaceSettings'),settingsDock=document.getElementById('workspaceSettingsDock'),controls=account?.querySelector('.footer-controls');
+  function place(){
+    if(desktop()){if(account&&accountDock)accountDock.appendChild(account);if(settings&&settingsDock)settingsDock.appendChild(settings);}
+    else{if(account&&home)home.after(account);if(settings&&controls)controls.appendChild(settings);}
   }
-  dock.querySelectorAll('[data-taskbar-app]').forEach(button => button.addEventListener('click', () => {
-    const app = button.dataset.taskbarApp;
-    if (app === 'messages') {
-      const home = document.querySelector('.sidebar-nav-item[onclick*="home"]');
-      if (home) home.click();
-    } else if (app === 'collabs') window.openCollabHub?.();
-    else if (app === 'library') document.getElementById('serverLibraryNav')?.click();
-  }));
-  placeAccount();
-  function reveal(icon) {
-    if (!desktop()) return;
-    const left = icon.offsetLeft - list.offsetLeft;
-    if (left < list.scrollLeft) list.scrollLeft = left;
-    else if (left + icon.offsetWidth > list.scrollLeft + list.clientWidth) list.scrollLeft = left + icon.offsetWidth - list.clientWidth;
-  }
-  function overflow() {
-    const hasOverflow = list.scrollWidth > list.clientWidth + 2;
-    dock.querySelectorAll('[data-scroll]').forEach(button => {
-      button.hidden = !desktop() || !hasOverflow;
-      button.disabled = button.dataset.scroll === '-1' ? list.scrollLeft <= 1 : list.scrollLeft + list.clientWidth >= list.scrollWidth - 1;
+  function overflow(){
+    dock.querySelectorAll('[data-scroll]').forEach(button=>{
+      button.hidden=!desktop()||list.scrollWidth<=list.clientWidth+2;
+      button.disabled=button.dataset.scroll==='-1'?list.scrollLeft<=1:list.scrollLeft+list.clientWidth>=list.scrollWidth-1;
     });
   }
-  let active;
-  function sync() {
-    for (const icon of icons()) icon.setAttribute('aria-current', String(icon.classList.contains('active')));
-    const selected = list.querySelector('.workspace-icon.active');
-    if (selected !== active) { active = selected; if (active) reveal(active); }
-    overflow();
-  }
-  dock.querySelectorAll('[data-scroll]').forEach(button => button.addEventListener('click', () => {
-    list.scrollBy({left:Number(button.dataset.scroll) * Math.max(100, list.clientWidth * .75), behavior:reduced() ? 'auto' : 'smooth'});
-  }));
-  list.addEventListener('scroll', overflow, {passive:true});
-  list.addEventListener('keydown', event => {
-    const current = event.target.closest('.workspace-icon'), items = icons();
-    if (!current || !['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
-    event.preventDefault();
-    const index = items.indexOf(current);
-    const target = event.key === 'Home' ? items[0] : event.key === 'End' ? items.at(-1) : items[(index + (event.key === 'ArrowRight' ? 1 : -1) + items.length) % items.length];
-    target?.focus({preventScroll:true}); if (target) reveal(target);
+  dock.querySelectorAll('[data-scroll]').forEach(button=>button.addEventListener('click',()=>list.scrollBy({left:Number(button.dataset.scroll)*Math.max(80,list.clientWidth*.75),behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'})));
+  list.addEventListener('scroll',overflow,{passive:true});
+  list.addEventListener('keydown',e=>{
+    const items=[...list.querySelectorAll('.workspace-icon')],index=items.indexOf(e.target);
+    if(index<0||!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+    e.preventDefault();
+    const target=e.key==='Home'?items[0]:e.key==='End'?items.at(-1):items[(index+(e.key==='ArrowRight'?1:-1)+items.length)%items.length];
+    target.focus({preventScroll:true});
+    if(desktop())list.scrollLeft=Math.max(0,target.offsetLeft-list.offsetLeft-list.clientWidth/2+target.offsetWidth/2);
   });
-
-  // A body-level tooltip escapes the scrolling dock without covering controls.
-  const tip = document.createElement('div'); tip.className = 'workspace-tooltip'; tip.hidden = true; tip.id = 'workspaceTooltip'; tip.setAttribute('role','tooltip'); document.body.appendChild(tip);
-  let tipped;
-  function hideTip() { tip.hidden = true; tipped?.removeAttribute('aria-describedby'); tipped = null; }
-  function showTip(icon) {
-    hideTip(); if (!desktop() || !icon) return;
-    tipped = icon; const name = icon.dataset.serverName || icon.title || 'Server';
-    const visibility = ['private','academic'].includes(icon.dataset.serverType) ? 'Private' : 'Public';
-    tip.textContent = name + ' · ' + visibility; tip.hidden = false;
-    icon.setAttribute('aria-describedby', tip.id);
-    const box = icon.getBoundingClientRect();
-    tip.style.left = Math.max(8, Math.min(innerWidth - tip.offsetWidth - 8, box.left + box.width / 2 - tip.offsetWidth / 2)) + 'px';
-    tip.style.top = Math.max(8, box.top - tip.offsetHeight - 12) + 'px';
+  const menu=document.createElement('div');menu.id='workspaceLogoMenu';menu.className='workspace-logo-menu';menu.setAttribute('role','menu');menu.setAttribute('aria-label','eCollab');menu.hidden=true;
+  menu.innerHTML='<button type="button" role="menuitem" data-logo-action="dashboard">Dashboard</button><button type="button" role="menuitem" data-logo-action="logout">Logout</button>';
+  document.body.appendChild(menu);logo.setAttribute('aria-controls',menu.id);
+  const items=[...menu.querySelectorAll('button')];
+  function close(restore=false){menu.hidden=true;logo.setAttribute('aria-expanded','false');if(restore)logo.focus();}
+  function open(){
+    menu.hidden=false;logo.setAttribute('aria-expanded','true');
+    const box=logo.getBoundingClientRect();menu.style.left=Math.max(8,Math.min(innerWidth-menu.offsetWidth-8,box.left))+'px';
+    menu.style.top=(desktop()?Math.max(8,box.top-menu.offsetHeight-8):box.bottom+8)+'px';items[0].focus();
   }
-  list.addEventListener('pointerover', e => showTip(e.target.closest('.workspace-icon')));
-  list.addEventListener('pointerleave', hideTip);
-  list.addEventListener('focusin', e => showTip(e.target.closest('.workspace-icon')));
-  list.addEventListener('focusout', hideTip);
-  list.addEventListener('click', hideTip);
-  list.addEventListener('scroll', hideTip, {passive:true});
-
-  const dialog = document.createElement('dialog'); dialog.className = 'workspace-picker'; dialog.setAttribute('aria-labelledby','workspacePickerTitle');
-  dialog.innerHTML = '<header><div><h2 id="workspacePickerTitle">Your servers</h2><p>Switch to a learning space.</p></div><button type="button" aria-label="Close server picker">×</button></header><label for="workspaceQuery">Find a server</label><input id="workspaceQuery" type="search" placeholder="Search by name…" autocomplete="off"><div class="workspace-picker-results"></div><p class="workspace-picker-status" role="status"></p>';
-  document.body.appendChild(dialog);
-  const input = dialog.querySelector('input'), results = dialog.querySelector('.workspace-picker-results');
-  let returnFocus = find;
-  function render() {
-    results.replaceChildren();
-    const query = input.value.trim().toLocaleLowerCase();
-    const matches = icons().filter(icon => (icon.dataset.serverName || icon.title || '').toLocaleLowerCase().includes(query));
-    for (const icon of matches) {
-      const button = document.createElement('button'); button.type = 'button'; button.className = 'workspace-picker-row';
-      const name = document.createElement('span'); name.textContent = icon.dataset.serverName || icon.title || 'Server';
-      const detail = document.createElement('small'); detail.textContent = icon.classList.contains('active') ? 'Current server' : (['private','academic'].includes(icon.dataset.serverType) ? 'Private' : 'Public');
-      button.append(name, detail); button.addEventListener('click', () => { returnFocus = icon; dialog.close(); icon.click(); icon.focus({preventScroll:true}); reveal(icon); }); results.appendChild(button);
-    }
-    dialog.querySelector('.workspace-picker-status').textContent = matches.length ? `${matches.length} server${matches.length === 1 ? '' : 's'}` : 'No servers match your search.';
-  }
-  find.addEventListener('click', () => { if (dialog.open) return; hideTip(); returnFocus = find; input.value = ''; render(); dialog.showModal(); input.focus(); });
-  dialog.querySelector('header button').addEventListener('click', () => dialog.close());
-  dialog.addEventListener('close', () => returnFocus.focus({preventScroll:true}));
-  dialog.addEventListener('click', e => { if (e.target === dialog) { const box = dialog.getBoundingClientRect(); if (e.clientX < box.left || e.clientX > box.right || e.clientY < box.top || e.clientY > box.bottom) dialog.close(); } });
-  input.addEventListener('input', render);
-  input.addEventListener('keydown', e => { if (e.key === 'ArrowDown') { e.preventDefault(); results.querySelector('button')?.focus(); } });
-  document.addEventListener('keydown', e => { if (desktop() && e.altKey && !e.ctrlKey && !e.metaKey && e.key.toLowerCase() === 's') { e.preventDefault(); find.click(); } });
-  new MutationObserver(sync).observe(list, {subtree:true, childList:true, attributes:true, attributeFilter:['class','title']});
-  if (window.ResizeObserver) new ResizeObserver(overflow).observe(list);
-  window.addEventListener('resize', () => { hideTip(); placeAccount(); overflow(); });
-  sync();
+  logo.addEventListener('click',()=>menu.hidden?open():close(true));
+  logo.addEventListener('keydown',e=>{if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();open();if(e.key==='ArrowUp')items.at(-1).focus();}});
+  menu.addEventListener('click',e=>{const action=e.target.closest('[data-logo-action]')?.dataset.logoAction;if(!action)return;close();if(action==='dashboard')window.goToDashboard?.();else window.handleLogout?.();});
+  menu.addEventListener('keydown',e=>{if(e.key==='Tab'){close();return;}if(!['ArrowDown','ArrowUp','Home','End'].includes(e.key))return;e.preventDefault();const index=items.indexOf(document.activeElement);(e.key==='Home'?items[0]:e.key==='End'?items.at(-1):items[(index+(e.key==='ArrowDown'?1:-1)+items.length)%items.length]).focus();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!menu.hidden){e.preventDefault();close(true);}});
+  document.addEventListener('pointerdown',e=>{if(!menu.hidden&&!menu.contains(e.target)&&!logo.contains(e.target))close();});
+  window.addEventListener('resize',()=>{close();place();overflow();});
+  if(window.ResizeObserver)new ResizeObserver(overflow).observe(list);
+  place();overflow();
 })();
