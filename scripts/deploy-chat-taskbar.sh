@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 umask 0022
 git pull --ff-only origin ecollab-collabs
 # Only public code is made readable; runtime secrets and writable storage are untouched.
-files=(modules/chat/chat.php includes/calls/bootstrap.php assets/css/desktop/chat-taskbar.css assets/css/calls/calls.css assets/js/calls/call-dock.js assets/js/chat/dm-call.js assets/js/chat/voice.js)
+files=(modules/chat/chat.php includes/calls/bootstrap.php assets/css/desktop/chat-taskbar.css assets/css/calls/calls.css assets/js/calls/call-dock.js assets/js/chat/workspace-taskbar.js assets/js/chat/dm-call.js assets/js/chat/voice.js)
 for file in "${files[@]}"; do
   [[ -f "$file" ]] || { echo "Missing file: $file" >&2; exit 1; }
   chmod 644 "$file"

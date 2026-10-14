@@ -176,8 +176,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </style>
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=notifications-2">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=3">
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat-taskbar.css?v=bottom-dock-1">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat-taskbar.css?v=refined-dock-1">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
+<script defer src="<?= BASE_URL ?>/assets/js/chat/workspace-taskbar.js?v=1"></script>
 </head>
 
 <body data-mobile-surface="chat">
@@ -200,14 +201,21 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
   <!-- WORKSPACE SWITCHER -->
   <nav class="workspace-switcher" id="workspaceSwitcher" aria-label="Workspaces">
+    <div class="workspace-dock-shell">
     <div class="workspace-brand-mark" aria-label="eCollab" title="eCollab">
       <img src="<?= BASE_URL ?>/assets/ecollab-icon.webp" alt="" draggable="false">
     </div>
     <div class="workspace-sep workspace-brand-sep"></div>
+    <button type="button" class="workspace-find" id="workspaceFind" aria-label="Find a server" title="Find a server (Alt+S)" aria-haspopup="dialog"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg></button>
+    <button type="button" class="workspace-scroll" data-scroll="-1" aria-label="Scroll servers left" hidden>‹</button>
+    <div class="workspace-server-list" id="workspaceServerList" role="group" aria-label="Your servers">
     <?php foreach ($servers as $idx => $srv): ?>
       <button type="button" class="workspace-icon<?= (int)$srv['id'] === (int)($firstServer['id'] ?? 0) ? ' active' : '' ?>"
         data-server-id="<?= (int)$srv['id'] ?>"
         data-ws="<?= $idx ?>"
+        data-server-name="<?= htmlspecialchars($srv['name'], ENT_QUOTES) ?>"
+        aria-label="<?= htmlspecialchars($srv['name'], ENT_QUOTES) ?>"
+        aria-current="<?= (int)$srv['id'] === (int)($firstServer['id'] ?? 0) ? 'true' : 'false' ?>"
         data-server-type="<?= htmlspecialchars((string)($srv['type'] ?? 'community')) ?>"
         onclick="switchWorkspace(<?= $idx ?>, <?= (int)$srv['id'] ?>)"
         title="<?= htmlspecialchars($srv['name']) ?>">
@@ -215,8 +223,12 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <span class="workspace-visibility-indicator <?= in_array(strtolower((string)($srv['type'] ?? 'community')), ['private','academic'], true) ? 'is-private' : 'is-public' ?>" title="<?= in_array(strtolower((string)($srv['type'] ?? 'community')), ['private','academic'], true) ? 'Private server' : 'Public server' ?>"><?= in_array(strtolower((string)($srv['type'] ?? 'community')), ['private','academic'], true) ? '🔒' : '🌐' ?></span>
       </button>
     <?php endforeach; ?>
+    </div>
+    <button type="button" class="workspace-scroll" data-scroll="1" aria-label="Scroll servers right" hidden>›</button>
     <div class="workspace-sep"></div>
     <button type="button" class="workspace-add" aria-label="Add workspace" onclick="openModal('addServerModal')" title="Add Workspace">+</button>
+    <div class="workspace-call-slot" id="workspaceCallDock" role="group" aria-label="Active call" hidden></div>
+    </div>
   </nav>
 
   <!-- LEFT SIDEBAR -->
