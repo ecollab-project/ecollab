@@ -176,7 +176,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </style>
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=notifications-2">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=3">
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat-taskbar.css?v=full-taskbar-1">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat-taskbar.css?v=balanced-taskbar-1">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=1"></script>
 <script defer src="<?= BASE_URL ?>/assets/js/chat/workspace-taskbar.js?v=2"></script>
 </head>
@@ -207,7 +207,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       <img src="<?= BASE_URL ?>/assets/ecollab-icon.webp" alt="" draggable="false">
     </div>
     <div class="workspace-sep workspace-brand-sep"></div>
-    <button type="button" class="workspace-find" id="workspaceFind" aria-label="Find a server" title="Find a server (Alt+S)" aria-haspopup="dialog"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg></button>
+    <button type="button" class="workspace-find" id="workspaceFind" aria-label="Find a server" title="Find a server (Alt+S)" aria-haspopup="dialog"><span class="workspace-search-label">Find a server</span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg></button>
     <div class="workspace-pinned" role="group" aria-label="Pinned shortcuts">
       <button type="button" class="workspace-pin" data-taskbar-app="messages" title="Messages" aria-label="Messages"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 4h16v12H9l-5 4V4Z"/><path d="M8 8h8M8 12h5"/></svg><span>Messages</span></button>
       <button type="button" class="workspace-pin" data-taskbar-app="collabs" title="Collabs" aria-label="Collabs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 6h7l2 2h9v12H3V6Z"/><path d="M9 14h6m-3-3v6"/></svg><span>Collabs</span></button>
@@ -227,7 +227,8 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         data-server-type="<?= htmlspecialchars((string)($srv['type'] ?? 'community')) ?>"
         onclick="switchWorkspace(<?= $idx ?>, <?= (int)$srv['id'] ?>)"
         title="<?= htmlspecialchars($srv['name']) ?>">
-        <?= htmlspecialchars($srv['icon_emoji'] ?: strtoupper(substr($srv['name'], 0, 1))) ?>
+        <span class="workspace-server-glyph"><?= htmlspecialchars($srv['icon_emoji'] ?: strtoupper(substr($srv['name'], 0, 1))) ?></span>
+        <span class="workspace-selected-name"><?= htmlspecialchars($srv['name']) ?></span>
         <span class="workspace-visibility-indicator <?= in_array(strtolower((string)($srv['type'] ?? 'community')), ['private','academic'], true) ? 'is-private' : 'is-public' ?>" title="<?= in_array(strtolower((string)($srv['type'] ?? 'community')), ['private','academic'], true) ? 'Private server' : 'Public server' ?>"><?= in_array(strtolower((string)($srv['type'] ?? 'community')), ['private','academic'], true) ? '🔒' : '🌐' ?></span>
       </button>
     <?php endforeach; ?>
