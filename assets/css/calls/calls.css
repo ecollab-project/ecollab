@@ -189,3 +189,9 @@ body.vc-active #voiceChannelView.active:not(.vc-minimized) .vc-header{position:r
 :is(.workspace-switcher,.ec-call-taskbar) #vcConnectedBar{grid-template-columns:minmax(0,1fr) auto;flex-basis:290px;width:290px}
 :is(.workspace-switcher,.ec-call-taskbar) #vcConnectedBar .vcb-status{min-width:0}
 :is(.workspace-switcher,.ec-call-taskbar) #vcConnectedBar .vcb-label{text-transform:none;letter-spacing:0;white-space:nowrap;font-size:11px}
+
+@media(min-width:861px){
+ .workspace-call-slot .ec-call.is-taskbar-docked{width:280px!important;border-radius:12px;background:#162724;border-color:#22c55e30}
+ .workspace-call-slot #vcConnectedBar{flex-basis:280px;width:280px;border-radius:12px}
+ .ec-call.is-taskbar-docked .ec-call-preview,#voiceChannelView.vc-minimized{bottom:calc(var(--server-dock-height,58px) + 14px + env(safe-area-inset-bottom))!important}
+}

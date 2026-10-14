@@ -30,7 +30,7 @@
   }
   function host() {
     const taskbar = document.getElementById('workspaceSwitcher');
-    if (taskbar && window.matchMedia('(min-width:861px)').matches) return taskbar;
+    if (taskbar && window.matchMedia('(min-width:861px)').matches) return document.getElementById('workspaceCallDock') || taskbar;
     if (!fallback) {
       fallback = document.createElement('nav');
       fallback.className = 'ec-call-taskbar';
@@ -42,6 +42,8 @@
   }
   function refresh() {
     for (const control of controls) if (!control.isConnected) controls.delete(control);
+    const slot = document.getElementById('workspaceCallDock');
+    if (slot) slot.hidden = ![...slot.children].some(el => el.style.display !== 'none');
     if (!fallback) return;
     fallback.hidden = ![...fallback.children].some(el => el.style.display !== 'none');
     document.body.classList.toggle('has-call-taskbar', !fallback.hidden);
