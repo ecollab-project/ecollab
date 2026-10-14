@@ -37,7 +37,7 @@ final class CodeLabExecutionService
     }
     private function enqueue(int $sid,int $uid,string $language,?int $runtime,string $kind,string $source,string $stdin,?int $aid):array
     {
-        if($language!=='web'&&(!$this->runner->enabled()||!$runtime))$this->fail('Configure the code runner and this language before running.',503);
+        if($language!=='web'&&(!$runtime||($kind==='run'&&!$this->runner->enabled())))$this->fail('Configure the code runner and this language before running.',503);
         $own=!$this->db->inTransaction();if($own)$this->db->beginTransaction();
         try {
             $ignore=$this->db->getAttribute(PDO::ATTR_DRIVER_NAME)==='sqlite'?'INSERT OR IGNORE':'INSERT IGNORE';
@@ -46,7 +46,7 @@ final class CodeLabExecutionService
             $gate=$this->q('SELECT * FROM code_lab_run_gates WHERE user_id=?'.$suffix,[$uid])->fetch(PDO::FETCH_ASSOC);
             if($aid){$existing=$this->q('SELECT id,state FROM code_lab_jobs WHERE attempt_id=?',[$aid])->fetch(PDO::FETCH_ASSOC);if($existing&&$existing['state']!=='failed'){if($own)$this->db->commit();return ['job_id'=>(int)$existing['id']];}}
             if((int)$this->q("SELECT COUNT(*) FROM code_lab_jobs WHERE state IN ('queued','running')")->fetchColumn()>=1000)$this->fail('The execution queue is full. Try again shortly.',429);
-            $active=$this->q("SELECT id FROM code_lab_jobs WHERE user_id=? AND state IN ('queued','running') LIMIT 1",[$uid])->fetchColumn();if($active)$this->fail('Wait for your current execution to finish before running or submitting.',409);
+            $active=$this->q("SELECT id FROM code_lab_jobs WHERE user_id=? AND state IN ('queued','running') LIMIT 1",[$uid])->fetchColumn();if($kind==='run'&&$active)$this->fail('Wait for your current execution to finish before running again.',409);
             $window=(new DateTimeImmutable($gate['window_started'],new DateTimeZone('UTC')))->getTimestamp();
             $count=$window<=($this->clock)()-3600?0:(int)$gate['request_count'];
             if($count>=60)$this->fail('Hourly execution limit reached. Try again later.',429);
