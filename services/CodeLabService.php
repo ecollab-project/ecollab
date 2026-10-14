@@ -17,7 +17,7 @@ final class CodeLabService
     private static function fail(string $message, int $code = 400): never { throw new RuntimeException($message, $code); }
     public function member(int $sid, int $uid): array
     {
-        $row = $this->query('SELECT s.id,s.name,s.owner_id,u.role FROM servers s JOIN server_members m ON m.server_id=s.id JOIN users u ON u.id=m.user_id WHERE s.id=? AND m.user_id=? AND s.status=? AND u.deleted_at IS NULL', [$sid,$uid,'active'])->fetch(PDO::FETCH_ASSOC);
+        $row = $this->query('SELECT s.id,s.name,s.owner_id,u.role FROM servers s JOIN server_members m ON m.server_id=s.id JOIN users u ON u.id=m.user_id WHERE s.id=? AND m.user_id=? AND s.status=? AND u.deleted_at IS NULL AND u.status NOT IN ("banned","suspended","deactivated")', [$sid,$uid,'active'])->fetch(PDO::FETCH_ASSOC);
         if (!$row) self::fail('You are not a member of this active server.',403);
         $row['can_manage'] = in_array($row['role'],['facilitator','admin','super_admin'],true);
         return $row;

@@ -9,8 +9,8 @@ $sql=str_replace('BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY','INTEGER PRIMARY K
 $sql=preg_replace('/,\s*INDEX code_lab_server \(server_id, id\)/','',$sql);
 $sql=str_replace(['UNIQUE KEY code_lab_private_attempt','UNIQUE KEY code_lab_private_playground'],['UNIQUE','UNIQUE'],$sql);
 $sql=preg_replace('/\) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;/',');',$sql);$db->exec($sql);
-$db->exec('CREATE TABLE users(id INTEGER PRIMARY KEY,role TEXT,deleted_at TEXT,full_name TEXT,username TEXT);CREATE TABLE servers(id INTEGER PRIMARY KEY,name TEXT,owner_id INTEGER,status TEXT);CREATE TABLE server_members(server_id INTEGER,user_id INTEGER)');
-$db->exec("INSERT INTO users VALUES(1,'facilitator',NULL,'Teacher','teacher'),(2,'student',NULL,'Alice','alice'),(3,'student',NULL,'Bob','bob'),(4,'student',NULL,'Other','other'),(5,'student',NULL,'Owner','owner');INSERT INTO servers VALUES(1,'Course',1,'active'),(2,'Other course',1,'active'),(3,'Student owned',5,'active');INSERT INTO server_members VALUES(1,1),(1,2),(1,3),(2,4),(3,5)");
+$db->exec('CREATE TABLE users(id INTEGER PRIMARY KEY,role TEXT,deleted_at TEXT,full_name TEXT,username TEXT,status TEXT DEFAULT "active");CREATE TABLE servers(id INTEGER PRIMARY KEY,name TEXT,owner_id INTEGER,status TEXT);CREATE TABLE server_members(server_id INTEGER,user_id INTEGER)');
+$db->exec("INSERT INTO users (id,role,deleted_at,full_name,username) VALUES(1,'facilitator',NULL,'Teacher','teacher'),(2,'student',NULL,'Alice','alice'),(3,'student',NULL,'Bob','bob'),(4,'student',NULL,'Other','other'),(5,'student',NULL,'Owner','owner');INSERT INTO servers VALUES(1,'Course',1,'active'),(2,'Other course',1,'active'),(3,'Student owned',5,'active');INSERT INTO server_members VALUES(1,1),(1,2),(1,3),(2,4),(3,5)");
 $now=strtotime('2026-10-20T00:00:00Z');$service=new CodeLabService($db,fn()=>$GLOBALS['now']);
 $input=['title'=>'Loops','instructions'=>'Sum inputs','language'=>'python','kind'=>'assignment','starter_code'=>'# Start here','duration_minutes'=>60];
 clReject(fn()=>$service->create(1,2,$input),403,'Students cannot create tasks');
@@ -50,5 +50,6 @@ clReject(fn()=>$service->playground(1,2,'python',['code'=>'overwrite','version'=
 clReject(fn()=>$service->playground(1,4,'python'),403,'Playground membership required');
 $bad=$input;$bad['due_at']='2026-02-30T00:00:00Z';clReject(fn()=>$service->create(1,1,$bad),400,'Invalid calendar date');
 $bad=$input;$bad['language']='shell';clReject(fn()=>$service->create(1,1,$bad),400,'Unsupported runtime rejected');
+$db->exec("UPDATE users SET status='banned' WHERE id=3");clReject(fn()=>$service->start(1,3,$tid),403,'Banned account loses access');
 $db->exec('DELETE FROM server_members WHERE user_id=2 AND server_id=1');clReject(fn()=>$service->start(1,2,$tid),403,'Removed member loses attempt access');
 echo "PASS: private attempts, playground isolation, roles, cross-server access, submission locking, deadlines, timing and stale saves\n";
