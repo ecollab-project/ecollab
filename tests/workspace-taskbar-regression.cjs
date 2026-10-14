@@ -1,7 +1,8 @@
 const {JSDOM}=require('jsdom'),fs=require('fs'),path=require('path'),assert=require('node:assert/strict');
-const dom=new JSDOM('<nav id="workspaceSwitcher"><button id="workspaceFind"></button><button data-scroll="-1"></button><div id="workspaceServerList"><button class="workspace-icon active" data-server-name="Study & learn" data-server-id="1" title="Study & learn">A</button><button class="workspace-icon" data-server-name="Programming" data-server-id="2" data-server-type="private" title="Programming">B</button><button class="workspace-icon" data-server-name="&lt;img src=x onerror=alert(1)&gt;" title="Long name">C</button></div><button data-scroll="1"></button></nav>',{runScripts:'outside-only',url:'https://ecollab.test'});
+const dom=new JSDOM('<nav id="workspaceSwitcher"><div id="workspaceAccountDock"></div><button data-taskbar-app="messages"></button><button data-taskbar-app="collabs"></button><button data-taskbar-app="library"></button><button id="workspaceFind"></button><button data-scroll="-1"></button><div id="workspaceServerList"><button class="workspace-icon active" data-server-name="Study & learn" data-server-id="1" title="Study & learn">A</button><button class="workspace-icon" data-server-name="Programming" data-server-id="2" data-server-type="private" title="Programming">B</button><button class="workspace-icon" data-server-name="&lt;img src=x onerror=alert(1)&gt;" title="Long name">C</button></div><button data-scroll="1"></button></nav><aside><div id="workspaceAccountHome"></div><section id="workspaceAccount"><button id="muteBtn"></button></section><button class="sidebar-nav-item" onclick="homeAction()" title="home"></button><a id="serverLibraryNav"></a></aside>',{runScripts:'outside-only',url:'https://ecollab.test'});
 const w=dom.window,list=w.document.getElementById('workspaceServerList');
-w.matchMedia=q=>({matches:q.includes('min-width')});
+w.desktop=true;w.matchMedia=q=>({matches:q.includes('min-width')&&w.desktop});
+let homes=0,collabs=0,libraries=0;w.document.querySelector('.sidebar-nav-item').onclick=()=>{homes++;};w.openCollabHub=()=>{collabs++;};w.document.getElementById('serverLibraryNav').onclick=e=>{e.preventDefault();libraries++;};
 w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
 w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
 Object.defineProperties(list,{clientWidth:{value:80},scrollWidth:{value:160}});
@@ -10,6 +11,11 @@ let switches=0;const icons=[...list.children];icons.forEach(icon=>icon.addEventL
 w.eval(fs.readFileSync(path.join(__dirname,'../assets/js/chat/workspace-taskbar.js'),'utf8'));
 (async()=>{
 assert.equal(icons[0].getAttribute('aria-current'),'true');
+const account=w.document.getElementById('workspaceAccount');assert.equal(account.parentNode.id,'workspaceAccountDock');
+for(const app of ['messages','collabs','library'])w.document.querySelector('[data-taskbar-app='+app+']').click();
+assert.equal(homes,1);assert.equal(collabs,1);assert.equal(libraries,1);
+w.desktop=false;w.dispatchEvent(new w.Event('resize'));assert.equal(account.previousElementSibling.id,'workspaceAccountHome');
+w.desktop=true;w.dispatchEvent(new w.Event('resize'));assert.equal(account.parentNode.id,'workspaceAccountDock');assert.equal(w.document.querySelectorAll('#muteBtn').length,1);
 const prev=w.document.querySelector('[data-scroll="-1"]'),next=w.document.querySelector('[data-scroll="1"]');
 assert(!next.hidden);assert(prev.disabled);next.click();assert(next.disabled);assert(!prev.disabled);
 icons[0].focus();icons[0].dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));

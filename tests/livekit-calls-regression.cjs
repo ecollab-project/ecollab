@@ -9,7 +9,7 @@ const tick=()=>new Promise(r=>setTimeout(r,0));
 const events=['ParticipantConnected','ParticipantDisconnected','TrackMuted','TrackUnmuted','LocalTrackPublished','LocalTrackUnpublished','ActiveSpeakersChanged','TrackSubscribed','TrackUnsubscribed','Reconnecting','Reconnected','Disconnected'];
 const clients=[];
 function client(id){
- const dom=new JSDOM('<nav id="workspaceSwitcher"></nav><div id="vcConnectedBar" style="display:none"></div><script src="/assets/js/chat/socket.js"></script>',{url:'https://ecollab.test/modules/chat/chat.php',runScripts:'outside-only'});const w=dom.window;
+ const dom=new JSDOM('<button id="muteBtn"></button><button id="deafenBtn"></button><nav id="workspaceSwitcher"></nav><div id="vcConnectedBar" style="display:none"></div><script src="/assets/js/chat/socket.js"></script>',{url:'https://ecollab.test/modules/chat/chat.php',runScripts:'outside-only'});const w=dom.window;
  w.desktop=true;w.matchMedia=()=>({matches:w.desktop,addEventListener(){},removeEventListener(){}});
  w.HTMLMediaElement.prototype.play=()=>Promise.resolve();w.HTMLMediaElement.prototype.pause=()=>{};
  w.ECOLLAB_CALLS_CONFIG={userId:id,baseUrl:'',csrfToken:'test',wsUrl:'wss://test'};
@@ -33,6 +33,9 @@ function client(id){
  await a.w.EcollabCalls.handle({type:'dm_call_answer',log_id:20,from_user_id:2});
  const ar=a.w.EcollabCalls.room,br=b.w.EcollabCalls.room;
  assert(ar&&br);assert(ar.localParticipant.isCameraEnabled&&br.localParticipant.isCameraEnabled);
+ await a.w.EcollabCalls.control('mic');assert(!ar.localParticipant.isMicrophoneEnabled);assert(a.w.document.getElementById('muteBtn').classList.contains('media-off'));
+ await a.w.EcollabCalls.control('deafen');assert(a.w.document.getElementById('deafenBtn').classList.contains('media-off'));assert(!ar.disconnected);
+ await a.w.EcollabCalls.control('mic');await a.w.EcollabCalls.control('deafen');
  const remote=new a.Participant('user-2');remote.isCameraEnabled=true;remote.set('camera',true,'video');ar.remoteParticipants.set(remote.identity,remote);ar.emit('ParticipantConnected',remote);
  assert.equal(a.w.document.querySelectorAll('.ec-call-tile video').length,2);
  a.w.document.querySelector('[data-action=camera]').click();await tick();
