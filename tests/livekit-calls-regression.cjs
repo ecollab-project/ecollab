@@ -9,8 +9,8 @@ const tick=()=>new Promise(r=>setTimeout(r,0));
 const events=['ParticipantConnected','ParticipantDisconnected','TrackMuted','TrackUnmuted','LocalTrackPublished','LocalTrackUnpublished','ActiveSpeakersChanged','TrackSubscribed','TrackUnsubscribed','Reconnecting','Reconnected','Disconnected'];
 const clients=[];
 function client(id){
- const dom=new JSDOM('<script src="/assets/js/chat/socket.js"></script>',{url:'https://ecollab.test/modules/chat/chat.php',runScripts:'outside-only'});const w=dom.window;
- w.matchMedia=()=>({matches:false,addEventListener(){},removeEventListener(){}});
+ const dom=new JSDOM('<nav id="workspaceSwitcher"></nav><div id="vcConnectedBar" style="display:none"></div><script src="/assets/js/chat/socket.js"></script>',{url:'https://ecollab.test/modules/chat/chat.php',runScripts:'outside-only'});const w=dom.window;
+ w.desktop=true;w.matchMedia=()=>({matches:w.desktop,addEventListener(){},removeEventListener(){}});
  w.HTMLMediaElement.prototype.play=()=>Promise.resolve();w.HTMLMediaElement.prototype.pause=()=>{};
  w.ECOLLAB_CALLS_CONFIG={userId:id,baseUrl:'',csrfToken:'test',wsUrl:'wss://test'};
  w.DM={activePartnerId:id===1?2:1,activePartnerName:'Peer',activeGroupId:null};
@@ -20,7 +20,7 @@ function client(id){
  class Participant {constructor(identity){this.identity=identity;this.name=identity;this.trackPublications=new Map();this.isMicrophoneEnabled=false;this.isCameraEnabled=false;this.isSpeaking=false;}getTrackPublication(source){return this.trackPublications.get(source);}async setMicrophoneEnabled(on){this.isMicrophoneEnabled=on;this.set('microphone',on,'audio');}async setCameraEnabled(on){this.isCameraEnabled=on;this.set('camera',on,'video');}async setScreenShareEnabled(on,capture,publish){this.isScreenShareEnabled=on;this.lastScreen={capture,publish};this.set('screen_share',on,'video');}set(source,on,kind){let pub=this.trackPublications.get(source);if(!pub){pub={source,track:new Track(kind),isMuted:!on};this.trackPublications.set(source,pub);}pub.isMuted=!on;this.room?.emit(on?'TrackUnmuted':'TrackMuted',pub,this);}}
  class Room {constructor(){this.localParticipant=new Participant('user-'+id);this.localParticipant.room=this;this.remoteParticipants=new Map();this.activeSpeakers=[];this.events={};}on(e,fn){(this.events[e]??=[]).push(fn);return this;}emit(e,...args){for(const fn of this.events[e]||[])fn(...args);}async connect(){}async startAudio(){}disconnect(){this.disconnected=true;this.emit('Disconnected');}}
  w.LivekitClient={Room,RoomEvent:Object.fromEntries(events.map(x=>[x,x]))};
- const sent=[];w.wsSend=data=>{sent.push(data);return true;};w.eval(settings);w.eval(code);
+ const sent=[];w.wsSend=data=>{sent.push(data);return true;};w.eval(settings);w.eval(fs.readFileSync(path.join(root,'assets/js/calls/call-dock.js'),'utf8'));w.eval(code);
  const c={dom,w,sent,Participant,Track};clients.push(c);return c;
 }
 (async()=>{
@@ -44,10 +44,23 @@ function client(id){
  a.w.document.querySelector('[data-action=expand]').click();assert(a.w.document.querySelector('.is-expanded'));
  a.w.document.querySelector('[data-action=minimize]').click();assert(a.w.document.querySelector('.is-minimized'));
  assert.equal(a.w.document.querySelector('[data-action=minimize]').textContent,'Restore');
- const panel=a.w.document.querySelector('.ec-call');panel.getBoundingClientRect=()=>({left:20,top:20,width:260,height:80});
- function pointer(type,x,y){const event=new a.w.Event(type,{bubbles:true,cancelable:true});Object.assign(event,{pointerId:7,button:0,clientX:x,clientY:y});panel.querySelector('header').dispatchEvent(event);}
- pointer('pointerdown',30,30);pointer('pointermove',180,150);assert.equal(panel.style.left,'170px');assert.equal(panel.style.top,'140px');pointer('pointerup',180,150);
- 
+ const panel=a.w.document.querySelector('.ec-call');
+ assert.equal(panel.parentNode.id,'workspaceSwitcher','direct call is in server taskbar');
+ assert.equal(a.w.document.getElementById('vcConnectedBar').parentNode.id,'workspaceSwitcher');
+ const signaling=a.sent.length;
+ panel.querySelector('[data-action=hide-preview]').click();
+ assert(panel.classList.contains('is-preview-hidden'));
+ assert.equal(a.w.EcollabCalls.room,ar);assert(!ar.disconnected);
+ assert.equal(a.sent.length,signaling,'closing video emits no end/decline');
+ ar.emit('ActiveSpeakersChanged');assert(panel.classList.contains('is-preview-hidden'),'participant updates do not reopen video');
+ assert.equal(a.w.document.querySelector('.ec-call-tile video'),retained);
+ panel.querySelector('[data-action=show-preview]').click();assert(!panel.classList.contains('is-preview-hidden'));
+ a.w.desktop=false;a.w.dispatchEvent(new a.w.Event('resize'));
+ assert(panel.parentNode.classList.contains('ec-call-taskbar'),'mobile has independent bottom call taskbar');
+ assert(!panel.parentNode.hidden);
+ a.w.desktop=true;a.w.dispatchEvent(new a.w.Event('resize'));
+ assert.equal(panel.parentNode.id,'workspaceSwitcher');
+ assert(a.w.document.querySelector('.ec-call-taskbar').hidden);
  a.w.document.querySelector('[data-action=minimize]').click();assert(a.w.document.querySelector('.is-expanded'),'restore previous expanded size');
  assert.equal(a.w.document.querySelector('.ec-call-tile video'),retained,'resizing does not rebuild video');
  a.w.document.querySelector('[data-action=expand]').click();assert(!a.w.document.querySelector('.is-expanded'));
@@ -63,6 +76,9 @@ function client(id){
  for(const p of group.remoteParticipants.values())assert(p.getTrackPublication('camera').track.attached.length<=1,'no leaked video elements');
  a.w.document.querySelector('[data-action=screen]').click();await tick();assert.equal(group.localParticipant.lastScreen.publish.screenShareEncoding.maxBitrate,6000000);
  a.w.document.querySelector('[data-action=minimize]').click();assert(a.w.document.querySelector('.is-minimized'));
+ assert.equal(a.w.document.querySelector('.ec-call').parentNode.id,'workspaceSwitcher','group call also docks');
+ a.w.document.querySelector('[data-action=hide-preview]').click();assert.equal(a.w.EcollabCalls.room,group);assert(!group.disconnected);
+ assert(group.localParticipant.isScreenShareEnabled,'closing preview does not stop own sharing');
  a.w.endDmCall();
  // Closing while authorization is pending cannot resurrect a camera/call.
  let complete;a.w.fetch=()=>new Promise(r=>complete=r);const pending=a.w.startDmCall(true);await tick();a.w.endDmCall();complete({ok:true,json:async()=>({success:true,url:'wss://test',token:'x'})});await pending;assert(!a.w.EcollabCalls.room);

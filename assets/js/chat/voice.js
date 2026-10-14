@@ -287,7 +287,9 @@ function _setVcLabels() {
 function _updateConnectedBar(visible) {
   const bar = document.getElementById('vcConnectedBar');
   if (!bar) return;
+  window.EcollabCallDock?.mount(bar);
   bar.style.display = visible ? '' : 'none';
+  window.EcollabCallDock?.refresh();
   const roomEl = document.getElementById('vcbRoomName');
   if (roomEl) roomEl.textContent = vcRoomName;
 }
@@ -326,7 +328,7 @@ function _ensureVoiceQuickActions() {
 }
 function _syncVoiceQuickActions() {
   const controls = [
-    [['vcMicBtn','vcQuickMic','muteBtn'], !vcMicMuted, 'Microphone'],
+    [['vcMicBtn','vcQuickMic','vcDockMic','muteBtn'], !vcMicMuted, 'Microphone'],
     [['vcDeafBtn','deafenBtn'], !vcDeafened, 'Audio playback'],
     [['vcCamBtn','vcQuickCam'], vcCamOn, 'Camera'],
     [['vcScreenBtn','vcQuickScreen'], vcScreenOn, 'Screen share'],
@@ -364,6 +366,7 @@ function toggleVcMinimize() {
   const vcView = document.getElementById('voiceChannelView');
   if (!vcView || !vcActive) return;
   if (vcView.parentNode !== document.body) document.body.appendChild(vcView);
+  vcView.classList.remove('vc-preview-hidden');
   vcMinimized = !vcMinimized;
   vcView.classList.toggle('vc-minimized', vcMinimized);
   _refreshVoiceLayout();
@@ -392,6 +395,7 @@ function toggleVcPanelFromBar() {
   if (!vcView) return;
   if (vcView.parentNode !== document.body) document.body.appendChild(vcView);
 
+  vcView.classList.remove('vc-preview-hidden');
   if (!vcView.classList.contains('active')) {
     // Panel was closed (shouldn't happen) — re-open
     vcView.classList.add('active');
@@ -413,6 +417,15 @@ function toggleVcPanelFromBar() {
   const btn = vcView.querySelector('.vc-minimize-btn');
   if (btn) btn.title = vcMinimized ? 'Expand' : 'Minimize';
 }
+
+// Closing the visual preview never leaves the room or changes published media.
+function closeVcPreview() {
+  const view = document.getElementById('voiceChannelView');
+  if (!view || !vcActive) return;
+  if (!vcMinimized) toggleVcMinimize();
+  view.classList.add('vc-preview-hidden');
+}
+window.closeVcPreview = closeVcPreview;
 
 // ── Render current user card ───────────────────────────────────────────────
 function renderVcUser() {

@@ -386,16 +386,17 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       </div>
       <div class="vcb-room" id="vcbRoomName">â</div>
       <div class="vcb-actions">
-        <div class="vcb-btn" onclick="toggleVcPanelFromBar()" title="Open Voice Panel">
+        <button type="button" class="vcb-btn" id="vcDockMic" onclick="toggleVcMic()" aria-label="Toggle microphone" title="Toggle microphone">Mic</button>
+        <button type="button" class="vcb-btn" onclick="toggleVcPanelFromBar()" title="Restore voice panel" aria-label="Restore voice panel">
           <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24">
             <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" />
           </svg>
-        </div>
-        <div class="vcb-btn vcb-leave" onclick="leaveVoice()" title="Disconnect">
+        </button>
+        <button type="button" class="vcb-btn vcb-leave" onclick="leaveVoice()" title="Leave voice channel" aria-label="Leave voice channel">
           <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24">
             <path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.24 1.01l-2.21 2.21z" />
           </svg>
-        </div>
+        </button>
       </div>
     </div>
 
@@ -696,11 +697,11 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           </svg>
           Invite
         </button>
-        <div class="vc-icon-btn" onclick="leaveVoice()" title="Leave Voice">
+        <button type="button" class="vc-icon-btn" onclick="closeVcPreview()" title="Close video preview and stay in voice" aria-label="Close video preview and stay in voice">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
           </svg>
-        </div>
+        </button>
       </div>
     </div>
     <div class="vc-body">
@@ -1113,9 +1114,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=tiptap-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=tiptap-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=voice-preview-watch-2" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=call-taskbar-1" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.22.3/dist/livekit-client.umd.min.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/livekit-voice.js?v=voice-preview-watch-2" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/livekit-voice.js?v=call-taskbar-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/whiteboard.js" defer></script>
   <!-- ── Private Channel Manager Modal ────────────────────────────────── -->
   <div id="privateChannelManagerModal" style="display:none!important;position:fixed;inset:0;z-index:11000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this)closePrivateChannelManager()">
