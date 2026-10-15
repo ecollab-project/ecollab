@@ -356,6 +356,7 @@ function renderChannelList(channels, startAtGeneral = false) {
 
 // ── Channel switch ──
 async function switchChannel(el, channelId) {
+  window.EcollabMedia?.close(false);
   if (window._currentNavView && window._currentNavView !== 'home') {
     window.switchView?.('home', document.querySelector('.sidebar-nav-item'));
   }

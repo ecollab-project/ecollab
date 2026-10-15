@@ -759,6 +759,7 @@ async function _loadDmSearchResults(query) {
 // ═══════════════════════════════════════════════════════════════
 
 window.openDmConversation = async function(partnerId, partnerName, partnerGradient, partnerAvatarUrl = '') {
+  window.EcollabMedia?.close(false);
   partnerId    = parseInt(partnerId);
   partnerName  = partnerName || 'User';
 
@@ -821,6 +822,7 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
 };
 
 window.openGroupConversation = async function(groupId) {
+  window.EcollabMedia?.close(false);
   groupId = parseInt(groupId);
   DM.activeConvId    = null;
   DM.activePartnerId = null;
@@ -888,13 +890,15 @@ function _ensureDmPanel() {
 
     <!-- Input -->
     <div id="dmAttachmentPreview" style="display:none;padding:8px 12px 0;border-top:1px solid var(--border);"></div>
-    <div style="display:flex;gap:8px;padding:10px 12px;flex-shrink:0;align-items:center;">
+    <div class="ec-dm-composer" style="display:flex;gap:8px;padding:10px 12px;flex-shrink:0;align-items:center;">
       <input id="dmFileInput" type="file" accept="image/jpeg,image/png,image/gif,image/webp,.pdf,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip" style="display:none" onchange="_dmFileChosen(this)" />
       <button type="button" onclick="document.getElementById('dmFileInput').click()" title="Add image or file" style="width:34px;height:34px;flex:0 0 34px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;color:var(--text-secondary);cursor:pointer;font-size:16px;">📎</button>
       <input id="dmInputField" type="text" placeholder="Message…"
         style="flex:1;min-width:0;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-primary);font-size:13px;font-family:inherit;outline:none;"
         onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendDmMessage();}"
         oninput="_dmTypingSignal()" />
+      <button type="button" class="ec-dm-media-button" title="Emoji" aria-label="Choose emoji" onclick="event.stopPropagation();window.EcollabMedia?.open('emoji',document.getElementById('dmInputField'),this)">☺</button>
+      <button type="button" class="ec-dm-media-button" title="Animated stickers" aria-label="Choose animated sticker" onclick="event.stopPropagation();window.EcollabMedia?.open('sticker',document.getElementById('dmInputField'),this)">▧</button>
       <button onclick="sendDmMessage()" style="background:var(--accent-purple);border:none;border-radius:8px;padding:8px 14px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Send</button>
     </div>`;
 
@@ -1152,6 +1156,7 @@ window.sendDmMessage = async function() {
 };
 
 window.closeDmPanel = function() {
+  window.EcollabMedia?.close(false);
   const panel = document.getElementById('dmConversationPanel');
   if (!panel) return;
   panel.classList.remove('open');

@@ -11,64 +11,11 @@
 // ═══════════════════════════════════════════════════════
 // GIF PICKER
 // ═══════════════════════════════════════════════════════
-const gifEmojis = ['🎉', '🔥', '😂', '😍', '🤔', '👏', '💯', '🙌', '🤣', '😭', '🎊', '✨', '💪', '🎯', '⚡', '🌟', '🚀', '💥', '🎵', '🎶'];
-
-function populateGifPicker() {
-  const grid = document.getElementById('gifGrid');
-  if (!grid || grid.children.length) return;
-  gifEmojis.forEach(emoji => {
-    const item = document.createElement('div');
-    item.className = 'gif-item';
-    item.textContent = emoji;
-    item.title = 'Insert GIF';
-    item.onclick = () => { insertEmoji(emoji); closeGifPicker(); };
-    grid.appendChild(item);
-  });
-}
-
-function toggleGifPicker(e) {
-  if (e) e.stopPropagation();
-  if (window.closeEmojiPicker) window.closeEmojiPicker();
-  closeAttachMenu();
-  closeExtrasMenu();
-  const picker = document.getElementById('gifPicker');
-  if (!picker) return;
-  picker.classList.toggle('open');
-  if (picker.classList.contains('open')) populateGifPicker();
-  const btn = document.getElementById('gifBtn');
-  if (btn) btn.classList.toggle('active', picker.classList.contains('open'));
-}
-
-function closeGifPicker() {
-  const picker = document.getElementById('gifPicker');
-  if (picker) picker.classList.remove('open');
-  const btn = document.getElementById('gifBtn');
-  if (btn) btn.classList.remove('active');
-}
-
-function filterGifs(query) {
-  const grid = document.getElementById('gifGrid');
-  if (!grid) return;
-  grid.innerHTML = '';
-  const filtered = query ? ['🔍', '✨', '🎯', '⚡', '💡', '🔥', '😂', '🎉'] : gifEmojis;
-  filtered.forEach(emoji => {
-    const item = document.createElement('div');
-    item.className = 'gif-item';
-    item.textContent = emoji;
-    item.onclick = () => { insertEmoji(emoji); closeGifPicker(); };
-    grid.appendChild(item);
-  });
-}
-
-function insertEmoji(emoji) {
-  const input = document.getElementById('chatInputField');
-  if (!input) return;
-  if (window.EcollabComposer?.insert(input, emoji)) return;
-  const pos = input.selectionStart ?? input.value.length;
-  input.value = input.value.substring(0, pos) + emoji + input.value.substring(pos);
-  input.focus();
-  input.selectionStart = input.selectionEnd = pos + [...emoji].length;
-}
+function populateGifPicker(){window.EcollabMedia?.load().catch(()=>{});}
+function toggleGifPicker(event){event?.stopPropagation();window.EcollabMedia?.open('sticker',document.getElementById('chatInputField'),document.getElementById('gifBtn'));}
+function closeGifPicker(){window.EcollabMedia?.close(false);}
+function filterGifs(){}
+function insertEmoji(emoji){window.EcollabMedia?.insertEmoji(emoji);}
 
 // ═══════════════════════════════════════════════════════
 // VOICE RECORDING
