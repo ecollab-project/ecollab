@@ -8,6 +8,7 @@ require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 require_once dirname(__DIR__, 2) . '/services/OllamaService.php';
 require_once dirname(__DIR__, 2) . '/services/JarredTools.php';
 require_once dirname(__DIR__, 2) . '/services/JarredActionService.php';
+require_once dirname(__DIR__, 2) . '/services/CodeLabIntegrityPolicy.php';
 
 require_once dirname(__DIR__, 2) . '/services/NotificationService.php';
 
@@ -85,6 +86,8 @@ try {
     $isAiConversation =
         (int)($recipient['is_system'] ?? 0) === 1
         && ($recipient['username'] ?? '') === 'ecollab_ai';
+
+    if ($isAiConversation && CodeLabIntegrityPolicy::isCodeLab($jarredSurface,(string)($_SERVER['HTTP_REFERER']??''))) {http_response_code(403);echo json_encode(['success'=>false,'error'=>CodeLabIntegrityPolicy::AI_MESSAGE]);exit;}
 
     $msgId = RealtimeOutbox::record($db, 'dm', $convId, function () use ($db, $convId, $me, $text, $attachmentPath, $attachmentName, $attachmentSize, $attachmentMime) {
         $ins = $db->prepare(

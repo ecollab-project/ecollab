@@ -8,6 +8,7 @@ require_once dirname(__DIR__, 2) . '/security/AuditLogger.php';
 require_once dirname(__DIR__, 2) . '/security/SecurityHeaders.php';
 require_once dirname(__DIR__, 2) . '/security/rate-limit/RateLimiter.php';
 require_once dirname(__DIR__, 2) . '/services/GeminiService.php';
+require_once dirname(__DIR__, 2) . '/services/CodeLabIntegrityPolicy.php';
 
 header('Content-Type: application/json');
 SecurityHeaders::send(isApi: true);
@@ -19,6 +20,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 AuthMiddleware::verifyCsrf();
 
+$body = json_decode(file_get_contents('php://input'), true) ?? [];
+if (CodeLabIntegrityPolicy::isCodeLab($body,(string)($_SERVER['HTTP_REFERER']??''))) {http_response_code(403);echo json_encode(['error'=>CodeLabIntegrityPolicy::AI_MESSAGE]);exit;}
+
 $apiKey = (string) env('GEMINI_API_KEY', '');
 if (!$apiKey || $apiKey === 'your_gemini_api_key_here') {
     http_response_code(503);
@@ -27,7 +31,6 @@ if (!$apiKey || $apiKey === 'your_gemini_api_key_here') {
 }
 
 try {
-    $body = json_decode(file_get_contents('php://input'), true) ?? [];
     $prompt = trim((string)($body['prompt'] ?? ''));
     $context = trim((string)($body['context'] ?? ''));
 
