@@ -1,0 +1,2399 @@
+{
+  "fluent_commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+  "emoji_mart_data": "1.2.1/sets/15/native.json",
+  "noto_downloaded_at": "2026-10-15",
+  "files": {
+    "emoji/fluent/1f600.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Grinning%20face/Flat/grinning_face_flat.svg",
+      "sha256": "d2324f21bcb2c6925bcc944e69d903b462d90278016a42a129716008906032b5"
+    },
+    "emoji/fluent/1f603.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Grinning%20face%20with%20big%20eyes/Flat/grinning_face_with_big_eyes_flat.svg",
+      "sha256": "8415c317f426b5d32ae342995a61521faac2b2783adec69ef6f87ee04a9d7a38"
+    },
+    "emoji/fluent/1f604.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Grinning%20face%20with%20smiling%20eyes/Flat/grinning_face_with_smiling_eyes_flat.svg",
+      "sha256": "6faedf66ea8b79cadf6e7423286cb0cfd7fa8ad657be1b50284392bf9cb00409"
+    },
+    "emoji/fluent/1f601.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Beaming%20face%20with%20smiling%20eyes/Flat/beaming_face_with_smiling_eyes_flat.svg",
+      "sha256": "1cbe6ae8d08d6a0398f6595e7cef5133f389d1c9f2fc679e31f82b0139342b95"
+    },
+    "emoji/fluent/1f606.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Grinning%20squinting%20face/Flat/grinning_squinting_face_flat.svg",
+      "sha256": "022ad71fc156d7f37005cd2a24b17e630631c898662271cd2346a442cc6f9ed9"
+    },
+    "emoji/fluent/1f605.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Grinning%20face%20with%20sweat/Flat/grinning_face_with_sweat_flat.svg",
+      "sha256": "f9730e554a892484f9e462dc696562e74a43a4296ccb206aeed494a52b782f0b"
+    },
+    "emoji/fluent/1f923.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Rolling%20on%20the%20floor%20laughing/Flat/rolling_on_the_floor_laughing_flat.svg",
+      "sha256": "ad00326cb8eebd4502a40916656c128054fa0c595d35b350e244791f5885918b"
+    },
+    "emoji/fluent/1f602.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20with%20tears%20of%20joy/Flat/face_with_tears_of_joy_flat.svg",
+      "sha256": "70b274401b327c246129741c9ea009b79a57aac974ffd5a3c3dcee6daa7e31ed"
+    },
+    "emoji/fluent/1f642.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Slightly%20smiling%20face/Flat/slightly_smiling_face_flat.svg",
+      "sha256": "63dc67ca4b2836b30da0c1952d5e28715d7784034f64498625dbef651e75c6b1"
+    },
+    "emoji/fluent/1f643.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Upside-down%20face/Flat/upside-down_face_flat.svg",
+      "sha256": "917d3e0b7f4817791c0bd4e0fb824a947272d3c79c19a3f310129b9a4238ba4a"
+    },
+    "emoji/fluent/1fae0.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Melting%20face/Flat/melting_face_flat.svg",
+      "sha256": "ca8eb73c4ba638150727a7908eb28cb8dbe159ae7a3ead1207399730c881588d"
+    },
+    "emoji/fluent/1f609.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Winking%20face/Flat/winking_face_flat.svg",
+      "sha256": "ca6b6ec5236b7173ed18b44fc77acc94213f89381e93161fc1754fed24d22e76"
+    },
+    "emoji/fluent/1f60a.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Smiling%20face%20with%20smiling%20eyes/Flat/smiling_face_with_smiling_eyes_flat.svg",
+      "sha256": "4a429b15f9aa2831f2fe786923751b6d59b099fabff39a4e41003267629cda25"
+    },
+    "emoji/fluent/1f607.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Smiling%20face%20with%20halo/Flat/smiling_face_with_halo_flat.svg",
+      "sha256": "4d65e9ad3342235aa913d1b64eddb04694cea7bd5ee11e9e459958bcd04012a5"
+    },
+    "emoji/fluent/1f970.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Smiling%20face%20with%20hearts/Flat/smiling_face_with_hearts_flat.svg",
+      "sha256": "a03eb36c8857b6641c40048190d46f123d66539b0b6641fb012dcc8b7b9c89bf"
+    },
+    "emoji/fluent/1f60d.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Smiling%20face%20with%20heart-eyes/Flat/smiling_face_with_heart-eyes_flat.svg",
+      "sha256": "378f8488b83385f293743eaec09bca85e02e841e2277ef73035e75f2ce2242ea"
+    },
+    "emoji/fluent/1f929.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Star-struck/Flat/star-struck_flat.svg",
+      "sha256": "c2207e61f41de47854eb31137d7297a6c1a5a72ca6249745a6b186107bf00958"
+    },
+    "emoji/fluent/1f618.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20blowing%20a%20kiss/Flat/face_blowing_a_kiss_flat.svg",
+      "sha256": "40840ebc5aaaaf9c6068b8225c64edf5f9ca4e550f58941cbfe2fb4eb4498783"
+    },
+    "emoji/fluent/1f617.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Kissing%20face/Flat/kissing_face_flat.svg",
+      "sha256": "09e58763654a581a46dfbd3e1472d0284dce7faa501329c575a30822539ecac3"
+    },
+    "emoji/fluent/263a-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Smiling%20face/Flat/smiling_face_flat.svg",
+      "sha256": "7d2fd42fc6bc14a6da31da060ac15d9758c25504e6c01301d4cec2db381db216"
+    },
+    "emoji/fluent/1f61a.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Kissing%20face%20with%20closed%20eyes/Flat/kissing_face_with_closed_eyes_flat.svg",
+      "sha256": "d0e08988aecee1152f7abbfcaffa62bc401654ab650188b6d19a2dea7ecbf2ac"
+    },
+    "emoji/fluent/1f619.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Kissing%20face%20with%20smiling%20eyes/Flat/kissing_face_with_smiling_eyes_flat.svg",
+      "sha256": "24c0380df2c393a49acad64565d2b53e7cce5c8152ef21eb76a30caa52e441c1"
+    },
+    "emoji/fluent/1f972.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Smiling%20face%20with%20tear/Flat/smiling_face_with_tear_flat.svg",
+      "sha256": "eba7451bdbce4b8f73ef4bfb71bd75a66f61e35ef177a18d51f23e86f1dafedd"
+    },
+    "emoji/fluent/1f60b.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20savoring%20food/Flat/face_savoring_food_flat.svg",
+      "sha256": "4864ef8bae43e1944befb5deffede03c058bc46ec5086c07fb440567b3f8b26a"
+    },
+    "emoji/fluent/1f61b.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20with%20tongue/Flat/face_with_tongue_flat.svg",
+      "sha256": "e86ff32cf5fff3c714af49afeed27d9519635159490b90a0d6c3785be49a21e1"
+    },
+    "emoji/fluent/1f61c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Winking%20face%20with%20tongue/Flat/winking_face_with_tongue_flat.svg",
+      "sha256": "ef572558572fd857f4f17bca87b72d7ffde8eaa64793f631d88182112bb2466d"
+    },
+    "emoji/fluent/1f92a.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Zany%20face/Flat/zany_face_flat.svg",
+      "sha256": "d09a561c2258f59c6758858f6137ec6dd35571100f5016d4d988217ec15925ca"
+    },
+    "emoji/fluent/1f61d.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Squinting%20face%20with%20tongue/Flat/squinting_face_with_tongue_flat.svg",
+      "sha256": "b4885c800676d897f49ae9c6b753342f3474176c156b5b4e702386d182935319"
+    },
+    "emoji/fluent/1f911.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Money-mouth%20face/Flat/money-mouth_face_flat.svg",
+      "sha256": "1d394f02305f84e73027115d1f20c80531053331210d7357b7b1711f5111c8a2"
+    },
+    "emoji/fluent/1f917.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Hugging%20face/Flat/hugging_face_flat.svg",
+      "sha256": "6f07a3521ca0634f6c1d38bf6fc3919fd42dd6c16670d9e18815a70807925ed6"
+    },
+    "emoji/fluent/1f92d.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20with%20hand%20over%20mouth/Flat/face_with_hand_over_mouth_flat.svg",
+      "sha256": "ab6a4c87b6aeabc840b15c8dbad3924567961405c36b91a46fb78bd1b6b43f2c"
+    },
+    "emoji/fluent/1fae2.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20with%20open%20eyes%20and%20hand%20over%20mouth/Flat/face_with_open_eyes_and_hand_over_mouth_flat.svg",
+      "sha256": "866580ec00d7a452ed2a3a9bb2975d8151ee84716313809ecbb75a6bbe8b9563"
+    },
+    "emoji/fluent/1fae3.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20with%20peeking%20eye/Flat/face_with_peeking_eye_flat.svg",
+      "sha256": "486fb99489f769d6d50c2d0d6f0fbb30ca4878b2d3de1342f0eba57244031f12"
+    },
+    "emoji/fluent/1f92b.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Shushing%20face/Flat/shushing_face_flat.svg",
+      "sha256": "331689820694c754538afb84361ddc9c327c546c5f11c52af654a0c660e335db"
+    },
+    "emoji/fluent/1f914.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Thinking%20face/Flat/thinking_face_flat.svg",
+      "sha256": "3026c4db7c56c913318d0526e774cd4f7feb5733f7fe9a2d3d5edc84d00bbe2d"
+    },
+    "emoji/fluent/1fae1.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Saluting%20face/Flat/saluting_face_flat.svg",
+      "sha256": "20020191e430d14c1c5d598a7b40371f0e8695f0cbc34b1b519258de19d3b02a"
+    },
+    "emoji/fluent/1f910.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Zipper-mouth%20face/Flat/zipper-mouth_face_flat.svg",
+      "sha256": "5aca2c73d41448336898148678d33af841b6a5bfa2c7fd3145c206fe5597e8c8"
+    },
+    "emoji/fluent/1f928.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20with%20raised%20eyebrow/Flat/face_with_raised_eyebrow_flat.svg",
+      "sha256": "004ba2e2a2933320a83fb9ab259280f88b2619cc3018d0ca40a4b0c06b375192"
+    },
+    "emoji/fluent/1f610.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Neutral%20face/Flat/neutral_face_flat.svg",
+      "sha256": "dda2611cb58783d0a5bcad6623f87e057f000ac0ea052fc9139e4529f7432c87"
+    },
+    "emoji/fluent/1f611.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Expressionless%20face/Flat/expressionless_face_flat.svg",
+      "sha256": "aa484dccd3024b3c08463cee10ae842e73729fea3cc4738c6bbc75ab81c68452"
+    },
+    "emoji/fluent/1f636.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20without%20mouth/Flat/face_without_mouth_flat.svg",
+      "sha256": "ec856e73d1d642b0140ac3719917a280ff0973a4bb5084fe429b682450d485d9"
+    },
+    "emoji/fluent/1fae5.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Dotted%20line%20face/Flat/dotted_line_face_flat.svg",
+      "sha256": "f78dcd87010eb15bd0e2182ca75c537619ea37c619bf909db5a2c8fa068fca79"
+    },
+    "emoji/fluent/1f636-200d-1f32b-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20in%20clouds/Flat/face_in_clouds_flat.svg",
+      "sha256": "f4cb4a53c91acaadb7401cca6fce0c8fe41b451abbf01242de461b4e9b63c3c8"
+    },
+    "emoji/fluent/1f60f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Smirking%20face/Flat/smirking_face_flat.svg",
+      "sha256": "f342051b353f9b5330a1cb42b7d6aab45aa04ed651947dcdd24622d9120112b1"
+    },
+    "emoji/fluent/1f612.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Unamused%20face/Flat/unamused_face_flat.svg",
+      "sha256": "460c3c19df84d331764709918ae3e9657a18e0d54eb61a14676f533787cb77d4"
+    },
+    "emoji/fluent/1f644.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20with%20rolling%20eyes/Flat/face_with_rolling_eyes_flat.svg",
+      "sha256": "ac8c83118a36ad3fb3dc41a4e730f73c913572af3e6b89f0972426d25bd1abf5"
+    },
+    "emoji/fluent/1f62c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Grimacing%20face/Flat/grimacing_face_flat.svg",
+      "sha256": "b38a87f36fd4b5c6363d8f07de744124dfe9e1689223e355edff286b35ef4607"
+    },
+    "emoji/fluent/1f62e-200d-1f4a8.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20exhaling/Flat/face_exhaling_flat.svg",
+      "sha256": "ba5473c564f282bd963a41967861a3ce818be320dc08cafd7989da678d0472bd"
+    },
+    "emoji/fluent/1f925.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Lying%20face/Flat/lying_face_flat.svg",
+      "sha256": "c270b945830b84583affe73ddfa9189d1ed6fb2ab2657b552a8a6ad6d2bbc4cb"
+    },
+    "emoji/fluent/1fae8.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Shaking%20face/Flat/shaking_face_flat.svg",
+      "sha256": "32ce0ce3d51b8ccd9971b020f433b24c865691bcce19a4c5f6407ed4c718ba07"
+    },
+    "emoji/fluent/1f60c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Relieved%20face/Flat/relieved_face_flat.svg",
+      "sha256": "53024e2159b2e3f5e3111b47b0a6b90c054a3621c01d9b86723268444678f96a"
+    },
+    "emoji/fluent/1f614.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pensive%20face/Flat/pensive_face_flat.svg",
+      "sha256": "9761b548bfcffa6516a3707b92ff102d1fe9aa72815e3f5bd0fa65273ee9d21c"
+    },
+    "emoji/fluent/1f62a.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Sleepy%20face/Flat/sleepy_face_flat.svg",
+      "sha256": "842d8e326ab17346bec27d9cfefe4137f6c6af1cb425cfb241d4bbef740682be"
+    },
+    "emoji/fluent/1f924.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Drooling%20face/Flat/drooling_face_flat.svg",
+      "sha256": "2f0891219d57354e8be2da6a2a1d7245a6e1b7fbc85573fb25e576a56db1fa36"
+    },
+    "emoji/fluent/1f634.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Sleeping%20face/Flat/sleeping_face_flat.svg",
+      "sha256": "47c702745c7be1af9250f79afbea555cfe8bf01a59a78f67b8cae3ed9645143f"
+    },
+    "emoji/fluent/1f637.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20with%20medical%20mask/Flat/face_with_medical_mask_flat.svg",
+      "sha256": "da996691f6fde6bf228170778e8470e47419395eac40998cfed3bed603bf5b6f"
+    },
+    "emoji/fluent/1f912.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20with%20thermometer/Flat/face_with_thermometer_flat.svg",
+      "sha256": "c28feb5113d7f331915f15fe7ec9bfb00eda8be1608d76edb7de384b0462958f"
+    },
+    "emoji/fluent/1f915.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20with%20head-bandage/Flat/face_with_head-bandage_flat.svg",
+      "sha256": "6393bb2741632d5a78a29e1f7a81ad147463b158598edc8488d048bbb257c143"
+    },
+    "emoji/fluent/1f922.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Nauseated%20face/Flat/nauseated_face_flat.svg",
+      "sha256": "77a17ff166f53924532b9758206b7c09a5af73b6e56021802f1e7dac158a3cec"
+    },
+    "emoji/fluent/1f92e.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20vomiting/Flat/face_vomiting_flat.svg",
+      "sha256": "c7b34d8b58d8b652206b1e2aca3064162f6645efa33dcc3f749e55c1633facbb"
+    },
+    "emoji/fluent/1f927.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Sneezing%20face/Flat/sneezing_face_flat.svg",
+      "sha256": "182b534ba524e3791725b1eaa3e4da04a119456fa56cdb5657fc66ae666e5af7"
+    },
+    "emoji/fluent/1f975.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Hot%20face/Flat/hot_face_flat.svg",
+      "sha256": "cf84b609f46ffc13211d634fe061c59952f46c4f2e3298bddb38fbee3372107e"
+    },
+    "emoji/fluent/1f976.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Cold%20face/Flat/cold_face_flat.svg",
+      "sha256": "3bf1c839f72b7b525c710df4bb1213bfac0e95b45ea4b8d8ae77b4595e9339d2"
+    },
+    "emoji/fluent/1f974.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woozy%20face/Flat/woozy_face_flat.svg",
+      "sha256": "c9ec971240a16d23d3a5bee438f307b543d9221cb9ad9541394d7714ee5ebbec"
+    },
+    "emoji/fluent/1f635-200d-1f4ab.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20with%20spiral%20eyes/Flat/face_with_spiral_eyes_flat.svg",
+      "sha256": "002b6c0be690487a108cef3c15a98fdc746d3a0539ce06579144fa94e4449fcd"
+    },
+    "emoji/fluent/1f92f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Exploding%20head/Flat/exploding_head_flat.svg",
+      "sha256": "eb106eae150fa1a8552cd593854223933b29d1e2dd5896ad5a86d5160f63fd04"
+    },
+    "emoji/fluent/1f920.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Cowboy%20hat%20face/Flat/cowboy_hat_face_flat.svg",
+      "sha256": "ce57715da22435e71e6276e55c8966fedefcbec7005fd6025cfae913384ada92"
+    },
+    "emoji/fluent/1f973.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Partying%20face/Flat/partying_face_flat.svg",
+      "sha256": "e74f8e3543ddee0fe7839a457eada5faebb10745f8aaca645e697630ecd1e386"
+    },
+    "emoji/fluent/1f978.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Disguised%20face/Flat/disguised_face_flat.svg",
+      "sha256": "cd3ecc4a74fdaa884d046c1e2a8c74a551648c9791fc456dd2e86fe4a07a9712"
+    },
+    "emoji/fluent/1f60e.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Smiling%20face%20with%20sunglasses/Flat/smiling_face_with_sunglasses_flat.svg",
+      "sha256": "e680a2a862087e29d73ce8bd2a2f30ba5e661d40e92f5e3792441483c8a6581c"
+    },
+    "emoji/fluent/1f913.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Nerd%20face/Flat/nerd_face_flat.svg",
+      "sha256": "31b212bd057c5dbb1c5bce2bb99babe2e19cddf88738dfb39b4ab0640a3cfb40"
+    },
+    "emoji/fluent/1f9d0.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20with%20monocle/Flat/face_with_monocle_flat.svg",
+      "sha256": "8d0dd42c0d827da6655a9e2044bf145091c01af7d249916c0ec6a3a78293f700"
+    },
+    "emoji/fluent/1f615.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Confused%20face/Flat/confused_face_flat.svg",
+      "sha256": "b765316ea9e12151291c47b02b8c4231659aa9eef01e1be5167d22ca5c30d566"
+    },
+    "emoji/fluent/1fae4.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20with%20diagonal%20mouth/Flat/face_with_diagonal_mouth_flat.svg",
+      "sha256": "98676f6722ff142fa185a72017ab118aeacc5454265f52c7af23b9354c27c253"
+    },
+    "emoji/fluent/1f61f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Worried%20face/Flat/worried_face_flat.svg",
+      "sha256": "15786a1a7b349ab55377b8ebd568e4a80fa19612eed9ef4a772cb89f2f73e4f1"
+    },
+    "emoji/fluent/1f641.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Slightly%20frowning%20face/Flat/slightly_frowning_face_flat.svg",
+      "sha256": "76fc89862be427509afb5cb7e1cd2158e3f426c7e40167b13832bf18db493d61"
+    },
+    "emoji/fluent/2639-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Frowning%20face/Flat/frowning_face_flat.svg",
+      "sha256": "c100b225428da60b402b4cc14f2e443367376928c7266cad54daa108a14d568f"
+    },
+    "emoji/fluent/1f62e.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20with%20open%20mouth/Flat/face_with_open_mouth_flat.svg",
+      "sha256": "4b54df2d22c097e621694f7e300f87b01bfbac6a3c3775a891399686d1400aac"
+    },
+    "emoji/fluent/1f62f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Hushed%20face/Flat/hushed_face_flat.svg",
+      "sha256": "fc2bb6014febcc928347d4567d26456a4172397afb980171928df9c453656577"
+    },
+    "emoji/fluent/1f632.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Astonished%20face/Flat/astonished_face_flat.svg",
+      "sha256": "79fa3662c37d8b9db9aeb642266e387e0029c33b9ce2e2ed717ce137a16f9545"
+    },
+    "emoji/fluent/1f633.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Flushed%20face/Flat/flushed_face_flat.svg",
+      "sha256": "e1f6905baae7c315f1e59aeb8783eef61f68ca69054516d45b0c514aa9524652"
+    },
+    "emoji/fluent/1f97a.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pleading%20face/Flat/pleading_face_flat.svg",
+      "sha256": "3ad4897a20160fc6f75da9828c164c075cee70ca163a3d19121eb89452c293b4"
+    },
+    "emoji/fluent/1f979.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20holding%20back%20tears/Flat/face_holding_back_tears_flat.svg",
+      "sha256": "db324f7c7e91d611ef80e39788f3db2f38d26282686f89e93296f7bcf4faf39a"
+    },
+    "emoji/fluent/1f626.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Frowning%20face%20with%20open%20mouth/Flat/frowning_face_with_open_mouth_flat.svg",
+      "sha256": "75dc0279100608e8b51829349614a22d40bf2d2d1fc5d6249b3264f4c08d3b04"
+    },
+    "emoji/fluent/1f627.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Anguished%20face/Flat/anguished_face_flat.svg",
+      "sha256": "821eb705f10da7af7b3d2d69a94faae93625e9d4ca533c40f4190bcaadf3f24d"
+    },
+    "emoji/fluent/1f628.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Fearful%20face/Flat/fearful_face_flat.svg",
+      "sha256": "bdc4b25b6f9af1b95610e8181b2e246b18f80230dd1a4943c35b35048a5cb6b7"
+    },
+    "emoji/fluent/1f630.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Anxious%20face%20with%20sweat/Flat/anxious_face_with_sweat_flat.svg",
+      "sha256": "9b501417347e69344434e8d66458342a5ea69daf1bc0d46efbe305591cd71d76"
+    },
+    "emoji/fluent/1f625.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Sad%20but%20relieved%20face/Flat/sad_but_relieved_face_flat.svg",
+      "sha256": "32516a4d22dc0ad4c7b9a65d68d06f62e22c40c9068cb7820afc69f78f5468c6"
+    },
+    "emoji/fluent/1f622.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Crying%20face/Flat/crying_face_flat.svg",
+      "sha256": "4a0960d7115204c9b89ae94d21fb53c244734cf2da91cba32f295f6e346ffd0c"
+    },
+    "emoji/fluent/1f62d.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Loudly%20crying%20face/Flat/loudly_crying_face_flat.svg",
+      "sha256": "d5e347b4f3a64a1e53f2f3e987da7043133093953dec980b5de5ccd714be94eb"
+    },
+    "emoji/fluent/1f631.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20screaming%20in%20fear/Flat/face_screaming_in_fear_flat.svg",
+      "sha256": "1a43ccb1dbe538c78c5ed24ae6d675af976c00444df4e4d1a0db711e369ce834"
+    },
+    "emoji/fluent/1f616.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Confounded%20face/Flat/confounded_face_flat.svg",
+      "sha256": "bba8f2493a996ac7f99cc2fdaf2b15fc524b01c10f358e20176b43bb2a916183"
+    },
+    "emoji/fluent/1f623.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Persevering%20face/Flat/persevering_face_flat.svg",
+      "sha256": "91d243b0443e22903c2eb1fac8a91cdfe49d84b4e4a5e63916201043c852284e"
+    },
+    "emoji/fluent/1f61e.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Disappointed%20face/Flat/disappointed_face_flat.svg",
+      "sha256": "bd3a1d6608e3a133614254d2874ef71fbd297a93df4d1a945b4aeb2a81cdd280"
+    },
+    "emoji/fluent/1f629.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Weary%20face/Flat/weary_face_flat.svg",
+      "sha256": "5adf73c83bc526527cb49ec4db24aadbb68cb010555886a2353fc1d26a0960df"
+    },
+    "emoji/fluent/1f62b.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Tired%20face/Flat/tired_face_flat.svg",
+      "sha256": "d63b18c3cbe37c618417af919b3ffcf75874b948ee3eb804bc0d95de710584e7"
+    },
+    "emoji/fluent/1f971.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Yawning%20face/Flat/yawning_face_flat.svg",
+      "sha256": "e4c44682da6de8bae1df5fadcb0f35fd0f18a8931ea86dd6b37b8e409d359263"
+    },
+    "emoji/fluent/1f621.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pouting%20face/Flat/pouting_face_flat.svg",
+      "sha256": "3521c7c982998fc70ec6978782d354dcce107975b3d0a3acc2d536496f78f5c4"
+    },
+    "emoji/fluent/1f620.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Angry%20face/Flat/angry_face_flat.svg",
+      "sha256": "bf536eeb45a62dcf593200817c268b9e4d72b034a788aa49591a58a01c1bfd35"
+    },
+    "emoji/fluent/1f92c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Face%20with%20symbols%20on%20mouth/Flat/face_with_symbols_on_mouth_flat.svg",
+      "sha256": "7c22fc9fcdcacd05cf8c6d2f4eb01081a80e2c0117dab99f964de5bdc0c6f9e1"
+    },
+    "emoji/fluent/1f608.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Smiling%20face%20with%20horns/Flat/smiling_face_with_horns_flat.svg",
+      "sha256": "00440f5e218bccbf0f262377e1352be4ce1af78f03052142e9bedeab3cb12945"
+    },
+    "emoji/fluent/1f480.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Skull/Flat/skull_flat.svg",
+      "sha256": "037f4dbe80a2fc7d5b1feed1ea92a91eb88df649d0a13b75bdfddee342b0949c"
+    },
+    "emoji/fluent/2620-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Skull%20and%20crossbones/Flat/skull_and_crossbones_flat.svg",
+      "sha256": "e9f5aa624ad06d9eaf784c14a894ae7ff55f8dad7ac2ea766cbd9d934699969a"
+    },
+    "emoji/fluent/1f4a9.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pile%20of%20poo/Flat/pile_of_poo_flat.svg",
+      "sha256": "8dd55c105bb308755045ccf1fd786b7955def5cab329e20a6e5bf06d516e34b9"
+    },
+    "emoji/fluent/1f921.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Clown%20face/Flat/clown_face_flat.svg",
+      "sha256": "4a48b862dc6ed479f7e1d6f9f5d17e3c37f341dde719db77ef5943cd0886198a"
+    },
+    "emoji/fluent/1f479.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Ogre/Flat/ogre_flat.svg",
+      "sha256": "7f8f4fd0e1440441f4b40f0025dcb23c8da4322268417fa595c41fcbbe0b061a"
+    },
+    "emoji/fluent/1f47a.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Goblin/Flat/goblin_flat.svg",
+      "sha256": "74ac80562c0fae1cacc0aac1f2ad220be540ba025218a0af094af6f12e71e49a"
+    },
+    "emoji/fluent/1f47b.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Ghost/Flat/ghost_flat.svg",
+      "sha256": "793771183d3125c2fca517c4fbee9df3f998aecbb2ff8bec394f63e0458d70cf"
+    },
+    "emoji/fluent/1f47d.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Alien/Flat/alien_flat.svg",
+      "sha256": "d3f8a20c9398cad870288029441e540ee5dd623bad3df81c7e8d47e530e1f9cd"
+    },
+    "emoji/fluent/1f47e.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Alien%20monster/Flat/alien_monster_flat.svg",
+      "sha256": "f5cc657a17090f3efab52be8efbf3942df9fa4bc9d50d878e6094191b701ce0d"
+    },
+    "emoji/fluent/1f44b.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Waving%20hand/Default/Flat/waving_hand_flat_default.svg",
+      "sha256": "a43bd601a3d46573cd3425faed5983b46e64374eaa61d7ac319c41903c17e51d"
+    },
+    "emoji/fluent/1f91a.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Raised%20back%20of%20hand/Default/Flat/raised_back_of_hand_flat_default.svg",
+      "sha256": "f20b75e3bf8c0b2170e8aa93e0d1643fdbc0739627766eb97a1824357a96b176"
+    },
+    "emoji/fluent/1f590-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Hand%20with%20fingers%20splayed/Default/Flat/hand_with_fingers_splayed_flat_default.svg",
+      "sha256": "66c85ca4ebeab2036d5e8979d005302a13badba3def3a2cc78d766e0465fc286"
+    },
+    "emoji/fluent/270b.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Raised%20hand/Default/Flat/raised_hand_flat_default.svg",
+      "sha256": "7075861958f1eaacf3334e3687cd02b0f760c5a7f4fcfeaf5cb65bc8b23ce51c"
+    },
+    "emoji/fluent/1f596.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Vulcan%20salute/Default/Flat/vulcan_salute_flat_default.svg",
+      "sha256": "d5aaf481e764cac06a7b9e6b26b5761e49cc559b9fd00252a894c74a5eba05af"
+    },
+    "emoji/fluent/1faf1.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Rightwards%20hand/Default/Flat/rightwards_hand_flat_default.svg",
+      "sha256": "17d49341beaf660f02566ebb3fe15fc9a412eb0682d04efadeb3e9f9390753ed"
+    },
+    "emoji/fluent/1faf2.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Leftwards%20hand/Default/Flat/leftwards_hand_flat_default.svg",
+      "sha256": "a6e1625d9f5516c294e343742f2361c450d8341f594463f6f01a0ba2c6d7d3c1"
+    },
+    "emoji/fluent/1faf3.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Palm%20down%20hand/Default/Flat/palm_down_hand_flat_default.svg",
+      "sha256": "a1203444d4d6ab9895951cfe4e13cf8f30e54b1c05eee998c80068ba86518341"
+    },
+    "emoji/fluent/1faf4.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Palm%20up%20hand/Default/Flat/palm_up_hand_flat_default.svg",
+      "sha256": "a08a4a7c74c601c02e872208a8600b26ef52f7425519ebc4adb90a30f450f191"
+    },
+    "emoji/fluent/1faf7.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Leftwards%20pushing%20hand/Default/Flat/leftwards_pushing_hand_flat_default.svg",
+      "sha256": "dc281289fa58c5f1c20e1c1d123b8d0f7cfdf32143441807a33089bb46d910b2"
+    },
+    "emoji/fluent/1faf8.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Rightwards%20pushing%20hand/Default/Flat/rightwards_pushing_hand_flat_default.svg",
+      "sha256": "f1aaa52982d909430c2b579a775c3c4a873069d0299d520e54deb97f2ac98566"
+    },
+    "emoji/fluent/1f44c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Ok%20hand/Default/Flat/ok_hand_flat_default.svg",
+      "sha256": "b86eb586d77023461ce1e5e855787c10a8e81f6baef99bd6fad19138064007ba"
+    },
+    "emoji/fluent/1f90c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pinched%20fingers/Default/Flat/pinched_fingers_flat_default.svg",
+      "sha256": "e0f38e02baa481270529c85f687f3a8c1e75cb85701840bab69ace19dbace01f"
+    },
+    "emoji/fluent/1f90f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pinching%20hand/Default/Flat/pinching_hand_flat_default.svg",
+      "sha256": "cfacd3538aa6b04e2698c3bcca612bab9f6aa7b68e0a17c70b7cacb7df794d5f"
+    },
+    "emoji/fluent/270c-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Victory%20hand/Default/Flat/victory_hand_flat_default.svg",
+      "sha256": "e1aca8ecc40fe164b050554a52338012ccc874e81ab5f91fba3c1c0f39cefaa1"
+    },
+    "emoji/fluent/1f91e.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Crossed%20fingers/Default/Flat/crossed_fingers_flat_default.svg",
+      "sha256": "a6ee0d8a121d0de11ff7670353c1434e16f0df83a30c86cf7ebcb5a73f70ed02"
+    },
+    "emoji/fluent/1faf0.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Hand%20with%20index%20finger%20and%20thumb%20crossed/Default/Flat/hand_with_index_finger_and_thumb_crossed_flat_default.svg",
+      "sha256": "7fbcf9d4d34975358adcbcd8cec35d8850ee0202d44d98ce9dc2bdf0f3d9c533"
+    },
+    "emoji/fluent/1f91f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Love-you%20gesture/Default/Flat/love-you_gesture_flat_default.svg",
+      "sha256": "d87c5b0c46a91bc32e9772313d8dd7aa25c49132153f11c535f50188a063157c"
+    },
+    "emoji/fluent/1f918.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Sign%20of%20the%20horns/Default/Flat/sign_of_the_horns_flat_default.svg",
+      "sha256": "5b5a7767353a26b13afce3a113145cc6f51fbbb51a6a506fcd8d47873018a729"
+    },
+    "emoji/fluent/1f919.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Call%20me%20hand/Default/Flat/call_me_hand_flat_default.svg",
+      "sha256": "ad2e91c248360c5f4803a61c2ec8087aacea37cc1a770ebbbf512bc344ce3d9a"
+    },
+    "emoji/fluent/1f448.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Backhand%20index%20pointing%20left/Default/Flat/backhand_index_pointing_left_flat_default.svg",
+      "sha256": "6b1bfca05de02ecaa972c22d415b2ea03d1327bfc5bd05a90dbd80467c331809"
+    },
+    "emoji/fluent/1f449.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Backhand%20index%20pointing%20right/Default/Flat/backhand_index_pointing_right_flat_default.svg",
+      "sha256": "dfd338da6f5a98b4972d5cda6d80c95b40858869ea8c3dc6022ed7bc7ce96eda"
+    },
+    "emoji/fluent/1f446.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Backhand%20index%20pointing%20up/Default/Flat/backhand_index_pointing_up_flat_default.svg",
+      "sha256": "576b618e1b17885dc380d67687d24d36de7b5a9edc4e1d9df8d2c1df6a544783"
+    },
+    "emoji/fluent/1f595.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Middle%20finger/Default/Flat/middle_finger_flat_default.svg",
+      "sha256": "f5da6fc0447bb8d1eb33d678a9f545a06d6d617ff425e473004c39b03c55f949"
+    },
+    "emoji/fluent/1f447.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Backhand%20index%20pointing%20down/Default/Flat/backhand_index_pointing_down_flat_default.svg",
+      "sha256": "57f7fb2eb659d0e2295a625aa588268be1634d3a87d48a11389fb707ad6d0352"
+    },
+    "emoji/fluent/261d-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Index%20pointing%20up/Default/Flat/index_pointing_up_flat_default.svg",
+      "sha256": "5c0fc6d520bcee640bdfcea6824b8fcdba229f19616ecf397b698c402dc02b86"
+    },
+    "emoji/fluent/1faf5.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Index%20pointing%20at%20the%20viewer/Default/Flat/index_pointing_at_the_viewer_flat_default.svg",
+      "sha256": "0a01fa09a5bfaf29ffb48c4c95a01c8851febad400add9463249a480b196a79b"
+    },
+    "emoji/fluent/1f44d.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Thumbs%20up/Default/Flat/thumbs_up_flat_default.svg",
+      "sha256": "2fdd1e26258c7edcf8d9204a9e8c288030244d0c8f049c6f28441ec74fe1e2b8"
+    },
+    "emoji/fluent/1f44e.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Thumbs%20down/Default/Flat/thumbs_down_flat_default.svg",
+      "sha256": "005daac5475f048c2c31669d0543b5a7350f72a69c6b48e09a5417c36ab039b3"
+    },
+    "emoji/fluent/270a.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Raised%20fist/Default/Flat/raised_fist_flat_default.svg",
+      "sha256": "4edbf6bacd2b4dd9b5becfda502702842f7ab09a221d89169706b54d1d430e60"
+    },
+    "emoji/fluent/1f44a.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Oncoming%20fist/Default/Flat/oncoming_fist_flat_default.svg",
+      "sha256": "9891dbd0cd1a7c1ac6a9c8a54697cd549892b950db1846b019f9e51bf71cf47f"
+    },
+    "emoji/fluent/1f91b.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Left-facing%20fist/Default/Flat/left-facing_fist_flat_default.svg",
+      "sha256": "5bde886220026507c68a8def3390cb6d3a7f5ad1c2ae95b22e7a0c592425f63b"
+    },
+    "emoji/fluent/1f91c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Right-facing%20fist/Default/Flat/right-facing_fist_flat_default.svg",
+      "sha256": "3b040b96f3bf1ca3f6911bc3ddb7f27fb78f4c53fab496c324df0950e9317536"
+    },
+    "emoji/fluent/1f44f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Clapping%20hands/Default/Flat/clapping_hands_flat_default.svg",
+      "sha256": "d198a0f3587ccedbe019ddccf20f693e85642faa12901be09d2a7395f28184b1"
+    },
+    "emoji/fluent/1f64c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Raising%20hands/Default/Flat/raising_hands_flat_default.svg",
+      "sha256": "65331148c13f24d443832e15201788436caa4f86f7acb10e6bcf1de574cd1ce4"
+    },
+    "emoji/fluent/1faf6.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Heart%20hands/Default/Flat/heart_hands_flat_default.svg",
+      "sha256": "e740d9fa73a02ac32e0995b39b7a1ea73833bce1b89a1656c6036308efa82ace"
+    },
+    "emoji/fluent/1f450.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Open%20hands/Default/Flat/open_hands_flat_default.svg",
+      "sha256": "5d961694032f4fabff9068d3e4cc1e8f86238ec01670a45228929f24a61471e0"
+    },
+    "emoji/fluent/1f932.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Palms%20up%20together/Default/Flat/palms_up_together_flat_default.svg",
+      "sha256": "b0619ba3132fa8c39732336caece0115d8bbb51ff3851112ac2e4bbc0b06e400"
+    },
+    "emoji/fluent/1f91d.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Handshake/Flat/handshake_flat.svg",
+      "sha256": "64206bd30217e01847ac8c6041d1b040bc81fe5efe412ace481c79a579bd1266"
+    },
+    "emoji/fluent/1f64f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Folded%20hands/Default/Flat/folded_hands_flat_default.svg",
+      "sha256": "d454949a4ec2de964331cc5167c4ea6dbd2f75639c349009c0686b74f3156310"
+    },
+    "emoji/fluent/270d-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Writing%20hand/Default/Flat/writing_hand_flat_default.svg",
+      "sha256": "9db258837429a393ed54af023bea486ac2a75465c8b4eaa900a70a14c6a2ce92"
+    },
+    "emoji/fluent/1f485.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Nail%20polish/Default/Flat/nail_polish_flat_default.svg",
+      "sha256": "642ee6e6a310b79b16916699c0e4995819b93921096564a60b466174316a9f8e"
+    },
+    "emoji/fluent/1f933.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Selfie/Default/Flat/selfie_flat_default.svg",
+      "sha256": "616c42c3d2bb00ef01e7f7694ef3f8467db7cedb369d922801087142c946730e"
+    },
+    "emoji/fluent/1f4aa.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Flexed%20biceps/Default/Flat/flexed_biceps_flat_default.svg",
+      "sha256": "0271c7b5033da1653b0c9d6e54f0136c568a7f7e974c301fe56a6643948cc7c1"
+    },
+    "emoji/fluent/1f9be.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Mechanical%20arm/Flat/mechanical_arm_flat.svg",
+      "sha256": "6e4ca75d8548ca72cd14436e1a118a7eecb27fa1a4e39ec66cba08cd4f1add04"
+    },
+    "emoji/fluent/1f9bf.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Mechanical%20leg/Flat/mechanical_leg_flat.svg",
+      "sha256": "2df6bd50298427e662e30f4c0eb7ad501a46729d1b8b1de752a1195b376ec15a"
+    },
+    "emoji/fluent/1f9b5.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Leg/Default/Flat/leg_flat_default.svg",
+      "sha256": "d3e9ee8e31b2e707b51ee95cc6db6b9166a1c5f8b4b55739527b3570f8531254"
+    },
+    "emoji/fluent/1f9b6.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Foot/Default/Flat/foot_flat_default.svg",
+      "sha256": "84fb15335cba91a1a7bd5f788dda5f6b95fc10f46e8337998858cf23c38ccb28"
+    },
+    "emoji/fluent/1f442.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Ear/Default/Flat/ear_flat_default.svg",
+      "sha256": "d6dc35602efd19ceabd95824243d55168fc3f8e71dfd7e7cf244fd4350960164"
+    },
+    "emoji/fluent/1f9bb.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Ear%20with%20hearing%20aid/Default/Flat/ear_with_hearing_aid_flat_default.svg",
+      "sha256": "eb1a4db03679257b370d23bf4656bc436601b0744187afa8fedb0142e79a86ee"
+    },
+    "emoji/fluent/1f443.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Nose/Default/Flat/nose_flat_default.svg",
+      "sha256": "6f7bcd230f987ea215916b743a4c139f85385e19a8bf8b32d6732daf64e3f29c"
+    },
+    "emoji/fluent/1f9e0.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Brain/Flat/brain_flat.svg",
+      "sha256": "6265573ae0b28db8fc53ba15f886ec9dca72c6345d4c304852db5f4d36876d46"
+    },
+    "emoji/fluent/1fac0.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Anatomical%20heart/Flat/anatomical_heart_flat.svg",
+      "sha256": "b1751514fbe7b237c55f7efd5bd7f106434e7e65b5e5a6b148cd5ce35d12c864"
+    },
+    "emoji/fluent/1fac1.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Lungs/Flat/lungs_flat.svg",
+      "sha256": "1f801645e7e4ab8a2d30af55de4ce6017a8767005be8a9398dd56f42641cd4dc"
+    },
+    "emoji/fluent/1f9b7.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Tooth/Flat/tooth_flat.svg",
+      "sha256": "f1de4464be967269122cd98b458f662d858069a50c5d810498093c9ed65188cb"
+    },
+    "emoji/fluent/1f9b4.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Bone/Flat/bone_flat.svg",
+      "sha256": "1271e3a6d33a1abf5a666e92215f96192345d5feabaabed162272a44472e1505"
+    },
+    "emoji/fluent/1f440.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Eyes/Flat/eyes_flat.svg",
+      "sha256": "98158bbd366ad8f839967b1d59ee8df8c95755baed7b5fe297fc59b56c53f1bc"
+    },
+    "emoji/fluent/1f441-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Eye/Flat/eye_flat.svg",
+      "sha256": "b3a5d3a19c43fff9977062fa8ce1b5eb3a9a1bd36ebefc058e45b9dbf1825425"
+    },
+    "emoji/fluent/1f445.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Tongue/Flat/tongue_flat.svg",
+      "sha256": "13c9754a92bdce1ec0c8ca6c64d6dbeb033df5c0dbb2029481a433d6a36375a2"
+    },
+    "emoji/fluent/1f444.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Mouth/Flat/mouth_flat.svg",
+      "sha256": "a901edfa3696253117b8b960c3c2d43b9d6b0ce02c93201e071015c53bffb044"
+    },
+    "emoji/fluent/1fae6.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Biting%20lip/Flat/biting_lip_flat.svg",
+      "sha256": "dd6db257a016896a460cf6dd2f4431c51846d4ca587e74a8ce81a2c1f7cf3556"
+    },
+    "emoji/fluent/1f476.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Baby/Default/Flat/baby_flat_default.svg",
+      "sha256": "f1bf168ed31c80d489bd7b1d5511af852e6503aa12749c4360de2f2542967d8a"
+    },
+    "emoji/fluent/1f9d2.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Child/Default/Flat/child_flat_default.svg",
+      "sha256": "1b938a9b04232efc53987dca2011fc8a4e4e0f33dd04d4d2da0919a673c22a1c"
+    },
+    "emoji/fluent/1f466.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Boy/Default/Flat/boy_flat_default.svg",
+      "sha256": "78ae21d36ec70fb1d65e5bc37653e71278e3f163799d096cf1d8db20318502f6"
+    },
+    "emoji/fluent/1f467.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Girl/Default/Flat/girl_flat_default.svg",
+      "sha256": "81df57c25a7e6efb354580783ba16620c6d0951c995dd61283ab7689d6cadd25"
+    },
+    "emoji/fluent/1f468.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man/Default/Flat/man_flat_default.svg",
+      "sha256": "1c45eb8dde3888fb3b6bf614e1a29e1d3f779d36a18ea14b8bd0b30097e5dfbf"
+    },
+    "emoji/fluent/1f9d4.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20beard/Default/Flat/person_beard_flat_default.svg",
+      "sha256": "564e257b342c3327452372e5b3cb4717988e644aabdf721810feb35b5f039f90"
+    },
+    "emoji/fluent/1f9d4-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20beard/Default/Flat/man_beard_flat_default.svg",
+      "sha256": "67a46a39c1cd25e446388cdb76d59dec9828a673f6c7e9f854af2d7cefd6f42c"
+    },
+    "emoji/fluent/1f9d4-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20beard/Default/Flat/woman_beard_flat_default.svg",
+      "sha256": "579e118d83a8c349f50b19be64e02372488b8b5faece3cc5005afe9c497d0652"
+    },
+    "emoji/fluent/1f468-200d-1f9b0.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20red%20hair/Default/Flat/man_red_hair_flat_default.svg",
+      "sha256": "a343bc797c58f9aaf04f19007202c1e0bd87375a96979e21acc36ee21d9776ed"
+    },
+    "emoji/fluent/1f468-200d-1f9b1.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20curly%20hair/Default/Flat/man_curly_hair_flat_default.svg",
+      "sha256": "990f147aceb63b6f3a9b4228b551e69b81ead8c38fb61bd64fe0f831d5db9a81"
+    },
+    "emoji/fluent/1f468-200d-1f9b3.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20white%20hair/Default/Flat/man_white_hair_flat_default.svg",
+      "sha256": "7dc89a1a8c7c79d0653b75e65df03ef9bc0b93134b2cdab57b88e82eab99ce4f"
+    },
+    "emoji/fluent/1f468-200d-1f9b2.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20bald/Default/Flat/man_bald_flat_default.svg",
+      "sha256": "b05f41018289438823b8e0d6c61f7d3595c1dd38811a1a5813681b5f8b0eab33"
+    },
+    "emoji/fluent/1f469.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman/Default/Flat/woman_flat_default.svg",
+      "sha256": "a7f5f3775c092305821fc0796b5734c0be351c6ab9e977ac4c3f2289add285a1"
+    },
+    "emoji/fluent/1f469-200d-1f9b0.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20red%20hair/Default/Flat/woman_red_hair_flat_default.svg",
+      "sha256": "84afece4444fea88ee0d3462d52155b1a3af90f9f8d941e9bed9657b84218547"
+    },
+    "emoji/fluent/1f9d1-200d-1f9b0.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20red%20hair/Default/Flat/person_red_hair_flat_default.svg",
+      "sha256": "32289bd960045b4376d1376407284bf6befc7c7c1413ab6f907118786546fab9"
+    },
+    "emoji/fluent/1f469-200d-1f9b1.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20curly%20hair/Default/Flat/woman_curly_hair_flat_default.svg",
+      "sha256": "153cf54b7161f64f8a438eedcd0688374976bf696d9af68b0eaa3c0e6779fe55"
+    },
+    "emoji/fluent/1f9d1-200d-1f9b1.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20curly%20hair/Default/Flat/person_curly_hair_flat_default.svg",
+      "sha256": "1cf6159de73096642318c38a239a109e1b11b6dda5b10a5245fcf4c3dcc4167c"
+    },
+    "emoji/fluent/1f469-200d-1f9b3.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20white%20hair/Default/Flat/woman_white_hair_flat_default.svg",
+      "sha256": "092b098c58c45ea151b126756c52e233bab90075bc5c28073e737a536b9cf444"
+    },
+    "emoji/fluent/1f9d1-200d-1f9b3.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20white%20hair/Default/Flat/person_white_hair_flat_default.svg",
+      "sha256": "1229162c37aaa1df43b2556dd4701acc9746309ba889283608f4b6e9b62fe381"
+    },
+    "emoji/fluent/1f469-200d-1f9b2.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20bald/Default/Flat/woman_bald_flat_default.svg",
+      "sha256": "0b10aad2c7555156cc0d494e5ef9a5d492d6d4b2f48270aeda1deeb230cdae6f"
+    },
+    "emoji/fluent/1f9d1-200d-1f9b2.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20bald/Default/Flat/person_bald_flat_default.svg",
+      "sha256": "586869252eb5eb43fc566a13162d852dd53fd35ae2862b03fbc98074841a5a1d"
+    },
+    "emoji/fluent/1f474.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Old%20man/Default/Flat/old_man_flat_default.svg",
+      "sha256": "b12f74af3049e92f59ac289f0423cc50b3e25960a4acfc0b7f9bde256a9448dd"
+    },
+    "emoji/fluent/1f475.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Old%20woman/Default/Flat/old_woman_flat_default.svg",
+      "sha256": "dcb8941b21023c01a486c4c6f3b9acc641ac7e570d12021328204112417d6942"
+    },
+    "emoji/fluent/1f64d.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20frowning/Default/Flat/person_frowning_flat_default.svg",
+      "sha256": "b71ae4305c63c61318aa90d878fc3e781e7b193775bb675896694ec47b3166f0"
+    },
+    "emoji/fluent/1f64d-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20frowning/Default/Flat/man_frowning_flat_default.svg",
+      "sha256": "2a2eba2a93790a5f6fc98d9cd2f2d5ed747e3bf5b33f74128b86a270736aca6a"
+    },
+    "emoji/fluent/1f64d-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20frowning/Default/Flat/woman_frowning_flat_default.svg",
+      "sha256": "4f7872fe5350303310403893463affcc90ca8a8198d3145c8d49ea8cc4d36954"
+    },
+    "emoji/fluent/1f64e.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20pouting/Default/Flat/person_pouting_flat_default.svg",
+      "sha256": "8b30ee3bb701034247cd88848202b1313134eb8e34bce1acea4b4d6be1f8c919"
+    },
+    "emoji/fluent/1f64e-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20pouting/Default/Flat/man_pouting_flat_default.svg",
+      "sha256": "b0bb23080bac3eb5a0679412db4d29cf504cb5848571f2f2e0e6dc16ae250a0d"
+    },
+    "emoji/fluent/1f64e-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20pouting/Default/Flat/woman_pouting_flat_default.svg",
+      "sha256": "1840a9bbd472453825ba651b8b63c349f2ed4c3a6f0b88be77c12541b8e1756c"
+    },
+    "emoji/fluent/1f645.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20gesturing%20no/Default/Flat/person_gesturing_no_flat_default.svg",
+      "sha256": "d425fa8ebe7df809781f156dbab91b8ad621110b65cad350a3ecd1f013b49956"
+    },
+    "emoji/fluent/1f645-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20gesturing%20no/Default/Flat/man_gesturing_no_flat_default.svg",
+      "sha256": "6ba919ee1652b8a155ead69234c138a9fd22260033d4df5f4ca2f59b1f2c198f"
+    },
+    "emoji/fluent/1f645-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20gesturing%20no/Default/Flat/woman_gesturing_no_flat_default.svg",
+      "sha256": "b435c7039082c2c05b1cad93c82edab8749fb87353083248deda6595238a8461"
+    },
+    "emoji/fluent/1f646.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20gesturing%20ok/Default/Flat/person_gesturing_ok_flat_default.svg",
+      "sha256": "a5fafd7348d12f594e3bec9c0b6300cf069d8b36dd7c5a48191b47adb0f748b7"
+    },
+    "emoji/fluent/1f646-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20gesturing%20ok/Default/Flat/man_gesturing_ok_flat_default.svg",
+      "sha256": "4f9becd2e6d04c5a6dd892758303ee8fd404f0e8e10e74d7acff819c644654a1"
+    },
+    "emoji/fluent/1f646-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20gesturing%20ok/Default/Flat/woman_gesturing_ok_flat_default.svg",
+      "sha256": "a0632103940e61c6f7cef1fc0df5fb5b9d3e80ab7886422fe7e0a0697ba4e168"
+    },
+    "emoji/fluent/1f481.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20tipping%20hand/Default/Flat/person_tipping_hand_flat_default.svg",
+      "sha256": "5b105d8e4b0993e3e2c38325aff96626c2c1d31c70ba2992960cf81f22e64053"
+    },
+    "emoji/fluent/1f481-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20tipping%20hand/Default/Flat/man_tipping_hand_flat_default.svg",
+      "sha256": "3367dd760bbe56bd3d469f98f4c68cdae020fca7494309c3ff1a1099d21e8c43"
+    },
+    "emoji/fluent/1f481-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20tipping%20hand/Default/Flat/woman_tipping_hand_flat_default.svg",
+      "sha256": "b55d599e06d2c356f923e27d123d7db9d9868fd720a8e5ade27c60ea421feb5f"
+    },
+    "emoji/fluent/1f64b.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20raising%20hand/Default/Flat/person_raising_hand_flat_default.svg",
+      "sha256": "515540c2db0ee381341260a64912047e6d35cc51413b4e6ccdd4e59ec7a12416"
+    },
+    "emoji/fluent/1f64b-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20raising%20hand/Default/Flat/man_raising_hand_flat_default.svg",
+      "sha256": "d502f0ea8ab6631f28e60aebac9f47efa77281a0ae98dffe50dde801870abb8f"
+    },
+    "emoji/fluent/1f64b-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20raising%20hand/Default/Flat/woman_raising_hand_flat_default.svg",
+      "sha256": "1a6433255a09c036eede4b5b1db78e6150be7afd2af1d8bf33516975072dcb62"
+    },
+    "emoji/fluent/1f647.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20bowing/Default/Flat/person_bowing_flat_default.svg",
+      "sha256": "f0e3ce7db44475c3811ba7d55ffb99be08780ed3888505b772f3267c9594c6ea"
+    },
+    "emoji/fluent/1f647-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20bowing/Default/Flat/man_bowing_flat_default.svg",
+      "sha256": "9f5ba6a3f8bd8fcf3df371957b94eb6155e3aa462c262d1b60f97ca2adceed8a"
+    },
+    "emoji/fluent/1f647-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20bowing/Default/Flat/woman_bowing_flat_default.svg",
+      "sha256": "341623dc85779e6a7c1803b76cdc8a5a2df206cbd3dcf4b7f0cbbf8694fe7f57"
+    },
+    "emoji/fluent/1f926-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20facepalming/Default/Flat/man_facepalming_flat_default.svg",
+      "sha256": "00a26f0103680440daadd767fe41370d4bcfb3b13427c707fd98d7439a171c66"
+    },
+    "emoji/fluent/1f926-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20facepalming/Default/Flat/woman_facepalming_flat_default.svg",
+      "sha256": "190a3221a6a8db12a020379a51b68f2c031f84a9c087db56ef15e7908479f4ba"
+    },
+    "emoji/fluent/1f937-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20shrugging/Default/Flat/man_shrugging_flat_default.svg",
+      "sha256": "a02b915dd770bc1fcbdbd67f443da3cf56c7d91994a6946c4bf122c9182d1586"
+    },
+    "emoji/fluent/1f937-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20shrugging/Default/Flat/woman_shrugging_flat_default.svg",
+      "sha256": "dd6661a539aca22b54ab912f2d8fd2d6555ce232e987e59eef552bd4ca8e004c"
+    },
+    "emoji/fluent/1f9d1-200d-2695-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Health%20worker/Default/Flat/health_worker_flat_default.svg",
+      "sha256": "3eac49687c4ab278eb334b2c5c37ff88e5c997697ee60e065baf2cfeeef512f3"
+    },
+    "emoji/fluent/1f468-200d-2695-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20health%20worker/Default/Flat/man_health_worker_flat_default.svg",
+      "sha256": "64ae9e6c5487553a8e2adb6b41e3de6a03782d2cd0feb4a36466e610ce91fd5f"
+    },
+    "emoji/fluent/1f469-200d-2695-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20health%20worker/Default/Flat/woman_health_worker_flat_default.svg",
+      "sha256": "d529ebe81d22a0040fc4f7925b6c76501ebda6830b90c794ead506be54d95f67"
+    },
+    "emoji/fluent/1f9d1-200d-1f393.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Student/Default/Flat/student_flat_default.svg",
+      "sha256": "990e7acd2e29ddfc6a81e40b0dbbab543b5a6ad81a234c9e7a4cdedc081d8b28"
+    },
+    "emoji/fluent/1f468-200d-1f393.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20student/Default/Flat/man_student_flat_default.svg",
+      "sha256": "64c001b39b8365d6d91af68df5a6a3e1e1a7f49ab859536b2a5fb6fa826abe76"
+    },
+    "emoji/fluent/1f469-200d-1f393.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20student/Default/Flat/woman_student_flat_default.svg",
+      "sha256": "0292c46c9ce9e888d16f808d417884e214ab59ebf758e6b89620f8d24cbdcecd"
+    },
+    "emoji/fluent/1f9d1-200d-1f3eb.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Teacher/Default/Flat/teacher_flat_default.svg",
+      "sha256": "d0cf19fac6954476cfc0e0e1dc0ce662977cc6e13e10adcea31491ce9cb322a6"
+    },
+    "emoji/fluent/1f468-200d-1f3eb.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20teacher/Default/Flat/man_teacher_flat_default.svg",
+      "sha256": "f5649ecac9bebd45ce16663530dd933f529e2235948a0a5e0edc602a6e9c8e93"
+    },
+    "emoji/fluent/1f469-200d-1f3eb.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20teacher/Default/Flat/woman_teacher_flat_default.svg",
+      "sha256": "d3f6a57462ed12d31f15842a3a1a09f82ad4a26c19f85afa0bd95cf1ebbeaecf"
+    },
+    "emoji/fluent/1f9d1-200d-2696-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Judge/Default/Flat/judge_flat_default.svg",
+      "sha256": "c1a561e907eb0230b607d2747893b091bfa59de6450310b394dd944a7087257a"
+    },
+    "emoji/fluent/1f468-200d-2696-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20judge/Default/Flat/man_judge_flat_default.svg",
+      "sha256": "49e10e193e935c7eef14974f9b83c914d8a138694306df47dd0ddb1f741cac5c"
+    },
+    "emoji/fluent/1f469-200d-2696-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20judge/Default/Flat/woman_judge_flat_default.svg",
+      "sha256": "0ba9858f96e210fcefe9c4e3625f234473e2769ca75cf1e4a4dfb1e7ba86c2dd"
+    },
+    "emoji/fluent/1f9d1-200d-1f33e.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Farmer/Default/Flat/farmer_flat_default.svg",
+      "sha256": "e9b7dd9555d156c769124e3eaa6023f291925db2afd9b0298ab4d9a4ccd1d2b2"
+    },
+    "emoji/fluent/1f468-200d-1f33e.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20farmer/Default/Flat/man_farmer_flat_default.svg",
+      "sha256": "475479241c6dac772aacc2404785b8bd5b5362e224e3da762000d20fe14ceadd"
+    },
+    "emoji/fluent/1f469-200d-1f33e.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20farmer/Default/Flat/woman_farmer_flat_default.svg",
+      "sha256": "fb2afb70390bbc6b247bb8e40889f65c10438e125e15386d1fe97faf0c9d5fb5"
+    },
+    "emoji/fluent/1f9d1-200d-1f373.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Cook/Default/Flat/cook_flat_default.svg",
+      "sha256": "3bd1ec92a5d2c8fe6ac4327d41a03b169d06194b6c102f0d66abaabecbf881aa"
+    },
+    "emoji/fluent/1f468-200d-1f373.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20cook/Default/Flat/man_cook_flat_default.svg",
+      "sha256": "25a0eae9d4e7c3da27b866cc3eaeec121db85847d0297f3f88541ca562bf4dca"
+    },
+    "emoji/fluent/1f469-200d-1f373.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20cook/Default/Flat/woman_cook_flat_default.svg",
+      "sha256": "959367bed7430bfa56b92fe8f696036c7bbba6d14a6c8f5562c92a1b15036d07"
+    },
+    "emoji/fluent/1f9d1-200d-1f527.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Mechanic/Default/Flat/mechanic_flat_default.svg",
+      "sha256": "a50715d61e69b8d3ae3de9590436c926f95a11d0c0ae857c702bd63935470ae3"
+    },
+    "emoji/fluent/1f468-200d-1f527.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20mechanic/Default/Flat/man_mechanic_flat_default.svg",
+      "sha256": "1594988266c7bc30cb2e145f5cee1ae8364aae6a3982889d3f1e59b1b10b0d00"
+    },
+    "emoji/fluent/1f469-200d-1f527.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20mechanic/Default/Flat/woman_mechanic_flat_default.svg",
+      "sha256": "5c68220e194a15818a050fd6b744c96bcd6b2aa61f225c5f03367755f8bf5aad"
+    },
+    "emoji/fluent/1f9d1-200d-1f3ed.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Factory%20worker/Default/Flat/factory_worker_flat_default.svg",
+      "sha256": "051f8e73a96723b2dd7830af5f7c9e97623a8f86b962825d1957b4341d18d277"
+    },
+    "emoji/fluent/1f468-200d-1f3ed.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20factory%20worker/Default/Flat/man_factory_worker_flat_default.svg",
+      "sha256": "975761066a0ee1ee2006cc6bdaeaa5f5c614facffc76ab5d7b6140880f9c6ddb"
+    },
+    "emoji/fluent/1f469-200d-1f3ed.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20factory%20worker/Default/Flat/woman_factory_worker_flat_default.svg",
+      "sha256": "b1d9f64fce213c45c85dbf2545d3ee0084f83e34d1a4d7ec66d916920bc84fff"
+    },
+    "emoji/fluent/1f9d1-200d-1f4bc.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Office%20worker/Default/Flat/office_worker_flat_default.svg",
+      "sha256": "13fe4e3841f1a20e7d1b8d0ce00a700f69dbaaa3496bc29ab8e82cbce6eb442b"
+    },
+    "emoji/fluent/1f468-200d-1f4bc.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20office%20worker/Default/Flat/man_office_worker_flat_default.svg",
+      "sha256": "e9c225595c0a90e240dbc3b1523ad33993b51e947d103283ad92feab2f44f475"
+    },
+    "emoji/fluent/1f469-200d-1f4bc.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20office%20worker/Default/Flat/woman_office_worker_flat_default.svg",
+      "sha256": "6a83afd2ff5e996c97b39e7bbc07cd3e4392d96538c51cd10ef0cb0a0107f990"
+    },
+    "emoji/fluent/1f9d1-200d-1f52c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Scientist/Default/Flat/scientist_flat_default.svg",
+      "sha256": "6ed4b3738601f0c11481c90392a8cc6878224e9dedc9a4dc626fccae4625e186"
+    },
+    "emoji/fluent/1f468-200d-1f52c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20scientist/Default/Flat/man_scientist_flat_default.svg",
+      "sha256": "9fa756d043e765696b330143ad7afea1c800131af7c32105c9861ccafa30daf2"
+    },
+    "emoji/fluent/1f469-200d-1f52c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20scientist/Default/Flat/woman_scientist_flat_default.svg",
+      "sha256": "373822067884ed17f0dfe543249ed87890327aba0a9b987f93205056b1010855"
+    },
+    "emoji/fluent/1f9d1-200d-1f4bb.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Technologist/Default/Flat/technologist_flat_default.svg",
+      "sha256": "32deed84ac8f649dbe81e4973b469a81ce55d1b4d1e26a3995e09175df187c2d"
+    },
+    "emoji/fluent/1f468-200d-1f4bb.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20technologist/Default/Flat/man_technologist_flat_default.svg",
+      "sha256": "8816ae96c9571841b5d64acdd0e644921e64d563b3ea28b2db837a5128d69021"
+    },
+    "emoji/fluent/1f469-200d-1f4bb.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20technologist/Default/Flat/woman_technologist_flat_default.svg",
+      "sha256": "62a8f4b5616dbf8c36f26268ebbfceb647bc1fb08abee2f3b2dfdc344843976a"
+    },
+    "emoji/fluent/1f9d1-200d-1f3a4.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Singer/Default/Flat/singer_flat_default.svg",
+      "sha256": "b6d3c42b5f7f1fe0d708d3ba53ef757b4411907c1b85dda9560900b6ed59f7ba"
+    },
+    "emoji/fluent/1f468-200d-1f3a4.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20singer/Default/Flat/man_singer_flat_default.svg",
+      "sha256": "ceabf259c50c9839fadda9f778ac2522ec440efb4adc45d5ecfd2a154aac543d"
+    },
+    "emoji/fluent/1f469-200d-1f3a4.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20singer/Default/Flat/woman_singer_flat_default.svg",
+      "sha256": "7e665257185bc122a3a4e33df7c740b8b90f00d7cd4af857d9627c710fc99842"
+    },
+    "emoji/fluent/1f9d1-200d-1f3a8.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Artist/Default/Flat/artist_flat_default.svg",
+      "sha256": "5462b1f6b4f4b43b6981be0369be28a070da9196b9dbeb71c2f125a3f0b0db62"
+    },
+    "emoji/fluent/1f468-200d-1f3a8.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20artist/Default/Flat/man_artist_flat_default.svg",
+      "sha256": "ea01039fbe2726532bb269706ac96ef52de682d4fae69305408095c113d0b147"
+    },
+    "emoji/fluent/1f469-200d-1f3a8.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20artist/Default/Flat/woman_artist_flat_default.svg",
+      "sha256": "204c3e0bc89c66d4c828ba55506be86c8f19bfdb301e94de104fd3cb0bd81114"
+    },
+    "emoji/fluent/1f9d1-200d-2708-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pilot/Default/Flat/pilot_flat_default.svg",
+      "sha256": "8ed8e0cd95f5bcded049e5e7e7ed34ba274b5614487aed78e9d0bfddea0264a8"
+    },
+    "emoji/fluent/1f468-200d-2708-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20pilot/Default/Flat/man_pilot_flat_default.svg",
+      "sha256": "5a62c0f9642c05c6cefc5c3d99742eadaede15b4addcdde361ea276eaf326b38"
+    },
+    "emoji/fluent/1f469-200d-2708-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20pilot/Default/Flat/woman_pilot_flat_default.svg",
+      "sha256": "e5758ecef7ddf5c9d780992a987fed6bf97641806a31aeff34dd711da555e668"
+    },
+    "emoji/fluent/1f9d1-200d-1f680.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Astronaut/Default/Flat/astronaut_flat_default.svg",
+      "sha256": "5579e2d124545cf55bf70ff09adc4d2e6f55c3390c90c574426c2ce794debb25"
+    },
+    "emoji/fluent/1f468-200d-1f680.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20astronaut/Default/Flat/man_astronaut_flat_default.svg",
+      "sha256": "fc0a3f6751cebc74c6f5690319dbcfdc1c42cd86898692de995fbe5fffa69878"
+    },
+    "emoji/fluent/1f469-200d-1f680.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20astronaut/Default/Flat/woman_astronaut_flat_default.svg",
+      "sha256": "8f9783a1203c90a1e0fc9e8d1cbd54be548d3cde4f010e023dceb1bb4e86ce4c"
+    },
+    "emoji/fluent/1f9d1-200d-1f692.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Firefighter/Default/Flat/firefighter_flat_default.svg",
+      "sha256": "c1ac6d1cf735ec77b5374c8184bcce92987dde618e86534dd8ccbf83f4ebbe59"
+    },
+    "emoji/fluent/1f468-200d-1f692.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20firefighter/Default/Flat/man_firefighter_flat_default.svg",
+      "sha256": "22ea1c869ffd96abd1dcc38d823b911dd7a1d386a15586186bcb5a45473baeff"
+    },
+    "emoji/fluent/1f469-200d-1f692.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20firefighter/Default/Flat/woman_firefighter_flat_default.svg",
+      "sha256": "a8377ddc39c0d26b90c51e35ee6f6121b66c1f604e530f85b5fe22ed9f8e76b6"
+    },
+    "emoji/fluent/1f46e.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Police%20officer/Default/Flat/police_officer_flat_default.svg",
+      "sha256": "1c1a6622249d8f7e90555a21411d7ca6059da64b87a15f3148b071d4b99255bb"
+    },
+    "emoji/fluent/1f46e-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20police%20officer/Default/Flat/man_police_officer_flat_default.svg",
+      "sha256": "d6a5d682f915128abb75809c40f15e73fdbf6e988f4b5e894b236954157d01ee"
+    },
+    "emoji/fluent/1f46e-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20police%20officer/Default/Flat/woman_police_officer_flat_default.svg",
+      "sha256": "ce85f95f1a9b8cc25609ec32c1dbace4422ade683a2363bc5f5e85ef592afc23"
+    },
+    "emoji/fluent/1f575-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Detective/Default/Flat/detective_flat_default.svg",
+      "sha256": "ffaac4705ed966fcc48057344a73e94d91659efe3ff2f960a711e465d04afe94"
+    },
+    "emoji/fluent/1f575-fe0f-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20detective/Default/Flat/man_detective_flat_default.svg",
+      "sha256": "01050c8bd97955bd11d1379ca9938470a85feb7d7ad86fe184090e45c2df53a0"
+    },
+    "emoji/fluent/1f575-fe0f-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20detective/Default/Flat/woman_detective_flat_default.svg",
+      "sha256": "d427282f7e9bb5c6132df16fbb80c90ba119c1d8b06d38da6b2e3472938e99f2"
+    },
+    "emoji/fluent/1f482.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Guard/Default/Flat/guard_flat_default.svg",
+      "sha256": "a04d63013332f0ad469c01b5c5f56f2ce61aeba373e1e3c299bdcfa01d1f724d"
+    },
+    "emoji/fluent/1f482-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20guard/Default/Flat/man_guard_flat_default.svg",
+      "sha256": "1bc99fc04610b772a909c2cc8eed5a68419435443c76c7249adc3d0f72a5169c"
+    },
+    "emoji/fluent/1f482-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20guard/Default/Flat/woman_guard_flat_default.svg",
+      "sha256": "9d26e38269a28afaa89e56f62d87b02d6ad3379670805019352f2a2a64304346"
+    },
+    "emoji/fluent/1f977.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Ninja/Default/Flat/ninja_flat_default.svg",
+      "sha256": "2671bb5f40ff66a98d82b8da79742e2d0a707af55ccfe375845d03a820e3444c"
+    },
+    "emoji/fluent/1f477.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Construction%20worker/Default/Flat/construction_worker_flat_default.svg",
+      "sha256": "16b6e0a29dc055fabd0046492895da41e0d9ef1432fdd6926414a0ad5ad2f4f0"
+    },
+    "emoji/fluent/1f477-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20construction%20worker/Default/Flat/man_construction_worker_flat_default.svg",
+      "sha256": "77ecd2462381c2c19d6fbc618a24e94e7ed73fa0467816c9c8e2b6fe2b564780"
+    },
+    "emoji/fluent/1f477-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20construction%20worker/Default/Flat/woman_construction_worker_flat_default.svg",
+      "sha256": "1c990d55e07e17cf03d70ddb397bac078b27e72410b7a477ac881af4e837a666"
+    },
+    "emoji/fluent/1fac5.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20with%20crown/Default/Flat/person_with_crown_flat_default.svg",
+      "sha256": "4d80ce00f6f201924c454445d65a956e507f8c4d5807b07f1e9db4b13bc82a5c"
+    },
+    "emoji/fluent/1f934.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Prince/Default/Flat/prince_flat_default.svg",
+      "sha256": "517f08347dea6485c0baf52ec1fe3658bd41fa78600f4c97eeea1db9ce1d9f6b"
+    },
+    "emoji/fluent/1f478.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Princess/Default/Flat/princess_flat_default.svg",
+      "sha256": "caf750694eb621336d981297db29942466c13122b2dc07d06a76f23b032775ea"
+    },
+    "emoji/fluent/1f473-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20wearing%20turban/Default/Flat/man_wearing_turban_flat_default.svg",
+      "sha256": "cb316b6dfed186bbca92717d12503f3f6f4aaa5d51bb4af4b31e1d1d761e4365"
+    },
+    "emoji/fluent/1f473-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20wearing%20turban/Default/Flat/woman_wearing_turban_flat_default.svg",
+      "sha256": "f411a45e27fc00e9e766e88d66be9673e6d6cc409e30fde56c8af8e19f995b34"
+    },
+    "emoji/fluent/1f9d5.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20with%20headscarf/Default/Flat/woman_with_headscarf_flat_default.svg",
+      "sha256": "7fc024bdaa76826df2f85a5d969df95f2c568b039bce2b7042eaeb5a5ea70be2"
+    },
+    "emoji/fluent/1f935.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20in%20tuxedo/Default/Flat/man_in_tuxedo_flat_default.svg",
+      "sha256": "9f2771c7f2e96fcc658cb9f3c1ade0f1535afa51ed602cb9a99c31fffc4a6413"
+    },
+    "emoji/fluent/1f935-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20in%20tuxedo/Default/Flat/man_in_tuxedo_flat_default.svg",
+      "sha256": "9f2771c7f2e96fcc658cb9f3c1ade0f1535afa51ed602cb9a99c31fffc4a6413"
+    },
+    "emoji/fluent/1f935-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20in%20tuxedo/Default/Flat/woman_in_tuxedo_flat_default.svg",
+      "sha256": "a071199ea117413db12d38939ff693ee987d232c6f60069a1800bd78744453f9"
+    },
+    "emoji/fluent/1f470-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20with%20veil/Default/Flat/man_with_veil_flat_default.svg",
+      "sha256": "395a5621c039a5a3d30cbae3fe6586147835a7cc41f84bf5989611d57c3c2fe2"
+    },
+    "emoji/fluent/1f470-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20with%20veil/Default/Flat/woman_with_veil_flat_default.svg",
+      "sha256": "a2c964bf3cafebd2a062dc0dd17856b6f0c0a723343bab036f4a47b187f27352"
+    },
+    "emoji/fluent/1f930.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pregnant%20woman/Default/Flat/pregnant_woman_flat_default.svg",
+      "sha256": "958ac63360c55002156ebc148401e2a1a9f7dfee07c031cf933f8db609ee6bc9"
+    },
+    "emoji/fluent/1fac3.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pregnant%20man/Default/Flat/pregnant_man_flat_default.svg",
+      "sha256": "8c89b7c6a47df9d6db0ddc7d6d0ccc5c714dd36bb366a0e3f701cd5a9ded0f67"
+    },
+    "emoji/fluent/1fac4.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pregnant%20person/Default/Flat/pregnant_person_flat_default.svg",
+      "sha256": "efa830f31c5238bdda60a9b4faa332234779c921e1b85de75793b6323952dbe5"
+    },
+    "emoji/fluent/1f931.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Breast%20feeding/Default/Flat/breast_feeding_flat_default.svg",
+      "sha256": "746ed673324399a0c01986b181a0b8a1d6d62241283711192356279985aec091"
+    },
+    "emoji/fluent/1f469-200d-1f37c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20feeding%20baby/Default/Flat/woman_feeding_baby_flat_default.svg",
+      "sha256": "88d9b05969ca02555ccd5f7debaae58dbd0697f048839130eeddf5ba9456fb56"
+    },
+    "emoji/fluent/1f468-200d-1f37c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20feeding%20baby/Default/Flat/man_feeding_baby_flat_default.svg",
+      "sha256": "1ab97456527cdc6c26f4ff105517543941a3a41e2c8d11536528c9150fad5a70"
+    },
+    "emoji/fluent/1f9d1-200d-1f37c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20feeding%20baby/Default/Flat/person_feeding_baby_flat_default.svg",
+      "sha256": "4aa9d54e7552da5bfdeee7ac208c40d0449ce691ed62107c5c3e6dfd73803baa"
+    },
+    "emoji/fluent/1f47c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Baby%20angel/Default/Flat/baby_angel_flat_default.svg",
+      "sha256": "d831b33947f5d144f183699e8b98c11b25fa5fba7304108fe98cb8bdf7faea60"
+    },
+    "emoji/fluent/1f385.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Santa%20claus/Default/Flat/santa_claus_flat_default.svg",
+      "sha256": "eb84756322a08680d42286524768915bca1084d93bc35a7cfa7ba51ac75a6285"
+    },
+    "emoji/fluent/1f936.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Mrs%20claus/Default/Flat/mrs_claus_flat_default.svg",
+      "sha256": "249bb121628416efa0512f2089a8e9683c8bd4263b652e872527e1637ce87c89"
+    },
+    "emoji/fluent/1f9d1-200d-1f384.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Mx%20claus/Default/Flat/mx_claus_flat_default.svg",
+      "sha256": "0d0501f2e31fb9fe02c658532f7bdb9b8a3546e35b54c5c3cfd1e325736f229d"
+    },
+    "emoji/fluent/1f9b8-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20superhero/Default/Flat/man_superhero_flat_default.svg",
+      "sha256": "0a5323c72f99051f4e9f393ddaa5e81f81d73c0cb0c75e2acf4bdefd61b2df10"
+    },
+    "emoji/fluent/1f9b8-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20superhero/Default/Flat/woman_superhero_flat_default.svg",
+      "sha256": "8aa7ed7cfb323f11ab76e321a3e54a0159608abc8cfb2cb2fddfb8adf4dc3736"
+    },
+    "emoji/fluent/1f9b9-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20supervillain/Default/Flat/man_supervillain_flat_default.svg",
+      "sha256": "bfe8dababea5e58f9d419987ed643bfc31960a45ec3dee232b772968eae7744d"
+    },
+    "emoji/fluent/1f9b9-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20supervillain/Default/Flat/woman_supervillain_flat_default.svg",
+      "sha256": "32a91bd2bd2a03dd463563d6ab2edbf9c6061b874b80b9f44ded577534f51839"
+    },
+    "emoji/fluent/1f9d9-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20mage/Default/Flat/man_mage_flat_default.svg",
+      "sha256": "734da79efa8411bf3cc99212dc939807d230fea42348d027c76cb6a87506689d"
+    },
+    "emoji/fluent/1f9d9-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20mage/Default/Flat/woman_mage_flat_default.svg",
+      "sha256": "111e4fea9efd981dcb2b1f75043cac6a1a839925a9faa95b6cf04bb1c3620b10"
+    },
+    "emoji/fluent/1f9da-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20fairy/Default/Flat/man_fairy_flat_default.svg",
+      "sha256": "b8013c63535cd640eaa5f204f3c085d386699105ce17f68f737b78ac7c628c7d"
+    },
+    "emoji/fluent/1f9da-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20fairy/Default/Flat/woman_fairy_flat_default.svg",
+      "sha256": "07b0d868eb9221ed787afc00d777eaef5038d6c45136f4e7562826afd5cb965a"
+    },
+    "emoji/fluent/1f9db-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20vampire/Default/Flat/man_vampire_flat_default.svg",
+      "sha256": "569bc2c07229f5eac47b1cf3e8f9c42b65cad0a616e2c3b84c4725688685b9fa"
+    },
+    "emoji/fluent/1f9db-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20vampire/Default/Flat/woman_vampire_flat_default.svg",
+      "sha256": "fca76a0842bc7f2eca96d8a465dcd29ce96f816a17a3d2eda4f0910373e0518a"
+    },
+    "emoji/fluent/1f9dd-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20elf/Default/Flat/man_elf_flat_default.svg",
+      "sha256": "3bbe2bbb9294a120dda70a5cd47dc2dc4c01f795c9cb6d82a3c3baefdf8ee321"
+    },
+    "emoji/fluent/1f9dd-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20elf/Default/Flat/woman_elf_flat_default.svg",
+      "sha256": "1877ea392797cb404b7c7c92228a1b9d2a136e9a99374ac68fde72cd2db42568"
+    },
+    "emoji/fluent/1f9de-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20genie/Flat/man_genie_flat.svg",
+      "sha256": "bd5fd558a147b7fa9a71783691319e2c9b8121d987f634dbed88685b54b1d60a"
+    },
+    "emoji/fluent/1f9de-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20genie/Flat/woman_genie_flat.svg",
+      "sha256": "0f669b1c72730018478573c39b3f7e1755ddf06e1aa171d3499f1272abff9b1c"
+    },
+    "emoji/fluent/1f9df-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20zombie/Flat/man_zombie_flat.svg",
+      "sha256": "d54c27a39a08d712b54751afd46dd113ba36f3d79563d0f628e52ccdcc9885ee"
+    },
+    "emoji/fluent/1f9df-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20zombie/Flat/woman_zombie_flat.svg",
+      "sha256": "241cdbc8ba37b2e1e17efddb2495163893d380a1e6d14cb73401a1c155e8a0d6"
+    },
+    "emoji/fluent/1f9cc.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Troll/Flat/troll_flat.svg",
+      "sha256": "700adb6d463fb0cdd40888a2f988b793b86ca2775bdb0adc93a8d64f7ee78a3d"
+    },
+    "emoji/fluent/1f486-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20getting%20massage/Default/Flat/man_getting_massage_flat_default.svg",
+      "sha256": "85d29fdfc3d3955ae1b602792f2faf297b930d0d80dfae7bcd9790d36d1529ed"
+    },
+    "emoji/fluent/1f486-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20getting%20massage/Default/Flat/woman_getting_massage_flat_default.svg",
+      "sha256": "aa36a0172b775564867a4a923a3e900bb80d09a4f370f083bce182ee1c4f0bb8"
+    },
+    "emoji/fluent/1f487-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20getting%20haircut/Default/Flat/man_getting_haircut_flat_default.svg",
+      "sha256": "72af853d1d1d44f70e755fe5cffd202521b146ac4ffd351e49adb8ebbab321ce"
+    },
+    "emoji/fluent/1f487-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20getting%20haircut/Default/Flat/woman_getting_haircut_flat_default.svg",
+      "sha256": "494b4620f7e615ed602bea6dcb186f546f0466b1b9229b300d1f84a85deb93bc"
+    },
+    "emoji/fluent/1f6b6-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20walking/Default/Flat/man_walking_flat_default.svg",
+      "sha256": "f526d640c5f24c636b1cda2e311f37a2352aca26afc509f755702a363c35878a"
+    },
+    "emoji/fluent/1f6b6-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20walking/Default/Flat/woman_walking_flat_default.svg",
+      "sha256": "f7e4c0bad2ee60d7555b9d58cda2dec8d280d6285fc35897802bad508cf53dd8"
+    },
+    "emoji/fluent/1f9cd-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20standing/Default/Flat/man_standing_flat_default.svg",
+      "sha256": "8c6fbbd9f9fd4f54503e8007941545fedf261f1e96a665007d251bf1aa205d18"
+    },
+    "emoji/fluent/1f9cd-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20standing/Default/Flat/woman_standing_flat_default.svg",
+      "sha256": "b95ed0a206eeec605a74d66e9ff64d4e22824c78eb716fcfa3cce225014b9f1b"
+    },
+    "emoji/fluent/1f9ce-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20kneeling/Default/Flat/man_kneeling_flat_default.svg",
+      "sha256": "80412f4cfba225991d84f1fb99d66ae1f521f99cebc023ca0a562246a470d8ac"
+    },
+    "emoji/fluent/1f9ce-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20kneeling/Default/Flat/woman_kneeling_flat_default.svg",
+      "sha256": "418708935e978379d9c8b8cd1e1ea3bb424a954c98753580ba10b504b3b9234a"
+    },
+    "emoji/fluent/1f9d1-200d-1f9af.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20with%20white%20cane/Default/Flat/person_with_white_cane_flat_default.svg",
+      "sha256": "a5568cffc856a5049902feb31efb7fa46a841702c34c2331008954724716d804"
+    },
+    "emoji/fluent/1f468-200d-1f9af.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20with%20white%20cane/Default/Flat/man_with_white_cane_flat_default.svg",
+      "sha256": "adbb6c94936e444d3e8b5e34631ace5ba2801492a91efc69f54ce644f85ee5c7"
+    },
+    "emoji/fluent/1f469-200d-1f9af.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20with%20white%20cane/Default/Flat/woman_with_white_cane_flat_default.svg",
+      "sha256": "ac634faf25f909e6fcb0ed2d35dab7cce6834bd59efb91c26cb3eeaa2227cf7d"
+    },
+    "emoji/fluent/1f9d1-200d-1f9bc.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20in%20motorized%20wheelchair/Default/Flat/person_in_motorized_wheelchair_flat_default.svg",
+      "sha256": "c23918f4c5b46640414e9ce719aac630beceb4f88de762bcfbebc9a731759905"
+    },
+    "emoji/fluent/1f468-200d-1f9bc.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20in%20motorized%20wheelchair/Default/Flat/man_in_motorized_wheelchair_flat_default.svg",
+      "sha256": "3e1b9968c7b561a14dc0174d679b03021daf49cb7842947f573f2be2fc2ceb3e"
+    },
+    "emoji/fluent/1f469-200d-1f9bc.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20in%20motorized%20wheelchair/Default/Flat/woman_in_motorized_wheelchair_flat_default.svg",
+      "sha256": "5a4f8e00a61bafb87ad8ae7910fe7226622030be43333475487ba4e9f011e023"
+    },
+    "emoji/fluent/1f9d1-200d-1f9bd.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20in%20manual%20wheelchair/Default/Flat/person_in_manual_wheelchair_flat_default.svg",
+      "sha256": "7ecd3e868a3897ebc21dbc60238051e84c55fb631a79978e9cbe35028b306344"
+    },
+    "emoji/fluent/1f468-200d-1f9bd.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20in%20manual%20wheelchair/Default/Flat/man_in_manual_wheelchair_flat_default.svg",
+      "sha256": "db034ae50a8bff3eefe6508023397943d7dfd40a6f5be181b2708ffb748df6a7"
+    },
+    "emoji/fluent/1f469-200d-1f9bd.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20in%20manual%20wheelchair/Default/Flat/woman_in_manual_wheelchair_flat_default.svg",
+      "sha256": "cf34c5e0a62e23665c048cc56d9dd72674ce1984bc5cd20d2a95162eda94d93c"
+    },
+    "emoji/fluent/1f3c3-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20running/Default/Flat/man_running_flat_default.svg",
+      "sha256": "dae7ca58ec019e21ef786cab81511db215dfaa9c4cefdda6b0026e78e607afeb"
+    },
+    "emoji/fluent/1f3c3-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20running/Default/Flat/woman_running_flat_default.svg",
+      "sha256": "3c63b31afddc974ed1df7d7b89623273e4b9d6dec6a0f896e5df12374490f7ad"
+    },
+    "emoji/fluent/1f57a.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20dancing/Default/Flat/man_dancing_flat_default.svg",
+      "sha256": "5c0d2df56f395a02efe27c5271dbe9f77e849bc5ff6527dc1a9ccf5831731a7e"
+    },
+    "emoji/fluent/1f574-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20in%20suit%20levitating/Default/Flat/person_in_suit_levitating_flat_default.svg",
+      "sha256": "2467e702a9513fcdd3adbd97419499b57699b20e6a52b1b5462ec9f49546bb70"
+    },
+    "emoji/fluent/1f46f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20with%20bunny%20ears/Flat/woman_with_bunny_ears_flat.svg",
+      "sha256": "51e7aad2d1f9eabcdee092a1272a2d5806f3c994a5dc69e3f288ba55495530ee"
+    },
+    "emoji/fluent/1f9d6.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20in%20steamy%20room/Default/Flat/person_in_steamy_room_flat_default.svg",
+      "sha256": "9c794caee5e7d5bbd1573ece848dd343f3351ba6d5f2ae7f666862ed0ed60622"
+    },
+    "emoji/fluent/1f9d6-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20in%20steamy%20room/Default/Flat/man_in_steamy_room_flat_default.svg",
+      "sha256": "cb8e93de648c9ca7cf26a57edbc8a9b19291e399859943f96c5cf35251be643c"
+    },
+    "emoji/fluent/1f9d6-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20in%20steamy%20room/Default/Flat/woman_in_steamy_room_flat_default.svg",
+      "sha256": "4f3091e1fb709cf28ce2aae852c29896424147ddc5290a07b7ea8cdec4973ab7"
+    },
+    "emoji/fluent/1f9d7.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20climbing/Default/Flat/person_climbing_flat_default.svg",
+      "sha256": "8a753cbe89601d62c522a6b986b73f8ba0fa8404d16b336a4c1650ce8ce92b60"
+    },
+    "emoji/fluent/1f9d7-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20climbing/Default/Flat/man_climbing_flat_default.svg",
+      "sha256": "268d9afd27e6b26b35075708e8b0f956bd991f50ff5a33102306969d3e3e05e9"
+    },
+    "emoji/fluent/1f9d7-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20climbing/Default/Flat/woman_climbing_flat_default.svg",
+      "sha256": "26b4b1255e06e687b92b17e579ca3bc57443fda74b14c582be80345e2dfb60ef"
+    },
+    "emoji/fluent/1f3c7.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Horse%20racing/Default/Flat/horse_racing_flat_default.svg",
+      "sha256": "727d911d4cb19e9e351e0636a2d367295a0727f890244b919952a258cadbf790"
+    },
+    "emoji/fluent/26f7-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Skier/Flat/skier_flat.svg",
+      "sha256": "1f7c70fa51a90ca5ea1d36e6a8bbfbc1e09b13183fb0dc6fac8ce40889b558d5"
+    },
+    "emoji/fluent/1f3c2.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Snowboarder/Default/Flat/snowboarder_flat_default.svg",
+      "sha256": "11efa1907c9228b0957126c58162e18c29807c10aa2787985727f642f531ffe0"
+    },
+    "emoji/fluent/1f3cc-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20golfing/Default/Flat/person_golfing_flat_default.svg",
+      "sha256": "a6b72e9a4441e38915ec021b306fd76f85a407e27d516e6cb9ad77d8ce2431a2"
+    },
+    "emoji/fluent/1f3cc-fe0f-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20golfing/Default/Flat/man_golfing_flat_default.svg",
+      "sha256": "2c735b2f7a45f7abac432b758a9d841dd3f3a9626dff0bff5805797b46a4b96e"
+    },
+    "emoji/fluent/1f3cc-fe0f-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20golfing/Default/Flat/woman_golfing_flat_default.svg",
+      "sha256": "63fbffe7cf19157eeeb6abcb2b2ec586d5d6f92c97c002a12fec351f54ffe477"
+    },
+    "emoji/fluent/1f3c4-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20surfing/Default/Flat/man_surfing_flat_default.svg",
+      "sha256": "12741b0bd5d14b122c74b72830984e16591f92ade93b6293355bc8a0b37bc8e4"
+    },
+    "emoji/fluent/1f3c4-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20surfing/Default/Flat/woman_surfing_flat_default.svg",
+      "sha256": "092f461516e8f9590f56504f2e7f020823bf744988bcbf8f07e94a5a6cbbb5d0"
+    },
+    "emoji/fluent/1f6a3-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20rowing%20boat/Default/Flat/man_rowing_boat_flat_default.svg",
+      "sha256": "8a67dde143e0fb026756e1fbecfebcea64751619f315564917ccceaf4ba35c2d"
+    },
+    "emoji/fluent/1f6a3-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20rowing%20boat/Default/Flat/woman_rowing_boat_flat_default.svg",
+      "sha256": "fda205298b6835131b3463e260596953b317e3f0959db73282ac217997aae6a0"
+    },
+    "emoji/fluent/1f3ca-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20swimming/Default/Flat/man_swimming_flat_default.svg",
+      "sha256": "60f7e54f0128ccf41c08c2ea633e24d70fd0d54da78f0dbaed06416a6d49f31f"
+    },
+    "emoji/fluent/1f3ca-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20swimming/Default/Flat/woman_swimming_flat_default.svg",
+      "sha256": "7d42f01ce61b371314bd91490e1f4ee954ddc21b265ac4b6db9712a6b17ad978"
+    },
+    "emoji/fluent/26f9-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20bouncing%20ball/Default/Flat/person_bouncing_ball_flat_default.svg",
+      "sha256": "c8502d7b4470496692b009b5e940271407f4bdbc00181b38b76a4b5c8ca0fa01"
+    },
+    "emoji/fluent/26f9-fe0f-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20bouncing%20ball/Default/Flat/man_bouncing_ball_flat_default.svg",
+      "sha256": "531ed3157360e3ab4e5373de31f236ba4044b8b0ef47ab1f2ccdaf1acfde2392"
+    },
+    "emoji/fluent/26f9-fe0f-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20bouncing%20ball/Default/Flat/woman_bouncing_ball_flat_default.svg",
+      "sha256": "3b847c22378c657db890686ac4f6fc64d310ce0b94f851f6f43d76e4b306a927"
+    },
+    "emoji/fluent/1f3cb-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20lifting%20weights/Default/Flat/person_lifting_weights_flat_default.svg",
+      "sha256": "1d57b16536a42308f657e684701f08f294127c40e836bbe54558df3b115ab80f"
+    },
+    "emoji/fluent/1f3cb-fe0f-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20lifting%20weights/Default/Flat/man_lifting_weights_flat_default.svg",
+      "sha256": "9a14a7714e0a068a9ff7d39ea58cb8cc2aa79bb673a6d4c2d17a1b11350c416b"
+    },
+    "emoji/fluent/1f3cb-fe0f-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20lifting%20weights/Default/Flat/woman_lifting_weights_flat_default.svg",
+      "sha256": "e64ac594684269ffc2955c8a8524506ff97ad685e43de31a209d2d03cf906b44"
+    },
+    "emoji/fluent/1f6b4-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20biking/Default/Flat/man_biking_flat_default.svg",
+      "sha256": "821b7953d131f13afa60e05742133db8b2688f48a63d909b7b8c4ef3b43fbdfd"
+    },
+    "emoji/fluent/1f6b4-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20biking/Default/Flat/woman_biking_flat_default.svg",
+      "sha256": "619979508c74a503692dbf3ca4c2f6e168718e608b258b73cf66ef2868e450d1"
+    },
+    "emoji/fluent/1f6b5-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20mountain%20biking/Default/Flat/man_mountain_biking_flat_default.svg",
+      "sha256": "b9a77389b01d6af05b1e91aab9011d151d18d1bc90028d5616a34947437b633a"
+    },
+    "emoji/fluent/1f6b5-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20mountain%20biking/Default/Flat/woman_mountain_biking_flat_default.svg",
+      "sha256": "c1f7ec293e802420d302cffba65cb70abd4a0acf1098fda89d32d0e86e07749b"
+    },
+    "emoji/fluent/1f938.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20cartwheeling/Default/Flat/person_cartwheeling_flat_default.svg",
+      "sha256": "0937dc37bb86b5f2405b9935f8b50ce64ba3d3b7e8018e9af307c994d6c2a2ad"
+    },
+    "emoji/fluent/1f938-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20cartwheeling/Default/Flat/man_cartwheeling_flat_default.svg",
+      "sha256": "fc171f6f307b43d708275737eca2eab5c0551242c5c1db5ac761342fe5f61cf0"
+    },
+    "emoji/fluent/1f938-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20cartwheeling/Default/Flat/woman_cartwheeling_flat_default.svg",
+      "sha256": "e22fc3d0ba51c89f33363ee8ea407c6785dd04033baa08fad8420453bd27da05"
+    },
+    "emoji/fluent/1f93d-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20playing%20water%20polo/Default/Flat/man_playing_water_polo_flat_default.svg",
+      "sha256": "fb5fa34576f9e8cd21e0da6a7b3aaa546690616f0d9cc0565e7289bf8c007025"
+    },
+    "emoji/fluent/1f93d-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20playing%20water%20polo/Default/Flat/woman_playing_water_polo_flat_default.svg",
+      "sha256": "1df53c454972e227d6c9543c711321aa917d3f6d3d3393d55ca6f2407e931406"
+    },
+    "emoji/fluent/1f93e-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20playing%20handball/Default/Flat/man_playing_handball_flat_default.svg",
+      "sha256": "ee036c671328aad4a7aca1082e02ef31ebb446cadba32b375ae30d9237e31850"
+    },
+    "emoji/fluent/1f93e-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20playing%20handball/Default/Flat/woman_playing_handball_flat_default.svg",
+      "sha256": "22b7e20fefc417648f248dcd96fa2a7425b3c4c6f11b37bff73badbb92e28bd4"
+    },
+    "emoji/fluent/1f939-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20juggling/Default/Flat/man_juggling_flat_default.svg",
+      "sha256": "f256564e20de4a1f74c200929c3f8a3ebda7aeee2df75395a8afa96c3636e52a"
+    },
+    "emoji/fluent/1f939-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20juggling/Default/Flat/woman_juggling_flat_default.svg",
+      "sha256": "785b0e29983720d921985f996fd76e91e5c53b4bcc37bebfb94a868f12f93cfb"
+    },
+    "emoji/fluent/1f9d8.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20in%20lotus%20position/Default/Flat/person_in_lotus_position_flat_default.svg",
+      "sha256": "afbc1a5d0a26db837f092ba43a825d0596d175113eb84c7732c675e2c43e0100"
+    },
+    "emoji/fluent/1f9d8-200d-2642-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Man%20in%20lotus%20position/Default/Flat/man_in_lotus_position_flat_default.svg",
+      "sha256": "0fc45d427d46b377059c3f1ab53d76e4ee08f48c121cb3e7619538e2e6274d78"
+    },
+    "emoji/fluent/1f9d8-200d-2640-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Woman%20in%20lotus%20position/Default/Flat/woman_in_lotus_position_flat_default.svg",
+      "sha256": "0ea4f65d12029dde4399af2da96c08939eb16ae4b82d1b7a7b140eab4299f38e"
+    },
+    "emoji/fluent/1f6cc.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Person%20in%20bed/Default/Flat/person_in_bed_flat_default.svg",
+      "sha256": "09b3bb139bde19f8baaf846b38d642e7f52baa5617eca082e7a336d36fcc1b16"
+    },
+    "emoji/fluent/1f5e3-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Speaking%20head/Flat/speaking_head_flat.svg",
+      "sha256": "fde889c756f9e69e1f8b1d9e4e86c3ad57054abfc57f39bdeaeab7a068904b81"
+    },
+    "emoji/fluent/1f464.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Bust%20in%20silhouette/Flat/bust_in_silhouette_flat.svg",
+      "sha256": "bb9f37d36851dddfe9c9460d6cec05afcb968656f9aa138a3454e25e876279d4"
+    },
+    "emoji/fluent/1f465.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Busts%20in%20silhouette/Flat/busts_in_silhouette_flat.svg",
+      "sha256": "7c54af879a2699ca05c26115d23246c7a7350f984b1f57ca6b162759be703047"
+    },
+    "emoji/fluent/1fac2.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/People%20hugging/Flat/people_hugging_flat.svg",
+      "sha256": "dac63b4e307b293b90ece44d1ae274a758163ea2fecfe90754ada90c6b5c0f9d"
+    },
+    "emoji/fluent/1f463.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Footprints/Flat/footprints_flat.svg",
+      "sha256": "741bb568b6a358c77942d0c5a227305322a5dba5fd9008605d182af7e15f3760"
+    },
+    "emoji/fluent/1f916.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Robot/Flat/robot_flat.svg",
+      "sha256": "5bf295c5a8c7c4197c8deb639c13b93359ad009585c1ff6b3fd0fbdcf6f8da20"
+    },
+    "emoji/fluent/1f63a.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Grinning%20cat/Flat/grinning_cat_flat.svg",
+      "sha256": "eb917d09d37ef833f7fbb51eeb583f27ddfd28a7248166050e994defe2cc2ac3"
+    },
+    "emoji/fluent/1f638.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Grinning%20cat%20with%20smiling%20eyes/Flat/grinning_cat_with_smiling_eyes_flat.svg",
+      "sha256": "3e4ed5a64b5023fc6751499f9dbe9c2636e224bcb00605348db997c431ef09f9"
+    },
+    "emoji/fluent/1f639.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Cat%20with%20tears%20of%20joy/Flat/cat_with_tears_of_joy_flat.svg",
+      "sha256": "b115dca2766f5c62f227975d1b77ff30ff41b6ded97529956663df07a9e18765"
+    },
+    "emoji/fluent/1f63b.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Smiling%20cat%20with%20heart-eyes/Flat/smiling_cat_with_heart-eyes_flat.svg",
+      "sha256": "6bd1fb92c432398df47632f98d3b0e7926201557e368b4af804d2c2921c7ddcf"
+    },
+    "emoji/fluent/1f63c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Cat%20with%20wry%20smile/Flat/cat_with_wry_smile_flat.svg",
+      "sha256": "c0c01c08c43131a46bd0ab538ebecf701f9ae2f41f9b801f55eaee5d5f9a4868"
+    },
+    "emoji/fluent/1f63d.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Kissing%20cat/Flat/kissing_cat_flat.svg",
+      "sha256": "67f9b84ce09d2389017339238d28f7da1083902975aa67836481b07c03329cd6"
+    },
+    "emoji/fluent/1f640.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Weary%20cat/Flat/weary_cat_flat.svg",
+      "sha256": "541e1ea97f5a28c98ec7ff6dc6cbef8232826e35e5675c88d5af6b7e79597458"
+    },
+    "emoji/fluent/1f63f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Crying%20cat/Flat/crying_cat_flat.svg",
+      "sha256": "484e30d346e750ea77c03af98898ba6b35a63df14d9cba6ca8dcaa4f5e647aa4"
+    },
+    "emoji/fluent/1f63e.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pouting%20cat/Flat/pouting_cat_flat.svg",
+      "sha256": "11629e8a1047118f5fdc44fc55b469c3c14652b7fca6cf5da4d984b9f49f1066"
+    },
+    "emoji/fluent/1f648.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/See-no-evil%20monkey/Flat/see-no-evil_monkey_flat.svg",
+      "sha256": "87f65ab0951b1a807b7c51fc88b6381988e11e61a6ede3dcecf4ded885f39aa9"
+    },
+    "emoji/fluent/1f649.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Hear-no-evil%20monkey/Flat/hear-no-evil_monkey_flat.svg",
+      "sha256": "12b2046ebfd0edd674dd6c94b604586b704e33edde226509c054414ad870d34b"
+    },
+    "emoji/fluent/1f64a.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Speak-no-evil%20monkey/Flat/speak-no-evil_monkey_flat.svg",
+      "sha256": "6da77fa401a2ba001e67c8bc1608ebaa65c8dc5c5bade3e2e4734fec1083b31b"
+    },
+    "emoji/fluent/1f48c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Love%20letter/Flat/love_letter_flat.svg",
+      "sha256": "3d4eee837d7a4fb614bd47dabed294b07a2e75d03ac90b9e97d51e4b20ece5cd"
+    },
+    "emoji/fluent/1f498.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Heart%20with%20arrow/Flat/heart_with_arrow_flat.svg",
+      "sha256": "59aabbffe9d6966547bf39af21a15dc57716acda2b57169359b186a571f69d2b"
+    },
+    "emoji/fluent/1f49d.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Heart%20with%20ribbon/Flat/heart_with_ribbon_flat.svg",
+      "sha256": "6017cd908b0b5778ef60a8cfde60177d168f4d100bbb01f5fa7daccb99055327"
+    },
+    "emoji/fluent/1f496.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Sparkling%20heart/Flat/sparkling_heart_flat.svg",
+      "sha256": "77c7441e227d01ac4a80dd36de26c9ae96fc3c43680761a36d1daedb0a0148da"
+    },
+    "emoji/fluent/1f497.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Growing%20heart/Flat/growing_heart_flat.svg",
+      "sha256": "bf9937feb6d359afcdba22708e90b26f6d1c8ebc155e3836f9495deb54d2646d"
+    },
+    "emoji/fluent/1f493.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Beating%20heart/Flat/beating_heart_flat.svg",
+      "sha256": "f057cdb2c7caa1dafb5f2a2cd609d3af8fd714b3f4ff9e6d40eb69b194d74d4f"
+    },
+    "emoji/fluent/1f49e.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Revolving%20hearts/Flat/revolving_hearts_flat.svg",
+      "sha256": "52e988bce06e48a2e7393a1d13f8dc208df0144d87bea0204c72bed7dd915ed7"
+    },
+    "emoji/fluent/1f495.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Two%20hearts/Flat/two_hearts_flat.svg",
+      "sha256": "e71f8be26d1b26516eb0e3a15f7699a61d597c4630634f2d9651a731b5d708e8"
+    },
+    "emoji/fluent/1f49f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Heart%20decoration/Flat/heart_decoration_flat.svg",
+      "sha256": "f54711bd52dff9729343ab19de78da8dd337de4184dcc079b8e6fe47835ec545"
+    },
+    "emoji/fluent/2763-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Heart%20exclamation/Flat/heart_exclamation_flat.svg",
+      "sha256": "cf03d784aac09316ffe0cbeb137cd9c3bae165bb6dd07de0d12c6de0b09c139d"
+    },
+    "emoji/fluent/1f494.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Broken%20heart/Flat/broken_heart_flat.svg",
+      "sha256": "9d050bd4c049a556ad836882903f8c544b20792b53b1bd85e042b37f71370f48"
+    },
+    "emoji/fluent/2764-fe0f-200d-1f525.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Heart%20on%20fire/Flat/heart_on_fire_flat.svg",
+      "sha256": "bc29f9851904b3f216e7e237147bc116b811e6df7005d51e6d472686c3d0c2d3"
+    },
+    "emoji/fluent/2764-fe0f-200d-1fa79.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Mending%20heart/Flat/mending_heart_flat.svg",
+      "sha256": "e5c90af20f7a12ec927824f75d31c8148734b8d1ad7a0a8c2a7bd9955aa5f25d"
+    },
+    "emoji/fluent/2764-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Red%20heart/Flat/red_heart_flat.svg",
+      "sha256": "61846b9c946736481d65dbf244fe53792d06d50405c2d5f3e40a0a06cbfe5317"
+    },
+    "emoji/fluent/1fa77.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pink%20heart/Flat/pink_heart_flat.svg",
+      "sha256": "b942a1c203fb0679ea4c6b5bee48e8c274048b7e147a1e5cd7e80c01e1d34e12"
+    },
+    "emoji/fluent/1f9e1.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Orange%20heart/Flat/orange_heart_flat.svg",
+      "sha256": "4a684f74b314aa3a02bd7c8aae0a426eba49a62459bc6e46112eb155f42ad7e0"
+    },
+    "emoji/fluent/1f49b.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Yellow%20heart/Flat/yellow_heart_flat.svg",
+      "sha256": "e13a5c06c250c122748153bf8e6a5e77a2c707cbce343ed75c75c30d373e0721"
+    },
+    "emoji/fluent/1f49a.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Green%20heart/Flat/green_heart_flat.svg",
+      "sha256": "9f70493689f82fef72e10c53b17ca6f3f5c4dcf5fbdf09b5e0efa81b0d2e026c"
+    },
+    "emoji/fluent/1f499.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Blue%20heart/Flat/blue_heart_flat.svg",
+      "sha256": "f5649d659e84a0ad0994a85e404d923707d03ce5c227507e2425f59de997cc82"
+    },
+    "emoji/fluent/1fa75.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Light%20blue%20heart/Flat/light_blue_heart_flat.svg",
+      "sha256": "cdd99422715c20e2bd417c8548d2fac4e4df954048bd176ee0fe2feddbe7507d"
+    },
+    "emoji/fluent/1f49c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Purple%20heart/Flat/purple_heart_flat.svg",
+      "sha256": "6b0a8894eb5dd391cba63711ea2408c01b3e3ffc443aad85375bcdc21414cba7"
+    },
+    "emoji/fluent/1f90e.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Brown%20heart/Flat/brown_heart_flat.svg",
+      "sha256": "33b70e676724dccfa52dea2ddb8d71e87e05a6f7a5664360a592a673c892d77e"
+    },
+    "emoji/fluent/1f5a4.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Black%20heart/Flat/black_heart_flat.svg",
+      "sha256": "559aa3d2ae3f46b1900e8b5effc98e84469ee2cfcd809600ba4a72253bef0085"
+    },
+    "emoji/fluent/1fa76.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Grey%20heart/Flat/grey_heart_flat.svg",
+      "sha256": "66ffd0b1fe5b8d8ad25afe9a862da9c8f093ca491be15be2e21aa537bf07582e"
+    },
+    "emoji/fluent/1f90d.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/White%20heart/Flat/white_heart_flat.svg",
+      "sha256": "a4284c9636123e364577e23b9114398f7ec29cf7278405bedead16f89c892e31"
+    },
+    "emoji/fluent/1f48b.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Kiss%20mark/Flat/kiss_mark_flat.svg",
+      "sha256": "23a9d7730d5eeb0819ca6bb4ddcd299f1aae269e360c44854c2119ff7f1b25ba"
+    },
+    "emoji/fluent/1f4af.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Hundred%20points/Flat/hundred_points_flat.svg",
+      "sha256": "d9b6aabfb4963be5654af52575c0536056f2dff21a4b867b5d20173b2ee9c4f4"
+    },
+    "emoji/fluent/1f4a2.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Anger%20symbol/Flat/anger_symbol_flat.svg",
+      "sha256": "703bff9557b02cb4817b16291c119c6e676c7146890666f93c757ec110ae739e"
+    },
+    "emoji/fluent/1f4a5.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Collision/Flat/collision_flat.svg",
+      "sha256": "62020b0173a8d00014f821799a47ce7235e0f0fb4dea33d6ffc8ebbe04162700"
+    },
+    "emoji/fluent/1f4ab.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Dizzy/Flat/dizzy_flat.svg",
+      "sha256": "41b314704c12c67e5f2a9750dee4cfb30a5850bbf2b02cde9fb2da3cc7979465"
+    },
+    "emoji/fluent/1f4a6.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Sweat%20droplets/Flat/sweat_droplets_flat.svg",
+      "sha256": "8e2e8fc6131e542cb8a20f765ff392ec711b61cee8294be50174c4858d833265"
+    },
+    "emoji/fluent/1f573-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Hole/Flat/hole_flat.svg",
+      "sha256": "7dd44d4e1994b5b6f2fbe5b84c4041a942774b2e5ef0fa5c60bd0981191ad47a"
+    },
+    "emoji/fluent/1f4ac.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Speech%20balloon/Flat/speech_balloon_flat.svg",
+      "sha256": "2b40d9136add717dad2389ce77af8eb9ca976963a8190b0097b379497628aac7"
+    },
+    "emoji/fluent/1f441-fe0f-200d-1f5e8-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Eye%20in%20speech%20bubble/Flat/eye_in_speech_bubble_flat.svg",
+      "sha256": "53fce936d602b496755e09d0d748dd775930357a90444194435e1e099217d207"
+    },
+    "emoji/fluent/1f5e8-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Left%20speech%20bubble/Flat/left_speech_bubble_flat.svg",
+      "sha256": "6fe333a2c007ce05b9b82e41965b7609bc25128881dd144eeb1933f962a5dfc8"
+    },
+    "emoji/fluent/1f5ef-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Right%20anger%20bubble/Flat/right_anger_bubble_flat.svg",
+      "sha256": "62aae2d36fe9c1accd9321f09d963869ec0078a5d16b83c13dbeadf3b85bff5a"
+    },
+    "emoji/fluent/1f4ad.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Thought%20balloon/Flat/thought_balloon_flat.svg",
+      "sha256": "e49e8e40e1f084606f2c10fa98b99cdc0b918edcb8550ff85721980cab0e0593"
+    },
+    "emoji/fluent/1f4a4.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Zzz/Flat/zzz_flat.svg",
+      "sha256": "4fa693d8950693ebbbad0c0e0b0f12c5cabbf12d31a51239fb7df0d473a1c1e6"
+    },
+    "emoji/fluent/1f435.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Monkey%20face/Flat/monkey_face_flat.svg",
+      "sha256": "4e2a9a96fdbdd4ff1f6696ceeac6ce20855c308217f37d5b2543232fd4b05c97"
+    },
+    "emoji/fluent/1f412.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Monkey/Flat/monkey_flat.svg",
+      "sha256": "b991c3f700ea455df2076b6dc23c9bc29f252c10b7f4ad4ed08b256e7cf67654"
+    },
+    "emoji/fluent/1f98d.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Gorilla/Flat/gorilla_flat.svg",
+      "sha256": "31b60ca4588f8a863cf101d0631f792eed822f46cc0dc74bbe147b989bc44ea1"
+    },
+    "emoji/fluent/1f9a7.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Orangutan/Flat/orangutan_flat.svg",
+      "sha256": "1b3d2314ef3c47e9ae2497bf93d8009a7f1c2f9d370e89fc5da76c6d4de1c8a3"
+    },
+    "emoji/fluent/1f436.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Dog%20face/Flat/dog_face_flat.svg",
+      "sha256": "2ccc82b870a9f6e5ddf64b2874f923890b526b77099feb05892e7839f14dfbe4"
+    },
+    "emoji/fluent/1f415.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Dog/Flat/dog_flat.svg",
+      "sha256": "e3ee366f39d9f47bbb5a6dc22a521dbea32f05f2216d0665a551b134ca2474da"
+    },
+    "emoji/fluent/1f9ae.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Guide%20dog/Flat/guide_dog_flat.svg",
+      "sha256": "68326a409a091e9819c7ea23b7e0c465563b97f6dbc36a18a43155944800da8a"
+    },
+    "emoji/fluent/1f415-200d-1f9ba.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Service%20dog/Flat/service_dog_flat.svg",
+      "sha256": "8e83138f313fedd5300a01c334ee14d995f7f6ea1ccaf4e93942f3306c83432b"
+    },
+    "emoji/fluent/1f429.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Poodle/Flat/poodle_flat.svg",
+      "sha256": "968f488ceefd2a0b454c0affe054ba0bc22aeb02be35ae67271f2469cdbd1228"
+    },
+    "emoji/fluent/1f43a.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Wolf/Flat/wolf_flat.svg",
+      "sha256": "23316ea219d91065f4a7747d2d3a9cf90794502ce33f1378b63f188d4ec1b467"
+    },
+    "emoji/fluent/1f98a.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Fox/Flat/fox_flat.svg",
+      "sha256": "05992c69f46f9a8ef14e7a95894baa3168f4c195d8d3de3f3a09ce82d68bffc9"
+    },
+    "emoji/fluent/1f99d.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Raccoon/Flat/raccoon_flat.svg",
+      "sha256": "0232c2309d69e8480229b6551f5edcb9832836af28c310c2c14886d20550b631"
+    },
+    "emoji/fluent/1f431.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Cat%20face/Flat/cat_face_flat.svg",
+      "sha256": "eb917d09d37ef833f7fbb51eeb583f27ddfd28a7248166050e994defe2cc2ac3"
+    },
+    "emoji/fluent/1f408.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Cat/Flat/cat_flat.svg",
+      "sha256": "59f5401062509f4d0fb310817ce9a9656724c6c924a4d42f2a33ac6bb0964602"
+    },
+    "emoji/fluent/1f408-200d-2b1b.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Black%20cat/Flat/black_cat_flat.svg",
+      "sha256": "701688ff9e20e6f426f984fb47e2f982c5e7754100587509d5b5597c7907de12"
+    },
+    "emoji/fluent/1f981.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Lion/Flat/lion_flat.svg",
+      "sha256": "82c0b956f3d733b2139bec69ca0043676ae31bf5870190a1174175ed1d3d27ed"
+    },
+    "emoji/fluent/1f42f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Tiger%20face/Flat/tiger_face_flat.svg",
+      "sha256": "c0987f9a782ca0e13d8edb0b2989ec8e17d87222e8ead170c104e7475775ab74"
+    },
+    "emoji/fluent/1f405.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Tiger/Flat/tiger_flat.svg",
+      "sha256": "b41f616d7a80caa5310e3822dbffa8b5bea959c2568c112a782e2d4e8cce6375"
+    },
+    "emoji/fluent/1f406.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Leopard/Flat/leopard_flat.svg",
+      "sha256": "3c4542129748e9b41a894a9285e45d2487cdb55cbbd82fb4d5dd12685edb6501"
+    },
+    "emoji/fluent/1f434.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Horse%20face/Flat/horse_face_flat.svg",
+      "sha256": "61e59a386a5d05d4c6867962453f62187aa3cf40c89b4259527748b67e233dfe"
+    },
+    "emoji/fluent/1face.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Moose/Flat/moose_flat.svg",
+      "sha256": "35829035c572af59c7fbc7aadf54e7d5c2ce6c2b834e49d095e98b3e2bac7683"
+    },
+    "emoji/fluent/1facf.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Donkey/Flat/donkey_flat.svg",
+      "sha256": "907075780d5246aacd5ea171b8bfb007fa3f61448073dad1f36555b24774a857"
+    },
+    "emoji/fluent/1f40e.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Horse/Flat/horse_flat.svg",
+      "sha256": "ef5b2ffb755b9dcd241736df80cd4a755cf89923ca67c07131251f3beba2886d"
+    },
+    "emoji/fluent/1f984.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Unicorn/Flat/unicorn_flat.svg",
+      "sha256": "66d76d96cb49e8bf610a9b896ee240c39f5a34f2162e5c98737e959938749e4d"
+    },
+    "emoji/fluent/1f993.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Zebra/Flat/zebra_flat.svg",
+      "sha256": "967c3bdbf21c974ede5a55f35310c5e734c2bdc69872a694fce4c51fe7820fc4"
+    },
+    "emoji/fluent/1f98c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Deer/Flat/deer_flat.svg",
+      "sha256": "5b8363cecc81bb3b6b983173e417a7cf72341c82d006270b88f9d9e0f8b59b80"
+    },
+    "emoji/fluent/1f9ac.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Bison/Flat/bison_flat.svg",
+      "sha256": "7cdcaaab28edecc87c7469cf5f0b40439229eb0f31808fd8b33da87d701a4ecd"
+    },
+    "emoji/fluent/1f42e.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Cow%20face/Flat/cow_face_flat.svg",
+      "sha256": "dd64edd2e1d8a9def133bbcb759edbe2136792865c2688dcbaeda195e32aef06"
+    },
+    "emoji/fluent/1f402.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Ox/Flat/ox_flat.svg",
+      "sha256": "a4d807e7b29932b5d112473838314cc0be587c80bbffa2ad42cd0e0cce1461ef"
+    },
+    "emoji/fluent/1f403.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Water%20buffalo/Flat/water_buffalo_flat.svg",
+      "sha256": "cf455691c6b188f6ab0e53518fa95f58dd14b1a5f957f1b7e2c35164b9e8aeb6"
+    },
+    "emoji/fluent/1f404.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Cow/Flat/cow_flat.svg",
+      "sha256": "2aa1806bbf6299d6a8fc865587d9384dff832fabc2fe04ff6d11aa01b53b5109"
+    },
+    "emoji/fluent/1f437.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pig%20face/Flat/pig_face_flat.svg",
+      "sha256": "90dcc30373bac5cee297f1ca7f046e16fe11aee380f49dbe24d4be6aa55dd56a"
+    },
+    "emoji/fluent/1f416.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pig/Flat/pig_flat.svg",
+      "sha256": "790bb801b792327d607bf51f7410be069fb26f2a2908b2a691c851a947bdba08"
+    },
+    "emoji/fluent/1f417.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Boar/Flat/boar_flat.svg",
+      "sha256": "24a5973932a925181b7aa22308b291987b04d80bf7b0a446fa1514e09d487c28"
+    },
+    "emoji/fluent/1f43d.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pig%20nose/Flat/pig_nose_flat.svg",
+      "sha256": "c805da1d63914d152fd84092b610cbecede8aa4dca7862b4e58ffc6c4e267c7e"
+    },
+    "emoji/fluent/1f40f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Ram/Flat/ram_flat.svg",
+      "sha256": "a1cd6e45f5dc4ce4cb520f0e902a997126f6cc051e49678b59f57aaf1c9dc9a5"
+    },
+    "emoji/fluent/1f347.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Grapes/Flat/grapes_flat.svg",
+      "sha256": "e959e27685f84cead6cc230c719c75feaf3a3cfde878cf00819473036005edd0"
+    },
+    "emoji/fluent/1f348.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Melon/Flat/melon_flat.svg",
+      "sha256": "d68357d7ac4055abb857aa3199f61a8721e4df83f86465e121688d659b7a29e0"
+    },
+    "emoji/fluent/1f349.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Watermelon/Flat/watermelon_flat.svg",
+      "sha256": "33ce86d2784776504191684fd34495c68ac54be7b98e100ef18c3a19297c735e"
+    },
+    "emoji/fluent/1f34a.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Tangerine/Flat/tangerine_flat.svg",
+      "sha256": "c820b266373b52bb1854213b08801c8d582d60dae06d380fdb4beaf89d569ea3"
+    },
+    "emoji/fluent/1f34b.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Lemon/Flat/lemon_flat.svg",
+      "sha256": "f3a924a7031fc0dd7c57a90e5f9794cf72859d860151dec321c4adc38605e4cc"
+    },
+    "emoji/fluent/1f34c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Banana/Flat/banana_flat.svg",
+      "sha256": "40047ed9d10462ba41457b0c55beb05b6fde4ce590e6c1f88577539e46c2f20d"
+    },
+    "emoji/fluent/1f34d.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pineapple/Flat/pineapple_flat.svg",
+      "sha256": "9d064d8f8796b53a9eeb18b642e6e16628848ad2fa944576b597e7c7f36a95be"
+    },
+    "emoji/fluent/1f96d.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Mango/Flat/mango_flat.svg",
+      "sha256": "5747bef4b8d4857d84e6bf784e65ef8b3925d162ae6ca099ab37e33e5b4d33bd"
+    },
+    "emoji/fluent/1f34e.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Red%20apple/Flat/red_apple_flat.svg",
+      "sha256": "bc69f7c89a3621fb564482f9e13818019c6eac3a9d16fe996852514f3b19a073"
+    },
+    "emoji/fluent/1f34f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Green%20apple/Flat/green_apple_flat.svg",
+      "sha256": "8d16350d03ee8c98f1d58985453b4c7fbe4d69da3fde37cbf8b5c70ecb80bbd4"
+    },
+    "emoji/fluent/1f350.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pear/Flat/pear_flat.svg",
+      "sha256": "ddab6102c0ab2fef2dee700b7bb3d427187df8bfa010b23c4e2516e15c226551"
+    },
+    "emoji/fluent/1f351.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Peach/Flat/peach_flat.svg",
+      "sha256": "a144b995f3b094fb28d3eb016efebd6372c5ae82273cf3c0379741eb0c9d4657"
+    },
+    "emoji/fluent/1f352.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Cherries/Flat/cherries_flat.svg",
+      "sha256": "67c243eed8f6430539076d065d71b90d8f7bb25ccd41c87c02a6f6f419dacf9f"
+    },
+    "emoji/fluent/1f353.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Strawberry/Flat/strawberry_flat.svg",
+      "sha256": "d8522f848f305fc81040dd9c5467f97df483fde5e2568429046e7f1ae1a23d91"
+    },
+    "emoji/fluent/1fad0.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Blueberries/Flat/blueberries_flat.svg",
+      "sha256": "5305d77f9893a5b694e0f068bedf20854527c1691654667f75bcbfef64d466ca"
+    },
+    "emoji/fluent/1f95d.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Kiwi%20fruit/Flat/kiwi_fruit_flat.svg",
+      "sha256": "760a74fa383f6ed6c89d0faf46ddd2635a5374a6c49eff4004df72ace283cfc5"
+    },
+    "emoji/fluent/1f345.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Tomato/Flat/tomato_flat.svg",
+      "sha256": "3b3326c731fce0fe697656d33bb092613eb261d827b6ca319b5cd6df08212add"
+    },
+    "emoji/fluent/1fad2.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Olive/Flat/olive_flat.svg",
+      "sha256": "39671f55587e0956820ad352dc5ca9fef761607c59db570069413c595d009992"
+    },
+    "emoji/fluent/1f383.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Jack-o-lantern/Flat/jack-o-lantern_flat.svg",
+      "sha256": "7ae095b96a6fb06ab383fdb43322d2d5ae3d223dd3dba458268f36634aae66cb"
+    },
+    "emoji/fluent/1f384.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Christmas%20tree/Flat/christmas_tree_flat.svg",
+      "sha256": "6225e2abfbeb584a77689519654d5a9da6de64f981542e3dff3dd7d9595978e8"
+    },
+    "emoji/fluent/1f386.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Fireworks/Flat/fireworks_flat.svg",
+      "sha256": "317e235cc20b99cb06f2c5f28ba30292e9eadfd2093b97903d2c4a5cfc551125"
+    },
+    "emoji/fluent/1f387.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Sparkler/Flat/sparkler_flat.svg",
+      "sha256": "35f9d0273f9a489c30898a4e6406932c08beeda7c9fc7968dd75a4a8b940d407"
+    },
+    "emoji/fluent/1f9e8.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Firecracker/Flat/firecracker_flat.svg",
+      "sha256": "f2eaac315aa3e03833407257e71f1c63aad06920fa0d398980f9ce082c952731"
+    },
+    "emoji/fluent/2728.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Sparkles/Flat/sparkles_flat.svg",
+      "sha256": "d5802877677464187a510c3fbb9d8c272dea164bcca2bf6a2270944e6cd2324e"
+    },
+    "emoji/fluent/1f388.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Balloon/Flat/balloon_flat.svg",
+      "sha256": "5b7af328c99543aa940215cd82af39c6248c54d5f3b36260284364db63490e73"
+    },
+    "emoji/fluent/1f389.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Party%20popper/Flat/party_popper_flat.svg",
+      "sha256": "8128c958bfc06568aa49d03cd001556a6c6223660f43c657d381e638416c51f6"
+    },
+    "emoji/fluent/1f38a.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Confetti%20ball/Flat/confetti_ball_flat.svg",
+      "sha256": "634a81f92d7a7e7b7458d30877bb61f4a4301a336137fbcc1e347f6a07f58ce7"
+    },
+    "emoji/fluent/1f38b.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Tanabata%20tree/Flat/tanabata_tree_flat.svg",
+      "sha256": "467a521b5132fbe6e8ffd27658b077442727a8d58cd92236ae4343cbb7b97352"
+    },
+    "emoji/fluent/1f38d.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pine%20decoration/Flat/pine_decoration_flat.svg",
+      "sha256": "d3caa7b4deda84d7a0a11954d9c9355ab4898767eb836d9933ecd64bd83f4e32"
+    },
+    "emoji/fluent/1f38e.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Japanese%20dolls/Flat/japanese_dolls_flat.svg",
+      "sha256": "47a03a0a3a88b584079af950570d8a0936d7b77ce396ae10ab4408d15222271b"
+    },
+    "emoji/fluent/1f38f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Carp%20streamer/Flat/carp_streamer_flat.svg",
+      "sha256": "57ba6ef22dc9141e429bd0c5c803ac2227858b1c90496b69e93ab66f7992ea80"
+    },
+    "emoji/fluent/1f390.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Wind%20chime/Flat/wind_chime_flat.svg",
+      "sha256": "fc23c2a2c463ef6de30e291bde993bf233f5aeabdc9c8cd68a1a5b358c44b492"
+    },
+    "emoji/fluent/1f391.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Moon%20viewing%20ceremony/Flat/moon_viewing_ceremony_flat.svg",
+      "sha256": "1f6aa560e4aec889e7b552ac1450b19b18d28509b129419f217adf180dd86fa7"
+    },
+    "emoji/fluent/1f9e7.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Red%20envelope/Flat/red_envelope_flat.svg",
+      "sha256": "d390a3aab558bd7e45742bc488db8444d550893a47e084e7dde636d8d1e35741"
+    },
+    "emoji/fluent/1f380.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Ribbon/Flat/ribbon_flat.svg",
+      "sha256": "eff1a8027406e2849b845f989825ec91e9237d462274739dabc8c85b867e4e90"
+    },
+    "emoji/fluent/1f381.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Wrapped%20gift/Flat/wrapped_gift_flat.svg",
+      "sha256": "326da81790739066b77219b1a84dbcdb2efb4fddbf4d1767c7097c6ab9b7634b"
+    },
+    "emoji/fluent/1f310.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Globe%20with%20meridians/Flat/globe_with_meridians_flat.svg",
+      "sha256": "adbe5c01de58d6a1289ac559cacaefd5a9072dd3eb326b6612cabf79f37cb552"
+    },
+    "emoji/fluent/1f5fa-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/World%20map/Flat/world_map_flat.svg",
+      "sha256": "dcb7208079a961893aac6700bac2cdcb069e30d787ff91cb865c8cb5f7209eea"
+    },
+    "emoji/fluent/1f5fe.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Map%20of%20japan/Flat/map_of_japan_flat.svg",
+      "sha256": "6b00bed4f973d15b06945bf0357e83a4b3ccd1b40fb1c8658c360fe80bdce4dd"
+    },
+    "emoji/fluent/1f9ed.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Compass/Flat/compass_flat.svg",
+      "sha256": "92e69670a742d2a9dc5cb30da349e261d959780981a9a52305676b9599698dd6"
+    },
+    "emoji/fluent/1f3d4-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Snow-capped%20mountain/Flat/snow-capped_mountain_flat.svg",
+      "sha256": "9f8ac2c09a91bb758b2e9e88221e45dfbac4a3889d411af500ecaddecfbbb8be"
+    },
+    "emoji/fluent/26f0-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Mountain/Flat/mountain_flat.svg",
+      "sha256": "c80aa9f24f53bae91a2df7ce8b319c68aa3766015bd4f30f8de1da4b552e69a0"
+    },
+    "emoji/fluent/1f30b.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Volcano/Flat/volcano_flat.svg",
+      "sha256": "1765ce0afd6c3b2fd2bfc4561f2c280f06995763b5e836fde3e609883036511e"
+    },
+    "emoji/fluent/1f5fb.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Mount%20fuji/Flat/mount_fuji_flat.svg",
+      "sha256": "7d0f944daf49798c1b6b1afce4452cb62279b225902617c3117ad51510025999"
+    },
+    "emoji/fluent/1f3d5-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Camping/Flat/camping_flat.svg",
+      "sha256": "2b327fcd35819612aa424162a305199a547951730fcfe8017ed799829f7c38de"
+    },
+    "emoji/fluent/1f3d6-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Beach%20with%20umbrella/Flat/beach_with_umbrella_flat.svg",
+      "sha256": "cebb26bceb7e6224e43518e43b06f2abd93547d0df0f625a4298a56741fde43e"
+    },
+    "emoji/fluent/1f3dc-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Desert/Flat/desert_flat.svg",
+      "sha256": "60a203968c9273f2e9f1b04646ec73c1dfcf59484d9f7881fd88cce63d95e31e"
+    },
+    "emoji/fluent/1f3dd-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Desert%20island/Flat/desert_island_flat.svg",
+      "sha256": "c24f5a68d174a58d42e92587d20ccfd06e8b572a2220ba5b2c605a69256850c2"
+    },
+    "emoji/fluent/1f3de-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/National%20park/Flat/national_park_flat.svg",
+      "sha256": "81d06ddf5acb50968e774c6ebd7fea8aa1a92fbbc5c946a58c7c45fc55b07bf3"
+    },
+    "emoji/fluent/1f3df-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Stadium/Flat/stadium_flat.svg",
+      "sha256": "fd4a84b01acd66df7e0cbb8e631bb1c952cfd13a74efe655b78e307fa27c67f1"
+    },
+    "emoji/fluent/1f3db-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Classical%20building/Flat/classical_building_flat.svg",
+      "sha256": "3c62410392043e2f44caf075b1950a1f51929676b9d54e8e2fa1655b86dc8e87"
+    },
+    "emoji/fluent/1f680.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Rocket/Flat/rocket_flat.svg",
+      "sha256": "ea9423e32494b81bbdccc8970987d9fe2a85462610cd4b8ddd0b9e1a03fb2ebf"
+    },
+    "emoji/fluent/1f525.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Fire/Flat/fire_flat.svg",
+      "sha256": "00184d516421223782fc5efd67af64641ee8044af9613a3674ce5899cd38583d"
+    },
+    "emoji/fluent/1f453.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Glasses/Flat/glasses_flat.svg",
+      "sha256": "75f429d041794a819d6efae3b27201c1678bc0964b65de7316cf1614c7fb8534"
+    },
+    "emoji/fluent/1f576-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Sunglasses/Flat/sunglasses_flat.svg",
+      "sha256": "735077c8a94a3d3ee750cd1acc36a240fcd4d5ecdc96d9d423d267b38e59cee6"
+    },
+    "emoji/fluent/1f97d.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Goggles/Flat/goggles_flat.svg",
+      "sha256": "d51a417aa309b8bd5ed74d57aafa73e053c4958765bb56edb62db3d2e8be30a7"
+    },
+    "emoji/fluent/1f97c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Lab%20coat/Flat/lab_coat_flat.svg",
+      "sha256": "94d8cbf738bc855108f7d762baadff67e05ed7c2f600b645392365bd1ec84f33"
+    },
+    "emoji/fluent/1f9ba.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Safety%20vest/Flat/safety_vest_flat.svg",
+      "sha256": "a70c001d7eacbd6aa2331f4c4e69b05872b6359c35990309f4cab105a2784a3e"
+    },
+    "emoji/fluent/1f454.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Necktie/Flat/necktie_flat.svg",
+      "sha256": "26186292b3632688ea3a70ea7748c7f25c426acc0fb5aba7c2fd389f72c9cea2"
+    },
+    "emoji/fluent/1f455.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/T-shirt/Flat/t-shirt_flat.svg",
+      "sha256": "6f8ffd795e5ed30cb3f2075cb7336824ddc6d2c988bf8c2e29503a8717d9cb6d"
+    },
+    "emoji/fluent/1f456.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Jeans/Flat/jeans_flat.svg",
+      "sha256": "4157a78ea0211fa0204573aa9c64f5e6d11a5b8439b3551e24704671dc445fc5"
+    },
+    "emoji/fluent/1f9e3.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Scarf/Flat/scarf_flat.svg",
+      "sha256": "bbab2b40e912134161c619740043fc95a40fc4dd3565d8bd8dfeb2ef8babbfbe"
+    },
+    "emoji/fluent/1f9e4.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Gloves/Flat/gloves_flat.svg",
+      "sha256": "e3af7bcee603f4a9e3c1a9c769ac07acb14d14ef7caff7f781785ccaca6851ba"
+    },
+    "emoji/fluent/1f9e5.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Coat/Flat/coat_flat.svg",
+      "sha256": "3aceb35d3d72ef05557617a80f98d21f372aa5141ad8b2c0d40ce42be8c14c74"
+    },
+    "emoji/fluent/1f9e6.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Socks/Flat/socks_flat.svg",
+      "sha256": "21d265b928af081abcb4bc9b32eda8ba44f911ee585ef2b7b10349e1eab248a6"
+    },
+    "emoji/fluent/1f457.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Dress/Flat/dress_flat.svg",
+      "sha256": "a4a0318e755fe518aa270bc3d00cec4a12d9675a4a5f9d4931eb449e07dd2168"
+    },
+    "emoji/fluent/1f458.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Kimono/Flat/kimono_flat.svg",
+      "sha256": "8edd77924d4ad5878040348c31754313eb303bad0514fd2941feb4055658a8aa"
+    },
+    "emoji/fluent/1f97b.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Sari/Flat/sari_flat.svg",
+      "sha256": "8a3009db613258e95c82b2e1f8ffd8f6ac27ce852e1ebc713895be630f65e316"
+    },
+    "emoji/fluent/1fa71.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/One-piece%20swimsuit/Flat/one-piece_swimsuit_flat.svg",
+      "sha256": "0dc15b086f76c976e1b9b3d7dd916a067be710b59eac124399d70e15994210ff"
+    },
+    "emoji/fluent/1fa72.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Briefs/Flat/briefs_flat.svg",
+      "sha256": "d9c18522e6d8f6dcbff8c9aed77e6b05b4b9cf4c628cdfd75a234bc87e5010bc"
+    },
+    "emoji/fluent/1fa73.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Shorts/Flat/shorts_flat.svg",
+      "sha256": "df1597cbce572530ca75d035884be9b965c88b980640a6351bf1f916100df6cb"
+    },
+    "emoji/fluent/1f393.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Graduation%20cap/Flat/graduation_cap_flat.svg",
+      "sha256": "8bd1f157195b278cfea4e5b852df232c4ca89dc6eb2174b1f1473ad1c0102be1"
+    },
+    "emoji/fluent/1f4bb.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Laptop/Flat/laptop_flat.svg",
+      "sha256": "c8fa307ed2c3e7e9e4267cff317caff6f0789a0601dabebde8380a0f0a7671b5"
+    },
+    "emoji/fluent/1f4a1.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Light%20bulb/Flat/light_bulb_flat.svg",
+      "sha256": "3e746a9b94051287b263e518e1f156cbfbffb45b5e0a6db6570b99d4c8c56484"
+    },
+    "emoji/fluent/1f4d6.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Open%20book/Flat/open_book_flat.svg",
+      "sha256": "84809f80ba9252021198ee4f015f1e16ac76020727625c3ee611712c017108b4"
+    },
+    "emoji/fluent/1f4da.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Books/Flat/books_flat.svg",
+      "sha256": "41e2686cdc526bfa41ea599e2a74378f3a02788ff7e8cd1b9ad0a39ea157000c"
+    },
+    "emoji/fluent/270f-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pencil/Flat/pencil_flat.svg",
+      "sha256": "f82b7820c41b57d2cca96ef75e32fdedcb07d2d8b786a781274c25fe306c76d7"
+    },
+    "emoji/fluent/1f3e7.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Atm%20sign/Flat/atm_sign_flat.svg",
+      "sha256": "829d8db8e5b0305601a9865231ff294f6909a19f3d391ce90a11c4fc5f7ad55f"
+    },
+    "emoji/fluent/1f6ae.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Litter%20in%20bin%20sign/Flat/litter_in_bin_sign_flat.svg",
+      "sha256": "a0119828d341f62f1fddb101c516428d1e9a79a0d8ea5fa45e9ba13b2750cd23"
+    },
+    "emoji/fluent/1f6b0.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Potable%20water/Flat/potable_water_flat.svg",
+      "sha256": "275b7de2776802fb495210295748f323e86195905e1f01a302fdc4eb88acf0a9"
+    },
+    "emoji/fluent/267f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Wheelchair%20symbol/Flat/wheelchair_symbol_flat.svg",
+      "sha256": "f1043d02215e0611d4ca6cac7e3487c2fe407d3c37dcf57c736cdaad7be3028f"
+    },
+    "emoji/fluent/1f6b9.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Mens%20room/Flat/mens_room_flat.svg",
+      "sha256": "10d82841d9cacd07804c887aee11b51c2fd38c9a531ce7b0997e71e9803e0c79"
+    },
+    "emoji/fluent/1f6ba.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Womens%20room/Flat/womens_room_flat.svg",
+      "sha256": "3e5aa4b87f05061d8fd4737fd0fda81f5dc195bd43c1c8a12bf6bde115046682"
+    },
+    "emoji/fluent/1f6bb.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Restroom/Flat/restroom_flat.svg",
+      "sha256": "c237b235bd823e6840f05631dff5e0b2a1026e8eba39aa4ca56e915fa15f8faa"
+    },
+    "emoji/fluent/1f6bc.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Baby%20symbol/Flat/baby_symbol_flat.svg",
+      "sha256": "5d24ace9b2983bee4925c982ef7a789faa7cfe9222fea38ddf4ca758a5dd1262"
+    },
+    "emoji/fluent/1f6be.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Water%20closet/Flat/water_closet_flat.svg",
+      "sha256": "b31402d76ce653e6ff681b4c23d77d061f86ac59d25da2feb2f067adbacd2136"
+    },
+    "emoji/fluent/1f6c2.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Passport%20control/Flat/passport_control_flat.svg",
+      "sha256": "cc52689187d7af3d07a11eb6f0f4e4ca20742445d323bc1f15169e2901fba59f"
+    },
+    "emoji/fluent/1f6c3.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Customs/Flat/customs_flat.svg",
+      "sha256": "ad53abb040bc641bd5c292e6748b32b32b36a33634a5582a7b0292d2d0eed7b7"
+    },
+    "emoji/fluent/1f6c4.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Baggage%20claim/Flat/baggage_claim_flat.svg",
+      "sha256": "d892770b46a2f7c821242d850b79d8a4ca46f37a9e0f6baeeaed8678db82908d"
+    },
+    "emoji/fluent/1f6c5.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Left%20luggage/Flat/left_luggage_flat.svg",
+      "sha256": "065248ce02214928fe15836608aa221e20b4e1e3c39854c95d02b9d5d85638df"
+    },
+    "emoji/fluent/26a0-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Warning/Flat/warning_flat.svg",
+      "sha256": "f63f090b7af8c10290b15adc7c87c7d487f928e86b3bb7df34aabbc331484e80"
+    },
+    "emoji/fluent/1f6b8.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Children%20crossing/Flat/children_crossing_flat.svg",
+      "sha256": "696d6f9c48f5182d3efec64fbfbf0fe6e10ed41b4df86853de9cc9dda0ab5ada"
+    },
+    "emoji/fluent/26d4.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/No%20entry/Flat/no_entry_flat.svg",
+      "sha256": "f3afe386e2bf30e8127141ceb506911798a8537644512fda56eb737f2b677ba6"
+    },
+    "emoji/fluent/1f6ab.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Prohibited/Flat/prohibited_flat.svg",
+      "sha256": "8c11599edb37304ed543fdcb29193acf7c6375fa6ab5c12c5c4ca1473398c695"
+    },
+    "emoji/fluent/1f6b3.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/No%20bicycles/Flat/no_bicycles_flat.svg",
+      "sha256": "500606b81688df63a0ebd3428908f2ae557a3178e3bc7e82eda195b021fae426"
+    },
+    "emoji/fluent/2714-fe0f.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Check%20mark/Flat/check_mark_flat.svg",
+      "sha256": "ed672ef0d2c703f1c077adeef10616bc51a6bef8b36bae0ef0bcdb1e9a8db61e"
+    },
+    "emoji/fluent/1f3c1.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Chequered%20flag/Flat/chequered_flag_flat.svg",
+      "sha256": "a3f7d423fa7550e5d5f739586570d77e3012a033806f3bce0231141523da2b01"
+    },
+    "emoji/fluent/1f38c.svg": {
+      "source": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Crossed%20flags/Flat/crossed_flags_flat.svg",
+      "sha256": "f7445ef309efc688f9249b9be031c299306311da1013ec299fb483acda2ef5e5"
+    },
+    "stickers/noto/1f600.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f600/512.webp",
+      "sha256": "99ae57c7ca271adaa211f2c3e599e996dcc2d962564e49bcd979671e5c73146f"
+    },
+    "stickers/noto/1f602.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f602/512.webp",
+      "sha256": "281d5ceb7881fe9393c200ea16c73a4d53af58b4ff04d76a46c432e7e4dd0901"
+    },
+    "stickers/noto/1f923.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f923/512.webp",
+      "sha256": "6dc164b225a4688da15a6642c366e9eb536a0bfb5fe5a475a75c94d2fe14eba5"
+    },
+    "stickers/noto/1f60d.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f60d/512.webp",
+      "sha256": "f9a12dd0779299de1c77d8c6168be39ad0f5c579b7ac46f9c77d60be042bc3de"
+    },
+    "stickers/noto/1f914.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f914/512.webp",
+      "sha256": "4f8cbd8d563d8bf16d4d7043c3e91afcfe514389bd7e81cc5624f6097aa2053c"
+    },
+    "stickers/noto/1f62d.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f62d/512.webp",
+      "sha256": "13a7a4b7e6d920b83f899ca64312bed80280507e93c04bd6e2361764db975a50"
+    },
+    "stickers/noto/1f389.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f389/512.webp",
+      "sha256": "aeff875df341bb7136fa4c84538000a3d4aea8a6dd16245ee8fa1c8bbfeb6ddc"
+    },
+    "stickers/noto/1f525.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f525/512.webp",
+      "sha256": "8c18972a71041700a1da4d9a1586640fb6d55eff4dc64efd29efde6a384a2ff5"
+    },
+    "stickers/noto/1f44f.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f44f/512.webp",
+      "sha256": "424f978963357da085a444e1b659028a5f7ccd927d72158ef5c97c82d3ddfd20"
+    },
+    "stickers/noto/1f44d.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f44d/512.webp",
+      "sha256": "f456f329ec2457828e0511f31b855e1b3b21c91f53d7d465dc3a1aa7d3b73383"
+    },
+    "stickers/noto/1f64c.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f64c/512.webp",
+      "sha256": "51accc877dc32ac4ecfbb5745b89afdf1f610c7e23c4fb292f4bea3dd603fa44"
+    },
+    "stickers/noto/1f4af.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f4af/512.webp",
+      "sha256": "c9fdc6075233c9fbd1b77b4df0107187a543223b9ff566fd65a887f221b21008"
+    },
+    "stickers/noto/1f680.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f680/512.webp",
+      "sha256": "304e710dde0b42b15673e10937623789adf72cae569c0e0defe7ec21c0bdf293"
+    },
+    "stickers/noto/2764-fe0f.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/2764_fe0f/512.webp",
+      "sha256": "8f02722ca349a1b1a0c7a02d7ec3c716e09eccdbf696adf89c67afe2bb175b56"
+    },
+    "stickers/noto/1f4aa.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f4aa/512.webp",
+      "sha256": "fdbf8494ad8c8235bcfec94e751b5570a398bb328020e5282f3923535389548e"
+    },
+    "stickers/noto/1f973.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f973/512.webp",
+      "sha256": "fcf2af3bb9244afe32685f0293ff2ad3f4fb3575e93fec3054f59c052b82762f"
+    },
+    "stickers/noto/1f634.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f634/512.webp",
+      "sha256": "ca41f50126de30ef67ae2df42f17ae3fd2ffd7deb7b1bba6d2e4141b1ff2ce3f"
+    },
+    "stickers/noto/1f440.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f440/512.webp",
+      "sha256": "44da2fbd6e9ec1dee07808fef5216fb8393d78155c7f104be99525215961e07e"
+    },
+    "stickers/noto/1f4a1.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f4a1/512.webp",
+      "sha256": "aae84c10307e31042dd9dc3d6c1b4561dd3965cde26343646d16a155119f408a"
+    },
+    "stickers/noto/1f60e.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f60e/512.webp",
+      "sha256": "16e9f241e5471c77bd94b3ff1fbdfd4a37e2056d6485256db41729165b57e66f"
+    },
+    "stickers/noto/1f91d.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f91d/512.webp",
+      "sha256": "400eb5356ebec89f85ddf6e955bfa6ad56103cdda2282c9e02f0160285545c0b"
+    },
+    "stickers/noto/1f64f.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f64f/512.webp",
+      "sha256": "648eb5ee603e776d4452ea78f2a89b7b08c3f4110d4afa7ed3954622a1499a68"
+    },
+    "stickers/noto/2728.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/2728/512.webp",
+      "sha256": "6f02d6b946908b6bb33452ff81f613928b0a30c09d51d0b43a85d35359e5d1cc"
+    },
+    "stickers/noto/1f929.webp": {
+      "source": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f929/512.webp",
+      "sha256": "878a5c5ac1397cf4f79cb73bdb4d077e0eb19b633ebc46dbdf53ecb74223d2b6"
+    }
+  }
+}

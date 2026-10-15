@@ -620,11 +620,6 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
             </svg>
           </button>
           <input class="chat-input-field" id="chatInputField" placeholder="Message…" oninput="handleTyping(event)" onkeydown="handleKeyDown(event)" />
-          <!-- GIF PICKER -->
-          <div class="gif-picker" id="gifPicker" style="position:absolute;bottom:calc(100% + 6px);right:160px;left:auto;">
-            <input class="gif-search" placeholder="Search GIFs..." oninput="filterGifs(this.value)" />
-            <div class="gif-grid" id="gifGrid"></div>
-          </div>
           <button class="input-btn-icon" id="emojiBtn" title="Emoji" onclick="toggleEmojiPicker(event)">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10" />
@@ -633,7 +628,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
               <line x1="15" y1="9" x2="15.01" y2="9" />
             </svg>
           </button>
-          <button class="input-btn-icon" id="gifBtn" title="GIF" onclick="toggleGifPicker(event)" style="font-size:12px;font-weight:800;letter-spacing:-0.5px;color:var(--text-muted);">GIF</button>
+          <button class="input-btn-icon" id="gifBtn" title="Animated stickers" aria-label="Choose animated sticker" onclick="toggleGifPicker(event)" style="font-size:12px;font-weight:800;letter-spacing:-0.5px;color:var(--text-muted);">▧</button>
           <button class="input-btn-icon" id="micBtn" title="Voice message" onclick="toggleVoiceRecord()">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
@@ -1126,9 +1121,11 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-composer.css?v=tiptap-1">
   <script src="<?= BASE_URL ?>/assets/js/chat/rich-composer.js?v=tiptap-1" defer></script>
   <?php endif; ?>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=tiptap-1" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=tiptap-1" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=media-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=media-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js?v=media-1" defer></script>
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-media.css?v=1">
+  <script src="<?= BASE_URL ?>/assets/js/chat/media-picker.js?v=1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=call-taskbar-timer-1" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.22.3/dist/livekit-client.umd.min.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/livekit-voice.js?v=call-taskbar-timer-1" defer></script>
@@ -1178,7 +1175,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     </button>
   </div>
 
-  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=tiptap-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=media-1" defer></script>
   <?php if (filter_var(env('CENTRIFUGO_ENABLED', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
   <script src="<?= BASE_URL ?>/assets/js/chat/centrifugo-delivery.js?v=delivery-1" defer></script>
   <?php endif; ?>
@@ -3132,7 +3129,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
             </button>
             <div class="wb-chat-icons">
               <button class="wb-chat-icon" onclick="showToast('😊 Emoji','info')">😊</button>
-              <button class="wb-chat-icon" style="font-size:10px;font-weight:800;">GIF</button>
+              <button class="wb-chat-icon" style="font-size:10px;font-weight:800;">▧</button>
               <div style="flex:1;"></div>
             </div>
           </div>

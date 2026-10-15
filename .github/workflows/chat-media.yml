@@ -1,0 +1,27 @@
+name: Chat emoji and animated stickers
+on:
+  pull_request:
+    paths: ['assets/media/**', 'assets/js/chat/media-picker.js', 'assets/js/chat/emoji.js', 'assets/js/chat/chat-features.js', 'assets/js/chat/dm-notifications.js', 'assets/css/chat-media.css', 'modules/chat/**', 'tests/chat-media*', 'scripts/check-chat-media.py', '.github/workflows/chat-media.yml']
+permissions:
+  contents: read
+jobs:
+  media:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - run: python3 scripts/check-chat-media.py
+      - run: |
+          php -l modules/chat/chat.php
+          php -l modules/chat/media-credits.php
+          node --check assets/js/chat/media-picker.js
+          node --check assets/js/chat/emoji.js
+          node --check assets/js/chat/chat-features.js
+          node --check assets/js/chat/dm-notifications.js
+      - run: npm install --no-save --ignore-scripts jsdom@30.1.2
+      - run: node tests/chat-media-regression.cjs
