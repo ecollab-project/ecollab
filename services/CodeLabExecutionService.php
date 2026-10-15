@@ -29,6 +29,7 @@ final class CodeLabExecutionService
         $lab=new CodeLabService($this->db,$this->clock);$lab->member($sid,$uid);$language=$in['language']??'';$runtime=null;
         $tid=(int)($in['task_id']??0);
         if($tid){$data=$lab->start($sid,$uid,$tid);if($data['attempt']['state']!=='in_progress')$this->fail('This attempt is read-only.',403);$language=$data['task']['language'];$runtime=$data['task']['runtime_id']===null?null:(int)$data['task']['runtime_id'];}
+        if(!$tid&&!in_array($language,CodeLabService::LANGUAGES,true))$this->fail('This language is no longer available.');
         if(!in_array($language,['c','cpp','python','java','javascript'],true))$this->fail('Use Web preview for HTML/CSS/JS.');
         $runtime=$runtime??CodeLabRunner::runtime($language);
         $source=$in['code']??null;$stdin=$in['stdin']??'';

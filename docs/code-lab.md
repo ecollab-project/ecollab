@@ -93,3 +93,10 @@ The service template uses the existing VPS account/path. Adjust those if deployi
 ### Execution validation
 
 `tests/code-lab-execution-regression.php` exercises private results, immutable job snapshots, queue/submission transactions, limits, weighted scores, hidden-output suppression, retries, quotas, compilation failure and manual overrides through a deterministic Judge0 transport fixture. CI also verifies DOM grading and the updated creation form/editor at 11 viewport widths. These tests do not certify a deployed sandbox: `scripts/check-code-lab-runner.php` compiles and executes known programs in all five languages against your actual runner before activation.
+
+## Advanced verification programs
+New task and playground language choices are C, C++, Python and Java.
+JavaScript and HTML/CSS/JS are no longer offered; historical data is preserved.
+In Playground, **Load test program** loads a graph algorithm and sample stdin
+without saving or executing it. See [advanced test programs](../examples/code-lab/advanced/README.md)
+for all nine fixtures and the VPS command that verifies all four runtimes.

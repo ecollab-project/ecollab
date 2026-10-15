@@ -55,6 +55,14 @@ clReject(fn()=>$service->playground(1,2,'python',['code'=>'overwrite','version'=
 clReject(fn()=>$service->playground(1,4,'python'),403,'Playground membership required');
 $bad=$input;$bad['due_at']='2026-02-30T00:00:00Z';clReject(fn()=>$service->create(1,1,$bad),400,'Invalid calendar date');
 $bad=$input;$bad['language']='shell';clReject(fn()=>$service->create(1,1,$bad),400,'Unsupported runtime rejected');
+clCheck(str_contains($service->sample(1,3,'python')['code'],'heapq'),'Bundled advanced sample');
+clReject(fn()=>$service->sample(1,4,'python'),403,'Sample membership required');
+clReject(fn()=>$service->sample(1,3,'../../config.php'),400,'Sample path cannot be supplied');
+foreach(['web','javascript','html','css','js'] as $removed){
+ $bad=$input;$bad['language']=$removed;
+ clReject(fn()=>$service->create(1,1,$bad),400,'Removed task language rejected');
+ clReject(fn()=>$service->playground(1,3,$removed),400,'Removed playground language rejected');
+}
 $db->exec("UPDATE users SET status='banned' WHERE id=3");clReject(fn()=>$service->start(1,3,$tid),403,'Banned account loses access');
 $db->exec('DELETE FROM server_members WHERE user_id=2 AND server_id=1');clReject(fn()=>$service->start(1,2,$tid),403,'Removed member loses attempt access');
 echo "PASS: private attempts, playground isolation, roles, cross-server access, submission locking, deadlines, timing and stale saves\n";

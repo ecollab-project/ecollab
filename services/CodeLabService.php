@@ -4,7 +4,7 @@ declare(strict_types=1);
 /** Classroom metadata and private source storage. Execution is delegated to a queue. */
 final class CodeLabService
 {
-    public const LANGUAGES = ['c','cpp','python','java','javascript','web'];
+    public const LANGUAGES = ['c','cpp','python','java'];
     private Closure $clock;
     public function __construct(private PDO $db, ?callable $clock = null)
     {
@@ -53,7 +53,7 @@ final class CodeLabService
             unset($task['starter_code']);
         }
         require_once __DIR__.'/CodeLabRunner.php';
-        $r=new CodeLabRunner();$languages=[];foreach(['c','cpp','python','java','javascript']as$l)if($r->enabled()&&CodeLabRunner::runtime($l))$languages[]=$l;
+        $r=new CodeLabRunner();$languages=[];foreach(self::LANGUAGES as$l)if($r->enabled()&&CodeLabRunner::runtime($l))$languages[]=$l;
         return ['server'=>$server,'tasks'=>$tasks,'server_now'=>($this->clock)(),'runner_available'=>$r->enabled(),'runnable_languages'=>$languages];
     }
     private static function text(mixed $value,int $max,string $name,bool $required=false): string
@@ -147,6 +147,16 @@ final class CodeLabService
         $q=$this->query('UPDATE code_lab_attempts SET score=?,feedback=?,reviewed_by=?,reviewed_at=? WHERE task_id=? AND user_id=? AND submitted_at IS NOT NULL',[(float)$score,$feedback,$uid,gmdate('Y-m-d H:i:s',($this->clock)()),$tid,$student]);
         if (!$q->rowCount()) self::fail('Submitted attempt not found.',404);
         return ['reviewed'=>true];
+    }
+    /** Fixed bundled fixtures only; caller cannot supply a filesystem path. */
+    public function sample(int $sid,int $uid,string $language): array
+    {
+        $this->member($sid,$uid);
+        $files=['c'=>'main.c','cpp'=>'main.cpp','python'=>'main.py','java'=>'Main.java'];
+        if (!isset($files[$language])) self::fail('Invalid language.');
+        $directory=dirname(__DIR__).'/examples/code-lab/advanced/';
+        $cases=json_decode(file_get_contents($directory.'cases.json'),true,512,JSON_THROW_ON_ERROR);
+        return ['code'=>file_get_contents($directory.$files[$language]),'input'=>$cases[0]['input'],'expected_output'=>$cases[0]['expected_output']];
     }
     public function playground(int $sid,int $uid,string $language,?array $input=null): array
     {

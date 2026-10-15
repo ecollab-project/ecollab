@@ -20,6 +20,7 @@ for attempt in range(30):
     except Exception:time.sleep(1)
 else:raise RuntimeError('Adapter did not become ready')
 subprocess.run(['php','scripts/check-code-lab-runner.php'],env=env,check=True,timeout=240)
+subprocess.run(['php','scripts/test-code-lab-languages.php'],env=env,check=True,timeout=600)
 
 
 def execute(source,stdin=''):

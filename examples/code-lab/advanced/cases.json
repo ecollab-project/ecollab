@@ -1,0 +1,47 @@
+[
+  {
+    "name": "weighted-directed",
+    "input": "6 8 0\n0 1 7\n0 2 9\n0 5 14\n1 2 10\n1 3 15\n2 3 11\n2 5 2\n3 4 6\n",
+    "expected_output": "0 7 9 20 26 11\nreachable=6 checksum=317\n"
+  },
+  {
+    "name": "disconnected",
+    "input": "4 1 0\n0 1 5\n",
+    "expected_output": "0 5 INF INF\nreachable=2 checksum=10\n"
+  },
+  {
+    "name": "duplicates-zero-cycle",
+    "input": "4 6 0\n0 1 8\n0 1 0\n1 0 0\n1 2 4\n0 2 9\n2 3 1\n",
+    "expected_output": "0 0 4 5\nreachable=4 checksum=32\n"
+  },
+  {
+    "name": "wide-integers",
+    "input": "5 4 0\n0 1 1000000000\n1 2 1000000000\n2 3 1000000000\n3 4 1000000000\n",
+    "expected_output": "0 1000000000 2000000000 3000000000 4000000000\nreachable=5 checksum=40000000000\n"
+  },
+  {
+    "name": "nonzero-source",
+    "input": "3 2 2\n2 1 3\n1 0 4\n",
+    "expected_output": "7 3 0\nreachable=3 checksum=13\n"
+  },
+  {
+    "name": "single-node",
+    "input": "1 0 0\n",
+    "expected_output": "0\nreachable=1 checksum=0\n"
+  },
+  {
+    "name": "negative-weight",
+    "input": "2 1 0\n0 1 -1\n",
+    "expected_output": "INVALID\n"
+  },
+  {
+    "name": "invalid-vertex",
+    "input": "2 1 0\n0 2 1\n",
+    "expected_output": "INVALID\n"
+  },
+  {
+    "name": "truncated-input",
+    "input": "2 1 0\n0 1\n",
+    "expected_output": "INVALID\n"
+  }
+]
