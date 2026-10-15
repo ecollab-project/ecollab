@@ -1,7 +1,7 @@
 name: Code Lab cgroup v2 sandbox
 on:
   pull_request:
-    paths: ['deploy/code-lab/piston/**', 'scripts/setup-code-lab-piston.sh', 'services/CodeLabRunner.php', 'tests/code-lab-piston*', '.github/workflows/code-lab-piston.yml']
+    paths: ['examples/code-lab/**', 'scripts/test-code-lab-languages.php', 'deploy/code-lab/piston/**', 'scripts/setup-code-lab-piston.sh', 'services/CodeLabRunner.php', 'tests/code-lab-piston*', '.github/workflows/code-lab-piston.yml']
 permissions:
   contents: read
 jobs:

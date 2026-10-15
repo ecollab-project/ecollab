@@ -1,7 +1,7 @@
 name: Code Lab isolation
 on:
   pull_request:
-    paths: ['services/CodeLab*.php', 'API/code-lab/**', 'modules/code-lab/**', 'assets/js/code-lab.js', 'assets/css/code-lab.css', 'tests/code-lab*', 'database/migrations/*code_lab*.sql', 'deploy/code-lab/**', 'scripts/*code-lab*', 'deploy/code-lab/application.env.example', '.github/workflows/code-lab.yml']
+    paths: ['examples/code-lab/**', 'services/CodeLab*.php', 'API/code-lab/**', 'modules/code-lab/**', 'assets/js/code-lab.js', 'assets/css/code-lab.css', 'tests/code-lab*', 'database/migrations/*code_lab*.sql', 'deploy/code-lab/**', 'scripts/*code-lab*', 'deploy/code-lab/application.env.example', '.github/workflows/code-lab.yml']
 permissions:
   contents: read
 jobs:

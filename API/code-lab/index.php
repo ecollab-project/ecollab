@@ -20,6 +20,7 @@ try {
     $service=new CodeLabService(Database::getInstance());$action=$input['action']??'overview';
     $execution=new CodeLabExecutionService(Database::getInstance(),new CodeLabRunner());
     $data=match ($method.':'.$action) {
+        'GET:sample'=>$service->sample($sid,$uid,(string)($input['language']??'')),
         'GET:job'=>$execution->result($sid,$uid,(int)($input['job_id']??0)),
         'POST:run'=>$execution->run($sid,$uid,$input),
         'POST:grade'=>$execution->grade($sid,$uid,$tid),
