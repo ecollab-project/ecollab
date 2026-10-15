@@ -100,3 +100,39 @@ JavaScript and HTML/CSS/JS are no longer offered; historical data is preserved.
 In Playground, **Load test program** loads a graph algorithm and sample stdin
 without saving or executing it. See [advanced test programs](../examples/code-lab/advanced/README.md)
 for all nine fixtures and the VPS command that verifies all four runtimes.
+
+## Code Lab clipboard and Jarred restrictions
+The learner workspace (source, stdin, selected instructions and output) has an
+internal clipboard. Copy/cut stores selected content only in page memory and
+writes an opaque random marker to the system clipboard. Paste into source/stdin
+accepts only the marker belonging to this page's current workspace. Code copied
+from external apps, another Code Lab tab, chat, or an earlier task cannot be
+pasted through normal browser clipboard actions. Copy selection/Paste internal
+buttons also work without clipboard permissions. Switching task/language,
+leaving the workspace or reloading clears this temporary memory.
+
+External paste, paste/drop beforeinput fallbacks and drag/drop into source/stdin
+are blocked. Normal typing, reading, editing, Save draft, compilation, automatic
+grading and submission remain. Download is hidden and guarded for task attempts;
+playground downloads remain available. Task-authoring forms, submission reviews,
+chat, documents and other pages do not receive the clipboard guard.
+
+Jarred's dashboard AI endpoint, chat AI-assist endpoint and Jarred DM endpoint
+reject requests explicitly marked as Code Lab or carrying a Code Lab page
+referrer. This happens before inference/actions (and before persisting a Jarred
+DM). Code Lab exposes no AI generation button. This is deliberately scoped;
+normal Jarred use on other surfaces remains available. Referrers and surface
+labels are browser-supplied context, not proof of a user's intent or location.
+
+This is a browser interaction restriction, NOT VM/kiosk isolation, secure
+proctoring, plagiarism detection or a server proof of code provenance. A user
+can bypass JavaScript with developer tools, forge requests, remove referrer
+context, use another device/tool, take screenshots or retype an answer. No
+clipboard contents are logged and a blocked action does not assign a penalty or
+change a grade. Stronger exam enforcement requires a managed exam environment
+and facilitator review. Do not claim the guard proves that work is original.
+
+Validation includes real Chromium keyboard copy/paste with the system clipboard,
+DOM tests for cut, read-only handling, internal controls, workspace boundaries,
+drop/beforeinput paths and authoring isolation, plus Code Lab-only AI scope tests.
+No new migration or environment variable is needed.

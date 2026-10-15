@@ -9,6 +9,7 @@ require_once dirname(__DIR__, 2) . '/security/rate-limit/RateLimiter.php';
 require_once dirname(__DIR__, 2) . '/services/AiSessionService.php';
 require_once dirname(__DIR__, 2) . '/services/GeminiService.php';
 require_once dirname(__DIR__, 2) . '/services/OllamaService.php';
+require_once dirname(__DIR__, 2) . '/services/CodeLabIntegrityPolicy.php';
 
 header('Content-Type: application/json; charset=utf-8');
 SecurityHeaders::send(isApi: true);
@@ -22,6 +23,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') aiJson(['success'=>false,'error'=>'Method not allowed.'],405);
     AuthMiddleware::verifyCsrf();
     $body = json_decode(file_get_contents('php://input') ?: '', true) ?: [];
+    if (CodeLabIntegrityPolicy::isCodeLab($body,(string)($_SERVER['HTTP_REFERER']??''))) aiJson(['success'=>false,'error'=>CodeLabIntegrityPolicy::AI_MESSAGE],403);
     $sessionId = filter_var($body['session_id'] ?? null, FILTER_VALIDATE_INT);
     $prompt = trim((string)($body['prompt'] ?? ''));
     if (!$sessionId || $sessionId < 1) aiJson(['success'=>false,'error'=>'A valid session_id is required.'],400);
