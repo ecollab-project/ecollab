@@ -1,0 +1,44 @@
+name: Code Lab cgroup v2 sandbox
+on:
+  pull_request:
+    paths: ['deploy/code-lab/piston/**', 'scripts/setup-code-lab-piston.sh', 'services/CodeLabRunner.php', 'tests/code-lab-piston*', '.github/workflows/code-lab-piston.yml']
+permissions:
+  contents: read
+jobs:
+  protocol:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -B tests/code-lab-piston-test.py
+      - run: bash -n scripts/setup-code-lab-piston.sh
+  sandbox:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CODE_LAB_RUNNER_STATE: /tmp/ecollab-code-lab-ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl
+      - name: Prepare private cgroup-v2 sandbox
+        run: |
+          test "$(stat -fc %T /sys/fs/cgroup)" = cgroup2fs
+          mkdir -p "$CODE_LAB_RUNNER_STATE"
+          chmod 700 "$CODE_LAB_RUNNER_STATE"
+          printf '{}\n' > "$CODE_LAB_RUNNER_STATE/profiles.json"
+          docker compose -f deploy/code-lab/piston/compose.yml up -d piston
+          docker compose -f deploy/code-lab/piston/compose.yml run --rm --no-deps adapter python -B /runner/prepare.py > "$CODE_LAB_RUNNER_STATE/profiles.new.json"
+          mv "$CODE_LAB_RUNNER_STATE/profiles.new.json" "$CODE_LAB_RUNNER_STATE/profiles.json"
+          docker compose -f deploy/code-lab/piston/compose.yml up -d adapter
+      - name: Actual compiler and isolation smoke checks
+        run: python3 -B tests/code-lab-piston-live.py
+      - name: Diagnostic status
+        if: failure()
+        run: |
+          docker compose -f deploy/code-lab/piston/compose.yml ps
+          docker compose -f deploy/code-lab/piston/compose.yml logs --tail 50 piston adapter
+      - name: Clean sandbox
+        if: always()
+        run: docker compose -f deploy/code-lab/piston/compose.yml down -v

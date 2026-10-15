@@ -21,7 +21,7 @@ clCheck($a['attempt']['state']==='submitted','A pending run cannot block timely 
 $executor->workOne();$result=$executor->result(1,2,$run['job_id']);clCheck($result['state']==='done'&&$result['result']['stdout']==="42\n",'Run output decoded');
 clReject(fn()=>$executor->result(1,3,$run['job_id']),404,'Other student cannot read run results');
 clCheck($payloads[0]['language_id']==71&&$payloads[0]['enable_network']===false&&!isset($payloads[0]['callback_url']),'Client cannot alter runtime, network or callback');
-clCheck($payloads[0]['cpu_time_limit']===2&&$payloads[0]['wall_time_limit']===8&&$payloads[0]['memory_limit']===262144,'Resource limits enforced in runner payload');
+clCheck($payloads[0]['cpu_time_limit']===2&&$payloads[0]['wall_time_limit']===8&&$payloads[0]['memory_limit']===262144&&$payloads[0]['stack_limit']===65536,'Resource limits enforced in runner payload');
 clCheck($executor->grade(1,2,$tid)['job_id']===$job,'Grading idempotent');$executor->workOne();$grade=$executor->result(1,2,$job);
 clCheck($grade['result']['score']===25&&$grade['result']['passed']===1,'Weighted grading correct');
 clCheck(!str_contains(json_encode($grade),'SECRET')&&!str_contains(json_encode($grade),'private-case'),'Hidden inputs, outputs and compiler errors are never returned');
