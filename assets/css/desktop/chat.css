@@ -2513,6 +2513,9 @@ html.compact-mode .sidebar-section-header {
 }
 
 .chat-input-container {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -2527,6 +2530,9 @@ html.compact-mode .sidebar-section-header {
 }
 
 .chat-input-main {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2568,11 +2574,36 @@ html.compact-mode .sidebar-section-header {
 }
 
 .chat-input-actions {
+  grid-column: 2;
+  grid-row: 1;
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 12px;
-  border-top: 1px solid var(--border);
+  padding: 8px 12px 8px 0;
+}
+
+.chat-input-actions > .input-spacer {
+  display: none;
+}
+
+#voiceRecordBar,
+#voicePreviewBar {
+  grid-column: 1 / -1;
+}
+
+/* Keep the input usable when phone controls cannot fit beside it. */
+@media (max-width: 767px) {
+  .chat-input-container {
+    display: block;
+  }
+
+  .chat-input-actions {
+    padding: 6px 12px;
+  }
+
+  .chat-input-actions > .input-spacer {
+    display: block;
+  }
 }
 
 .input-action-btn {
