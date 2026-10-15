@@ -21,8 +21,8 @@ The setup:
 1. Starts a digest-pinned Piston image on a private Docker network, with a persistent packages volume. Its package-management API is not published to the host/internet.
 2. Installs the newest stable versions *available in Piston's package index* for GCC, Python, Java and Node. This does not imply the newest upstream compiler or every third-party library is available.
 3. Freezes exact runtime versions into `/var/lib/ecollab-code-lab/profiles.json`, with a generated private API token. Repeat deployments preserve these profiles.
-4. Starts a bounded adapter at **127.0.0.1:2358** and backs up the existing `.env` outside the web root. It changes only the three Code Lab runner settings; database, LiveKit, Centrifugo and other settings are preserved, including `.env` ownership and mode.
-5. Runs the five-language smoke checker. Only after every program succeeds does it install/restart `ecollab-code-lab.service`.
+4. Starts a bounded adapter at **127.0.0.1:2358**. It does not expose Piston’s package-management API.
+5. Runs the five-language smoke checker with temporary child-process settings. Only after every program succeeds does it privately back up `.env`, update its three Code Lab settings, and install/restart `ecollab-code-lab.service`. Database, LiveKit, Centrifugo and other settings are preserved, including `.env` ownership and mode.
 
 If anything fails, paste the error output, not `.env` or the private profile/backup contents. A failed smoke check does not enable the classroom worker. If an older worker was already enabled, its existing state should be inspected before retrying. No secret values are printed by the setup/checker.
 

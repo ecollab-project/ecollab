@@ -4,6 +4,10 @@ import json
 import pathlib
 import threading
 import time
+import tempfile
+import subprocess
+import sys
+import stat
 import unittest
 import urllib.error
 import urllib.request
@@ -62,5 +66,26 @@ class BridgeTests(unittest.TestCase):
             with self.assertRaises(urllib.error.HTTPError)as e:urllib.request.urlopen(request)
             self.assertEqual(e.exception.code,404)
         finally:server.shutdown();server.server_close()
+
+class InstallerTests(unittest.TestCase):
+    def test_configuration_backup_preserves_unrelated_values_and_mode(self):
+        script=(ROOT/'scripts/setup-code-lab-piston.sh').read_text()
+        block=script.split('python3 - "$project_path/.env" "$CODE_LAB_RUNNER_STATE" <<\'PY\'\n',1)[1].split('\nPY\n',1)[0]
+        self.assertLess(script.index('# Smoke-test with child-process settings'),script.index('# Only these three Code Lab keys change.'))
+        with tempfile.TemporaryDirectory()as temp:
+            folder=pathlib.Path(temp);app=folder/'public';app.mkdir();state=folder/'private';state.mkdir()
+            env=app/'.env';original='DB_PASSWORD=keep-database\nCENTRIFUGO_TOKEN_SECRET=keep-centrifugo\nLIVEKIT_API_SECRET=keep-livekit\nCODE_LAB_JUDGE0_URL=http://old\n'
+            env.write_text(original);env.chmod(0o640)
+            before=env.stat()
+            (state/'profiles.json').write_text(json.dumps({'token':'test-token-'*8,'profiles':[{'id':10001+i}for i in range(5)]}))
+            subprocess.run([sys.executable,'-c',block,str(env),str(state)],check=True)
+            updated=env.read_text()
+            for line in original.splitlines()[:3]:self.assertIn(line,updated)
+            self.assertIn('CODE_LAB_JUDGE0_URL=http://127.0.0.1:2358',updated)
+            self.assertEqual(stat.S_IMODE(env.stat().st_mode),0o640)
+            self.assertEqual((env.stat().st_uid,env.stat().st_gid),(before.st_uid,before.st_gid))
+            backups=list(state.glob('application-env-before-piston-*'));self.assertEqual(len(backups),1)
+            self.assertEqual(backups[0].read_text(),original)
+            self.assertEqual(stat.S_IMODE(backups[0].stat().st_mode),0o600)
 
 if __name__=='__main__':unittest.main()

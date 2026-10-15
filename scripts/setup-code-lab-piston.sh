@@ -24,6 +24,21 @@ if ! python3 -c 'import json,sys;c=json.load(open(sys.argv[1]));sys.exit(0 if le
  mv "$CODE_LAB_RUNNER_STATE/profiles.new.json" "$CODE_LAB_RUNNER_STATE/profiles.json"
 fi
 "${compose[@]}" up -d --force-recreate adapter
+# Smoke-test with child-process settings before changing the application .env.
+python3 - "$project_path" "$CODE_LAB_RUNNER_STATE" <<'PYSMOKE'
+import json,os,pathlib,subprocess,sys,time,urllib.request
+project=pathlib.Path(sys.argv[1]);conf=json.loads((pathlib.Path(sys.argv[2])/'profiles.json').read_text())
+env=dict(os.environ,CODE_LAB_JUDGE0_URL='http://127.0.0.1:2358',CODE_LAB_JUDGE0_TOKEN=conf['token'],CODE_LAB_LANGUAGE_IDS=json.dumps(dict(zip(['c','cpp','python','java','javascript'],[p['id'] for p in conf['profiles']]))))
+for attempt in range(30):
+ try:
+  request=urllib.request.Request('http://127.0.0.1:2358/languages',headers={'X-Auth-Token':conf['token']})
+  with urllib.request.urlopen(request,timeout=2) as response:json.load(response)
+  break
+ except Exception:time.sleep(1)
+else:raise SystemExit('Adapter did not become ready; application configuration unchanged.')
+subprocess.run(['php',str(project/'scripts/check-code-lab-runner.php'),'--languages'],env=env,check=True,timeout=30)
+subprocess.run(['php',str(project/'scripts/check-code-lab-runner.php')],env=env,check=True,timeout=240)
+PYSMOKE
 # Only these three Code Lab keys change. Preserve ownership/mode and all other .env entries.
 python3 - "$project_path/.env" "$CODE_LAB_RUNNER_STATE" <<'PY'
 import datetime,json,os,pathlib,re,shutil,stat,sys,tempfile
@@ -43,13 +58,6 @@ try:
 finally:
  if os.path.exists(temp):os.unlink(temp)
 PY
-# Known programs only; enabling the classroom worker depends on all checks passing.
-for attempt in $(seq 1 30); do
- if php "$project_path/scripts/check-code-lab-runner.php" --languages >/dev/null 2>&1; then break; fi
- sleep 1
-done
-php "$project_path/scripts/check-code-lab-runner.php" --languages
-php "$project_path/scripts/check-code-lab-runner.php"
 install -m 644 "$project_path/deploy/code-lab/ecollab-code-lab.service" /etc/systemd/system/ecollab-code-lab.service
 systemctl daemon-reload
 systemctl enable ecollab-code-lab
