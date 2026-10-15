@@ -24,6 +24,7 @@ const wait=()=>new Promise(r=>setTimeout(r,15));
  await media.open('emoji',dm,button);d.getElementById('ecMediaPicker').dispatchEvent(new w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert(d.getElementById('ecMediaPicker').hidden);
  await media.open('emoji',dm,button);dm.remove();await wait();assert(d.getElementById('ecMediaPicker').hidden,'Removed DM input closes picker');
  const row=d.createElement('div');row.className='dm-message-bubble';row.textContent='Saved 🚀';d.body.append(row);await wait();assert(row.querySelector('.ec-media-inline'),'New real-time message decorated');
+ const mixed=d.createElement('div');mixed.className='msg-text';mixed.textContent='Well done :ec-sticker:1f680: 🚀';d.body.append(mixed);await wait();assert(mixed.querySelector('.ec-media-sticker'));assert(mixed.textContent.includes('Well done'));assert(mixed.textContent.includes('🚀'));
  assert(urls.every(url=>url==='/assets/media/catalog.json'),'Runtime requests stay on origin');
  const source=fs.readFileSync('assets/js/chat/dm-notifications.js','utf8');assert(source.includes("open('emoji',document.getElementById('dmInputField')"));assert(source.includes("open('sticker',document.getElementById('dmInputField')"));
  dom.window.close();console.log('PASS: search, recents, Unicode preservation, tones, sticker allowlist, code/link exclusions, reduced motion, channel/DM isolation, rich-editor insertion, disabled input, Escape and live messages');

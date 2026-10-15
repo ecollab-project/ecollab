@@ -81,8 +81,8 @@
   const walker=document.createTreeWalker(node,NodeFilter.SHOW_TEXT),texts=[];while(walker.nextNode())texts.push(walker.currentNode);
   for(const text of texts){
    if(text.parentElement.closest('code,pre,a,textarea,script,style,[contenteditable="true"],.ec-media-inline,.ec-media-sticker,.dm-message-time'))continue;
-   const sticker=/^:ec-sticker:([a-f0-9-]{2,80}):$/.exec(text.textContent.trim()),record=sticker&&bySticker.get(sticker[1]);
-   if(record){const wrap=document.createElement('span');wrap.className='ec-media-sticker';wrap.setAttribute('role','img');wrap.setAttribute('aria-label',record.name+' animated sticker');wrap.append(image(record,true));text.replaceWith(wrap);continue;}
+   const matches=[...text.textContent.matchAll(/:ec-sticker:([a-f0-9-]{2,80}):/g)].filter(match=>bySticker.has(match[1]));
+   if(matches.length){const fragment=document.createDocumentFragment();let offset=0;for(const match of matches){fragment.append(document.createTextNode(text.textContent.slice(offset,match.index)));const record=bySticker.get(match[1]),wrap=document.createElement('span');wrap.className='ec-media-sticker';wrap.setAttribute('role','img');wrap.setAttribute('aria-label',record.name+' animated sticker');wrap.append(image(record,true));fragment.append(wrap);offset=match.index+match[0].length;}fragment.append(document.createTextNode(text.textContent.slice(offset)));text.replaceWith(fragment);continue;}
    if(!segmenter)continue;
    const fragment=document.createDocumentFragment();let changed=false;
    for(const {segment} of segmenter.segment(text.textContent)){const emoji=byEmoji.get(normalize(segment));if(!emoji?.image){fragment.append(document.createTextNode(segment));continue;}changed=true;const wrap=document.createElement('span');wrap.className='ec-media-inline';wrap.setAttribute('role','img');wrap.setAttribute('aria-label',emoji.name);const unicode=document.createElement('span');unicode.className='ec-media-unicode';unicode.setAttribute('aria-hidden','true');unicode.textContent=segment;wrap.append(unicode,image(emoji));fragment.append(wrap);}
