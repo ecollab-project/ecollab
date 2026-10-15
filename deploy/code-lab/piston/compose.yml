@@ -1,0 +1,49 @@
+name: ecollab-code-lab
+services:
+  piston:
+    image: ghcr.io/engineer-man/piston@sha256:2f66b7456189c4d713aa986d98eccd0b6ee16d26c7ec5f21b30e942756fd127a
+    restart: unless-stopped
+    privileged: true
+    cgroup: private
+    cpus: 1.0
+    mem_limit: 1536m
+    pids_limit: 256
+    environment:
+      PISTON_MAX_CONCURRENT_JOBS: "1"
+      PISTON_OUTPUT_MAX_SIZE: "16384"
+      PISTON_MAX_PROCESS_COUNT: "64"
+      PISTON_COMPILE_TIMEOUT: "30000"
+      PISTON_RUN_TIMEOUT: "8000"
+      PISTON_COMPILE_CPU_TIME: "10000"
+      PISTON_RUN_CPU_TIME: "2000"
+      PISTON_COMPILE_MEMORY_LIMIT: "536870912"
+      PISTON_RUN_MEMORY_LIMIT: "268435456"
+      PISTON_LOG_LEVEL: WARN
+    volumes:
+      - packages:/piston/packages
+    tmpfs:
+      - /tmp:exec,size=512m
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "2"}
+  adapter:
+    image: python:3.12-slim-bookworm
+    restart: unless-stopped
+    command: [python, -B, /runner/bridge.py]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    cpus: 0.25
+    pids_limit: 32
+    ports: ["127.0.0.1:2358:2358"]
+    volumes:
+      - ./bridge.py:/runner/bridge.py:ro
+      - ./prepare.py:/runner/prepare.py:ro
+      - ${CODE_LAB_RUNNER_STATE:?Set private state directory}/profiles.json:/runner/profiles.json:ro
+    depends_on: [piston]
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "2"}
+volumes:
+  packages:

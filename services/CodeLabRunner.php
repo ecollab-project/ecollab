@@ -43,7 +43,7 @@ final class CodeLabRunner
         $created=$this->request('POST','/submissions?base64_encoded=true&wait=false',[
             'language_id'=>$runtime,'source_code'=>base64_encode($source),'stdin'=>base64_encode($stdin),
             'cpu_time_limit'=>2,'cpu_extra_time'=>0.5,'wall_time_limit'=>8,'memory_limit'=>262144,
-            'stack_limit'=>1048576,'max_processes_and_or_threads'=>64,'max_file_size'=>64,
+            'stack_limit'=>65536,'max_processes_and_or_threads'=>64,'max_file_size'=>64,
             'enable_network'=>false,'enable_per_process_and_thread_time_limit'=>false,'enable_per_process_and_thread_memory_limit'=>false,'number_of_runs'=>1,'redirect_stderr_to_stdout'=>false
         ]);
         $token=$created['token']??'';if(!is_string($token)||!preg_match('/^[a-zA-Z0-9-]{8,100}$/D',$token))throw new RuntimeException('Invalid runner submission token.');

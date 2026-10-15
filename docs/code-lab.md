@@ -1,5 +1,7 @@
 # Server Code Lab
 
+**Ubuntu 24.04 / cgroup v2:** use [the Piston setup](code-lab-piston.md). The Judge0 cgroup v1 deployment below remains an alternative for compatible dedicated hosts.
+
 Chat sidebar → Code Lab uses the selected server. Student/facilitator dashboards link to a server picker. Membership in an active server is required on the page and every API request. Facilitators/admins who belong to that server can publish assignments and practice tasks, view submitted work and manually record scores/feedback. Students, including student server owners, cannot publish or grade tasks.
 
 ## Classroom foundation (migration 054)
