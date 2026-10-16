@@ -285,7 +285,8 @@
 
   async function disconnect() {
     if (!room) return;
-    const previous = room; room = null;
+    const previous = room,wasConnected=activeChannelId!==null; room = null;activeChannelId=null;
+    if(wasConnected)window.EcollabSounds?.play('hop-out');
     try { await previous.disconnect(); } catch (_) {}
     document.querySelectorAll('.livekit-media-track').forEach(el => el.remove());
     room = null;
@@ -314,10 +315,12 @@
     room.on(RoomEvent.ParticipantConnected, participant => {
       console.log('[LiveKit] participant connected:', participant.identity);
       syncParticipant(participant);
+      if(activeChannelId)window.EcollabSounds?.play('hop-in');
     });
     room.on(RoomEvent.ParticipantDisconnected, participant => {
       console.log('[LiveKit] participant disconnected:', participant.identity);
       removeParticipant(participant);
+      if(activeChannelId)window.EcollabSounds?.play('hop-out');
     });
     room.on(RoomEvent.ParticipantMetadataChanged, (_metadata, participant) => {
       if (participant) syncParticipant(participant);
@@ -387,6 +390,7 @@
       refreshParticipantCounts();
     });
     room.on(RoomEvent.Disconnected, () => {
+      if(activeChannelId!==null)window.EcollabSounds?.play('hop-out');
       document.querySelectorAll('.livekit-media-track').forEach(el => el.remove());
       activeChannelId = null;
       if (vcActive) { vcActive=false; disconnectVoice(); }
@@ -399,6 +403,7 @@
 
     await room.connect(auth.url, auth.token);
     activeChannelId = Number(channelId);
+    window.EcollabSounds?.play('hop-in');
 
     // Respect the sidebar microphone choice when entering voice.
     await room.localParticipant.setMicrophoneEnabled(!preferredMicMuted);

@@ -26,14 +26,14 @@
   function announce(c){bus?.postMessage({tabId,key:c.groupId?'group-'+c.groupId:'call-'+c.logId});}
   if(bus)bus.onmessage=({data})=>{if(data.tabId!==tabId&&call?.state==='incoming'&&data.key===(call.groupId?'group-'+call.groupId:'call-'+call.logId))cleanup(call);};
   function ring(c) {
-    c.ringer=new Audio(base+'/assets/sounds/'+(c.state==='incoming'?'incoming-ring.mp3':'ringback.mp3'));
-    c.ringer.loop=true;c.ringer.volume=.5;c.ringer.play().catch(()=>{});
+    c.ringer=window.EcollabSounds?.ring();
     c.timeout=setTimeout(()=>{if(call===c&&['incoming','outgoing'].includes(c.state))end(true);},45000);
   }
-  function stopRing(c){clearTimeout(c.timeout);c.ringer?.pause();c.ringer=null;}
+  function stopRing(c){clearTimeout(c.timeout);c.ringer?.stop();c.ringer=null;}
   function cleanup(c) {
     if(!c)return;
     if(call===c)call=null;
+    if(c.state==='active')window.EcollabSounds?.play('hop-out');
     if(c.room) document.getElementById('ecMediaSettings')?.remove();
     stopRing(c); c.closed=true;
     c.room?.disconnect();
@@ -63,6 +63,8 @@
     const room=new LK.Room({adaptiveStream:true,dynacast:true,audioCaptureDefaults:media().audio(),videoCaptureDefaults:media().video(),disconnectOnPageLeave:true});c.room=room;
     const update=()=>{if(call===c){reconcileAudio(c);render(c);}};
     for(const event of ['ParticipantConnected','ParticipantDisconnected','TrackMuted','TrackUnmuted','LocalTrackPublished','LocalTrackUnpublished','TrackSubscribed'])room.on(LK.RoomEvent[event],update);
+    room.on(LK.RoomEvent.ParticipantConnected,()=>{if(call===c&&c.state==='active')window.EcollabSounds?.play('hop-in');});
+    room.on(LK.RoomEvent.ParticipantDisconnected,()=>{if(call===c&&c.state==='active')window.EcollabSounds?.play('hop-out');});
     room.on(LK.RoomEvent.ActiveSpeakersChanged,()=>{if(call===c)syncSpeaking(c);});
     room.on(LK.RoomEvent.TrackUnsubscribed,track=>{const el=c.audio.get(track);if(el){track.detach(el);el.remove();c.audio.delete(track);}update();});
     room.on(LK.RoomEvent.Reconnecting,()=>{c.message='Reconnecting…';render(c);});
@@ -74,7 +76,7 @@
     if(c.video)try{await room.localParticipant.setCameraEnabled(true,media().video());}catch(e){c.message='Camera unavailable. You joined with audio only.';}
     if(call!==c){room.disconnect();return;}
     try{await media().initialize(room);}catch(e){c.message=e.message;}
-    c.state='active';stopRing(c);announce(c);reconcileAudio(c);render(c);
+    c.state='active';stopRing(c);window.EcollabSounds?.play('hop-in');announce(c);reconcileAudio(c);render(c);
     await room.startAudio().catch(()=>{c.message='Tap the call window to hear audio.';render(c);});
   }
   function make(data){return {...data,deafened:false,minimized:false,expanded:false,previewHidden:false,audio:new Map(),videos:[],message:'',closed:false};}
@@ -216,7 +218,7 @@
     try{const res=await fetch(base+'/API/auth/ws-token.php',{credentials:'same-origin'});if(res.status===401)return;if(!res.ok)throw Error('Signaling unavailable');const data=await res.json();socket=new WebSocket(config.wsUrl);socket.onopen=()=>socket.send(JSON.stringify({type:'auth',ws_token:data.token}));socket.onmessage=e=>{try{const d=JSON.parse(e.data);if(d.type==='auth_ok'){authed=true;reconnect=0;}else handle(d).catch(console.error);}catch(_){}};socket.onclose=()=>{authed=false;clearTimeout(timer);timer=setTimeout(connectSignals,Math.min(30000,2000*2**reconnect++));};socket.onerror=()=>{};}catch(_){timer=setTimeout(connectSignals,10000);}
   }
   window.addEventListener('ecollab-media-settings-changed',()=>{if(call?.room)media().playback(call.room);});
-  window.EcollabCalls={handle,control:action,busy:()=>!!call,get room(){return call?.room;}};
+  window.EcollabCalls={handle,control:action,busy:()=>!!call,get room(){return call?.room;},get deafened(){return !!call?.deafened;}};
   window.startDmCall=start;window.endDmCall=end;
   for(const data of window.__ecollabPendingCalls || []) handle(data).catch(console.error);
   delete window.__ecollabPendingCalls;

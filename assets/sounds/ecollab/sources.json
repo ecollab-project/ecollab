@@ -1,0 +1,27 @@
+{
+  "source_folder": "https://drive.google.com/drive/folders/1d0IwdlUaBLaeK3n4M98tzhXCMx628emu",
+  "supplied_by": "Ecollab project team",
+  "processing": "Original audio duration retained; embedded artwork/metadata removed; Vorbis and MP3 web copies encoded.",
+  "files": [
+    {
+      "sound": "notification",
+      "original_sha256": "7e5b0f3474970350eabfbf2d4fa7b8b43bd9abca677a3da664b32e5375e0e31f"
+    },
+    {
+      "sound": "ring",
+      "original_sha256": "745e6c720ae5bb75fd38655930215bbbe37d6f881de3c203d39c30683ebbb005"
+    },
+    {
+      "sound": "hop-in",
+      "original_sha256": "160fe7d2699eacfe640febee23a167ddd5706a558698eb4469c6d226487604f5"
+    },
+    {
+      "sound": "hop-out",
+      "original_sha256": "3871adcd0a08639bc39881fda4ed7367d809e5f3ca5ee531ab35cf437b13c584"
+    },
+    {
+      "sound": "logo",
+      "original_sha256": "c7368a84d50f757b0e79cb92f471cdc2eff446cc76c223936c5bade924c2112a"
+    }
+  ]
+}

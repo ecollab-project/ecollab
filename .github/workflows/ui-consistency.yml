@@ -26,6 +26,7 @@ jobs:
         run: |
           node tests/ai-dashboard-regression.cjs
           node tests/ui-consistency-regression.cjs
+          node tests/sounds-regression.cjs
           node tests/call-settings-regression.cjs
           node tests/livekit-calls-regression.cjs
           node tests/livekit-voice-regression.cjs
