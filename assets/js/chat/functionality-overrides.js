@@ -146,29 +146,7 @@ window.ECOLLAB_ESC = esc;
   })();
 })();
 
-/* Profile viewer is loaded last so it intentionally overrides the old
- * mini/full profile presentation without touching chat.js or chat-features.js. */
-(function loadProfileView(){
-  if(document.getElementById('profileViewScript')) return;
-  const s=document.createElement('script');
-  s.id='profileViewScript';
-  s.defer=true;
-  s.src=(window.ECOLLAB?.baseUrl||'')+'/assets/js/chat/profile-view.js?v=1';
-  document.head.appendChild(s);
-})();
-
-/* Load the eye-friendly profile theme after profile-view.js injects its
- * runtime style element. !important rules in the stylesheet intentionally
- * win over the profile viewer's inline presentation styles. */
-(function loadProfileViewTheme(){
-  const id='profileViewThemeStyles';
-  if(document.getElementById(id)) return;
-  const link=document.createElement('link');
-  link.id=id;
-  link.rel='stylesheet';
-  link.href=(window.ECOLLAB?.baseUrl||'')+'/assets/css/desktop/profile-view-overrides.css?v=1';
-  document.head.appendChild(link);
-})();
+/* The profile viewer and theme are loaded explicitly by chat.php after legacy overrides. */
 
 /* ───────────────────────────────────────────────────────────────────────────
  * CHAT COLLABORATION ACCESS + DOCUMENTS

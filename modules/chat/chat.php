@@ -1112,7 +1112,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     6. whiteboard.js — collaborative whiteboard
     7. dm-notifications.js — DM badge polling
   -->
-  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=sfx-1-tiptap-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=timeline-1" defer></script>
   <?php if (filter_var(env('CHAT_RESUMABLE_UPLOADS', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-uploads.css?v=uppy-1">
   <script src="<?= BASE_URL ?>/assets/js/chat/resumable-uploads.js?v=uppy-1" defer></script>
@@ -1121,7 +1121,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-composer.css?v=tiptap-1">
   <script src="<?= BASE_URL ?>/assets/js/chat/rich-composer.js?v=tiptap-1" defer></script>
   <?php endif; ?>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=media-1" defer></script>
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-timeline.css?v=1">
+  <script src="<?= BASE_URL ?>/assets/js/chat/timeline.js?v=1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=timeline-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=media-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js?v=media-1" defer></script>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-media.css?v=1">
@@ -1175,7 +1177,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     </button>
   </div>
 
-  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=sfx-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=timeline-1" defer></script>
   <?php if (filter_var(env('CENTRIFUGO_ENABLED', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
   <script src="<?= BASE_URL ?>/assets/js/chat/centrifugo-delivery.js?v=delivery-1" defer></script>
   <?php endif; ?>
@@ -3462,10 +3464,12 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <!-- Compatibility detail modal -->
   <div id="pmCompatModal"></div>
 
-  <script src="<?= BASE_URL ?>/assets/js/chat/functionality-overrides.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/functionality-overrides.js?v=profile-2" defer></script>
   <!-- Thread enhancements are loaded by functionality-overrides.js after threads-v2.js is ready. -->
   <script src="<?= BASE_URL ?>/assets/js/chat/collabs-ui.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/nav-persistence.js?v=2" defer></script>
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/profile-view-overrides.css?v=1">
+  <script id="profileViewScript" src="<?= BASE_URL ?>/assets/js/chat/profile-view.js?v=2" defer></script>
 <script type="module" src="<?= BASE_URL ?>/assets/js/chat/yjs-channel-presence.js?v=yjs-chat-1"></script>
 </body>
 

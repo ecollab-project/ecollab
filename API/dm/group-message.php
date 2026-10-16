@@ -6,6 +6,7 @@ require_once dirname(__DIR__, 2) . '/services/RealtimeOutbox.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 
 require_once dirname(__DIR__, 2) . '/services/NotificationService.php';
+require_once dirname(__DIR__, 2) . '/services/ChatReadService.php';
 
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
@@ -45,14 +46,9 @@ try {
         $memStmt->execute([':gid' => $groupId]);
         $members = $memStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // dm_reads is keyed by (user_id, conversation_id), and conversation_id
-        // is NOT NULL in the current schema. Group conversations therefore cannot
-        // be stored in dm_reads without corrupting/overwriting direct-message read
-        // state. Group read tracking will use a dedicated table in a later schema
-        // change; opening a group must not fail just because no DM read row exists.
-
         $after = filter_input(INPUT_GET, 'after', FILTER_VALIDATE_INT);
         $after = $after !== false && $after !== null && $after >= 0 ? $after : null;
+        $reads=new ChatReadService($db);$boundary=$after===null?$reads->snapshot('group',$groupId,$uid):[];
         $cursorSql = $after !== null ? ' AND dm.id > :after' : '';
         $orderSql = $after !== null ? 'ASC' : 'DESC';
         $msgs = $db->prepare(
@@ -73,7 +69,9 @@ try {
         $messages = $msgs->fetchAll(PDO::FETCH_ASSOC);
         if ($after === null) $messages = array_reverse($messages);
 
+        if(($_GET['read']??'1')!=='0')$reads->mark('group',$groupId,$uid,$messages,$after);
         echo json_encode([
+            'first_unread_id'=>$boundary['first_unread_id']??null,
             'success' => true,
             'group' => $group,
             'members' => $members,

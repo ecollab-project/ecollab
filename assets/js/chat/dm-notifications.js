@@ -134,7 +134,7 @@ async function _syncOpenDmMessages() {
       let cursor = dmDeliveryCursors.get(key) ?? Math.max(0, ...visibleIds);
       for (let page = 0; page < 20; page++) {
         const url = groupId ? `/API/dm/group-message.php?group_id=${groupId}` : `/API/dm/open-conversation.php?partner_id=${partnerId}`;
-        const data = await apiFetch(BASE() + url + '&after=' + cursor);
+        const data = await apiFetch(BASE() + url + '&after=' + cursor+'&read='+(window.EcollabTimeline?.canRead(document.getElementById('dmMessagesArea'))===false?0:1));
         if (groupId !== DM.activeGroupId || partnerId !== DM.activePartnerId) {dmSyncDirty = true; break;}
         const previous = cursor;
         (data.messages || []).forEach(message => {_appendDmMessage(message); cursor = Math.max(cursor, Number(message.id) || 0);});
@@ -795,7 +795,7 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
       </span>`;
   } else {
     title.innerHTML = `
-      <span onclick="openMiniProfile(event,'${_esc(partnerName)}','','${_esc(partnerGradient || '')}','${_esc((partnerName[0]||'?').toUpperCase())}',${partnerId})" style="display:flex;align-items:center;gap:8px;cursor:pointer;min-width:0;flex:1;">
+      <span role="button" tabindex="0" data-profile-user-id="${partnerId}" data-profile-name="${_esc(partnerName)}" style="display:flex;align-items:center;gap:8px;cursor:pointer;min-width:0;flex:1;">
         ${_avatar(partnerName, partnerGradient, 30, partnerAvatarUrl)}
         <span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(partnerName)}</span>
       </span>
@@ -810,7 +810,7 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
   msgArea.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">Loading…</div>';
 
   try {
-    const data = await apiFetch(BASE() + `/API/dm/open-conversation.php?partner_id=${partnerId}`);
+    const data = await apiFetch(BASE() + `/API/dm/open-conversation.php?partner_id=${partnerId}&read=${document.hidden?0:1}`);
     if (DM.activePartnerId !== partnerId || DM.activeGroupId) return;
     DM.activeConvId = Number(data.conversation_id);
 
@@ -818,7 +818,7 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
     const conv = DM.conversations.find(c => c.conversation_id === DM.activeConvId);
     if (conv) { conv.unread_count = 0; _renderDmList(); }
 
-    _renderDmMessages(data.messages || []);
+    _renderDmMessages(data.messages || [],data.first_unread_id);
   } catch (err) {
     msgArea.innerHTML = `<div style="text-align:center;padding:20px;color:#f87171;font-size:13px;">Failed to load: ${_esc(err.message)}</div>`;
   }
@@ -843,7 +843,7 @@ window.openGroupConversation = async function(groupId) {
   msgArea.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">Loading…</div>';
 
   try {
-    const data = await apiFetch(BASE() + `/API/dm/group-message.php?group_id=${groupId}`);
+    const data = await apiFetch(BASE() + `/API/dm/group-message.php?group_id=${groupId}&read=${document.hidden?0:1}`);
     if (DM.activeGroupId !== groupId) return;
     const displayName = data.group?.name || (DM.groups.find(g => g.id === groupId)?.display_name) || 'Group';
 
@@ -855,7 +855,7 @@ window.openGroupConversation = async function(groupId) {
       <button onclick="window.startDmGroupVoice(${groupId}, '${_esc(displayName).replace(/'/g, "\\'")}')" title="Start voice call — anyone in the group can join" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;flex-shrink:0;">📞</button>`;
 
     window.EcollabDmSettings?.opened({ type: 'group', id: groupId, name: displayName, members: data.members || [] });
-    _renderDmMessages(data.messages || []);
+    _renderDmMessages(data.messages || [],data.first_unread_id);
   } catch (err) {
     msgArea.innerHTML = `<div style="text-align:center;padding:20px;color:#f87171;font-size:13px;">Failed to load: ${_esc(err.message)}</div>`;
   }
@@ -908,10 +908,11 @@ function _ensureDmPanel() {
   document.body.appendChild(panel);
 }
 
-function _renderDmMessages(messages) {
+function _renderDmMessages(messages,firstUnreadId=null) {
   const area = document.getElementById('dmMessagesArea');
   if (!area) return;
 
+  window.EcollabTimeline?.reset(area,firstUnreadId);
   if (messages.length === 0) {
     area.innerHTML = `<div style="text-align:center;padding:30px 20px;color:var(--text-muted);font-size:13px;">No messages yet. Say hello! 👋</div>`;
     return;
@@ -919,6 +920,7 @@ function _renderDmMessages(messages) {
 
   window.EcollabDmSettings?.record(messages, true);
   area.innerHTML = messages.map(m => _dmMessageHTML(m)).join('');
+  window.EcollabTimeline?.decorate(area);
   area.scrollTop = area.scrollHeight;
 }
 
@@ -953,12 +955,12 @@ function _dmMessageHTML(m) {
   const grad   = m.sender_gradient || '';
   const avatarUrl = m.sender_avatar_url || '';
   return `
-    <div style="display:flex;flex-direction:${isMine ? 'row-reverse' : 'row'};align-items:flex-end;gap:8px;" data-msg-id="${m.id}">
+    <div style="display:flex;flex-direction:${isMine ? 'row-reverse' : 'row'};align-items:flex-end;gap:8px;" data-msg-id="${m.id}" data-sender-id="${Number(m.sender_id)||0}" data-message-timestamp="${_esc(m.created_at||'')}">
       ${!isMine ? _avatar(name, grad, 26, avatarUrl) : ''}
       <div class="dm-message-bubble" style="max-width:72%;background:${isMine ? 'var(--accent-purple)' : 'var(--bg-tertiary)'};color:${isMine ? '#fff' : 'var(--text-primary)'};padding:8px 12px;border-radius:${isMine ? '12px 12px 4px 12px' : '12px 12px 12px 4px'};font-size:13px;line-height:1.5;word-break:break-word;">
         ${_dmAttachmentHTML(m)}
         ${m.body ? (window.EcollabComposer?.render(m.body) ?? _esc(m.body)) : ''}
-        <div class="dm-message-time" style="font-size:10px;opacity:0.65;margin-top:4px;text-align:${isMine ? 'right' : 'left'};">${_timeAgo(m.created_at)}</div>
+        <div class="dm-message-time" style="font-size:10px;opacity:0.65;margin-top:4px;text-align:${isMine ? 'right' : 'left'};">${_esc(window.EcollabTimeline?.stamp(m.created_at)||_timeAgo(m.created_at))}</div>
       </div>
     </div>`;
 }
@@ -969,10 +971,12 @@ function _appendDmMessage(m) {
   m = { ...m, id: m.id ?? m.message_id };
   window.EcollabDmSettings?.record([m]);
   if (m.id == null || area.querySelector(`[data-msg-id="${CSS.escape(String(m.id))}"]`)) return;
+  const follow=window.EcollabTimeline?.beforeAppend(area,m)??true;
   const el = document.createElement('div');
   el.innerHTML = _dmMessageHTML(m);
   area.appendChild(el.firstElementChild);
-  area.scrollTop = area.scrollHeight;
+  window.EcollabTimeline?.decorate(area);
+  if(follow){area.scrollTop = area.scrollHeight;window.EcollabTimeline?.requestRead(area);}
 }
 
 function _showAiTyping() {
@@ -1279,3 +1283,5 @@ Object.assign(window, {
 
 
 
+
+window.addEventListener('ecollab:visible-chat',({detail})=>{if(detail?.area==='dmMessagesArea'&&!dmSyncBusy)_syncOpenDmMessages();});
