@@ -86,13 +86,25 @@ async function uploadChatAttachment(endpoint, form, retried = false) {
 }
 window.uploadChatAttachment = uploadChatAttachment;
 
+// Resolve API media paths consistently. A stored path can be absolute, app-relative,
+// root-relative, or an HTTPS URL (for example an OAuth profile picture).
 function chatAvatarUrl(url) {
   const raw = String(url || '').trim();
   if (!raw) return '';
-  if (/^(?:https?:)?\/\//i.test(raw) || /^(?:data|blob):/i.test(raw)) return raw;
-  const base = String(window.ECOLLAB?.baseUrl || '').replace(/\/$/, '');
-  if (raw.startsWith('/')) return base + raw;
-  return base + '/' + raw.replace(/^\.\//, '');
+  if (/^(?:data:image\/(?:png|jpeg|webp|gif);base64,|blob:)/i.test(raw)) return raw;
+  try {
+    const appRoot = new URL(String(window.ECOLLAB?.baseUrl || '').replace(/\/+$/, '') + '/', window.location.origin);
+    const resolved = new URL(raw.replace(/^\.\//, ''), raw.startsWith('/') ? window.location.origin : appRoot);
+    return /^https?:$/.test(resolved.protocol) ? resolved.href : '';
+  } catch (_) {
+    return '';
+  }
+}
+
+function chatMediaUrl(path) {
+  const resolved = chatAvatarUrl(path);
+  // Attachments must be ordinary HTTP(S) resources, not data/blob/javascript URLs.
+  return /^https?:\/\//i.test(resolved) ? resolved : '';
 }
 
 const API_BASE = (window.ECOLLAB?.baseUrl || '') + '/API/chat';
@@ -543,8 +555,9 @@ function buildMessageElement(msg) {
   const [c1, c2] = grad.split(',');
   const init = (msg.full_name || msg.username || '?').charAt(0).toUpperCase();
   const avatarUrl = chatAvatarUrl(msg.avatar_url);
-  const avatarBg = avatarUrl ? `url("${escHtml(avatarUrl)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
-  const avatarText = avatarUrl ? '' : init;
+  // Keep an initial visible beneath the avatar image if the network request fails.
+  const avatarBg = `linear-gradient(135deg,${c1},${c2})`;
+  const avatarText = init;
   const isMe = parseInt(msg.sender_id) === parseInt(window.ECOLLAB?.userId);
   const time = formatTime(msg.created_at);
   const edited = msg.is_edited ? '<span class="edited-tag" style="font-size:10px;color:var(--text-muted);margin-left:4px;">(edited)</span>' : '';
@@ -565,10 +578,16 @@ function buildMessageElement(msg) {
   let attachHtml = '';
   if (msg.attachments && msg.attachments.length) {
     msg.attachments.forEach(att => {
+      const mediaUrl = chatMediaUrl(att.file_path || att.url);
+      if (!mediaUrl) {
+        attachHtml += `<div class="msg-attachment-error" role="status">Attachment unavailable: ${escHtml(att.file_name || 'unknown file')}</div>`;
+        return;
+      }
+      const href = escHtml(mediaUrl);
       if (att.mime_type && att.mime_type.startsWith('image/')) {
-        attachHtml += `<img src="${(window.ECOLLAB?.baseUrl || '')}/${escHtml(att.file_path)}" style="max-width:300px;max-height:220px;border-radius:8px;margin-top:6px;display:block;cursor:pointer;" onclick="window.open('${(window.ECOLLAB?.baseUrl || '')}/${escHtml(att.file_path)}','_blank')" alt="${escHtml(att.file_name)}">`;
+        attachHtml += `<a href="${href}" target="_blank" rel="noopener noreferrer" title="Open image in new tab"><img src="${href}" style="max-width:300px;max-height:220px;border-radius:8px;margin-top:6px;display:block;cursor:pointer;" onerror="this.replaceWith(document.createTextNode('Image unavailable'))" alt="${escHtml(att.file_name || 'Image attachment')}"></a>`;
       } else if (att.mime_type?.startsWith('video/')) {
-        attachHtml += `<video controls playsinline preload="metadata" src="${(window.ECOLLAB?.baseUrl || '')}/${escHtml(att.file_path)}" style="max-width:100%;width:300px;border-radius:8px;margin-top:6px;"></video>`;
+        attachHtml += `<video controls playsinline preload="metadata" src="${href}" style="max-width:100%;width:300px;border-radius:8px;margin-top:6px;">Video unavailable.</video>`;
       } else {
         attachHtml += `
           <div style="display:flex;align-items:center;gap:10px;margin-top:6px;padding:10px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;max-width:300px;">
@@ -577,10 +596,11 @@ function buildMessageElement(msg) {
               <div style="font-size:13px;font-weight:600;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(att.file_name)}</div>
               <div style="font-size:11px;color:var(--text-muted);">${formatBytes(att.file_size)}</div>
             </div>
-            <a href="${(window.ECOLLAB?.baseUrl || '')}/${escHtml(att.file_path)}" download="${escHtml(att.file_name)}" style="color:var(--accent-purple);font-size:12px;font-weight:600;text-decoration:none;">↓</a>
+            <a href="${href}" download="${escHtml(att.file_name)}" style="color:var(--accent-purple);font-size:12px;font-weight:600;text-decoration:none;">↓</a>
           </div>
         `;
       }
+
     });
   }
 
@@ -613,6 +633,7 @@ function buildMessageElement(msg) {
     <div class="msg-avatar" role="button" tabindex="0" aria-label="Open profile" data-profile-user-id="${Number(msg.sender_id)||0}">
       <div class="avatar-placeholder" style="width:36px;height:36px;font-size:14px;border-radius:50%;background:${avatarBg};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;position:relative;flex-shrink:0;">
         ${avatarText}
+        ${avatarUrl ? `<img src="${escHtml(avatarUrl)}" alt="" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;" onerror="this.remove()">` : ''}
         <div class="online-dot"></div>
       </div>
     </div>

@@ -32,6 +32,8 @@ jobs:
           COLLABORA_TEST_DSN: mysql:host=127.0.0.1;port=3306;dbname=collabora_test
           COLLABORA_TEST_PASSWORD: test
         run: php tests/collabora-regression.php
+      - name: Fallback PowerPoint template regression
+        run: php tests/blank-presentation-template.php
       - name: Whiteboard permission regression
         env:
           COLLABORA_TEST_DSN: mysql:host=127.0.0.1;port=3306;dbname=collabora_test
