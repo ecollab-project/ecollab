@@ -6441,3 +6441,9 @@ body.vc-active:not(.vc-pip) .sidebar-icons {
 #membersList .member-name { overflow-wrap:anywhere; line-height:1.35; }
 #membersList .member-status { flex-shrink:0; color:var(--text-muted); white-space:nowrap; }
 #membersList .member-status.online { color:var(--accent-green); }
+
+/* Keep participant names clear of the bottom-right microphone indicator. */
+#voiceChannelView:not(.vc-minimized) .vc-speaker-card:not(.has-camera){min-width:0}
+#voiceChannelView:not(.vc-minimized) .vc-speaker-card:not(.has-camera) .sc-name{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:13px;line-height:1.4;white-space:normal;overflow-wrap:anywhere;padding-right:38px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;max-width:100%}
+#voiceChannelView:not(.vc-minimized) .vc-speaker-card:not(.has-camera) .sc-role{padding-right:38px;line-height:1.5}
+#voiceChannelView:not(.vc-minimized) .vc-speaker-card:not(.has-camera) .sc-quality{position:static;height:14px;margin-top:10px}
