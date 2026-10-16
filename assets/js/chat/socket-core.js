@@ -699,7 +699,7 @@ function handleScreenShareNotify(data) {
   }
 }
 
-// ── Voice join / leave ───────��───────────────────────────────────────────────
+// ── Voice join / leave ───────────────────────────────────────────────────────
 function handleVoiceJoin(data) {
   if (window.addVcParticipant && data.user) {
     const isMe          = parseInt(data.user.id) === parseInt(window.ECOLLAB?.userId);
