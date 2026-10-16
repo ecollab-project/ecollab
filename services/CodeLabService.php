@@ -90,7 +90,10 @@ final class CodeLabService
             $this->query('INSERT INTO code_lab_tasks (server_id,created_by,title,instructions,language,kind,starter_code,opens_at,due_at,duration_minutes,grading_mode,runtime_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',[$sid,$uid,$title,$instructions,$language,$kind,$starter,$opens,$due,$duration,$mode,$runtime]);
             $id=(int)$this->db->lastInsertId();
             foreach($cases as$pos=>$case)$this->query('INSERT INTO code_lab_test_cases(task_id,position,input_data,expected_output,hidden,weight) VALUES(?,?,?,?,?,?)',[$id,$pos,$case['input'],$case['expected_output'],(int)$case['hidden'],$case['weight']]);
-            $this->db->commit();return ['id'=>$id];
+            $this->db->commit();
+            require_once __DIR__.'/NotificationService.php';
+            try { foreach($this->query('SELECT user_id FROM server_members WHERE server_id=?',[$sid])->fetchAll(PDO::FETCH_COLUMN)as$recipient)NotificationService::create($this->db,(int)$recipient,$uid,'class_update','New Code Lab task','Your facilitator published a coding activity.','/modules/code-lab/index.php?server_id='.$sid,'💻'); } catch(Throwable $notificationError) { error_log('[code-lab/notifications] delivery unavailable'); }
+            return ['id'=>$id];
         }catch(Throwable $e){if($this->db->inTransaction())$this->db->rollBack();throw $e;}
     }
     /** Unique (task,user) makes double clicks and refreshes resume the same session. */
@@ -146,6 +149,8 @@ final class CodeLabService
         $feedback=self::text($input['feedback']??'',20000,'feedback');$student=(int)($input['student_id']??0);
         $q=$this->query('UPDATE code_lab_attempts SET score=?,feedback=?,reviewed_by=?,reviewed_at=? WHERE task_id=? AND user_id=? AND submitted_at IS NOT NULL',[(float)$score,$feedback,$uid,gmdate('Y-m-d H:i:s',($this->clock)()),$tid,$student]);
         if (!$q->rowCount()) self::fail('Submitted attempt not found.',404);
+        require_once __DIR__.'/NotificationService.php';
+        NotificationService::create($this->db,$student,$uid,'class_update','Code Lab review ready','Your facilitator reviewed your submission.','/modules/code-lab/index.php?server_id='.$sid,'💻');
         return ['reviewed'=>true];
     }
     /** Fixed bundled fixtures only; caller cannot supply a filesystem path. */

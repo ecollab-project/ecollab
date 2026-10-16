@@ -16,6 +16,7 @@ $executionSql=str_replace(['UNIQUE KEY code_lab_case_position','UNIQUE KEY code_
 $executionSql=preg_replace('/\) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;/',');',$executionSql);$db->exec($executionSql);
 $db->exec('CREATE TABLE users(id INTEGER PRIMARY KEY,role TEXT,deleted_at TEXT,full_name TEXT,username TEXT,status TEXT DEFAULT "active");CREATE TABLE servers(id INTEGER PRIMARY KEY,name TEXT,owner_id INTEGER,status TEXT);CREATE TABLE server_members(server_id INTEGER,user_id INTEGER)');
 $db->exec("INSERT INTO users (id,role,deleted_at,full_name,username) VALUES(1,'facilitator',NULL,'Teacher','teacher'),(2,'student',NULL,'Alice','alice'),(3,'student',NULL,'Bob','bob'),(4,'student',NULL,'Other','other'),(5,'student',NULL,'Owner','owner');INSERT INTO servers VALUES(1,'Course',1,'active'),(2,'Other course',1,'active'),(3,'Student owned',5,'active');INSERT INTO server_members VALUES(1,1),(1,2),(1,3),(2,4),(3,5)");
+$db->exec('CREATE TABLE notifications(id INTEGER PRIMARY KEY AUTOINCREMENT,recipient_id INTEGER,actor_id INTEGER,type TEXT,title TEXT,body TEXT,link_url TEXT,icon TEXT,is_read INTEGER DEFAULT 0,created_at TEXT DEFAULT CURRENT_TIMESTAMP)');
 $now=strtotime('2026-10-20T00:00:00Z');$service=new CodeLabService($db,fn()=>$GLOBALS['now']);
 $input=['title'=>'Loops','instructions'=>'Sum inputs','language'=>'python','kind'=>'assignment','starter_code'=>'# Start here','duration_minutes'=>60];
 clReject(fn()=>$service->create(1,2,$input),403,'Students cannot create tasks');

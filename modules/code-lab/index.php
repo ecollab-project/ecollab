@@ -13,10 +13,10 @@ try {
 function clEscape(string $s): string {return htmlspecialchars($s,ENT_QUOTES,'UTF-8');}
 ?><!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Code Lab · eCollab</title>
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/code-lab.css?v=2">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/code-lab.css?v=editor-1">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script><script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
-<script defer src="<?= BASE_URL ?>/assets/js/code-lab.js?v=integrity-1"></script><script defer src="<?= BASE_URL ?>/assets/js/code-lab-integrity.js?v=1"></script></head>
+<script defer src="<?= BASE_URL ?>/assets/js/code-lab-editor.js?v=1"></script><script defer src="<?= BASE_URL ?>/assets/js/code-lab.js?v=editor-1"></script><script defer src="<?= BASE_URL ?>/assets/js/code-lab-integrity.js?v=editor-1"></script></head>
 <body data-mobile-surface="code-lab"><main class="cl-shell" id="codeLab" data-server-id="<?= $sid ?>" data-base="<?= clEscape(BASE_URL) ?>" data-csrf="<?= clEscape($csrf) ?>">
 <header class="cl-header"><div><a class="cl-back" href="<?= BASE_URL ?>/modules/chat/chat.php<?= $sid?'?server_id='.$sid:'' ?>">← Back to messages</a><p class="cl-eyebrow">SERVER TOOLS</p><h1>Code Lab <span class="cl-mark" aria-hidden="true">&lt;/&gt;</span></h1><p class="cl-muted">Your own code. Shared learning.</p></div><label class="cl-server">Server<select id="clServer"><option value="0">Choose a server</option><?php foreach ($servers as $s): ?><option value="<?= (int)$s['id'] ?>" <?= (int)$s['id']===$sid?'selected':'' ?>><?= clEscape($s['name']) ?></option><?php endforeach ?></select></label></header>
 <div id="clStatus" role="status" aria-live="polite"></div>

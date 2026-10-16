@@ -1,0 +1,16 @@
+name: ecollab-similarity
+services:
+  comparison:
+    build: .
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    cpus: 1.0
+    mem_limit: 768m
+    pids_limit: 80
+    ports: ["127.0.0.1:2359:2359"]
+    volumes:
+      - /var/lib/ecollab-similarity/token:/runner/token:ro
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=256m,uid=10001,gid=10001

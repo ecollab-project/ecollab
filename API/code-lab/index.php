@@ -5,6 +5,7 @@ require_once ROOT_PATH.'/database/config/db.php';
 require_once ROOT_PATH.'/security/middleware/AuthMiddleware.php';
 require_once ROOT_PATH.'/services/CodeLabService.php';
 require_once ROOT_PATH.'/services/CodeLabExecutionService.php';
+require_once ROOT_PATH.'/services/CodeLabSimilarityService.php';
 header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
 $user=AuthMiddleware::requireAuth(true);
 $method=$_SERVER['REQUEST_METHOD'];
@@ -21,6 +22,8 @@ try {
     $execution=new CodeLabExecutionService(Database::getInstance(),new CodeLabRunner());
     $data=match ($method.':'.$action) {
         'GET:sample'=>$service->sample($sid,$uid,(string)($input['language']??'')),
+        'POST:similarity'=>(new CodeLabSimilarityService(Database::getInstance()))->queue($sid,$uid,$tid),
+        'GET:similarity'=>(new CodeLabSimilarityService(Database::getInstance()))->latest($sid,$uid,$tid),
         'GET:job'=>$execution->result($sid,$uid,(int)($input['job_id']??0)),
         'POST:run'=>$execution->run($sid,$uid,$input),
         'POST:grade'=>$execution->grade($sid,$uid,$tid),

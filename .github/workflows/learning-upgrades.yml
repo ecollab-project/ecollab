@@ -1,0 +1,55 @@
+name: Learning upgrades
+on:
+  pull_request:
+    paths: ['tools/code-lab-editor/**', 'tools/web-push/**', 'assets/js/code-lab*', 'assets/js/browser-push.js', 'push-sw.js', 'services/WebPushService.php', 'services/CodeLab*.php', 'API/auth/push-subscription.php', 'API/code-lab/**', 'services/AuthService.php', 'modules/chat/settings.php', 'modules/code-lab/**', 'tests/*push*', 'tests/learning-upgrades*', 'tests/code-lab-similarity*', 'deploy/code-lab/similarity/**', 'deploy/learning-upgrades/**', 'scripts/*upgrades*', 'scripts/*push*', 'database/migrations/056*', 'database/migrations/057*', '.github/workflows/learning-upgrades.yml']
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl, mbstring, pdo_sqlite, dom
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          composer install --working-dir=tools/web-push --no-dev --no-interaction --no-plugins
+          php scripts/generate-push-keys.php > /tmp/test-vapid.json
+          php -r '$k=json_decode(file_get_contents("/tmp/test-vapid.json"),true);if(strlen($k["publicKey"])!==87||strlen($k["privateKey"])!==43)exit(1);'
+          php tests/learning-upgrades-regression.php
+          php tests/code-lab-execution-regression.php
+          bash -n scripts/setup-learning-upgrades.sh
+          find API/auth/push-subscription.php services/WebPushService.php services/CodeLabSimilarityService.php scripts/*push*.php scripts/code-lab-similarity-worker.php -type f -exec php -l {} \;
+      - run: |
+          npm ci --prefix tools/code-lab-editor
+          npm run build --prefix tools/code-lab-editor
+          git diff --exit-code -- assets/js/code-lab-editor.js assets/js/code-lab-editor.NOTICES.txt
+          npm install --no-save --ignore-scripts jsdom@30.1.2 playwright@1.58.2
+          node tests/browser-push-regression.cjs
+          node tests/code-lab-ui-regression.cjs
+          npx playwright install --with-deps chromium
+          node tests/code-lab-integrity-browser.cjs
+  actual-jplag:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build private parser
+        run: |
+          curl --fail --location https://github.com/jplag/JPlag/releases/download/v6.3.0/jplag-6.3.0-jar-with-dependencies.jar -o deploy/code-lab/similarity/jplag.jar
+          echo '5f2c21e8b88ed77134effcb3a5a3ab13d188f6a3e16d401387f7479e92db9aa2  deploy/code-lab/similarity/jplag.jar' | sha256sum -c -
+          sudo mkdir -p /var/lib/ecollab-similarity
+          openssl rand -hex 32 | sudo tee /var/lib/ecollab-similarity/token >/dev/null
+          sudo chown 10001:10001 /var/lib/ecollab-similarity/token
+          sudo chmod 400 /var/lib/ecollab-similarity/token
+          docker compose -f deploy/code-lab/similarity/compose.yml up -d --build
+      - name: Parse C, C++, Python and Java with real JPlag
+        run: |
+          sudo env SIMILARITY_URL=http://127.0.0.1:2359/compare SIMILARITY_TOKEN_FILE=/var/lib/ecollab-similarity/token python3 -B tests/code-lab-similarity-live.py
+      - name: Clean parser
+        if: always()
+        run: docker compose -f deploy/code-lab/similarity/compose.yml down -v
