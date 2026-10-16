@@ -35,8 +35,7 @@ function timeAgo(dateStr) {
 }
 
 function formatTime(dateStr) {
-  const d = new Date(dateStr);
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return window.EcollabTimeline?.stamp(dateStr)||new Date(dateStr).toLocaleString([], {weekday:'short',hour:'numeric',minute:'2-digit',hour12:true});
 }
 
 async function apiFetch(url, options = {}, _retried = false) {
@@ -382,6 +381,7 @@ async function switchChannel(el, channelId) {
 
   currentChannelId = channelId;
   window.ECOLLAB.currentChannelId = channelId;
+  window.EcollabTimeline?.reset(document.getElementById('messagesArea'));
   renderMessages([], false);
   if (window.subscribeToChannel) window.subscribeToChannel(channelId);
   oldestMessageId = null;
@@ -419,7 +419,7 @@ async function switchChannel(el, channelId) {
   try {
     const [chanData, msgData] = await Promise.all([
       apiFetch(`${API_BASE}/get-channel.php?id=${channelId}`),
-      apiFetch(`${API_BASE}/get-messages.php?channel_id=${channelId}`),
+      apiFetch(`${API_BASE}/get-messages.php?channel_id=${channelId}&read=${document.hidden?0:1}`),
     ]);
     if (Number(channelId) !== Number(currentChannelId)) return;
 
@@ -475,6 +475,7 @@ async function switchChannel(el, channelId) {
     }
 
     if (msgData.messages) {
+      window.EcollabTimeline?.reset(document.getElementById('messagesArea'),msgData.first_unread_id);
       renderMessages(msgData.messages, false, true);
       hasMoreMessages = msgData.has_more;
       if (msgData.messages.length) {
@@ -518,12 +519,14 @@ function renderMessages(messages, prepend = false, preserveLive = false) {
   if (prepend) {
     const oldScrollHeight = area.scrollHeight;
     area.insertBefore(fragment, area.firstChild);
+    window.EcollabTimeline?.decorate(area);
     // Maintain scroll position
     area.scrollTop += area.scrollHeight - oldScrollHeight;
   } else {
     if (typing) area.insertBefore(fragment, typing);
     else area.appendChild(fragment);
     retained.forEach(el => { if (typing) area.insertBefore(el, typing); else area.appendChild(el); });
+    window.EcollabTimeline?.decorate(area);
     scrollToBottom();
   }
 }
@@ -534,6 +537,7 @@ function buildMessageElement(msg) {
   div.className = 'message-group' + (msg.is_pinned ? ' pinned-msg-highlight' : '');
   div.dataset.msgId = msg.id;
   div.dataset.senderId = msg.sender_id;
+  div.dataset.messageTimestamp = msg.created_at||'';
 
   const grad = msg.avatar_color_gradient || '#3b82f6,#6366f1';
   const [c1, c2] = grad.split(',');
@@ -606,7 +610,7 @@ function buildMessageElement(msg) {
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
       </button>
     </div>
-    <div class="msg-avatar">
+    <div class="msg-avatar" role="button" tabindex="0" aria-label="Open profile" data-profile-user-id="${Number(msg.sender_id)||0}">
       <div class="avatar-placeholder" style="width:36px;height:36px;font-size:14px;border-radius:50%;background:${avatarBg};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;position:relative;flex-shrink:0;">
         ${avatarText}
         <div class="online-dot"></div>
@@ -614,7 +618,7 @@ function buildMessageElement(msg) {
     </div>
     <div class="msg-content">
       <div class="msg-header">
-        <span class="msg-username ${roleClass}" onclick="openMiniProfile(event, '${escHtml(msg.full_name || msg.username)}', '${escHtml(msg.role || 'Student')}', '', '${init}', ${msg.sender_id || 0})">${escHtml(msg.full_name || msg.username)}</span>
+        <span class="msg-username ${roleClass}" role="button" tabindex="0" data-profile-user-id="${Number(msg.sender_id)||0}" data-profile-name="${escHtml(msg.full_name||msg.username)}">${escHtml(msg.full_name || msg.username)}</span>
         ${msg.role === 'facilitator' ? '<span class="msg-badge">FACULTY</span>' : ''}
         ${msg.is_verified ? '<span style="color:#a855f7;font-size:12px;" title="Verified">✓</span>' : ''}
         <span class="msg-timestamp">${time}</span>
@@ -663,13 +667,15 @@ function appendMessageToUI(msg) {
   const typing = document.getElementById('typingIndicator');
   if (!area) return;
   if (area.querySelector(`[data-msg-id="${CSS.escape(String(msg.id))}"]`)) return;
+  const follow=window.EcollabTimeline?.beforeAppend(area,msg)??true;
   const el = buildMessageElement(msg);
   if (typing && typing.parentNode === area) {
     area.insertBefore(el, typing);
   } else {
     area.appendChild(el);
   }
-  scrollToBottom();
+  window.EcollabTimeline?.decorate(area);
+  if(follow){scrollToBottom();window.EcollabTimeline?.requestRead(area);}
   if (Number.isFinite(Number(msg.id))) lastMessageId = Math.max(Number(lastMessageId) || 0, Number(msg.id));
 }
 window.appendMessageToUI = appendMessageToUI;
@@ -1382,7 +1388,7 @@ function renderMembersPanel(members) {
     const memberInitial = memberAvatarUrl ? '' : init;
     const online = chatMemberOnline(m) ? 'online' : '';
     return `
-      <div class="member-item" data-user-id="${m.id || m.user_id || 0}" data-user-grad="${grad}" onclick="openMiniProfile(event, '${escHtml(m.full_name || m.username)}', '${escHtml(m.role || 'Student')}', '', '${init}', ${m.id || m.user_id || 0})">
+      <div class="member-item" data-user-id="${m.id || m.user_id || 0}" data-user-grad="${grad}" role="button" tabindex="0" data-profile-user-id="${Number(m.id||m.user_id)||0}" data-profile-name="${escHtml(m.full_name||m.username)}">
         <div class="user-avatar">
           ${chatSidebarAvatar(m.full_name || m.username, m.avatar_url, grad, 28)}
           <div class="online-dot ${chatMemberOnline(m) ? '' : 'offline'}"></div>

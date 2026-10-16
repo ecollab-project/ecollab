@@ -86,9 +86,11 @@ try {
 
     if ($action === 'list' && $method === 'GET') {
         $stmt = $db->prepare("
-            SELECT g.id, g.name, g.last_message, g.last_msg_at, g.created_at
+            SELECT g.id, g.name, g.last_message, g.last_msg_at, g.created_at,
+                   (SELECT COUNT(*) FROM dm_messages dm WHERE dm.group_id=g.id AND dm.is_deleted=0 AND dm.sender_id<>gm.user_id AND dm.id>COALESCE(cr.last_message_id,0)) AS unread_count
             FROM dm_groups g
             JOIN dm_group_members gm ON gm.group_id = g.id AND gm.user_id = :uid
+            LEFT JOIN chat_read_cursors cr ON cr.user_id=gm.user_id AND cr.scope='group' AND cr.conversation_id=g.id
             ORDER BY COALESCE(g.last_msg_at, g.created_at) DESC
         ");
         $stmt->execute([':uid' => $uid]);

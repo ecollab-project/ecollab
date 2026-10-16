@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
+require_once dirname(__DIR__, 2) . '/services/ChatReadService.php';
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
 $me = AuthMiddleware::requireAuth(true);
@@ -84,16 +85,9 @@ try {
         throw new RuntimeException('Unable to create direct-message conversation');
     }
 
-    $readStmt = $db->prepare(
-        'INSERT INTO dm_reads (user_id, conversation_id, last_read_at)
-         VALUES (:uid, :cid, NOW())
-         ON DUPLICATE KEY UPDATE last_read_at = NOW()'
-    );
-    $readStmt->execute([':uid' => $me['id'], ':cid' => $convId]);
-    $readStmt->closeCursor();
-
     $after = filter_input(INPUT_GET, 'after', FILTER_VALIDATE_INT);
     $after = $after !== false && $after !== null && $after >= 0 ? $after : null;
+    $reads=new ChatReadService($db);$boundary=$after===null?$reads->snapshot('dm',$convId,(int)$me['id']):[];
     $cursorSql = $after !== null ? ' AND dm.id > :after' : '';
     $orderSql = $after !== null ? 'ASC' : 'DESC';
     $msgs = $db->prepare(
@@ -116,12 +110,24 @@ try {
     if ($after === null) $messages = array_reverse($messages);
     $msgs->closeCursor();
 
+    if(($_GET['read']??'1')!=='0'){
+    $readStmt = $db->prepare(
+        'INSERT INTO dm_reads (user_id, conversation_id, last_read_at)
+         VALUES (:uid, :cid, NOW())
+         ON DUPLICATE KEY UPDATE last_read_at = NOW()'
+    );
+    $readStmt->execute([':uid' => $me['id'], ':cid' => $convId]);
+    $readStmt->closeCursor();
+
+    $reads->mark('dm',$convId,(int)$me['id'],$messages,$after);
+    }
     echo json_encode([
         'success' => true,
         'conversation_id' => $convId,
         'partner' => $partner,
         'friend_status' => $friendStatus ?: 'none',
         'messages' => $messages,
+        'first_unread_id' => $boundary['first_unread_id']??null,
         'has_more' => count($messages) >= 50,
     ]);
 } catch (Throwable $e) {

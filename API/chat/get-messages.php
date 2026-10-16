@@ -6,6 +6,7 @@ require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 require_once dirname(__DIR__, 2) . '/services/MessageService.php';
 require_once dirname(__DIR__, 2) . '/services/ChannelService.php';
+require_once dirname(__DIR__, 2) . '/services/ChatReadService.php';
 
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
@@ -82,15 +83,18 @@ try {
         exit;
     }
 
+    $reads=new ChatReadService($db);
+    $boundary=$before===null&&$after===null?$reads->snapshot('channel',(int)$channelId,(int)$user['id']):[];
     $messages = $service->getMessages((int)$channelId, $user['id'], $before, $limit, $after);
 
     // Mark as read
     $cs = new ChannelService();
-    $cs->markRead((int)$channelId, $user['id']);
+    if(($_GET['read']??'1')!=='0'&&$before===null){$reads->mark('channel',(int)$channelId,(int)$user['id'],$messages,$after);$cs->markRead((int)$channelId, $user['id']);}
 
     echo json_encode([
         'success'  => true,
         'messages' => $messages,
+        'first_unread_id' => $boundary['first_unread_id']??null,
         'has_more' => count($messages) >= $limit,
     ]);
 } catch (Throwable $e) {

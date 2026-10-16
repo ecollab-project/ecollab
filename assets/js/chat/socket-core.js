@@ -699,7 +699,7 @@ function handleScreenShareNotify(data) {
   }
 }
 
-// ── Voice join / leave ───────────────────────────────────────────────────────
+// ── Voice join / leave ───────��───────────────────────────────────────────────
 function handleVoiceJoin(data) {
   if (window.addVcParticipant && data.user) {
     const isMe          = parseInt(data.user.id) === parseInt(window.ECOLLAB?.userId);
@@ -841,7 +841,7 @@ function startPollingFallback() {
     try {
       const base = window.ECOLLAB?.baseUrl || '';
       const data = await apiFetch(
-        `${base}/API/chat/get-messages.php?channel_id=${channelId}&after=${lastMessageId}`
+        `${base}/API/chat/get-messages.php?channel_id=${channelId}&after=${lastMessageId}&read=${window.EcollabTimeline?.canRead(document.getElementById('messagesArea'))===false?0:1}`
       );
       if (Number(channelId) !== Number(window.ECOLLAB?.currentChannelId)) return;
       if (data.messages?.length) {
@@ -935,7 +935,7 @@ async function syncDeliveryChannel() {
       if (!channelId) break;
       let cursor = deliveryChannelCursors.get(channelId) ?? Number(lastMessageId || 0);
       for (let page = 0; page < 20; page++) {
-        const data = await apiFetch((window.ECOLLAB.baseUrl || '') + `/API/chat/get-messages.php?channel_id=${channelId}&after=${cursor}&limit=100`);
+        const data = await apiFetch((window.ECOLLAB.baseUrl || '') + `/API/chat/get-messages.php?channel_id=${channelId}&after=${cursor}&limit=100&read=${window.EcollabTimeline?.canRead(document.getElementById('messagesArea'))===false?0:1}`);
         if (channelId !== Number(window.ECOLLAB.currentChannelId)) {deliveryChannelDirty = true; break;}
         const messages = data.messages || [];
         const previous = cursor;
@@ -956,3 +956,5 @@ window.addEventListener('ecollab:delivery-sync', ({detail}) => {
 });
 if (window.EcollabDelivery) syncDeliveryChannel();
 
+
+window.addEventListener('ecollab:visible-chat',({detail})=>{if(detail?.area==='messagesArea'&&!deliveryChannelBusy)syncDeliveryChannel();});

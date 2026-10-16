@@ -128,7 +128,7 @@ try {
             'hobbies'               => implode(', ', $hobbies),
             'study_style'           => ucfirst($profile['study_style'] ?? ''),
             'goals'                 => $goalLabel,
-            'year_level'            => $profile['year_level'] ? 'Year ' . $profile['year_level'] : '',
+            'year_level'            => !empty($profile['year_level']) ? 'Year ' . $profile['year_level'] : '',
             'academic_program'      => $program,
             'academic_program_id'   => isset($profile['academic_program_id']) ? (int)$profile['academic_program_id'] : null,
             'year_level_value'      => isset($profile['year_level']) ? (int)$profile['year_level'] : null,

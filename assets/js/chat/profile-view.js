@@ -45,19 +45,21 @@
       </main>
       <aside class="ec-profile-right"><div class="ec-board-tabs"><div class="ec-board-tab active">Board</div><div class="ec-board-tab">Activity</div><div class="ec-board-tab">Wishlist</div></div><div id="ecProfileBoard"></div><div class="ec-right-section"><div class="ec-right-title">Study Profile</div><div class="ec-profile-stats"><div class="ec-stat"><b id="ecRightStyle">—</b><span>Study Style</span></div><div class="ec-stat"><b id="ecRightGoal">—</b><span>Goal</span></div><div class="ec-stat"><b id="ecRightMatch">—</b><span>Match</span></div></div></div><div class="ec-right-section"><div class="ec-right-title">Study Activity</div><div class="ec-profile-stats"><div class="ec-stat"><b id="ecRightStreak">—</b><span>Streak</span></div><div class="ec-stat"><b id="ecRightHours">—</b><span>Study Hours</span></div><div class="ec-stat"><b id="ecRightMutualCount">—</b><span>Mutual Servers</span></div></div></div><div class="ec-right-section" id="ecRightCompatSection"><div class="ec-right-title">Compatibility</div><div class="ec-right-compat"><div class="ec-compat-head"><span>Match with you</span><span class="ec-compat-score" id="ecRightCompatTotal">—</span></div><div class="ec-compat-bars" id="ecRightCompatBars"></div></div></div><div class="ec-right-section"><div class="ec-right-title">Connection</div><div class="ec-right-connection" id="ecRightConnection"></div></div><div class="ec-right-section"><div class="ec-right-title">Mutual Servers</div><div class="ec-right-server-list" id="ecRightServers"></div></div></aside>
     </div>`;
-    m.onclick=e=>{if(e.target===m)close();};document.getElementById('ecProfileClose').onclick=close;return m;
+    m.onclick=e=>{if(e.target===m)close();};document.getElementById('ecProfileClose').onclick=close;document.getElementById('ecProfileClose').setAttribute('aria-label','Close profile');return m;
   }
-  function close(){const m=document.getElementById('profileCardModal');if(m){m.classList.remove('open');m.style.display='none';}}
+  let profileRequest=0,profileOpener=null;
+  function close(){++profileRequest;profileOpener?.focus();const m=document.getElementById('profileCardModal');if(m){m.classList.remove('open');m.style.display='none';}}
   async function open(target){
+    const request=++profileRequest;profileOpener=document.activeElement;
     const m=ensureModal();if(!m||!target)return;
     m.style.display='flex';m.classList.add('open');
     const loading=['ecProfileName','ecProfileHandle','ecProfileBio'];loading.forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='Loading…';});
     try{
       const param=typeof target==='number'||/^\d+$/.test(String(target))?`user_id=${target}`:`name=${encodeURIComponent(target)}`;
-      const d=await json(`${base()}/API/profile/get-profile.php?${param}`);const p=d.profile||{};window.__ecProfileViewed=p;
+      const d=await json(`${base()}/API/profile/get-profile.php?${param}`);const p=d.profile||{};if(request!==profileRequest)return;window.__ecProfileViewed=p;
       const grad=p.avatar_color_gradient||'#a855f7,#ec4899';
       document.getElementById('ecProfileBanner').style.background=`linear-gradient(135deg,${grad})`;
-      const av=document.getElementById('ecProfileAvatar');const avUrl=avatarUrl(p.avatar_url);if(avUrl){av.style.background=`url("${avUrl.replace(/"/g,'%22')}") center/cover no-repeat`;av.textContent='';}else{av.style.background=`linear-gradient(135deg,${grad})`;av.textContent=(p.full_name||p.username||'?')[0].toUpperCase();}
+      const av=document.getElementById('ecProfileAvatar');const avUrl=avatarUrl(p.avatar_url);if(avUrl){av.style.backgroundImage=`url("${avUrl.replace(/"/g,'%22')}")`;av.textContent='';}else{av.style.background=`linear-gradient(135deg,${grad})`;av.textContent=(p.full_name||p.username||'?')[0].toUpperCase();}
       document.getElementById('ecProfileName').textContent=p.full_name||p.username||'User';
       document.getElementById('ecProfileHandle').textContent=p.username?`@${p.username}`:'';
       const meta=[];if(p.role)meta.push(p.role==='facilitator'?'Facilitator':p.role.charAt(0).toUpperCase()+p.role.slice(1));if(p.year_level)meta.push(p.year_level);if(p.academic_program)meta.push(p.academic_program);document.getElementById('ecProfileMeta').innerHTML=meta.map(x=>`<span class="ec-pill">${esc(x)}</span>`).join('');
@@ -71,7 +73,7 @@
         const msg=document.createElement('button');msg.className='ec-pbtn primary';msg.textContent='💬 Message';msg.onclick=()=>openDM(p.id,p.full_name||p.username,p.avatar_color_gradient||'');actions.appendChild(msg);
         const conn=document.createElement('button');conn.className='ec-pbtn secondary';conn.id='ecConnectBtn';conn.textContent=p.connection_status==='accepted'?'Connected ✓':p.connection_status==='pending'?'⏳ Pending…':'＋ Connect';conn.disabled=p.connection_status==='accepted'||p.connection_status==='pending';if(!conn.disabled)conn.onclick=async()=>{try{const r=await json(`${base()}/API/friendship/send-request.php`,{method:'POST',body:JSON.stringify({addressee_id:Number(p.id)})});conn.textContent=r.status==='accepted'?'Connected ✓':'⏳ Pending…';conn.disabled=true;window.showToast?.(r.status==='accepted'?'Already connected':'Connection request sent!','success');}catch(e){window.showToast?.(e.message||'Could not connect','info');}};actions.appendChild(conn);
       }
-    }catch(e){document.getElementById('ecProfileName').textContent='Profile unavailable';document.getElementById('ecProfileBio').textContent=e.message||'Could not load profile.';}
+    }catch(e){if(request!==profileRequest)return;document.getElementById('ecProfileName').textContent='Profile unavailable';document.getElementById('ecProfileBio').textContent=e.message||'Could not load profile.';}
   }
 
   // Route the profile Message button into the existing Chat DM UI.
@@ -93,6 +95,10 @@
   }
 
   function install(){
+    function activate(event){const el=event.target.closest?.('[data-profile-user-id]');if(!el)return;if(event.type==='keydown'&&!['Enter',' '].includes(event.key))return;event.preventDefault();event.stopPropagation();const id=Number(el.dataset.profileUserId);open(id||el.dataset.profileName||el.textContent.trim());}
+    document.addEventListener('click',activate);document.addEventListener('keydown',activate);
+    document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.getElementById('profileCardModal')?.classList.contains('open'))close();});
+
     window.openFullProfileCard=target=>{const t=target||window._miniProfileUserId||window._miniProfileUsername;return open(t);};
     window.__real_openFullProfileCard=window.openFullProfileCard;
     window.openMiniProfile=function(event,name,role,avatarGrad,initials,userId){
