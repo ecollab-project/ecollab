@@ -1,7 +1,19 @@
 """Actual pinned JPlag parser checks, with no program execution."""
-import importlib.util,json,os,pathlib,urllib.request
+import importlib.util,json,os,pathlib,time,urllib.request,urllib.error
 root=pathlib.Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('bridge',root/'deploy/code-lab/similarity/bridge.py');bridge=importlib.util.module_from_spec(spec);spec.loader.exec_module(bridge)
+if os.environ.get('SIMILARITY_URL'):
+    token=pathlib.Path(os.environ['SIMILARITY_TOKEN_FILE']).read_text().strip()
+    for attempt in range(30):
+        try:
+            probe=urllib.request.Request(os.environ['SIMILARITY_URL'],data=b'{}',headers={'Content-Type':'application/json','X-Auth-Token':token})
+            urllib.request.urlopen(probe,timeout=2)
+        except urllib.error.HTTPError as error:
+            if error.code==422:break
+            raise
+        except (OSError,urllib.error.URLError):pass
+        time.sleep(1)
+    else:raise RuntimeError('Parser did not become ready')
 for language,filename in [('c','main.c'),('cpp','main.cpp'),('python','main.py'),('java','Main.java')]:
     source=(root/'examples/code-lab/advanced'/filename).read_text()
     body={'language':language,'sources':{'attempt_1':source,'attempt_2':source},'base_code':''}
