@@ -1,0 +1,13 @@
+'use strict';
+const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/strict');
+(async()=>{
+const events={},shown=[],opened=[];const self={location:{origin:'https://example.invalid',href:'https://example.invalid/push-sw.js'},addEventListener:(name,fn)=>events[name]=fn,registration:{showNotification:async(title,options)=>shown.push({title,...options})},clients:{claim:async()=>{},matchAll:async()=>[{url:'https://example.invalid/modules/code-lab/index.php',focus:async()=>{throw Error('Must not interrupt a coding session');}}],openWindow:async url=>opened.push(url)},skipWaiting:async()=>{}};
+vm.runInNewContext(fs.readFileSync('push-sw.js','utf8'),{self,URL});
+assert(!events.fetch,'Push must not intercept application requests');let pending;
+events.push({data:{json:()=>({title:'Private title',body:'Secret answer',url:'https://evil.invalid'})},waitUntil:p=>pending=p});await pending;assert.equal(shown[0].title,'Ecollab');assert(!JSON.stringify(shown).includes('Secret'));assert(shown[0].data.url.startsWith('https://example.invalid/'));
+events.notificationclick({notification:{data:shown[0].data,close(){}},waitUntil:p=>pending=p});await pending;assert.equal(opened.length,1);
+// Permission and subscription are only requested by a deliberate button action.
+const {JSDOM}=require('jsdom');const dom=new JSDOM('<section id="browserPushSettings" data-base="https://example.invalid" data-csrf="csrf"><p id="pushDeviceStatus"></p><button id="enablePushDevice"></button><button id="disablePushDevice"></button></section>',{url:'https://example.invalid/modules/chat/settings.php',runScripts:'outside-only'});const w=dom.window;let prompts=0,subscriptions=0,posts=0;
+w.isSecureContext=true;w.PushManager=function(){};w.Notification={requestPermission:async()=>{prompts++;return 'granted';}};const sub={endpoint:'https://fcm.googleapis.com/device',toJSON(){return {endpoint:this.endpoint,keys:{}};},unsubscribe:async()=>true};Object.defineProperty(w.navigator,'serviceWorker',{value:{register:async()=>({active:true,pushManager:{getSubscription:async()=>null,subscribe:async()=>{subscriptions++;return sub;}}})}});
+w.fetch=async(url,options)=>{if(options.method==='POST')posts++;return {ok:true,json:async()=>({configured:true,public_key:'B'.repeat(88),success:true})};};w.eval(fs.readFileSync('assets/js/browser-push.js','utf8'));await new Promise(r=>setTimeout(r,0));assert.equal(prompts,0);assert.equal(subscriptions,0);await w.document.getElementById('enablePushDevice').onclick();assert.equal(prompts,1);assert.equal(subscriptions,1);assert.equal(posts,1);dom.window.close();console.log('PASS: push opt-in, generic payload, same-origin navigation and Code Lab focus protection');
+})().catch(e=>{console.error(e);process.exitCode=1;});

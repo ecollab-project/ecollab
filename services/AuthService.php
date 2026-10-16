@@ -807,6 +807,9 @@ class AuthService {
         if (session_status() === PHP_SESSION_NONE) session_start();
         $userId = $_SESSION['user_id'] ?? null;
         if ($userId) {
+            $pushHash=(string)($_COOKIE['ecollab_push_device']??'');
+            if(preg_match('/^[a-f0-9]{64}$/D',$pushHash)){try{$this->db->prepare('DELETE FROM push_subscriptions WHERE user_id=? AND endpoint_hash=?')->execute([(int)$userId,$pushHash]);}catch(Throwable $e){error_log('[logout] push unsubscribe unavailable');}}
+            setcookie('ecollab_push_device','',['expires'=>time()-3600,'path'=>'/','secure'=>true,'httponly'=>true,'samesite'=>'Lax']);
             $this->db->prepare("UPDATE users SET is_online=0, status='offline', last_seen_at=NOW() WHERE id=:id")
                 ->execute([':id' => $userId]);
             // Clear remember token

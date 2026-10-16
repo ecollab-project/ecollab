@@ -136,3 +136,8 @@ Validation includes real Chromium keyboard copy/paste with the system clipboard,
 DOM tests for cut, read-only handling, internal controls, workspace boundaries,
 drop/beforeinput paths and authoring isolation, plus Code Lab-only AI scope tests.
 No new migration or environment variable is needed.
+
+
+## Editor, similarity review and notifications
+
+See [Learning upgrades](learning-upgrades.md) for CodeMirror, facilitator-only JPlag comparison reports and optional browser push setup.
