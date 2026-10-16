@@ -14,7 +14,8 @@ function resolver(source, from, until, exportName, baseUrl = 'https://ecollab.te
   const end = source.indexOf(until, start);
   assert.ok(start >= 0 && end > start, 'resolver must remain discoverable');
   const sandbox = { URL, window: { ECOLLAB: { baseUrl }, location: { origin: 'https://ecollab.tech' } } };
-  vm.runInNewContext(source.slice(start, end) + '\nthis.resolved = ' + exportName + ';', sandbox);
+  // The profile resolver depends on the module-level base() helper.
+  vm.runInNewContext('const base = () => window.ECOLLAB.baseUrl;\n' + source.slice(start, end) + '\nthis.resolved = ' + exportName + ';', sandbox);
   return sandbox.resolved;
 }
 
