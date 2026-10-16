@@ -291,6 +291,9 @@ function _onWsNotification(data) {
 
 /** Add a notification item to the in-memory list + update badge + dropdown */
 function _addInlineNotification(notif) {
+  if(notif.id&&NOTIF.items.some(item=>String(item.id)===String(notif.id)))return;
+  const category={connection_request:'notification_connections',connection_accepted:'notification_connections',class_update:'notification_announcements',announcement:'notification_announcements',mention:'notification_mentions',reply:'notification_replies',thread:'notification_threads',reaction:'notification_reactions',match:'notification_matches'}[notif.type]||'notification_messages';
+  if(typeof showDesktopNotification==='function')showDesktopNotification(category,notif.title||'Ecollab notification',String(notif.body||'').slice(0,100));
   NOTIF.items.unshift({
     id:         notif.id || Date.now(),
     type:       notif.type,
