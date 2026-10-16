@@ -9,7 +9,15 @@
     if(!r.ok||d.success===false) throw new Error(d.error||d.message||`Request failed (${r.status})`);
     return d;
   }
-  function avatarUrl(url){const raw=String(url||'').trim();if(!raw)return '';if(/^(?:https?:)?\/\//i.test(raw)||/^(?:data|blob):/i.test(raw))return raw;return base()+'/'+raw.replace(/^\//,'');}
+  function avatarUrl(url){
+    const raw=String(url||'').trim();if(!raw)return '';
+    if(/^(?:data:image\/(?:png|jpeg|webp|gif);base64,|blob:)/i.test(raw))return raw;
+    try{
+      const appRoot=new URL(String(base()||'').replace(/\/+$/,'')+'/',window.location.origin);
+      const resolved=new URL(raw.replace(/^\.\//,''),raw.startsWith('/')?window.location.origin:appRoot);
+      return /^https?:$/.test(resolved.protocol)?resolved.href:'';
+    }catch(_){return '';}
+  }
   function ensureStyles(){
     if(document.getElementById('ec-profile-view-styles')) return;
     const s=document.createElement('style');s.id='ec-profile-view-styles';s.textContent=`
@@ -59,7 +67,15 @@
       const d=await json(`${base()}/API/profile/get-profile.php?${param}`);const p=d.profile||{};if(request!==profileRequest)return;window.__ecProfileViewed=p;
       const grad=p.avatar_color_gradient||'#a855f7,#ec4899';
       document.getElementById('ecProfileBanner').style.background=`linear-gradient(135deg,${grad})`;
-      const av=document.getElementById('ecProfileAvatar');const avUrl=avatarUrl(p.avatar_url);if(avUrl){av.style.backgroundImage=`url("${avUrl.replace(/"/g,'%22')}")`;av.textContent='';}else{av.style.background=`linear-gradient(135deg,${grad})`;av.textContent=(p.full_name||p.username||'?')[0].toUpperCase();}
+      const av=document.getElementById('ecProfileAvatar');const avUrl=avatarUrl(p.avatar_url);
+      av.style.background=`linear-gradient(135deg,${grad})`;
+      av.textContent=(p.full_name||p.username||'?').charAt(0).toUpperCase();
+      if(avUrl){
+        const photo=new Image();photo.alt='';photo.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
+        photo.onload=()=>{if(request!==profileRequest)return;av.textContent='';av.appendChild(photo);};
+        // Keep the initial visible when an old or inaccessible avatar URL fails.
+        photo.onerror=()=>{};photo.src=avUrl;
+      }
       document.getElementById('ecProfileName').textContent=p.full_name||p.username||'User';
       document.getElementById('ecProfileHandle').textContent=p.username?`@${p.username}`:'';
       const meta=[];if(p.role)meta.push(p.role==='facilitator'?'Facilitator':p.role.charAt(0).toUpperCase()+p.role.slice(1));if(p.year_level)meta.push(p.year_level);if(p.academic_program)meta.push(p.academic_program);document.getElementById('ecProfileMeta').innerHTML=meta.map(x=>`<span class="ec-pill">${esc(x)}</span>`).join('');
