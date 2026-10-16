@@ -643,7 +643,7 @@ function handleThreadReply(data) {
 // Every notification_* setting previously saved correctly but had nothing
 // anywhere that actually checked it — no desktop notification, no sound, for
 // messages or mentions. This is the first real consumer of those settings.
-let _notifAudio = null;
+
 
 function _notifEnabled(kind) {
   const s = window._userSettings;
@@ -663,13 +663,8 @@ function showDesktopNotification(kind, title, body) {
     } catch (e) { /* ignore unsupported/blocked notifications */ }
   }
 
-  if (_notifEnabled('notification_sound')) {
-    try {
-      if (!_notifAudio) _notifAudio = new Audio((window.ECOLLAB?.baseUrl || '') + '/assets/sounds/notification.mp3');
-      _notifAudio.currentTime = 0;
-      _notifAudio.play().catch(() => {}); // browsers block autoplay until first user interaction
-    } catch (e) { /* ignore */ }
-  }
+  if (_notifEnabled('notification_sound')) window.EcollabSounds?.play('notification');
+
 }
 window.showDesktopNotification = showDesktopNotification;
 

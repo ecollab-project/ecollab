@@ -1112,7 +1112,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     6. whiteboard.js — collaborative whiteboard
     7. dm-notifications.js — DM badge polling
   -->
-  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=tiptap-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=sfx-1-tiptap-1" defer></script>
   <?php if (filter_var(env('CHAT_RESUMABLE_UPLOADS', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-uploads.css?v=uppy-1">
   <script src="<?= BASE_URL ?>/assets/js/chat/resumable-uploads.js?v=uppy-1" defer></script>
@@ -1128,7 +1128,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <script src="<?= BASE_URL ?>/assets/js/chat/media-picker.js?v=1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=call-taskbar-timer-1" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.22.3/dist/livekit-client.umd.min.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/livekit-voice.js?v=call-taskbar-timer-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/livekit-voice.js?v=sfx-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/whiteboard.js" defer></script>
   <!-- ── Private Channel Manager Modal ────────────────────────────────── -->
   <div id="privateChannelManagerModal" style="display:none!important;position:fixed;inset:0;z-index:11000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this)closePrivateChannelManager()">

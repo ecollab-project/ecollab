@@ -17,7 +17,7 @@
   }
   let prefs=normalize(saved), applying=false;
   const accountKeys={input_device:'microphone',output_device:'speaker',noise_suppression:'noise',echo_cancellation:'echo',auto_gain_control:'gain',output_volume:'volume'};
-  function fromAccount(settings){const value={};for(const [key,local] of Object.entries(accountKeys)){if(settings[key]!==undefined)value[local]=settings[key];}prefs=normalize({...prefs,...value});decorate();}
+  function fromAccount(settings){window._userSettings={...window._userSettings,...settings};const value={};for(const [key,local] of Object.entries(accountKeys)){if(settings[key]!==undefined)value[local]=settings[key];}prefs=normalize({...prefs,...value});decorate();}
   window.addEventListener('ecollab:settings-applied',e=>fromAccount(e.detail||{}));
   const base=window.ECOLLAB_CALLS_CONFIG?.baseUrl||window.ECOLLAB_BASE||'';
   const ready=(typeof fetch==='function'?fetch(base+'/API/profile/settings.php',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(d=>{if(d?.settings)fromAccount(d.settings);}):Promise.resolve()).catch(()=>{});
