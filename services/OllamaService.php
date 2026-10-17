@@ -10,6 +10,21 @@ final class OllamaService
     {
         $this->baseUrl = rtrim($baseUrl ?: (getenv('OLLAMA_URL') ?: 'http://127.0.0.1:11434'), '/');
         $this->model = $model ?: (getenv('OLLAMA_MODEL') ?: 'qwen3:1.7b');
+        $parts = parse_url($this->baseUrl);
+        if (!$parts || ($parts['scheme'] ?? '') !== 'http' || !in_array($parts['host'] ?? '', ['127.0.0.1', 'localhost', '[::1]'], true)
+            || !in_array($parts['path'] ?? '', ['', '/'], true) || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment'])) {
+            throw new InvalidArgumentException('Ollama must use a local HTTP endpoint.');
+        }
+    }
+
+    /** Load the local model without reading a conversation or generating a reply. */
+    public function warmUp(): array
+    {
+        $started = microtime(true);
+        $data = $this->requestChat(['model'=>$this->model,'messages'=>[],'stream'=>false,'keep_alive'=>'10m',
+            'options'=>['num_ctx'=>4096,'num_thread'=>max(1,min(2,(int)(getenv('OLLAMA_NUM_THREADS') ?: 1)))]]);
+        return ['elapsed_ms'=>(int)round((microtime(true)-$started)*1000),
+            'load_ms'=>(int)round(($data['load_duration']??0)/1000000)];
     }
 
     public function chatWithTools(array $messages, string $systemPrompt, array $tools, callable $executor, int $maxTokens = 400, int $maxRounds = 3): array
@@ -40,7 +55,7 @@ final class OllamaService
                 'think' => false,
                 'options' => ['temperature' => 0.3, 'num_thread' => max(1, min(2, (int)(getenv('OLLAMA_NUM_THREADS') ?: 1))),
                 'num_ctx' => 4096,
-                'num_predict' => max(1, $maxTokens)],
+                'num_predict' => max(1, min(1024, $maxTokens))],
             ];
             $data = $this->requestChat($payload);
             $inputTokens += (int)($data['prompt_eval_count'] ?? 0);
@@ -99,6 +114,8 @@ final class OllamaService
             $ch = curl_init($this->baseUrl . '/api/chat');
             curl_setopt_array($ch, [
                 CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => false, CURLOPT_PROXY => '',
+                CURLOPT_PROTOCOLS => CURLPROTO_HTTP,
                 CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
                 CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
                 CURLOPT_CONNECTTIMEOUT => 5, CURLOPT_TIMEOUT => 90,
@@ -145,7 +162,7 @@ final class OllamaService
                 'temperature' => 0.25,
                 'num_thread' => max(1, min(2, (int)(getenv('OLLAMA_NUM_THREADS') ?: 1))),
                 'num_ctx' => 4096,
-                'num_predict' => max(1, $maxTokens),
+                'num_predict' => max(1, min(1024, $maxTokens)),
             ],
         ];
 

@@ -41,7 +41,7 @@ class CSRF {
             ?? '';
         $stored = $_SESSION[self::TOKEN_KEY] ?? '';
 
-        if ($stored === '' || !hash_equals($stored, $submitted)) {
+        if (!is_string($stored) || !is_string($submitted) || $stored === '' || $submitted === '' || !hash_equals($stored, $submitted)) {
             http_response_code(403);
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'error' => 'Invalid security token. Please refresh the page and try again.']);

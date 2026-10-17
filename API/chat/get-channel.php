@@ -10,6 +10,9 @@ require_once dirname(__DIR__, 2) . '/services/ChannelService.php';
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
 $user = AuthMiddleware::requireAuth(true);
+// These endpoints write no session data; release the per-account lock before DB work.
+session_write_close();
+header('Cache-Control: no-store, private');
 
 try {
     $channelId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
@@ -53,20 +56,6 @@ try {
     if ($hasAccess) {
         $service->markRead((int)$channelId, $user['id']);
     }
-
-    // Auto-create access requests table if needed
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS channel_access_requests (
-            id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            channel_id   INT UNSIGNED    NOT NULL,
-            user_id      BIGINT UNSIGNED NOT NULL,
-            status       ENUM('pending','accepted','declined') NOT NULL DEFAULT 'pending',
-            requested_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            resolved_at  DATETIME NULL,
-            PRIMARY KEY (id),
-            UNIQUE KEY uq_channel_user (channel_id, user_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    ");
 
     // Access state was resolved before loading channel content.
 

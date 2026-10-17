@@ -10,6 +10,9 @@ require_once dirname(__DIR__, 2) . '/services/ChannelService.php';
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
 $user = AuthMiddleware::requireAuth(true);
+// These endpoints write no session data; release the per-account lock before DB work.
+session_write_close();
+header('Cache-Control: no-store, private');
 
 try {
     $serverId = filter_input(INPUT_GET, 'server_id', FILTER_VALIDATE_INT);

@@ -11,6 +11,9 @@ require_once dirname(__DIR__, 2) . '/services/ChatReadService.php';
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
 $user = AuthMiddleware::requireAuth(true);
+// These endpoints write no session data; release the per-account lock before DB work.
+session_write_close();
+header('Cache-Control: no-store, private');
 
 try {
     $channelId = filter_input(INPUT_GET, 'channel_id', FILTER_VALIDATE_INT);
@@ -100,6 +103,6 @@ try {
 } catch (Throwable $e) {
     $code = ($e->getCode() >= 400 && $e->getCode() < 600) ? $e->getCode() : 500;
     http_response_code($code);
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(['error' => $code < 500 ? $e->getMessage() : 'Server error']);
 }
 
