@@ -10,33 +10,12 @@ require_once dirname(__DIR__, 2) . '/services/NotificationService.php';
 header('Content-Type: application/json; charset=utf-8');
 AuthMiddleware::startSession();
 $me = AuthMiddleware::requireAuth(true);
+session_write_close();
+header('Cache-Control: no-store, private');
 
 try {
     $db = Database::getInstance();
-    $tableStmt = $db->query("SHOW TABLES LIKE 'notifications'");
-    $tableExists = (bool)$tableStmt->fetchColumn();
-    $tableStmt->closeCursor();
-
-    if (!$tableExists) {
-        echo json_encode(['success'=>true,'notifications'=>[],'unread_count'=>0]);
-        exit;
-    }
-
-    // recipient_id is the canonical Ecollab notification recipient column.
-    // Migration 031 converts legacy user_id schemas before this endpoint relies
-    // on the column.
-    $columnsStmt = $db->query("SHOW COLUMNS FROM notifications");
-    $columns = [];
-    foreach ($columnsStmt->fetchAll(PDO::FETCH_ASSOC) as $column) {
-        $columns[$column['Field']] = true;
-    }
-    $columnsStmt->closeCursor();
-
-    if (!isset($columns['recipient_id'])) {
-        echo json_encode(['success'=>true,'notifications'=>[],'unread_count'=>0]);
-        exit;
-    }
-
+    // Canonical schema is installed by migration 031; avoid metadata queries on every poll.
     NotificationService::recoverMissedCalls($db,(int)$me['id']);
 
     $offset = max(0,(int)($_GET['offset'] ?? 0));

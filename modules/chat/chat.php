@@ -1129,7 +1129,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js?v=media-1" defer></script>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-media.css?v=1">
   <script src="<?= BASE_URL ?>/assets/js/chat/media-picker.js?v=settings-speed-1" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=call-taskbar-timer-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=request-hardening-1" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.22.3/dist/livekit-client.umd.min.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/livekit-voice.js?v=sfx-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/whiteboard.js" defer></script>

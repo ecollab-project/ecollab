@@ -8,6 +8,8 @@ require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
 $me = AuthMiddleware::requireAuth(true);
+session_write_close();
+header('Cache-Control: no-store, private');
 
 try {
     $db = Database::getInstance();

@@ -1355,7 +1355,7 @@ function _reportVoiceStatus(action, channelId) {
   fd.append('action', action === 'join' ? 'join_voice' : 'leave_voice');
   if (channelId) fd.append('channel_id', channelId);
   fd.append('server_id', window.ECOLLAB?.currentServerId || '');
-  fetch(`${base}/API/chat/active-now.php`, { method: 'POST', body: fd }).catch(() => { });
+  fetch(`${base}/API/chat/active-now.php`, { method: 'POST', headers: { 'X-CSRF-Token': window.ECOLLAB?.csrfToken || '' }, body: fd }).catch(() => { });
 }
 
 // ── WebRTC: create peer connection for a remote user ─────────────────────

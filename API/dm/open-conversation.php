@@ -8,6 +8,8 @@ require_once dirname(__DIR__, 2) . '/services/UserPreferences.php';
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
 $me = AuthMiddleware::requireAuth(true);
+session_write_close();
+header('Cache-Control: no-store, private');
 $partnerId = (int)($_GET['partner_id'] ?? 0);
 
 if (!$partnerId || $partnerId === (int)$me['id']) {
