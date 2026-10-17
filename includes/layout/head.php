@@ -39,7 +39,8 @@ if (!defined('BASE_URL')) {
 
     <!-- Applies saved appearance/accessibility settings site-wide, not just
          on the settings page itself -->
-    <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js" defer></script>
+    <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js?v=3" defer></script>
+<?php require_once ROOT_PATH.'/includes/layout/color-theme.php'; ?>
 </head>
 
 <body class="<?= htmlspecialchars($bodyClass, ENT_QUOTES, 'UTF-8') ?>">

@@ -117,6 +117,7 @@ html,body,#placeholder{margin:0;width:100%;height:100%;overflow:hidden;font-fami
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script>
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
 <script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
+<?php require_once ROOT_PATH.'/includes/layout/color-theme.php'; ?>
 </head>
 <body data-mobile-surface="coworkspace">
 <div class="top"><a href="<?= BASE_URL ?>/modules/collaboration/coworkspaces.php?channel_id=<?= $channelId ?><?= $workspace ? '&workspace_id=' . (int)$workspace['id'] : '' ?>">← Back</a><strong><?= htmlspecialchars((string)$doc['title']) ?></strong><span>• <?= htmlspecialchars((string)$channel['name']) ?></span><?php if ($workspace): ?><span>• <?= htmlspecialchars((string)$workspace['name']) ?></span><?php endif; ?></div>

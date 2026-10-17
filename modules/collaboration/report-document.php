@@ -18,6 +18,7 @@ header('Cache-Control: no-store');
 <style>body{margin:0;background:#0f172a;color:#e2e8f0;font:16px system-ui}main{max-width:580px;margin:40px auto;padding:24px}label{display:block;margin:20px 0 8px}select,textarea,button{box-sizing:border-box;font:inherit;border-radius:8px;padding:12px;border:1px solid #475569}select,textarea{width:100%;background:#1e293b;color:inherit}textarea{min-height:150px}button{margin-top:20px;background:#818cf8;color:#111827;cursor:pointer}a{color:#a5b4fc}button:disabled{opacity:.6}</style><link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
 <script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script>
+<?php require_once ROOT_PATH.'/includes/layout/color-theme.php'; ?>
 </head>
 <body data-mobile-surface="forms"><main><h1>Report document</h1><p><?=reportEscape($document['title'])?></p><p>Reports are reviewed by this server’s moderators. The document remains open in your original tab.</p>
 <?php if ((int)$document['created_by'] === (int)$user['id']): ?><p>You cannot report your own document.</p><?php else: ?>

@@ -30,7 +30,7 @@ $initials = strtoupper(mb_substr($firstName, 0, 1));
   <title>Find Your Communities – <?= APP_NAME ?></title>
   <meta name="robots" content="noindex,nofollow">
   <meta name="csrf-token" content="<?= htmlspecialchars(CSRF::token(), ENT_QUOTES, 'UTF-8') ?>">
-  <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js?v=3" defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -41,6 +41,7 @@ $initials = strtoupper(mb_substr($firstName, 0, 1));
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script>
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
 <script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
+<?php require_once ROOT_PATH.'/includes/layout/color-theme.php'; ?>
 </head>
 <body data-mobile-surface="forms">
 

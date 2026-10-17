@@ -5,6 +5,8 @@ require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 
+require_once dirname(__DIR__, 2) . '/services/ColorPaletteService.php';
+
 header('Content-Type: application/json; charset=utf-8');
 AuthMiddleware::startSession();
 $user = AuthMiddleware::requireAuth(true);
@@ -13,7 +15,7 @@ $userId = (int)$user['id'];
 
 $defaults = [
     'connection_requests'=>1,'direct_messages'=>1,'activity_status'=>1,'read_receipts'=>1,'screenshot_alerts'=>1,'ai_matching'=>1,
-    'profile_visibility'=>'everyone','avatar_gradient'=>'#a855f7,#ec4899','theme'=>'dark','compact_mode'=>0,'reduce_motion'=>0,
+    'profile_visibility'=>'everyone','avatar_gradient'=>'#a855f7,#ec4899','theme'=>'dark','color_palette'=>ColorPaletteService::DEFAULT,'compact_mode'=>0,'reduce_motion'=>0,
     'high_contrast'=>0,'screen_reader_mode'=>0,'notification_desktop'=>1,'notification_messages'=>1,'notification_mentions'=>1,
     'notification_matches'=>1,'notification_sound'=>1,'input_device'=>null,'output_device'=>null,'mic_volume'=>100,'output_volume'=>100,
     'noise_suppression'=>1,'echo_cancellation'=>1,'auto_gain_control'=>1,
@@ -54,6 +56,7 @@ try {
     foreach ($allowed as $key) {
         if (!array_key_exists($key,$body)) continue;
         $value=$body[$key];
+        if ($key==='color_palette' && (!is_string($value) || !ColorPaletteService::valid($value))) { http_response_code(422); echo json_encode(['error'=>'Unknown color palette']); exit; }
         if (is_int($defaults[$key])) {
             $value=(int)(bool)$value;
             if (in_array($key,['mic_volume','output_volume','input_sensitivity'],true)) $value=max(0,min(100,(int)$body[$key]));
