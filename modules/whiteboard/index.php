@@ -21,7 +21,7 @@ $csrf = AuthMiddleware::csrfToken();
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Ecollab Whiteboard</title>
     <meta name="csrf-token" content="<?= htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8') ?>">
-    <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js" defer></script>
+    <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js?v=3" defer></script>
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/whiteboard.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/whiteboard-mobile.css">
     <style>
@@ -111,6 +111,7 @@ $csrf = AuthMiddleware::csrfToken();
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
 <script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script>
+<?php require_once ROOT_PATH.'/includes/layout/color-theme.php'; ?>
 </head>
 
 <body data-mobile-surface="whiteboard">

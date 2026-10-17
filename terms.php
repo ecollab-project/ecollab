@@ -20,6 +20,7 @@ h1{font-size:30px;margin:0 0 6px}h2{font-size:18px;margin:0 0 12px}h3{font-size:
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
 <script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script>
+<?php require_once ROOT_PATH.'/includes/layout/color-theme.php'; ?>
 </head>
 <body data-mobile-surface="policy">
 <header class="top"><div class="brand"><span>◆</span> eCollab</div><a class="back" href="<?= htmlspecialchars(BASE_URL,ENT_QUOTES) ?>/modules/auth/signup.php">← Back to Sign Up</a></header>

@@ -76,6 +76,7 @@ body{margin:0;background:#0d1118;color:#f5f7fb;font-family:Inter,system-ui,sans-
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script>
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
 <script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
+<?php require_once ROOT_PATH.'/includes/layout/color-theme.php'; ?>
 </head><body data-mobile-surface="coworkspace"><div class="wrap">
 <header class="top"><div><a href="<?= BASE_URL ?>/modules/student/dashboard.php">← Back to Dashboard</a><h1>🤝 Coworkspaces & Resources</h1><p class="muted">Choose any server you belong to. Workspaces and shared files are server-wide.</p></div><a class="btn" href="<?= BASE_URL ?>/modules/chat/chat.php<?= $serverId?'?server_id='.$serverId:'' ?>">💬 Open Chat</a></header>
 <div class="layout"><aside class="panel"><strong>My Servers</strong><?php foreach($servers as $s): ?><a class="server <?= (int)$s['id']===$serverId?'active':'' ?>" href="?server_id=<?= (int)$s['id'] ?>"><?= htmlspecialchars($s['icon_emoji']?:'💬') ?> <?= htmlspecialchars($s['name']) ?><small><?= (int)$s['member_count'] ?> people</small></a><?php endforeach; ?><?php if(!$servers): ?><div class="empty">You are not a member of any server yet.</div><?php endif; ?></aside>

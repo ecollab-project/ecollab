@@ -27,6 +27,7 @@
     html.style.setProperty('--ec-sidebar-scale', String((settings.sidebar_scale || 100) / 100));
     html.style.fontSize = (settings.font_scale || 100) + '%';
 
+    window.EcollabColors?.apply(settings);
     if (settings.theme) {
       const light = settings.theme === 'light' ||
         (settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: light)').matches);

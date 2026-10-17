@@ -1,0 +1,44 @@
+/* Map legacy page tokens to the shared palette without changing feature layouts. */
+html:root,html:root body{
+ --bg:var(--ec-page);--nav:var(--ec-surface);--sidebar:var(--ec-surface);--side:var(--ec-surface);--panel:var(--ec-surface);--panel2:var(--ec-raised);--card:var(--ec-surface);--card2:var(--ec-raised);--input:var(--ec-input);--line:var(--ec-line);--border:var(--ec-line);--border2:var(--ec-line);
+ --text:var(--ec-text);--muted:var(--ec-muted);--muted2:var(--ec-muted);--text-primary:var(--ec-text);--text-secondary:var(--ec-muted);--text-muted:var(--ec-muted);
+ --bg-deepest:var(--ec-page);--bg-primary:var(--ec-page);--bg-secondary:var(--ec-surface);--bg-tertiary:var(--ec-raised);--bg-card:var(--ec-raised);--bg-hover:var(--ec-raised);--bg-active:var(--ec-accent-soft);--border-accent:var(--ec-accent);
+ --accent:var(--ec-accent);--accent2:var(--ec-accent2);--accent-bg:var(--ec-accent-soft);--accent-purple:var(--ec-accent);--accent-pink:var(--ec-accent2);--purple:var(--ec-accent);--pink:var(--ec-accent2);--teal:var(--ec-accent2);--grad:linear-gradient(135deg,var(--ec-primary),var(--ec-primary-end));--gradient-primary:var(--grad);--gradient-main:var(--grad);--brand-primary:var(--ec-accent);--brand-secondary:var(--ec-accent2);
+ --auth-bg:var(--ec-page);--auth-pink:var(--ec-accent);--auth-pink2:var(--ec-accent2);--auth-card:var(--ec-surface);--auth-input:var(--ec-input);--auth-border:var(--ec-line);--auth-muted:var(--ec-muted);--auth-grad:var(--grad);--auth-purple:var(--ec-accent);
+ --glow-pink:0 0 20px color-mix(in srgb,var(--ec-accent2) 22%,transparent);--glow-purple:0 0 20px color-mix(in srgb,var(--ec-accent) 22%,transparent);
+}
+html:root body{background-color:var(--ec-page);color:var(--ec-text)}
+html:root .primary,html:root .btn-primary,html:root .cl-primary{background:linear-gradient(135deg,var(--ec-primary),var(--ec-primary-end));border-color:var(--ec-primary);color:var(--ec-button-text)}
+html:root :is(.cl-card,.cl-panel,.modalbox,.workspace-logo-menu,.workspace-server-tooltip){background:var(--ec-surface);border-color:var(--ec-line);color:var(--ec-text)}
+html:root :is(.cl-tabs button.active,.navbtn.active,.choice button.active){background:var(--ec-accent-soft);color:var(--ec-accent);border-color:var(--ec-accent)}
+html:root :is(.cl-mark,.cl-eyebrow){color:var(--ec-accent)}
+html:root :is(.cl-muted,.desc,.help,.hint){color:var(--ec-muted)}
+html:root :is(.hero,.lw-hero,.workspace-attention){background:linear-gradient(135deg,var(--ec-surface),var(--ec-raised));border-color:var(--ec-line)}
+html:root .logo{background:linear-gradient(135deg,var(--ec-primary),var(--ec-primary-end));color:#fff}
+html:root :is(.cl-shell input,.cl-shell select,.cl-shell textarea,.cl-shell button:not(.cl-primary):not(.active),#clCode,#clOutput,.cl-review pre){background-color:var(--ec-input);border-color:var(--ec-line);color:var(--ec-text)}
+html:root :is(.cl-shell dialog,.cl-shell .cl-badge){background:var(--ec-raised);color:var(--ec-text);border-color:var(--ec-line)}
+html:root :is(.workspace-brand-mark,.workspace-server.active){border-color:var(--ec-accent)}
+html:root .workspace-logo-menu button:hover{background:var(--ec-accent-soft);outline-color:var(--ec-accent)}
+@media(min-width:861px){html:root #workspaceAccountDock .user-profile-footer{background:linear-gradient(var(--ec-surface),var(--ec-surface)) padding-box,linear-gradient(115deg,var(--ec-accent),var(--ec-accent2)) border-box;box-shadow:0 0 14px color-mix(in srgb,var(--ec-accent) 20%,transparent)}}
+/* Keep safety states distinct from cosmetic accents. */
+html:root.high-contrast{--ec-page:#000!important;--ec-surface:#000!important;--ec-raised:#151515!important;--ec-input:#000!important;--ec-line:#fff!important;--ec-text:#fff!important;--ec-muted:#fff!important;--ec-accent:#fde047!important;--ec-accent2:#fff!important;--ec-focus:#fde047!important}
+html:root.high-contrast[data-theme=light]{--ec-page:#fff!important;--ec-surface:#fff!important;--ec-raised:#eee!important;--ec-input:#fff!important;--ec-line:#000!important;--ec-text:#000!important;--ec-muted:#000!important;--ec-accent:#064e3b!important;--ec-accent2:#111!important;--ec-focus:#064e3b!important}
+.ec-palette-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:12px}
+.ec-palette-choice{display:flex;flex-direction:column;gap:10px;min-width:0;text-align:left;background:var(--ec-input);color:var(--ec-text);border:1px solid var(--ec-line);border-radius:12px;padding:14px;cursor:pointer;font:inherit}
+.ec-palette-choice:hover{border-color:var(--ec-accent)}.ec-palette-choice.selected{border-color:var(--ec-accent);box-shadow:0 0 0 1px var(--ec-accent)}.ec-palette-choice.selected strong:after{content:' ✓';color:var(--ec-accent)}
+.ec-palette-choice:focus-visible{outline:2px solid var(--ec-focus);outline-offset:3px}.ec-palette-choice:disabled{cursor:wait;opacity:.7}.ec-palette-choice strong{font-size:12px}.ec-palette-choice small{font-size:9px;line-height:1.5;color:var(--ec-muted);overflow-wrap:anywhere}
+.ec-palette-swatches{display:flex;height:35px;width:100%;border-radius:7px;overflow:hidden;border:1px solid var(--ec-line)}.ec-palette-swatches>span{flex:1;min-width:0}
+#ecPaletteStatus{font-size:12px;color:var(--ec-accent);line-height:1.6;min-height:20px}
+
+/* Public entry points use the same brand palette as the workspace. */
+html:root body[data-mobile-surface="forms"]:before{background:radial-gradient(ellipse at 15% 85%,var(--ec-accent-soft),transparent 65%)}
+html:root body[data-mobile-surface="forms"]:after{background-image:linear-gradient(color-mix(in srgb,var(--ec-accent) 5%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--ec-accent) 5%,transparent) 1px,transparent 1px)}
+html:root body[data-mobile-surface="forms"] :is(.orb1,.orb2){background:var(--ec-accent-soft)}
+html:root body[data-mobile-surface="forms"] :is(.card,.form-box){background:var(--ec-surface);border-color:var(--ec-line);box-shadow:0 0 30px var(--ec-accent-soft)}
+html:root body[data-mobile-surface="forms"] :is(.login-btn,.nav-logo .ico,.step-fill){background:var(--grad);color:#fff;box-shadow:0 0 20px var(--ec-accent-soft)}
+html:root body[data-mobile-surface="forms"] .hero-text h1{background:linear-gradient(90deg,var(--ec-accent),var(--ec-accent2));background-clip:text;-webkit-background-clip:text}
+html:root body[data-mobile-surface="forms"] :is(.terms-link,.forgot){color:var(--ec-accent)}
+html:root body[data-mobile-surface="landing"] :is(.tablet-outer,.tab-body,.tab-sidebar,.tab-topbar,.user-card){background:var(--ec-surface);border-color:var(--ec-line)}
+html:root body[data-mobile-surface="landing"] :is(.btn-start,.btn-cta,.cta-btn){background:var(--grad);color:#fff}
+html:root .send-btn{box-shadow:0 2px 12px var(--ec-accent-soft)}
+html:root .send-btn:hover{box-shadow:0 4px 18px var(--ec-accent-soft)}

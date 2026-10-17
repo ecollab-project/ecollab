@@ -29,7 +29,7 @@ $serverName = (string)($currentServer['name'] ?? 'Current Server');
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>eCollab Library</title>
   <link rel="icon" type="image/webp" href="<?= BASE_URL ?>/assets/ecollab-icon.webp">
-  <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js?v=3" defer></script>
   <style>
     :root{--bg:#0b0f1a;--panel:#111827;--card:#1a2235;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--purple:#a855f7;--pink:#ec4899}
     *{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}.lib-shell{max-width:1200px;margin:auto;padding:24px}.lib-top{display:flex;align-items:center;gap:14px;margin-bottom:24px}.lib-back{color:var(--muted);text-decoration:none;padding:9px 12px;border:1px solid var(--border);border-radius:9px}.lib-title{font-size:25px;font-weight:800}.lib-sub{color:var(--muted);font-size:13px;margin-top:3px}.lib-search{width:100%;padding:13px 15px;background:var(--panel);border:1px solid var(--border);border-radius:11px;color:var(--text);outline:none}.lib-tabs{display:flex;gap:8px;margin:18px 0}.lib-tab{border:1px solid var(--border);background:var(--panel);color:var(--muted);padding:10px 14px;border-radius:9px;cursor:pointer;font-weight:700}.lib-tab.active{color:white;border-color:rgba(168,85,247,.5);background:rgba(168,85,247,.16)}.lib-note{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px}.lib-note h2{margin:0 0 7px;font-size:18px}.lib-note p{margin:0;color:var(--muted);line-height:1.6}.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;margin-top:18px}.lib-placeholder{min-height:220px;background:var(--card);border:1px solid var(--border);border-radius:13px;padding:18px;color:var(--muted)}@media(max-width:600px){.lib-shell{padding:14px}.lib-title{font-size:21px}.lib-tabs{overflow:auto}.lib-tab{white-space:nowrap}.lib-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -40,6 +40,7 @@ $serverName = (string)($currentServer['name'] ?? 'Current Server');
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script>
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
 <script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
+<?php require_once ROOT_PATH.'/includes/layout/color-theme.php'; ?>
 </head>
 <body data-mobile-surface="library">
 <main class="lib-shell" data-server-id="<?= $serverId ?>">
