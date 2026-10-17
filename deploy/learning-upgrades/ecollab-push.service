@@ -1,0 +1,16 @@
+[Unit]
+Description=Ecollab opt-in browser push delivery worker
+After=network.target mariadb.service
+[Service]
+User=ecollabadmin
+WorkingDirectory=/home/ecollabadmin/ecollab-inspect
+ExecStart=/usr/bin/php scripts/web-push-worker.php --loop
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+MemoryMax=256M
+[Install]
+WantedBy=multi-user.target

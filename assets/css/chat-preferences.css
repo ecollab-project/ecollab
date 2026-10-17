@@ -1,0 +1,24 @@
+.ec-no-show_timestamps :is(.msg-timestamp,.dm-message-time){display:none!important}
+.ec-no-typing_indicators :is(#typingIndicator,#dmTypingIndicator){display:none!important}
+.ec-no-link_previews :is(.link-preview,.url-preview,.embed-preview){display:none!important}
+.ec-preview-control{display:block;padding:10px 14px;margin:6px 0;border:1px solid var(--border);border-radius:8px;background:var(--bg-tertiary);color:var(--text-primary);cursor:pointer;font:inherit}
+.ec-preview-control[hidden],.ec-video-link[hidden],img[hidden],video[hidden]{display:none!important}
+.ec-jarred-disabled :is(.ai-assist-btn,[data-action="jarred"]){opacity:.55}
+html.screen-reader-mode :is(a,button,input,textarea,select,[tabindex]):focus-visible{outline:3px solid var(--ec-focus,#86efac)!important;outline-offset:3px!important}
+html .dm-message-bubble[data-mine="true"]{background:var(--ec-primary,#24664b)!important;color:#fff!important}
+html body[data-mobile-surface="chat"] .msg-text{font-size:calc(14px * var(--ec-font-scale,1))}
+html body[data-mobile-surface="chat"] .dm-message-bubble{font-size:calc(13px * var(--ec-font-scale,1))!important}
+html.density-compact .message-group{margin-bottom:6px;padding-top:3px;padding-bottom:3px}
+html.density-spacious .message-group{margin-bottom:22px;padding-top:8px;padding-bottom:8px}
+html.density-compact .dm-message-bubble{padding:5px 9px!important}
+html.density-spacious .dm-message-bubble{padding:12px 16px!important}
+@media(min-width:861px){html:root{--sidebar-left-width:calc(260px * var(--ec-sidebar-scale,1))}}
+.ec-no-read_receipts .ec-read-receipt{display:none!important}
+.ec-link-preview{display:block;padding:9px 12px;margin-top:8px;border-left:2px solid var(--ec-accent,var(--accent-purple));border-radius:6px;background:var(--bg-tertiary);max-width:340px;overflow-wrap:anywhere;font-size:12px}
+.ec-link-preview strong,.ec-link-preview small{display:block}.ec-link-preview small{color:var(--text-muted);margin-top:3px}
+.ec-link-preview[hidden]{display:none!important}
+html body[data-mobile-surface="settings"] :is(.navbtn,.rname,.field input,.field textarea,.field select,.desc){font-size:calc(13px * var(--ec-font-scale,1))}
+html body[data-mobile-surface="dashboard"] :is(.lw-row,.workspace-list-row,.workspace-card p,.lw-panel-body,.lw-space-card p){font-size:calc(13px * var(--ec-font-scale,1))}
+html body[data-mobile-surface="dashboard"] :is(.lw-sidebar nav button,.workspace-sidebar nav a){font-size:calc(13px * var(--ec-font-scale,1))}
+.switch:disabled{opacity:.45;cursor:not-allowed}
+.ec-media-sticker[hidden]{display:none!important}

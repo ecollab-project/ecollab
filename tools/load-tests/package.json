@@ -1,0 +1,1 @@
+{"name":"ecollab-load-test-validation","private":true,"type":"module","scripts":{"test":"node ../../tests/load-test-plan-regression.cjs"},"devDependencies":{"ws":"8.18.3"}}

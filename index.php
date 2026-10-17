@@ -31,19 +31,21 @@ $dashUrl  = $isAuthed ? match ($_SESSION['role'] ?? 'student') {
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/variables.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/landing.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/landing-mobile.css">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
+<script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
+<script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script>
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/brand-video.css?v=1">
+<?php require_once ROOT_PATH.'/includes/layout/color-theme.php'; ?>
 </head>
 
-<body>
+<body data-mobile-surface="landing">
 
   <!-- Particles -->
   <div class="particles" id="particles"></div>
 
   <!-- ── NAV ─────────────────────────────────────────────────────────────── -->
   <nav>
-    <div class="nav-logo">
-      <div class="icon">🌿</div>
-      <?= APP_NAME ?>
-    </div>
+    <div class="nav-logo ecollab-landing-brand"><img src="<?= BASE_URL ?>/assets/ecollab-wordmark.webp" alt="eCollab"></div>
     <ul class="nav-links">
       <li><a href="#hero">Home</a></li>
       <li><a href="#features">Features</a></li>
@@ -72,6 +74,8 @@ $dashUrl  = $isAuthed ? match ($_SESSION['role'] ?? 'student') {
     </h1>
     <p>AI-powered peer matching and collaborative learning that connects <span style="color:var(--pink);font-weight:600">Fatima</span> students and beyond.</p>
 
+    <button type="button" class="ec-brand-watch" data-brand-video aria-haspopup="dialog" aria-controls="ecBrandVideoDialog"><span aria-hidden="true">▶</span> Watch Ecollab</button>
+
     <!-- Tablet Mockup -->
     <div class="tablet-wrap">
       <div class="float-icon fi1">🤖</div>
@@ -84,10 +88,7 @@ $dashUrl  = $isAuthed ? match ($_SESSION['role'] ?? 'student') {
         <div class="tablet-screen">
           <!-- Sidebar -->
           <div class="tab-sidebar">
-            <div class="logo-row">
-              <div class="logo-icon">🌿</div>
-              <?= APP_NAME ?>
-            </div>
+            <div class="logo-row ecollab-demo-brand"><img src="<?= BASE_URL ?>/assets/ecollab-wordmark.webp" alt="eCollab"></div>
             <div class="active-row">
               <div class="dot" style="background:rgba(255,45,117,0.2)">🏠</div>
               Dashboard
@@ -248,7 +249,7 @@ $dashUrl  = $isAuthed ? match ($_SESSION['role'] ?? 'student') {
   <!-- ── BUILT FOR BANNER ──────────────────────────────────────────────────── -->
   <div class="banner" id="about">
     <div class="banner-icon">🤖</div>
-    <h3>Built for <span>Fatima</span> Computing Students &amp; Beyond</h3>
+    <div class="ec-about-copy"><h3>Built for <span>Fatima</span> Computing Students &amp; Beyond</h3><button type="button" class="ec-brand-watch" data-brand-video aria-haspopup="dialog" aria-controls="ecBrandVideoDialog"><span aria-hidden="true">▶</span> Play Ecollab logo animation</button></div>
     <div class="banner-icon" style="background:rgba(159,59,255,0.15);border-color:rgba(159,59,255,0.25);">🎓</div>
   </div>
 
@@ -420,7 +421,7 @@ $dashUrl  = $isAuthed ? match ($_SESSION['role'] ?? 'student') {
     </div>
     <div class="footer-links">
       <h5>Company</h5>
-      <a href="#">About</a>
+      <a href="#about">About</a>
       <a href="#">Careers</a>
       <a href="#">Contact</a>
       <a href="#">Press</a>
@@ -437,6 +438,14 @@ $dashUrl  = $isAuthed ? match ($_SESSION['role'] ?? 'student') {
     © <?= date('Y') ?> <?= APP_NAME ?>. All rights reserved. | Privacy | Terms
   </div>
 
+  <dialog id="ecBrandVideoDialog" class="ec-brand-dialog" aria-labelledby="ecBrandVideoTitle" aria-describedby="ecBrandVideoDescription">
+    <header><h2 id="ecBrandVideoTitle">Ecollab — Connect. Learn. Grow.</h2><button type="button" id="ecBrandVideoClose" autofocus aria-label="Close logo animation">Close ×</button></header>
+    <video id="ecBrandVideo" controls playsinline preload="none" poster="<?= BASE_URL ?>/assets/media/brand/logo-poster.webp" data-src="<?= BASE_URL ?>/assets/media/brand/logo-animation.mp4" aria-label="Ecollab logo animation with audio"></video>
+    <div class="ec-brand-video-footer"><p id="ecBrandVideoDescription">Our logo animation, with audio. Playback starts when you choose to watch.</p><button type="button" id="ecBrandVideoReplay">Replay</button><a href="<?= BASE_URL ?>/assets/media/brand/logo-animation.mp4" target="_blank" rel="noopener">Open video</a></div>
+    <p id="ecBrandVideoStatus" class="ec-brand-video-status" role="status" aria-live="polite"></p>
+  </dialog>
+  <noscript><p style="text-align:center"><a href="<?= BASE_URL ?>/assets/media/brand/logo-animation.mp4">Watch the Ecollab logo animation</a></p></noscript>
+  <script src="<?= BASE_URL ?>/assets/js/brand-video.js?v=1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/landing.js" defer></script>
 </body>
 

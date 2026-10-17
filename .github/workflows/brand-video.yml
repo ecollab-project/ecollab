@@ -1,0 +1,22 @@
+name: Brand video player
+on:
+  pull_request:
+    paths: ['index.php', 'assets/js/brand-video.js', 'assets/css/brand-video.css', 'assets/media/brand/**', 'tests/brand-video-browser.cjs', '.github/workflows/brand-video.yml']
+permissions:
+  contents: read
+jobs:
+  playback:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo
+      - run: php -l index.php
+      - run: npm install --no-save --ignore-scripts playwright@1.58.2
+      - run: npx playwright install --with-deps chromium
+      - run: node tests/brand-video-browser.cjs

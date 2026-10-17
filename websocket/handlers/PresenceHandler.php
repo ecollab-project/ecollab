@@ -36,7 +36,7 @@ class PresenceHandler {
             SELECT u.id, u.username, u.full_name, u.avatar_color_gradient, u.role
             FROM users u
             JOIN server_members sm ON sm.user_id = u.id AND sm.server_id = :sid
-            WHERE u.is_online = 1
+            WHERE u.last_active_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE)
         ");
         $stmt->execute([':sid' => $serverId]);
         return $stmt->fetchAll();

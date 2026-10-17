@@ -137,4 +137,3 @@
     el.dataset.delay = (i % 4) * 80;
     observer.observe(el);
   });
-</script>

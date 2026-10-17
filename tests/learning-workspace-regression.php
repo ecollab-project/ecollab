@@ -1,0 +1,45 @@
+<?php
+declare(strict_types=1);
+require_once dirname(__DIR__).'/services/LearningWorkspaceService.php';
+ini_set('display_errors','1');ini_set('error_log','/dev/null');error_reporting(E_ALL);
+function verify(bool $ok,string $label):void{if(!$ok)throw new RuntimeException($label);}
+function rejects(callable $fn,int $code=0):void{try{$fn();}catch(Throwable $e){verify(!$code||$e->getCode()===$code,'Wrong rejection: '.$e->getMessage());return;}throw new RuntimeException('Expected rejection');}
+$db=new PDO('sqlite::memory:');$db->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);$db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE,PDO::FETCH_ASSOC);
+$db->exec("CREATE TABLE servers(id INTEGER PRIMARY KEY,owner_id INTEGER,name TEXT,description TEXT,type TEXT,visibility TEXT,status TEXT,member_count INTEGER DEFAULT 0);
+CREATE TABLE student_notes(id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,title TEXT,content TEXT,updated_at TEXT DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE notifications(id INTEGER PRIMARY KEY AUTOINCREMENT,recipient_id INTEGER,actor_id INTEGER,type TEXT,title TEXT,body TEXT,link_url TEXT,icon TEXT,is_read INTEGER DEFAULT 0,read_at TEXT,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE channels(id INTEGER PRIMARY KEY,server_id INTEGER,name TEXT,type TEXT,is_private INTEGER,created_by INTEGER,position INTEGER DEFAULT 0);
+CREATE TABLE server_members(server_id INTEGER,user_id INTEGER,server_role TEXT,UNIQUE(server_id,user_id));
+CREATE TABLE channel_members(channel_id INTEGER,user_id INTEGER);
+CREATE TABLE uploaded_files(id INTEGER PRIMARY KEY,channel_id INTEGER,original_name TEXT,file_size INTEGER,created_at TEXT,deleted_at TEXT);
+CREATE TABLE moderation_actions(id INTEGER PRIMARY KEY,server_id INTEGER,target_user_id INTEGER,action_type TEXT,is_active INTEGER,expires_at TEXT);
+CREATE TABLE messages(id INTEGER PRIMARY KEY AUTOINCREMENT,channel_id INTEGER,sender_id INTEGER,content TEXT,content_type TEXT,is_deleted INTEGER DEFAULT 0,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE study_room_sessions(id INTEGER PRIMARY KEY AUTOINCREMENT,channel_id INTEGER,title TEXT,description TEXT,status TEXT,scheduled_start TEXT,scheduled_end TEXT,created_by INTEGER);
+INSERT INTO servers VALUES(10,1,'Public','A','class','public','active',2),(20,2,'Other','B','public','private','active',1),(30,2,'Closed','C','public','public','archived',0);
+INSERT INTO channels VALUES(11,10,'general','text',0,1,0),(12,10,'private','text',1,1,1),(13,10,'announcements','announcement',0,1,2),(21,20,'other','text',0,2,0);
+INSERT INTO server_members VALUES(10,1,'owner'),(10,2,'member'),(10,3,'member'),(20,2,'owner');
+INSERT INTO uploaded_files VALUES(1,11,'public file',100,'2026-10-13 00:00:00',NULL),(2,12,'private file',200,'2026-10-13 00:00:00',NULL),(3,21,'other file',300,'2026-10-13 00:00:00',NULL);
+INSERT INTO notifications(recipient_id,title,body) VALUES(1,'One','Personal'),(2,'Two','Private');");
+$s=new LearningWorkspaceService($db);
+$s->mutate(1,false,'save_note',['title'=>'My note','content'=>'First']);$s->mutate(2,false,'save_note',['title'=>'Other note','content'=>'Secret']);
+$d=$s->data(1,false);verify(count($d['notes']['items'])===1,'Notes leaked');verify(count($d['notifications']['items'])===1,'Notifications leaked');
+$n=$d['notes']['items'][0];rejects(fn()=>$s->mutate(2,false,'save_note',['id'=>$n['id'],'title'=>'Bad','content'=>'Stolen','revision'=>$n['revision']]),404);
+$s->mutate(1,false,'save_note',['id'=>$n['id'],'title'=>'Edited','content'=>'Updated','revision'=>$n['revision']]);rejects(fn()=>$s->mutate(1,false,'save_note',['id'=>$n['id'],'title'=>'Stale','content'=>'Stale','revision'=>$n['revision']]),409);
+$s->mutate(1,false,'read_notifications',[]);verify((int)$db->query('SELECT is_read FROM notifications WHERE recipient_id=2')->fetchColumn()===0,'Other notifications modified');
+$d=$s->data(3,false);verify(array_column($d['channels']['items'],'id')===[11,13],'Private channel leaked');verify(array_column($d['resources']['items'],'id')===[1],'Private file leaked');
+$db->exec('INSERT INTO channel_members VALUES(12,3)');verify(count($s->data(3,false)['resources']['items'])===2,'Explicit private access missing');
+rejects(fn()=>$s->data(2,true,10),403);rejects(fn()=>$s->mutate(2,true,'session',['server_id'=>10]),403);rejects(fn()=>$s->mutate(1,false,'session',['server_id'=>10]),403);
+$session=['server_id'=>10,'channel_id'=>11,'title'=>'Study','starts_at'=>'2026-10-14T10:00','ends_at'=>'2026-10-14T11:00'];$s->mutate(1,true,'session',$session);verify($db->query('SELECT scheduled_start FROM study_room_sessions')->fetchColumn()==='2026-10-14 02:00:00','Philippines time conversion failed');rejects(fn()=>$s->mutate(1,true,'session',array_replace($session,['channel_id'=>21])));rejects(fn()=>$s->mutate(1,true,'session',array_replace($session,['ends_at'=>'2026-10-14T09:00'])));
+rejects(fn()=>$s->mutate(3,false,'join_space',['server_id'=>20]),403);rejects(fn()=>$s->mutate(3,false,'join_space',['server_id'=>30]),403);
+$db->exec("INSERT INTO moderation_actions VALUES(1,10,4,'ban',1,NULL)");rejects(fn()=>$s->mutate(4,false,'join_space',['server_id'=>10]),403);$s->mutate(5,false,'join_space',['server_id'=>10]);$s->mutate(5,false,'join_space',['server_id'=>10]);verify((int)$db->query('SELECT COUNT(*) FROM server_members WHERE user_id=5')->fetchColumn()===1,'Join is not idempotent');
+$_ENV['CENTRIFUGO_ENABLED']='true';
+$before=(int)$db->query('SELECT COUNT(*) FROM messages')->fetchColumn();
+rejects(fn()=>$s->mutate(1,true,'announcement',['server_id'=>10,'title'=>'Update','message'=>'Study together']));
+verify((int)$db->query('SELECT COUNT(*) FROM messages')->fetchColumn()===$before,'Message was committed without delivery intent');
+$db->exec('CREATE TABLE realtime_outbox(id INTEGER PRIMARY KEY AUTOINCREMENT,kind TEXT,target_id INTEGER,message_id INTEGER); UPDATE channels SET is_private=1 WHERE id=13; INSERT INTO channel_members VALUES(13,2)');
+$s->mutate(1,true,'announcement',['server_id'=>10,'title'=>'Update','message'=>'Study together']);
+verify((int)$db->query('SELECT COUNT(*) FROM realtime_outbox')->fetchColumn()===1,'Delivery intent missing');
+verify((int)$db->query('SELECT COUNT(*) FROM notifications WHERE recipient_id=3')->fetchColumn()===0,'Private announcement notification leaked');
+verify((int)$db->query('SELECT COUNT(*) FROM notifications WHERE recipient_id=2')->fetchColumn()===2,'Accessible announcement notification missing');
+foreach(['modules/student/dashboard.php','modules/facilitator/dashboard.php','includes/layout/learning-workspace.php','assets/js/learning/workspace.js'] as $file)verify(!preg_match('/system-capacity|system-health|service-status|CENTRIFUGO_|CPU|RAM/',file_get_contents(dirname(__DIR__).'/'.$file)),'System controls exposed in '.$file);
+echo "Learning workspace regression checks passed.\n";

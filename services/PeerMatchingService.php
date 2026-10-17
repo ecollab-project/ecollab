@@ -44,7 +44,7 @@ class PeerMatchingService
      *
      * @return array<string,mixed>
      */
-    public function scoreProfiles(array $profileA, array $profileB): array
+    public function scoreProfiles(array $profileA, array $profileB, ?float $semantic = null): array
     {
         $subjects = $this->scoreSubjects(
             $profileA['subjects'] ?? [],
@@ -92,8 +92,21 @@ class PeerMatchingService
             $tags[] = $tag;
         }
 
+        $ruleTotal = round($total, 2);
+        $usesML = $semantic !== null && is_finite($semantic) && $semantic >= 0 && $semantic <= 100;
+        if ($usesML) {
+            $total = $total * 0.75 + $semantic * 0.25;
+            if ($semantic >= 60) $tags[] = 'Related study topics';
+        }
+
         return [
             'total' => round($total, 2),
+            'rule_total' => $ruleTotal,
+            'semantic' => $usesML ? round($semantic, 2) : null,
+            'engine' => $usesML ? 'hybrid-v1' : 'rules-v1',
+            'weights' => $usesML
+                ? ['subjects'=>26.25, 'style'=>18.75, 'interests'=>18.75, 'hobbies'=>11.25, 'semantic'=>25]
+                : ['subjects'=>35, 'style'=>25, 'interests'=>25, 'hobbies'=>15, 'semantic'=>0],
 
             'subjects' => round($subjects['score'], 2),
             'style' => round($style['score'], 2),
@@ -554,9 +567,9 @@ class PeerMatchingService
         $prefs = $prefsStmt->fetch(PDO::FETCH_ASSOC) ?: [];
 
         $subjectsStmt = $db->prepare(
-            'SELECT subject_id, role, proficiency
-             FROM pm_user_subjects
-             WHERE user_id = :user_id'
+            'SELECT p.subject_id, p.role, p.proficiency, t.name
+             FROM pm_user_subjects p JOIN pm_subjects t ON t.id = p.subject_id
+             WHERE p.user_id = :user_id'
         );
 
         $subjectsStmt->execute([
@@ -566,9 +579,9 @@ class PeerMatchingService
         $subjects = $subjectsStmt->fetchAll(PDO::FETCH_ASSOC);
 
         $interestsStmt = $db->prepare(
-            'SELECT interest_id
-             FROM pm_user_interests
-             WHERE user_id = :user_id'
+            'SELECT p.interest_id, t.name
+             FROM pm_user_interests p JOIN pm_interest_tags t ON t.id = p.interest_id
+             WHERE p.user_id = :user_id'
         );
 
         $interestsStmt->execute([
@@ -578,9 +591,9 @@ class PeerMatchingService
         $interests = $interestsStmt->fetchAll(PDO::FETCH_ASSOC);
 
         $hobbiesStmt = $db->prepare(
-            'SELECT hobby_id
-             FROM pm_user_hobbies
-             WHERE user_id = :user_id'
+            'SELECT p.hobby_id, t.name
+             FROM pm_user_hobbies p JOIN pm_hobby_tags t ON t.id = p.hobby_id
+             WHERE p.user_id = :user_id'
         );
 
         $hobbiesStmt->execute([

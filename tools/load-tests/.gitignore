@@ -1,0 +1,5 @@
+accounts.json
+target.json
+results*.json
+*.zip
+node_modules/

@@ -1,0 +1,11 @@
+const {JSDOM}=require('jsdom'),fs=require('fs'),path=require('path'),assert=require('node:assert/strict');
+const root=path.resolve(__dirname,'..');
+const dom=new JSDOM('<body data-mobile-surface="editor"><header>Editor</header><main><table id="plain"><caption>Member activity</caption><tr><td>Details</td></tr></table><div class="lw-table-wrap"><table id="owned"><tr><td>Owned</td></tr></table></div><table id="dynamic"><tr><td><button id="action">Review</button></td></tr></table></main></body>',{runScripts:'outside-only',pretendToBeVisual:true});
+const w=dom.window,d=w.document;w.requestAnimationFrame=fn=>setTimeout(fn,0);d.querySelector('header').getBoundingClientRect=()=>({height:102});
+let reviews=0;d.getElementById('action').onclick=()=>reviews++;
+w.eval(fs.readFileSync(root+'/assets/js/device-layout.js','utf8'));
+assert.equal(d.getElementById('plain').parentElement.className,'device-table-scroll');assert.equal(d.getElementById('plain').parentElement.getAttribute('aria-label'),'Member activity');assert.equal(d.getElementById('owned').parentElement.className,'lw-table-wrap');assert.equal(d.documentElement.style.getPropertyValue('--device-editor-header'),'102px');d.getElementById('action').click();assert.equal(reviews,1);
+(async()=>{const table=d.createElement('table');table.innerHTML='<tr><td>New data</td></tr>';d.querySelector('main').appendChild(table);await new Promise(r=>setTimeout(r,30));assert.equal(table.parentElement.className,'device-table-scroll');assert.equal(d.querySelectorAll('.device-table-scroll .device-table-scroll').length,0);dom.window.close();
+for(const p of [root+'/index.php',root+'/terms.php',root+'/includes/layout/learning-workspace.php',...fs.readdirSync(root+'/modules',{recursive:true}).filter(p=>p.endsWith('.php')).map(p=>root+'/modules/'+p)]){const content=fs.readFileSync(p,'utf8');if(/<html|<!doctype/i.test(content)){assert(content.includes('/assets/css/device-layout.css'),p+' lacks shared device styles');assert(content.includes('/assets/js/device-layout.js'),p+' lacks dynamic table support');assert(content.includes('mobile-viewport.js'),p+' lacks viewport support');}}
+console.log('PASS: all page templates load responsive assets; tables preserve actions, wrappers and accessible labels; editor header sizing updates');
+})().catch(e=>{console.error(e);dom.window.close();process.exitCode=1;});

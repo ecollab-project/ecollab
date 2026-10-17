@@ -8,6 +8,8 @@ require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
 $me = AuthMiddleware::requireAuth(true);
+session_write_close();
+header('Cache-Control: no-store, private');
 
 try {
     $db = Database::getInstance();
@@ -21,6 +23,7 @@ try {
             u.id            AS partner_id,
             u.username      AS partner_username,
             u.full_name     AS partner_name,
+            u.avatar_url     AS partner_avatar_url,
             u.avatar_color_gradient AS partner_gradient,
             (
                 SELECT COUNT(*) FROM dm_messages dm

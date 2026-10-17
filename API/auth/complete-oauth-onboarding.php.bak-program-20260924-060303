@@ -1,0 +1,283 @@
+<?php
+
+declare(strict_types=1);
+
+require_once dirname(__DIR__, 2) . '/config.php';
+require_once dirname(__DIR__, 2) . '/database/config/db.php';
+require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
+require_once dirname(__DIR__, 2) . '/security/csrf/csrf.php';
+
+header('Content-Type: application/json; charset=utf-8');
+
+AuthMiddleware::startSession();
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'error' => 'Method not allowed.']);
+    exit;
+}
+
+if (
+    empty($_SESSION['user_id']) ||
+    empty($_SESSION['oauth_onboarding']) ||
+    ($_SESSION['role'] ?? '') !== 'student'
+) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'OAuth onboarding session is not valid.']);
+    exit;
+}
+
+CSRF::verify();
+
+$data = json_decode(file_get_contents('php://input'), true);
+if (!is_array($data)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'Invalid request.']);
+    exit;
+}
+
+$userId = (int)$_SESSION['user_id'];
+$course = trim((string)($data['course'] ?? ''));
+$year   = (int)($data['year_level'] ?? 0);
+
+if ($course === '') {
+    echo json_encode(['success' => false, 'error' => 'Please select your course.']);
+    exit;
+}
+
+if ($year < 1 || $year > 4) {
+    echo json_encode(['success' => false, 'error' => 'Please select a valid year level.']);
+    exit;
+}
+
+if (empty($data['terms_agreed'])) {
+    echo json_encode(['success' => false, 'error' => 'You must agree to the Terms & Privacy Policy.']);
+    exit;
+}
+
+$db = Database::getInstance();
+
+try {
+    $db->beginTransaction();
+
+    // Resolve the selected academic program exactly like normal signup.
+    $progStmt = $db->prepare("
+        SELECT id
+        FROM academic_programs
+        WHERE name = :name
+        LIMIT 1
+    ");
+    $progStmt->execute([':name' => $course]);
+    $programId = $progStmt->fetchColumn();
+
+    if (!$programId) {
+        throw new RuntimeException('Selected academic program was not found.');
+    }
+
+    /*
+     * The current signup UI does not have dedicated study_style /
+     * primary_goal controls. Derive the compatibility values from
+     * the Step 3 tags just like signup.js currently does.
+     */
+    $collabStyle = is_array($data['collab_style'] ?? null)
+        ? $data['collab_style']
+        : [];
+
+    $goals = is_array($data['goals'] ?? null)
+        ? $data['goals']
+        : [];
+
+    $studyStyle = in_array('solo-learning', $collabStyle, true)
+        ? 'solo'
+        : (in_array('team-projects', $collabStyle, true) ? 'group' : 'mixed');
+
+    $goalMap = [
+        'pass-exams'       => 'pass_exams',
+        'build-portfolio'  => 'build_projects',
+        'find-teammates'   => 'find_study_partners',
+        'learn-new-skills' => 'improve_skills',
+        'networking'       => 'network_collaborate',
+    ];
+
+    $primaryGoal = 'improve_skills';
+    foreach ($goals as $goal) {
+        if (isset($goalMap[$goal])) {
+            $primaryGoal = $goalMap[$goal];
+            break;
+        }
+    }
+
+    // Google/Microsoft already created the user_profiles row.
+    // Update it rather than creating another account.
+    $profile = $db->prepare("
+        UPDATE user_profiles
+        SET academic_program_id = :program,
+            year_level = :year,
+            study_style = :style,
+            primary_goal = :goal
+        WHERE user_id = :uid
+    ");
+    $profile->execute([
+        ':program' => (int)$programId,
+        ':year'    => $year,
+        ':style'   => $studyStyle,
+        ':goal'    => $primaryGoal,
+        ':uid'     => $userId,
+    ]);
+
+    // Defensive fallback in case an older OAuth account somehow lacks
+    // its minimal user_profiles row.
+    if ($profile->rowCount() === 0) {
+        $exists = $db->prepare("
+            SELECT 1 FROM user_profiles WHERE user_id = :uid LIMIT 1
+        ");
+        $exists->execute([':uid' => $userId]);
+
+        if (!$exists->fetchColumn()) {
+            $insertProfile = $db->prepare("
+                INSERT INTO user_profiles
+                    (user_id, academic_program_id, year_level, study_style, primary_goal)
+                VALUES
+                    (:uid, :program, :year, :style, :goal)
+            ");
+            $insertProfile->execute([
+                ':uid'     => $userId,
+                ':program' => (int)$programId,
+                ':year'    => $year,
+                ':style'   => $studyStyle,
+                ':goal'    => $primaryGoal,
+            ]);
+        }
+    }
+
+    // Steps 3 + 4 use the existing interest_tags/user_interests system.
+    $allSlugs = [];
+
+    foreach (['collab_style', 'goals', 'availability', 'interests'] as $field) {
+        $values = $data[$field] ?? [];
+
+        if (!is_array($values)) {
+            continue;
+        }
+
+        foreach ($values as $slug) {
+            $slug = strtolower(trim((string)$slug));
+            if ($slug !== '') {
+                $allSlugs[] = $slug;
+            }
+        }
+    }
+
+    if ($allSlugs) {
+        $tagStmt = $db->prepare("
+            SELECT id
+            FROM interest_tags
+            WHERE slug = :slug
+            LIMIT 1
+        ");
+
+        $interestStmt = $db->prepare("
+            INSERT IGNORE INTO user_interests
+                (user_id, interest_tag_id)
+            VALUES
+                (:uid, :tid)
+        ");
+
+        foreach (array_unique($allSlugs) as $slug) {
+            $tagStmt->execute([':slug' => $slug]);
+            $tagId = $tagStmt->fetchColumn();
+
+            if ($tagId) {
+                $interestStmt->execute([
+                    ':uid' => $userId,
+                    ':tid' => (int)$tagId,
+                ]);
+            }
+        }
+    }
+
+    // Step 5 hobbies — same storage shape as normal registration.
+    $hobbies = $data['hobbies'] ?? [];
+
+    if (is_array($hobbies) && $hobbies) {
+        $tableCheck = $db->query("SHOW TABLES LIKE 'user_hobbies'");
+
+        if ($tableCheck && $tableCheck->rowCount() > 0) {
+            $hobbyStmt = $db->prepare("
+                INSERT INTO user_hobbies
+                    (user_id, hobby, genre, title, hours_per_month,
+                     playstyle, experience_level, created_at)
+                VALUES
+                    (:uid, :hobby, :genre, :title, :hrs,
+                     :play, :exp, NOW())
+                ON DUPLICATE KEY UPDATE
+                    genre = VALUES(genre),
+                    title = VALUES(title),
+                    hours_per_month = VALUES(hours_per_month),
+                    playstyle = VALUES(playstyle),
+                    experience_level = VALUES(experience_level)
+            ");
+
+            foreach ($hobbies as $hobby) {
+                if (!is_array($hobby) || empty($hobby['hobby'])) {
+                    continue;
+                }
+
+                $hobbyStmt->execute([
+                    ':uid'   => $userId,
+                    ':hobby' => substr(trim((string)$hobby['hobby']), 0, 60),
+                    ':genre' => substr(trim((string)($hobby['genre'] ?? '')), 0, 60),
+                    ':title' => substr(trim((string)($hobby['title'] ?? '')), 0, 120),
+                    ':hrs'   => (int)($hobby['hoursPerMonth'] ?? 0),
+                    ':play'  => substr(trim((string)($hobby['playstyle'] ?? '')), 0, 60),
+                    ':exp'   => substr(trim((string)($hobby['experience'] ?? '')), 0, 60),
+                ]);
+            }
+        }
+    }
+
+    // Keep peer matching synchronized with onboarding.
+    $pm = $db->prepare("
+        INSERT INTO pm_user_study_prefs
+            (user_id, study_style, primary_goal)
+        VALUES
+            (:uid, :style, :goal)
+        ON DUPLICATE KEY UPDATE
+            study_style = VALUES(study_style),
+            primary_goal = VALUES(primary_goal)
+    ");
+
+    $pm->execute([
+        ':uid'   => $userId,
+        ':style' => $studyStyle,
+        ':goal'  => $primaryGoal,
+    ]);
+
+    $db->commit();
+
+    // Onboarding is complete only after every DB write succeeded.
+    unset(
+        $_SESSION['oauth_onboarding'],
+        $_SESSION['oauth_onboarding_provider']
+    );
+
+    echo json_encode([
+        'success'  => true,
+        'redirect' => BASE_URL . '/modules/onboarding/server-discovery.php',
+    ]);
+
+} catch (Throwable $e) {
+    if ($db->inTransaction()) {
+        $db->rollBack();
+    }
+
+    error_log('[complete-oauth-onboarding] ' . $e->getMessage());
+
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error'   => $e->getMessage(),
+        'file'    => basename($e->getFile()),
+        'line'    => $e->getLine(),
+    ]);
+}

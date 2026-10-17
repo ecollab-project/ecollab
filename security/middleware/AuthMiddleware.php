@@ -36,6 +36,7 @@ class AuthMiddleware
             'role'                 => $_SESSION['role']                 ?? 'student',
             'avatar_gradient'      => $gradient,        // auth canonical
             'avatar_color_gradient' => $gradient,        // chat canonical (alias)
+            'avatar_url'            => $_SESSION['avatar_url'] ?? '',
         ];
     }
 
@@ -121,6 +122,9 @@ class AuthMiddleware
     public static function startSession(): void
     {
         if (session_status() === PHP_SESSION_NONE) {
+            ini_set('session.use_strict_mode', '1');
+            ini_set('session.use_only_cookies', '1');
+            ini_set('session.use_trans_sid', '0');
             session_set_cookie_params([
                 'lifetime' => SESSION_LIFETIME,
                 'path'     => '/',
@@ -158,7 +162,7 @@ class AuthMiddleware
             ?? '';
         $stored = $_SESSION['csrf_token'] ?? '';
 
-        if (!hash_equals($stored, $submitted)) {
+        if (!is_string($stored) || !is_string($submitted) || $stored === '' || $submitted === '' || !hash_equals($stored, $submitted)) {
             http_response_code(403);
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'error' => 'CSRF token mismatch.']);

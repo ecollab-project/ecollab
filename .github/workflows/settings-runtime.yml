@@ -1,0 +1,34 @@
+name: Settings and Jarred runtime
+on:
+  pull_request:
+jobs:
+  runtime:
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env: {MARIADB_ROOT_PASSWORD: test-password, MARIADB_DATABASE: settings_runtime}
+        ports: ['3306:3306']
+        options: --health-cmd="healthcheck.sh --connect --innodb_initialized" --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - uses: shivammathur/setup-php@v2
+        with: {php-version: '8.3', extensions: 'curl, mbstring, pdo_sqlite, pdo_mysql', coverage: none}
+      - run: npm install --no-save --ignore-scripts jsdom@30.1.2 playwright@1.58.2 yjs@13.6.27 y-protocols@1.0.6
+      - run: npm ci --prefix tools/chat-composer --ignore-scripts --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: php tests/client-ip-regression.php
+      - run: node tests/request-security-regression.cjs
+      - run: php tests/rate-limit-concurrency.php
+        env: {SETTINGS_TEST_DSN: 'mysql:host=127.0.0.1;port=3306;dbname=settings_runtime'}
+      - run: php tests/settings-runtime-regression.php
+      - run: php tests/settings-migration-regression.php
+        env: {SETTINGS_TEST_DSN: 'mysql:host=127.0.0.1;port=3306;dbname=settings_runtime'}
+      - run: node tests/jarred-provider-regression.cjs
+      - run: node tests/jarred-session-race.cjs
+      - run: node tests/realtime-settings-regression.cjs
+      - run: node tests/settings-runtime-browser.cjs
+      - run: node tests/chat-composer-regression.cjs
+      - run: node tests/yjs-channel-presence-regression.cjs

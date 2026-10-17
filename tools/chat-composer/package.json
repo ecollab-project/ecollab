@@ -1,0 +1,21 @@
+{
+  "name": "ecollab-chat-composer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node ../../tests/chat-composer-regression.cjs"
+  },
+  "dependencies": {
+    "@tiptap/core": "3.31.4",
+    "@tiptap/starter-kit": "3.31.4",
+    "@tiptap/markdown": "3.31.4",
+    "dompurify": "3.4.16",
+    "marked": "18.1.0",
+    "@tiptap/pm": "3.31.4"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "jsdom": "26.1.0"
+  }
+}

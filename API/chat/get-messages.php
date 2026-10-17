@@ -6,10 +6,14 @@ require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 require_once dirname(__DIR__, 2) . '/services/MessageService.php';
 require_once dirname(__DIR__, 2) . '/services/ChannelService.php';
+require_once dirname(__DIR__, 2) . '/services/ChatReadService.php';
 
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
 $user = AuthMiddleware::requireAuth(true);
+// These endpoints write no session data; release the per-account lock before DB work.
+session_write_close();
+header('Cache-Control: no-store, private');
 
 try {
     $channelId = filter_input(INPUT_GET, 'channel_id', FILTER_VALIDATE_INT);
@@ -20,6 +24,9 @@ try {
     }
 
     $before     = filter_input(INPUT_GET, 'before', FILTER_VALIDATE_INT) ?: null;
+    $after      = filter_input(INPUT_GET, 'after', FILTER_VALIDATE_INT);
+    $after      = $after !== false && $after !== null && $after >= 0 ? $after : null;
+    if ($after !== null) $before = null;
     $limit      = filter_input(INPUT_GET, 'limit', FILTER_VALIDATE_INT) ?: 50;
     $pinnedOnly = filter_input(INPUT_GET, 'pinned', FILTER_VALIDATE_INT) === 1;
 
@@ -31,7 +38,7 @@ try {
     $roleStmt->execute([':uid' => $user['id']]);
     $userRole = $roleStmt->fetchColumn() ?: 'student';
     $roleStmt->closeCursor();
-    $isPrivileged = in_array($userRole, ['admin', 'super_admin', 'moderator'], true);
+    $isPrivileged = in_array($userRole, ['admin', 'super_admin'], true);
 
     if (!$isPrivileged) {
         // Use a double-quoted SQL string so MySQL receives real newlines
@@ -62,7 +69,7 @@ try {
 
         $canManage = in_array(
             $access['server_role'],
-            ['owner', 'admin', 'moderator'],
+            ['owner', 'admin'],
             true
         ) || (int)$access['created_by'] === (int)$user['id'];
 
@@ -79,19 +86,23 @@ try {
         exit;
     }
 
-    $messages = $service->getMessages((int)$channelId, $user['id'], $before, $limit);
+    $reads=new ChatReadService($db);
+    $boundary=$before===null&&$after===null?$reads->snapshot('channel',(int)$channelId,(int)$user['id']):[];
+    $messages = $service->getMessages((int)$channelId, $user['id'], $before, $limit, $after);
 
     // Mark as read
     $cs = new ChannelService();
-    $cs->markRead((int)$channelId, $user['id']);
+    if(($_GET['read']??'1')!=='0'&&$before===null){$reads->mark('channel',(int)$channelId,(int)$user['id'],$messages,$after);$cs->markRead((int)$channelId, $user['id']);}
 
     echo json_encode([
         'success'  => true,
         'messages' => $messages,
+        'first_unread_id' => $boundary['first_unread_id']??null,
         'has_more' => count($messages) >= $limit,
     ]);
 } catch (Throwable $e) {
     $code = ($e->getCode() >= 400 && $e->getCode() < 600) ? $e->getCode() : 500;
     http_response_code($code);
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(['error' => $code < 500 ? $e->getMessage() : 'Server error']);
 }
+

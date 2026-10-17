@@ -1,0 +1,20 @@
+name: Chat timeline and profiles
+on:
+  pull_request:
+  push:
+    paths: ['assets/js/chat/**', 'API/chat/**', 'API/dm/**', 'API/profile/**', 'services/ChatReadService.php', 'database/migrations/058*', 'tests/chat-*-regression.*', '.github/workflows/chat-timeline.yml']
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - uses: shivammathur/setup-php@v2
+        with: {php-version: '8.3', extensions: pdo_sqlite, coverage: none}
+      - run: npm install --no-save --ignore-scripts jsdom@30.1.2
+      - run: node tests/chat-timeline-regression.cjs
+      - run: node tests/chat-profile-regression.cjs
+      - run: php tests/chat-read-regression.php
+      - run: |
+          for file in API/chat/get-messages.php API/dm/open-conversation.php API/dm/group-message.php API/dm/groups.php API/profile/get-profile.php services/ChatReadService.php modules/chat/chat.php; do php -l "$file" || exit 1; done

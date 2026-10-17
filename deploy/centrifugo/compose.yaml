@@ -1,0 +1,12 @@
+services:
+  centrifugo:
+    image: centrifugo/centrifugo:v6.9.6
+    container_name: ecollab-centrifugo
+    command: centrifugo --config=/centrifugo/config.json
+    restart: unless-stopped
+    ports: ["127.0.0.1:8001:8000"]
+    env_file: centrifugo.env
+    volumes: ["./config.json:/centrifugo/config.json:ro"]
+    mem_limit: 256m
+    cpus: 0.50
+    security_opt: ["no-new-privileges:true"]

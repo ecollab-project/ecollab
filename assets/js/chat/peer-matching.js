@@ -15,6 +15,15 @@
 const PM_API = (window.ECOLLAB?.baseUrl || '') + '/API/chat/peer-match.php';
 
 /* ── fetch helper ────────────────────────────────────────────────────────── */
+function pmAvatarUrl(url) {
+  const raw = String(url || '').trim();
+  if (!raw) return '';
+  if (/^(?:https?:)?\/\//i.test(raw) || /^(?:data|blob):/i.test(raw)) return raw;
+  const base = String(window.ECOLLAB?.baseUrl || '').replace(/\/$/, '');
+  if (raw.startsWith('/')) return base + raw;
+  return base + '/' + raw.replace(/^\.\//, '');
+}
+
 async function pmFetch(action, params = {}, method = 'GET', body = null) {
   const qs  = new URLSearchParams({ action, ...params }).toString();
   const url = `${PM_API}?${qs}`;
@@ -166,6 +175,10 @@ function _pmMatchCard(m) {
   const [c1, c2] = (m.grad || '#a855f7,#ec4899').split(',');
   const onlineDot = m.is_online
     ? `<span class="pm-online-dot" title="Online now"></span>` : '';
+  const avatarBg = pmAvatarUrl(m.avatar_url)
+    ? `url("${pmEsc(pmAvatarUrl(m.avatar_url))}") center/cover no-repeat`
+    : `linear-gradient(135deg,${c1},${c2})`;
+  const avatarText = pmAvatarUrl(m.avatar_url) ? '' : init;
 
   const scoreBar = (label, val, color) => `
     <div class="pm-score-row">
@@ -184,8 +197,8 @@ function _pmMatchCard(m) {
   return `
     <div class="pm-card" data-uid="${m.id}">
       <div class="pm-card-top">
-        <div class="pm-avatar" style="background:linear-gradient(135deg,${c1},${c2})">
-          ${init}${onlineDot}
+        <div class="pm-avatar">
+          ${window.chatSidebarAvatar(m.name, m.avatar_url, m.grad, 42)}${onlineDot}
         </div>
         <div class="pm-card-info">
           <div class="pm-card-name">${pmEsc(m.name)}
@@ -291,10 +304,12 @@ async function _pmRunSearch() {
     if (!users.length) { results.innerHTML = `<div class="pm-empty">No users found</div>`; return; }
     results.innerHTML = users.map(u => {
       const [c1,c2] = (u.avatar_color_gradient||'#a855f7,#ec4899').split(',');
+      const avatarBg = pmAvatarUrl(u.avatar_url) ? `url("${pmEsc(pmAvatarUrl(u.avatar_url))}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
+      const avatarText = pmAvatarUrl(u.avatar_url) ? '' : (u.full_name||u.username||'?')[0].toUpperCase();
       return `
         <div class="pm-search-row">
-          <div class="pm-avatar pm-avatar-sm" style="background:linear-gradient(135deg,${c1},${c2})">
-            ${(u.full_name||u.username||'?')[0].toUpperCase()}
+          <div class="pm-avatar pm-avatar-sm">
+            ${window.chatSidebarAvatar(u.full_name || u.username, u.avatar_url, u.avatar_color_gradient, 34)}
             ${u.is_online ? '<span class="pm-online-dot"></span>' : ''}
           </div>
           <div class="pm-search-info">
@@ -336,12 +351,14 @@ async function _pmRenderRequests(body) {
 function _pmRequestCard(r, dir) {
   const [c1,c2]  = (r.avatar_color_gradient||'#a855f7,#ec4899').split(',');
   const name     = r.full_name || r.username;
+  const avatarBg = pmAvatarUrl(r.avatar_url) ? `url("${pmEsc(pmAvatarUrl(r.avatar_url))}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
+  const avatarText = pmAvatarUrl(r.avatar_url) ? '' : (name||'?')[0].toUpperCase();
   const statusClass = { pending:'pm-status-pending', accepted:'pm-status-accepted', declined:'pm-status-declined', expired:'pm-status-declined' }[r.status] || '';
 
   return `
     <div class="pm-request-card">
-      <div class="pm-avatar pm-avatar-sm" style="background:linear-gradient(135deg,${c1},${c2})">
-        ${(name||'?')[0].toUpperCase()}
+      <div class="pm-avatar pm-avatar-sm">
+        ${window.chatSidebarAvatar(name, r.avatar_url, r.avatar_color_gradient, 34)}
       </div>
       <div class="pm-request-info">
         <div class="pm-card-name">${pmEsc(name)}</div>
@@ -386,12 +403,14 @@ async function _pmRenderLeaderboard(body) {
       <div class="pm-leaderboard-list">
         ${leaderboard.map((p, i) => {
           const [c1,c2] = (p.avatar_color_gradient||'#a855f7,#ec4899').split(',');
+          const avatarBg = pmAvatarUrl(p.avatar_url) ? `url("${pmEsc(pmAvatarUrl(p.avatar_url))}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
+          const avatarText = pmAvatarUrl(p.avatar_url) ? '' : (p.full_name||p.username||'?')[0];
           const medals  = ['🥇','🥈','🥉'];
           return `
             <div class="pm-leaderboard-row">
               <span class="pm-lb-rank">${medals[i] || `#${i+1}`}</span>
-              <div class="pm-avatar pm-avatar-sm" style="background:linear-gradient(135deg,${c1},${c2})">
-                ${(p.full_name||p.username||'?')[0]}
+              <div class="pm-avatar pm-avatar-sm">
+                ${window.chatSidebarAvatar(p.full_name || p.username, p.avatar_url, p.avatar_color_gradient, 34)}
                 ${p.is_online?'<span class="pm-online-dot"></span>':''}
               </div>
               <div class="pm-lb-info">
@@ -629,6 +648,7 @@ async function openCompatibilityModal(userId, name) {
       { label: 'Style',     val: s.style,     max: 100, color: '#a855f7' },
       { label: 'Interests', val: s.interests, max: 100, color: '#f59e0b' },
       { label: 'Hobbies',   val: s.hobbies,   max: 100, color: '#22c55e' },
+      ...(s.semantic != null ? [{ label: 'Topics', val: s.semantic, max: 100, color: '#06b6d4' }] : []),
     ]);
 
     const tagSection = (title, items, emptyMsg) => {
@@ -660,6 +680,7 @@ async function openCompatibilityModal(userId, name) {
             <div class="pm-compat-total-wrap">
               <div class="pm-compat-total" style="color:${_pmScoreColor(s.total)}">${s.total}%</div>
               <div class="pm-compat-total-label">Overall Match</div>
+              <div class="pm-section-note">${s.semantic != null ? 'Includes related study topics' : 'Based on profile preferences'}. Match score, not a probability.</div>
             </div>
             ${radarSVG}
           </div>
@@ -668,7 +689,8 @@ async function openCompatibilityModal(userId, name) {
             ${[['Subjects',w.subjects,s.subjects,'#3b82f6'],
                ['Study Style',w.style,s.style,'#a855f7'],
                ['Interests',w.interests,s.interests,'#f59e0b'],
-               ['Hobbies',w.hobbies,s.hobbies,'#22c55e']].map(([lbl,wt,val,col])=>`
+               ['Hobbies',w.hobbies,s.hobbies,'#22c55e'],
+               ...(s.semantic != null ? [['Related Topics',w.semantic,s.semantic,'#06b6d4']] : [])].map(([lbl,wt,val,col])=>`
               <div class="pm-breakdown-row">
                 <span class="pm-breakdown-label">${lbl} <small>(${wt}% weight)</small></span>
                 <div class="pm-score-track" style="flex:1">
@@ -760,17 +782,19 @@ window.refreshMatches = async function(btn) {
     window._allMatches.length = 0;
     matches.forEach(m => window._allMatches.push({
       id:     m.id, name: m.name, detail: m.detail, pct: m.pct,
-      type:   m.type, tags: m.tags, grad: m.grad,
+      type:   m.type, tags: m.tags, grad: m.grad, avatar_url: m.avatar_url || '',
     }));
 
     const miniList = document.getElementById('matchesList');
     if (miniList) {
       miniList.innerHTML = matches.slice(0,3).map(m => {
         const [c1,c2] = (m.grad||'#a855f7,#ec4899').split(',');
+        const avatarBg = pmAvatarUrl(m.avatar_url) ? `url("${pmEsc(pmAvatarUrl(m.avatar_url))}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
+        const avatarText = pmAvatarUrl(m.avatar_url) ? '' : (m.name||'?')[0];
         return `
           <div class="match-item" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
-            <div style="position:relative;width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">
-              ${(m.name||'?')[0]}
+            <div class="sidebar-match-avatar" style="position:relative;flex-shrink:0;">
+              ${window.chatSidebarAvatar(m.name, m.avatar_url, m.grad, 36)}
               ${m.is_online?'<span style="position:absolute;bottom:0;right:0;width:9px;height:9px;background:#22c55e;border-radius:50%;border:2px solid var(--bg-secondary)"></span>':''}
             </div>
             <div style="flex:1;min-width:0;">
@@ -787,3 +811,5 @@ window.refreshMatches = async function(btn) {
   } catch { if (_origRefreshMatches && btn) _origRefreshMatches(btn); }
   finally { if (btn) { btn.classList.remove('spinning'); btn.disabled = false; } }
 };
+
+

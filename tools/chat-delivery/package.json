@@ -1,0 +1,1 @@
+{"name":"ecollab-chat-delivery","private":true,"type":"module","scripts":{"build":"node build.mjs","test":"node ../../tests/centrifugo-client-regression.cjs"},"dependencies":{"centrifuge":"5.7.4"},"devDependencies":{"esbuild":"0.25.12","jsdom":"26.1.0","ws":"8.18.3"}}

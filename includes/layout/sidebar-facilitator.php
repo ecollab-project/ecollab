@@ -15,60 +15,56 @@ function fNavItem(string $page, string $icon, string $label, $badge, string $act
 }
 ?>
 <aside class="sidebar">
-  <div class="logo" onclick="showPage('dashboard')">
-    <div class="logo-icon">🔷</div>
-    <span class="logo-text">Ecollab</span>
+  <div class="logo ecollab-brand-logo" onclick="showPage('dashboard')">
+    <img class="ecollab-brand-wordmark" src="<?= BASE_URL ?>/assets/ecollab-wordmark.webp" alt="eCollab">
   </div>
 
   <div class="nav-pad">
     <?= fNavItem('dashboard', '🏠', 'Dashboard', null, $activePage) ?>
-    <?= fNavItem('mychannel', '📡', 'My Channel', null, $activePage) ?>
+    <?= fNavItem('servermonitoring', '🖥️', 'My Servers', null, $activePage) ?>
+    <div class="nav-item" onclick="window.location.href='<?= BASE_URL ?>/modules/chat/chat.php'"><span class="nav-ic">💬</span>Go to Messages</div>
   </div>
 
-  <div class="nav-section-title">Channel Management</div>
+  <div class="nav-section-title">Server Management</div>
   <div class="nav-pad" style="padding-top:0">
-    <?= fNavItem('overview',      '📊', 'Overview',           null, $activePage) ?>
-    <?= fNavItem('members',       '👥', 'Members',            null, $activePage) ?>
     <?= fNavItem('roles',         '🛡', 'Roles & Permissions',null, $activePage) ?>
     <?= fNavItem('announcements', '📢', 'Announcements',       null, $activePage) ?>
     <?= fNavItem('resources',     '📚', 'Resources',           null, $activePage) ?>
     <?= fNavItem('files',         '🔗', 'Files & Links',       null, $activePage) ?>
-    <?= fNavItem('chsettings',    '⚙',  'Channel Settings',   null, $activePage) ?>
+    <?= fNavItem('chsettings',    '⚙',  'Server Settings',    null, $activePage) ?>
   </div>
 
   <div class="nav-section-title">Activity & Analytics</div>
   <div class="nav-pad" style="padding-top:0">
     <?= fNavItem('useractivity',  '📈', 'User Activity',      null, $activePage, 'active-soft') ?>
-    <?= fNavItem('messages',      '💬', 'Messages',            null, $activePage) ?>
     <?= fNavItem('sessions',      '🎓', 'Study Sessions',      null, $activePage) ?>
-    <?= fNavItem('engagement',    '💡', 'Engagement',           null, $activePage) ?>
-    <?= fNavItem('leaderboards',  '🏆', 'Leaderboards',        null, $activePage) ?>
   </div>
 
   <div class="nav-section-title">Moderation</div>
   <div class="nav-pad" style="padding-top:0">
-    <?= fNavItem('reports',   '🚩', 'Reports',          2,    $activePage) ?>
-    <?= fNavItem('modqueue',  '⚠',  'Moderation Queue', null, $activePage) ?>
+    <?= fNavItem('reports',   '🚩', 'Reports',          null, $activePage) ?>
     <?= fNavItem('banned',    '🚫', 'Banned Users',     null, $activePage) ?>
-    <?= fNavItem('chlogs',    '📋', 'Channel Logs',     null, $activePage) ?>
   </div>
 
   <div class="nav-section-title">Tools</div>
   <div class="nav-pad" style="padding-top:0">
-    <?= fNavItem('whiteboard', '🎨', 'Whiteboard',    null, $activePage) ?>
-    <?= fNavItem('polls',      '📊', 'Polls & Quizzes',null, $activePage) ?>
+    <?= fNavItem('polls',      '📊', 'Polls',          null, $activePage) ?>
+    <div class="nav-item" onclick="window.location.href='<?= BASE_URL ?>/modules/collaboration/index.php'"><span class="nav-ic">🧩</span>Collaboration Hub</div>
     <div class="nav-item" onclick="openModal('aiModal')"><span class="nav-ic">🤖</span>AI Assistant</div>
-    <div class="nav-item" onclick="goToChat()"><span class="nav-ic">💬</span>Go to Chat</div>
   </div>
 
-  <!-- Channel selector -->
-  <div class="channel-selector" onclick="openModal('channelSwitchModal')" style="margin-top:auto">
+  <!-- Current server -->
+  <?php
+    $sidebarServerName = $sidebarServer['name'] ?? ($dashData['channel']['name'] ?? 'My Servers');
+    $sidebarServerIcon = $sidebarServer['icon_emoji'] ?? '🖥️';
+    $sidebarServerStatus = ucfirst((string)($sidebarServer['status'] ?? 'active'));
+  ?>
+  <div class="channel-selector facilitator-server-card" style="margin-top:auto" title="<?= htmlspecialchars($sidebarServerName) ?>">
     <div class="cs-top">
-      <div class="cs-av"><?= htmlspecialchars($initials) ?></div>
-      <div class="cs-name">CS 305 – Neural Networks</div>
-      <div class="cs-arr">▾</div>
+      <div class="cs-av"><?= htmlspecialchars($sidebarServerIcon) ?></div>
+      <div class="cs-name"><?= htmlspecialchars($sidebarServerName) ?></div>
     </div>
-    <div class="cs-status"><div class="cs-dot"></div>Active</div>
+    <div class="cs-status"><div class="cs-dot"></div><?= htmlspecialchars($sidebarServerStatus) ?></div>
   </div>
 
   <!-- Profile card -->
@@ -77,7 +73,7 @@ function fNavItem(string $page, string $icon, string $label, $badge, string $act
       <div class="pc-av" style="background:linear-gradient(135deg,<?= htmlspecialchars($c1) ?>,<?= htmlspecialchars($c2) ?>)"><?= htmlspecialchars($initials) ?><div class="pc-online"></div></div>
       <div>
         <div class="pc-name"><?= htmlspecialchars($user['full_name'] ?: $user['username']) ?></div>
-        <div class="pc-role">✅ Channel Administrator</div>
+        <div class="pc-role">✅ Facilitator</div>
       </div>
     </div>
   </div>

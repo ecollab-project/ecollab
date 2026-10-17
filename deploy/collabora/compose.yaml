@@ -1,0 +1,13 @@
+services:
+  collabora:
+    image: ${COLLABORA_IMAGE:?Set a pinned collabora/code image digest}
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:9980:9980'
+    environment:
+      aliasgroup1: ${ECOLLAB_ORIGIN:?Set the exact HTTPS eCollab origin}
+      server_name: ${COLLABORA_HOST:?Set the office hostname without scheme}
+      extra_params: '--o:ssl.enable=false --o:ssl.termination=true --o:logging.level=warning'
+    cap_add: [MKNOD]
+    mem_limit: 2g
+    cpus: 2

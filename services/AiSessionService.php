@@ -250,6 +250,21 @@ final class AiSessionService
         ];
     }
 
+    /** Persist a complete turn atomically; no model call holds this transaction open. */
+    public function appendExchange(int $userId,int $sessionId,string $prompt,string $reply,int $inputTokens,int $outputTokens):array {
+        if(trim($prompt)===''||trim($reply)==='')throw new InvalidArgumentException('A complete turn is required.');
+        $this->db->beginTransaction();
+        try {
+            $this->getSession($userId,$sessionId);
+            $insert=$this->db->prepare('INSERT INTO ai_messages(session_id,role,content,token_count) VALUES(?,?,?,?)');
+            $insert->execute([$sessionId,'user',$prompt,$inputTokens]);
+            $insert->execute([$sessionId,'assistant',$reply,$outputTokens]);$id=(int)$this->db->lastInsertId();
+            $this->db->prepare('UPDATE ai_sessions SET message_count=message_count+2,token_cost=token_cost+?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND user_id=?')->execute([$inputTokens+$outputTokens,$sessionId,$userId]);
+            $s=$this->db->prepare('SELECT id,session_id,role,content,token_count,created_at FROM ai_messages WHERE id=?');$s->execute([$id]);$message=$s->fetch(PDO::FETCH_ASSOC);
+            $this->db->commit();return $message;
+        }catch(Throwable $e){if($this->db->inTransaction())$this->db->rollBack();throw $e;}
+    }
+
     public function getRecentConversation(int $userId, int $sessionId, int $limit = 20): array
     {
         $this->getSession($userId, $sessionId);

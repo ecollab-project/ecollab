@@ -1,0 +1,117 @@
+/* Shared device layout. Loaded after each page's own styles; drawing surfaces
+   and embedded editor internals remain owned by their respective modules. */
+:root{--device-gutter:clamp(10px,2vw,32px);--device-editor-header:70px}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{min-width:0}
+:where(main,section,article,header,footer,aside,form,fieldset){box-sizing:border-box;min-width:0}
+:where(img,video){max-width:100%}
+:where(input,select,textarea){box-sizing:border-box;min-width:0;max-width:100%}
+:where(h1,h2,h3,p,label,summary){overflow-wrap:break-word}
+:where(pre){max-width:100%;overflow:auto}
+.device-table-scroll{max-width:100%;min-width:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.device-table-scroll:focus-visible{outline:2px solid #c084fc;outline-offset:-2px}
+:where(.lw-main,.lw-content,.workspace-shell,.workspace-main,.shell,.lib-shell,.layout,.main,.main-content){min-width:0}
+.lw-card-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr))}
+:where(.workspace-table-wrap,.workspace-table-scroll,.lw-table-wrap,.table-wrap,.responsive-table){max-width:100%;min-width:0;overscroll-behavior:contain}
+:where(.workspace-list-row,.workspace-review-row,.lw-row,.perm-row,.invite-item,.candidate,.request)>:first-child{min-width:0;overflow-wrap:anywhere}
+:where(.workspace-dialog-actions,.lw-row-actions,.workspace-row-actions,.invite-row,.request-actions,.candidate){flex-wrap:wrap}
+:where(dialog){box-sizing:border-box;max-width:calc(100vw - 20px);max-height:calc(var(--app-viewport-height,100dvh) - 24px);overscroll-behavior:contain}
+:where(.workspace-sidebar,.lw-sidebar){max-width:calc(100vw - 32px);padding-bottom:env(safe-area-inset-bottom)}
+body.has-call-taskbar:not([data-mobile-surface=chat]):not([data-mobile-surface=whiteboard]){padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+@media(max-width:900px){
+ .lw-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .lw-grid{grid-template-columns:minmax(0,1fr)}
+ .lw-header{min-width:0;gap:8px}.lw-search{min-width:0;flex:1}.lw-search input{min-width:0;width:100%}
+ .lw-sidebar{height:100dvh}
+ .lw-row-actions{flex-shrink:1}
+}
+@media(max-width:860px){
+ :where(button,[role=button],a.btn,a.lw-button,.navbtn,.workspaceSettings,.workspace-pin,.footer-icon-btn){min-height:44px;touch-action:manipulation}
+ :where(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=hidden]),select,textarea){font-size:16px}
+ :where(dialog){padding:16px;max-height:calc(var(--app-viewport-height,100dvh) - 20px)}
+ :where(dialog header,dialog footer,.modal-footer,.workspace-dialog-actions,.lw-heading,.card-header,.lw-panel-head,.workspace-list-row,.workspace-monitor-owner){flex-wrap:wrap}
+ .workspace-topbar{height:auto;min-height:62px;padding-block:10px;flex-wrap:wrap;gap:8px}
+ .workspace-topbar-left,.workspace-topbar-right{min-width:0;flex-wrap:wrap;gap:8px}
+ .workspace-main{padding-inline:var(--device-gutter)}
+ .workspace-filters,.workspace-monitor-actions,.workspace-pagination{flex-wrap:wrap;gap:8px}
+ .workspace-stat small,.workspace-list-row strong,.workspace-page-heading p{overflow-wrap:anywhere}
+ .lw-header{height:auto;min-height:66px;padding-block:10px;flex-wrap:wrap}
+ .lw-header-actions{flex:none;gap:4px}.lw-header-actions button{min-width:40px;padding:8px}
+ .lw-content{padding-inline:var(--device-gutter)}
+ .lw-panel-head{align-items:flex-start}.lw-row{flex-wrap:wrap;gap:10px}.lw-row-actions{justify-content:flex-start}
+ .lw-space-card{padding:18px;min-width:0}.lw-space-card footer{flex-wrap:wrap}
+ .lw-footer{flex-wrap:wrap;gap:8px}.lw-pagination{flex-wrap:wrap;gap:8px}
+ #lw-toast,.workspace-toast{max-width:calc(100vw - 24px);right:12px;bottom:max(12px,env(safe-area-inset-bottom))}
+ body[data-mobile-surface=chat] .sidebar-left{width:min(280px,calc(100vw - var(--workspace-width,60px)))!important}
+ body[data-mobile-surface=chat] .chat-header{min-height:0;padding:8px;gap:4px}
+ body[data-mobile-surface=chat] .chat-header>div:last-child{max-width:100%;flex-wrap:wrap}
+ body[data-mobile-surface=chat] :where(.msg-body,.msg-content,.dm-message-body,.dm-content,.thread-post-content){min-width:0;overflow-wrap:anywhere}
+ body[data-mobile-surface=chat] :where(.chat-input-container,.chat-input-actions,.dm-input-container,.dm-input-actions){min-width:0;flex-wrap:wrap}
+ body[data-mobile-surface=chat] .ec-composer{flex-basis:calc(100% - 54px)}
+ body[data-mobile-surface=chat] .ec-composer-toolbar{flex-wrap:wrap;max-height:100px;overflow:auto}
+ body[data-mobile-surface=chat] .ec-composer-tool{min-width:32px;min-height:36px}
+ body[data-mobile-surface=chat] :where(.extras-menu,.attach-menu,.emoji-picker,.notif-dropdown){max-width:calc(100vw - 16px);max-height:calc(var(--app-viewport-height,100dvh) * .5);overflow:auto}
+ :where(.voice-channel-view.active:not(.vc-minimized)) .vc-header{height:auto;min-height:52px;flex-wrap:wrap;gap:8px;padding:8px}
+ .voice-channel-view.active:not(.vc-minimized) .vc-header-right{flex-wrap:wrap;gap:6px}
+ :where(.voice-channel-view) :where(.vc-controls-bar,.vc-bar-grp){flex-wrap:wrap;gap:6px}
+ .ec-call header{flex-wrap:wrap}.ec-call .ec-call-window-actions{flex-wrap:wrap}
+ .ec-call.is-minimized,.ec-call.is-taskbar-docked{max-width:calc(100vw - 24px)!important}
+ .ec-call-taskbar{scroll-padding:12px}
+ body[data-mobile-surface=editor]>main{height:auto;min-height:0;flex-direction:column}
+ body[data-mobile-surface=editor]>main>iframe{width:100%;height:max(220px,calc(var(--app-viewport-height,100dvh) - var(--device-editor-header)));min-height:220px;flex:none}
+ body[data-mobile-surface=editor]>main>aside{width:100%;max-height:none;box-sizing:border-box}
+ body[data-mobile-surface=coworkspace] :where(.candidate,.request,.join,.invite-row,.invite-item,.perm-row){flex-wrap:wrap;gap:8px}
+ body[data-mobile-surface=coworkspace] :where(.grid,.access-grid){grid-template-columns:minmax(0,1fr)!important}
+ body[data-mobile-surface=coworkspace] :where(.meta,.doc-title,.title){overflow-wrap:anywhere}
+ body[data-mobile-surface=library] .lib-top{flex-wrap:wrap;gap:10px}
+ body[data-mobile-surface=forms] :where(.page,.card){max-width:100%;box-sizing:border-box}
+ body[data-mobile-surface=forms] .otp-group{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
+ body[data-mobile-surface=forms] .otp-input{width:100%;min-width:0;padding:0;height:44px}
+ body[data-mobile-surface=policy] .top{flex-wrap:wrap;gap:10px;padding:12px var(--device-gutter)}
+ body[data-mobile-surface=policy] .wrap{padding-inline:var(--device-gutter)}
+ body[data-mobile-surface=whiteboard] .wb-hdr{height:auto!important;min-height:56px;flex-wrap:wrap;gap:6px;padding:8px}
+ body[data-mobile-surface=whiteboard] .wb-hdr-center{order:3;flex:1 0 100%;justify-content:center;overflow:auto}
+ body[data-mobile-surface=whiteboard] .wb-hdr-right{min-width:0;gap:4px}
+ body[data-mobile-surface=whiteboard] .wb-rsidebar{width:min(280px,calc(100vw - 24px))}
+ body[data-mobile-surface=whiteboard] #wbOverlay{height:var(--app-viewport-height,100dvh)!important}
+ .wb-version-panel{width:min(270px,calc(100vw - 24px))!important}
+}
+@media(max-width:420px){
+ .workspace-stats,.lw-stats{grid-template-columns:minmax(0,1fr)}
+ .workspace-role-row{grid-template-columns:70px minmax(0,1fr) 32px}
+ .lw-header{padding-inline:10px}.lw-search{flex-basis:calc(100% - 54px)}.lw-header-actions{margin-left:auto}
+ .lw-form-grid{grid-template-columns:minmax(0,1fr)!important}
+ .workspace-table th,.workspace-table td,.lw-table th,.lw-table td{padding:10px}
+ body[data-mobile-surface=forms] .page{padding:12px 10px}
+ body[data-mobile-surface=forms] .card{padding:18px 14px;border-radius:18px}
+ body[data-mobile-surface=forms] :where(.options-row,.nav-btns,.terms-row,.hobby-metrics){flex-wrap:wrap;gap:8px}
+ body[data-mobile-surface=forms] .hobby-metrics{grid-template-columns:minmax(0,1fr)}
+ body[data-mobile-surface=library] .lib-grid{grid-template-columns:minmax(0,1fr)}
+ body[data-mobile-surface=settings] .inner{padding:18px 10px}
+ body[data-mobile-surface=settings] .hero{flex-wrap:wrap}.row .copy{min-width:0}
+ body[data-mobile-surface=chat] .user-profile-footer{padding:8px;gap:6px;flex-wrap:wrap}
+ body[data-mobile-surface=chat] .footer-controls{margin-left:auto}
+ body[data-mobile-surface=landing] :where(.hero-btns,.nav-actions,.cta-btns){flex-wrap:wrap;gap:8px}
+ body[data-mobile-surface=landing] .hero h1{font-size:clamp(26px,10vw,42px)}
+}
+@media(max-height:480px) and (orientation:landscape){
+ :where(dialog,.modal,.md,.pm-shell){max-height:calc(var(--app-viewport-height,100dvh) - 16px)!important;overflow:auto}
+ .voice-channel-view.vc-minimized{max-height:calc(var(--app-viewport-height,100dvh) - 80px)!important;overflow:auto!important}
+ .ec-call.is-taskbar-docked .ec-call-preview{max-height:calc(var(--app-viewport-height,100dvh) - 84px)}
+ body[data-mobile-surface=chat] .ec-composer-surface .tiptap{max-height:80px}
+}
+@media(min-width:1920px){
+ .workspace-main,.lw-content{max-width:1800px;margin-inline:auto}
+ body[data-mobile-surface=chat] .msg-content{max-width:1120px}
+ body[data-mobile-surface=chat] .chat-input-wrapper{max-width:1440px;width:100%;align-self:center}
+}
+@media(max-width:860px){body[data-mobile-surface=whiteboard] #excalidraw-root{top:var(--device-whiteboard-header,60px)!important}}
+.ob-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))}
+@media(max-width:420px){body[data-mobile-surface=landing] .pricing-grid-single{grid-template-columns:minmax(0,1fr)}body[data-mobile-surface=forms] .ob-page{padding-inline:10px}}
+@media(pointer:coarse){
+ :where(button,[role=button],a.btn,a.lw-button,select){min-height:44px;touch-action:manipulation}
+ .lw-check{min-height:44px}
+ .footer-icon-btn{min-width:44px!important;min-height:44px!important}
+ .workspace-switcher .workspace-icon{min-width:44px;min-height:44px}
+}
+@media(min-width:861px) and (pointer:coarse){body[data-mobile-surface=chat]{height:calc(var(--app-viewport-height,100dvh) - var(--server-dock-height,58px))}}
