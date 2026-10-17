@@ -9,6 +9,7 @@ try{
  a.provider.typing(true);const typing=a.messages.at(-1);assert.equal(typing.state.typing,true);assert(!Object.hasOwn(typing.state,'text'),'no draft text is sent');
  const before=b.messages.length;b.provider.receive({type:'chat_presence',channel_id:20,presence:canonical(a,typing)});assert.equal(b.messages.length,before);assert([...b.states.values()].some(s=>s.user?.id===1&&s.typing));
  for(const callback of a.timers.values())callback();assert.equal(a.messages.at(-1).state.typing,false,'typing stops after idle timeout');
+ a.provider.preferences({activity_status:0});assert.equal(a.messages.at(-1).state,null,'Invisible status publishes a tombstone');a.provider.preferences({activity_status:1});assert(a.messages.at(-1).state,'Visibility can be restored');
  const count=a.messages.length;a.provider.receive({type:'joined_channel',channel_id:21,presence:[]});assert.equal(a.messages.length,count+1,'channel change must not send old-client tombstone to new room');assert.equal(a.messages.at(-1).channel_id,21);
  a.provider.receive({type:'chat_presence',channel_id:20,presence:canonical(b,b.messages.at(-1))});assert.equal(a.states.size,1,'previous channel presence ignored');
  b.provider.receive({type:'chat_presence_remove',channel_id:20,client_ids:[typing.client_id]});assert.equal(b.states.size,1);

@@ -4,6 +4,7 @@ require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 require_once dirname(__DIR__, 2) . '/services/ChatReadService.php';
+require_once dirname(__DIR__, 2) . '/services/UserPreferences.php';
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
 $me = AuthMiddleware::requireAuth(true);
@@ -121,9 +122,11 @@ try {
 
     $reads->mark('dm',$convId,(int)$me['id'],$messages,$after);
     }
+    $partnerRead=UserPreferences::partnerRead($db,$convId,(int)$me['id'],$partnerId);
     echo json_encode([
         'success' => true,
         'conversation_id' => $convId,
+        'partner_last_read_id'=>$partnerRead,
         'partner' => $partner,
         'friend_status' => $friendStatus ?: 'none',
         'messages' => $messages,

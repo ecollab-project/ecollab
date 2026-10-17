@@ -7,6 +7,7 @@ require_once ROOT_PATH.'/security/middleware/AuthMiddleware.php';
 require_once ROOT_PATH.'/security/middleware/RoleMiddleware.php';
 require_once ROOT_PATH.'/services/UserService.php';
 require_once ROOT_PATH.'/services/OllamaService.php';
+require_once ROOT_PATH.'/services/JarredConversation.php';
 require_once ROOT_PATH.'/services/JarredCapabilityPolicy.php';
 require_once ROOT_PATH.'/services/JarredGroupRecommendationService.php';
 
@@ -30,7 +31,9 @@ if($prompt===''||mb_strlen($prompt)>3000){
 }
 
 try{
-    $uid=(int)$user['id'];
+    AuthMiddleware::verifyCsrf();
+    $uid=(int)$user['id'];$prefs=UserPreferences::get(Database::getInstance(),$uid);UserPreferences::assertJarred($prefs);
+    if(session_status()===PHP_SESSION_ACTIVE)session_write_close();
     $serverId=max(0,(int)($body['server_id']??0));
     $dash=(new UserService())->getFacilitatorDashboardData($uid);
 
@@ -85,8 +88,8 @@ try{
 
     $result=(new OllamaService())->generate(
         $messages,
-        "You are Jarred inside eCollab's Facilitator Dashboard. Analyze only the authorized dashboard evidence supplied with the request. Never invent students, counts, percentages, quiz results, skill scores, participation, trends, or events. If evidence needed for a requested conclusion is absent, say what is missing. Separate measured dashboard facts from interpretation. For reports, use concise headings and actionable observations. Do not make psychological or intelligence judgments about students. Grouping and skill claims require actual matching or assessment evidence; do not infer them from message counts alone.",
-        650
+        "You are Jarred inside eCollab's Facilitator Dashboard. Analyze only the authorized dashboard evidence supplied with the request. Never invent students, counts, percentages, quiz results, skill scores, participation, trends, or events. If evidence needed for a requested conclusion is absent, say what is missing. Separate measured dashboard facts from interpretation. For reports, use concise headings and actionable observations. Do not make psychological or intelligence judgments about students. Grouping and skill claims require actual matching or assessment evidence; do not infer them from message counts alone.".JarredConversation::instructions($prefs),
+        JarredConversation::tokens($prefs)
     );
     $text=trim((string)($result['text']??''));
     if($text==='') throw new RuntimeException('Jarred returned an empty response.');
@@ -94,6 +97,6 @@ try{
     echo json_encode(['success'=>true,'reply'=>$text,'model'=>$result['model']??null]);
 }catch(Throwable $e){
     error_log('[facilitator/jarred] '.$e->getMessage());
-    http_response_code(500);
-    echo json_encode(['error'=>'Jarred is temporarily unavailable.']);
+    http_response_code(in_array($e->getCode(),[403,409,503],true)?$e->getCode():500);
+    echo json_encode(['error'=>$e->getCode()===403?$e->getMessage():'Jarred is temporarily unavailable.']);
 }

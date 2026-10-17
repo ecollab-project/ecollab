@@ -6,6 +6,7 @@ require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/services/RealtimeOutbox.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 require_once dirname(__DIR__, 2) . '/services/OllamaService.php';
+require_once dirname(__DIR__, 2) . '/services/JarredConversation.php';
 require_once dirname(__DIR__, 2) . '/services/JarredTools.php';
 require_once dirname(__DIR__, 2) . '/services/JarredActionService.php';
 require_once dirname(__DIR__, 2) . '/services/CodeLabIntegrityPolicy.php';
@@ -23,6 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['error' => 'Method not allowed']);
     exit;
 }
+
+AuthMiddleware::verifyCsrf();if(session_status()===PHP_SESSION_ACTIVE)session_write_close();
 
 $body   = json_decode(file_get_contents('php://input'), true) ?? [];
 $convId = (int)($body['conversation_id'] ?? 0);
@@ -88,6 +91,8 @@ try {
         && ($recipient['username'] ?? '') === 'ecollab_ai';
 
     if ($isAiConversation && CodeLabIntegrityPolicy::isCodeLab($jarredSurface,(string)($_SERVER['HTTP_REFERER']??''))) {http_response_code(403);echo json_encode(['success'=>false,'error'=>CodeLabIntegrityPolicy::AI_MESSAGE]);exit;}
+
+    if($isAiConversation){$prefs=UserPreferences::get($db,(int)$me['id']);UserPreferences::assertJarred($prefs);$turnLock=JarredConversation::lock((int)$me['id'],'dm',$convId);}
 
     $msgId = RealtimeOutbox::record($db, 'dm', $convId, function () use ($db, $convId, $me, $text, $attachmentPath, $attachmentName, $attachmentSize, $attachmentMime) {
         $ins = $db->prepare(
@@ -167,30 +172,8 @@ try {
         $historyStmt->execute([':cid' => $convId]);
         $history = array_reverse($historyStmt->fetchAll(PDO::FETCH_ASSOC));
 
-        $messages = [];
-        foreach ($history as $row) {
-            $isAssistant = (int)$row['sender_id'] === $recipientId;
-            $content = trim((string)$row['body']);
-            if ($content === '') continue;
-
-            // qwen3:1.7b strongly imitates earlier assistant turns. Old Jarred
-            // replies may contain obsolete/hallucinated channel behavior, so do
-            // not feed those replies back as authority. Preserve recent USER
-            // turns for conversational continuity; the current Jarred response
-            // is always regenerated from the current system prompt/context.
-            if ($isAssistant) continue;
-
-            $messages[] = [
-                'role' => 'user',
-                'content' => $content,
-            ];
-        }
-
-        // Avoid sending a long stack of user-only history to the small model.
-        // Keep the latest few user turns, including the current request.
-        if (count($messages) > 4) {
-            $messages = array_slice($messages, -4);
-        }
+        $prior=array_map(static fn($row)=>['role'=>(int)$row['sender_id']===$recipientId?'assistant':'user','content'=>(string)$row['body']],$history);array_pop($prior);
+        $messages = JarredConversation::history($prior,5000);$messages[]=['role'=>'user','content'=>$text];
 
         $jarredTools = new JarredTools();
 
@@ -219,6 +202,7 @@ try {
             exit;
         }
 
+        $jarredSurface['personalization']=(bool)$prefs['jarred_personalization'];
         $jarredContext = $jarredTools->contextForPrompt((int)$me['id'], $text, $activeServerId, $jarredSurface);
 
         // qwen3:1.7b on this VPS does not reliably emit native Ollama tool_calls.
@@ -248,8 +232,8 @@ For facilitators, analyze only supplied authorized evidence and distinguish meas
 You can create temporary public/private voice rooms through the authorized workflow; answer from authorized eCollab context; report active members; explain deterministic peer matches; search authorized message context when supplied; describe accessible servers/channels; discuss authorized Coworkspace/document/whiteboard context; recommend academic library material; and have normal conversation. Do not claim actions the backend did not provide.
 
 Keep ordinary DM replies short and conversational unless the user asks for detail.
-JARRED_SYSTEM_PROMPT,
-            400
+JARRED_SYSTEM_PROMPT . JarredConversation::instructions($prefs),
+            JarredConversation::tokens($prefs)
         );
 
         $aiText = trim((string)($result['text'] ?? ''));
@@ -317,13 +301,13 @@ JARRED_SYSTEM_PROMPT,
             'created_at' => $createdAt,
             'recipient_id' => $recipientId,
             'is_ai' => true,
-            'ai_error' => 'AI is temporarily unavailable',
+            'ai_error' => in_array($aiError->getCode(),[409,503],true)?'Jarred is busy. Wait briefly and try again.':'AI is temporarily unavailable',
         ]);
     }
 } catch (Throwable $e) {
     error_log('[dm/send-message] ' . $e->getMessage());
-    http_response_code(500);
-    echo json_encode(['error' => 'Server error']);
+    $status=in_array($e->getCode(),[403,409,503],true)?$e->getCode():500;http_response_code($status);
+    echo json_encode(['error' => $status===500?'Server error':$e->getMessage()]);
 }
 
 

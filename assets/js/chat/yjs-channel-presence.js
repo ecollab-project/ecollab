@@ -12,7 +12,7 @@ export function createChannelPresence({send,changed}) {
       if(message.type==='joined_channel'){
         clear();room=Number(message.channel_id);doc=new Y.Doc();awareness=new Awareness(doc);
         awareness.on('update',(_changes,origin)=>{if(origin!=='remote')publish();});awareness.on('change',render);
-        awareness.setLocalState({typing:false,status:document.hidden?'idle':'active'});
+        awareness.setLocalState(window._userSettings?.activity_status===0?null:{typing:false,status:document.hidden?'idle':'active'});
         for(const entry of message.presence||[])applyAwarenessUpdate(awareness,awarenessFrame(entry),'remote');
         return;
       }
@@ -20,8 +20,9 @@ export function createChannelPresence({send,changed}) {
       if(message.type==='chat_presence')applyAwarenessUpdate(awareness,awarenessFrame(message.presence),'remote');
       if(message.type==='chat_presence_remove')removeAwarenessStates(awareness,message.client_ids||[],'remote');
     },
-    typing(on){if(!awareness)return false;clearTimeout(stop);if(awareness.getLocalState()?.typing!==!!on)awareness.setLocalStateField('typing',!!on);if(on)stop=setTimeout(()=>awareness?.setLocalStateField('typing',false),2500);return true;},
+    typing(on){if(window.EcollabPreferences?.enabled('typing_indicators')===false)on=false;if(!awareness)return false;clearTimeout(stop);if(awareness.getLocalState()?.typing!==!!on)awareness.setLocalStateField('typing',!!on);if(on)stop=setTimeout(()=>awareness?.setLocalStateField('typing',false),2500);return true;},
     idle(on){if(awareness){awareness.setLocalStateField('status',on?'idle':'active');if(on)this.typing(false);}},
+    preferences(settings){if(!awareness)return;if(settings.activity_status===0)awareness.setLocalState(null);else if(!awareness.getLocalState())awareness.setLocalState({typing:false,status:document.hidden?'idle':'active'});if(settings.typing_indicators===0)this.typing(false);},
     disconnect:()=>clear(),dispose:()=>clear(true)
   };
 }
@@ -37,7 +38,7 @@ if(typeof window!=='undefined'&&document.getElementById('chatInputField')){
     if(!badge){badge=document.createElement('span');badge.id='channelPresenceBadge';badge.style.cssText='font-size:11px;color:var(--text-muted);margin-left:8px';document.querySelector('.chat-header')?.append(badge);}
     if(badge){badge.textContent=room?(users.size+(states.has(localId)&&!users.has(Number(window.ECOLLAB?.userId))?1:0))+' viewing':'';badge.title=[...users.values()].map(u=>u.name).join(', ');}
   }});
-  window.EcollabChatPresence=presence;
+  window.EcollabChatPresence=presence;window.addEventListener('ecollab:settings-applied',event=>presence.preferences(event.detail||{}));
   window.addEventListener('ecollab:chat-presence',event=>presence.receive(event.detail));
   window.addEventListener('ecollab:realtime-disconnected',()=>presence.disconnect());
   document.addEventListener('visibilitychange',()=>presence.idle(document.hidden));window.addEventListener('blur',()=>presence.idle(true));window.addEventListener('focus',()=>presence.idle(false));window.addEventListener('pagehide',()=>presence.dispose());

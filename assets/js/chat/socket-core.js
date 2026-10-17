@@ -648,7 +648,6 @@ function handleThreadReply(data) {
 function _notifEnabled(kind) {
   const s = window._userSettings;
   if (!s) return true; // settings not loaded yet — default to notifying
-  if (s.notification_desktop === 0) return false; // master switch off
   if (kind && s[kind] === 0) return false;
   return true;
 }
@@ -656,7 +655,7 @@ function _notifEnabled(kind) {
 function showDesktopNotification(kind, title, body) {
   if (!_notifEnabled(kind)) return;
 
-  if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+  if (_notifEnabled('notification_desktop') && document.hidden && 'Notification' in window && Notification.permission === 'granted') {
     try {
       const n = new Notification(title, { body, silent: true });
       n.onclick = () => { window.focus(); n.close(); };
@@ -786,6 +785,7 @@ let _typingThrottle = null;
 let _typingState    = false;
 
 function sendTypingEvent(isTyping) {
+  if(window.EcollabPreferences?.enabled('typing_indicators')===false||window.EcollabPreferences?.enabled('activity_status')===false)isTyping=false;
   if(window.EcollabChatPresence?.typing(isTyping))return;
   if (!window.ECOLLAB?.currentChannelId) return;
   if (isTyping === _typingState) return; // no-op if state unchanged

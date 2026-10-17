@@ -15,7 +15,10 @@
  * added alongside this file.
  */
 (function () {
-  function applyClasses(settings) {
+  if(window.EcollabAccountSettings)return;
+  window.EcollabAccountSettings={apply:applyClasses,refresh:run};
+  let resolveReady;window.EcollabAccountSettingsReady=new Promise(resolve=>resolveReady=resolve);
+  function applyClasses(settings,remote=false) {
     const html = document.documentElement;
     html.classList.toggle('no-motion', !!settings.reduce_motion);
     html.classList.toggle('high-contrast', !!settings.high_contrast);
@@ -37,15 +40,16 @@
     // Cached globally so other scripts (notification triggers, etc.) don't
     // need a second round-trip to know the user's current preferences.
     window._userSettings = settings;
-    window.dispatchEvent(new CustomEvent('ecollab:settings-applied', { detail: settings }));
+    const event=new CustomEvent('ecollab:settings-applied',{detail:settings});event.fromSettingsSync=remote;window.dispatchEvent(event);
   }
 
   function run() {
+    if(document.querySelector('meta[name="ecollab-user"]')?.content==='0'){resolveReady({});return;}
     const base = window.ECOLLAB?.baseUrl || window.ECOLLAB_BASE || window.ECOLLAB_CALLS_CONFIG?.baseUrl || window.BASE_URL || '';
     fetch(base + '/API/profile/settings.php', { credentials: 'same-origin' })
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d && d.settings) applyClasses(d.settings); })
-      .catch(() => {});
+      .then(d => { if (d && d.settings){applyClasses(d.settings);resolveReady(d.settings);}else resolveReady({}); })
+      .catch(() => resolveReady({}));
   }
 
   if (document.readyState === 'loading') {

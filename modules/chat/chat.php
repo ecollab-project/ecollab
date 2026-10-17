@@ -46,7 +46,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <title>Ecollab — Chat</title>
   <link rel="icon" type="image/webp" href="<?= BASE_URL ?>/assets/ecollab-icon.webp">
   <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken) ?>">
-  <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js?v=3" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js?v=settings-speed-1" defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat.css?v=voice-name-spacing-1">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/whiteboard.css">
@@ -1113,22 +1113,22 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     6. whiteboard.js — collaborative whiteboard
     7. dm-notifications.js — DM badge polling
   -->
-  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=timeline-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=settings-speed-1" defer></script>
   <?php if (filter_var(env('CHAT_RESUMABLE_UPLOADS', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-uploads.css?v=uppy-1">
   <script src="<?= BASE_URL ?>/assets/js/chat/resumable-uploads.js?v=uppy-1" defer></script>
   <?php endif; ?>
   <?php if (filter_var(env('CHAT_RICH_COMPOSER', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-composer.css?v=tiptap-1">
-  <script src="<?= BASE_URL ?>/assets/js/chat/rich-composer.js?v=tiptap-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/rich-composer.js?v=settings-speed-1" defer></script>
   <?php endif; ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-timeline.css?v=1">
-  <script src="<?= BASE_URL ?>/assets/js/chat/timeline.js?v=1" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=timeline-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/timeline.js?v=settings-speed-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=settings-speed-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=media-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js?v=media-1" defer></script>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-media.css?v=1">
-  <script src="<?= BASE_URL ?>/assets/js/chat/media-picker.js?v=1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/media-picker.js?v=settings-speed-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=call-taskbar-timer-1" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.22.3/dist/livekit-client.umd.min.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/livekit-voice.js?v=sfx-1" defer></script>
@@ -1178,7 +1178,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     </button>
   </div>
 
-  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=timeline-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=settings-speed-1" defer></script>
   <?php if (filter_var(env('CENTRIFUGO_ENABLED', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
   <script src="<?= BASE_URL ?>/assets/js/chat/centrifugo-delivery.js?v=delivery-1" defer></script>
   <?php endif; ?>
@@ -3471,7 +3471,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <script src="<?= BASE_URL ?>/assets/js/chat/nav-persistence.js?v=2" defer></script>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/profile-view-overrides.css?v=1">
   <script id="profileViewScript" src="<?= BASE_URL ?>/assets/js/chat/profile-view.js?v=2" defer></script>
-<script type="module" src="<?= BASE_URL ?>/assets/js/chat/yjs-channel-presence.js?v=yjs-chat-1"></script>
+<script type="module" src="<?= BASE_URL ?>/assets/js/chat/yjs-channel-presence.js?v=settings-speed-1"></script>
 </body>
 
 <!-- ── FLASHCARD MODALS ── -->
@@ -3573,7 +3573,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 <div id="resourceCommentsModal" class="collab-modal-overlay" style="display:none"></div>
 
 <?php require_once dirname(__DIR__, 2) . '/includes/calls/bootstrap.php'; ?>
-<script type="module" src="<?= BASE_URL ?>/assets/js/chat/yjs-channel-presence.js?v=yjs-chat-1"></script>
+<script type="module" src="<?= BASE_URL ?>/assets/js/chat/yjs-channel-presence.js?v=settings-speed-1"></script>
 </body>
 
 </html>

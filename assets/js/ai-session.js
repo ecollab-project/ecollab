@@ -11,6 +11,7 @@
   let initialized = false;
   let sessionLoad = null;
   let sending = false;
+  let navigationVersion=0;
 
   async function request(path, options = {}) {
     const headers = Object.assign({
@@ -105,7 +106,7 @@
 
     document.getElementById('ecAiNew').addEventListener('click', newSession);
     document.getElementById('ecAiSend').addEventListener('click', sendPersistentAI);
-    document.getElementById('ecAiRename').addEventListener('click', renameCurrent);
+    document.getElementById('ecAiRename').addEventListener('click',()=>renameCurrent());
     document.getElementById('ecAiDelete').addEventListener('click', deleteCurrent);
     document.getElementById('ecAiInput').addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -173,8 +174,7 @@
         menu.title = 'Rename';
         menu.addEventListener('click', e => {
           e.stopPropagation();
-          currentSessionId = session.id;
-          renameCurrent();
+          renameCurrent(session.id,session.session_title);
         });
 
         row.append(name, menu);
@@ -199,11 +199,13 @@
   }
 
   async function newSession(reload = true) {
+    const navigation=++navigationVersion;
     try {
       const data = await request('/API/ai/sessions.php', {
         method: 'POST',
         body: JSON.stringify({ title: 'New AI Conversation' })
       });
+      if(navigation!==navigationVersion)return;
       currentSessionId = data.session.id;
       if (reload) await loadSessions(false);
       await renderSession(data.session, []);
@@ -214,8 +216,10 @@
   }
 
   async function openSession(id) {
+    const navigation=++navigationVersion;currentSessionId=Number(id);
     try {
       const data = await request('/API/ai/session.php?id=' + encodeURIComponent(id));
+      if(navigation!==navigationVersion)return;
       currentSessionId = data.session.id;
       renderSession(data.session, data.messages);
       markActive();
@@ -271,6 +275,7 @@
 
   async function sendPersistentAI() {
     if (sending) return;
+    if(window.EcollabPreferences?.enabled('jarred_enabled')===false){toast('Enable Jarred in Settings to send a message.','info');return;}
     const legacyInput = document.getElementById('aiInput');
     const prompt = (document.getElementById('ecAiInput') || legacyInput)?.value.trim();
     if (!prompt) return;
@@ -282,10 +287,11 @@
     input.value = prompt;
     input.disabled = true;
     if (button) { button.disabled = true; button.textContent = 'Sending…'; }
-    let loading;
+    let loading,sentSession=null;
     try {
       await initPersistentAI();
       if (!currentSessionId) throw new Error('Could not start an AI conversation. Try New chat or reopen the assistant.');
+      sentSession=currentSessionId;
       const log = document.getElementById('ecAiLog');
       if (log?.querySelector('.ec-ai-empty')) log.innerHTML = '';
       appendMessage('user', prompt);
@@ -297,17 +303,17 @@
       log?.appendChild(loading);
       if (log) log.scrollTop = log.scrollHeight;
       const data = await request('/API/ai/message.php', {
-        method: 'POST', body: JSON.stringify({ session_id: currentSessionId, prompt })
+        method: 'POST', body: JSON.stringify({ session_id: sentSession, prompt })
       });
       if (!data.message || typeof data.message.content !== 'string') throw new Error('The assistant returned an invalid response. Please try again.');
       loading.remove();
-      appendMessage('assistant', data.message.content);
+      if(currentSessionId===sentSession)appendMessage('assistant', data.message.content);
       await loadSessions(false);
       markActive();
     } catch (error) {
       loading?.remove();
       const log = document.getElementById('ecAiLog');
-      if (log) {
+      if (log && (sentSession===null||currentSessionId===sentSession)) {
         const notice = document.createElement('div');
         notice.className = 'ec-ai-error';
         notice.setAttribute('role', 'alert');
@@ -315,24 +321,24 @@
         notice.textContent = error.message;
         log.appendChild(notice);
       }
-      input.value = prompt;
+      if(sentSession===null||currentSessionId===sentSession)input.value = prompt;
     } finally {
       sending = false;
       input.disabled = false;
       if (button) { button.disabled = false; button.textContent = 'Send →'; }
-      input.focus();
+      if(sentSession===null||currentSessionId===sentSession)input.focus();
       const log = document.getElementById('ecAiLog');
       if (log) log.scrollTop = log.scrollHeight;
     }
   }
 
-  async function renameCurrent() {
-    if (!currentSessionId) {
+  async function renameCurrent(targetId=currentSessionId,targetTitle=null) {
+    if (!targetId) {
       toast('Open a conversation first.', 'info', 'ℹ️');
       return;
     }
 
-    const current = document.getElementById('ecAiTitle')?.textContent || '';
+    const current = targetTitle??document.getElementById('ecAiTitle')?.textContent??'';
     const title = window.prompt('Conversation name:', current);
     if (title === null) return;
 
@@ -340,11 +346,11 @@
       const data = await request('/API/ai/session.php', {
         method: 'PATCH',
         body: JSON.stringify({
-          session_id: currentSessionId,
+          session_id: targetId,
           title: title
         })
       });
-      document.getElementById('ecAiTitle').textContent = data.session.session_title;
+      if(currentSessionId===targetId)document.getElementById('ecAiTitle').textContent = data.session.session_title;
       await loadSessions(false);
     } catch (error) {
       toast(error.message, 'error', '❌');
@@ -357,15 +363,15 @@
       return;
     }
 
+    const deletedSession=currentSessionId;
     if (!window.confirm('Delete this AI conversation and its messages?')) return;
 
     try {
       await request('/API/ai/session.php', {
         method: 'DELETE',
-        body: JSON.stringify({ session_id: currentSessionId })
+        body: JSON.stringify({ session_id: deletedSession })
       });
-      currentSessionId = null;
-      await loadSessions(true);
+      if(currentSessionId===deletedSession){++navigationVersion;currentSessionId=null;await loadSessions(true);}else await loadSessions(false);
       toast('AI conversation deleted.', 'success', '🗑️');
     } catch (error) {
       toast(error.message, 'error', '❌');

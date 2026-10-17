@@ -203,11 +203,11 @@ try {
             $minScore = max(0, min(100, (float)($_GET['min_score'] ?? 0)));
             $sort = (string)($_GET['sort'] ?? 'score');
 
-            $users = $db->prepare("SELECT u.id, u.username, u.full_name, u.role, u.avatar_url, u.avatar_color_gradient, u.bio, u.is_online
+            $users = $db->prepare("SELECT u.id, u.username, u.full_name, u.role, u.avatar_url, u.avatar_color_gradient, u.bio,CASE WHEN NOT EXISTS(SELECT 1 FROM user_settings privacy WHERE privacy.user_id=u.id AND privacy.activity_status=0) THEN u.is_online ELSE 0 END AS is_online
                 FROM users u
                 WHERE u.id != ? AND u.deleted_at IS NULL AND u.status != 'banned' AND COALESCE(u.is_system, 0) = 0
                   AND NOT EXISTS (SELECT 1 FROM user_settings us WHERE us.user_id=u.id AND us.ai_matching=0)
-                ORDER BY u.is_online DESC, u.last_active_at DESC LIMIT 100");
+                ORDER BY is_online DESC, u.last_active_at DESC LIMIT 100");
             $users->execute([$uid]);
             $service = new PeerMatchingService();
             $matches = [];
@@ -304,7 +304,7 @@ try {
             if ($hobbyId) { $where[] = 'EXISTS (SELECT 1 FROM pm_user_hobbies ph WHERE ph.user_id=u.id AND ph.hobby_id=?)'; $params[]=$hobbyId; }
             if ($interestId) { $where[] = 'EXISTS (SELECT 1 FROM pm_user_interests pi WHERE pi.user_id=u.id AND pi.interest_id=?)'; $params[]=$interestId; }
             if ($studyStyle !== '') { $where[] = 'EXISTS (SELECT 1 FROM pm_user_study_prefs pp WHERE pp.user_id=u.id AND pp.study_style=?)'; $params[]=$studyStyle; }
-            $stmt = $db->prepare('SELECT u.id,u.username,u.full_name,u.role,u.avatar_url,u.avatar_color_gradient,u.bio,u.is_online FROM users u WHERE '.implode(' AND ',$where).' ORDER BY u.is_online DESC,u.last_active_at DESC LIMIT 50');
+            $stmt = $db->prepare('SELECT u.id,u.username,u.full_name,u.role,u.avatar_url,u.avatar_color_gradient,u.bio,CASE WHEN NOT EXISTS(SELECT 1 FROM user_settings privacy WHERE privacy.user_id=u.id AND privacy.activity_status=0) THEN u.is_online ELSE 0 END AS is_online FROM users u WHERE '.implode(' AND ',$where).' ORDER BY is_online DESC,u.last_active_at DESC LIMIT 50');
             $stmt->execute($params);
             $users = [];
             $service = new PeerMatchingService();
@@ -454,7 +454,7 @@ try {
             $json(['saved' => true]);
 
         case 'get_leaderboard':
-            $stmt=$db->prepare("SELECT c.*, CASE WHEN c.user_a_id=? THEN c.user_b_id ELSE c.user_a_id END AS peer_id, u.username,u.full_name,u.avatar_url,u.avatar_color_gradient,u.is_online FROM pm_compatibility c JOIN users u ON u.id=CASE WHEN c.user_a_id=? THEN c.user_b_id ELSE c.user_a_id END WHERE (c.user_a_id=? OR c.user_b_id=?) AND u.deleted_at IS NULL AND u.status!='banned' AND COALESCE(u.is_system,0)=0 AND NOT EXISTS (SELECT 1 FROM user_settings us WHERE us.user_id=u.id AND us.ai_matching=0) ORDER BY c.score_total DESC LIMIT 20");
+            $stmt=$db->prepare("SELECT c.*, CASE WHEN c.user_a_id=? THEN c.user_b_id ELSE c.user_a_id END AS peer_id, u.username,u.full_name,u.avatar_url,u.avatar_color_gradient,CASE WHEN NOT EXISTS(SELECT 1 FROM user_settings privacy WHERE privacy.user_id=u.id AND privacy.activity_status=0) THEN u.is_online ELSE 0 END AS is_online FROM pm_compatibility c JOIN users u ON u.id=CASE WHEN c.user_a_id=? THEN c.user_b_id ELSE c.user_a_id END WHERE (c.user_a_id=? OR c.user_b_id=?) AND u.deleted_at IS NULL AND u.status!='banned' AND COALESCE(u.is_system,0)=0 AND NOT EXISTS (SELECT 1 FROM user_settings us WHERE us.user_id=u.id AND us.ai_matching=0) ORDER BY c.score_total DESC LIMIT 20");
             $stmt->execute([$uid,$uid,$uid,$uid]);
             $json(['leaderboard'=>$stmt->fetchAll(PDO::FETCH_ASSOC)]);
 

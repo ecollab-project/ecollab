@@ -11,6 +11,8 @@ require_once dirname(__DIR__, 2) . '/services/GeminiService.php';
 require_once dirname(__DIR__, 2) . '/services/OllamaService.php';
 require_once dirname(__DIR__, 2) . '/services/CodeLabIntegrityPolicy.php';
 
+require_once dirname(__DIR__,2).'/services/JarredConversation.php';
+
 header('Content-Type: application/json; charset=utf-8');
 SecurityHeaders::send(isApi: true);
 AuthMiddleware::startSession();
@@ -30,6 +32,9 @@ try {
     if ($prompt === '') aiJson(['success'=>false,'error'=>'Prompt is required.'],400);
     if (mb_strlen($prompt) > 4000) aiJson(['success'=>false,'error'=>'Prompt must be 4000 characters or fewer.'],400);
 
+    $prefs=UserPreferences::get(Database::getInstance(),(int)$user['id']);UserPreferences::assertJarred($prefs);
+    if(session_status()===PHP_SESSION_ACTIVE)session_write_close();
+
     $apiKey = (string)env('GEMINI_API_KEY','');
 
     $limiter = new RateLimiter();
@@ -38,9 +43,9 @@ try {
 
     $service = new AiSessionService();
     $session = $service->getSession((int)$user['id'],(int)$sessionId);
+    $turnLock=JarredConversation::lock((int)$user['id'],'session',(int)$sessionId);
     $history = $service->getRecentConversation((int)$user['id'],(int)$sessionId,20);
-    $messages = [];
-    foreach ($history as $item) $messages[] = ['role'=>(string)$item['role'],'content'=>mb_substr((string)$item['content'],0,8000)];
+    $messages = JarredConversation::history($history);
     $messages[] = ['role'=>'user','content'=>$prompt];
 
     $role = (string)($user['role'] ?? 'student');
@@ -48,36 +53,39 @@ try {
         ? 'You are Ecollab AI, an academic assistant for facilitators. Help with class activity analysis, announcements, study materials, quizzes, and teaching workflows. Be accurate, concise, and practical.'
         : 'You are Ecollab AI, a study assistant for students. Help with explanations, study plans, quizzes, programming, and academic concepts. Be accurate, concise, friendly, and educational.';
 
+    $systemPrompt.=JarredConversation::instructions($prefs);
+    $maxTokens=JarredConversation::tokens($prefs);
+
     // The VPS local model remains available when Gemini is absent or unavailable.
     if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
     $result = null;
     if ($apiKey !== '' && $apiKey !== 'your_gemini_api_key_here') {
         try {
-            $result = (new GeminiService($apiKey,(string)env('GEMINI_MODEL','gemini-flash-latest')))->generate($messages,$systemPrompt,700);
+            $result = (new GeminiService($apiKey,(string)env('GEMINI_MODEL','gemini-flash-latest'),15))->generate($messages,$systemPrompt,$maxTokens);
             if (trim((string)($result['text'] ?? '')) === '') $result = null;
         } catch (Throwable $providerError) {
             error_log('[ai/message] Gemini unavailable; trying local model.');
         }
     }
     if ($result === null) {
-        $result = (new OllamaService((string)env('OLLAMA_URL','http://127.0.0.1:11434'),(string)env('OLLAMA_MODEL','qwen3:1.7b')))->generate($messages,$systemPrompt,700);
+        $result = (new OllamaService((string)env('OLLAMA_URL','http://127.0.0.1:11434'),(string)env('OLLAMA_MODEL','qwen3:1.7b')))->generate($messages,$systemPrompt,$maxTokens);
     }
     if (trim((string)($result['text'] ?? '')) === '') throw new RuntimeException('The assistant returned an empty response.');
     $inputTokens = (int)(($result['input_tokens'] ?? null) ?: aiApproxTokens($prompt));
     $outputTokens = (int)($result['output_tokens'] ?? aiApproxTokens($result['text']));
-    $service->appendMessage((int)$user['id'],(int)$sessionId,'user',$prompt,aiApproxTokens($prompt));
-    $assistantMessage = $service->appendMessage((int)$user['id'],(int)$sessionId,'assistant',$result['text'],$outputTokens);
+    $assistantMessage = $service->appendExchange((int)$user['id'],(int)$sessionId,$prompt,$result['text'],aiApproxTokens($prompt),$outputTokens);
 
     if (($session['message_count'] ?? 0) === 0 || ($session['session_title'] ?? '') === 'New AI Conversation') {
         $title = mb_substr(trim(preg_replace('/\s+/',' ',$prompt) ?? $prompt),0,117);
         if ($title !== '') $service->renameSession((int)$user['id'],(int)$sessionId,$title);
     }
 
+    JarredConversation::unlock($turnLock);
     aiJson(['success'=>true,'session_id'=>(int)$sessionId,'message'=>['id'=>(int)$assistantMessage['id'],'role'=>'assistant','content'=>$result['text'],'token_count'=>$outputTokens,'created_at'=>$assistantMessage['created_at']],'usage'=>['input_tokens'=>$inputTokens,'output_tokens'=>$outputTokens]]);
 } catch (Throwable $e) {
     error_log('[ai/message] '.$e->getMessage());
     $status = $e->getCode(); if ($status < 400 || $status > 599) $status = 500;
-    aiJson(['success'=>false,'error'=>defined('APP_DEBUG') && APP_DEBUG ? $e->getMessage() : ($status === 503 ? 'Jarred is temporarily busy or unavailable. Please try again shortly.' : 'AI service error.')],$status);
+    aiJson(['success'=>false,'error'=>defined('APP_DEBUG') && APP_DEBUG ? $e->getMessage() : (in_array($status,[403,409],true)?$e->getMessage():($status === 503 ? 'Jarred is temporarily busy or unavailable. Please try again shortly.' : 'AI service error.'))],$status);
 }
 
 

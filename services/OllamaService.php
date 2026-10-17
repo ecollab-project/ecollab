@@ -36,6 +36,7 @@ final class OllamaService
                 'messages' => $payloadMessages,
                 'tools' => $tools,
                 'stream' => false,
+                'keep_alive' => '10m',
                 'think' => false,
                 'options' => ['temperature' => 0.3, 'num_thread' => max(1, min(2, (int)(getenv('OLLAMA_NUM_THREADS') ?: 1))),
                 'num_ctx' => 4096,
@@ -53,6 +54,7 @@ final class OllamaService
                     'input_tokens' => $inputTokens ?: null,
                     'output_tokens' => $outputTokens ?: null,
                     'model' => (string)($data['model'] ?? $this->model),
+            'timing_ms'=>['load'=>(int)round(($data['load_duration']??0)/1000000),'prompt'=>(int)round(($data['prompt_eval_duration']??0)/1000000),'generation'=>(int)round(($data['eval_duration']??0)/1000000)],
                 ];
             }
 
@@ -105,7 +107,9 @@ final class OllamaService
             if ($raw === false) throw new RuntimeException('Ollama request failed: ' . curl_error($ch));
             $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
             if ($status < 200 || $status >= 300) throw new RuntimeException('Ollama returned HTTP ' . $status);
-            return json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+            $data=json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+            if(!is_array($data)||isset($data['error']))throw new RuntimeException('Local model returned an invalid response.',503);
+            return $data;
         } finally {
             if ($ch !== null) curl_close($ch);
             flock($lock, LOCK_UN); fclose($lock);
@@ -135,9 +139,10 @@ final class OllamaService
             'model' => $this->model,
             'messages' => $payloadMessages,
             'stream' => false,
+                'keep_alive' => '10m',
             'think' => false,
             'options' => [
-                'temperature' => 0.4,
+                'temperature' => 0.25,
                 'num_thread' => max(1, min(2, (int)(getenv('OLLAMA_NUM_THREADS') ?: 1))),
                 'num_ctx' => 4096,
                 'num_predict' => max(1, $maxTokens),
@@ -151,6 +156,7 @@ final class OllamaService
             'input_tokens' => $data['prompt_eval_count'] ?? null,
             'output_tokens' => $data['eval_count'] ?? null,
             'model' => (string)($data['model'] ?? $this->model),
+            'timing_ms'=>['load'=>(int)round(($data['load_duration']??0)/1000000),'prompt'=>(int)round(($data['prompt_eval_duration']??0)/1000000),'generation'=>(int)round(($data['eval_duration']??0)/1000000)],
         ];
     }
 }
