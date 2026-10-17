@@ -11,6 +11,7 @@
   let initialized = false;
   let sessionLoad = null;
   let sending = false;
+  let navigationVersion=0;
 
   async function request(path, options = {}) {
     const headers = Object.assign({
@@ -199,11 +200,13 @@
   }
 
   async function newSession(reload = true) {
+    const navigation=++navigationVersion;
     try {
       const data = await request('/API/ai/sessions.php', {
         method: 'POST',
         body: JSON.stringify({ title: 'New AI Conversation' })
       });
+      if(navigation!==navigationVersion)return;
       currentSessionId = data.session.id;
       if (reload) await loadSessions(false);
       await renderSession(data.session, []);
@@ -214,8 +217,10 @@
   }
 
   async function openSession(id) {
+    const navigation=++navigationVersion;currentSessionId=Number(id);
     try {
       const data = await request('/API/ai/session.php?id=' + encodeURIComponent(id));
+      if(navigation!==navigationVersion)return;
       currentSessionId = data.session.id;
       renderSession(data.session, data.messages);
       markActive();
@@ -271,6 +276,7 @@
 
   async function sendPersistentAI() {
     if (sending) return;
+    if(window.EcollabPreferences?.enabled('jarred_enabled')===false){toast('Enable Jarred in Settings to send a message.','info');return;}
     const legacyInput = document.getElementById('aiInput');
     const prompt = (document.getElementById('ecAiInput') || legacyInput)?.value.trim();
     if (!prompt) return;
@@ -282,10 +288,11 @@
     input.value = prompt;
     input.disabled = true;
     if (button) { button.disabled = true; button.textContent = 'Sending…'; }
-    let loading;
+    let loading,sentSession=null;
     try {
       await initPersistentAI();
       if (!currentSessionId) throw new Error('Could not start an AI conversation. Try New chat or reopen the assistant.');
+      sentSession=currentSessionId;
       const log = document.getElementById('ecAiLog');
       if (log?.querySelector('.ec-ai-empty')) log.innerHTML = '';
       appendMessage('user', prompt);
@@ -297,17 +304,17 @@
       log?.appendChild(loading);
       if (log) log.scrollTop = log.scrollHeight;
       const data = await request('/API/ai/message.php', {
-        method: 'POST', body: JSON.stringify({ session_id: currentSessionId, prompt })
+        method: 'POST', body: JSON.stringify({ session_id: sentSession, prompt })
       });
       if (!data.message || typeof data.message.content !== 'string') throw new Error('The assistant returned an invalid response. Please try again.');
       loading.remove();
-      appendMessage('assistant', data.message.content);
+      if(currentSessionId===sentSession)appendMessage('assistant', data.message.content);
       await loadSessions(false);
       markActive();
     } catch (error) {
       loading?.remove();
       const log = document.getElementById('ecAiLog');
-      if (log) {
+      if (log && (sentSession===null||currentSessionId===sentSession)) {
         const notice = document.createElement('div');
         notice.className = 'ec-ai-error';
         notice.setAttribute('role', 'alert');
@@ -315,12 +322,12 @@
         notice.textContent = error.message;
         log.appendChild(notice);
       }
-      input.value = prompt;
+      if(sentSession===null||currentSessionId===sentSession)input.value = prompt;
     } finally {
       sending = false;
       input.disabled = false;
       if (button) { button.disabled = false; button.textContent = 'Send →'; }
-      input.focus();
+      if(sentSession===null||currentSessionId===sentSession)input.focus();
       const log = document.getElementById('ecAiLog');
       if (log) log.scrollTop = log.scrollHeight;
     }

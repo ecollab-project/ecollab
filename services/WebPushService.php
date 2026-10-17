@@ -34,7 +34,7 @@ final class WebPushService {
    $this->db->commit();
   }catch(Throwable $e){if($this->db->inTransaction())$this->db->rollBack();throw $e;}
  }
- public static function preference(string $type):string{return match($type){'mention'=>'notification_mentions','reply'=>'notification_replies','thread'=>'notification_threads','reaction'=>'notification_reactions','connection_request','connection_accepted'=>'notification_connections','announcement','class_update'=>'notification_announcements','match'=>'notification_matches',default=>'notification_messages'};}
+ public static function preference(string $type,string $link=''):string{if($type==='message'&&str_contains($link,'group_id='))return 'notification_groups';return match($type){'mention'=>'notification_mentions','reply','thread_reply'=>'notification_replies','thread','thread_comment'=>'notification_threads','reaction'=>'notification_reactions','connection_request','connection_accepted'=>'notification_connections','announcement','class_update'=>'notification_announcements','match'=>'notification_matches',default=>'notification_messages'};}
  public function deadlineNotices():void{
   require_once __DIR__.'/NotificationService.php';
   $rows=$this->q("SELECT t.id,t.server_id,t.created_by,m.user_id FROM code_lab_tasks t JOIN server_members m ON m.server_id=t.server_id LEFT JOIN code_lab_attempts a ON a.task_id=t.id AND a.user_id=m.user_id LEFT JOIN code_lab_deadline_notices d ON d.task_id=t.id AND d.user_id=m.user_id WHERE d.task_id IS NULL AND t.due_at>? AND t.due_at<=? AND (t.opens_at IS NULL OR t.opens_at<=?) AND a.submitted_at IS NULL AND m.user_id<>t.created_by ORDER BY t.due_at LIMIT 500",[gmdate('Y-m-d H:i:s'),gmdate('Y-m-d H:i:s',time()+3600),gmdate('Y-m-d H:i:s')])->fetchAll(PDO::FETCH_ASSOC);
@@ -50,9 +50,9 @@ final class WebPushService {
   foreach($rows as$r)$this->q($ignore.' INTO push_deliveries(notification_id,subscription_id,available_at) VALUES(?,?,?)',[$r['id'],$r['subscription_id'],gmdate('Y-m-d H:i:s')]);
   $job=$this->q("SELECT * FROM push_deliveries WHERE state='queued' AND available_at<=? ORDER BY id LIMIT 1",[gmdate('Y-m-d H:i:s')])->fetch(PDO::FETCH_ASSOC);if(!$job)return false;
   if($this->q("UPDATE push_deliveries SET state='running',started_at=?,attempts=attempts+1 WHERE id=? AND state='queued'",[gmdate('Y-m-d H:i:s'),$job['id']])->rowCount()!==1)return true;
-  $row=$this->q('SELECT s.subscription_json,n.type,n.is_read,n.recipient_id,u.status,u.deleted_at FROM push_subscriptions s JOIN notifications n ON n.id=? AND n.recipient_id=s.user_id JOIN users u ON u.id=s.user_id WHERE s.id=?',[$job['notification_id'],$job['subscription_id']])->fetch(PDO::FETCH_ASSOC);
+  $row=$this->q('SELECT s.subscription_json,n.type,n.link_url,n.is_read,n.recipient_id,u.status,u.deleted_at FROM push_subscriptions s JOIN notifications n ON n.id=? AND n.recipient_id=s.user_id JOIN users u ON u.id=s.user_id WHERE s.id=?',[$job['notification_id'],$job['subscription_id']])->fetch(PDO::FETCH_ASSOC);
   $prefs=$row?$this->q('SELECT * FROM user_settings WHERE user_id=?',[$row['recipient_id']])->fetch(PDO::FETCH_ASSOC):false;
-  if(!$row||$row['is_read']||$row['deleted_at']!==null||in_array($row['status'],['banned','suspended','deactivated'],true)||($prefs&&(!(int)$prefs['notification_desktop']||!(int)($prefs[self::preference($row['type'])]??1)))){$this->finish((int)$job['id'],'skipped');return true;}
+  if(!$row||$row['is_read']||$row['deleted_at']!==null||in_array($row['status'],['banned','suspended','deactivated'],true)||($prefs&&(!(int)$prefs['notification_desktop']||!(int)($prefs[self::preference($row['type'],(string)($row['link_url']??''))]??1)))){$this->finish((int)$job['id'],'skipped');return true;}
   try{
    $subscription=self::validate(json_decode($row['subscription_json'],true,512,JSON_THROW_ON_ERROR));
    $payload=json_encode(['title'=>'Ecollab','body'=>'You have a new notification. Open Ecollab to view it.','tag'=>'ecollab-updates','url'=>rtrim((string)BASE_URL,'/').'/modules/chat/chat.php'],JSON_THROW_ON_ERROR);

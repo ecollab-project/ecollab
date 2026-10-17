@@ -630,6 +630,7 @@ function buildMessageElement(msg) {
     </div>
   `;
 
+  window.EcollabPreferences?.decorate(div);
   return div;
 }
 
@@ -666,7 +667,7 @@ function appendMessageToUI(msg) {
   const area = document.getElementById('messagesArea');
   const typing = document.getElementById('typingIndicator');
   if (!area) return;
-  if (area.querySelector(`[data-msg-id="${CSS.escape(String(msg.id))}"]`)) return;
+  if (window.EcollabTimeline?window.EcollabTimeline.has(area,msg.id):area.querySelector(`[data-msg-id="${CSS.escape(String(msg.id))}"]`)) return;
   const follow=window.EcollabTimeline?.beforeAppend(area,msg)??true;
   const el = buildMessageElement(msg);
   if (typing && typing.parentNode === area) {
@@ -674,7 +675,7 @@ function appendMessageToUI(msg) {
   } else {
     area.appendChild(el);
   }
-  window.EcollabTimeline?.decorate(area);
+  window.EcollabTimeline?.append(area,el);
   if(follow){scrollToBottom();window.EcollabTimeline?.requestRead(area);}
   if (Number.isFinite(Number(msg.id))) lastMessageId = Math.max(Number(lastMessageId) || 0, Number(msg.id));
 }
@@ -859,7 +860,7 @@ function handleKeyDown(e) {
       if (e.key === 'Escape') { _hideMentionDropdown(); return; }
     }
   }
-  if (e.key === 'Enter' && !e.shiftKey) {
+  if (e.key === 'Enter' && !e.shiftKey && (e.ctrlKey||e.metaKey||window.EcollabPreferences?.enabled('enter_to_send')!==false)) {
     e.preventDefault();
     sendMessage();
   }

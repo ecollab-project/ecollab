@@ -30,6 +30,9 @@ try {
     if (!$user) { http_response_code(404); echo json_encode(['error' => 'User not found']); exit; }
     $uid = (int)$user['id'];
 
+    require_once dirname(__DIR__,2).'/services/UserPreferences.php';
+    if(!UserPreferences::mayViewProfile($db,(int)$me['id'],$uid)){http_response_code(403);echo json_encode(['error'=>'This profile is restricted by its owner.']);exit;}
+
     // ── Extended profile ───────────────────────────────────────────────────
     $pStmt = $db->prepare("SELECT * FROM user_profiles WHERE user_id = :uid LIMIT 1");
     $pStmt->execute([':uid' => $uid]);

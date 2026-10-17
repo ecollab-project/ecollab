@@ -49,7 +49,7 @@ try {
     }
 
     if ($action === 'list') {
-        $stmt = $db->prepare("SELECT u.id,u.username,u.full_name,u.role,u.avatar_color_gradient,u.is_online,sm.server_role,sm.nickname,sm.joined_at FROM server_members sm JOIN users u ON u.id=sm.user_id WHERE sm.server_id=? AND u.deleted_at IS NULL ORDER BY FIELD(sm.server_role,'owner','admin','moderator','member'),u.full_name,u.username");
+        $stmt = $db->prepare("SELECT u.id,u.username,u.full_name,u.role,u.avatar_color_gradient,CASE WHEN NOT EXISTS(SELECT 1 FROM user_settings privacy WHERE privacy.user_id=u.id AND privacy.activity_status=0) THEN u.is_online ELSE 0 END AS is_online,sm.server_role,sm.nickname,sm.joined_at FROM server_members sm JOIN users u ON u.id=sm.user_id WHERE sm.server_id=? AND u.deleted_at IS NULL ORDER BY FIELD(sm.server_role,'owner','admin','moderator','member'),u.full_name,u.username");
         $stmt->execute([$serverId]);
         memberJson(['members' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
     }
@@ -60,7 +60,7 @@ try {
         $params = [$serverId];
         $where = "u.deleted_at IS NULL AND u.status NOT IN ('banned','suspended','deactivated') AND NOT EXISTS (SELECT 1 FROM server_members x WHERE x.server_id=? AND x.user_id=u.id)";
         if ($q !== '') { $where .= ' AND (u.username LIKE ? OR u.full_name LIKE ? OR u.email LIKE ?)'; $like = '%' . $q . '%'; $params[]=$like; $params[]=$like; $params[]=$like; }
-        $stmt = $db->prepare("SELECT u.id,u.username,u.full_name,u.role,u.avatar_color_gradient,u.is_online FROM users u WHERE $where ORDER BY u.is_online DESC,u.full_name,u.username LIMIT 40");
+        $stmt = $db->prepare("SELECT u.id,u.username,u.full_name,u.role,u.avatar_color_gradient,CASE WHEN NOT EXISTS(SELECT 1 FROM user_settings privacy WHERE privacy.user_id=u.id AND privacy.activity_status=0) THEN u.is_online ELSE 0 END AS is_online FROM users u WHERE $where ORDER BY is_online DESC,u.full_name,u.username LIMIT 40");
         $stmt->execute($params);
         memberJson(['users' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
     }

@@ -61,7 +61,7 @@ function attach(input) {
   const toolbar=document.createElement('div');toolbar.className='ec-composer-toolbar';toolbar.setAttribute('role','toolbar');toolbar.setAttribute('aria-label','Message formatting');
   const surface=document.createElement('div');surface.className='ec-composer-surface';
   const footer=document.createElement('div');footer.className='ec-composer-footer';
-  const hint=document.createElement('span');hint.textContent='Enter to send · Shift+Enter for a new line';
+  const hint=document.createElement('span');hint.textContent=window.EcollabPreferences?.enabled('enter_to_send')===false?'Enter for a new line · Ctrl+Enter to send':'Enter to send · Shift+Enter for a new line';
   const counter=document.createElement('span');counter.className='ec-composer-count';counter.setAttribute('aria-live','off');footer.append(hint,counter);
   wrapper.append(toolbar,surface,footer);input.insertAdjacentElement('afterend',wrapper);
   let value=input.value,editor;
@@ -90,7 +90,7 @@ function attach(input) {
         const inBlock=editor.isActive('codeBlock') || editor.isActive('bulletList') || editor.isActive('orderedList') || editor.isActive('blockquote');
         if(event.key==='Enter' && (event.ctrlKey || event.metaKey)){event.preventDefault();return send();}
         if(isChannel && !inBlock){window.handleKeyDown?.(event);if(event.defaultPrevented)return true;}
-        if(event.key==='Enter' && !event.shiftKey && !inBlock){event.preventDefault();return send();}
+        if(event.key==='Enter' && !event.shiftKey && !inBlock && window.EcollabPreferences?.enabled('enter_to_send')!==false){event.preventDefault();return send();}
         return false;
       }
     },

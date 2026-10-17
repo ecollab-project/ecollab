@@ -16,13 +16,13 @@
     return p;
   }
   let prefs=normalize(saved), applying=false;
-  const accountKeys={input_device:'microphone',output_device:'speaker',noise_suppression:'noise',echo_cancellation:'echo',auto_gain_control:'gain',output_volume:'volume'};
+  const accountKeys={input_device:'microphone',camera_device:'camera',output_device:'speaker',noise_suppression:'noise',echo_cancellation:'echo',auto_gain_control:'gain',output_volume:'volume'};
   function fromAccount(settings){window._userSettings={...window._userSettings,...settings};const value={};for(const [key,local] of Object.entries(accountKeys)){if(settings[key]!==undefined)value[local]=settings[key];}prefs=normalize({...prefs,...value});decorate();}
   window.addEventListener('ecollab:settings-applied',e=>fromAccount(e.detail||{}));
   const base=window.ECOLLAB_CALLS_CONFIG?.baseUrl||window.ECOLLAB_BASE||'';
-  const ready=(typeof fetch==='function'?fetch(base+'/API/profile/settings.php',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(d=>{if(d?.settings)fromAccount(d.settings);}):Promise.resolve()).catch(()=>{});
+  const ready=(window.EcollabAccountSettingsReady?window.EcollabAccountSettingsReady.then(fromAccount):window._userSettings?Promise.resolve():typeof fetch==='function'?fetch(base+'/API/profile/settings.php',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(d=>{if(d?.settings)fromAccount(d.settings);}):Promise.resolve()).catch(()=>{});
   if(window._userSettings)fromAccount(window._userSettings);
-  const audio=(p=prefs)=>({echoCancellation:p.echo,noiseSuppression:p.noise,autoGainControl:p.gain,...(p.microphone?{deviceId:p.microphone}:{})});
+  const audio=(p=prefs)=>({echoCancellation:p.echo,noiseSuppression:p.noise,autoGainControl:p.gain,...(navigator.mediaDevices?.getSupportedConstraints?.().volume?{volume:Math.max(0,Math.min(100,Number(window._userSettings?.mic_volume??100)))/100}:{}),...(p.microphone?{deviceId:p.microphone}:{})});
   const video=(p=prefs)=>({resolution:{width:p.cameraQuality==='360p'?640:p.cameraQuality==='1080p'?1920:1280,height:p.cameraQuality==='360p'?360:p.cameraQuality==='1080p'?1080:720,frameRate:p.cameraFps},...(p.camera?{deviceId:p.camera}:{})});
   function screenOptions(quality=prefs.quality) {
     const resolution=quality==='720p'?{width:1280,height:720,frameRate:30}:quality==='1080p'?{width:1920,height:1080,frameRate:30}:undefined;

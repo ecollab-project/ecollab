@@ -33,8 +33,7 @@ try {
     }
 
     $sql = "
-        SELECT DISTINCT u.id, u.username, u.full_name, u.avatar_url, u.avatar_color_gradient,
-               u.is_online, COALESCE(u.is_system,0) AS is_system,
+        SELECT DISTINCT u.id, u.username, u.full_name, u.avatar_url, u.avatar_color_gradient,CASE WHEN NOT EXISTS(SELECT 1 FROM user_settings privacy WHERE privacy.user_id=u.id AND privacy.activity_status=0) THEN u.is_online ELSE 0 END AS is_online, COALESCE(u.is_system,0) AS is_system,
                CASE WHEN EXISTS(SELECT 1 FROM friendships f WHERE f.status='accepted' AND ((f.requester_id=:uid3 AND f.addressee_id=u.id) OR (f.addressee_id=:uid4 AND f.requester_id=u.id))) THEN 1 ELSE 0 END AS is_connected
         FROM server_members sm_me
         JOIN server_members sm_other ON sm_other.server_id = sm_me.server_id
@@ -56,7 +55,7 @@ try {
         $params[':q2'] = '%' . $q . '%';
     }
 
-    $sql .= ' ORDER BY u.is_online DESC, u.full_name ASC LIMIT 100';
+    $sql .= ' ORDER BY is_online DESC, u.full_name ASC LIMIT 100';
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);

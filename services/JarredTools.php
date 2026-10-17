@@ -57,10 +57,6 @@ final class JarredTools
         $prompt = trim($prompt);
         if ($prompt === '') return '';
 
-        $serverId = ($activeServerId && $this->canAccessServer($requesterId, $activeServerId))
-            ? $activeServerId
-            : $this->resolveServerId($requesterId, $prompt);
-
         $parts = [];
 
         // Do not inject server/surface metadata into ordinary conversation.
@@ -76,6 +72,11 @@ final class JarredTools
             '/\\b(online|active|member|voice|call|match|matching|peer|partner|skill|document|docx|xlsx|pptx|coworkspace|workspace|whiteboard|board|excalidraw|diagram|find|search|thread|message|said|mentioned|discussed|conversation|summari[sz]e|recap|server|channel|book|ebook|library|resource|reference)\\b/i',
             $prompt
         );
+
+        if (!$needsAppContext) return '';
+        $serverId = ($activeServerId && $this->canAccessServer($requesterId, $activeServerId))
+            ? $activeServerId
+            : $this->resolveServerId($requesterId, $prompt);
 
         if ($needsAppContext) {
             $policy = (new JarredCapabilityPolicy())->context($requesterId, $serverId, $surface);
@@ -138,7 +139,7 @@ final class JarredTools
 
         if (preg_match('/\\b(book|books|ebook|ebooks|library|read|reading|textbook|textbooks|resource|resources|reference|references|literature)\\b/i', $prompt)) {
             $parts[] = 'ECOLLAB ACADEMIC LIBRARY: ' . json_encode(
-                $this->libraryRecommendations($requesterId, $serverId, $prompt, 12),
+                $this->libraryRecommendations($requesterId, $serverId, $prompt, 12, (bool)($surface['personalization']??true)),
                 JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
             );
         }
@@ -316,7 +317,7 @@ final class JarredTools
         return $result;
     }
 
-    public function libraryRecommendations(int $requesterId, ?int $serverId, string $prompt = '', int $limit = 12): array
+    public function libraryRecommendations(int $requesterId, ?int $serverId, string $prompt = '', int $limit = 12, bool $personalize = true): array
     {
         $limit = max(1, min(20, $limit));
         $topics = [];
@@ -342,7 +343,7 @@ final class JarredTools
                 $label = (string)$r['name'];
                 $seed = strtolower(implode(' ', [$r['name'] ?? '', $r['description'] ?? '', $r['category'] ?? '', $r['tags'] ?? '']));
             }
-        } else {
+        } elseif ($personalize) {
             $st = $this->db->prepare(
                 "SELECT ap.name program,ap.code,up.year_level,GROUP_CONCAT(DISTINCT it.name SEPARATOR ', ') interests
                  FROM users u

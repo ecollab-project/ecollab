@@ -21,7 +21,7 @@ $csrf = AuthMiddleware::csrfToken();
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Ecollab Whiteboard</title>
     <meta name="csrf-token" content="<?= htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8') ?>">
-    <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js?v=3" defer></script>
+    <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js?v=settings-speed-1" defer></script>
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/whiteboard.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/whiteboard-mobile.css">
     <style>
@@ -184,7 +184,7 @@ $csrf = AuthMiddleware::csrfToken();
             if (el) el.textContent = message;
         }
     </script>
-    <script src="<?= BASE_URL ?>/assets/js/chat/socket-core.js"></script>
+    <script src="<?= BASE_URL ?>/assets/js/chat/socket-core.js?v=settings-speed-1"></script>
     <script src="<?= BASE_URL ?>/assets/js/chat/whiteboard.js"></script>
     <script>
         window.addEventListener('DOMContentLoaded', function() {

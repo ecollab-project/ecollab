@@ -90,7 +90,7 @@
   }
  }
  const surfaces='.msg-text,.dm-message-bubble,.reaction>span:first-child';
- function scan(root){if(root?.nodeType!==1)return;if(root.matches(surfaces))decorate(root);root.querySelectorAll(surfaces).forEach(decorate);}
+ function scan(root){if(root?.nodeType!==1)return;if(root.matches(surfaces))decorate(root);root.querySelectorAll(surfaces).forEach(decorate);const message=root.closest('[data-msg-id]');if(message)window.EcollabPreferences?.decorate(message);else root.querySelectorAll('[data-msg-id]').forEach(m=>window.EcollabPreferences?.decorate(m));}
  const pending=new Set();let scheduled=false;
  const observer=new MutationObserver(records=>{
   for(const record of records){const parent=record.target.nodeType===1?record.target:record.target.parentElement;if(parent?.closest('.ec-media-inline,.ec-media-sticker,#ecMediaPicker'))continue;const surface=parent?.closest(surfaces);if(surface)pending.add(surface);else for(const node of record.addedNodes)if(node.nodeType===1)pending.add(node);}

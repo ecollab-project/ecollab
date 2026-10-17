@@ -138,6 +138,7 @@ async function _syncOpenDmMessages() {
         if (groupId !== DM.activeGroupId || partnerId !== DM.activePartnerId) {dmSyncDirty = true; break;}
         const previous = cursor;
         (data.messages || []).forEach(message => {_appendDmMessage(message); cursor = Math.max(cursor, Number(message.id) || 0);});
+        if(!groupId)_renderDmReadReceipt(data.partner_last_read_id);
         dmDeliveryCursors.set(key, cursor);
         if (!data.has_more || cursor <= previous) break;
         if (page === 19) setTimeout(_syncOpenDmMessages, 0);
@@ -197,7 +198,7 @@ function _onWsDmTyping(data) {
 
   if (data.is_typing) {
     indicator.style.display = 'flex';
-    indicator.textContent   = `${_esc(data.sender_name)} is typing…`;
+    indicator.textContent   = `${String(data.sender_name||'Someone')} is typing…`;
     clearTimeout(DM.typingTimers[data.conversation_id]);
     DM.typingTimers[data.conversation_id] = setTimeout(() => {
       indicator.style.display = 'none';
@@ -234,7 +235,7 @@ function _onWsDmGroupMessage(data) {
   // every group member, including the sender)
   if (typeof showDesktopNotification === 'function' && data.sender_id != ME_ID() && window.EcollabDmSettings?.alertsEnabled('group', groupId) !== false) {
     const groupName = grp ? grp.display_name : 'Group';
-    showDesktopNotification('notification_messages', `${data.sender_name || 'Someone'} (${groupName})`, String(data.body || '').slice(0, 100));
+    showDesktopNotification('notification_groups', `${data.sender_name || 'Someone'} (${groupName})`, String(data.body || '').slice(0, 100));
   }
   if (Number(data.sender_id) !== Number(ME_ID())) _pollNotifications();
 }
@@ -247,7 +248,7 @@ function _onWsDmGroupTyping(data) {
   const key = 'group_' + data.group_id;
   if (data.is_typing) {
     indicator.style.display = 'flex';
-    indicator.textContent   = `${_esc(data.sender_name)} is typing…`;
+    indicator.textContent   = `${String(data.sender_name||'Someone')} is typing…`;
     clearTimeout(DM.typingTimers[key]);
     DM.typingTimers[key] = setTimeout(() => { indicator.style.display = 'none'; }, 3000);
   } else {
@@ -292,7 +293,7 @@ function _onWsNotification(data) {
 /** Add a notification item to the in-memory list + update badge + dropdown */
 function _addInlineNotification(notif) {
   if(notif.id&&NOTIF.items.some(item=>String(item.id)===String(notif.id)))return;
-  const category={connection_request:'notification_connections',connection_accepted:'notification_connections',class_update:'notification_announcements',announcement:'notification_announcements',mention:'notification_mentions',reply:'notification_replies',thread:'notification_threads',reaction:'notification_reactions',match:'notification_matches'}[notif.type]||'notification_messages';
+  const category=notif.type==='message'&&String(notif.link_url||'').includes('group_id=')?'notification_groups':{group_message:'notification_groups',connection_request:'notification_connections',connection_accepted:'notification_connections',class_update:'notification_announcements',announcement:'notification_announcements',mention:'notification_mentions',reply:'notification_replies',thread:'notification_threads',thread_comment:'notification_threads',thread_reply:'notification_replies',reaction:'notification_reactions',match:'notification_matches'}[notif.type]||'notification_messages';
   if(typeof showDesktopNotification==='function')showDesktopNotification(category,notif.title||'Ecollab notification',String(notif.body||'').slice(0,100));
   NOTIF.items.unshift({
     id:         notif.id || Date.now(),
@@ -462,8 +463,12 @@ window._handleNotifClick = async function(notifId, type, refId, destination = nu
 };
 
 // Poll notifications from DB on a slow cadence (backup to WebSocket)
+let notificationPoll=null,notificationPollAt=0,notificationPollTimer=null,notificationPollDirty=false;
 async function _pollNotifications() {
-  try {
+  if(notificationPoll){notificationPollDirty=true;return notificationPoll;}
+  if(Date.now()-notificationPollAt<1000){clearTimeout(notificationPollTimer);notificationPollTimer=setTimeout(_pollNotifications,1000-(Date.now()-notificationPollAt));return;}
+  notificationPollAt=Date.now();
+  notificationPoll=(async()=>{try {
     const data = await apiFetch(BASE() + '/API/notifications/get.php');
     if (data.notifications) {
       const old = NOTIF.items.slice(30);
@@ -475,7 +480,8 @@ async function _pollNotifications() {
       _updateNotifBadge();
       _renderNotifDropdown();
     }
-  } catch (_) {}
+  } catch (_) {} })();
+  try{return await notificationPoll;}finally{notificationPoll=null;if(notificationPollDirty){notificationPollDirty=false;clearTimeout(notificationPollTimer);notificationPollTimer=setTimeout(_pollNotifications,250);}}
 }
 
 async function _loadMoreNotifications() {
@@ -819,6 +825,7 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
     if (conv) { conv.unread_count = 0; _renderDmList(); }
 
     _renderDmMessages(data.messages || [],data.first_unread_id);
+    _renderDmReadReceipt(data.partner_last_read_id);
   } catch (err) {
     msgArea.innerHTML = `<div style="text-align:center;padding:20px;color:#f87171;font-size:13px;">Failed to load: ${_esc(err.message)}</div>`;
   }
@@ -896,16 +903,16 @@ function _ensureDmPanel() {
     <div class="ec-dm-composer" style="display:flex;gap:8px;padding:10px 12px;flex-shrink:0;align-items:center;">
       <input id="dmFileInput" type="file" accept="image/jpeg,image/png,image/gif,image/webp,.pdf,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip" style="display:none" onchange="_dmFileChosen(this)" />
       <button type="button" onclick="document.getElementById('dmFileInput').click()" title="Add image or file" style="width:34px;height:34px;flex:0 0 34px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;color:var(--text-secondary);cursor:pointer;font-size:16px;">📎</button>
-      <input id="dmInputField" type="text" placeholder="Message…"
+      <textarea id="dmInputField" rows="1" placeholder="Message…"
         style="flex:1;min-width:0;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-primary);font-size:13px;font-family:inherit;outline:none;"
-        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendDmMessage();}"
-        oninput="_dmTypingSignal()" />
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey&&(event.ctrlKey||event.metaKey||window.EcollabPreferences?.enabled('enter_to_send')!==false)){event.preventDefault();sendDmMessage();}"
+        oninput="_dmTypingSignal()"></textarea>
       <button type="button" class="ec-dm-media-button" title="Emoji" aria-label="Choose emoji" onclick="event.stopPropagation();window.EcollabMedia?.open('emoji',document.getElementById('dmInputField'),this)">☺</button>
       <button type="button" class="ec-dm-media-button" title="Animated stickers" aria-label="Choose animated sticker" onclick="event.stopPropagation();window.EcollabMedia?.open('sticker',document.getElementById('dmInputField'),this)">▧</button>
       <button onclick="sendDmMessage()" style="background:var(--accent-purple);border:none;border-radius:8px;padding:8px 14px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Send</button>
     </div>`;
 
-  document.body.appendChild(panel);
+  document.body.appendChild(panel);window.EcollabPreferences?.apply();
 }
 
 function _renderDmMessages(messages,firstUnreadId=null) {
@@ -920,6 +927,7 @@ function _renderDmMessages(messages,firstUnreadId=null) {
 
   window.EcollabDmSettings?.record(messages, true);
   area.innerHTML = messages.map(m => _dmMessageHTML(m)).join('');
+  area.querySelectorAll('[data-msg-id]').forEach(message=>window.EcollabPreferences?.decorate(message));
   window.EcollabTimeline?.decorate(area);
   area.scrollTop = area.scrollHeight;
 }
@@ -957,7 +965,7 @@ function _dmMessageHTML(m) {
   return `
     <div style="display:flex;flex-direction:${isMine ? 'row-reverse' : 'row'};align-items:flex-end;gap:8px;" data-msg-id="${m.id}" data-sender-id="${Number(m.sender_id)||0}" data-message-timestamp="${_esc(m.created_at||'')}">
       ${!isMine ? _avatar(name, grad, 26, avatarUrl) : ''}
-      <div class="dm-message-bubble" style="max-width:72%;background:${isMine ? 'var(--accent-purple)' : 'var(--bg-tertiary)'};color:${isMine ? '#fff' : 'var(--text-primary)'};padding:8px 12px;border-radius:${isMine ? '12px 12px 4px 12px' : '12px 12px 12px 4px'};font-size:13px;line-height:1.5;word-break:break-word;">
+      <div class="dm-message-bubble" data-mine="${isMine}" style="max-width:72%;background:${isMine ? 'var(--accent-purple)' : 'var(--bg-tertiary)'};color:${isMine ? '#fff' : 'var(--text-primary)'};padding:8px 12px;border-radius:${isMine ? '12px 12px 4px 12px' : '12px 12px 12px 4px'};font-size:13px;line-height:1.5;word-break:break-word;">
         ${_dmAttachmentHTML(m)}
         ${m.body ? (window.EcollabComposer?.render(m.body) ?? _esc(m.body)) : ''}
         <div class="dm-message-time" style="font-size:10px;opacity:0.65;margin-top:4px;text-align:${isMine ? 'right' : 'left'};">${_esc(window.EcollabTimeline?.stamp(m.created_at)||_timeAgo(m.created_at))}</div>
@@ -965,17 +973,24 @@ function _dmMessageHTML(m) {
     </div>`;
 }
 
+function _renderDmReadReceipt(cursor){
+ const area=document.getElementById('dmMessagesArea');if(!area)return;area.querySelectorAll('.ec-read-receipt').forEach(e=>e.remove());
+ if(!cursor||window.EcollabPreferences?.enabled('read_receipts')===false)return;
+ const own=[...area.querySelectorAll('[data-msg-id]')].filter(e=>Number(e.dataset.senderId)===Number(ME_ID())&&Number(e.dataset.msgId)<=Number(cursor)).at(-1);
+ if(own){const label=document.createElement('small');label.className='ec-read-receipt';label.textContent='Seen';label.style.cssText='display:block;text-align:right;margin-top:4px;opacity:.75';own.querySelector('.dm-message-bubble')?.append(label);}
+}
 function _appendDmMessage(m) {
   const area = document.getElementById('dmMessagesArea');
   if (!area) return;
   m = { ...m, id: m.id ?? m.message_id };
   window.EcollabDmSettings?.record([m]);
-  if (m.id == null || area.querySelector(`[data-msg-id="${CSS.escape(String(m.id))}"]`)) return;
+  if (m.id == null || (window.EcollabTimeline?window.EcollabTimeline.has(area,m.id):area.querySelector(`[data-msg-id="${CSS.escape(String(m.id))}"]`))) return;
   const follow=window.EcollabTimeline?.beforeAppend(area,m)??true;
   const el = document.createElement('div');
   el.innerHTML = _dmMessageHTML(m);
-  area.appendChild(el.firstElementChild);
-  window.EcollabTimeline?.decorate(area);
+  const message=el.firstElementChild;window.EcollabPreferences?.decorate(message);
+  area.appendChild(message);
+  window.EcollabTimeline?.append(area,message);
   if(follow){area.scrollTop = area.scrollHeight;window.EcollabTimeline?.requestRead(area);}
 }
 
@@ -996,6 +1011,7 @@ function _hideAiTyping() {
 // Typing signal debounce
 let _dmTypingTimeout;
 function _dmTypingSignal() {
+  if(window.EcollabPreferences?.enabled('typing_indicators')===false||window.EcollabPreferences?.enabled('activity_status')===false)return;
   if (!DM.activeConvId || !DM.activePartnerId || DM.activePartnerIsAI) return;
   _wsSend({ type: 'dm_typing', conversation_id: DM.activeConvId, recipient_id: DM.activePartnerId, is_typing: true });
   clearTimeout(_dmTypingTimeout);
@@ -1252,7 +1268,7 @@ function _init() {
   list?.addEventListener('keydown',activate);
 
   // Poll notifications every 30 seconds as backup
-  NOTIF.pollInterval = setInterval(_pollNotifications, 30_000);
+  NOTIF.pollInterval = setInterval(()=>{if(!document.hidden)_pollNotifications();}, 30_000);
 
   // Close notif dropdown when clicking outside
   document.addEventListener('click', function(e) {

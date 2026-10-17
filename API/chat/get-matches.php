@@ -27,7 +27,7 @@ try {
     $stmt = $db->prepare("
         SELECT DISTINCT
             u.id, u.username, u.full_name, u.role,
-            u.avatar_url, u.avatar_color_gradient, u.bio, u.is_online
+            u.avatar_url, u.avatar_color_gradient, u.bio,CASE WHEN NOT EXISTS(SELECT 1 FROM user_settings privacy WHERE privacy.user_id=u.id AND privacy.activity_status=0) THEN u.is_online ELSE 0 END AS is_online
         FROM users u
         LEFT JOIN friendships f
           ON (f.requester_id = :uid1 AND f.addressee_id = u.id)
@@ -38,7 +38,7 @@ try {
           AND COALESCE(u.is_system, 0) = 0
           AND NOT EXISTS (SELECT 1 FROM user_settings us WHERE us.user_id=u.id AND us.ai_matching=0)
           AND (f.id IS NULL OR f.status = 'rejected')
-        ORDER BY u.is_online DESC, u.last_active_at DESC
+        ORDER BY is_online DESC, u.last_active_at DESC
         LIMIT 50
     ");
     $stmt->execute([
