@@ -11,8 +11,8 @@ The chat runner is unchanged.
 | Mode | Work per user | Initial acceptance |
 |---|---|---|
 | `voice` | Non-silent Opus audio publishing and subscribing to every other participant in its room | Full 300s hold, >=99% continuous media; p95 packet loss <=2%, jitter <=30ms, RTT <=300ms |
-| `video` | Audio plus VP8 640x360 at 15fps, max400kbps per camera; all-to-all room subscriptions | Same media targets; every expected video stream >=8 decoded fps |
-| `screen` | Audio from everyone; one animated 1280x720 share at 5fps, max2Mbps per room | Same targets; every expected share >=2 decoded fps |
+| `video` | Audio plus VP8 1280x720 at 30fps, max1.7Mbps per camera; all-to-all room subscriptions | Same media targets; every expected video stream >=15 decoded fps |
+| `screen` | Audio from everyone; one animated 1920x1080 share at 30fps, max6Mbps per room | Same targets; every expected share >=15 decoded fps |
 | `code-run` | One synchronized compiler submission, four languages distributed across users | >=99% completed AND correct; p95 including queue wait <30s; deadline180s |
 | `code-grade` | Read/start own assignment, submit source, finish both automatic checks with score100 | >=99% completed AND correct; p95 including queue wait <60s; deadline180s |
 | `ai` | Two turns in each student's own Jarred session; recall a unique synthetic study label | >=99% completed AND recall-correct; p95 for BOTH turns <30s |
@@ -22,6 +22,11 @@ uses a full peak hold. These are explicitly chosen starting SLOs, not measured
 network guarantees. Keep SLOs and profiles fixed across comparisons. A busy/429/
 503 AI response, accepted-but-unfinished compiler job, wrong answer or early stop
 cannot pass. The synthetic recall probe does not measure general AI accuracy.
+
+The default media quality matches the current capture defaults: 720p/30fps camera
+and1080p/30fps sharing. `-MediaQuality economy` explicitly selects360p/15fps camera
+or720p/5fps sharing; reports group that separately. Audio is a fixed32kbps profile.
+Adaptive subscriptions are disabled to measure all expected receivers consistently.
 
 For 1:1-like media use room size2; for groups/voice use10 or50. Total users means
 participants, not calls: 300 users in pairs =150 rooms; 300 users in groups of10

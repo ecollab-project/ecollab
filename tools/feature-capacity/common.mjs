@@ -5,6 +5,7 @@ export function validateMediaTarget(target){
   if(target.mode!=='media'||!/^capacity-\d{8}-\d{6}-[a-f0-9]{8}$/.test(target.run_id||'')||!/^k6-\d{8}-\d{6}-[a-f0-9]{8}$/.test(target.fixture_id||''))throw Error('Use a prepared media fixture');
   const url=new URL(target.livekit_url);if(url.protocol!=='wss:'&&!(url.protocol==='ws:'&&['127.0.0.1','localhost'].includes(url.hostname)))throw Error('LiveKit requires WSS');
   if(url.username||url.password||url.hash||url.search)throw Error('Invalid LiveKit URL');
+  if(!Number.isSafeInteger(target.room_size)||target.room_size<2||target.room_size>50)throw Error('Room size must be 2..50');
   const ids=new Set();if(!Array.isArray(target.media))throw Error('Missing media tokens');
   for(const [index,u]of target.media.entries()){
     if(!Number.isSafeInteger(u.id)||u.id<1||ids.has(u.id)||u.slot!==index||typeof u.token!=='string'||!u.room.startsWith('ecollab-'+target.run_id+'-'))throw Error('Invalid media account');ids.add(u.id);
@@ -40,4 +41,10 @@ export function evaluateMedia(report){
   if((percentile(loss,.95)??Infinity)>2)failed.push('packet loss p95 over 2%');
   if((percentile(rtt,.95)??Infinity)>300)failed.push('RTT p95 over 300ms');
   return {capacity_pass:failed.length===0,failed_thresholds:failed,healthy_participants:good,jitter_ms:distribution(jitter),packet_loss_pct:distribution(loss),rtt_ms:distribution(rtt),audio_kbps:distribution(audio),video_fps:distribution(video)};
+}
+
+export function mediaEncoding(quality,media){
+  if(!['app-default','economy'].includes(quality))throw Error('MEDIA_QUALITY must be app-default or economy');
+  const screen=media==='screen',economy=quality==='economy';
+  return {width:screen?(economy?1280:1920):(economy?640:1280),height:screen?(economy?720:1080):(economy?360:720),fps:economy?(screen?5:15):30,max_bitrate:screen?(economy?2000000:6000000):(economy?400000:1700000),min_fps:economy?(screen?2:8):15};
 }

@@ -5,11 +5,12 @@ import {fileURLToPath} from 'node:url';
 import {monitorEventLoopDelay} from 'node:perf_hooks';
 import {createRequire} from 'node:module';
 import {chromium} from 'playwright';
-import {integer,distribution,evaluateMedia,validateMediaTarget} from './common.mjs';
+import {integer,distribution,evaluateMedia,validateMediaTarget,mediaEncoding} from './common.mjs';
 const root=path.dirname(fileURLToPath(import.meta.url)),require=createRequire(import.meta.url);
 const target=JSON.parse(fs.readFileSync(process.env.TARGET_FILE||'feature-target.json','utf8'));validateMediaTarget(target);
 const users=integer(process.env.VUS,'VUS',2,2,300),ramp=integer(process.env.RAMP_SECONDS,'RAMP_SECONDS',120,1,600),hold=integer(process.env.HOLD_SECONDS,'HOLD_SECONDS',300,10,1800);
 const shardCount=integer(process.env.SHARD_COUNT,'SHARD_COUNT',1,1,20),shardIndex=integer(process.env.SHARD_INDEX,'SHARD_INDEX',0,0,shardCount-1);
+const quality=process.env.MEDIA_QUALITY||'app-default';
 const media=process.env.MEDIA_PROFILE||'voice';if(!['voice','video','screen'].includes(media))throw Error('MEDIA_PROFILE must be voice, video or screen');
 if(users%target.room_size===1)throw Error('Every tested room needs at least two participants; choose a different room size or user count');
 if(users>target.media.length)throw Error('Not enough unique synthetic media tokens');
@@ -18,6 +19,7 @@ const start=integer(process.env.START_AT_MS,'START_AT_MS',Date.now()+10000,Date.
 const holdStart=start+(ramp+10)*1000,holdEnd=holdStart+hold*1000;
 const expiry=Math.min(target.expires_at*1000,...target.media.slice(0,users).map(u=>JSON.parse(Buffer.from(u.token.split('.')[1],'base64url').toString()).exp*1000));
 if(holdEnd+30000>expiry)throw Error('Media tokens expire before the full hold. Prepare/copy fresh tokens after installing the runner.');
+const encoding=mediaEncoding(quality,media);
 const selected=target.media.slice(0,users).filter((_,i)=>i%shardCount===shardIndex);
 if(!selected.length)throw Error('Empty generator shard');
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,Math.max(0,ms)));
@@ -26,7 +28,7 @@ let cpuPrevious=cpuSnapshot(),cpuSamples=[],minimumFree=os.freemem();const loop=
 const meter=setInterval(()=>{const current=cpuSnapshot(),total=current.total-cpuPrevious.total;if(total>0)cpuSamples.push(100*(1-(current.idle-cpuPrevious.idle)/total));cpuPrevious=current;minimumFree=Math.min(minimumFree,os.freemem());},1000);
 const participants=selected.map(u=>({id:u.id,slot:u.slot,joined:false,closed_early:false,error:false,samples:[]}));
 let browser;let fullHold=false;let interrupted=false;const contexts=[];
-const profile={media,room_size:target.room_size,total_users:users,ramp_seconds:ramp,hold_seconds:hold,video:media==='video'?'VP8 640x360 15fps / max400kbps per publisher':media==='screen'?'VP8 1280x720 5fps / max2Mbps; one share per room':null,audio:'Opus max32kbps; every participant publishes non-silent synthetic audio',topology:'all-to-all subscriptions within each room',scope:'LiveKit media plane only; application invite/ringing/answer signaling, real capture devices and subjective quality are not measured'};
+const profile={media,quality,encoding,room_size:target.room_size,total_users:users,ramp_seconds:ramp,hold_seconds:hold,video:media==='voice'?null:`VP8 ${encoding.width}x${encoding.height} ${encoding.fps}fps / max${encoding.max_bitrate}bps`,audio:'Opus max32kbps; every participant publishes non-silent synthetic audio',topology:'all-to-all subscriptions within each room',scope:'LiveKit media plane only; application invite/ringing/answer signaling, real capture devices and subjective quality are not measured'};
 const report={revision:'feature-capacity-1',kind:'media',run_id:target.run_id,sample_id:target.run_id+'-'+start,fixture_id:target.fixture_id,configured_users:selected.length,total_users:users,shard_count:shardCount,shard_index:shardIndex,start_at_ms:start,hold_start_ms:holdStart,hold_end_ms:holdEnd,profile,participants};
 process.once('SIGINT',()=>{interrupted=true;});
 try{
@@ -39,7 +41,7 @@ try{
       await page.addInitScript(()=>{const Base=window.RTCPeerConnection;window.capacityPeerConnections=[];window.RTCPeerConnection=class extends Base{constructor(...args){super(...args);window.capacityPeerConnections.push(this);}};});
       await page.goto('about:blank');await page.addScriptTag({path:sdk});await page.addScriptTag({path:path.join(root,'media-client.js')});
       const group=Math.floor(u.slot/target.room_size),groupSize=Math.min(target.room_size,users-group*target.room_size);
-      p.config={url:target.livekit_url,token:u.token,slot:u.slot,media,publisher:u.slot%target.room_size===0,expected_audio:groupSize-1};
+      p.config={url:target.livekit_url,token:u.token,slot:u.slot,media,encoding,publisher:u.slot%target.room_size===0,expected_audio:groupSize-1};
       const scheduled=start+u.slot/(users-1)*ramp*1000;await sleep(scheduled-Date.now());p.launch_skew_ms=Math.max(0,Date.now()-scheduled);
       await page.evaluate(async config=>{await window.startCapacityMedia(config);},p.config);p.joined=true;p.joined_at=Date.now();
       if(p.joined_at>holdStart)p.error=true;
