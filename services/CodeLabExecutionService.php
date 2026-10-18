@@ -5,8 +5,13 @@ require_once __DIR__.'/CodeLabRunner.php';
 final class CodeLabExecutionService
 {
     private Closure $clock;
+    private ?int $maintenanceAt=null;
+    private array $statements=[];
+    private ?array $lastTiming=null;
     public function __construct(private PDO $db,private CodeLabRunner $runner,?callable $clock=null){$this->clock=Closure::fromCallable($clock??fn()=>time());}
-    private function q(string $sql,array $args=[]):PDOStatement{$q=$this->db->prepare($sql);$q->execute($args);return $q;}
+    private function q(string $sql,array $args=[]):PDOStatement{$q=$this->statements[$sql]??=$this->db->prepare($sql);$q->closeCursor();$q->execute($args);return $q;}
+    /** CLI diagnostics only: no IDs, source, inputs, outputs or hidden cases. */
+    public function lastTiming():?array{return $this->lastTiming;}
     private function fail(string $message,int $code=400):never{throw new RuntimeException($message,$code);}
     public static function validateCases(mixed $cases,string $language):array
     {
@@ -76,19 +81,27 @@ final class CodeLabExecutionService
     /** One CLI worker claim; compare-and-set prevents two workers processing a job. */
     public function workOne():bool
     {
+        $this->lastTiming=null;$workStarted=hrtime(true);$runnerMs=0.;$finishedState='failed';
+        $now=($this->clock)();
+        // Retention/recovery are periodic maintenance, not per-submission work.
+        // Recover at startup and the next work cycle after each 60s interval.
+        if($this->maintenanceAt===null||$now<$this->maintenanceAt||$now-$this->maintenanceAt>=60){
         $this->q("UPDATE code_lab_jobs SET state='failed',result_json=?,finished_at=? WHERE state='running' AND started_at<?",[json_encode(['error'=>'Worker stopped. Retry grading or run again.']),gmdate('Y-m-d H:i:s',($this->clock)()),gmdate('Y-m-d H:i:s',($this->clock)()-600)]);
         $this->q("DELETE FROM code_lab_jobs WHERE kind='run' AND state IN ('done','failed') AND created_at<?",[gmdate('Y-m-d H:i:s',($this->clock)()-86400)]);
+            $this->maintenanceAt=$now;
+        }
         $j=$this->q("SELECT * FROM code_lab_jobs WHERE state='queued' ORDER BY id LIMIT 1")->fetch(PDO::FETCH_ASSOC);if(!$j)return false;
         if($this->q("UPDATE code_lab_jobs SET state='running',started_at=? WHERE id=? AND state='queued'",[gmdate('Y-m-d H:i:s',($this->clock)()),$j['id']])->rowCount()!==1)return true;
         try {
             (new CodeLabService($this->db,$this->clock))->member((int)$j['server_id'],(int)$j['user_id']);
-            if($j['kind']==='run'){$r=$this->runner->execute((int)$j['runtime_id'],$j['source_code'],$j['stdin']);$result=['status'=>$r['status']['description'],'stdout'=>$r['stdout'],'stderr'=>$r['stderr'],'compile_output'=>$r['compile_output'],'time'=>$r['time']??null,'memory'=>$r['memory']??null];}
+            $execute=function(string $stdin)use($j,&$runnerMs):array{$started=hrtime(true);try{return $this->runner->execute((int)$j['runtime_id'],$j['source_code'],$stdin);}finally{$runnerMs+=(hrtime(true)-$started)/1e6;}};
+            if($j['kind']==='run'){$r=$execute($j['stdin']);$result=['status'=>$r['status']['description'],'stdout'=>$r['stdout'],'stderr'=>$r['stderr'],'compile_output'=>$r['compile_output'],'time'=>$r['time']??null,'memory'=>$r['memory']??null];}
             else {
                 $a=$this->q('SELECT task_id FROM code_lab_attempts WHERE id=? AND user_id=? AND submitted_at IS NOT NULL',[$j['attempt_id'],$j['user_id']])->fetch(PDO::FETCH_ASSOC);if(!$a)throw new RuntimeException('Missing immutable submission.');
                 $cases=$this->q('SELECT * FROM code_lab_test_cases WHERE task_id=? ORDER BY position',[$a['task_id']])->fetchAll(PDO::FETCH_ASSOC);if(!$cases)throw new RuntimeException('Missing grading checks.');
                 $total=0;$earned=0;$results=[];
                 foreach($cases as$c){$pass=$j['language']==='web'?self::webCheck($j['source_code'],$c['input_data'],$c['expected_output']):false;
-                    if($j['language']!=='web'){$r=$this->runner->execute((int)$j['runtime_id'],$j['source_code'],$c['input_data']);$pass=$r['status']['id']===3&&self::matches($r['stdout'],$c['expected_output']);}
+                    if($j['language']!=='web'){$r=$execute($c['input_data']);$pass=$r['status']['id']===3&&self::matches($r['stdout'],$c['expected_output']);}
                     $total+=(int)$c['weight'];if($pass)$earned+=(int)$c['weight'];
                     // No student-code output/errors from grading: these can echo hidden inputs.
                     $results[]=['case'=>(int)$c['position']+1,'hidden'=>(bool)$c['hidden'],'passed'=>$pass];
@@ -100,12 +113,14 @@ final class CodeLabExecutionService
             if($this->q("UPDATE code_lab_jobs SET state='done',result_json=?,finished_at=? WHERE id=? AND state='running'",[json_encode($result,JSON_THROW_ON_ERROR),gmdate('Y-m-d H:i:s',($this->clock)()),$j['id']])->rowCount()!==1)throw new RuntimeException('Execution claim expired.');
             if($j['kind']==='grade')$this->q('UPDATE code_lab_attempts SET auto_score=?,score=CASE WHEN reviewed_by IS NULL THEN ? ELSE score END WHERE id=? AND submitted_at IS NOT NULL',[$score,$score,$j['attempt_id']]);
             if($this->db->inTransaction())$this->db->commit();
+            $finishedState='done';
             if($j['kind']==='grade'){ try {
                 require_once __DIR__.'/NotificationService.php';
                 $actor=$this->q('SELECT t.created_by FROM code_lab_tasks t JOIN code_lab_attempts a ON a.task_id=t.id WHERE a.id=?',[$j['attempt_id']])->fetchColumn();
                 if($actor)NotificationService::create($this->db,(int)$j['user_id'],(int)$actor,'class_update','Code Lab grading ready','Automatic checks finished. Open your submission to review the result.','/modules/code-lab/index.php?server_id='.(int)$j['server_id'],'💻');
             } catch(Throwable $notificationError) { error_log('[code-lab/notifications] delivery unavailable'); } }
         }catch(Throwable $e){if($this->db->inTransaction())$this->db->rollBack();$this->q("UPDATE code_lab_jobs SET state='failed',result_json=?,finished_at=? WHERE id=? AND state='running'",[json_encode(['error'=>'Execution service could not finish. No automatic score was recorded. Retry when the runner is ready.']),gmdate('Y-m-d H:i:s',($this->clock)()),$j['id']]);}
+        $this->lastTiming=['language'=>$j['language'],'kind'=>$j['kind'],'state'=>$finishedState,'runner_ms'=>round($runnerMs,3),'work_ms'=>round((hrtime(true)-$workStarted)/1e6,3)];
         return true;
     }
 }

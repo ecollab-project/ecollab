@@ -23,6 +23,7 @@ jobs:
           php tests/code-lab-regression.php
           php -l services/CodeLabRunner.php
           php -l services/CodeLabExecutionService.php
+          php -l services/CodeLabWorkerMetrics.php
           php -l scripts/code-lab-worker.php
           php -l scripts/check-code-lab-runner.php
           php tests/code-lab-execution-regression.php
