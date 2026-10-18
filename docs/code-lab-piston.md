@@ -54,3 +54,32 @@ Language packages live in the Docker volume. Do not delete it or change profile 
 `tests/code-lab-piston-test.py` verifies private authentication, async API compatibility, runtime pinning, fixed limits, schema rejection and failure translation. The `Code Lab cgroup v2 sandbox` workflow starts the actual Piston container on Ubuntu 24.04, installs all five language runtimes, runs the PHP compiler checker, and verifies stdin, timeout, blocked network, output cap and that adapter credentials are absent inside the sandbox. Actual VPS smoke checks still need to pass before activation.
 
 Upstream reference: https://github.com/engineer-man/piston
+
+
+## Faster result delivery (2026-10-18)
+
+The adapter now advertises a bounded result-wait capability. PHP can wait up to
+one second for a result; a completion notification wakes it immediately. This
+removes the fixed 250ms polling interval that could delay queue advancement after
+every fast program. Pending jobs still return their pending state at timeout.
+Old adapters and ordinary Judge0 retain the previous compatible polling behavior.
+The capability does not change program time/memory limits, output caps, network
+isolation, CPU quotas, one-at-a-time sandbox execution or grading privacy.
+
+Deploy after the current load test ends and the execution queue drains:
+
+```bash
+cd ~/ecollab-inspect
+git pull --ff-only origin ecollab-collabs
+php scripts/check-code-lab-runner.php --queue-idle
+sudo bash scripts/setup-code-lab-piston.sh
+```
+
+The installer reuses frozen runtimes and the private token, checks queue state
+before restarting the adapter, smoke-tests the compilers and restarts the PHP
+worker so it loads the new client. Run this during a quiet period: the idle check
+is a preflight check, not a maintenance lock preventing new submissions.
+No migration or Windows runner changes are required. Repeat the same 50-user test,
+then the 100-user test with the 30-second p95 threshold unchanged. Actual VPS
+improvement must come from those results; loopback timing tests are not capacity
+claims. The scripts do not add more worker processes or sandbox CPU capacity.
