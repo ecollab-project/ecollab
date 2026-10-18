@@ -1438,7 +1438,7 @@ function renderMembersPanel(members, total = members.length) {
     `;
   }).join('');
 
-  list.innerHTML = html + (total > 20 ? `<button type="button" class="members-more" onclick="openMembersPanel()">+${total - 20} more members</button>` : '');
+  list.innerHTML = html + (total > 20 ? `<button type="button" class="members-more" style="background:transparent;border:0;width:100%;font-family:inherit;cursor:pointer" onclick="openMembersPanel()">+${total - 20} more members</button>` : '');
 
   if (chatPresenceSnapshot?.serverId === String(window.ECOLLAB?.currentServerId)) {
     applyChatMemberPresence(chatPresenceSnapshot.serverId, [...chatPresenceSnapshot.ids].map(id => ({ id })));
