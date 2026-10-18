@@ -32,7 +32,7 @@ const members = Array.from({length:1000}, (_,i) => ({id:i+1, username:'member'+i
   assert.equal(context._getModalMembersSource().length,1000,'Modal no longer limited to sidebar');
   vm.runInContext("_membersSearch='outside preview'; _renderMembersModal();",context);
   assert.match(dom.window.document.getElementById('membersModalList').textContent,/Outside preview/);
-  assert.match(dom.window.document.getElementById('membersModalList').innerHTML,/1000\)/,'Profile uses the actual user ID');
+  assert.equal(dom.window.document.querySelector('#membersModalList [data-profile-user-id]').dataset.profileUserId,'1000','Profile uses the actual user ID');
   const stale=context.loadChatMemberDirectory();
   context.currentChannelId=81; context.window.serverMembers=[];
   pending.shift().resolve({success:true,has_access:true,members}); await stale;

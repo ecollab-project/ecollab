@@ -582,7 +582,7 @@ function _renderMembersModal() {
     if (_membersTab === 'all') html += `<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);padding:10px 10px 4px;">${groups[status]} — ${group.length}</div>`;
     group.forEach(m => {
       const dotColor = status === 'online' ? '#22c55e' : status === 'idle' ? '#f59e0b' : '#475569';
-      html += `<div onclick="openMiniProfile(event,'','','','',${Number(m.id)||0})"
+      html += `<div role="button" tabindex="0" data-profile-user-id="${Number(m.id)||0}" data-profile-name="${_esc(m.name)}"
         style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background 0.12s;"
         onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
         <div style="position:relative;flex-shrink:0;">
