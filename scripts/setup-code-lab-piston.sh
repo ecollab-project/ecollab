@@ -23,6 +23,8 @@ if ! python3 -c 'import json,sys;c=json.load(open(sys.argv[1]));sys.exit(0 if le
  python3 -c 'import json,sys;c=json.load(open(sys.argv[1]));assert len(c["profiles"])==5 and len(c["token"])>=32' "$CODE_LAB_RUNNER_STATE/profiles.new.json"
  mv "$CODE_LAB_RUNNER_STATE/profiles.new.json" "$CODE_LAB_RUNNER_STATE/profiles.json"
 fi
+# In-flight adapter results are in memory; never intentionally restart a busy queue.
+php "$project_path/scripts/check-code-lab-runner.php" --queue-idle
 "${compose[@]}" up -d --force-recreate adapter
 # Smoke-test with child-process settings before changing the application .env.
 python3 - "$project_path" "$CODE_LAB_RUNNER_STATE" <<'PYSMOKE'

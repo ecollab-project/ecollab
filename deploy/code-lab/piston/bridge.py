@@ -11,7 +11,7 @@ import time
 import urllib.request
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, parse_qs
 
 
 def piston_request(path, body=None, timeout=45):
@@ -62,6 +62,7 @@ class Adapter:
             raise ValueError('Five pinned runtime profiles required')
         self.request=request
         self.lock=threading.Lock()
+        self.completed=threading.Condition(self.lock)
         self.jobs={}
         self.pending=queue.Queue(maxsize=32)
         threading.Thread(target=self.worker,daemon=True).start()
@@ -112,10 +113,15 @@ class Adapter:
                 result={'status':{'id':13}}  # Infrastructure error, never a zero grade.
             with self.lock:
                 self.jobs[token]={'result':result,'at':time.monotonic()}
+                self.completed.notify_all()
             self.pending.task_done()
 
-    def get(self,token):
-        with self.lock:
+    def get(self,token,wait_ms=0):
+        if not isinstance(wait_ms,int) or not 0<=wait_ms<=1000:
+            raise ValueError('Result wait must be 0–1000ms')
+        with self.completed:
+            if wait_ms:
+                self.completed.wait_for(lambda: token not in self.jobs or self.jobs[token]['result']['status']['id']>2,timeout=wait_ms/1000)
             job=self.jobs.get(token)
             return job['result'].copy() if job else None
 
@@ -140,7 +146,11 @@ class Handler(BaseHTTPRequestHandler):
         if path=='/languages':
             return self.send_json(200,[{'id':p['id'],'name':p['name']+' ('+p['language']+' '+p['version']+', Piston)'} for p in self.server.adapter.profiles.values()])
         if path.startswith('/submissions/'):
-            result=self.server.adapter.get(path.split('/')[-1])
+            try:
+                wait_ms=int(parse_qs(urlsplit(self.path).query).get('wait_ms',['0'])[0])
+                result=self.server.adapter.get(path.split('/')[-1],wait_ms)
+            except (ValueError,TypeError):
+                return self.send_json(400,{'error':'Invalid result wait'})
             return self.send_json(200,result) if result else self.send_json(404,{'error':'Execution not found'})
         return self.send_json(404,{'error':'Not found'})
     def do_POST(self):
@@ -156,7 +166,7 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(body,dict):
                 raise ValueError('Invalid request')
             token=self.server.adapter.submit(body)
-            return self.send_json(201,{'token':token})
+            return self.send_json(201,{'token':token,'poll_wait_ms':1000})
         except queue.Full:
             return self.send_json(429,{'error':'Execution queue full'})
         except (ValueError,TypeError,KeyError,AttributeError,UnicodeError):

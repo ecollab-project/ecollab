@@ -47,12 +47,16 @@ final class CodeLabRunner
             'enable_network'=>false,'enable_per_process_and_thread_time_limit'=>false,'enable_per_process_and_thread_memory_limit'=>false,'number_of_runs'=>1,'redirect_stderr_to_stdout'=>false
         ]);
         $token=$created['token']??'';if(!is_string($token)||!preg_match('/^[a-zA-Z0-9-]{8,100}$/D',$token))throw new RuntimeException('Invalid runner submission token.');
+        // Only adapters explicitly advertising the bounded extension receive it.
+        // Standard Judge0 and older Piston adapters retain their polling contract.
+        $waitMs=($created['poll_wait_ms']??null)===1000?1000:0;
         $limit=microtime(true)+45;
         do {
-            $result=$this->request('GET','/submissions/'.rawurlencode($token).'?base64_encoded=true&fields=status,stdout,stderr,compile_output,time,memory,exit_code');
+            $pollStarted=microtime(true);
+            $result=$this->request('GET','/submissions/'.rawurlencode($token).'?base64_encoded=true&fields=status,stdout,stderr,compile_output,time,memory,exit_code'.($waitMs?'&wait_ms='.$waitMs:''));
             $status=(int)($result['status']['id']??0);
             if($status>2)break;
-            if(!$this->transport)usleep(250000);
+            if(!$this->transport&&(!$waitMs||microtime(true)-$pollStarted<0.1))usleep(250000);
         } while(microtime(true)<$limit);
         if(!in_array($status,range(3,12),true))throw new RuntimeException('Runner did not finish reliably.');
         foreach(['stdout','stderr','compile_output']as$key){$value=$result[$key]??null;$decoded=$value===null?'':base64_decode((string)$value,true);if($decoded===false)throw new RuntimeException('Invalid runner output encoding.');$result[$key]=json_decode(json_encode(substr($decoded,0,16384),JSON_INVALID_UTF8_SUBSTITUTE),true);}

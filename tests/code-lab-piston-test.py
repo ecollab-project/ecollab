@@ -38,6 +38,35 @@ class BridgeTests(unittest.TestCase):
         self.assertEqual(request['run_timeout'],8000)
         self.assertEqual(request['run_memory_limit'],268435456)
         self.assertEqual(request['compile_memory_limit'],536870912)
+    def test_bounded_wait_wakes_on_completion_and_releases_lock(self):
+        entered=threading.Event();release=threading.Event()
+        def request(path,body):
+            entered.set();release.wait(3)
+            return {'run':{'code':0,'stdout':'42'}}
+        self.adapter.request=request
+        token=self.submit();self.assertTrue(entered.wait(1))
+        result=[]
+        waiter=threading.Thread(target=lambda:result.append(self.adapter.get(token,1000)))
+        waiter.start();time.sleep(.02)
+        # The waiting HTTP reader must not hold the adapter lock/queue hostage.
+        self.assertEqual(self.adapter.get(token)['status']['id'],2)
+        with self.assertRaises(ValueError):self.adapter.get(token,1001)
+        with self.assertRaises(ValueError):self.adapter.get(token,-1)
+        release.set();waiter.join(.5)
+        self.assertFalse(waiter.is_alive(),'Completion notification should wake the reader before its 1s timeout')
+        self.assertEqual(result[0]['status']['id'],3)
+        self.assertIsNone(self.adapter.get('unknown',1000))
+    def test_pending_wait_times_out_without_a_false_completion(self):
+        release=threading.Event()
+        def request(path,body):
+            release.wait(3)
+            return {'run':{'code':0}}
+        self.adapter.request=request
+        token=self.submit();before=time.monotonic()
+        result=self.adapter.get(token,30)
+        self.assertLess(time.monotonic()-before,.5)
+        self.assertLessEqual(result['status']['id'],2)
+        release.set()
     def test_reject_legacy_ids_and_extra_execution_features(self):
         for change in [{'language_id':71},{'enable_network':True},{'callback_url':'https://example.invalid'},{'additional_files':'zip'},{'source_code':'invalid!'}]:
             with self.assertRaises(ValueError):self.submit(**change)
@@ -47,6 +76,36 @@ class BridgeTests(unittest.TestCase):
         self.assertEqual(bridge.translate({'run':{'code':None,'signal':'SIGKILL','status':'OL'}})['status']['id'],11)
         for result in [{},{'run':{'status':'XX'}},{'compile':{'status':'XX'},'run':{}}]:
             with self.assertRaises(ValueError):bridge.translate(result)
+    def test_php_client_wait_and_legacy_compatibility(self):
+        import os
+        php=os.environ.get('PHP_BIN','php')
+        if subprocess.run([php,'-r','exit(function_exists("curl_init")?0:1);'],capture_output=True).returncode:
+            self.skipTest('PHP cURL is exercised by CI')
+        def request(path,body):
+            time.sleep(.04)
+            return {'run':{'code':0,'stdout':'42\n','cpu_time':40}}
+        self.adapter.request=request
+        timings={}
+        for legacy in [True,False]:
+            reads=[]
+            class TestHandler(bridge.Handler):
+                def send_json(self,status,value):
+                    if legacy and status==201:
+                        value={key:val for key,val in value.items() if key!='poll_wait_ms'}
+                    super().send_json(status,value)
+                def do_GET(self):
+                    reads.append(self.path)
+                    super().do_GET()
+            server=bridge.Server(('127.0.0.1',0),self.adapter);server.RequestHandlerClass=TestHandler
+            threading.Thread(target=server.serve_forever,daemon=True).start()
+            try:
+                result=subprocess.run([php,str(ROOT/'tests/code-lab-runner-wait.php'),'http://127.0.0.1:'+str(server.server_port)],capture_output=True,text=True,check=True,timeout=15)
+                report=json.loads(result.stdout);self.assertEqual(report['finished'],8)
+                timings[legacy]=report['elapsed_ms']
+                self.assertEqual(any('wait_ms=1000' in path for path in reads),not legacy)
+            finally:server.shutdown();server.server_close()
+        self.assertLess(timings[False],timings[True]*.7,'Fast executions should not pay the fixed 250ms completion polling delay')
+        print('Controlled 8-job loopback fixture: legacy %.1fms, completion wait %.1fms (not a VPS capacity result)'%(timings[True],timings[False]))
     def test_auth_and_protocol(self):
         server=bridge.Server(('127.0.0.1',0),self.adapter)
         threading.Thread(target=server.serve_forever,daemon=True).start()
@@ -58,10 +117,14 @@ class BridgeTests(unittest.TestCase):
             request=urllib.request.Request(address+'/languages',headers=headers)
             with urllib.request.urlopen(request)as response:self.assertEqual(len(json.load(response)),5)
             request=urllib.request.Request(address+'/submissions?base64_encoded=true&wait=false',data=json.dumps({'language_id':10003,'source_code':base64.b64encode(b'print(42)').decode(),'stdin':'','enable_network':False}).encode(),headers=headers)
-            with urllib.request.urlopen(request)as response:token=json.load(response)['token']
+            with urllib.request.urlopen(request)as response:
+                created=json.load(response);token=created['token'];self.assertEqual(created['poll_wait_ms'],1000)
             self.adapter.pending.join()
             request=urllib.request.Request(address+'/submissions/'+token+'?base64_encoded=true&fields=stdout,status',headers=headers)
             with urllib.request.urlopen(request)as response:self.assertEqual(json.load(response)['status']['id'],3)
+            request=urllib.request.Request(address+'/submissions/'+token+'?wait_ms=1001',headers=headers)
+            with self.assertRaises(urllib.error.HTTPError)as e:urllib.request.urlopen(request)
+            self.assertEqual(e.exception.code,400)
             request=urllib.request.Request(address+'/submissions/unknown',headers=headers)
             with self.assertRaises(urllib.error.HTTPError)as e:urllib.request.urlopen(request)
             self.assertEqual(e.exception.code,404)
