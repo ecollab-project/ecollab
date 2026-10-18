@@ -205,8 +205,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function updatePresence() {
+  if (!currentChannelId) return;
   try {
-    await apiFetch(`${API_BASE}/get-channel.php?id=${currentChannelId || 0}`);
+    await apiFetch(`${API_BASE}/get-channel.php?id=${currentChannelId || 0}&members=none`);
   } catch { /* silent */ }
 }
 
@@ -381,6 +382,10 @@ async function switchChannel(el, channelId) {
 
   currentChannelId = channelId;
   window.ECOLLAB.currentChannelId = channelId;
+  window.serverMembers = [];
+  window.serverMembersComplete = false;
+  _hideMentionDropdown();
+  renderMembersPanel([]);
   window.EcollabTimeline?.reset(document.getElementById('messagesArea'));
   renderMessages([], false);
   if (window.subscribeToChannel) window.subscribeToChannel(channelId);
@@ -469,8 +474,9 @@ async function switchChannel(el, channelId) {
       // Hide input for non-text channel types
       const isTextChannel = ['text', 'study_room'].includes(ch.type);
       if (inputWrapper) inputWrapper.style.display = isTextChannel ? '' : 'none';
-      renderMembersPanel(chanData.members || []);
-      // Cache full member objects for @mention autocomplete
+      renderMembersPanel(chanData.members || [], chanData.member_total);
+      window.serverMembersComplete = chanData.members_complete !== false;
+      // Cache sidebar preview; full directory is fetched only when needed.
       window.serverMembers = chanData.members || [];
     }
 
@@ -866,7 +872,13 @@ function handleKeyDown(e) {
   }
 }
 
-function _showMentionDropdown(query) {
+function _showMentionDropdown(query, directoryLoaded = false) {
+  if (!directoryLoaded && window.serverMembersComplete === false) {
+    const channelId = currentChannelId;
+    loadChatMemberDirectory().then(() => {
+      if (_mentionActive && channelId === currentChannelId && _mentionQuery === query) _showMentionDropdown(query, true);
+    }).catch(() => {});
+  }
   // Get members from sidebar
   const members = [];
   document.querySelectorAll('#membersList .member-item, #activeMembersList .active-user').forEach(el => {
@@ -900,7 +912,7 @@ function _showMentionDropdown(query) {
     else document.body.appendChild(dd);
   }
 
-  if (!filtered.length) { _hideMentionDropdown(); return; }
+  if (!filtered.length) { const dd = document.getElementById('mentionDropdown'); if (dd) dd.style.display = 'none'; return; }
 
   dd.innerHTML = filtered.map((m, i) => {
     const name = typeof m === 'string' ? m : (m.full_name || m.username);
@@ -912,7 +924,7 @@ function _showMentionDropdown(query) {
     return `<div class="mention-item${i === 0 ? ' active' : ''}" data-username="${escHtml(username)}"
       style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;transition:background 0.1s;"
       onmouseenter="document.querySelectorAll('.mention-item').forEach(i=>i.classList.remove('active'));this.classList.add('active')"
-      onclick="_insertMention('${escHtml(name)}')">
+      >
       <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">${init}</div>
       <div>
         <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${escHtml(name)}</div>
@@ -920,6 +932,7 @@ function _showMentionDropdown(query) {
       </div>
     </div>`;
   }).join('');
+  dd.querySelectorAll('.mention-item').forEach(item => item.addEventListener('click', () => _insertMention(item.dataset.username)));
   dd.style.display = 'block';
 }
 
@@ -936,6 +949,28 @@ function _insertMention(username) {
   input.setSelectionRange(newPos, newPos);
   _hideMentionDropdown();
 }
+
+// Deduplicate simultaneous mention/modal requests, but never reuse access decisions.
+let memberDirectoryPending = null;
+async function loadChatMemberDirectory() {
+  const channelId = currentChannelId;
+  if (!channelId) return [];
+  if (memberDirectoryPending?.channelId === channelId) return memberDirectoryPending.promise;
+  const promise = (async () => {
+    const data = await apiFetch(`${API_BASE}/get-channel.php?id=${channelId}&members=all`);
+    if (!data.success || !data.has_access) throw new Error('Member directory unavailable');
+    if (channelId === currentChannelId) {
+      window.serverMembers = data.members || [];
+      window.serverMembersComplete = true;
+    }
+    return data.members || [];
+  })();
+  const request = {channelId, promise};
+  memberDirectoryPending = request;
+  try { return await promise; }
+  finally { if (memberDirectoryPending === request) memberDirectoryPending = null; }
+}
+window.loadChatMemberDirectory = loadChatMemberDirectory;
 
 function _hideMentionDropdown() {
   _mentionActive = false;
@@ -1374,10 +1409,11 @@ function applyChatMemberPresence(serverId, users) {
   });
 }
 window.applyChatMemberPresence = applyChatMemberPresence;
-function renderMembersPanel(members) {
+function renderMembersPanel(members, total = members.length) {
+  total = Math.max(members.length, Number(total) || 0);
   const list = document.getElementById('membersList');
   const badge = document.getElementById('memberCountBadge');
-  if (badge) badge.textContent = '— ' + members.length;
+  if (badge) badge.textContent = '— ' + total;
   if (!list) return;
 
   const html = members.slice(0, 20).map(m => {
@@ -1402,7 +1438,7 @@ function renderMembersPanel(members) {
     `;
   }).join('');
 
-  list.innerHTML = html + (members.length > 20 ? `<div class="members-more">+${members.length - 20} more members</div>` : '');
+  list.innerHTML = html + (total > 20 ? `<button type="button" class="members-more" onclick="openMembersPanel()">+${total - 20} more members</button>` : '');
 
   if (chatPresenceSnapshot?.serverId === String(window.ECOLLAB?.currentServerId)) {
     applyChatMemberPresence(chatPresenceSnapshot.serverId, [...chatPresenceSnapshot.ids].map(id => ({ id })));
@@ -1417,7 +1453,11 @@ async function refreshMembersPanel() {
     const serverId = window.ECOLLAB?.currentServerId;
     const data = await apiFetch(`${API_BASE}/get-channel.php?id=${channelId}`);
     if (channelId !== currentChannelId || serverId !== window.ECOLLAB?.currentServerId) return;
-    if (data.members) renderMembersPanel(data.members);
+    if (data.members) {
+      renderMembersPanel(data.members, data.member_total);
+      window.serverMembers = data.members;
+      window.serverMembersComplete = data.members_complete !== false;
+    }
   } catch { /* silent */ }
 }
 window.refreshMembersPanel = refreshMembersPanel;

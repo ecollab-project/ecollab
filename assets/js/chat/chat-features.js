@@ -545,13 +545,23 @@ function _getPlaceholderActiveUsers() {
 let _membersTab = 'all';
 let _membersSearch = '';
 
-function openMembersPanel() {
+async function openMembersPanel() {
   _membersTab = 'all'; _membersSearch = '';
   const inp = document.getElementById('membersSearch');
   if (inp) inp.value = '';
   document.querySelectorAll('#membersStatusTabs .filter-tab').forEach((t, i) => t.classList.toggle('active', i === 0));
   _renderMembersModal();
   if (window.openModal) openModal('membersModal');
+  const channelId = window.ECOLLAB?.currentChannelId;
+  try {
+    await window.loadChatMemberDirectory?.();
+    if (channelId === window.ECOLLAB?.currentChannelId) _renderMembersModal();
+  } catch {
+    if (channelId === window.ECOLLAB?.currentChannelId) {
+      const container = document.getElementById('membersModalList');
+      if (container) container.textContent = 'Unable to load the member directory. Close and reopen to retry.';
+    }
+  }
 }
 
 function _renderMembersModal() {
@@ -572,7 +582,7 @@ function _renderMembersModal() {
     if (_membersTab === 'all') html += `<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);padding:10px 10px 4px;">${groups[status]} — ${group.length}</div>`;
     group.forEach(m => {
       const dotColor = status === 'online' ? '#22c55e' : status === 'idle' ? '#f59e0b' : '#475569';
-      html += `<div onclick="openMiniProfile(event,'${_esc(m.name)}','${_esc(m.role || 'Member')}','','${_esc(m.name[0].toUpperCase())}')"
+      html += `<div onclick="openMiniProfile(event,'','','','',${Number(m.id)||0})"
         style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background 0.12s;"
         onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
         <div style="position:relative;flex-shrink:0;">
@@ -593,7 +603,12 @@ function _renderMembersModal() {
 }
 
 function _getModalMembersSource() {
-  // Build from real sidebar member list if available, else placeholder
+  if (Array.isArray(window.serverMembers)) return window.serverMembers.map(m => ({
+    id: Number(m.id), name: m.full_name || m.nickname || m.username || '?',
+    role: m.server_role || m.role || 'Member', grad: m.avatar_color_gradient,
+    status: Number(m.is_online) === 1 ? 'online' : 'offline',
+  }));
+  // Fallback for older pages without the directory loader.
   const memberItems = document.querySelectorAll('#membersList .member-item');
   if (memberItems.length > 0) {
     const result = [];

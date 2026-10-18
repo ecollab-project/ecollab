@@ -42,3 +42,27 @@ Tests exercise spoofed/direct/trusted IPv4/IPv6 IP chains, real PHP CSRF/session
 These are focused fixes, not a penetration-test certificate or a new capacity measurement. Retest the existing k6 workload to measure latency/throughput after deployment; monitor CPU/RAM alongside it. VPS OS patching, backup retention, firewall exposure, production TLS/session settings and secret rotation remain operational controls and were not changed remotely.
 
 References: [PHP session security](https://www.php.net/manual/en/session.security.ini.php), [OWASP CSRF](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html), [MariaDB GET_LOCK](https://mariadb.com/docs/server/reference/sql-functions/secondary-functions/miscellaneous-functions/get_lock).
+
+### Bounded chat member loading (2026-10-18)
+
+`GET /API/chat/get-channel.php?id=...` now returns the first 20 visible
+members, plus `member_total` and `members_complete`. The sidebar already
+renders 20 rows. `members=all` explicitly requests the full directory for
+member search and mentions; `members=none` skips both roster and count work
+for the existing read-marker heartbeat. All modes retain the channel and
+private-channel access checks and `no-store` responses. Directory-only
+requests do not advance the read marker.
+
+The member dialog now searches the full directory rather than the 20 DOM
+rows. Concurrent directory requests share one in-flight HTTP request;
+channel switches discard stale responses. Refreshes replace the preview
+and its count, so presence and membership are not permanently cached.
+No schema, compiler, AI, broker or load-test configuration changes are needed.
+
+Deploy with `git pull --ff-only origin ecollab-collabs` and reload PHP-FPM
+if OPcache timestamp validation is disabled. Repeat the existing 300-user
+120-second ramp / 300-second hold benchmark with the same parameters.
+Compare HTTP times, received bytes, API failures, socket failures and own
+message delivery; the earlier run received 1.79 GB. A smaller response is
+expected, but throughput and latency improvement require a new VPS run.
+The load-test script and workload have not changed.

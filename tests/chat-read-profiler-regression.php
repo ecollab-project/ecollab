@@ -46,6 +46,17 @@ try {
     $db->exec('ALTER TABLE channels ADD slug VARCHAR(60), ADD description TEXT, ADD is_locked INT DEFAULT 0, ADD member_count INT DEFAULT 0');
     require_once dirname(__DIR__).'/services/ChannelService.php';
     $instance=new ReflectionProperty(Database::class,'instance');$instance->setValue(null,$db);
+    if (!defined('BASE_URL')) define('BASE_URL', 'https://example.invalid');
+    $service = new ChannelService();
+    $preview = $service->getOnlineMembers(19, 1, 20);
+    $directory = $service->getOnlineMembers(19, 1);
+    ensure(count($preview) === 20 && count($directory) === 1000, 'Sidebar bounded, directory complete');
+    ensure($service->countVisibleMembers(19) === 1000, 'Accurate directory count');
+    ensure(array_column($preview, 'id') === array_slice(array_column($directory, 'id'), 0, 20), 'Stable preview ordering');
+    ensure(strlen(json_encode($preview)) < strlen(json_encode($directory)) / 20, 'Large roster payload reduced by over 95 percent');
+    $db->exec("UPDATE users SET status='banned' WHERE id=998; UPDATE users SET role='admin' WHERE id=999; UPDATE users SET deleted_at=NOW() WHERE id=1000");
+    ensure($service->countVisibleMembers(19) === 997 && count($service->getOnlineMembers(19, 1)) === 997, 'Count and roster share privacy filters');
+    ensure($service->countVisibleMembers(999) === 0, 'Empty server count');
     $db->exec('SET TRANSACTION READ ONLY');$db->beginTransaction();
     $channels=(new ChannelService())->getChannelsForUser(19,1);
     ensure(count($channels)===1 && (int)$channels[0]['unread_count']===65,'Authorized channel and legacy unread count retained');
