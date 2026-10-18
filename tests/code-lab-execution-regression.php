@@ -49,4 +49,27 @@ if(class_exists('DOMDocument')){
  clCheck($executor->result(1,3,(int)$submittedWeb['grade_job']['id'])['result']['score']===50,'HTML structure graded through private queue');
 }
 clCheck(CodeLabExecutionService::matches("a\r\nb\n","a\nb"),'Newline normalization');clCheck(!CodeLabExecutionService::matches(' a','a'),'Meaningful whitespace preserved');
+// Maintenance must not rescan retained history before every fast execution.
+// Recovery still runs when idle and leaves active/queued/grade rows intact.
+$maintenance=new CodeLabExecutionService($db,$runner,fn()=>$GLOBALS['now']);$maintenance->workOne();
+$insert=$db->prepare("INSERT INTO code_lab_jobs(server_id,user_id,language,runtime_id,kind,source_code,stdin,state,created_at,started_at) VALUES(1,2,'python',71,?,'private-source','',?,?,?)");
+$old=gmdate('Y-m-d H:i:s',$now-90000);$stale=gmdate('Y-m-d H:i:s',$now-601);$recent=gmdate('Y-m-d H:i:s',$now);
+$ids=[];foreach([['run','done',$old,null],['run','running',$recent,$stale],['grade','done',$old,null],['run','running',$recent,$recent]]as$row){$insert->execute($row);$ids[]=(int)$db->lastInsertId();}
+$now+=59;$maintenance->workOne();
+clCheck((int)$db->query('SELECT COUNT(*) FROM code_lab_jobs WHERE id IN ('.implode(',',$ids).')')->fetchColumn()===4,'No per-job retention scan during maintenance interval');
+clCheck($db->query('SELECT state FROM code_lab_jobs WHERE id='.$ids[1])->fetchColumn()==='running','Recovery is deferred for at most maintenance interval');
+$now++;$maintenance->workOne();
+clCheck($db->query('SELECT state FROM code_lab_jobs WHERE id='.$ids[0])->fetchColumn()===false,'Expired run removed at maintenance boundary');
+clCheck($db->query('SELECT state FROM code_lab_jobs WHERE id='.$ids[1])->fetchColumn()==='failed','Stale running claim recovered while idle');
+clCheck($db->query('SELECT state FROM code_lab_jobs WHERE id='.$ids[2])->fetchColumn()==='done','Grades retained');
+clCheck($db->query('SELECT state FROM code_lab_jobs WHERE id='.$ids[3])->fetchColumn()==='running','Live execution preserved');
+clCheck($maintenance->lastTiming()===null,'Idle maintenance is not counted as a completed job');
+$db->exec('DELETE FROM code_lab_jobs WHERE id IN ('.implode(',',$ids).')');
+$run=$maintenance->run(1,2,['language'=>'python','code'=>'private-source','stdin'=>'private-input']);$maintenance->workOne();
+$timing=$maintenance->lastTiming();clCheck($timing['state']==='done'&&$timing['language']==='python'&&$timing['runner_ms']>=0&&$timing['work_ms']>=$timing['runner_ms'],'Execution timings cover actual runner wait and worker overhead');
+clCheck(!str_contains(json_encode($timing),'private-'),'Timing metadata contains no source or input');
+require_once dirname(__DIR__).'/services/CodeLabWorkerMetrics.php';
+$metrics=new CodeLabWorkerMetrics();$metrics->record(['language'=>'python','kind'=>'run','state'=>'done','runner_ms'=>40,'work_ms'=>50,'source'=>'PRIVATE']);$metrics->record(['language'=>'python','kind'=>'run','state'=>'failed','runner_ms'=>60,'work_ms'=>70]);
+$summary=$metrics->drain(30);$g=$summary['groups']['run/python'];clCheck($summary['jobs']===2&&$g['failed']===1&&$g['runner_ms']['avg']===50.0&&$g['overhead_avg_ms']===10.0,'Bounded timing summary includes failures and correct aggregates');
+clCheck(!str_contains(json_encode($summary),'PRIVATE')&&$metrics->drain(30)===null,'Only safe aggregates emitted and drained');
 echo "PASS: queue ownership, frozen submissions, weighted grading, hidden-case privacy, quotas, runtime/limit enforcement, outage retry and manual overrides\n";

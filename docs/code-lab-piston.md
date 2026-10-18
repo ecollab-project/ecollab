@@ -83,3 +83,53 @@ No migration or Windows runner changes are required. Repeat the same 50-user tes
 then the 100-user test with the 30-second p95 threshold unchanged. Actual VPS
 improvement must come from those results; loopback timing tests are not capacity
 claims. The scripts do not add more worker processes or sandbox CPU capacity.
+
+
+## Worker overhead and measurement (2026-10-18)
+
+The PHP worker now reuses prepared statements (not authorization results), and
+performs expired-run cleanup and abandoned-claim recovery at startup and once
+per minute between jobs instead of before every job. Idle polling remains one
+second. Recovery still uses the existing ten-minute stale-claim threshold;
+completed grading records are never removed by run retention. A long grading
+job can defer maintenance until the next work cycle.
+
+Every 30 seconds, after the current job returns, the worker emits a bounded
+`code_lab_worker_summary` to its journal. Groups contain language, run/grade,
+job/failure counts, average/maximum runner and total work durations, and average
+non-runner overhead. No account/job IDs, source, test inputs, outputs, hidden
+cases or credentials are emitted. Empty windows are silent. `runner_ms` includes
+private HTTP, adapter and actual compiler/execution waits; it is not CPU time.
+`work_ms` includes membership checks, SQL, maintenance when due and notification
+attempts. Neither metric includes time waiting in the application queue before
+claiming. These summaries are not substitutes for end-to-end test p95.
+
+Apply during a quiet period after jobs have drained; no migration, adapter
+restart, runtime update or Windows script download is needed:
+
+```bash
+cd ~/ecollab-inspect
+git pull --ff-only origin ecollab-collabs
+php scripts/check-code-lab-runner.php --queue-idle && sudo systemctl restart ecollab-code-lab
+sudo systemctl is-active ecollab-code-lab
+```
+
+In one VPS terminal, collect host observations while testing from Windows:
+
+```bash
+cd ~/ecollab-inspect
+php scripts/observe-feature-capacity.php 240
+```
+
+Then inspect worker summaries after the test:
+
+```bash
+sudo journalctl -u ecollab-code-lab --since "10 minutes ago" --no-pager | grep code_lab_worker_summary
+```
+
+Use the same 50-user test first and 100-user test next, with the 30-second p95
+threshold unchanged. A serial execution queue remains: this change does not
+establish a new capacity or add CPU, sandbox concurrency or PHP processes. If
+runner time dominates, investigate the sandbox/CPU measurements before changing
+backend frameworks or worker limits. The idle check remains a preflight, not a
+lock against new submissions; do not restart during an active assessment.
