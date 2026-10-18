@@ -52,8 +52,14 @@ def translate(result):
             'time':(run.get('cpu_time') or 0)/1000,'memory':None,'exit_code':run.get('code')}
 
 
+def execution_slots(value):
+    if str(value) not in ('1','2'):
+        raise ValueError('Execution slots must be one or two')
+    return int(value)
+
+
 class Adapter:
-    def __init__(self,config,request=piston_request):
+    def __init__(self,config,request=piston_request,slots=2):
         if not isinstance(config.get('token'),str) or len(config['token'])<32:
             raise ValueError('Private API token required')
         self.token=config['token']
@@ -65,7 +71,8 @@ class Adapter:
         self.completed=threading.Condition(self.lock)
         self.jobs={}
         self.pending=queue.Queue(maxsize=32)
-        threading.Thread(target=self.worker,daemon=True).start()
+        for _ in range(execution_slots(slots)):
+            threading.Thread(target=self.worker,daemon=True).start()
 
     def submit(self,body):
         profile=self.profiles.get(body.get('language_id'))
@@ -194,5 +201,5 @@ class Server(ThreadingHTTPServer):
 
 if __name__=='__main__':
     with open('/runner/profiles.json') as file:
-        adapter=Adapter(json.load(file))
+        adapter=Adapter(json.load(file),slots=execution_slots(os.environ.get('CODE_LAB_EXECUTION_SLOTS','2')))
     Server(('0.0.0.0',2358),adapter).serve_forever()

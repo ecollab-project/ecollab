@@ -1,4 +1,5 @@
 """Known test programs only, against the actual cgroup-v2 sandbox in CI."""
+import concurrent.futures
 import base64
 import json
 import os
@@ -23,8 +24,8 @@ subprocess.run(['php','scripts/check-code-lab-runner.php'],env=env,check=True,ti
 subprocess.run(['php','scripts/test-code-lab-languages.php'],env=env,check=True,timeout=600)
 
 
-def execute(source,stdin=''):
-    body={'language_id':10003,'source_code':base64.b64encode(source.encode()).decode(),'stdin':base64.b64encode(stdin.encode()).decode(),'enable_network':False}
+def execute(source,stdin='',language_id=10003):
+    body={'language_id':language_id,'source_code':base64.b64encode(source.encode()).decode(),'stdin':base64.b64encode(stdin.encode()).decode(),'enable_network':False}
     request=urllib.request.Request(address+'/submissions?base64_encoded=true&wait=false',data=json.dumps(body).encode(),headers=headers)
     with urllib.request.urlopen(request)as response:token=json.load(response)['token']
     deadline=time.monotonic()+50
@@ -47,3 +48,29 @@ assert result['status']['id']==11,'Runtime/syntax error not reported'
 result=execute('import os;print("PRIVATE_FILE" if os.path.exists("/runner/profiles.json") else "ISOLATED")')
 assert result['status']['id']==3 and base64.b64decode(result['stdout']).strip()==b'ISOLATED','Adapter credentials visible inside sandbox'
 print('PASS: five real language compilers/runtimes, stdin, timeout, blocked networking, output limits and filesystem isolation')
+
+# Three submissions: at most two active; overlapping jobs cannot share a working file.
+def parallel_program(index):
+    source='import time,json,pathlib\np=pathlib.Path("same-name.txt");p.write_text("slot-'+str(index)+'")\nstart=time.monotonic();time.sleep(1.5)\nprint(json.dumps({"start":start,"end":time.monotonic(),"value":p.read_text()}))'
+    result=execute(source)
+    assert result['status']['id']==3,'Concurrent real sandbox execution failed'
+    value=json.loads(base64.b64decode(result['stdout']))
+    assert value['value']=='slot-'+str(index),'Concurrent sandboxes shared a working file'
+    return value
+with concurrent.futures.ThreadPoolExecutor(max_workers=3)as pool:
+    intervals=list(pool.map(parallel_program,range(3)))
+events=sorted([(r['start'],1)for r in intervals]+[(r['end'],-1)for r in intervals])
+active=0;peak=0
+for _,delta in events:active+=delta;peak=max(peak,active)
+assert peak==2,'Expected exactly two overlapping isolated programs, never three'
+print('PASS: actual two-slot sandbox overlap, bounded concurrency, independent working files')
+
+def java_program(index):
+    source='public class Main { public static void main(String[] args) throws Exception { java.nio.file.Path p=java.nio.file.Path.of("same-java-file.txt"); java.nio.file.Files.writeString(p,"java-'+str(index)+'"); Thread.sleep(1000); System.out.println(java.nio.file.Files.readString(p)); } }'
+    result=execute(source,language_id=10004)
+    assert result['status']['id']==3 and base64.b64decode(result['stdout']).strip()==('java-'+str(index)).encode(),'Concurrent Java memory/process isolation failed'
+with concurrent.futures.ThreadPoolExecutor(max_workers=2)as pool:list(pool.map(java_program,range(2)))
+print('PASS: concurrent Java compilation/execution under the unchanged shared memory/process limits')
+
+subprocess.run(['php','tests/code-lab-worker-pool.php'],env=dict(env,CODE_LAB_POOL_HTTP_TEST='1'),check=True,timeout=30)
+print('PASS: supervisor SIGTERM preserves both real in-flight compiler HTTP results')

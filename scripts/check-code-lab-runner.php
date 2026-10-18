@@ -3,6 +3,16 @@ declare(strict_types=1);
 if(PHP_SAPI!=='cli')exit(1);
 require dirname(__DIR__).'/config.php';require ROOT_PATH.'/services/CodeLabRunner.php';
 try {
+ if(in_array('--workers',$argv,true)){
+  require_once ROOT_PATH.'/database/config/db.php';require_once ROOT_PATH.'/services/CodeLabWorkerPool.php';
+  $size=CodeLabWorkerPool::size(getenv('CODE_LAB_EXECUTION_SLOTS')?:'2');$db=Database::getInstance();
+  for($attempt=0;$attempt<30;$attempt++){
+   $slots=[];for($slot=1;$slot<=$size;$slot++){$q=$db->prepare('SELECT IS_USED_LOCK(?)');$q->execute([CodeLabWorkerPool::slotName($db,$slot)]);$slots[$slot]=$q->fetchColumn()!==null;}
+   if(!in_array(false,$slots,true)){echo json_encode(['worker_slots'=>$slots])."\n";exit;}
+   usleep(100000);
+  }
+  throw new RuntimeException('Worker slots did not become ready.');
+ }
  if(in_array('--queue-idle',$argv,true)){
   require_once ROOT_PATH.'/database/config/db.php';
   $counts=['queued'=>0,'running'=>0];

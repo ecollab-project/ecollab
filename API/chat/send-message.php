@@ -39,6 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 AuthMiddleware::verifyCsrf();
+// Authentication and CSRF are complete; release this account’s session lock before I/O.
+session_write_close();
 
 try {
     $body = json_decode(file_get_contents('php://input'), true) ?? $_POST;

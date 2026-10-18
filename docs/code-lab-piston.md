@@ -41,7 +41,7 @@ Hard-refresh Code Lab, open Playground, choose Python, enter `print(42)` and Run
 
 Piston uses isolated namespaces, unprivileged users and cgroup v2 for submitted programs. It requires a privileged service container; that is not the same boundary as a separate VM. A dedicated execution host remains the stronger deployment for hostile or public workloads. This local configuration caps Piston at 1 CPU, 1.5 GiB memory and 256 processes, and the adapter at 0.25 CPU / 128 MiB. These limits reduce contention on the existing 2-vCPU / 8-GB VPS but do not establish a student capacity figure.
 
-Each program has no outgoing network access, 2s CPU / 8s wall execution time and 256 MiB memory; compilation gets 10s CPU / 30s wall and 512 MiB. One execution runs at a time. Output is capped at 16 KiB per stream and results are base64-encoded to the existing app. Piston appends a final newline to stdin if absent; author test inputs accordingly. Java uses `public class Main`.
+Each program has no outgoing network access, 2s CPU / 8s wall execution time and 256 MiB memory; compilation gets 10s CPU / 30s wall and 512 MiB. Up to two executions run at a time in the current bounded pool (one-slot rollback is supported). The 1-CPU / 1.5-GiB container quota is shared, not multiplied per slot. Output is capped at 16 KiB per stream and results are base64-encoded to the existing app. Piston appends a final newline to stdin if absent; author test inputs accordingly. Java uses `public class Main`.
 
 No application directory, `.env`, Docker socket or adapter credentials are mounted into Piston. The adapter holds a separate private token, owns the runtime mapping, and rejects callback URLs, arbitrary file bundles and legacy runtime IDs. It never executes source locally. Piston provides language execution; eCollab continues to enforce membership, private results, immutable submission snapshots, deadlines, quotas and hidden-check privacy.
 
@@ -133,3 +133,12 @@ establish a new capacity or add CPU, sandbox concurrency or PHP processes. If
 runner time dominates, investigate the sandbox/CPU measurements before changing
 backend frameworks or worker limits. The idle check remains a preflight, not a
 lock against new submissions; do not restart during an active assessment.
+
+
+## Bounded two-slot execution pool
+
+See [capacity audit](code-lab-capacity-audit.md) for tested blockers, remaining
+limits, deployment, rollback and the required repeat measurements. The current
+installer defaults to two PHP processes, two adapter workers and two Piston job
+slots under the original aggregate resource quotas. Earlier single-worker
+sections above describe the preceding changes, not the current pool size.
