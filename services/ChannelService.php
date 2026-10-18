@@ -215,7 +215,7 @@ class ChannelService
     /**
      * Get server members with an explicit online flag.
      */
-    public function getOnlineMembers(int $serverId, int $viewerId = 0): array
+    public function getOnlineMembers(int $serverId, int $viewerId = 0, ?int $limit = null): array
     {
         $stmt = $this->db->prepare("
             SELECT u.id, u.username, u.full_name,
@@ -235,8 +235,8 @@ class ChannelService
             WHERE u.deleted_at IS NULL
               AND u.role NOT IN ('admin','super_admin')
               AND u.status NOT IN ('banned','suspended','deactivated')
-            ORDER BY is_online DESC, sm.server_role ASC, u.full_name ASC
-        ");
+            ORDER BY is_online DESC, sm.server_role ASC, u.full_name ASC, u.id ASC
+        " . ($limit === null ? '' : ' LIMIT ' . max(1, min(100, $limit))));
         $stmt->execute([
             ':sid' => $serverId,
             ':viewer' => $viewerId,
@@ -244,6 +244,18 @@ class ChannelService
             ':base_url2' => (string)BASE_URL,
         ]);
         return $stmt->fetchAll();
+    }
+
+    /** Count the same visible roster without constructing avatar/profile payloads. */
+    public function countVisibleMembers(int $serverId): int
+    {
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM server_members sm
+            JOIN users u ON u.id=sm.user_id
+            WHERE sm.server_id=:sid AND u.deleted_at IS NULL
+              AND u.role NOT IN ('admin','super_admin')
+              AND u.status NOT IN ('banned','suspended','deactivated')");
+        $stmt->execute([':sid' => $serverId]);
+        return (int)$stmt->fetchColumn();
     }
 
     /**

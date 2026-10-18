@@ -22,6 +22,11 @@ try {
         exit;
     }
 
+    // Sidebar is bounded; explicit directory requests retain the full roster contract.
+    $memberMode = $_GET['members'] ?? 'sidebar';
+    if (!is_string($memberMode) || !in_array($memberMode, ['sidebar', 'all', 'none'], true)) {
+        throw new InvalidArgumentException('Invalid member mode', 400);
+    }
     $db = Database::getInstance();
 
     $service = new ChannelService();
@@ -52,8 +57,13 @@ try {
         $hasAccess = $isSysAdmin || (bool)$accStmt->fetchColumn() || $canManage;
     }
 
-    $members = $hasAccess ? $service->getOnlineMembers((int)$channel['server_id'], (int)$user['id']) : [];
-    if ($hasAccess) {
+    $members = $hasAccess && $memberMode !== 'none'
+        ? $service->getOnlineMembers((int)$channel['server_id'], (int)$user['id'], $memberMode === 'all' ? null : 20)
+        : [];
+    $memberTotal = $hasAccess && $memberMode !== 'none'
+        ? ($memberMode === 'all' ? count($members) : $service->countVisibleMembers((int)$channel['server_id'])) : 0;
+    // Opening the directory must not mark messages read.
+    if ($hasAccess && $memberMode !== 'all') {
         $service->markRead((int)$channelId, $user['id']);
     }
 
@@ -71,6 +81,8 @@ try {
         'success'        => true,
         'channel'        => $channel,
         'members'        => $members,
+        'member_total'   => $memberTotal,
+        'members_complete' => $memberMode === 'all' || ($memberMode === 'sidebar' && count($members) >= $memberTotal),
         'can_manage'     => $canManage,
         'has_access'     => $hasAccess,
         'request_status' => $requestStatus,
