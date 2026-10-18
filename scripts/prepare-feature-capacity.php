@@ -14,7 +14,6 @@ try{
     $target=$tool->prepare($fixture,$mode,(int)($argv[3]??10));
     $folder=dirname($path).'/'.$target['run_id'];if(!mkdir($folder,0700))throw new RuntimeException('Cannot create private kit folder.');
     foreach(glob(ROOT_PATH.'/tools/feature-capacity/*')as$file)if(is_file($file))copy($file,$folder.'/'.basename($file));
-    copy(ROOT_PATH.'/tools/load-tests/plan.js',$folder.'/plan.js');
     $targetJson=json_encode($target,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);
     $accountJson=json_encode($fixture['users'],JSON_PRETTY_PRINT|JSON_THROW_ON_ERROR);
     foreach([$folder.'/feature-target.json'=>$targetJson,$folder.'/accounts.json'=>$accountJson,dirname($path).'/feature-target.json'=>$targetJson,dirname($path).'/feature-accounts.json'=>$accountJson]as$file=>$json){
