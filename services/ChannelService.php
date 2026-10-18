@@ -18,18 +18,7 @@ class ChannelService
      */
     public function getChannelsForUser(int $serverId, int $userId): array
     {
-        try {
-            $this->db->exec("
-                CREATE TABLE IF NOT EXISTS channel_seen (
-                    channel_id  INT UNSIGNED    NOT NULL,
-                    user_id     BIGINT UNSIGNED NOT NULL,
-                    first_seen_at DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    PRIMARY KEY (channel_id, user_id)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-            ");
-        } catch (\Throwable $e) {
-            // Non-fatal — will just show all channels without new-badge
-        }
+        // Migration 010 owns channel_seen; channel-list reads must not execute schema DDL.
 
         $roleStmt = $this->db->prepare("SELECT role FROM users WHERE id = :uid LIMIT 1");
         $roleStmt->execute([':uid' => $userId]);

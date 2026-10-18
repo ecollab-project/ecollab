@@ -42,6 +42,15 @@ try {
     ensure(!$db->inTransaction(),'Read-only transaction released');
     ensure($db->query('SELECT last_read_at FROM message_reads')->fetchColumn()==='2020-01-01 00:00:00','Read marker not changed');
     try{ChatReadProfiler::inspect($db,80,2);throw new LogicException('Private outsider accepted');}catch(RuntimeException $e){ensure($e->getMessage()==='Viewer is not authorized for this channel','Private access denied');}
+    // Exercise actual channel listing in a read-only transaction: request-time DDL would end it.
+    $db->exec('ALTER TABLE channels ADD slug VARCHAR(60), ADD description TEXT, ADD is_locked INT DEFAULT 0, ADD member_count INT DEFAULT 0');
+    require_once dirname(__DIR__).'/services/ChannelService.php';
+    $instance=new ReflectionProperty(Database::class,'instance');$instance->setValue(null,$db);
+    $db->exec('SET TRANSACTION READ ONLY');$db->beginTransaction();
+    $channels=(new ChannelService())->getChannelsForUser(19,1);
+    ensure(count($channels)===1 && (int)$channels[0]['unread_count']===65,'Authorized channel and legacy unread count retained');
+    ensure(count((new ChannelService())->getChannelsForUser(19,2))===0,'Private channel remains hidden');
+    ensure($db->inTransaction(),'Channel list must not execute implicit-commit schema DDL');$db->rollBack();
     $db->exec('UPDATE channels SET created_by=1000; DELETE FROM channel_members WHERE user_id=1');
     try{ChatReadProfiler::inspect($db,80,1);throw new LogicException('Revoked viewer accepted');}catch(RuntimeException $e){ensure($e->getMessage()==='Viewer is not authorized for this channel','Revocation checked');}
     echo "Read profiler: large roster, full message page, plans, privacy and access checks passed\n";
