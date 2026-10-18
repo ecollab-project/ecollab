@@ -3,6 +3,8 @@ on:
   push:
     branches: [ecollab-collabs]
     paths: ['tools/load-tests/**','services/LoadTestFixture.php','scripts/*load-test*','tests/load-test-*','.github/workflows/load-tests.yml']
+  pull_request:
+    paths: ['tools/load-tests/**','services/LoadTestFixture.php','scripts/*load-test*','tests/load-test-*','.github/workflows/load-tests.yml']
   workflow_dispatch:
 jobs:
   kit:
@@ -20,7 +22,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with: {php-version: '8.3', extensions: pdo_mysql}
       - run: npm ci --ignore-scripts --prefix tools/load-tests
-      - run: node tests/load-test-plan-regression.cjs && node tests/load-test-ratchet-contract.cjs
+      - run: node tests/load-test-plan-regression.cjs && node tests/load-test-ratchet-contract.cjs && node tests/load-test-diagnostics.cjs
       - run: |
           curl -fsSL https://github.com/grafana/k6/releases/download/v2.3.0/k6-v2.3.0-linux-amd64.tar.gz -o /tmp/k6.tar.gz
           echo '39c3117b6af817592dcd0ce4242105c0a7af10948c2a425306f0be8f7a8a8ab1  /tmp/k6.tar.gz' | sha256sum -c -

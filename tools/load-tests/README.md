@@ -45,3 +45,12 @@ Passing applies only to this workload and dataset. The script does not run brows
 `accounts.json` and the ZIP contain generated passwords. Keep them private; do not commit them or use HTTP debug output. Delete your kit credentials after fixture cleanup. Run through the normal HTTPS URL so Nginx/TLS/session/database limits are included.
 
 Timer interruption warnings at scheduled ramp-down/final stop are k6 cancelling unfinished iterations. The runner excludes these planned socket closes from failure metrics; connection/protocol errors and premature closes during ramp-up/hold remain failures. Interrupted-iteration counts are still visible in k6 output.
+
+
+## Diagnostic reports (diagnostics-1)
+
+Reports include observed/planned duration and `full_schedule_elapsed`. A report written after an early abort is explicitly not a capacity pass. This flag checks elapsed schedule only; also require a successful process exit, the intended VU peak and no failed thresholds. Socket failures count events: an error followed by a close can count twice, and forced abort cleanup can emit additional close warnings.
+
+`endpoint_times` contains separate duration/waiting/receiving trends for each API (including asynchronous reads/writes). Waiting includes network and server queues; it is not a pure SQL timer. `data_received`/`data_sent` help identify transfer volume; no HTTP bodies or credentials are logged. Close diagnostics include VU, connection age, numeric close code, ready state and scenario progress. Unknown codes remain null. `connection_reuse_disabled` reflects k6 summary options when available, otherwise null; record your invocation too. Do not change connection reuse, thresholds, fixture or workload parameters between comparisons.
+
+To update an existing private Windows kit, back up `chat-capacity.js` and copy only the updated `tools/load-tests/chat-capacity.js` from the VPS into it. Keep its existing `target.json`, `accounts.json` and `plan.js`; no fixture recreation or credential transfer is needed. The metrics add observation overhead, so use the same runner revision on both sides of any new controlled comparison. HTTP tests do not measure browser rendering or AI inference.
