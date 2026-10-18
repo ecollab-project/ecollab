@@ -9,6 +9,8 @@ AuthMiddleware::startSession();
 $me = AuthMiddleware::requireAuth(true);
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') { http_response_code(405); echo json_encode(['error'=>'Method not allowed']); exit; }
 AuthMiddleware::verifyCsrf();
+// Authentication and CSRF are complete; release this account’s session lock before I/O.
+session_write_close();
 
 try {
     if (empty($_FILES['image']) || !is_array($_FILES['image'])) throw new RuntimeException('No image uploaded',400);

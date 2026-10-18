@@ -1,7 +1,7 @@
 # Code Lab capacity and blocking audit — 2026-10-18
 
 Scope: the authenticated Code Lab submission, durable queue, PHP worker, private
-adapter and compiler path. This is not a claim that every failure in eCollab,
+adapter and compiler path, plus session locking in chat/voice-token/upload routes. This is not a claim that every failure in eCollab,
 LiveKit, Jarred, the network or the VPS has been eliminated.
 
 ## Evidence and changes
@@ -23,6 +23,7 @@ not justify a PHP framework replacement as the next performance change.
 | Shutdown during grading | SIGTERM stops new claims and allows current work to finish. Systemd uses KillMode=mixed and a 540-second stop budget, then forcibly bounds a stuck process. |
 | Recreating runner with active jobs | Installer checks an empty queue, stops claims, rechecks, then recreates services. New API submissions remain durable/queued. Previously active worker is restarted on installer failure. This is not an atomic maintenance lock. |
 | Repeated SQL cleanup/preparation | Minute-based maintenance and prepared-statement reuse remain enabled. Membership checks remain fresh. |
+| Session locks in chat, voice-token and uploads | Five routes now close the authenticated session immediately after CSRF verification, before database/file work. Profile-avatar updates still retain their session write. This improves same-account request overlap; it is not a compiler-speed claim. |
 | PHP session locks across compilation | API closes the session before database actions. Compilers run in CLI processes, outside PHP-FPM. |
 | Database locks held during compilation | Claim is a short compare-and-set; result transaction starts after execution. Grading notifications run after commit. |
 | Indefinite private HTTP calls | Existing connect/request, adapter execution and result-wait deadlines remain bounded. An infrastructure failure remains an error, never a student zero. |
