@@ -1,0 +1,40 @@
+name: Feature capacity runners
+on:
+  pull_request:
+    paths: ['tools/feature-capacity/**','services/FeatureCapacityFixture.php','services/LoadTestFixture.php','scripts/*feature-capacity*','tests/feature-capacity-*','.github/workflows/feature-capacity.yml']
+  push:
+    branches: [ecollab-collabs]
+    paths: ['tools/feature-capacity/**','services/FeatureCapacityFixture.php','services/LoadTestFixture.php','scripts/*feature-capacity*','tests/feature-capacity-*','.github/workflows/feature-capacity.yml']
+permissions:
+  contents: read
+jobs:
+  runners:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env: {MYSQL_ROOT_PASSWORD: root, MYSQL_DATABASE: load_fixture_test}
+        ports: ['3306:3306']
+        options: --health-cmd="mysqladmin ping -proot" --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - uses: shivammathur/setup-php@v2
+        with: {php-version: '8.3', extensions: 'pdo_mysql, curl'}
+      - run: npm ci --ignore-scripts --prefix tools/feature-capacity
+      - run: npx --prefix tools/feature-capacity playwright install --with-deps chromium
+      - run: node tests/feature-capacity-regression.mjs && python3 tests/feature-capacity-programs.py
+      - run: php -l services/FeatureCapacityFixture.php && php -l scripts/prepare-feature-capacity.php && php tests/feature-capacity-fixture.php
+        env: {TEST_LOAD_DSN: 'mysql:host=127.0.0.1;dbname=load_fixture_test', TEST_LOAD_USER: root, TEST_LOAD_PASSWORD: root}
+      - run: |
+          curl -fsSL https://github.com/grafana/k6/releases/download/v2.3.0/k6-v2.3.0-linux-amd64.tar.gz -o /tmp/k6.tar.gz
+          echo '39c3117b6af817592dcd0ce4242105c0a7af10948c2a425306f0be8f7a8a8ab1  /tmp/k6.tar.gz' | sha256sum -c -
+          tar -xzf /tmp/k6.tar.gz -C /tmp
+          K6_BIN=/tmp/k6-v2.3.0-linux-amd64/k6 node tests/feature-capacity-mock.cjs
+      - run: |
+          docker run -d --network host --name capacity-livekit livekit/livekit-server:v1.13.7 --dev --bind 127.0.0.1 --node-ip 127.0.0.1
+          for attempt in {1..30}; do curl -fsS http://127.0.0.1:7880 && break; sleep 1; done
+          node tests/feature-capacity-media.mjs
+      - if: failure()
+        run: docker logs capacity-livekit 2>&1 | tail -80

@@ -47,6 +47,15 @@ final class LoadTestFixture
             $outsiders=$this->db->prepare("SELECT COUNT(*) FROM server_members WHERE server_id=? AND user_id NOT IN ($in)");$outsiders->execute([(int)$data['server_id'],...$ids]);if((int)$outsiders->fetchColumn()>0)throw new RuntimeException('A real member joined the fixture; review before cleanup');
             $channels=$this->db->prepare('SELECT id,created_by FROM channels WHERE server_id=?');$channels->execute([(int)$data['server_id']]);$channelRows=$channels->fetchAll(PDO::FETCH_ASSOC);
             if(count($channelRows)!==1||(int)$channelRows[0]['id']!==(int)$data['channel_id']||!in_array((int)$channelRows[0]['created_by'],$ids,true))throw new RuntimeException('Fixture channels changed; review before cleanup');
+            // Code Lab tables have no cascading server foreign keys. Remove auxiliary
+            // capacity fixtures first, so cleanup cannot leave jobs/tasks orphaned.
+            foreach(['code_lab_tasks','code_lab_jobs'] as $table){
+                $exists=$this->db->prepare('SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name=?');$exists->execute([$table]);
+                if((int)$exists->fetchColumn()){
+                    $lab=$this->db->prepare('SELECT COUNT(*) FROM '.$table.' WHERE server_id=?');$lab->execute([(int)$data['server_id']]);
+                    if((int)$lab->fetchColumn())throw new RuntimeException('Code Lab data remains; clean feature-capacity targets before the base fixture.');
+                }
+            }
             $channelIds=array_map(fn($c)=>(int)$c['id'],$channelRows);
             foreach($channelIds as $cid){$foreign=$this->db->prepare("SELECT COUNT(*) FROM messages WHERE channel_id=? AND sender_id NOT IN ($in)");$foreign->execute([$cid,...$ids]);if((int)$foreign->fetchColumn()>0)throw new RuntimeException('A real user posted in the fixture; review before cleanup');}
             foreach($channelIds as $cid){
