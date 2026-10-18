@@ -9,7 +9,7 @@ services:
     mem_limit: 1536m
     pids_limit: 256
     environment:
-      PISTON_MAX_CONCURRENT_JOBS: "1"
+      PISTON_MAX_CONCURRENT_JOBS: "${CODE_LAB_EXECUTION_SLOTS:-2}"
       PISTON_OUTPUT_MAX_SIZE: "16384"
       PISTON_MAX_PROCESS_COUNT: "64"
       PISTON_COMPILE_TIMEOUT: "30000"
@@ -35,6 +35,8 @@ services:
     security_opt: [no-new-privileges:true]
     mem_limit: 128m
     cpus: 0.25
+    environment:
+      CODE_LAB_EXECUTION_SLOTS: "${CODE_LAB_EXECUTION_SLOTS:-2}"
     pids_limit: 32
     ports: ["127.0.0.1:2358:2358"]
     volumes:

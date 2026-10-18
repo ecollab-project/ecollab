@@ -8,6 +8,9 @@ project_path="$(cd "$(dirname "$0")/.." && pwd)"
 command -v python3 >/dev/null
 docker compose version >/dev/null
 docker info >/dev/null
+export CODE_LAB_EXECUTION_SLOTS="${CODE_LAB_EXECUTION_SLOTS:-2}"
+[[ "$CODE_LAB_EXECUTION_SLOTS" == 1 || "$CODE_LAB_EXECUTION_SLOTS" == 2 ]] || { echo 'Use one or two execution slots.' >&2; exit 1; }
+php -r 'exit(function_exists("pcntl_fork") && function_exists("posix_kill") ? 0 : 1);' || { echo 'PHP CLI pcntl and posix are required.' >&2; exit 1; }
 export CODE_LAB_RUNNER_STATE=/var/lib/ecollab-code-lab
 umask 077
 mkdir -p "$CODE_LAB_RUNNER_STATE"
@@ -16,6 +19,14 @@ compose=(docker compose -f "$project_path/deploy/code-lab/piston/compose.yml")
 # Bind mount must be a regular file before the adapter starts.
 if [[ ! -e "$CODE_LAB_RUNNER_STATE/profiles.json" ]]; then printf '{}\n' > "$CODE_LAB_RUNNER_STATE/profiles.json"; fi
 [[ -f "$CODE_LAB_RUNNER_STATE/profiles.json" ]] || { echo 'Invalid profile file; preserved existing state.' >&2; exit 1; }
+# Stop new worker claims before recreating any in-memory runner service.
+php "$project_path/scripts/check-code-lab-runner.php" --queue-idle
+worker_was_active=0
+if systemctl is-active --quiet ecollab-code-lab; then worker_was_active=1; fi
+restore_worker() { if [[ "$worker_was_active" == 1 ]]; then systemctl start ecollab-code-lab || true; fi; }
+trap restore_worker EXIT
+systemctl stop ecollab-code-lab 2>/dev/null || [[ "$worker_was_active" == 0 ]]
+php "$project_path/scripts/check-code-lab-runner.php" --queue-idle
 "${compose[@]}" up -d piston
 # Freeze the installed versions. A repeat deploy never silently changes old task runtimes.
 if ! python3 -c 'import json,sys;c=json.load(open(sys.argv[1]));sys.exit(0 if len(c.get("profiles",[]))==5 and len(c.get("token",""))>=32 else 1)' "$CODE_LAB_RUNNER_STATE/profiles.json"; then
@@ -60,8 +71,14 @@ try:
 finally:
  if os.path.exists(temp):os.unlink(temp)
 PY
+if [[ -f "$CODE_LAB_RUNNER_STATE/worker.env" ]]; then cp -p "$CODE_LAB_RUNNER_STATE/worker.env" "$CODE_LAB_RUNNER_STATE/worker-env-before-pool-$(date -u +%Y%m%dT%H%M%S%N)"; fi
+printf 'CODE_LAB_EXECUTION_SLOTS=%s\n' "$CODE_LAB_EXECUTION_SLOTS" > "$CODE_LAB_RUNNER_STATE/worker.env.new"
+mv "$CODE_LAB_RUNNER_STATE/worker.env.new" "$CODE_LAB_RUNNER_STATE/worker.env"
 install -m 644 "$project_path/deploy/code-lab/ecollab-code-lab.service" /etc/systemd/system/ecollab-code-lab.service
 systemctl daemon-reload
 systemctl enable ecollab-code-lab
 systemctl restart ecollab-code-lab
+php "$project_path/scripts/check-code-lab-runner.php" --workers
+worker_was_active=0
+trap - EXIT
 printf '%s\n' 'Piston runtimes passed smoke checks. Code Lab worker started. No cgroup/GRUB changes or reboot were needed.' 'The API is bound to 127.0.0.1:2358 only. Private configuration/backup: /var/lib/ecollab-code-lab.'

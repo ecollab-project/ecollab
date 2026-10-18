@@ -67,6 +67,26 @@ class BridgeTests(unittest.TestCase):
         self.assertLess(time.monotonic()-before,.5)
         self.assertLessEqual(result['status']['id'],2)
         release.set()
+    def test_two_slots_progress_independently_without_exceeding_bound(self):
+        release=threading.Event();two_started=threading.Event();active=0;peak=0;guard=threading.Lock()
+        def request(path,body):
+            nonlocal active,peak
+            with guard:
+                active+=1;peak=max(peak,active)
+                if active==2:two_started.set()
+            release.wait(2)
+            with guard:active-=1
+            return {'run':{'code':0,'stdout':body['files'][0]['content']}}
+        self.adapter.request=request
+        tokens=[self.submit(source_code=base64.b64encode(('source-'+str(i)).encode()).decode())for i in range(3)]
+        self.assertTrue(two_started.wait(1),'A slow first job must not block the second slot')
+        self.assertEqual(self.adapter.get(tokens[2])['status']['id'],1)
+        release.set();self.adapter.pending.join()
+        self.assertEqual(peak,2)
+        for i,token in enumerate(tokens):self.assertEqual(base64.b64decode(self.adapter.get(token)['stdout']),('source-'+str(i)).encode())
+        for value in ['0','3',-1,True]:
+            with self.assertRaises(ValueError):bridge.execution_slots(value)
+
     def test_reject_legacy_ids_and_extra_execution_features(self):
         for change in [{'language_id':71},{'enable_network':True},{'callback_url':'https://example.invalid'},{'additional_files':'zip'},{'source_code':'invalid!'}]:
             with self.assertRaises(ValueError):self.submit(**change)

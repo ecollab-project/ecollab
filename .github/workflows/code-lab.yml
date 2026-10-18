@@ -23,6 +23,8 @@ jobs:
           php tests/code-lab-regression.php
           php -l services/CodeLabRunner.php
           php -l services/CodeLabExecutionService.php
+          php -l services/CodeLabWorkerPool.php
+          php tests/code-lab-worker-pool.php
           php -l services/CodeLabWorkerMetrics.php
           php -l scripts/code-lab-worker.php
           php -l scripts/check-code-lab-runner.php
@@ -37,3 +39,18 @@ jobs:
       - run: node tests/code-lab-integrity-regression.cjs
       - run: npx playwright install --with-deps chromium
       - run: node tests/code-lab-integrity-browser.cjs
+
+  concurrent-claims:
+    runs-on: ubuntu-24.04
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env: {MARIADB_ROOT_PASSWORD: test-password, MARIADB_DATABASE: code_lab_pool_test}
+        ports: ['3306:3306']
+        options: --health-cmd="healthcheck.sh --connect --innodb_initialized" --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: {php-version: '8.3', extensions: pdo_mysql}
+      - run: php tests/code-lab-pool-mysql.php
+        env: {CODE_LAB_POOL_TEST_DSN: 'mysql:host=127.0.0.1;port=3306;dbname=code_lab_pool_test'}
