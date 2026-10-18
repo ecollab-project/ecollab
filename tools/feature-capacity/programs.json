@@ -1,0 +1,6 @@
+{
+  "c": "#include <stdio.h>\n#include <stdlib.h>\nint main(void){int n;if(scanf(\"%d\",&n)!=1||n<2||n>100000)return 1;char *a=calloc(n+1,1);if(!a)return 2;int count=0;for(int i=2;i<=n;i++){if(!a[i]){count++;if(i<=n/i)for(int j=i*i;j<=n;j+=i)a[j]=1;}}printf(\"%d\\n\",count);free(a);return 0;}\n",
+  "cpp": "#include <iostream>\n#include <vector>\nint main(){int n;if(!(std::cin>>n)||n<2||n>100000)return 1;std::vector<bool>a(n+1);int count=0;for(int i=2;i<=n;i++)if(!a[i]){count++;if(i<=n/i)for(int j=i*i;j<=n;j+=i)a[j]=true;}std::cout<<count<<'\\n';}\n",
+  "python": "import sys\nn=int(sys.stdin.readline())\nassert 2<=n<=100000\na=bytearray(n+1)\ncount=0\nfor i in range(2,n+1):\n    if not a[i]:\n        count+=1\n        for j in range(i*i,n+1,i):\n            a[j]=1\nprint(count)\n",
+  "java": "import java.util.Scanner;\npublic class Main {public static void main(String[] args){int n=new Scanner(System.in).nextInt();if(n<2||n>100000)throw new IllegalArgumentException();boolean[] a=new boolean[n+1];int count=0;for(int i=2;i<=n;i++)if(!a[i]){count++;if(i<=n/i)for(int j=i*i;j<=n;j+=i)a[j]=true;}System.out.println(count);}}\n"
+}
