@@ -71,3 +71,6 @@ def java_program(index):
     assert result['status']['id']==3 and base64.b64decode(result['stdout']).strip()==('java-'+str(index)).encode(),'Concurrent Java memory/process isolation failed'
 with concurrent.futures.ThreadPoolExecutor(max_workers=2)as pool:list(pool.map(java_program,range(2)))
 print('PASS: concurrent Java compilation/execution under the unchanged shared memory/process limits')
+
+subprocess.run(['php','tests/code-lab-worker-pool.php'],env=dict(env,CODE_LAB_POOL_HTTP_TEST='1'),check=True,timeout=30)
+print('PASS: supervisor SIGTERM preserves both real in-flight compiler HTTP results')
