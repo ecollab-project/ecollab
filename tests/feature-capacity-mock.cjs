@@ -28,8 +28,7 @@ const root=path.resolve(__dirname,'..'),fixture='k6-20261018-000000-1234abcd';
     await new Promise(r=>server.listen(0,'127.0.0.1',r));
     const dir=fs.mkdtempSync(path.join(os.tmpdir(),'ecollab-feature-test-'));
     try{
-      for(const f of['api-capacity.js','programs.json'])fs.copyFileSync(path.join(root,'tools/feature-capacity',f),path.join(dir,f));
-      fs.copyFileSync(path.join(root,'tools/load-tests/plan.js'),path.join(dir,'plan.js'));
+      for(const f of['api-capacity.js','programs.json','plan.js'])fs.copyFileSync(path.join(root,'tools/feature-capacity',f),path.join(dir,f));
       fs.writeFileSync(path.join(dir,'accounts.json'),JSON.stringify([1,2].map(id=>({id,email:'k6_1234abcd_'+id+'@example.invalid',password:'x'.repeat(48)}))));
       fs.writeFileSync(path.join(dir,'feature-target.json'),JSON.stringify({run_id:'capacity-20261018-000000-1234abcd',fixture_id:fixture,mode,server_id:19,base_url:'http://127.0.0.1:'+server.address().port,task_ids:{'2:c':1,'2:cpp':2,'2:python':3,'2:java':4}}));
       let output='';const code=await new Promise((resolve,reject)=>{const child=spawn(process.env.K6_BIN||'k6',['run','-e','VUS=2','-e','RAMP_SECONDS=5','-e','POLL_SECONDS=1','-e','DEADLINE_SECONDS=10','-e','REPORT_FILE=result.json','api-capacity.js'],{cwd:dir});child.stdout.on('data',d=>output+=d);child.stderr.on('data',d=>output+=d);child.on('error',reject);child.on('close',resolve);});

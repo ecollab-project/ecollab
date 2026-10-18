@@ -69,6 +69,10 @@ npm ci
 npx playwright install chromium
 ```
 
+The public runner folder includes `plan.js`; no helper from the chat kit is needed.
+If you downloaded the earlier incomplete folder, copy `..\kit\plan.js` into it
+or download the fixed `tools/feature-capacity/plan.js`.
+
 k6 is already installed in the existing chat kit. Media uses Node/Playwright,
 not k6. Do not upload a ZIP/kit containing accounts or room tokens to GitHub.
 
