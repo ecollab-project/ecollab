@@ -2,7 +2,7 @@
 const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),http=require('node:http'),assert=require('node:assert/strict'),{spawn}=require('node:child_process');
 const root=path.resolve(__dirname,'..'),fixture='k6-20261018-000000-1234abcd';
 (async()=>{
-  for(const [mode,fault]of[['ai',''],['ai','busy'],['ai','wrong'],['code-run',''],['code-run','wrong'],['code-grade',''],['code-grade','wrong'],['code-run','queued']]){
+  for(const [mode,fault]of[['ai',''],['ai','busy'],['ai','wrong'],['code-run',''],['code-run','wrong'],['code-grade',''],['code-grade','wrong'],['code-run','queued'],['code-run','late']]){
     let deleted=0;const seen=new Set(),jobs=new Map();
     const server=http.createServer((req,res)=>{let raw='';req.on('data',chunk=>raw+=chunk);req.on('end',()=>{
       const body=raw?JSON.parse(raw):{},uid=Number((req.headers.cookie||'').match(/capacity=(\d+)/)?.[1]||0);
@@ -19,7 +19,9 @@ const root=path.resolve(__dirname,'..'),fixture='k6-20261018-000000-1234abcd';
         const polls=(jobs.get(uid)||0)+1;jobs.set(uid,polls);
         const state=fault==='queued'?'queued':polls===1?'queued':polls===2?'running':'done';
         const result=mode==='code-grade'?{score:fault==='wrong'?50:100,total:2,passed:fault==='wrong'?1:2}:{status:'Finished',stdout:fault==='wrong'?'999':'168\n'};
-        return json({success:true,data:{id:uid,state,result:state==='done'?result:null}});
+        const answer=()=>json({success:true,data:{id:uid,state,result:state==='done'?result:null}});
+        if(fault==='late'&&state==='done')return setTimeout(answer,12000);
+        return answer();
       }
       json({error:'not found'},404);
     });});

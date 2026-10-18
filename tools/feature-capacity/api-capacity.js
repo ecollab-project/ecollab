@@ -56,6 +56,7 @@ export default function(config){
         r=request('/API/ai/message.php','ai-message',csrf,{session_id:sessionId,prompt});
         if(!r.ok||typeof r.data.message?.content!=='string'||!new RegExp('\\b'+fact+'\\b').test(r.data.message.content)){reject(r.status);return;}
       }
+      if(Date.now()-started>deadline*1000){reject('deadline');return;}
       success=true;valid=true;
     }else{
       let r;
@@ -72,6 +73,7 @@ export default function(config){
         if(!firstRunning&&job.state!=='queued'){queueWait.add(Date.now()-started);firstRunning=true;}
         if(job.state==='failed'){reject('worker');return;}
         if(job.state==='done'){
+          if(Date.now()-started>deadline*1000){reject('deadline');return;}
           success=true;valid=target.mode==='code-run'?job.result?.status==='Finished'&&String(job.result.stdout||'').trim()==='168':Number(job.result?.score)===100&&Number(job.result?.total)===2&&Number(job.result?.passed)===2;
           break;
         }
