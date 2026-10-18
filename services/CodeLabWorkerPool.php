@@ -39,7 +39,7 @@ final class CodeLabWorkerPool
     public static function slotName(PDO $db,int $slot):string
     {
         self::size($slot);
-        return 'ec-cl-slot-'.hash('sha224',(string)$db->query('SELECT DATABASE()')->fetchColumn().':'.$slot);
+        return 'ec-cl-'.hash('sha224',(string)$db->query('SELECT DATABASE()')->fetchColumn().':'.$slot);
     }
     public static function acquireSlot(PDO $db,int $slot):string
     {
