@@ -65,9 +65,11 @@ final class CodeLabExecutionService
     public function result(int $sid,int $uid,int $id):array
     {
         (new CodeLabService($this->db,$this->clock))->member($sid,$uid);
-        $j=$this->q('SELECT id,kind,state,result_json FROM code_lab_jobs WHERE id=? AND server_id=? AND user_id=?',[$id,$sid,$uid])->fetch(PDO::FETCH_ASSOC);
+        $j=$this->q('SELECT id,kind,state,result_json,created_at FROM code_lab_jobs WHERE id=? AND server_id=? AND user_id=?',[$id,$sid,$uid])->fetch(PDO::FETCH_ASSOC);
         if(!$j)$this->fail('Execution not found.',404);
-        $j['result']=$j['result_json']===null?null:json_decode($j['result_json'],true);unset($j['result_json']);return $j;
+        // Advisory position within this server, never IDs or data from another tenant.
+        $j['queue_position']=$j['state']==='queued'?1+(int)$this->q("SELECT COUNT(*) FROM code_lab_jobs WHERE server_id=? AND state='queued' AND (created_at<? OR (created_at=? AND id<?))",[$sid,$j['created_at'],$j['created_at'],$id])->fetchColumn():null;
+        $j['result']=$j['result_json']===null?null:json_decode($j['result_json'],true);unset($j['result_json'],$j['created_at']);return $j;
     }
     public static function matches(string $actual,string $expected):bool{return rtrim(str_replace("\r\n","\n",$actual),"\n")===rtrim(str_replace("\r\n","\n",$expected),"\n");}
     public static function webCheck(string $source,string $selector,string $expected):bool
@@ -78,7 +80,27 @@ final class CodeLabExecutionService
         $dom=new DOMDocument();$old=libxml_use_internal_errors(true);
         try{$dom->loadHTML('<?xml encoding="UTF-8">'.$source,LIBXML_NONET|LIBXML_NOERROR|LIBXML_NOWARNING);$xp=new DOMXPath($dom);$expr=$selector[0]==='#'?"//*[@id='".substr($selector,1)."']":($selector[0]==='.'?"//*[contains(concat(' ',normalize-space(@class),' '),' ".substr($selector,1)." ')]":'//'.strtolower($selector));$nodes=$xp->query($expr);foreach($nodes as $node){if($expected===''||self::matches(trim($node->textContent),$expected))return true;}return false;}finally{libxml_clear_errors();libxml_use_internal_errors($old);}
     }
-    /** One CLI worker claim; compare-and-set prevents two workers processing a job. */
+    /** Short dispatcher transaction; no database lock spans compilation/grading. */
+    private function claim():?array
+    {
+        if($this->db->inTransaction())throw new LogicException('Dispatch requires its own transaction.');
+        $this->db->beginTransaction();
+        try{
+            $lock=$this->db->getAttribute(PDO::ATTR_DRIVER_NAME)==='sqlite'?'':' FOR UPDATE';
+            $cursor=$this->q('SELECT last_server_id FROM code_lab_dispatch_cursor WHERE id=1'.$lock)->fetchColumn();
+            if($cursor===false)throw new RuntimeException('Code Lab dispatcher migration is missing.');
+            // Locking reads avoid stale repeatable-read snapshots after waiting for the cursor.
+            $sid=$this->q("SELECT server_id FROM code_lab_jobs WHERE state='queued' AND server_id>? ORDER BY server_id LIMIT 1".$lock,[(int)$cursor])->fetchColumn();
+            if($sid===false)$sid=$this->q("SELECT server_id FROM code_lab_jobs WHERE state='queued' ORDER BY server_id LIMIT 1".$lock)->fetchColumn();
+            if($sid===false){$this->db->commit();return null;}
+            $job=$this->q("SELECT * FROM code_lab_jobs WHERE state='queued' AND server_id=? ORDER BY created_at,id LIMIT 1".$lock,[(int)$sid])->fetch(PDO::FETCH_ASSOC);
+            if(!$job)throw new RuntimeException('Queued job disappeared during dispatch.');
+            if($this->q("UPDATE code_lab_jobs SET state='running',started_at=? WHERE id=? AND state='queued'",[gmdate('Y-m-d H:i:s',($this->clock)()),$job['id']])->rowCount()!==1)throw new RuntimeException('Execution claim lost.');
+            $this->q('UPDATE code_lab_dispatch_cursor SET last_server_id=? WHERE id=1',[(int)$sid]);
+            $this->db->commit();return $job;
+        }catch(Throwable $e){if($this->db->inTransaction())$this->db->rollBack();throw $e;}
+    }
+    /** Two shared slots rotate between nonempty server queues; FIFO claim order per server. */
     public function workOne():bool
     {
         $this->lastTiming=null;$workStarted=hrtime(true);$runnerMs=0.;$finishedState='failed';
@@ -90,8 +112,7 @@ final class CodeLabExecutionService
         $this->q("DELETE FROM code_lab_jobs WHERE kind='run' AND state IN ('done','failed') AND created_at<?",[gmdate('Y-m-d H:i:s',($this->clock)()-86400)]);
             $this->maintenanceAt=$now;
         }
-        $j=$this->q("SELECT * FROM code_lab_jobs WHERE state='queued' ORDER BY id LIMIT 1")->fetch(PDO::FETCH_ASSOC);if(!$j)return false;
-        if($this->q("UPDATE code_lab_jobs SET state='running',started_at=? WHERE id=? AND state='queued'",[gmdate('Y-m-d H:i:s',($this->clock)()),$j['id']])->rowCount()!==1)return true;
+        $j=$this->claim();if(!$j)return false;
         try {
             (new CodeLabService($this->db,$this->clock))->member((int)$j['server_id'],(int)$j['user_id']);
             $execute=function(string $stdin)use($j,&$runnerMs):array{$started=hrtime(true);try{return $this->runner->execute((int)$j['runtime_id'],$j['source_code'],$stdin);}finally{$runnerMs+=(hrtime(true)-$started)/1e6;}};

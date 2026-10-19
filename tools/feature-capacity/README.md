@@ -13,11 +13,12 @@ The chat runner is unchanged.
 | `voice` | Non-silent Opus audio publishing and subscribing to every other participant in its room | Full 300s hold, >=99% continuous media; p95 packet loss <=2%, jitter <=30ms, RTT <=300ms |
 | `video` | Audio plus VP8 1280x720 at 30fps, max1.7Mbps per camera; all-to-all room subscriptions | Same media targets; every expected video stream >=15 decoded fps |
 | `screen` | Audio from everyone; one animated 1920x1080 share at 30fps, max6Mbps per room | Same targets; every expected share >=15 decoded fps |
+| `code-sustained` | Ten repeated compiler jobs per user, five-second think time, one outstanding job per account | >=99% completed AND correct; p95 per job including queue <30s; all configured iterations finish |
 | `code-run` | One synchronized compiler submission, four languages distributed across users | >=99% completed AND correct; p95 including queue wait <30s; deadline180s |
 | `code-grade` | Read/start own assignment, submit source, finish both automatic checks with score100 | >=99% completed AND correct; p95 including queue wait <60s; deadline180s |
 | `ai` | Two turns in each student's own Jarred session; recall a unique synthetic study label | >=99% completed AND recall-correct; p95 for BOTH turns <30s |
 
-API tests are synchronized bursts, not a sustained arrival-rate benchmark. Media
+The default API tests are synchronized bursts. `code-sustained` uses closed-loop repeated submissions with backpressure, not a fixed arrival-rate benchmark. Media
 uses a full peak hold. These are explicitly chosen starting SLOs, not measured
 network guarantees. Keep SLOs and profiles fixed across comparisons. A busy/429/
 503 AI response, accepted-but-unfinished compiler job, wrong answer or early stop
@@ -51,11 +52,13 @@ Default user quota is20 AI messages/hour. Two complete six-stage ladders at two
 turns exceed that quota: use fresh synthetic accounts or wait for the quota window,
 not a production quota bypass.
 
-One `ecollab-code-lab` worker handles jobs serially. A queue with300 accepted jobs
+Two shared `ecollab-code-lab` execution slots rotate between nonempty server queues, preserving FIFO claim order within each server. A queue with300 accepted jobs
 is not300 parallel executions. This runner waits for actual completion, includes
 queue time, tests C/C++/Python/Java, and verifies output/grades. Its sieve workloads
 are intentionally bounded; results do not establish capacity for arbitrary
 student programs or CPU/time-limit abuse.
+
+See [server queues and feature test commands](../../docs/feature-capacity-server-queues.md) for migration, sustained-load settings and step-by-step commands.
 
 ## Install the PC tools once
 
