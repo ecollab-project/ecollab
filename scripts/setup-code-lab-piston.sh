@@ -57,6 +57,7 @@ for attempt in range(30):
 else:raise SystemExit('Adapter did not become ready; application configuration unchanged.')
 subprocess.run(['php',str(project/'scripts/check-code-lab-runner.php'),'--languages'],env=env,check=True,timeout=30)
 subprocess.run(['php',str(project/'scripts/check-code-lab-runner.php')],env=env,check=True,timeout=240)
+subprocess.run(['php',str(project/'scripts/check-code-lab-runner.php'),'--grading'],env=env,check=True,timeout=240)
 PYSMOKE
 # Only these three Code Lab keys change. Preserve ownership/mode and all other .env entries.
 python3 - "$project_path/.env" "$CODE_LAB_RUNNER_STATE" <<'PY'
@@ -88,3 +89,4 @@ php "$project_path/scripts/check-code-lab-runner.php" --workers
 worker_was_active=0
 trap - EXIT
 printf '%s\n' 'Piston runtimes passed smoke checks. Code Lab worker started. No cgroup/GRUB changes or reboot were needed.' 'The API is bound to 127.0.0.1:2358 only. Private configuration/backup: /var/lib/ecollab-code-lab.'
+

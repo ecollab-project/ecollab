@@ -83,3 +83,35 @@ assert result['status']['id']==5,'Compiled Java runtime CPU limit was weakened'
 result=execute('public class Main { public static void main(String[] args) { System.out.println("LEGACY_OK"); } }',language_id=10004)
 assert result['status']['id']==3 and base64.b64decode(result['stdout']).strip()==b'LEGACY_OK','Frozen legacy Java mapping was changed'
 print('PASS: compiled Java phases, compiler diagnostics without run result, unchanged run CPU timeout and legacy Java compatibility')
+
+
+# Compile once, restore a fresh artifact/filesystem/process for every hidden case.
+def grade(source,inputs,language_id):
+    body={'language_id':language_id,'source_code':base64.b64encode(source.encode()).decode(),'stdin':'','test_inputs':[base64.b64encode(x.encode()).decode()for x in inputs],'enable_network':False}
+    request=urllib.request.Request(address+'/grade-submissions',data=json.dumps(body).encode(),headers=headers)
+    with urllib.request.urlopen(request)as response:token=json.load(response)['token']
+    deadline=time.monotonic()+135
+    while time.monotonic()<deadline:
+        with urllib.request.urlopen(urllib.request.Request(address+'/submissions/'+token+'?wait_ms=1000',headers=headers),timeout=12)as response:result=json.load(response)
+        if result['status']['id']>2:return result
+    raise RuntimeError('Batch grading did not finish')
+
+programs={
+ 10001:'#include <stdio.h>\nint main(){int n;scanf("%d",&n);printf("%d\\n",n+1);}',
+ 10002:'#include <iostream>\nint main(){int n;std::cin>>n;std::cout<<n+1<<std::endl;}',
+ 10003:'print(int(input())+1)',
+ 10006:'public class Main { public static void main(String[] a) { System.out.println(new java.util.Scanner(System.in).nextInt()+1); } }'
+}
+for language,source in programs.items():
+    result=grade(source,['41','5'],language)
+    assert result['status']['id']==3 and result['compile_count']==(0 if language==10003 else 1),'Compile-once protocol failed'
+    assert [base64.b64decode(row['stdout']).strip()for row in result['results']]==[b'42',b'6'],'Batch case ordering/stdin failed'
+    assert all(row['status']['id']==3 for row in result['results']),'Batch runtime failed'
+result=grade('import pathlib\np=pathlib.Path("case-file");print("DIRTY" if p.exists() else "FRESH");p.write_text(input())',['first-secret','second-secret'],10003)
+assert [base64.b64decode(row['stdout']).strip()for row in result['results']]==[b'FRESH',b'FRESH'],'Cases shared filesystem state'
+result=grade('n=int(input())\nif n==1:\n while True: pass\nprint(42)',['1','2'],10003)
+assert [row['status']['id']for row in result['results']]==[5,3],'Per-case CPU budget/timeout isolation failed'
+result=grade('public class Main { syntax error }',['a','b'],10006)
+assert result['compile_count']==1 and [row['status']['id']for row in result['results']]==[6,6],'Compiler errors must not execute cases'
+subprocess.run(['php','scripts/check-code-lab-runner.php','--grading'],env=env,check=True,timeout=240)
+print('PASS: real compile-once grading in four runtimes, pristine cases, independent CPU budgets, compilation failures and PHP batch client')
