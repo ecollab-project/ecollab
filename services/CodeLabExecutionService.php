@@ -89,11 +89,13 @@ final class CodeLabExecutionService
             $lock=$this->db->getAttribute(PDO::ATTR_DRIVER_NAME)==='sqlite'?'':' FOR UPDATE';
             $cursor=$this->q('SELECT last_server_id FROM code_lab_dispatch_cursor WHERE id=1'.$lock)->fetchColumn();
             if($cursor===false)throw new RuntimeException('Code Lab dispatcher migration is missing.');
-            // Locking reads avoid stale repeatable-read snapshots after waiting for the cursor.
-            $sid=$this->q("SELECT server_id FROM code_lab_jobs WHERE state='queued' AND server_id>? ORDER BY server_id LIMIT 1".$lock,[(int)$cursor])->fetchColumn();
-            if($sid===false)$sid=$this->q("SELECT server_id FROM code_lab_jobs WHERE state='queued' ORDER BY server_id LIMIT 1".$lock)->fetchColumn();
+            // The cursor serializes claimers. The first snapshot read occurs AFTER
+            // acquiring it, so it includes the previous dispatch commit. Do not
+            // range-lock the queue index: completions/enqueues also update it.
+            $sid=$this->q("SELECT server_id FROM code_lab_jobs WHERE state='queued' AND server_id>? ORDER BY server_id LIMIT 1",[(int)$cursor])->fetchColumn();
+            if($sid===false)$sid=$this->q("SELECT server_id FROM code_lab_jobs WHERE state='queued' ORDER BY server_id LIMIT 1")->fetchColumn();
             if($sid===false){$this->db->commit();return null;}
-            $job=$this->q("SELECT * FROM code_lab_jobs WHERE state='queued' AND server_id=? ORDER BY created_at,id LIMIT 1".$lock,[(int)$sid])->fetch(PDO::FETCH_ASSOC);
+            $job=$this->q("SELECT * FROM code_lab_jobs WHERE state='queued' AND server_id=? ORDER BY created_at,id LIMIT 1",[(int)$sid])->fetch(PDO::FETCH_ASSOC);
             if(!$job)throw new RuntimeException('Queued job disappeared during dispatch.');
             if($this->q("UPDATE code_lab_jobs SET state='running',started_at=? WHERE id=? AND state='queued'",[gmdate('Y-m-d H:i:s',($this->clock)()),$job['id']])->rowCount()!==1)throw new RuntimeException('Execution claim lost.');
             $this->q('UPDATE code_lab_dispatch_cursor SET last_server_id=? WHERE id=1',[(int)$sid]);

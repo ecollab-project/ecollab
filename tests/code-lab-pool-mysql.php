@@ -41,7 +41,7 @@ $processes=[];
 for($slot=1;$slot<=2;$slot++){$p=proc_open([PHP_BINARY,__FILE__,'worker',(string)$slot],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);$processes[]=[$p,$pipes];}
 foreach($processes as[$p,$pipes]){$out=stream_get_contents($pipes[1]);$err=stream_get_contents($pipes[2]);foreach($pipes as$pipe)fclose($pipe);if(proc_close($p)!==0)throw new RuntimeException('Concurrent fixture worker failed: '.$out.$err);}
 $counts=$db->query('SELECT state,COUNT(*) n FROM code_lab_jobs GROUP BY state')->fetchAll(PDO::FETCH_KEY_PAIR);
-if((int)($counts['done']??0)!==79||(int)($counts['failed']??0)!==1||(int)$db->query('SELECT COUNT(*) FROM pool_audit')->fetchColumn()!==80)throw new RuntimeException('Duplicate, lost or incorrectly graded work');
+if((int)($counts['done']??0)!==79||(int)($counts['failed']??0)!==1||(int)$db->query('SELECT COUNT(*) FROM pool_audit')->fetchColumn()!==80)throw new RuntimeException('Duplicate, lost or incorrectly graded work: '.json_encode($counts).'; runner calls='.$db->query('SELECT COUNT(*) FROM pool_audit')->fetchColumn());
 foreach($db->query("SELECT result_json FROM code_lab_jobs WHERE state='done'")as$row){if(json_decode($row['result_json'],true)['stdout']!=='42')throw new RuntimeException('Result mismatch');}
 echo "PASS: MariaDB concurrent claims exactly once, independent slot locks, 79 results, one infrastructure failure without a zero grade\n";
 
