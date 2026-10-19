@@ -17,9 +17,11 @@ from urllib.parse import urlsplit, parse_qs
 def piston_request(path, body=None, timeout=45):
     data=None if body is None else json.dumps(body).encode()
     req=urllib.request.Request(os.environ.get('PISTON_URL','http://piston:2000')+'/api/v2'+path,data=data,headers={'Content-Type':'application/json'})
+    # Ten bounded case outputs can expand under JSON control-character escaping.
+    limit=4194304 if path=='/ecollab-grade' else 1048576
     with urllib.request.urlopen(req,timeout=125 if path=='/ecollab-grade' else timeout) as response:
-        raw=response.read(1048577)
-    if len(raw)>1048576:
+        raw=response.read(limit+1)
+    if len(raw)>limit:
         raise ValueError('Oversize execution response')
     return json.loads(raw)
 
