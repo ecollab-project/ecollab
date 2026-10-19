@@ -115,3 +115,23 @@ result=grade('public class Main { syntax error }',['a','b'],10006)
 assert result['compile_count']==1 and [row['status']['id']for row in result['results']]==[6,6],'Compiler errors must not execute cases'
 subprocess.run(['php','scripts/check-code-lab-runner.php','--grading'],env=env,check=True,timeout=240)
 print('PASS: real compile-once grading in four runtimes, pristine cases, independent CPU budgets, compilation failures and PHP batch client')
+# A running Java case can overwrite its class, but the next case must still boot
+# from the pristine compiler snapshot rather than the previous case's directory.
+result=grade('public class Main { public static void main(String[] a) throws Exception { System.out.println("FRESH_CLASS"); java.nio.file.Files.write(java.nio.file.Path.of("Main.class"),new byte[]{0}); } }',['a','b'],10006)
+assert [row['status']['id']for row in result['results']]==[3,3],'Compiled class mutation leaked into the next case'
+assert [base64.b64decode(row['stdout']).strip()for row in result['results']]==[b'FRESH_CLASS',b'FRESH_CLASS']
+
+def parallel_grade(index):
+    source='import time,json,pathlib\np=pathlib.Path("same-batch-file");p.write_text("batch-'+str(index)+'")\nstart=time.monotonic();time.sleep(1.5)\nprint(json.dumps({"start":start,"end":time.monotonic(),"value":p.read_text()}))'
+    result=grade(source,['a','b'],10003)
+    assert result['status']['id']==3
+    values=[json.loads(base64.b64decode(row['stdout']))for row in result['results']]
+    assert all(value['value']=='batch-'+str(index)for value in values),'Batch jobs shared files'
+    return values
+with concurrent.futures.ThreadPoolExecutor(max_workers=3)as pool:
+    intervals=[value for batch in pool.map(parallel_grade,range(3)) for value in batch]
+events=sorted([(r['start'],1)for r in intervals]+[(r['end'],-1)for r in intervals])
+active=0;peak=0
+for _,delta in events:active+=delta;peak=max(peak,active)
+assert peak==2,'Batch grading exceeded or failed to use the two shared slots'
+print('PASS: fresh compiled Java artifacts and isolated two-slot overlapping batch jobs')
