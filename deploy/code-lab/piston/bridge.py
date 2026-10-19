@@ -31,13 +31,13 @@ def b64(value):
 def translate(result):
     run=result.get('run')
     compile_result=result.get('compile')
-    if not isinstance(run,dict):
-        raise ValueError('Missing execution result')
     if compile_result and compile_result.get('status')=='XX':
         raise ValueError('Compiler sandbox internal error')
     if compile_result and (compile_result.get('code')!=0 or compile_result.get('signal') or compile_result.get('status')):
-        status=6
-    elif run.get('status')=='TO':
+        return {'status':{'id':6},'stdout':'','stderr':'','compile_output':b64(compile_result.get('stderr')),'time':None,'memory':None,'exit_code':compile_result.get('code')}
+    if not isinstance(run,dict):
+        raise ValueError('Missing execution result')
+    if run.get('status')=='TO':
         status=5
     elif run.get('code')==0 and not run.get('signal') and not run.get('status'):
         status=3
@@ -64,8 +64,8 @@ class Adapter:
             raise ValueError('Private API token required')
         self.token=config['token']
         self.profiles={int(p['id']):p for p in config['profiles']}
-        if len(self.profiles)!=5 or not all(p['id']>=10000 and p.get('language') and p.get('version') and p.get('filename') for p in self.profiles.values()):
-            raise ValueError('Five pinned runtime profiles required')
+        if set(self.profiles) not in (set(range(10001,10006)),set(range(10001,10007))) or not all(p['id']>=10000 and p.get('language') and p.get('version') and p.get('filename') for p in self.profiles.values()):
+            raise ValueError('Five legacy profiles and optional compiled Java profile required')
         self.request=request
         self.lock=threading.Lock()
         self.completed=threading.Condition(self.lock)

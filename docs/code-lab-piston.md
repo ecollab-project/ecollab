@@ -142,3 +142,64 @@ limits, deployment, rollback and the required repeat measurements. The current
 installer defaults to two PHP processes, two adapter workers and two Piston job
 slots under the original aggregate resource quotas. Earlier single-worker
 sections above describe the preceding changes, not the current pool size.
+
+
+## Java compilation budget fix — 2026-10-19
+
+The original Java 15.0.2 package launches source-file mode (`java Main.java`),
+so compilation and execution both consume the run-stage CPU budget. A synthetic
+prime-sieve submission hit that two-second limit at 2.019s. This is a runtime
+phase issue; it does not prove that the student algorithm returned a wrong value.
+
+The installer adds **Java (compiled, JDK 15.0.2)** as private runtime **10006**,
+using package `ecollab-java-compiled` version `1.0.0`. It copies the already
+installed JDK into a separate, immutable package and adds an explicit `javac`
+compile script and compiled-class run script. The legacy package and IDs
+10001–10005 are preserved exactly. Expect additional package-volume disk usage
+for one copy of the installed JDK; no compiler version is downloaded or changed.
+The new package is discovered on a Piston restart while application workers are
+stopped and the queue has drained.
+
+Compilation retains 10s CPU / 30s wall / 512MiB; execution retains 2s CPU / 8s
+wall / 256MiB. Both JVM stages use one processor and Serial GC; compilation uses
+C1-only JIT and a 256MiB heap, execution a 128MiB heap with normal tiered JIT.
+These explicit heap caps reserve room for JVM/native overhead under the sandbox
+memory ceilings. Annotation processing is disabled, as it is in source-file mode.
+Source must declare `public class Main`, as in the existing Code Lab examples.
+Network, output, process and aggregate container limits remain unchanged.
+
+New playground runs and newly created tasks use 10006 through the application
+runtime map. Existing tasks pin their original runtime IDs and keep their prior
+semantics; they are **not silently migrated**. Recreate a task explicitly to use
+the new compiled profile. Submitted attempts and grades are not rewritten.
+
+The adapter also recognizes compilation failure when Piston omits the `run`
+result. Such a result is a compilation error, not a runner infrastructure outage.
+Actual compiler infrastructure errors still produce no automatic zero grade;
+grading continues to hide test inputs, outputs and compiler diagnostics.
+
+Deploy after tests/assessments and jobs finish:
+
+```bash
+cd ~/ecollab-inspect
+git pull --ff-only origin ecollab-collabs
+php scripts/check-code-lab-runner.php --queue-idle
+sudo bash scripts/setup-code-lab-piston.sh
+php scripts/check-code-lab-runner.php --runtime-map
+```
+
+The map should show `"java":10006`. The installer backs up the private profile
+configuration, preserves its token, verifies the package and compiler smoke
+checks, then updates the application's default map. Repeated installs verify
+existing compile/run scripts and refuse to overwrite a conflicting package.
+This is not a transactional rollback of Docker/application files; inspect any
+installer failure before repeating it. Keep existing private backup contents
+out of logs and chat.
+
+Repeat the unchanged Windows 50-user workload first, then 100 if it passes.
+Keep the 30-second p95 target and report correctness as well as completion.
+No Windows download, database migration or global time-limit increase is needed.
+The backup branch is `backup/before-java-compile-stage-20261019`, including the
+tracked Centrifugo configuration. This fix establishes correct Java phase
+accounting, **not** a new VPS capacity figure. Retain the 1-CPU baseline for the
+first comparison; the earlier 1.5-CPU experiment was restored afterward.

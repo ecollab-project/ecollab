@@ -21,6 +21,7 @@ try {
   if(array_sum($counts)){fwrite(STDERR,"Code Lab queue is active. Let current jobs finish before restarting the adapter.\n");exit(2);}exit;
  }
  $runner=new CodeLabRunner();if(!$runner->enabled())throw new RuntimeException('not configured');
+ if(in_array('--runtime-map',$argv,true)){echo json_encode(array_combine(['c','cpp','python','java'],array_map([CodeLabRunner::class,'runtime'],['c','cpp','python','java'])))."\n";exit;}
  if(in_array('--languages',$argv,true)){foreach($runner->request('GET','/languages')as$l)echo (int)$l['id']."\t".$l['name']."\n";exit;}
  $sources=['c'=>'#include <stdio.h>\nint main(){puts("ECOLLAB_OK");return 0;}','cpp'=>'#include <iostream>\nint main(){std::cout<<"ECOLLAB_OK"<<std::endl;}','python'=>'print("ECOLLAB_OK")','java'=>'public class Main { public static void main(String[] args) { System.out.println("ECOLLAB_OK"); } }','javascript'=>'console.log("ECOLLAB_OK");'];
  foreach($sources as$language=>$source){$id=CodeLabRunner::runtime($language);if(!$id)throw new RuntimeException('missing runtime');$result=$runner->execute($id,str_replace('\\n',"\n",$source),'');if($result['status']['id']!==3||trim($result['stdout'])!=='ECOLLAB_OK')throw new RuntimeException('smoke failed');echo "$language: compilation/execution passed\n";}

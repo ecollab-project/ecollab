@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+[[ "${1:-}" == Main.java ]] || exit 1
+shift
+exec java -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -Xms16m -Xmx128m -cp . Main "$@"

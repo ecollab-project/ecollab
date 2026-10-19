@@ -9,6 +9,7 @@ import subprocess
 import sys
 import stat
 import unittest
+import shutil
 import urllib.error
 import urllib.request
 
@@ -94,11 +95,14 @@ class BridgeTests(unittest.TestCase):
         self.assertEqual(bridge.translate({'run':{'code':None,'signal':'SIGKILL','status':'TO'}})['status']['id'],5)
         self.assertEqual(bridge.translate({'compile':{'code':1,'stderr':'bad'},'run':{'code':1}})['status']['id'],6)
         self.assertEqual(bridge.translate({'run':{'code':None,'signal':'SIGKILL','status':'OL'}})['status']['id'],11)
+        self.assertEqual(bridge.translate({'compile':{'code':1,'stderr':'syntax'}})['status']['id'],6)
         for result in [{},{'run':{'status':'XX'}},{'compile':{'status':'XX'},'run':{}}]:
             with self.assertRaises(ValueError):bridge.translate(result)
     def test_php_client_wait_and_legacy_compatibility(self):
         import os
         php=os.environ.get('PHP_BIN','php')
+        if shutil.which(php) is None:
+            self.skipTest('PHP cURL is exercised by CI')
         if subprocess.run([php,'-r','exit(function_exists("curl_init")?0:1);'],capture_output=True).returncode:
             self.skipTest('PHP cURL is exercised by CI')
         def request(path,body):
@@ -149,6 +153,26 @@ class BridgeTests(unittest.TestCase):
             with self.assertRaises(urllib.error.HTTPError)as e:urllib.request.urlopen(request)
             self.assertEqual(e.exception.code,404)
         finally:server.shutdown();server.server_close()
+
+class JavaProfileTests(unittest.TestCase):
+    def test_upgrade_preserves_legacy_profiles_and_private_token(self):
+        spec=importlib.util.spec_from_file_location('java_profile',ROOT/'deploy/code-lab/piston/java_profile.py')
+        module=importlib.util.module_from_spec(spec)
+        sys.path.insert(0,str(ROOT/'deploy/code-lab/piston'))
+        try:spec.loader.exec_module(module)
+        finally:sys.path.pop(0)
+        config={'token':'private-'*8,'profiles':[{'id':10001+i,'name':name,'language':name,'version':'15.0.2' if name=='java' else '1.2.3','filename':'Main.java' if name=='java' else 'main'}for i,name in enumerate(['c','cpp','python','java','javascript'])]}
+        runtimes=[{'language':'ecollab-java-compiled','version':'1.0.0'}]
+        updated=module.upgrade(config,runtimes)
+        self.assertEqual(updated['token'],config['token'])
+        self.assertEqual(updated['profiles'][:5],config['profiles'])
+        self.assertEqual(len(config['profiles']),5,'Upgrade must not mutate existing profiles')
+        self.assertEqual(updated['profiles'][5]['id'],10006)
+        self.assertEqual(module.upgrade(updated,runtimes),updated,'Repeat install must be idempotent')
+        with self.assertRaises(ValueError):module.upgrade(config,[])
+        self.assertEqual(len(bridge.Adapter(updated).profiles),6)
+        updated['profiles'][5]['version']='unreviewed'
+        with self.assertRaises(ValueError):module.upgrade(updated,runtimes)
 
 class InstallerTests(unittest.TestCase):
     def test_configuration_backup_preserves_unrelated_values_and_mode(self):

@@ -12,7 +12,7 @@ import urllib.request
 state=pathlib.Path(os.environ['CODE_LAB_RUNNER_STATE'])
 config=json.loads((state/'profiles.json').read_text())
 address='http://127.0.0.1:2358'
-env=dict(os.environ,CODE_LAB_JUDGE0_URL=address,CODE_LAB_JUDGE0_TOKEN=config['token'],CODE_LAB_LANGUAGE_IDS=json.dumps(dict(zip(['c','cpp','python','java','javascript'],[p['id']for p in config['profiles']]))))
+env=dict(os.environ,CODE_LAB_JUDGE0_URL=address,CODE_LAB_JUDGE0_TOKEN=config['token'],CODE_LAB_LANGUAGE_IDS=json.dumps((dict(zip(['c','cpp','python','java','javascript'],[p['id']for p in config['profiles']])) | {'java':10006})))
 headers={'X-Auth-Token':config['token'],'Content-Type':'application/json'}
 for attempt in range(30):
     try:
@@ -67,10 +67,19 @@ print('PASS: actual two-slot sandbox overlap, bounded concurrency, independent w
 
 def java_program(index):
     source='public class Main { public static void main(String[] args) throws Exception { java.nio.file.Path p=java.nio.file.Path.of("same-java-file.txt"); java.nio.file.Files.writeString(p,"java-'+str(index)+'"); Thread.sleep(1000); System.out.println(java.nio.file.Files.readString(p)); } }'
-    result=execute(source,language_id=10004)
+    result=execute(source,language_id=10006)
     assert result['status']['id']==3 and base64.b64decode(result['stdout']).strip()==('java-'+str(index)).encode(),'Concurrent Java memory/process isolation failed'
 with concurrent.futures.ThreadPoolExecutor(max_workers=2)as pool:list(pool.map(java_program,range(2)))
 print('PASS: concurrent Java compilation/execution under the unchanged shared memory/process limits')
 
 subprocess.run(['php','tests/code-lab-worker-pool.php'],env=dict(env,CODE_LAB_POOL_HTTP_TEST='1'),check=True,timeout=30)
 print('PASS: supervisor SIGTERM preserves both real in-flight compiler HTTP results')
+
+# Compilation diagnostics must be classified even when Piston omits `run`.
+result=execute('public class Main { this does not compile }',language_id=10006)
+assert result['status']['id']==6 and base64.b64decode(result['compile_output']),'Java compilation failure classification failed'
+result=execute('public class Main { public static void main(String[] args) { while(true) {} } }',language_id=10006)
+assert result['status']['id']==5,'Compiled Java runtime CPU limit was weakened'
+result=execute('public class Main { public static void main(String[] args) { System.out.println("LEGACY_OK"); } }',language_id=10004)
+assert result['status']['id']==3 and base64.b64decode(result['stdout']).strip()==b'LEGACY_OK','Frozen legacy Java mapping was changed'
+print('PASS: compiled Java phases, compiler diagnostics without run result, unchanged run CPU timeout and legacy Java compatibility')
