@@ -12,13 +12,19 @@ const programs=JSON.parse(open('./programs.json')), languages=['c','cpp','python
 const users=number(__ENV,'VUS',2,2,300);if(users>accounts.length)throw new Error('Each user requires a distinct synthetic account');
 const ramp=number(__ENV,'RAMP_SECONDS',120,5,600),deadline=number(__ENV,'DEADLINE_SECONDS',180,10,600);
 const slo=number(__ENV,'P95_LIMIT_MS',target.mode==='ai'?30000:target.mode==='code-grade'?60000:30000,100,600000);
+const sustained=__ENV.SUSTAINED==='true';
+if(sustained&&target.mode!=='code-run')throw new Error('Sustained mode requires a code-run fixture');
+const rounds=sustained?number(__ENV,'SUBMISSIONS_PER_USER',10,2,20):1;
+const think=sustained?number(__ENV,'THINK_SECONDS',5,1,60):0;
+const workload=users*rounds;
+let sessionCsrf=null;
 const turns=number(__ENV,'AI_TURNS',2,1,3),poll=number(__ENV,'POLL_SECONDS',2,1,10);
 const auth=new Rate('feature_auth_ok'),completed=new Rate('feature_completed_ok'),correct=new Rate('feature_correct_ok');
 const attempted=new Counter('feature_attempted'),finished=new Counter('feature_finished'),rejected=new Counter('feature_rejected');
 const latency=new Trend('feature_completion_ms',true),skew=new Trend('feature_launch_skew_ms',true),queueWait=new Trend('feature_queue_observed_ms',true);
 export const options={summaryTrendStats:['avg','med','p(95)','p(99)','max'],noCookiesReset:true,
-  scenarios:{feature:{executor:'per-vu-iterations',vus:users,iterations:1,maxDuration:(ramp+deadline+30)+'s'}},
-  thresholds:{feature_auth_ok:['rate==1'],feature_completed_ok:['rate>=0.99'],feature_correct_ok:['rate>=0.99'],feature_finished:['count>='+Math.ceil(users*.99)],feature_completion_ms:['p(95)<'+slo],feature_launch_skew_ms:['max<5000']},
+  scenarios:{feature:{executor:'per-vu-iterations',vus:users,iterations:rounds,maxDuration:(ramp+rounds*(deadline+think)+30)+'s'}},
+  thresholds:{feature_auth_ok:['rate==1'],feature_completed_ok:['rate>=0.99'],feature_correct_ok:['rate>=0.99'],feature_finished:['count>='+Math.ceil(workload*.99)],feature_completion_ms:['p(95)<'+slo],feature_launch_skew_ms:['max<5000']},
   systemTags:['status','method','name','scenario','expected_response','check']};
 export function setup(){return {launch_at:Date.now()+ramp*1000};}
 function request(path,name,csrf='',body=null,method=body===null?'GET':'POST'){
@@ -36,7 +42,7 @@ function reject(status){rejected.add(1,{status:String(status||0)});}
 export default function(config){
   const account=accounts[exec.vu.idInTest-1];let csrf,sessionId=null;let success=false,valid=false,started=null;
   try{
-    csrf=login(account);auth.add(Boolean(csrf));if(!csrf){reject('auth');return;}
+    if(!sessionCsrf){sessionCsrf=login(account);auth.add(Boolean(sessionCsrf));}csrf=sessionCsrf;if(!csrf){reject('auth');return;}
     let prepared;
     const language=languages[(exec.vu.idInTest-1)%languages.length];
     if(target.mode==='ai'){
@@ -47,8 +53,12 @@ export default function(config){
       prepared=request('/API/code-lab/index.php','attempt-start',csrf,{action:'start',server_id:target.server_id,task_id:tid});
       if(!prepared.ok||prepared.data.data?.attempt?.state!=='in_progress'){reject(prepared.status);return;}
     }
-    const wait=config.launch_at-Date.now();if(wait>0)sleep(wait/1000);
-    skew.add(Math.max(0,Date.now()-config.launch_at));attempted.add(1);started=Date.now();
+    if(exec.vu.iterationInScenario===0){
+      const launch=config.launch_at+(sustained?(exec.vu.idInTest-1)*think*1000/users:0);
+      const wait=launch-Date.now();if(wait>0)sleep(wait/1000);
+      skew.add(Math.max(0,Date.now()-launch));
+    }else if(sustained){sleep(think);}
+    attempted.add(1);started=Date.now();
     if(target.mode==='ai'){
       const fact='CAPACITY_'+account.id;let r;
       for(let turn=0;turn<turns;turn++){
@@ -92,8 +102,8 @@ export function handleSummary(data){
   const values=name=>data.metrics[name]?.values||{};let failed=[];
   for(const[name,m]of Object.entries(data.metrics))for(const[t,v]of Object.entries(m.thresholds||{}))if(!v.ok)failed.push(name+': '+t);
   const completedCount=Number(values('feature_finished').count||0),attemptedCount=Number(values('feature_attempted').count||0);
-  const whole=Number(values('iterations').count||0)===users&&attemptedCount===users;
-  const passed=whole&&completedCount>=Math.ceil(users*.99)&&!failed.length;
-  const report={revision:'feature-capacity-1',kind:target.mode,run_id:target.run_id,sample_id:target.run_id+'-'+Date.now(),fixture_id:target.fixture_id,configured_users:users,profile:{ramp_seconds:ramp,deadline_seconds:deadline,p95_limit_ms:slo,ai_turns:target.mode==='ai'?turns:null,program:'prime-sieve-1000',grading_cases:target.mode==='code-grade'?2:null},configured_provider:target.configured_provider||null,full_workload_completed:whole,capacity_pass:passed,attempted:attemptedCount,finished:completedCount,completed:values('feature_completed_ok'),correct:values('feature_correct_ok'),authentication:values('feature_auth_ok'),rejections:values('feature_rejected'),completion_ms:values('feature_completion_ms'),observed_queue_ms:values('feature_queue_observed_ms'),launch_skew_ms:values('feature_launch_skew_ms'),http:values('http_req_duration'),requests:values('http_reqs'),failed_thresholds:failed,scope:target.mode==='ai'?'Authenticated Jarred session API; fixed synthetic fact recall, not general accuracy.':'Authenticated Code Lab API including queue wait and real compiler/grader completion.'};
-  return {[__ENV.REPORT_FILE||'results-'+target.mode+'-'+users+'.json']:JSON.stringify(report,null,2),stdout:'\n'+target.mode+' '+users+' users: '+(passed?'workload passed':'capacity NOT established')+'. Inspect JSON and require exit code 0.\n'};
+  const whole=Number(values('iterations').count||0)===workload&&attemptedCount===workload;
+  const passed=whole&&completedCount>=Math.ceil(workload*.99)&&!failed.length;
+  const report={revision:'feature-capacity-1',kind:sustained?'code-sustained':target.mode,run_id:target.run_id,sample_id:target.run_id+'-'+Date.now(),fixture_id:target.fixture_id,configured_users:users,profile:{model:sustained?'closed-loop repeated submissions':'simultaneous burst',submissions_per_user:rounds,think_seconds:think,expected_submissions:workload,ramp_seconds:ramp,deadline_seconds:deadline,p95_limit_ms:slo,ai_turns:target.mode==='ai'?turns:null,program:'prime-sieve-1000',grading_cases:target.mode==='code-grade'?2:null},configured_provider:target.configured_provider||null,full_workload_completed:whole,capacity_pass:passed,attempted:attemptedCount,finished:completedCount,completed:values('feature_completed_ok'),correct:values('feature_correct_ok'),authentication:values('feature_auth_ok'),rejections:values('feature_rejected'),completion_ms:values('feature_completion_ms'),observed_queue_ms:values('feature_queue_observed_ms'),launch_skew_ms:values('feature_launch_skew_ms'),http:values('http_req_duration'),requests:values('http_reqs'),failed_thresholds:failed,scope:sustained?'Closed-loop repeated compiler jobs, one outstanding per user; completion includes queue wait. This does not promise a fixed arrival rate.':target.mode==='ai'?'Authenticated Jarred session API; fixed synthetic fact recall, not general accuracy.':'Authenticated Code Lab API including queue wait and real compiler/grader completion.'};
+  return {[__ENV.REPORT_FILE||'results-'+target.mode+'-'+users+'.json']:JSON.stringify(report,null,2),stdout:'\n'+(sustained?'code-sustained':target.mode)+' '+users+' users: '+(passed?'workload passed':'capacity NOT established')+'. Inspect JSON and require exit code 0.\n'};
 }

@@ -17,7 +17,7 @@ export function summarize(reports){
   const groups=new Map();
   for(const r of reports){
     if(r.revision!=='feature-capacity-1'||r.requires_aggregation)continue;
-    const profile={...r.profile};delete profile.total_users;
+    const profile={...r.profile};delete profile.total_users;delete profile.expected_submissions;
     const key=JSON.stringify([r.kind,profile,r.configured_provider||null]);
     if(!groups.has(key))groups.set(key,{kind:r.kind,profile,configured_provider:r.configured_provider||null,levels:{}});
     const group=groups.get(key),level=group.levels[r.configured_users]||={passed:0,failed:0,run_ids:[]};
@@ -34,3 +34,4 @@ if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.ur
   if(aggregate){const r=combineShards(reports),out='results-media-combined-'+r.run_id+'.json';fs.writeFileSync(out,JSON.stringify(r,null,2));console.log(out);if(!r.capacity_pass)process.exitCode=1;}
   else console.log(JSON.stringify({scope:'Highest repeat-validated TESTED load per exact profile. Two independent successful runs and zero failures required. Untested loads and mixed workloads remain unestablished.',profiles:summarize(reports)},null,2));
 }
+

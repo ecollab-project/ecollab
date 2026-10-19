@@ -29,6 +29,7 @@ jobs:
           php -l scripts/code-lab-worker.php
           php -l scripts/check-code-lab-runner.php
           php tests/code-lab-execution-regression.php
+          php tests/code-lab-server-queue.php
           bash -n deploy/code-lab/bootstrap-judge0.sh
           node --check assets/js/code-lab.js
           node --check assets/js/code-lab-integrity.js
@@ -54,3 +55,4 @@ jobs:
         with: {php-version: '8.3', extensions: pdo_mysql}
       - run: php tests/code-lab-pool-mysql.php
         env: {CODE_LAB_POOL_TEST_DSN: 'mysql:host=127.0.0.1;port=3306;dbname=code_lab_pool_test'}
+
