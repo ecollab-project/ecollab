@@ -122,9 +122,15 @@ final class CodeLabExecutionService
             else {
                 $a=$this->q('SELECT task_id FROM code_lab_attempts WHERE id=? AND user_id=? AND submitted_at IS NOT NULL',[$j['attempt_id'],$j['user_id']])->fetch(PDO::FETCH_ASSOC);if(!$a)throw new RuntimeException('Missing immutable submission.');
                 $cases=$this->q('SELECT * FROM code_lab_test_cases WHERE task_id=? ORDER BY position',[$a['task_id']])->fetchAll(PDO::FETCH_ASSOC);if(!$cases)throw new RuntimeException('Missing grading checks.');
+                $runs=[];
+                if($j['language']!=='web'){
+                    $started=hrtime(true);
+                    try{$runs=$this->runner->executeCases((int)$j['runtime_id'],$j['source_code'],array_column($cases,'input_data'));}
+                    finally{$runnerMs+=(hrtime(true)-$started)/1e6;}
+                }
                 $total=0;$earned=0;$results=[];
-                foreach($cases as$c){$pass=$j['language']==='web'?self::webCheck($j['source_code'],$c['input_data'],$c['expected_output']):false;
-                    if($j['language']!=='web'){$r=$execute($c['input_data']);$pass=$r['status']['id']===3&&self::matches($r['stdout'],$c['expected_output']);}
+                foreach($cases as$i=>$c){$pass=$j['language']==='web'?self::webCheck($j['source_code'],$c['input_data'],$c['expected_output']):false;
+                    if($j['language']!=='web'){$r=$runs[$i];$pass=$r['status']['id']===3&&self::matches($r['stdout'],$c['expected_output']);}
                     $total+=(int)$c['weight'];if($pass)$earned+=(int)$c['weight'];
                     // No student-code output/errors from grading: these can echo hidden inputs.
                     $results[]=['case'=>(int)$c['position']+1,'hidden'=>(bool)$c['hidden'],'passed'=>$pass];
@@ -147,3 +153,4 @@ final class CodeLabExecutionService
         return true;
     }
 }
+

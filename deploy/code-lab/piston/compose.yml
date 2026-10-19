@@ -3,6 +3,7 @@ services:
   piston:
     image: ghcr.io/engineer-man/piston@sha256:2f66b7456189c4d713aa986d98eccd0b6ee16d26c7ec5f21b30e942756fd127a
     restart: unless-stopped
+    entrypoint: [bash, -c, "python3 /ecollab-grade/install.py && exec /piston_api/src/docker-entrypoint.sh"]
     privileged: true
     cgroup: private
     cpus: 1.0
@@ -22,6 +23,7 @@ services:
     volumes:
       - packages:/piston/packages
       - ./java-compiled:/ecollab-java-runtime:ro
+      - ./grading:/ecollab-grade:ro
     tmpfs:
       - /tmp:exec,size=512m
     logging:
@@ -51,3 +53,4 @@ services:
       options: {max-size: "10m", max-file: "2"}
 volumes:
   packages:
+

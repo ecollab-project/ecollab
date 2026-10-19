@@ -27,6 +27,29 @@ class BridgeTests(unittest.TestCase):
         self.adapter=bridge.Adapter(config,request)
     def submit(self,**extra):
         return self.adapter.submit({'language_id':10003,'source_code':base64.b64encode(b'print(42)').decode(),'stdin':'','enable_network':False,**extra})
+    def test_batch_compile_once_and_fail_closed(self):
+        def request(path, body):
+            self.assertEqual(path,'/ecollab-grade')
+            self.assertNotIn('stdin',body)
+            self.assertEqual(body['inputs'],['41','5'])
+            return {'runs':[{'code':0,'stdout':'42'},{'code':0,'stdout':'6'}],'compile_count':0}
+        self.adapter.request=request
+        body={'language_id':10003,'source_code':base64.b64encode(b'program').decode(),'stdin':'','test_inputs':[base64.b64encode(x).decode() for x in [b'41',b'5']],'enable_network':False}
+        token=self.adapter.submit(body,batch=True);self.adapter.pending.join()
+        result=self.adapter.get(token)
+        self.assertEqual(result['compile_count'],0)
+        self.assertEqual([base64.b64decode(r['stdout']) for r in result['results']],[b'42',b'6'])
+        for malformed in [{'runs':[{'code':0}],'compile_count':0},{'runs':[{'code':0},{'code':0}],'compile_count':1},{'runs':[{'status':'XX'},{'code':0}],'compile_count':0}]:
+            self.adapter.request=lambda path,body:malformed
+            token=self.adapter.submit(body,batch=True);self.adapter.pending.join()
+            self.assertEqual(self.adapter.get(token)['status']['id'],13)
+        for change in [{'test_inputs':[]},{'test_inputs':['%%%']},{'test_inputs':['eA==']*11},{'language_id':10004},{'stdin':'eA=='}]:
+            with self.assertRaises(ValueError):self.adapter.submit({**body,**change},batch=True)
+        with self.assertRaises(ValueError):self.adapter.submit(body)
+        self.adapter.request=lambda path,body:{'compile':{'code':1,'stderr':'bad'},'runs':[],'compile_count':1}
+        token=self.adapter.submit({**body,'language_id':10001},batch=True);self.adapter.pending.join()
+        self.assertEqual([r['status']['id'] for r in self.adapter.get(token)['results']],[6,6])
+
     def test_pinned_profile_limits_and_result(self):
         token=self.submit(run_timeout=999999,version='newest',language='bash')
         self.adapter.pending.join()
@@ -196,3 +219,4 @@ class InstallerTests(unittest.TestCase):
             self.assertEqual(stat.S_IMODE(backups[0].stat().st_mode),0o600)
 
 if __name__=='__main__':unittest.main()
+

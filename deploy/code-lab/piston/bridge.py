@@ -1,5 +1,5 @@
 """Private, bounded Judge0-subset adapter for the cgroup-v2 Piston service.
-No submitted source is executed in this process. Only /execute on Piston runs code.
+No submitted source is executed in this process. Only Piston sandbox execution endpoints run submitted code.
 """
 import base64
 import hmac
@@ -17,9 +17,11 @@ from urllib.parse import urlsplit, parse_qs
 def piston_request(path, body=None, timeout=45):
     data=None if body is None else json.dumps(body).encode()
     req=urllib.request.Request(os.environ.get('PISTON_URL','http://piston:2000')+'/api/v2'+path,data=data,headers={'Content-Type':'application/json'})
-    with urllib.request.urlopen(req,timeout=timeout) as response:
-        raw=response.read(1048577)
-    if len(raw)>1048576:
+    # Ten bounded case outputs can expand under JSON control-character escaping.
+    limit=4194304 if path=='/ecollab-grade' else 1048576
+    with urllib.request.urlopen(req,timeout=125 if path=='/ecollab-grade' else timeout) as response:
+        raw=response.read(limit+1)
+    if len(raw)>limit:
         raise ValueError('Oversize execution response')
     return json.loads(raw)
 
@@ -70,18 +72,33 @@ class Adapter:
         self.lock=threading.Lock()
         self.completed=threading.Condition(self.lock)
         self.jobs={}
+        self.cached_bytes=0
         self.pending=queue.Queue(maxsize=32)
         for _ in range(execution_slots(slots)):
             threading.Thread(target=self.worker,daemon=True).start()
 
-    def submit(self,body):
+    def submit(self,body,batch=False):
         profile=self.profiles.get(body.get('language_id'))
         if profile is None or body.get('enable_network') is not False:
             raise ValueError('Unsupported runtime or network settings')
         if any(body.get(k) for k in ('callback_url','additional_files','compiler_options','command_line_arguments','expected_output')):
             raise ValueError('Unsupported submission feature')
+        if not batch and 'test_inputs' in body:
+            raise ValueError('Batch inputs require the grading endpoint')
         source=base64.b64decode(body.get('source_code',''),validate=True).decode('utf-8')
         stdin=base64.b64decode(body.get('stdin',''),validate=True).decode('utf-8')
+        inputs=None
+        if batch:
+            if profile['id'] not in (10001,10002,10003,10006):
+                raise ValueError('Runtime has no batch grading support')
+            values=body.get('test_inputs')
+            if not isinstance(values,list) or not 1<=len(values)<=10 or any(not isinstance(v,str) for v in values):
+                raise ValueError('Invalid grading input list')
+            inputs=[base64.b64decode(v,validate=True).decode('utf-8') for v in values]
+            if any(len(v.encode())>2048 for v in inputs):
+                raise ValueError('Grading input limit exceeded')
+            if stdin:
+                raise ValueError('Batch stdin must be empty')
         if len(source.encode())>100000 or len(stdin.encode())>4096:
             raise ValueError('Source/input limit exceeded')
         # Fixed limits cannot be raised by an API caller; profile/version are server-owned.
@@ -89,21 +106,26 @@ class Adapter:
                  'files':[{'name':profile['filename'],'content':source}], 'stdin':stdin,
                  'compile_timeout':30000,'run_timeout':8000,'compile_cpu_time':10000,'run_cpu_time':2000,
                  'compile_memory_limit':536870912,'run_memory_limit':268435456}
+        if batch:
+            payload.pop('stdin')
+            payload['inputs']=inputs
         token=str(uuid.uuid4())
         with self.lock:
             cutoff=time.monotonic()-900
             for key in list(self.jobs):
                 job=self.jobs[key]
                 if job['result']['status']['id']>2 and job['at']<cutoff:
+                    self.cached_bytes-=job.get('bytes',0)
                     del self.jobs[key]
             if len(self.jobs)>=256:
                 completed=sorted((j['at'],k) for k,j in self.jobs.items() if j['result']['status']['id']>2)
                 if not completed:
                     raise queue.Full()
-                del self.jobs[completed[0][1]]
+                removed=self.jobs.pop(completed[0][1])
+                self.cached_bytes-=removed.get('bytes',0)
             self.jobs[token]={'result':{'status':{'id':1}},'at':time.monotonic()}
             try:
-                self.pending.put_nowait((token,payload))
+                self.pending.put_nowait((token,payload,batch))
             except queue.Full:
                 del self.jobs[token]
                 raise
@@ -111,15 +133,36 @@ class Adapter:
 
     def worker(self):
         while True:
-            token,payload=self.pending.get()
+            token,payload,batch=self.pending.get()
             with self.lock:
                 self.jobs[token]['result']={'status':{'id':2}}
             try:
-                result=translate(self.request('/execute',payload))
+                if batch:
+                    response=self.request('/ecollab-grade',payload)
+                    compile_result=response.get('compile')
+                    if compile_result and (compile_result.get('code')!=0 or compile_result.get('signal') or compile_result.get('status')):
+                        results=[translate({'compile':compile_result}) for _ in payload['inputs']]
+                    else:
+                        runs=response.get('runs')
+                        if not isinstance(runs,list) or len(runs)!=len(payload['inputs']):
+                            raise ValueError('Incomplete grading execution')
+                        results=[translate({'compile':compile_result,'run':run}) for run in runs]
+                    expected=0 if payload['language']=='python' else 1
+                    if response.get('compile_count')!=expected:
+                        raise ValueError('Unexpected compilation count')
+                    result={'status':{'id':3},'results':results,'compile_count':expected}
+                else:
+                    result=translate(self.request('/execute',payload))
             except Exception:
                 result={'status':{'id':13}}  # Infrastructure error, never a zero grade.
+            size=len(json.dumps(result).encode())
             with self.lock:
-                self.jobs[token]={'result':result,'at':time.monotonic()}
+                while self.cached_bytes+size>16777216:
+                    completed=sorted((j['at'],k) for k,j in self.jobs.items() if j['result']['status']['id']>2)
+                    if not completed:break
+                    removed=self.jobs.pop(completed[0][1]);self.cached_bytes-=removed.get('bytes',0)
+                self.jobs[token]={'result':result,'at':time.monotonic(),'bytes':size}
+                self.cached_bytes+=size
                 self.completed.notify_all()
             self.pending.task_done()
 
@@ -151,7 +194,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json(401,{'error':'Authentication required'})
         path=urlsplit(self.path).path
         if path=='/languages':
-            return self.send_json(200,[{'id':p['id'],'name':p['name']+' ('+p['language']+' '+p['version']+', Piston)'} for p in self.server.adapter.profiles.values()])
+            return self.send_json(200,[{'id':p['id'],'name':p['name']+' ('+p['language']+' '+p['version']+', Piston)', 'ecollab_grade_v1':p['id'] in (10001,10002,10003,10006)} for p in self.server.adapter.profiles.values()])
         if path.startswith('/submissions/'):
             try:
                 wait_ms=int(parse_qs(urlsplit(self.path).query).get('wait_ms',['0'])[0])
@@ -163,7 +206,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.authorized():
             return self.send_json(401,{'error':'Authentication required'})
-        if urlsplit(self.path).path!='/submissions':
+        path=urlsplit(self.path).path
+        if path not in ('/submissions','/grade-submissions'):
             return self.send_json(404,{'error':'Not found'})
         try:
             length=int(self.headers.get('Content-Length','0'))
@@ -172,7 +216,7 @@ class Handler(BaseHTTPRequestHandler):
             body=json.loads(self.rfile.read(length))
             if not isinstance(body,dict):
                 raise ValueError('Invalid request')
-            token=self.server.adapter.submit(body)
+            token=self.server.adapter.submit(body,batch=path=='/grade-submissions')
             return self.send_json(201,{'token':token,'poll_wait_ms':1000})
         except queue.Full:
             return self.send_json(429,{'error':'Execution queue full'})
@@ -203,3 +247,4 @@ if __name__=='__main__':
     with open('/runner/profiles.json') as file:
         adapter=Adapter(json.load(file),slots=execution_slots(os.environ.get('CODE_LAB_EXECUTION_SLOTS','2')))
     Server(('0.0.0.0',2358),adapter).serve_forever()
+
