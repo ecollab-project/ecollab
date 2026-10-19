@@ -29,11 +29,17 @@ systemctl stop ecollab-code-lab 2>/dev/null || [[ "$worker_was_active" == 0 ]]
 php "$project_path/scripts/check-code-lab-runner.php" --queue-idle
 "${compose[@]}" up -d piston
 # Freeze the installed versions. A repeat deploy never silently changes old task runtimes.
-if ! python3 -c 'import json,sys;c=json.load(open(sys.argv[1]));sys.exit(0 if len(c.get("profiles",[]))==5 and len(c.get("token",""))>=32 else 1)' "$CODE_LAB_RUNNER_STATE/profiles.json"; then
+if ! python3 -c 'import json,sys;c=json.load(open(sys.argv[1]));sys.exit(0 if {p["id"] for p in c.get("profiles",[])} in (set(range(10001,10006)),set(range(10001,10007))) and len(c.get("token",""))>=32 else 1)' "$CODE_LAB_RUNNER_STATE/profiles.json"; then
  "${compose[@]}" run --rm --no-deps adapter python -B /runner/prepare.py > "$CODE_LAB_RUNNER_STATE/profiles.new.json"
  python3 -c 'import json,sys;c=json.load(open(sys.argv[1]));assert len(c["profiles"])==5 and len(c["token"])>=32' "$CODE_LAB_RUNNER_STATE/profiles.new.json"
  mv "$CODE_LAB_RUNNER_STATE/profiles.new.json" "$CODE_LAB_RUNNER_STATE/profiles.json"
 fi
+# Keep legacy Java untouched; add a versioned package with a real compile stage.
+java_install_status="$("${compose[@]}" exec -T piston bash /ecollab-java-runtime/install.sh)"
+if [[ "$java_install_status" == CHANGED ]]; then "${compose[@]}" restart piston; fi
+"${compose[@]}" run --rm --no-deps adapter python -B /runner/java_profile.py > "$CODE_LAB_RUNNER_STATE/profiles.compiled.json"
+cp -p "$CODE_LAB_RUNNER_STATE/profiles.json" "$CODE_LAB_RUNNER_STATE/profiles-before-compiled-java-$(date -u +%Y%m%dT%H%M%S%N).json"
+mv "$CODE_LAB_RUNNER_STATE/profiles.compiled.json" "$CODE_LAB_RUNNER_STATE/profiles.json"
 # In-flight adapter results are in memory; never intentionally restart a busy queue.
 php "$project_path/scripts/check-code-lab-runner.php" --queue-idle
 "${compose[@]}" up -d --force-recreate adapter
@@ -41,7 +47,7 @@ php "$project_path/scripts/check-code-lab-runner.php" --queue-idle
 python3 - "$project_path" "$CODE_LAB_RUNNER_STATE" <<'PYSMOKE'
 import json,os,pathlib,subprocess,sys,time,urllib.request
 project=pathlib.Path(sys.argv[1]);conf=json.loads((pathlib.Path(sys.argv[2])/'profiles.json').read_text())
-env=dict(os.environ,CODE_LAB_JUDGE0_URL='http://127.0.0.1:2358',CODE_LAB_JUDGE0_TOKEN=conf['token'],CODE_LAB_LANGUAGE_IDS=json.dumps(dict(zip(['c','cpp','python','java','javascript'],[p['id'] for p in conf['profiles']]))))
+env=dict(os.environ,CODE_LAB_JUDGE0_URL='http://127.0.0.1:2358',CODE_LAB_JUDGE0_TOKEN=conf['token'],CODE_LAB_LANGUAGE_IDS=json.dumps((dict(zip(['c','cpp','python','java','javascript'],[p['id'] for p in conf['profiles']])) | ({'java':10006} if any(p['id']==10006 for p in conf['profiles']) else {}))))
 for attempt in range(30):
  try:
   request=urllib.request.Request('http://127.0.0.1:2358/languages',headers={'X-Auth-Token':conf['token']})
@@ -56,7 +62,7 @@ PYSMOKE
 python3 - "$project_path/.env" "$CODE_LAB_RUNNER_STATE" <<'PY'
 import datetime,json,os,pathlib,re,shutil,stat,sys,tempfile
 path=pathlib.Path(sys.argv[1]);state=pathlib.Path(sys.argv[2]);conf=json.loads((state/'profiles.json').read_text());original=path.read_text();info=path.stat()
-settings={'CODE_LAB_JUDGE0_URL':'http://127.0.0.1:2358','CODE_LAB_JUDGE0_TOKEN':conf['token'],'CODE_LAB_LANGUAGE_IDS':json.dumps(dict(zip(['c','cpp','python','java','javascript'],[p['id'] for p in conf['profiles']])),separators=(',',':'))}
+settings={'CODE_LAB_JUDGE0_URL':'http://127.0.0.1:2358','CODE_LAB_JUDGE0_TOKEN':conf['token'],'CODE_LAB_LANGUAGE_IDS':json.dumps((dict(zip(['c','cpp','python','java','javascript'],[p['id'] for p in conf['profiles']])) | ({'java':10006} if any(p['id']==10006 for p in conf['profiles']) else {})),separators=(',',':'))}
 updated=original
 for key,value in settings.items():
  pattern=r'^'+re.escape(key)+r'=.*$'

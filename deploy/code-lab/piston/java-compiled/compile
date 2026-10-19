@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+[[ "$#" == 1 && "$1" == Main.java ]] || exit 1
+exec javac -J-XX:ActiveProcessorCount=1 -J-XX:+UseSerialGC -J-XX:TieredStopAtLevel=1 -J-Xms16m -J-Xmx256m -proc:none -encoding UTF-8 -d . Main.java

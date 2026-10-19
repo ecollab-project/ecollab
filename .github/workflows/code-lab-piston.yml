@@ -33,6 +33,10 @@ jobs:
           docker compose -f deploy/code-lab/piston/compose.yml up -d piston
           docker compose -f deploy/code-lab/piston/compose.yml run --rm --no-deps adapter python -B /runner/prepare.py > "$CODE_LAB_RUNNER_STATE/profiles.new.json"
           mv "$CODE_LAB_RUNNER_STATE/profiles.new.json" "$CODE_LAB_RUNNER_STATE/profiles.json"
+          docker compose -f deploy/code-lab/piston/compose.yml exec -T piston bash /ecollab-java-runtime/install.sh
+          docker compose -f deploy/code-lab/piston/compose.yml restart piston
+          docker compose -f deploy/code-lab/piston/compose.yml run --rm --no-deps adapter python -B /runner/java_profile.py > "$CODE_LAB_RUNNER_STATE/profiles.compiled.json"
+          mv "$CODE_LAB_RUNNER_STATE/profiles.compiled.json" "$CODE_LAB_RUNNER_STATE/profiles.json"
           docker compose -f deploy/code-lab/piston/compose.yml up -d adapter
       - name: Actual compiler and isolation smoke checks
         run: python3 -B tests/code-lab-piston-live.py

@@ -21,6 +21,7 @@ services:
       PISTON_LOG_LEVEL: WARN
     volumes:
       - packages:/piston/packages
+      - ./java-compiled:/ecollab-java-runtime:ro
     tmpfs:
       - /tmp:exec,size=512m
     logging:
@@ -42,6 +43,7 @@ services:
     volumes:
       - ./bridge.py:/runner/bridge.py:ro
       - ./prepare.py:/runner/prepare.py:ro
+      - ./java_profile.py:/runner/java_profile.py:ro
       - ${CODE_LAB_RUNNER_STATE:?Set private state directory}/profiles.json:/runner/profiles.json:ro
     depends_on: [piston]
     logging:
