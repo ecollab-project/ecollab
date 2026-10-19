@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/RealtimeDispatchMetrics.php';
 
 final class RealtimeOutbox
 {
@@ -55,23 +56,26 @@ final class RealtimeOutbox
         return array_values(array_unique(array_map('intval',$stmt->fetchAll(PDO::FETCH_COLUMN))));
     }
 
-    public static function dispatch($db, CentrifugoService $broker): int
+    public static function dispatch($db, CentrifugoService $broker,?RealtimeDispatchMetrics $metrics=null): int
     {
-        $rows=$db->query('SELECT * FROM realtime_outbox WHERE published_at IS NULL AND available_at<=NOW() ORDER BY id LIMIT 25')->fetchAll(PDO::FETCH_ASSOC);
+        $timed=static fn(string $phase,callable $work)=>$metrics?$metrics->measure($phase,$work):$work();
+        $rows=$timed('select',fn()=>$db->query('SELECT * FROM realtime_outbox WHERE published_at IS NULL AND available_at<=NOW() ORDER BY id LIMIT 25')->fetchAll(PDO::FETCH_ASSOC));
         $sent=0;
         foreach($rows as $event){
+            $success=false;$recipientCount=0;
             try {
-                $users=self::recipients($db,$event);
-                if($users)$broker->broadcast($users,['type'=>'chat_changed','kind'=>$event['kind'],
-                    'target_id'=>(int)$event['target_id'],'message_id'=>(int)$event['message_id'],'event_id'=>(int)$event['id']]);
-                $db->prepare('UPDATE realtime_outbox SET published_at=NOW(),last_error=NULL WHERE id=?')->execute([$event['id']]);
-                $sent++;
+                $users=$timed('recipients',fn()=>self::recipients($db,$event));$recipientCount=count($users);
+                if($users)$timed('broadcast',fn()=>$broker->broadcast($users,['type'=>'chat_changed','kind'=>$event['kind'],
+                    'target_id'=>(int)$event['target_id'],'message_id'=>(int)$event['message_id'],'event_id'=>(int)$event['id']]));
+                $timed('acknowledge',fn()=>$db->prepare('UPDATE realtime_outbox SET published_at=NOW(),last_error=NULL WHERE id=?')->execute([$event['id']]));
+                $sent++;$success=true;
             } catch(Throwable $e) {
                 $delay=min(60,2 ** min(6,(int)$event['attempts']));
-                $db->prepare("UPDATE realtime_outbox SET attempts=attempts+1,available_at=DATE_ADD(NOW(),INTERVAL $delay SECOND),last_error='Delivery unavailable' WHERE id=?")->execute([$event['id']]);
+                $timed('retry',fn()=>$db->prepare("UPDATE realtime_outbox SET attempts=attempts+1,available_at=DATE_ADD(NOW(),INTERVAL $delay SECOND),last_error='Delivery unavailable' WHERE id=?")->execute([$event['id']]));
                 error_log('[Realtime delivery] Event '.(int)$event['id'].' deferred; retry in '.$delay.' seconds');
-            }
+            }finally{$metrics?->outcome($success,$recipientCount);}
         }
         return $sent;
     }
 }
+
