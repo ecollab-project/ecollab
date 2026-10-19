@@ -4,6 +4,7 @@ Automatic grading submits all case inputs in one authenticated, private adapter 
 C, C++ and the compiled Java runtime compile once. Python has no compile stage.
 Each case executes in a new Piston isolate box/cgroup with a fresh stdin pipe and a
 pristine copy of the compiler artifacts. Expected outputs remain in the application.
+Each case releases its files and cgroup before the next case starts.
 No source or artifacts are cached across jobs. A case cannot persist files or
 processes into another case. The original per-case comparison, weights and public
 result redaction remain unchanged.

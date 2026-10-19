@@ -69,8 +69,18 @@
                     }
                 }
                 this.stdin = input.endsWith('\n') ? input : input + '\n';
-                runs.push(await this.safe_call(fresh, 'run', [code_files[0].name, ...this.args],
-                    this.timeouts.run, this.cpu_times.run, this.memory_limits.run));
+                try {
+                    runs.push(await this.safe_call(fresh, 'run', [code_files[0].name, ...this.args],
+                        this.timeouts.run, this.cpu_times.run, this.memory_limits.run));
+                } finally {
+                    // Release case files/cgroup before allocating the next case.
+                    // A failed cleanup aborts grading; job.cleanup retries dirty boxes.
+                    await new Promise((resolve, reject) => require('child_process').execFile(
+                        '/usr/local/bin/isolate', ['--cleanup', '--cg', '-b' + fresh.id],
+                        error => error ? reject(error) : resolve()));
+                    this.#dirty_boxes = this.#dirty_boxes.filter(item => item !== fresh);
+                    await nativeFs.rm(fresh.metadata_file_path, {force: true});
+                }
             }
             this.state = job_states.EXECUTED;
             return {compile, runs, compile_count: this.runtime.compiled ? 1 : 0};

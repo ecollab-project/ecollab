@@ -6,10 +6,12 @@ const assert = require('node:assert/strict');
 (async () => {
  const fragment = await fs.readFile(path.join(__dirname,'../deploy/code-lab/piston/grading/job-method.js'),'utf8');
  const job_states={PRIMED:1,EXECUTED:2};
+ let cleanupError=null,cleanups=0;
  const FakeJob = new Function('require','path','job_states',`return class {
-   async #create_isolate_box(){const dir=await require('fs/promises').mkdtemp(this.root+'/case-');return {dir};}
+   #dirty_boxes=[];
+   async #create_isolate_box(){const dir=await require('fs/promises').mkdtemp(this.root+'/case-');const box={dir,id:1,metadata_file_path:dir+'/metadata'};this.#dirty_boxes.push(box);return box;}
    ${fragment}
- }`)(require,path,job_states);
+ }`)(name=>name==='child_process'?{execFile:(_file,_args,done)=>{cleanups++;done(cleanupError);}}:require(name),path,job_states);
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'grading-'));
  async function fixture(compiled=true){
   const dir=await fs.mkdtemp(root+'/job-');await fs.mkdir(dir+'/submission');
@@ -34,7 +36,7 @@ const assert = require('node:assert/strict');
    return {code:0,stdout:job.stdin};
   };
   const result=await job.ecollab_execute_cases(box,['first','second']);
-  assert.equal(compiles,1);assert.equal(runs,2);assert.equal(result.compile_count,1);assert.equal(job.stdin,'');
+  assert.equal(compiles,1);assert.equal(runs,2);assert.equal(cleanups,2);assert.equal(result.compile_count,1);assert.equal(job.stdin,'');
   for(const kind of ['symlink','hardlink','large','entries']){
    const {job,box}=await fixture(false);
    if(kind==='symlink')await fs.symlink('/etc/passwd',box.dir+'/submission/link');
@@ -44,6 +46,10 @@ const assert = require('node:assert/strict');
    job.safe_call=()=>{throw Error('unsafe artifact executed');};
    await assert.rejects(job.ecollab_execute_cases(box,['input']),/Artifact/);
   }
+  const dirty=await fixture(false);let dirtyRuns=0;dirty.job.safe_call=async()=>{dirtyRuns++;return {code:0};};
+  cleanupError=Error('cleanup unavailable');
+  await assert.rejects(dirty.job.ecollab_execute_cases(dirty.box,['a','b']),/cleanup unavailable/);
+  assert.equal(dirtyRuns,1);assert.equal(dirty.job.stdin,'');cleanupError=null;
   const failed=await fixture();failed.job.safe_call=async()=>({code:1,stderr:'compile error'});
   assert.deepEqual((await failed.job.ecollab_execute_cases(failed.box,['a','b'])).runs,[]);
   console.log('PASS: one compile, pristine per-case snapshots, fixed limits, compiler failure, rejected links and bounded artifacts');
