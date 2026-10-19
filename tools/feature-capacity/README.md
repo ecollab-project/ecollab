@@ -120,7 +120,7 @@ Stable current target/account copies are written beside the manifest for easy SC
 older per-run folders remain available for cleanup.
 
 Code-grade preparation creates separate private assignments for2/4-user smoke
-runs and each50/100/150/200/250/300-user stage. Each stage can run ONCE per prepared
+runs and every25-user stage from50 through300 (including75 and125). Each stage can run ONCE per prepared
 target: submissions are immutable. Prepare a NEW target for an independent repeat.
 No facilitator role is granted to a test student; CLI provisioning only inserts
 known synthetic assignments in the already verified fixture server.
@@ -151,7 +151,7 @@ Then, using the matching prepared target:
 Run ONLY the mode matching the target; prepare/copy a different target before
 switching between API modes. The three media profiles can use a freshly prepared
 media target but each takes long enough that tokens normally need renewal.
-Increase Users through50,100,150,200,250,300 only after the lower level passes.
+Increase Users through50,75,100,125,150,175,200,225,250,275,300 only after the lower level passes.
 Do not automatically escalate failed loads. Keep the terminal output visible.
 The wrapper saves timestamped JSON and the actual process exit code. Require
 exit0, full completion and no failed thresholds. Run each passing profile twice

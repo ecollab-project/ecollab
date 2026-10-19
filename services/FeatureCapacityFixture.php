@@ -46,7 +46,7 @@ final class FeatureCapacityFixture
                 // Provision known synthetic assignments directly; do not elevate a student role.
                 $task=$this->db->prepare('INSERT INTO code_lab_tasks(server_id,created_by,title,instructions,language,kind,starter_code,grading_mode,runtime_id) VALUES(?,?,?,?,?,?,?,?,?)');
                 $test=$this->db->prepare('INSERT INTO code_lab_test_cases(task_id,position,input_data,expected_output,hidden,weight) VALUES(?,?,?,?,?,1)');
-                foreach([2,4,50,100,150,200,250,300] as $level)foreach(['c','cpp','python','java'] as $language){
+                foreach(array_merge([2,4],range(50,300,25)) as $level)foreach(['c','cpp','python','java'] as $language){
                     $runtime=CodeLabRunner::runtime($language);if(!$runtime)throw new RuntimeException('All four language runtimes must be configured.');
                     $task->execute([$target['server_id'],(int)$server['owner_id'],$runId.' '.$level.':'.$language,'Synthetic sieve benchmark; count primes up to the input integer.',$language,'assignment','','automatic',$runtime]);$id=(int)$this->db->lastInsertId();
                     $test->execute([$id,0,"1000\n","168\n",0]);$test->execute([$id,1,"2000\n","303\n",1]);$target['task_ids'][$level.':'.$language]=$id;

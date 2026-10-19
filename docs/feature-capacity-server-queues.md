@@ -50,7 +50,8 @@ npx playwright install chromium
 
 Install browsers before preparing media tokens. `Users` now accepts any integer
 2–300 for compiler/media/AI testing, including 75. Grading requires its prepared
-task levels: 2,4,50,100,150,200,250,300.
+task levels: 2,4 and50 through300 in steps of25, including75 and125.
+Older target files do not gain these assignments: prepare/copy a fresh `code-grade` target.
 
 ## Prepare the matching private target
 
