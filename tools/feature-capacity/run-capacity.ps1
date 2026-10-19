@@ -16,7 +16,7 @@ Set-Location $PSScriptRoot
 $target=Get-Content .\feature-target.json -Raw | ConvertFrom-Json
 $expected=if($Mode -in @('voice','video','screen')){'media'}elseif($Mode -eq 'code-sustained'){'code-run'}else{$Mode}
 if($target.mode -ne $expected){throw "Prepare a $expected target on the VPS and copy feature-target.json here first."}
-if($Mode -eq 'code-grade' -and -not $target.task_ids.PSObject.Properties.Name.Where({$_ -like "${Users}:*"}).Count){throw "No grading tasks for $Users users. Prepare a fresh grading fixture; use 2,4,50,100,150,200,250,300."}
+if($Mode -eq 'code-grade' -and -not $target.task_ids.PSObject.Properties.Name.Where({$_ -like "${Users}:*"}).Count){throw "No grading tasks for $Users users. Prepare a fresh grading fixture; supported levels are 2,4 and 50 through 300 in steps of 25."}
 $stamp=Get-Date -Format 'yyyyMMdd-HHmmss'
 $report=Join-Path $PWD "results-$Mode-$Users-$stamp-shard-$ShardIndex.json"
 $settings=@{TARGET_FILE=(Join-Path $PSScriptRoot 'feature-target.json');VUS="$Users";RAMP_SECONDS="$RampSeconds";HOLD_SECONDS="$HoldSeconds";DEADLINE_SECONDS="$DeadlineSeconds";REPORT_FILE=$report;MEDIA_PROFILE=$Mode;MEDIA_QUALITY=$MediaQuality;SHARD_COUNT="$ShardCount";SHARD_INDEX="$ShardIndex";SUSTAINED=([string]($Mode -eq 'code-sustained')).ToLowerInvariant();SUBMISSIONS_PER_USER="$SubmissionsPerUser";THINK_SECONDS="$ThinkSeconds"}

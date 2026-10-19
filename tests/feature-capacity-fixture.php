@@ -15,10 +15,11 @@ try{
     $tool=new FeatureCapacityFixture($db);$tool->validate($fixture);
     $db->exec('INSERT INTO server_members VALUES(19,3)');try{$tool->prepare($fixture,'code-grade');throw new LogicException('Real member accepted');}catch(RuntimeException $e){ensure(str_contains($e->getMessage(),'membership differs'),'Reject outsiders');}
     ensure((int)$db->query('SELECT COUNT(*) FROM code_lab_tasks')->fetchColumn()===0,'No mutation after validation rejection');$db->exec('DELETE FROM server_members WHERE user_id=3');
-    $target=$tool->prepare($fixture,'code-grade');ensure(count($target['task_ids'])===32,'Fresh assignments for all stages and smoke sizes');ensure((int)$db->query('SELECT COUNT(*) FROM code_lab_test_cases')->fetchColumn()===64,'Two grading cases per language/stage');
-    $id=$target['task_ids']['50:c'];$db->exec("INSERT INTO code_lab_attempts VALUES(1,$id,1);INSERT INTO code_lab_jobs VALUES(1,19,1,1,'running','test')");
+    $target=$tool->prepare($fixture,'code-grade');ensure(count($target['task_ids'])===52,'Fresh assignments for all stages and smoke sizes');ensure((int)$db->query('SELECT COUNT(*) FROM code_lab_test_cases')->fetchColumn()===104,'Two grading cases per language/stage');
+    foreach(['c','cpp','python','java']as$language)ensure(isset($target['task_ids']['125:'.$language]),'125-user assignments exist for every runtime');ensure(count(array_unique($target['task_ids']))===52,'Each level and runtime receives an independent assignment');
+    $id=$target['task_ids']['125:c'];$db->exec("INSERT INTO code_lab_attempts VALUES(1,$id,1);INSERT INTO code_lab_jobs VALUES(1,19,1,1,'running','test')");
     try{$tool->cleanup($fixture,$target);throw new LogicException('Active job cleanup accepted');}catch(RuntimeException $e){ensure(str_contains($e->getMessage(),'drain'),'Do not delete active jobs');}
-    ensure((int)$db->query('SELECT COUNT(*) FROM code_lab_tasks')->fetchColumn()===32,'Cleanup rollback retains all tasks');
+    ensure((int)$db->query('SELECT COUNT(*) FROM code_lab_tasks')->fetchColumn()===52,'Cleanup rollback retains all tasks');
     $db->exec("UPDATE code_lab_jobs SET state='done'");$tool->cleanup($fixture,$target);ensure((int)$db->query('SELECT COUNT(*) FROM code_lab_tasks')->fetchColumn()===0,'Synthetic grading data removed');
     $media=$tool->prepare($fixture,'media',2);ensure(count($media['media'])===2,'Scoped participant tokens');ensure(!str_contains(json_encode($media),'secret'),'No server secret export');
     $db->exec("UPDATE users SET role='facilitator' WHERE id=1");try{$tool->validate($fixture);throw new LogicException('Role elevation accepted');}catch(RuntimeException $e){ensure(str_contains($e->getMessage(),'student'),'Reject changed account roles');}
