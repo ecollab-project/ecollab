@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/ChannelReadQueries.php';
 
 /** CLI diagnostics: return counts, timings and plans, never message/user contents. */
 final class ChatReadProfiler
@@ -54,7 +55,7 @@ final class ChatReadProfiler
                      WHERE u.deleted_at IS NULL AND u.role NOT IN ('admin','super_admin')
                         AND u.status NOT IN ('banned','suspended','deactivated')
                      ORDER BY is_online DESC,sm.server_role ASC,u.full_name ASC",[$userId,$channel['server_id']]],
-                'channel_list_unread'=>[
+                'channel_list_unread_legacy'=>[
                     "SELECT c.id,c.name,c.type,
                         (SELECT COUNT(*) FROM messages m WHERE m.channel_id=c.id AND m.is_deleted=0
                         AND m.created_at>COALESCE((SELECT mr.last_read_at FROM message_reads mr
@@ -66,6 +67,7 @@ final class ChatReadProfiler
                         WHERE cm.channel_id=c.id AND cm.user_id=?) OR sm.server_role IN ('owner','admin') OR c.created_by=?)
                      ORDER BY c.position ASC,c.created_at ASC",[$userId,$userId,$userId,$channel['server_id'],$userId,$userId]],
             ];
+            $queries['server_list']=ChannelReadQueries::servers($userId,(bool)$admin);
             $result=['channel_id'=>$channelId,'server_id'=>(int)$channel['server_id'],'viewer_id'=>$userId,
                 'samples'=>$repeats,'scope'=>'Read-only SQL timings; excludes HTTP, PHP-FPM queuing, session locks and read-marker writes',
                 'queries'=>[]];
@@ -76,6 +78,24 @@ final class ChatReadProfiler
                 if ($name==='message_page') $ids=array_column($rows,'id');
                 unset($rows);
             }
+            [$visibleSql,$visibleParams]=ChannelReadQueries::channels((int)$channel['server_id'],$userId,(bool)$admin);
+            $stmt=$db->prepare($visibleSql);$times=[];$current=[];$authorized=[];
+            for($i=0;$i<$repeats;$i++){
+                $start=hrtime(true);$stmt->execute($visibleParams);$authorized=$stmt->fetchAll(PDO::FETCH_ASSOC);$stmt->closeCursor();
+                $current=$admin?$authorized:ChannelReadQueries::withUnread($db,$authorized);
+                $times[]=round((hrtime(true)-$start)/1e6,3);
+            }
+            $plan=$db->prepare('EXPLAIN '.$visibleSql);$plan->execute($visibleParams);
+            $stats=['rows_returned'=>count($current),'milliseconds'=>$times,'average_ms'=>round(array_sum($times)/count($times),3),'plan'=>$plan->fetchAll(PDO::FETCH_ASSOC),'count_batches'=>0,'count_plan'=>[]];
+            if(!$admin&&$authorized){
+                $batches=ChannelReadQueries::unreadBatches($authorized);$stats['count_batches']=count($batches);
+                [$countSql,$countParams]=$batches[0];$plan=$db->prepare('EXPLAIN '.$countSql);$plan->execute($countParams);$stats['count_plan']=$plan->fetchAll(PDO::FETCH_ASSOC);
+                [$legacySql,$legacyParams]=$queries['channel_list_unread_legacy'];$legacy=$db->prepare($legacySql);$legacy->execute($legacyParams);
+                $expected=[];foreach($legacy->fetchAll(PDO::FETCH_ASSOC)as$r)$expected[(int)$r['id']]=(int)$r['unread_count'];
+                $actual=[];foreach($current as$r)$actual[(int)$r['id']]=(int)$r['unread_count'];
+                $stats['exact_counts_match']=$expected===$actual;
+            }
+            $result['queries']['channel_list_unread']=$stats;
             if ($ids) {
                 $placeholders=implode(',',array_fill(0,count($ids),'?'));
                 $extras=[
@@ -106,3 +126,4 @@ final class ChatReadProfiler
             'average_ms'=>round(array_sum($times)/count($times),3),'plan'=>$explain->fetchAll(PDO::FETCH_ASSOC)],$rows];
     }
 }
+

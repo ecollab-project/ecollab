@@ -35,9 +35,20 @@ $id=RealtimeOutbox::record($db,'dm',7,function()use($db){$db->exec('INSERT INTO 
 try{RealtimeOutbox::record($db,'dm',7,function()use($db){$db->exec('INSERT INTO dm_messages VALUES(9,7,NULL,0)');return 6;});throw new LogicException('Expected unique-key failure');}catch(PDOException $e){}
 check((int)$db->query('SELECT COUNT(*) FROM dm_messages WHERE id=9')->fetchColumn()===0,'Outbox error rolls message back');
 $api=getenv('TEST_BROKER_API')?:'http://127.0.0.1:18001/api';
-RealtimeOutbox::dispatch($db,new CentrifugoService(str_repeat('a',64),str_repeat('x',64),$api));
+$metrics=new RealtimeDispatchMetrics();
+RealtimeOutbox::dispatch($db,new CentrifugoService(str_repeat('a',64),str_repeat('x',64),$api),$metrics);
 check((int)$db->query('SELECT attempts FROM realtime_outbox')->fetchColumn()===1,'Failure retained for retry');
 $db->exec('UPDATE realtime_outbox SET available_at=NOW()');
-check(RealtimeOutbox::dispatch($db,new CentrifugoService(str_repeat('a',64),str_repeat('b',64),$api))===1,'Retry succeeds');
+check(RealtimeOutbox::dispatch($db,new CentrifugoService(str_repeat('a',64),str_repeat('b',64),$api),$metrics)===1,'Retry succeeds');
 check((int)$db->query('SELECT COUNT(*) FROM realtime_outbox WHERE published_at IS NOT NULL')->fetchColumn()===1,'Success marked after publish');
 echo "Database audience, atomic save, rollback, migration rerun and delivery retry checks passed\n";
+
+
+$timings=$metrics->drain();check($timings['attempted']===2&&$timings['failed']===1&&$timings['recipient_targets']===4,'Failure and successful retry counted separately');
+foreach(['select','recipients','broadcast']as$phase)check($timings['phases'][$phase]['calls']===2&&$timings['phases'][$phase]['total_ms']>=0,'Real dispatch phase measured');
+check($timings['phases']['acknowledge']['calls']===1&&$timings['phases']['retry']['calls']===1,'Ack and retry timings separated');
+check($metrics->drain()['phases']===[],'Metrics reset between windows');
+check(!str_contains(json_encode($timings),'message_id')&&!str_contains(json_encode($timings),'user_id'),'No audience or content fields in metrics');
+try{$metrics->measure('broadcast',fn()=>throw new RuntimeException('PRIVATE_SENTINEL'));}catch(RuntimeException $e){}
+$failedTiming=$metrics->drain();check($failedTiming['phases']['broadcast']['calls']===1&&!str_contains(json_encode($failedTiming),'PRIVATE'),'Thrown operation timed without logging exception content');
+echo "Dispatch phases: real successful/retried broker calls, failure timing, privacy and window reset passed\n";

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/database/config/db.php';
+require_once __DIR__.'/ChannelReadQueries.php';
 
 class ChannelService
 {
@@ -24,57 +25,10 @@ class ChannelService
         $roleStmt->execute([':uid' => $userId]);
         $role = $roleStmt->fetchColumn() ?: 'student';
 
-        if (in_array($role, ['admin', 'super_admin'], true)) {
-            $stmt = $this->db->prepare("
-                SELECT c.id, c.name, c.slug, c.type, c.description, c.position,
-                       c.is_private, c.is_locked, c.member_count, c.created_at,
-                       0 AS unread_count,
-                       CASE WHEN cs.channel_id IS NULL THEN 1 ELSE 0 END AS is_new
-                FROM channels c
-                LEFT JOIN channel_seen cs ON cs.channel_id = c.id AND cs.user_id = :uid_seen
-                WHERE c.server_id = :server_id
-                ORDER BY c.position ASC, c.created_at ASC
-            ");
-            $stmt->execute([':server_id' => $serverId, ':uid_seen' => $userId]);
-        } else {
-            $stmt = $this->db->prepare("
-                SELECT c.id, c.name, c.slug, c.type, c.description, c.position,
-                       c.is_private, c.is_locked, c.member_count, c.created_at,
-                       (
-                           SELECT COUNT(*) FROM messages m
-                           WHERE m.channel_id = c.id
-                             AND m.is_deleted = 0
-                             AND m.created_at > COALESCE((
-                                 SELECT mr.last_read_at FROM message_reads mr
-                                 WHERE mr.user_id = :uid AND mr.channel_id = c.id
-                             ), '1970-01-01')
-                       ) AS unread_count,
-                       CASE WHEN cs.channel_id IS NULL THEN 1 ELSE 0 END AS is_new
-                FROM channels c
-                JOIN server_members sm ON sm.server_id = c.server_id AND sm.user_id = :uid2
-                LEFT JOIN channel_seen cs ON cs.channel_id = c.id AND cs.user_id = :uid4
-                WHERE c.server_id = :server_id
-                  AND (
-                      c.is_private = 0
-                      OR EXISTS (
-                          SELECT 1 FROM channel_members cm
-                          WHERE cm.channel_id = c.id AND cm.user_id = :uid3
-                      )
-                      OR sm.server_role IN ('owner','admin')
-                      OR c.created_by = :uid5
-                  )
-                ORDER BY c.position ASC, c.created_at ASC
-            ");
-            $stmt->execute([
-                ':uid'       => $userId,
-                ':uid2'      => $userId,
-                ':uid3'      => $userId,
-                ':uid4'      => $userId,
-                ':uid5'      => $userId,
-                ':server_id' => $serverId,
-            ]);
-        }
-        return $stmt->fetchAll();
+        $admin=in_array($role,['admin','super_admin'],true);
+        [$sql,$params]=ChannelReadQueries::channels($serverId,$userId,$admin);
+        $stmt=$this->db->prepare($sql);$stmt->execute($params);$channels=$stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $admin?$channels:ChannelReadQueries::withUnread($this->db,$channels);
     }
 
     /**
@@ -189,26 +143,8 @@ class ChannelService
         $roleStmt->execute([':uid' => $userId]);
         $role = $roleStmt->fetchColumn() ?: 'student';
 
-        if (in_array($role, ['admin', 'super_admin'], true)) {
-            $stmt = $this->db->prepare("
-                SELECT s.id, s.name, s.slug, s.icon_emoji, s.icon_url,
-                       s.category, s.type, s.member_count, 'admin' AS server_role
-                FROM servers s
-                WHERE s.status = 'active'
-                ORDER BY s.created_at ASC
-            ");
-            $stmt->execute();
-        } else {
-            $stmt = $this->db->prepare("
-                SELECT s.id, s.name, s.slug, s.icon_emoji, s.icon_url,
-                       s.category, s.type, s.member_count, sm.server_role
-                FROM servers s
-                JOIN server_members sm ON sm.server_id = s.id AND sm.user_id = :uid
-                WHERE s.status = 'active'
-                ORDER BY sm.joined_at ASC
-            ");
-            $stmt->execute([':uid' => $userId]);
-        }
+        [$sql,$params]=ChannelReadQueries::servers($userId,in_array($role,['admin','super_admin'],true));
+        $stmt=$this->db->prepare($sql);$stmt->execute($params);
         return $stmt->fetchAll();
     }
 
@@ -271,5 +207,6 @@ class ChannelService
         $stmt->execute([':uid' => $userId, ':cid' => $channelId]);
     }
 }
+
 
 
