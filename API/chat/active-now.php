@@ -9,6 +9,7 @@ require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 require_once dirname(__DIR__, 2) . '/services/TemporaryVoiceService.php';
+require_once dirname(__DIR__, 2) . '/services/ChannelAccessService.php';
 
 header('Content-Type: application/json');
 header('Cache-Control: no-cache, no-store');
@@ -30,7 +31,6 @@ $userId   = (int)$user['id'];
 $serverId = (int)($_GET['server_id'] ?? $_POST['server_id'] ?? 0);
 $action   = $_GET['action'] ?? $_POST['action'] ?? 'get';
 $tempVoice = new TemporaryVoiceService();
-$tempVoice->cleanupExpired();
 
 // ── Heartbeat: keep user online ───────────────────────────────────────────
 if ($action === 'heartbeat') {
@@ -44,24 +44,15 @@ if ($action === 'heartbeat') {
 if ($action === 'join_voice') {
     $channelId = (int)($_POST['channel_id'] ?? 0);
     if ($channelId) {
-        $access = $db->prepare(
-            "SELECT c.id FROM channels c
-             JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid
-             WHERE c.id=:cid AND c.type='voice'
-               AND (c.is_private=0 OR c.created_by=:uid2 OR EXISTS(
-                    SELECT 1 FROM channel_members cm WHERE cm.channel_id=c.id AND cm.user_id=:uid3
-               ))
-             LIMIT 1"
-        );
-        $access->execute([':uid'=>$userId,':cid'=>$channelId,':uid2'=>$userId,':uid3'=>$userId]);
-        if (!$access->fetchColumn()) {
-            http_response_code(403);
+        try {
+            $tempVoice->join($userId, $channelId, function () use ($db, $userId, $channelId): void {
+                (new ChannelAccessService($db))->voice($channelId, $userId);
+            });
+        } catch (Throwable $e) {
+            http_response_code($e->getCode() === 403 ? 403 : 503);
             echo json_encode(['success'=>false,'error'=>'Voice channel access denied']);
             exit;
         }
-        $db->prepare("UPDATE users SET voice_channel_id=:cid WHERE id=:id")
-           ->execute([':cid' => $channelId, ':id' => $userId]);
-        $tempVoice->markJoined($channelId);
     }
     echo json_encode(['success' => true]);
     exit;
@@ -69,12 +60,12 @@ if ($action === 'join_voice') {
 
 // ── Leave voice ───────────────────────────────────────────────────────────
 if ($action === 'leave_voice') {
-    $oldStmt = $db->prepare("SELECT voice_channel_id FROM users WHERE id=:id LIMIT 1");
-    $oldStmt->execute([':id'=>$userId]);
-    $oldChannelId = (int)($oldStmt->fetchColumn() ?: 0);
-    $db->prepare("UPDATE users SET voice_channel_id=NULL WHERE id=:id")
-       ->execute([':id' => $userId]);
-    if ($oldChannelId > 0) $tempVoice->markLeftAndSchedule($oldChannelId);
+    try { $tempVoice->leave($userId); }
+    catch (Throwable $e) {
+        http_response_code(503);
+        echo json_encode(['success'=>false,'error'=>'Voice presence temporarily unavailable']);
+        exit;
+    }
     echo json_encode(['success' => true]);
     exit;
 }

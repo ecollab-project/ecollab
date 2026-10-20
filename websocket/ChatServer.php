@@ -11,6 +11,9 @@ require_once dirname(__DIR__).'/services/WhiteboardPresenceService.php';
 use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
 
+require_once dirname(__DIR__).'/services/TemporaryVoiceService.php';
+require_once dirname(__DIR__).'/services/ChannelAccessService.php';
+
 class ChatServer implements MessageComponentInterface
 {
     /** @var \SplObjectStorage<ConnectionInterface, array> */
@@ -105,7 +108,7 @@ class ChatServer implements MessageComponentInterface
         $channelScopedTypes = [
             'join_channel','message','message_edited','message_deleted','message_pinned',
             'collab_note_cursor','collab_note_presence','typing','presence','chat_presence','channel_seen',
-            'draft_save','thread_reply','mention','join_voice','whiteboard_sync','wb_join',
+            'draft_save','thread_reply','mention','whiteboard_sync','wb_join',
             'wb_op','wb_cursor','wb_presence','wb_leave','wb_state_save','wb_request_state','screen_share_notify',
             'webrtc_offer','webrtc_answer','webrtc_candidate',
         ];
@@ -185,9 +188,11 @@ class ChatServer implements MessageComponentInterface
                     $leaveNotify = json_encode(['type'=>'wb_peer_left','channel_id'=>$wbChanId,'whiteboard_id'=>$wbWhiteboardId,'user_id'=>$uid,'username'=>$username]);
                     foreach ($remainingIds as $peerId) foreach ($this->userConns[$peerId] ?? [] as $peerConn) try { $peerConn->send($leaveNotify); } catch (\Exception) {}
                 }
+                $voiceChannelIds = [(int)($meta['voice_channel_id'] ?? 0)];
                 foreach ($this->voiceRooms as $vcId => &$participants) {
                     $wasInRoom = array_filter($participants, fn($p) => $p['user_id'] === $uid);
                     if (!empty($wasInRoom)) {
+                        $voiceChannelIds[] = (int)$vcId;
                         $participants = array_values(array_filter($participants, fn($p) => $p['user_id'] !== $uid));
                         $leavePayload = json_encode(['type'=>'voice_leave','user_id'=>$uid,'username'=>$username,'channel_id'=>$vcId]);
                         foreach ($participants as $p) foreach ($this->userConns[(int)$p['user_id']] ?? [] as $peerConn) try { $peerConn->send($leavePayload); } catch (\Exception) {}
@@ -196,7 +201,11 @@ class ChatServer implements MessageComponentInterface
                     }
                 }
                 unset($participants);
-                try { $this->db->prepare("UPDATE users SET voice_channel_id=NULL WHERE id=:id")->execute([':id'=>$uid]); } catch (\Exception) {}
+                // The final tab may differ from the tab that joined voice.
+                foreach (array_unique($voiceChannelIds) as $voiceChannelId) {
+                    if ($voiceChannelId <= 0 || $voiceChannelId >= self::DM_GROUP_VOICE_ID_OFFSET) continue;
+                    try { (new TemporaryVoiceService($this->db))->leave($uid, $voiceChannelId); } catch (\Throwable $e) { error_log('[WS] Voice leave failed'); }
+                }
                 $isSysAdmin=in_array((string)($meta['role']??''),['admin','super_admin'],true);
                 if(!$isSysAdmin){$this->setUserOnline($uid, false);$this->broadcastPresence($uid, false, $username);}
             }
@@ -314,9 +323,11 @@ class ChatServer implements MessageComponentInterface
             $mem->execute([':gid'=>$gid,':uid'=>$uid]);
             if(!$mem->fetchColumn())return;
         }else{
-            $chk=$this->db->prepare("SELECT 1 FROM channels c JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid WHERE c.id=:cid AND c.type='voice'");
-            $chk->execute([':uid'=>$uid,':cid'=>$channelId]);
-            if(!$chk->fetchColumn())return;
+            try {
+                (new TemporaryVoiceService($this->db))->join($uid, $channelId, function () use ($uid, $channelId): void {
+                    (new ChannelAccessService($this->db))->voice($channelId, $uid);
+                });
+            } catch (\Throwable $e) { $from->send(json_encode(['type'=>'error','message'=>'Voice channel access denied'])); return; }
         }
 
         $stmt=$this->db->prepare('SELECT id,username,full_name,avatar_color_gradient,role FROM users WHERE id=:id');
@@ -351,9 +362,6 @@ class ChatServer implements MessageComponentInterface
             'resourceId'=>$from->resourceId
         ];
 
-        if(!$isDm){
-            try{$this->db->prepare("UPDATE users SET voice_channel_id=:cid WHERE id=:id")->execute([':cid'=>$channelId,':id'=>$uid]);}catch(\Exception){}
-        }
 
         $payload=json_encode(['type'=>'voice_join','user'=>$user,'channel_id'=>$channelId]);
         // CRITICAL: voice events are scoped strictly to this room.
@@ -389,7 +397,7 @@ class ChatServer implements MessageComponentInterface
 
         $meta['voice_channel_id']=null;
         if(!$isDm){
-            try{$this->db->prepare("UPDATE users SET voice_channel_id=NULL WHERE id=:id")->execute([':id'=>$uid]);}catch(\Exception){}
+            try{(new TemporaryVoiceService($this->db))->leave($uid, $channelId);}catch(\Throwable $e){error_log('[WS] Voice leave failed');}
         }
 
         $payload=json_encode(['type'=>'voice_leave','user_id'=>$uid,'username'=>$meta['username'],'channel_id'=>$channelId]);

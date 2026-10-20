@@ -213,7 +213,11 @@ try {
             $matches = [];
 
             $candidates = $users->fetchAll(PDO::FETCH_ASSOC);
-            $profiles = array_map(static fn($candidate) => $loadProfile((int)$candidate['id'], $db), $candidates);
+            // Keep candidate order aligned with semantic scores.
+            $byId = $service->loadProfiles($db, array_column($candidates, 'id'));
+            $profiles = array_map(static fn($candidate) => $byId[(int)$candidate['id']], $candidates);
+            $relationships = $service->loadRelationships($db, $uid, array_column($candidates, 'id'));
+            $cacheRows = [];
             $semantic = (new PeerSemanticClient())->scores($profile, $profiles);
             foreach ($candidates as $index => $candidate) {
                 $cid = (int)$candidate['id'];
@@ -227,11 +231,7 @@ try {
                 if ($score['total'] < $minScore) continue;
 
                 $a = min($uid, $cid); $b = max($uid, $cid);
-                $cache = $db->prepare("INSERT INTO pm_compatibility
-                    (user_a_id,user_b_id,score_total,score_subjects,score_interests,score_hobbies,score_style,shared_subjects,shared_interests,shared_hobbies,match_tags)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?)
-                    ON DUPLICATE KEY UPDATE score_total=VALUES(score_total),score_subjects=VALUES(score_subjects),score_interests=VALUES(score_interests),score_hobbies=VALUES(score_hobbies),score_style=VALUES(score_style),shared_subjects=VALUES(shared_subjects),shared_interests=VALUES(shared_interests),shared_hobbies=VALUES(shared_hobbies),match_tags=VALUES(match_tags),computed_at=CURRENT_TIMESTAMP");
-                $cache->execute([$a,$b,$score['rule_total'],$score['subjects'],$score['interests'],$score['hobbies'],$score['style'],$score['shared_subjects'],$score['shared_interests'],$score['shared_hobbies'],json_encode($service->scoreProfiles($profile, $candidateProfile)['tags'], JSON_UNESCAPED_UNICODE)]);
+                $cacheRows[] = [$a,$b,$score['rule_total'],$score['subjects'],$score['interests'],$score['hobbies'],$score['style'],$score['shared_subjects'],$score['shared_interests'],$score['shared_hobbies'],json_encode($service->scoreProfiles($profile, $candidateProfile)['tags'], JSON_UNESCAPED_UNICODE)];
 
                 $name = (string)($candidate['full_name'] ?: $candidate['username']);
                 $mySubjectIds = array_map(static fn($x) => (int)$x['subject_id'], $profile['subjects']);
@@ -241,12 +241,8 @@ try {
                 $sharedInterests = array_values(array_filter($candidateProfile['interests'], static fn($s) => in_array((int)$s['interest_id'], $myInterestIds, true)));
                 $sharedHobbies = array_values(array_filter($candidateProfile['hobbies'], static fn($s) => in_array((int)$s['hobby_id'], $myHobbyIds, true)));
 
-                $friendStmt = $db->prepare("SELECT status FROM friendships WHERE (requester_id=? AND addressee_id=?) OR (requester_id=? AND addressee_id=?) LIMIT 1");
-                $friendStmt->execute([$uid,$cid,$cid,$uid]);
-                $friendship = $friendStmt->fetchColumn();
-                $requestStmt = $db->prepare("SELECT status FROM pm_match_requests WHERE requester_id=? AND addressee_id=? LIMIT 1");
-                $requestStmt->execute([$uid,$cid]);
-                $requestStatus = $requestStmt->fetchColumn() ?: null;
+                $friendship = $relationships[$cid]['friendship'] ?? null;
+                $requestStatus = $relationships[$cid]['request_status'] ?? null;
 
                 $matches[] = [
                     'id'=>$cid,
@@ -277,6 +273,8 @@ try {
                     'grad'=>(string)($candidate['avatar_color_gradient'] ?? '#a855f7,#ec4899'),
                 ];
             }
+
+            $service->cacheCompatibility($db, $cacheRows);
 
             usort($matches, static function (array $a, array $b) use ($sort): int {
                 return match ($sort) {
@@ -310,7 +308,9 @@ try {
             $service = new PeerMatchingService();
             $mine = $loadProfile($uid,$db);
             $candidates = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $profiles = array_map(static fn($candidate) => $loadProfile((int)$candidate['id'], $db), $candidates);
+            // Keep candidate order aligned with semantic scores.
+            $byId = $service->loadProfiles($db, array_column($candidates, 'id'));
+            $profiles = array_map(static fn($candidate) => $byId[(int)$candidate['id']], $candidates);
             $semantic = (new PeerSemanticClient())->scores($mine, $profiles);
             foreach ($candidates as $index => $candidate) {
                 $cp = $profiles[$index];

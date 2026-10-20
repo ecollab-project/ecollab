@@ -4,20 +4,16 @@ require_once dirname(__DIR__,2).'/config.php';
 require_once dirname(__DIR__,2).'/database/config/db.php';
 require_once dirname(__DIR__,2).'/security/middleware/AuthMiddleware.php';
 require_once dirname(__DIR__,2).'/services/LiveKitService.php';
+require_once dirname(__DIR__,2).'/services/ChannelAccessService.php';
 header('Content-Type: application/json');header('Cache-Control: no-store');
 try {
     $user=AuthMiddleware::requireAuth(true);
     if (($_SERVER['REQUEST_METHOD']??'') !== 'GET') { http_response_code(405); exit; }
+    session_write_close();
     $ids=array_slice(array_values(array_unique(array_filter(array_map('intval',explode(',',(string)($_GET['channel_ids']??''))),fn($id)=>$id>0))),0,100);
     if (!$ids) { echo json_encode(['success'=>true,'counts'=>(object)[]]); exit; }
     $db=Database::getInstance();
-    $params=$ids; $params[]=(int)$user['id']; $params[]=(int)$user['id']; $params[]=(int)$user['id'];
-    $q=$db->prepare("SELECT c.id FROM channels c JOIN server_members sm ON sm.server_id=c.server_id
-        WHERE c.id IN (".implode(',',array_fill(0,count($ids),'?')).") AND c.type='voice' AND sm.user_id=?
-        AND (c.is_private=0 OR sm.server_role IN ('owner','admin') OR c.created_by=?
-        OR EXISTS(SELECT 1 FROM channel_members cm WHERE cm.channel_id=c.id AND cm.user_id=?))");
-    $q->execute($params); $allowed=array_map('intval',$q->fetchAll(PDO::FETCH_COLUMN));
-    session_write_close();
+    $allowed=array_keys((new ChannelAccessService($db))->voiceChannels($ids, (int)$user['id']));
     $counts=array_fill_keys($allowed,0);
     if ($allowed) {
         $service=new LiveKitService();

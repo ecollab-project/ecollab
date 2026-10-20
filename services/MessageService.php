@@ -4,15 +4,21 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/database/config/db.php';
 require_once __DIR__ . '/RealtimeOutbox.php';
+require_once __DIR__ . '/ChannelAccessService.php';
 
 class MessageService
 {
     private PDO $db;
     private const PAGE_SIZE = 50;
 
-    public function __construct()
+    public function __construct(?PDO $db = null)
     {
-        $this->db = Database::getInstance();
+        $this->db = $db ?? Database::getInstance();
+    }
+
+    public static function normalizeLimit(int $limit): int
+    {
+        return min(100, max(1, $limit));
     }
 
     /**
@@ -20,32 +26,9 @@ class MessageService
      */
     public function getMessages(int $channelId, int $userId, ?int $before = null, int $limit = self::PAGE_SIZE, ?int $after = null): array
     {
-        // Verify user has access to this channel's server
-        // Admins/moderators can read any channel
-        $roleCheck = $this->db->prepare("SELECT role FROM users WHERE id = :uid LIMIT 1");
-        $roleCheck->execute([':uid' => $userId]);
-        $readerRole = $roleCheck->fetchColumn() ?: 'student';
-
-        if (!in_array($readerRole, ['admin', 'super_admin', 'moderator'], true)) {
-            $access = $this->db->prepare("
-                SELECT 1 FROM channels c
-                JOIN server_members sm ON sm.server_id = c.server_id AND sm.user_id = :uid
-                WHERE c.id = :cid LIMIT 1
-            ");
-            $access->execute([':uid' => $userId, ':cid' => $channelId]);
-            if (!$access->fetch()) {
-                throw new RuntimeException('Access denied', 403);
-            }
-        } else {
-            // Just verify the channel exists
-            $access = $this->db->prepare("SELECT 1 FROM channels WHERE id = :cid LIMIT 1");
-            $access->execute([':cid' => $channelId]);
-            if (!$access->fetch()) {
-                throw new RuntimeException('Channel not found', 404);
-            }
-        }
-
-        $limit = min(max(1, $limit), 100);
+        (new ChannelAccessService($this->db))->read($channelId, $userId);
+        $limit = self::normalizeLimit($limit);
+        if ($after !== null) $before = null;
         $params = [':cid' => $channelId, ':limit' => $limit];
         $beforeClause = '';
         if ($before !== null) {
@@ -343,22 +326,7 @@ class MessageService
      */
     public function getPinnedMessages(int $channelId, int $userId): array
     {
-        // Verify access
-        $access = $this->db->prepare("
-            SELECT 1 FROM channels ch
-            JOIN server_members sm ON sm.server_id = ch.server_id AND sm.user_id = :uid
-            WHERE ch.id = :cid LIMIT 1
-        ");
-        $access->execute([':uid' => $userId, ':cid' => $channelId]);
-        if (!$access->fetch()) {
-            // Admins/facilitators may still access
-            $roleStmt = $this->db->prepare("SELECT role FROM users WHERE id=:uid LIMIT 1");
-            $roleStmt->execute([':uid' => $userId]);
-            $role = $roleStmt->fetchColumn();
-            if (!in_array($role, ['admin', 'moderator', 'super_admin', 'facilitator'], true)) {
-                throw new \RuntimeException('Forbidden', 403);
-            }
-        }
+        (new ChannelAccessService($this->db))->read($channelId, $userId);
 
         $stmt = $this->db->prepare("
             SELECT m.id, m.channel_id, m.sender_id, m.content, m.content_type,

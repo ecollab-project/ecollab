@@ -1,0 +1,46 @@
+name: Phase 1 backend regression
+on:
+  pull_request:
+    branches: [ecollab-collabs]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: 'yes'
+          MARIADB_DATABASE: ecollab_phase1_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_sqlite, pdo_mysql, mbstring, curl
+          coverage: none
+      - name: Install locked dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: PHP syntax
+        run: find API services websocket scripts tests -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Focused and existing standalone regressions
+        run: |
+          set -e
+          for test in phase1-access phase1-temporary-voice phase1-peer-batch phase1-messages phase1-websocket peer-ml-regression chat-read-regression centrifugo-regression whiteboard-scene-regression whiteboard-presence-regression; do
+            php "tests/$test.php"
+          done
+      - name: Existing unit suite
+        run: php vendor/bin/phpunit --testsuite Unit --stderr
+      - name: Parallel authenticated session requests
+        run: python3 tests/phase1-session.py
+      - name: MariaDB migration, locking and cache regression
+        env:
+          PHASE1_TEST_DSN: mysql:host=127.0.0.1;port=3306;dbname=ecollab_phase1_test
+        run: php tests/phase1-mariadb.php

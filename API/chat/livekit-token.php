@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
-require_once dirname(__DIR__, 2) . '/services/ChannelService.php';
+require_once dirname(__DIR__, 2) . '/services/ChannelAccessService.php';
 require_once dirname(__DIR__, 2) . '/services/LiveKitService.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -33,36 +33,7 @@ try {
         throw new InvalidArgumentException('A valid channel_id is required.');
     }
 
-    $channels = new ChannelService();
-    $channel = $channels->getChannel($channelId, (int)$user['id']);
-    if (!$channel || ($channel['type'] ?? '') !== 'voice') {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'You cannot join this voice channel.']);
-        exit;
-    }
-
-    // Private-channel authorization must be stricter than server membership.
-    if (!empty($channel['is_private']) && !in_array((string)($user['role'] ?? ''), ['admin', 'super_admin'], true)) {
-        $db = Database::getInstance();
-        $stmt = $db->prepare(
-            "SELECT 1
-               FROM channels c
-               JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid
-              WHERE c.id=:cid
-                AND (
-                    EXISTS (SELECT 1 FROM channel_members cm WHERE cm.channel_id=c.id AND cm.user_id=:uid2)
-                    OR sm.server_role IN ('owner','admin')
-                    OR c.created_by=:uid3
-                )
-              LIMIT 1"
-        );
-        $stmt->execute([':uid'=>(int)$user['id'], ':uid2'=>(int)$user['id'], ':uid3'=>(int)$user['id'], ':cid'=>$channelId]);
-        if (!$stmt->fetchColumn()) {
-            http_response_code(403);
-            echo json_encode(['success' => false, 'error' => 'You cannot join this private voice channel.']);
-            exit;
-        }
-    }
+    $channel = (new ChannelAccessService(Database::getInstance()))->voice($channelId, (int)$user['id']);
 
     $livekit = new LiveKitService();
     $result = $livekit->issueRoomToken($user, $channelId, (string)$channel['name']);
@@ -72,8 +43,9 @@ try {
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 } catch (Throwable $e) {
     error_log('[livekit-token] ' . $e->getMessage());
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Voice service is temporarily unavailable.']);
+    $code = $e->getCode() === 403 ? 403 : 503;
+    http_response_code($code);
+    echo json_encode(['success' => false, 'error' => $code === 403 ? 'Voice channel access denied.' : 'Voice service is temporarily unavailable.']);
 }
 
 
