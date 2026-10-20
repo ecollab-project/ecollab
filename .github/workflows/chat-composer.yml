@@ -1,0 +1,19 @@
+name: Chat composer
+on:
+  push:
+    branches: [ecollab-collabs]
+    paths: ['tools/chat-composer/**','assets/js/chat/**','assets/css/chat-composer.css','modules/chat/chat.php','tests/chat-composer*','scripts/*chat-composer*','.github/workflows/chat-composer.yml']
+  workflow_dispatch:
+jobs:
+  composer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - uses: shivammathur/setup-php@v2
+        with: {php-version: '8.3'}
+      - run: npm ci --ignore-scripts --prefix tools/chat-composer
+      - run: npm run build --prefix tools/chat-composer && git diff --exit-code -- assets/js/chat/rich-composer*
+      - run: node tests/chat-composer-regression.cjs
+      - run: bash -n scripts/deploy-chat-composer.sh && php -l scripts/configure-chat-composer.php && php -l modules/chat/chat.php

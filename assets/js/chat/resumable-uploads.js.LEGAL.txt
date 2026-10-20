@@ -1,0 +1,17 @@
+Bundled license information:
+
+@uppy/utils/lib/Translator.js:
+  /**
+   * Takes a string with placeholder variables like `%{smart_count} file selected`
+   * and replaces it with values from options `{smart_count: 5}`
+   *
+   * @license https://github.com/airbnb/polyglot.js/blob/master/LICENSE
+   * taken from https://github.com/airbnb/polyglot.js/blob/master/lib/polyglot.js#L299
+   *
+   * @param phrase that needs interpolation, with placeholders
+   * @param options with values that will be used to replace placeholders
+   */
+
+tus-js-client/lib.esm/upload.js:
+tus-js-client/lib.esm/browser/fileReader.js:
+  /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */

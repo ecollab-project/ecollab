@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/config.php';
@@ -9,6 +10,9 @@ require_once dirname(__DIR__, 2) . '/services/ChannelService.php';
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
 $user = AuthMiddleware::requireAuth(true);
+// These endpoints write no session data; release the per-account lock before DB work.
+session_write_close();
+header('Cache-Control: no-store, private');
 
 try {
     $channelId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
@@ -18,6 +22,11 @@ try {
         exit;
     }
 
+    // Sidebar is bounded; explicit directory requests retain the full roster contract.
+    $memberMode = $_GET['members'] ?? 'sidebar';
+    if (!is_string($memberMode) || !in_array($memberMode, ['sidebar', 'all', 'none'], true)) {
+        throw new InvalidArgumentException('Invalid member mode', 400);
+    }
     $db = Database::getInstance();
 
     $service = new ChannelService();
@@ -28,36 +37,37 @@ try {
         exit;
     }
 
-    $members = $service->getOnlineMembers((int)$channel['server_id']);
-    $service->markRead((int)$channelId, $user['id']);
-
-    // Auto-create access requests table if needed
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS channel_access_requests (
-            id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            channel_id   INT UNSIGNED    NOT NULL,
-            user_id      BIGINT UNSIGNED NOT NULL,
-            status       ENUM('pending','accepted','declined') NOT NULL DEFAULT 'pending',
-            requested_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            resolved_at  DATETIME NULL,
-            PRIMARY KEY (id),
-            UNIQUE KEY uq_channel_user (channel_id, user_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    ");
-
-    // Determine if user can manage the channel and if they have access
-    $roleStmt = $db->prepare("SELECT server_role FROM server_members WHERE server_id = :sid AND user_id = :uid LIMIT 1");
-    $roleStmt->execute([':sid' => $channel['server_id'], ':uid' => $user['id']]);
-    $serverRole = $roleStmt->fetchColumn();
-    $canManage = in_array($serverRole, ['owner', 'admin', 'moderator'])
-        || (int)($channel['created_by'] ?? 0) === (int)$user['id'];
+    // Resolve access before exposing member/activity data.
+    $platformRole = (string)($user['role'] ?? 'student');
+    $isSysAdmin = in_array($platformRole, ['admin','super_admin'], true);
+    $serverRole = null;
+    if (!$isSysAdmin) {
+        $roleStmt = $db->prepare("SELECT server_role FROM server_members WHERE server_id = :sid AND user_id = :uid LIMIT 1");
+        $roleStmt->execute([':sid' => $channel['server_id'], ':uid' => $user['id']]);
+        $serverRole = $roleStmt->fetchColumn();
+    }
+    $canManage = $isSysAdmin
+        || in_array($serverRole, ['owner', 'admin'], true)
+        || (int)($channel['owner_id'] ?? $channel['created_by'] ?? 0) === (int)$user['id'];
 
     $hasAccess = true;
     if ($channel['is_private']) {
         $accStmt = $db->prepare("SELECT 1 FROM channel_members WHERE channel_id = :cid AND user_id = :uid LIMIT 1");
         $accStmt->execute([':cid' => $channelId, ':uid' => $user['id']]);
-        $hasAccess = (bool)$accStmt->fetchColumn() || $canManage;
+        $hasAccess = $isSysAdmin || (bool)$accStmt->fetchColumn() || $canManage;
     }
+
+    $members = $hasAccess && $memberMode !== 'none'
+        ? $service->getOnlineMembers((int)$channel['server_id'], (int)$user['id'], $memberMode === 'all' ? null : 20)
+        : [];
+    $memberTotal = $hasAccess && $memberMode !== 'none'
+        ? ($memberMode === 'all' ? count($members) : $service->countVisibleMembers((int)$channel['server_id'])) : 0;
+    // Opening the directory must not mark messages read.
+    if ($hasAccess && $memberMode !== 'all') {
+        $service->markRead((int)$channelId, $user['id']);
+    }
+
+    // Access state was resolved before loading channel content.
 
     // Check for pending request status
     $requestStatus = null;
@@ -71,6 +81,8 @@ try {
         'success'        => true,
         'channel'        => $channel,
         'members'        => $members,
+        'member_total'   => $memberTotal,
+        'members_complete' => $memberMode === 'all' || ($memberMode === 'sidebar' && count($members) >= $memberTotal),
         'can_manage'     => $canManage,
         'has_access'     => $hasAccess,
         'request_status' => $requestStatus,
@@ -78,5 +90,6 @@ try {
 } catch (Throwable $e) {
     $code = ($e->getCode() >= 400 && $e->getCode() < 600) ? $e->getCode() : 500;
     http_response_code($code);
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(['error' => $code < 500 ? $e->getMessage() : 'Server error']);
 }
+

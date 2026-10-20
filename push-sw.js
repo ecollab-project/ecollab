@@ -1,0 +1,6 @@
+/* Dedicated push scope: no fetch handler, caching, or offline interception. */
+'use strict';
+self.addEventListener('install',()=>self.skipWaiting());
+self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
+self.addEventListener('push',event=>{event.waitUntil((async()=>{let data={};try{data=event.data?.json()||{};}catch{}const origin=self.location.origin;let url=new URL('./modules/chat/chat.php',self.location.href).href;try{const requested=new URL(data.url,origin);if(requested.origin===origin)url=requested.href;}catch{}await self.registration.showNotification('Ecollab',{body:'You have a new notification. Open Ecollab to view it.',tag:'ecollab-updates',data:{url}});})());});
+self.addEventListener('notificationclick',event=>{event.notification.close();event.waitUntil((async()=>{const url=new URL(event.notification.data?.url||'./modules/chat/chat.php',self.location.href);if(url.origin!==self.location.origin)return;const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});for(const window of windows){if(new URL(window.url).origin===url.origin&&new URL(window.url).pathname.endsWith('/modules/chat/chat.php')){await window.focus();if('navigate'in window)await window.navigate(url.href);return;}}await self.clients.openWindow(url.href);})());});

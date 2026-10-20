@@ -67,5 +67,5 @@ try {
     echo json_encode(['mentions' => $mentions, 'count' => count($mentions)]);
 } catch (Throwable $e) {
     http_response_code(500);
-    echo json_encode(['error' => $e->getMessage(), 'mentions' => []]);
+    echo json_encode(['error' => 'Server error', 'mentions' => []]);
 }

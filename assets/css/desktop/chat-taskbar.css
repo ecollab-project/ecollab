@@ -1,0 +1,138 @@
+/* Desktop chat composition: navigation, conversation and people above the server dock.
+   Mobile keeps the existing navigation drawer and touch controls. */
+@media (min-width: 861px) {
+  body[data-mobile-surface="chat"] {
+    --server-dock-height: 58px;
+    --sidebar-right-width: 260px;
+    height: calc(100vh - var(--server-dock-height));
+    height: calc(100dvh - var(--server-dock-height));
+  }
+
+  body[data-mobile-surface="chat"] :is(.sidebar-left, .chat-main, .sidebar-right, #navViewOverlay) {
+    height: 100% !important;
+    min-height: 0;
+  }
+
+  .workspace-switcher {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 90;
+    width: 100%;
+    height: var(--server-dock-height);
+    flex-direction: row;
+    justify-content: safe center;
+    gap: 12px;
+    padding: 8px 16px;
+    border-right: 0;
+    border-top: 1px solid var(--border);
+    background: var(--bg-primary);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+  }
+
+  .workspace-switcher :is(.workspace-icon, .workspace-add, .workspace-brand-mark) {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    margin: 0;
+  }
+
+  .workspace-switcher .workspace-icon.active::before {
+    left: 12px;
+    top: auto;
+    bottom: -5px;
+    width: 18px;
+    height: 3px;
+    transform: none;
+    border-radius: 4px;
+  }
+
+  .workspace-switcher .workspace-sep {
+    width: 1px;
+    height: 24px;
+    flex: 0 0 1px;
+    margin: 0 !important;
+  }
+
+  .workspace-switcher .workspace-icon:hover { transform: translateY(-2px); }
+  .workspace-switcher .workspace-icon:focus-visible,
+  .workspace-switcher .workspace-add:focus-visible {
+    outline: 2px solid var(--accent-purple);
+    outline-offset: 2px;
+  }
+
+  #collabHub {
+    height: calc(100vh - var(--server-dock-height));
+    height: calc(100dvh - var(--server-dock-height));
+  }
+}
+
+.workspace-switcher button { font-family: inherit; padding: 0; }
+.workspace-switcher .workspace-add { background: transparent; }
+@media (prefers-reduced-motion: reduce) {
+  .workspace-switcher .workspace-icon:hover { transform: none; }
+}
+
+.workspace-taskbar-left,.workspace-taskbar-center,.workspace-taskbar-right,.workspace-server-list{display:contents}
+#workspaceAccountDock,#workspaceSettingsDock,.workspace-scroll{display:none}
+.workspace-call-slot[hidden]{display:none!important}
+#workspaceAccountHome{display:none}
+#workspaceAccount .user-avatar{cursor:default}
+.workspace-switcher .workspace-brand-mark{pointer-events:auto;cursor:pointer;border:0;padding:0}
+.workspace-switcher .workspace-brand-mark:focus-visible{outline:2px solid #c084fc;outline-offset:3px}
+@media(min-width:861px){
+ .workspace-switcher{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;overflow:visible;padding:8px 12px}
+ .workspace-taskbar-left,.workspace-taskbar-center,.workspace-taskbar-right{display:flex;align-items:center;min-width:0;gap:8px}
+ .workspace-taskbar-center{justify-content:center}
+ .workspace-taskbar-right{justify-content:flex-end}
+ #workspaceAccountDock,#workspaceSettingsDock{display:block;min-width:0}
+ .workspace-server-list{display:flex;align-items:center;gap:8px;min-width:0;overflow-x:auto;overflow-y:hidden;padding:3px;scrollbar-width:none;overscroll-behavior-x:contain}
+ .workspace-server-list::-webkit-scrollbar{display:none}
+ .workspace-switcher .workspace-scroll{display:flex;align-items:center;justify-content:center;flex:0 0 20px;width:20px;height:34px;border:0;border-radius:7px;background:transparent;color:#94a3b8;font-size:20px;cursor:pointer}
+ .workspace-scroll[hidden]{display:none!important}.workspace-scroll:disabled{opacity:.3}
+ .workspace-taskbar-center .workspace-sep{display:none}
+ .workspace-taskbar-center .workspace-add{width:30px;flex-basis:30px}
+ #workspaceAccountDock .user-profile-footer{display:flex;align-items:center;width:208px;min-width:0;height:40px;margin:0;padding:0;gap:8px;border:0;background:transparent}
+ #workspaceAccountDock .footer-controls{flex:none;gap:4px}
+ #workspaceAccountDock .user-avatar,#workspaceAccountDock .avatar-lg{width:30px;height:30px;flex:none;font-size:12px}
+ #workspaceAccountDock .footer-icon-btn,#workspaceSettingsDock .footer-icon-btn{display:flex;align-items:center;justify-content:center;width:32px;min-width:32px;height:34px;padding:0;border:1px solid transparent;border-radius:8px;text-decoration:none;background:transparent;color:#94a3b8;cursor:pointer}
+ #workspaceSettingsDock{padding-left:8px;border-left:1px solid #ffffff0c}
+ #workspaceSettingsDock .footer-icon-btn:hover{background:#ffffff08;color:#fff}
+ .workspace-call-slot{display:flex;min-width:0;gap:8px}
+ .workspace-call-slot #vcConnectedBar,.workspace-call-slot .ec-call.is-taskbar-docked{width:250px!important;flex-basis:250px!important}
+}
+@media(min-width:861px) and (max-width:1200px){
+ #workspaceAccountDock .taskbar-account-details{display:none}
+ #workspaceAccountDock .user-profile-footer{width:auto}
+ .workspace-taskbar-left{gap:6px}
+ .workspace-call-slot #vcConnectedBar,.workspace-call-slot .ec-call.is-taskbar-docked{width:220px!important;flex-basis:220px!important}
+}
+.workspace-logo-menu[hidden]{display:none}
+.workspace-logo-menu{position:fixed;z-index:10110;width:180px;padding:6px;border:1px solid #ffffff18;border-radius:12px;background:#172033;box-shadow:0 12px 32px #0007;color:#e2e8f0}
+.workspace-logo-menu button{display:block;width:100%;padding:10px 12px;border:0;border-radius:7px;background:transparent;color:inherit;text-align:left;font:13px Inter,system-ui,sans-serif;cursor:pointer}
+.workspace-logo-menu button:hover,.workspace-logo-menu button:focus-visible{background:#a855f71a;outline:1px solid #a855f755}
+.workspace-logo-menu [data-logo-action=logout]{color:#f87171}
+@media(min-width:861px){.workspace-taskbar-right #vcDockMic,.workspace-taskbar-right .ec-call-compact-actions [data-action=mic]{display:none!important}}
+
+/* Visible group dividers, placed symmetrically around the centered servers. */
+@media(min-width:861px){
+ #workspaceAccountDock{padding-left:10px;border-left:1px solid #94a3b84d}
+ #workspaceSettingsDock{border-left-color:#94a3b84d}
+ .workspace-taskbar-center::before,.workspace-taskbar-center::after{content:'';display:block;flex:0 0 1px;width:1px;height:28px;background:#94a3b84d}
+ .workspace-call-slot:not([hidden]){padding-left:10px;border-left:1px solid #94a3b84d}
+}
+.workspace-server-tooltip[hidden]{display:none}
+.workspace-server-tooltip{position:fixed;z-index:10110;max-width:min(300px,calc(100vw - 16px));padding:8px 12px;border:1px solid #a78bfa55;border-radius:9px;background:#1a2235;color:#f1f5f9;box-shadow:0 8px 24px #0007;font:12px/1.4 Inter,system-ui,sans-serif;overflow-wrap:anywhere;pointer-events:none}
+
+/* Logo-colored account capsule, preserving the existing media button states. */
+@media(min-width:861px){
+ #workspaceAccountDock{padding-left:10px}
+ #workspaceAccountDock .user-profile-footer{
+   width:224px;height:42px;padding:4px 8px;gap:8px;
+   border:1px solid transparent;border-radius:11px;
+   background:linear-gradient(#141226,#141226) padding-box,linear-gradient(115deg,#a855f7,#ec4899) border-box;
+   box-shadow:0 0 9px #a855f72e,0 0 14px #ec48991f,inset 0 0 8px #a855f70a;
+ }
+}
+@media(min-width:861px) and (max-width:1200px){#workspaceAccountDock .user-profile-footer{width:auto}}

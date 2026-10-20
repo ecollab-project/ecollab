@@ -52,21 +52,26 @@ try {
         exit;
     }
 
-    $serverMemberStmt = $db->prepare("
-        SELECT 1
-        FROM server_members
-        WHERE server_id = :sid AND user_id = :uid
-        LIMIT 1
-    ");
-    $serverMemberStmt->execute([
-        ':sid' => (int)$channel['server_id'],
-        ':uid' => $uid,
-    ]);
+    $platformRole = (string)($me['role'] ?? 'student');
+    $isSysAdmin = in_array($platformRole, ['admin', 'super_admin'], true);
 
-    if (!$serverMemberStmt->fetchColumn()) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Not a member of this server']);
-        exit;
+    if (!$isSysAdmin) {
+        $serverMemberStmt = $db->prepare("
+            SELECT 1
+            FROM server_members
+            WHERE server_id = :sid AND user_id = :uid
+            LIMIT 1
+        ");
+        $serverMemberStmt->execute([
+            ':sid' => (int)$channel['server_id'],
+            ':uid' => $uid,
+        ]);
+
+        if (!$serverMemberStmt->fetchColumn()) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Not a member of this server']);
+            exit;
+        }
     }
 
     // Auto-create channel_seen table if it doesn't exist yet.
@@ -88,7 +93,7 @@ try {
     // Public channels are accessible to every server member, so keep that
     // access table in sync when the channel is actually opened. Private
     // channel membership is never granted automatically here.
-    if ((int)$channel['is_private'] === 0) {
+    if (!$isSysAdmin && (int)$channel['is_private'] === 0) {
         $db->prepare("
             INSERT IGNORE INTO channel_members (channel_id, user_id)
             VALUES (:cid, :uid)

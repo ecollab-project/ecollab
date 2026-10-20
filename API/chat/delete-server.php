@@ -1,0 +1,5 @@
+<?php
+declare(strict_types=1);
+require_once dirname(__DIR__,2).'/config.php';require_once ROOT_PATH.'/database/config/db.php';require_once ROOT_PATH.'/security/middleware/AuthMiddleware.php';
+header('Content-Type: application/json');AuthMiddleware::startSession();$u=AuthMiddleware::requireAuth(true);if($_SERVER['REQUEST_METHOD']!=='POST'){http_response_code(405);echo json_encode(['error'=>'Method not allowed']);exit;}AuthMiddleware::verifyCsrf();
+$b=json_decode(file_get_contents('php://input'),true)??$_POST;$id=(int)($b['server_id']??0);$db=Database::getInstance();$q=$db->prepare('SELECT owner_id FROM servers WHERE id=:id');$q->execute([':id'=>$id]);$owner=$q->fetchColumn();if($owner===false){http_response_code(404);echo json_encode(['error'=>'Server not found']);exit;}$sys=in_array((string)($u['role']??''),['admin','super_admin'],true);if(!$sys&&(int)$owner!==(int)$u['id']){http_response_code(403);echo json_encode(['error'=>'Only the server owner or SysAdmin can delete this server']);exit;}$db->prepare("UPDATE servers SET status='deleted' WHERE id=:id")->execute([':id'=>$id]);echo json_encode(['success'=>true]);

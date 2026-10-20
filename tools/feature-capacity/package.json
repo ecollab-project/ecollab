@@ -1,0 +1,1 @@
+{"name":"ecollab-feature-capacity","private":true,"type":"module","scripts":{"test":"node ../../tests/feature-capacity-regression.mjs"},"dependencies":{"livekit-client":"2.22.3","playwright":"1.58.2"}}

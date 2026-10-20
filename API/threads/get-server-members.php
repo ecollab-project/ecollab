@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 /**
  * threads/get-server-members.php
@@ -124,12 +125,8 @@ try {
         'count'   => count($members),
         'server_id' => $serverId,
     ]);
-
 } catch (Throwable $e) {
     error_log('[threads/get-server-members] ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode([
-        'error'   => 'Server error',
-        'detail'  => $e->getMessage(),  // remove this in production
-    ]);
+    echo json_encode(['error' => 'Server error']);
 }

@@ -1,0 +1,18 @@
+[Unit]
+Description=eCollab saved-message delivery worker
+After=network.target mariadb.service docker.service
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/home/ecollabadmin/ecollab-inspect
+ExecStart=/usr/bin/php /home/ecollabadmin/ecollab-inspect/scripts/realtime-worker.php
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+CPUAccounting=true
+CPUQuota=25%
+MemoryMax=128M
+
+[Install]
+WantedBy=multi-user.target

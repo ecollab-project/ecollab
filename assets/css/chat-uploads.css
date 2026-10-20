@@ -1,0 +1,8 @@
+#chatUploadTransfers{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(20px,env(safe-area-inset-bottom));z-index:2100;width:min(350px,calc(100vw - 32px));display:grid;gap:10px}
+.chat-upload-transfer{display:grid;grid-template-columns:1fr auto auto;gap:10px;padding:14px;border:1px solid var(--border,#444);border-radius:12px;background:var(--bg-secondary,#20212a);color:var(--text-primary,#fff);box-shadow:0 8px 24px #0005}
+.chat-upload-transfer strong{grid-column:1/-1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.chat-upload-transfer span{grid-column:1/-1;font-size:12px;color:var(--text-secondary,#ccc)}
+.chat-upload-transfer progress{width:100%;align-self:center;accent-color:var(--accent-purple,#a855f7)}
+.chat-upload-transfer button{min-height:36px;padding:5px 10px;border:1px solid var(--border,#555);border-radius:8px;background:var(--bg-tertiary,#333);color:inherit;cursor:pointer}
+.chat-upload-transfer button:focus-visible{outline:2px solid var(--accent-purple,#a855f7);outline-offset:2px}
+@media(max-width:768px){#chatUploadTransfers{top:max(12px,env(safe-area-inset-top));bottom:auto;right:16px;left:16px;width:auto}}
