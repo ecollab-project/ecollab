@@ -50,9 +50,9 @@ export function evaluateMedia(report){
   for(const[key,label]of[['jitter_samples','jitter'],['loss_samples','packet loss'],['rtt_samples','RTT']]){
     if(coverage.participants.some(p=>p.samples!==expectedSamples||p[key]!==expectedSamples))failed.push(label+' measurement coverage incomplete');
   }
-  if((percentile(jitter,.95)??Infinity)>30)failed.push('jitter p95 over 30ms');
-  if((percentile(loss,.95)??Infinity)>2)failed.push('packet loss p95 over 2%');
-  if((percentile(rtt,.95)??Infinity)>300)failed.push('RTT p95 over 300ms');
+  if(jitter.length&&percentile(jitter,.95)>30)failed.push('jitter p95 over 30ms');
+  if(loss.length&&percentile(loss,.95)>2)failed.push('packet loss p95 over 2%');
+  if(rtt.length&&percentile(rtt,.95)>300)failed.push('RTT p95 over 300ms');
   return {capacity_pass:failed.length===0,failed_thresholds:failed,healthy_participants:good,measurement_coverage:coverage,jitter_ms:distribution(jitter),packet_loss_pct:distribution(loss),rtt_ms:distribution(rtt),audio_kbps:distribution(audio),video_fps:distribution(video)};
 }
 

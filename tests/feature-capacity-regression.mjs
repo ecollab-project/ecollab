@@ -18,6 +18,9 @@ for(const invalid of[NaN,Infinity,-1,'12']){
   const report=make();report.participants[0].samples[0].rtt_ms=invalid;
   assert(evaluateMedia(report).failed_thresholds.includes('RTT measurement coverage incomplete'));
 }
+const absent=make();for(const participant of absent.participants)for(const sample of participant.samples)sample.rtt_ms=null;
+const absentResult=evaluateMedia(absent);assert(!absentResult.capacity_pass);assert.equal(absentResult.rtt_ms.p95,null);
+assert(absentResult.failed_thresholds.includes('RTT measurement coverage incomplete'));assert(!absentResult.failed_thresholds.includes('RTT p95 over 300ms'),'No latency threshold claim without a measurement');
 const zero=make();zero.participants[0].samples[0].rtt_ms=0;assert(evaluateMedia(zero).capacity_pass);
 const missing=make();missing.participants[0].samples.pop();assert(!evaluateMedia(missing).capacity_pass,'Missing scheduled samples cannot pass');
 const observedError=make();observedError.participants[0].samples[0].error=true;
