@@ -6,6 +6,8 @@ require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
 $me = AuthMiddleware::requireAuth(true);
+session_write_close();
+header('Cache-Control: no-store, private');
 $q = trim((string)($_GET['q'] ?? ''));
 $serverId = (int)($_GET['server_id'] ?? 0);
 $channelId = (int)($_GET['channel_id'] ?? 0);

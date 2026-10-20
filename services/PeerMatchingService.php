@@ -556,58 +556,65 @@ class PeerMatchingService
      */
     public function loadProfile(PDO $db, int $userId): array
     {
-        $prefsStmt = $db->prepare(
-            'SELECT * FROM pm_user_study_prefs WHERE user_id = :user_id LIMIT 1'
-        );
+        return $this->loadProfiles($db, [$userId])[$userId]
+            ?? ['prefs'=>[], 'subjects'=>[], 'interests'=>[], 'hobbies'=>[]];
+    }
 
-        $prefsStmt->execute([
-            ':user_id' => $userId,
-        ]);
+    /** Four queries per <=100 IDs; keys preserve caller order, including absent profiles. */
+    public function loadProfiles(PDO $db, array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids), fn($id) => $id > 0)));
+        $profiles = array_fill_keys($ids, ['prefs'=>[], 'subjects'=>[], 'interests'=>[], 'hobbies'=>[]]);
+        foreach (array_chunk($ids, 100) as $chunk) {
+            $in = implode(',', array_fill(0, count($chunk), '?'));
+            $q = $db->prepare("SELECT * FROM pm_user_study_prefs WHERE user_id IN ($in)");
+            $q->execute($chunk);
+            foreach ($q->fetchAll(PDO::FETCH_ASSOC) as $row) $profiles[(int)$row['user_id']]['prefs'] = $row;
+            foreach ([
+                'subjects'=>"SELECT p.user_id,p.subject_id,p.role,p.proficiency,t.name FROM pm_user_subjects p JOIN pm_subjects t ON t.id=p.subject_id WHERE p.user_id IN ($in) ORDER BY p.user_id,p.subject_id",
+                'interests'=>"SELECT p.user_id,p.interest_id,t.name FROM pm_user_interests p JOIN pm_interest_tags t ON t.id=p.interest_id WHERE p.user_id IN ($in) ORDER BY p.user_id,p.interest_id",
+                'hobbies'=>"SELECT p.user_id,p.hobby_id,t.name FROM pm_user_hobbies p JOIN pm_hobby_tags t ON t.id=p.hobby_id WHERE p.user_id IN ($in) ORDER BY p.user_id,p.hobby_id",
+            ] as $key => $sql) {
+                $q = $db->prepare($sql); $q->execute($chunk);
+                foreach ($q->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                    $id = (int)$row['user_id']; unset($row['user_id']);
+                    $profiles[$id][$key][] = $row;
+                }
+            }
+        }
+        return $profiles;
+    }
 
-        $prefs = $prefsStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    /** Preserve the existing directional/LIMIT 1 relationship semantics in one round trip.
+     * Correlated indexed lookups deliberately retain the old ambiguous-pair selection;
+     * do not silently redefine friendship precedence for legacy reciprocal rows.
+     */
+    public function loadRelationships(PDO $db, int $userId, array $ids): array
+    {
+        $out = [];
+        foreach (array_chunk(array_values(array_unique(array_map('intval', $ids))), 100) as $chunk) {
+            $in = implode(',', array_fill(0, count($chunk), '?'));
+            $q = $db->prepare("SELECT u.id,
+                (SELECT status FROM friendships WHERE (requester_id=? AND addressee_id=u.id) OR (requester_id=u.id AND addressee_id=?) LIMIT 1) AS friendship,
+                (SELECT status FROM pm_match_requests WHERE requester_id=? AND addressee_id=u.id LIMIT 1) AS request_status
+                FROM users u WHERE u.id IN ($in)");
+            $q->execute([$userId, $userId, $userId, ...$chunk]);
+            foreach ($q->fetchAll(PDO::FETCH_ASSOC) as $row) $out[(int)$row['id']] = $row;
+        }
+        return $out;
+    }
 
-        $subjectsStmt = $db->prepare(
-            'SELECT p.subject_id, p.role, p.proficiency, t.name
-             FROM pm_user_subjects p JOIN pm_subjects t ON t.id = p.subject_id
-             WHERE p.user_id = :user_id'
-        );
-
-        $subjectsStmt->execute([
-            ':user_id' => $userId,
-        ]);
-
-        $subjects = $subjectsStmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $interestsStmt = $db->prepare(
-            'SELECT p.interest_id, t.name
-             FROM pm_user_interests p JOIN pm_interest_tags t ON t.id = p.interest_id
-             WHERE p.user_id = :user_id'
-        );
-
-        $interestsStmt->execute([
-            ':user_id' => $userId,
-        ]);
-
-        $interests = $interestsStmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $hobbiesStmt = $db->prepare(
-            'SELECT p.hobby_id, t.name
-             FROM pm_user_hobbies p JOIN pm_hobby_tags t ON t.id = p.hobby_id
-             WHERE p.user_id = :user_id'
-        );
-
-        $hobbiesStmt->execute([
-            ':user_id' => $userId,
-        ]);
-
-        $hobbies = $hobbiesStmt->fetchAll(PDO::FETCH_ASSOC);
-
-        return [
-            'prefs' => $prefs,
-            'subjects' => $subjects,
-            'interests' => $interests,
-            'hobbies' => $hobbies,
-        ];
+    /** Rule-only compatibility cache; presentation may still include semantic scores. */
+    public function cacheCompatibility(PDO $db, array $rows): void
+    {
+        foreach (array_chunk($rows, 100) as $chunk) {
+            $values = implode(',', array_fill(0, count($chunk), '(?,?,?,?,?,?,?,?,?,?,?)'));
+            $q = $db->prepare("INSERT INTO pm_compatibility
+                (user_a_id,user_b_id,score_total,score_subjects,score_interests,score_hobbies,score_style,shared_subjects,shared_interests,shared_hobbies,match_tags)
+                VALUES $values
+                ON DUPLICATE KEY UPDATE score_total=VALUES(score_total),score_subjects=VALUES(score_subjects),score_interests=VALUES(score_interests),score_hobbies=VALUES(score_hobbies),score_style=VALUES(score_style),shared_subjects=VALUES(shared_subjects),shared_interests=VALUES(shared_interests),shared_hobbies=VALUES(shared_hobbies),match_tags=VALUES(match_tags),computed_at=CURRENT_TIMESTAMP");
+            $q->execute(array_merge(...$chunk));
+        }
     }
 
     /**

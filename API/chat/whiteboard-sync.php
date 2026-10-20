@@ -16,6 +16,7 @@ try {
     if ($method !== 'GET') {
         AuthMiddleware::verifyCsrf();
     }
+    session_write_close();
 
     $channelId = filter_input(INPUT_GET, 'channel_id', FILTER_VALIDATE_INT)
         ?: filter_var(json_decode(file_get_contents('php://input'), true)['channel_id'] ?? 0, FILTER_VALIDATE_INT);
