@@ -32,5 +32,41 @@ assert.equal(context.capacityTransportRtt(report([{...transport,selectedCandidat
  context.window.capacityPeerConnections=[{getStats:async()=>selected},{getStats:async()=>missing}];
  sample=await context.sampleCapacityMedia(config);
  assert.equal(sample.rtt_ms,null,'One measured connection must not conceal another missing connection RTT');
+ // A stalled stream must fail continuity and loss coverage without inventing 100% loss.
+ const source={context_state:'running',track_state:'live',enabled:true,muted:false};
+ const outgoing={id:'publisher',type:'outbound-rtp',kind:'audio',bytesSent:2000,packetsSent:20};
+ const setup=(rows,previous)=>{
+   context.window.capacityPeerConnections=[{getStats:async()=>report([transport,pair('selected',.04),...rows])}];
+   context.window.capacityMedia={room:{remoteParticipants:new Map([['remote',{identity:'user-42',audioTrackPublications:new Map([['track',{trackSid:'pub42',isSubscribed:true,isMuted:false,track:{mediaStreamTrack:{id:'remote-track',readyState:'live'}}}]])}]])},
+     audioContext:{state:'running'},audioTrack:{readyState:'live',enabled:true,muted:false},
+     previous:new Map(previous.map(row=>['0:'+row.id,{...row,measuredAt:5000}]))};
+ };
+ const stalled={...incoming,trackIdentifier:'remote-track',ssrc:42};
+ setup([stalled,outgoing],[stalled,{...outgoing,bytesSent:1000,packetsSent:10}]);
+ sample=await context.sampleCapacityMedia(config);
+ assert.equal(sample.audio_alive,false);assert.equal(sample.max_loss_pct,null);
+ assert.equal(sample.audio_streams.find(s=>s.direction==='inbound').reason,'no byte progress');
+ assert.equal(sample.audio_streams.find(s=>s.direction==='inbound').participant,'user-42');
+ assert.equal(sample.audio_streams.find(s=>s.direction==='outbound').bytes_delta,1000);
+ assert.equal(sample.remote_audio_tracks[0].publication_sid,'pub42');
+ assert.equal(JSON.stringify(sample.audio_source),JSON.stringify(source));
+ assert(Number.isFinite(sample.sampled_at_ms));
+ setup([{...stalled,packetsLost:10}],[stalled]);
+ sample=await context.sampleCapacityMedia(config);
+ assert.equal(sample.max_loss_pct,100,'Positive loss with zero received packets remains genuine measured 100% loss');
+ const flowing={...incoming,id:'flowing',packetsReceived:200,bytesReceived:10000};
+ setup([stalled,flowing],[stalled,{...flowing,packetsReceived:100,bytesReceived:5000}]);
+ sample=await context.sampleCapacityMedia({...config,expected_audio:2});
+ assert.equal(sample.max_loss_pct,null,'A flowing stream must not hide unmeasured loss on another stream');
+ setup([{...stalled,bytesReceived:20,packetsReceived:1}],[stalled]);
+ sample=await context.sampleCapacityMedia(config);
+ assert.equal(sample.audio_alive,false);assert.equal(sample.max_loss_pct,null);
+ assert.equal(sample.audio_streams[0].reason,'counters reset');
+ setup([flowing],[{...flowing,packetsReceived:100,bytesReceived:5000}]);
+ sample=await context.sampleCapacityMedia(config);
+ assert.equal(sample.audio_alive,true);assert.equal(sample.max_loss_pct,0);
+ assert.equal(sample.audio_streams.length,0,'Normal inbound diagnostics omitted to bound report size');
+ assert.equal(sample.remote_audio_tracks,undefined);
  console.log('PASS: selected transport path, legacy fallback, no stale/zero imputation, bounded retry and per-connection RTT coverage');
+ console.log('PASS: absent packet progress, measured all-loss, mixed streams, counter reset, source/publication and publisher diagnostics');
 })().catch(error=>{console.error(error);process.exitCode=1;});

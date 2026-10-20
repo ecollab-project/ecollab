@@ -25,6 +25,11 @@ const zero=make();zero.participants[0].samples[0].rtt_ms=0;assert(evaluateMedia(
 const missing=make();missing.participants[0].samples.pop();assert(!evaluateMedia(missing).capacity_pass,'Missing scheduled samples cannot pass');
 const observedError=make();observedError.participants[0].samples[0].error=true;
 assert(evaluateMedia(observedError).failed_thresholds.includes('media continuity below 99%'));
+const stalled=make();stalled.participants[0].samples[0].audio_alive=false;stalled.participants[0].samples[0].max_loss_pct=null;
+const stalledResult=evaluateMedia(stalled);
+assert(!stalledResult.capacity_pass);assert(stalledResult.failed_thresholds.includes('media continuity below 99%'));
+assert(stalledResult.failed_thresholds.includes('packet loss measurement coverage incomplete'));
+assert(!stalledResult.failed_thresholds.includes('packet loss p95 over 2%'),'No invented loss threshold claim for an unmeasured interval');
 const a=make(),b=make();for(const r of[a,b]){r.shard_count=2;r.shard_pass=true;r.configured_users=1;r.start_at_ms=100;r.hold_start_ms=200;r.hold_end_ms=300;}
 a.participants=[a.participants[0]];b.participants=[b.participants[1]];b.shard_index=1;
 assert(combineShards([a,b]).capacity_pass);
