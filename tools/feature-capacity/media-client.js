@@ -15,7 +15,8 @@ async function startCapacityMedia(config) {
   const audio=state.audioContext=new AudioContext({sampleRate:48000});await audio.resume();
   const oscillator=audio.createOscillator(),gain=audio.createGain(),destination=audio.createMediaStreamDestination();
   oscillator.frequency.value=240+config.slot%300;gain.gain.value=.1;oscillator.connect(gain);gain.connect(destination);oscillator.start();
-  await room.localParticipant.publishTrack(destination.stream.getAudioTracks()[0],{source:Track.Source.Microphone,dtx:false,audioPreset:{maxBitrate:32000}});
+  state.audioTrack=destination.stream.getAudioTracks()[0];
+  await room.localParticipant.publishTrack(state.audioTrack,{source:Track.Source.Microphone,dtx:false,audioPreset:{maxBitrate:32000}});
   if(config.media==='video'||config.media==='screen'&&config.publisher){
     const canvas=document.createElement('canvas');canvas.width=config.encoding.width;canvas.height=config.encoding.height;document.body.append(canvas);
     const ctx=canvas.getContext('2d');let frame=0;const fps=config.encoding.fps;
@@ -43,7 +44,16 @@ function capacityTransportRtt(report) {
 async function sampleCapacityMedia(config) {
   const state=window.capacityMedia;
   if(!state?.room)return {audio_alive:false,video_alive:false,max_jitter_ms:null,max_loss_pct:null,rtt_ms:null};
-  const now=performance.now();let audio=[],video=[],outbound=[],jitters=[],loss=[],rtt=[];
+  const now=performance.now();let audio=[],video=[],outbound=[],jitters=[],loss=[],rtt=[],audioStreams=[];
+  const remoteTracks=[];
+  for(const participant of state.room.remoteParticipants?.values()||[]){
+    for(const publication of participant.audioTrackPublications.values()){
+      remoteTracks.push({participant:participant.identity,publication_sid:publication.trackSid,
+        track_identifier:publication.track?.mediaStreamTrack?.id??null,
+        subscribed:publication.isSubscribed,muted:publication.isMuted,
+        track_state:publication.track?.mediaStreamTrack?.readyState??null});
+    }
+  }
   for(const[pcIndex,pc]of window.capacityPeerConnections.entries()){
     const report=await pc.getStats();
     // A separate publisher/subscriber connection can have a different path.
@@ -59,14 +69,30 @@ async function sampleCapacityMedia(config) {
     for(const stat of report.values()){
       const codec=report.get(stat.codecId);if(/rtx|ulpfec/i.test(codec?.mimeType||''))continue;
       if(!['inbound-rtp','outbound-rtp'].includes(stat.type)||stat.isRemote)continue;
-      const key=pcIndex+':'+stat.id,previous=state.previous.get(key);state.previous.set(key,{...stat,measuredAt:now});if(!previous)continue;
-      const seconds=(now-previous.measuredAt)/1000;if(seconds<=0)continue;
+      const key=pcIndex+':'+stat.id,previous=state.previous.get(key);state.previous.set(key,{...stat,measuredAt:now});
       const kind=stat.kind||stat.mediaType;
+      if(kind==='audio'){
+        const seconds=previous?(now-previous.measuredAt)/1000:null;
+        const delta=name=>previous&&Number.isFinite(stat[name])&&Number.isFinite(previous[name])?stat[name]-previous[name]:null;
+        const bytes=delta(stat.type==='inbound-rtp'?'bytesReceived':'bytesSent');
+        const packets=delta(stat.type==='inbound-rtp'?'packetsReceived':'packetsSent');
+        const lost=delta('packetsLost');
+        audioStreams.push({peer_connection:pcIndex,stats_id:stat.id,track_identifier:stat.trackIdentifier??null,
+          participant:remoteTracks.find(t=>t.track_identifier&&t.track_identifier===stat.trackIdentifier)?.participant??null,
+          direction:stat.type==='inbound-rtp'?'inbound':'outbound',ssrc:stat.ssrc??null,
+          interval_ms:seconds===null?null:seconds*1000,bytes_delta:bytes,packets_delta:packets,lost_delta:lost,
+          kbps:seconds>0&&bytes!==null&&bytes>=0?bytes*8/seconds/1000:null,
+          reason:!previous?'first observation':seconds<=0?'invalid interval':bytes===null||packets===null?'counters missing':bytes<0||packets<0?'counters reset':bytes===0?'no byte progress':null});
+      }
+      if(!previous)continue;
+      const seconds=(now-previous.measuredAt)/1000;if(seconds<=0)continue;
       if(stat.type==='outbound-rtp'&&kind==='video'&&stat.framesEncoded!==undefined){outbound.push((stat.framesEncoded-previous.framesEncoded)/seconds);continue;}
       if(stat.type!=='inbound-rtp')continue;
-      const received=Math.max(0,(stat.packetsReceived||0)-(previous.packetsReceived||0));
-      const lost=Math.max(0,(stat.packetsLost||0)-(previous.packetsLost||0));
-      loss.push(received+lost?100*lost/(received+lost):100);
+      const received=Number.isFinite(stat.packetsReceived)&&Number.isFinite(previous.packetsReceived)?stat.packetsReceived-previous.packetsReceived:null;
+      const lost=Number.isFinite(stat.packetsLost)&&Number.isFinite(previous.packetsLost)?Math.max(0,stat.packetsLost-previous.packetsLost):null;
+      // No packet progress is an unmeasured loss interval, not 100% loss.
+      // Keep null in this array so another stream cannot conceal missing coverage.
+      loss.push(received!==null&&received>=0&&lost!==null&&received+lost>0?100*lost/(received+lost):null);
       if(Number.isFinite(stat.jitter))jitters.push(stat.jitter*1000);
       if(kind==='audio')audio.push(((stat.bytesReceived||0)-(previous.bytesReceived||0))*8/seconds/1000);
       if(kind==='video'&&stat.framesDecoded!==undefined)video.push((stat.framesDecoded-previous.framesDecoded)/seconds);
@@ -75,10 +101,15 @@ async function sampleCapacityMedia(config) {
   const expected=config.expected_audio;
   const expectedVideo=config.media==='video'?expected:config.media==='screen'&&!config.publisher?1:0;
   const fps=config.encoding.min_fps;
-  return {audio_alive:audio.length===expected&&audio.every(v=>v>=1),
+  const audioAlive=audio.length===expected&&audio.every(v=>v>=1);
+  return {sampled_at_ms:Date.now(),audio_alive:audioAlive,
+    audio_source:{context_state:state.audioContext?.state??null,track_state:state.audioTrack?.readyState??null,enabled:state.audioTrack?.enabled??null,muted:state.audioTrack?.muted??null},
+    audio_streams:audioStreams.filter(s=>s.direction==='outbound'||!audioAlive),
+    remote_audio_tracks:!audioAlive?remoteTracks:undefined,
+    expected_audio_streams:expected,observed_audio_streams:audio.length,
     video_alive:expectedVideo>0?video.length===expectedVideo&&video.every(v=>v>=fps):config.media==='screen'?outbound.length>=1&&outbound.every(v=>v>=fps):true,
     min_audio_kbps:audio.length?Math.min(...audio):null,min_video_fps:video.length?Math.min(...video):outbound.length?Math.min(...outbound):null,
-    max_jitter_ms:jitters.length?Math.max(...jitters):null,max_loss_pct:loss.length?Math.max(...loss):null,
+    max_jitter_ms:jitters.length?Math.max(...jitters):null,max_loss_pct:loss.length&&loss.every(v=>v!==null)?Math.max(...loss):null,
     rtt_ms:rtt.length&&rtt.every(s=>s.value_ms!==null)?Math.max(...rtt.map(s=>s.value_ms)):null,rtt_measurements:rtt,
     closed_early:state.closed_early,error:state.error};
 }

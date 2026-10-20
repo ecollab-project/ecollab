@@ -42,7 +42,7 @@ be relabeled as complete call-workflow capacity.
 
 ## Media measurement coverage
 
-The `media-stats-2` profile distinguishes observed media continuity from missing
+The `media-stats-3` profile distinguishes observed media continuity from missing
 quality telemetry. A client with flowing audio is not reported as disconnected
 because a browser omits an RTT reading. Missing, negative or non-finite RTT,
 jitter or packet-loss values still fail a separate measurement-coverage check;
@@ -57,6 +57,20 @@ fallback when selected-path IDs are absent. A missing value triggers one fresh
 zero or mixes RTCP latency into ICE latency. Reports include per-connection RTT
 sources and per-participant measurement counts. Updated profiles are grouped
 separately from old ones for repeat validation.
+
+A stream with neither received nor lost packet progress has no measured packet-loss
+percentage. It reports null, fails loss coverage, and still fails audio continuity
+when bytes stop progressing; it never becomes an invented 100% loss observation.
+Other flowing streams cannot conceal that missing measurement. Actual all-lost
+intervals with positive lost-packet progress still report 100%.
+
+Samples include UTC milliseconds, local audio context/track state and outbound
+audio counters. Failed audio samples additionally include inbound stream IDs,
+SSRCs, track identifiers, packet/byte deltas and remote publication state. A remote
+participant identity is included when its track identifier matches the RTP stats.
+Use the publisher's outbound progress and receiver's inbound progress to investigate
+stalls; these observations alone do not establish which machine or network caused it.
+No tokens, API credentials or ICE addresses are included in these diagnostics.
 
 Reference: https://www.w3.org/TR/webrtc-stats/#dom-rtctransportstats-selectedcandidatepairid
 
