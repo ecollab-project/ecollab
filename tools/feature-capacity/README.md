@@ -40,6 +40,26 @@ subjective call quality and the app's DM/group invite/ringing/answer workflow ar
 not measured. Those need separate functional tests; media-plane results must not
 be relabeled as complete call-workflow capacity.
 
+## Media measurement coverage
+
+The `media-stats-2` profile distinguishes observed media continuity from missing
+quality telemetry. A client with flowing audio is not reported as disconnected
+because a browser omits an RTT reading. Missing, negative or non-finite RTT,
+jitter or packet-loss values still fail a separate measurement-coverage check;
+every scheduled sample for every participant must contain each quality reading.
+The 300ms RTT, 30ms jitter, 2% loss and generator-health limits remain unchanged.
+Do not reinterpret an older failed report as a passing capacity test.
+
+RTT is ICE transport latency. The collector prefers each RTP transport's
+`selectedCandidatePairId`, with the nominated succeeded pair as a compatibility
+fallback when selected-path IDs are absent. A missing value triggers one fresh
+`getStats()` retry after 200ms. It never borrows a previous sample, substitutes
+zero or mixes RTCP latency into ICE latency. Reports include per-connection RTT
+sources and per-participant measurement counts. Updated profiles are grouped
+separately from old ones for repeat validation.
+
+Reference: https://www.w3.org/TR/webrtc-stats/#dom-rtctransportstats-selectedcandidatepairid
+
 ## Existing resource constraints
 
 `OllamaService` has a nonblocking global inference lock: one LOCAL inference at a
@@ -238,3 +258,4 @@ References: https://docs.livekit.io/reference/client-sdk-js/ and
 https://docs.livekit.io/transport/self-hosting/benchmark . The runner SDK is pinned
 to2.22.3 to match the current application. No fixed VPS capacity is inferred from
 upstream benchmark hardware.
+

@@ -22,25 +22,38 @@ export function evaluateMedia(report){
   if((report.generator?.event_loop_p95_ms??Infinity)>100)failed.push('generator event loop overloaded');
   if((report.generator?.minimum_free_bytes??0)<268435456)failed.push('generator memory pressure');
   let good=0;let audio=[];let video=[];let jitter=[];let loss=[];let rtt=[];
+  const expectedSamples=Math.floor(profile.hold_seconds/5);
+  const coverage={expected_samples:expectedSamples*report.configured_users,observed_samples:0,jitter_samples:0,loss_samples:0,rtt_samples:0,participants:[]};
+  const measured=(value,max=Infinity)=>Number.isFinite(value)&&value>=0&&value<=max;
   for(const p of all){
     let ok=p.joined&&p.closed_early!==true&&p.error!==true;
     if((p.samples||[]).length<Math.floor(profile.hold_seconds/5)*.8)ok=false;
+    const metrics={slot:p.slot,samples:(p.samples||[]).length,jitter_samples:0,loss_samples:0,rtt_samples:0};
     for(const s of p.samples||[]){
       if(!s.audio_alive)ok=false;
       if(profile.media!=='voice'&&!s.video_alive)ok=false;
-      if(s.max_jitter_ms!=null)jitter.push(s.max_jitter_ms);else ok=false;
-      if(s.max_loss_pct!=null)loss.push(s.max_loss_pct);else ok=false;
-      if(s.rtt_ms!=null)rtt.push(s.rtt_ms);else ok=false;
+      if(s.error||s.closed_early)ok=false;
+      if(measured(s.max_jitter_ms)){jitter.push(s.max_jitter_ms);metrics.jitter_samples++;}
+      if(measured(s.max_loss_pct,100)){loss.push(s.max_loss_pct);metrics.loss_samples++;}
+      if(measured(s.rtt_ms)){rtt.push(s.rtt_ms);metrics.rtt_samples++;}
       if(s.min_audio_kbps!=null)audio.push(s.min_audio_kbps);
       if(s.min_video_fps!=null)video.push(s.min_video_fps);
     }
+    coverage.observed_samples+=metrics.samples;
+    for(const key of['jitter_samples','loss_samples','rtt_samples'])coverage[key]+=metrics[key];
+    coverage.participants.push(metrics);
     if(ok)good++;
   }
   if(good<Math.ceil(report.configured_users*.99))failed.push('media continuity below 99%');
+  // Missing telemetry fails coverage, never masquerades as a dropped audio track.
+  // Every scheduled participant sample must still carry each quality reading.
+  for(const[key,label]of[['jitter_samples','jitter'],['loss_samples','packet loss'],['rtt_samples','RTT']]){
+    if(coverage.participants.some(p=>p.samples!==expectedSamples||p[key]!==expectedSamples))failed.push(label+' measurement coverage incomplete');
+  }
   if((percentile(jitter,.95)??Infinity)>30)failed.push('jitter p95 over 30ms');
   if((percentile(loss,.95)??Infinity)>2)failed.push('packet loss p95 over 2%');
   if((percentile(rtt,.95)??Infinity)>300)failed.push('RTT p95 over 300ms');
-  return {capacity_pass:failed.length===0,failed_thresholds:failed,healthy_participants:good,jitter_ms:distribution(jitter),packet_loss_pct:distribution(loss),rtt_ms:distribution(rtt),audio_kbps:distribution(audio),video_fps:distribution(video)};
+  return {capacity_pass:failed.length===0,failed_thresholds:failed,healthy_participants:good,measurement_coverage:coverage,jitter_ms:distribution(jitter),packet_loss_pct:distribution(loss),rtt_ms:distribution(rtt),audio_kbps:distribution(audio),video_fps:distribution(video)};
 }
 
 export function mediaEncoding(quality,media){
@@ -48,3 +61,4 @@ export function mediaEncoding(quality,media){
   const screen=media==='screen',economy=quality==='economy';
   return {width:screen?(economy?1280:1920):(economy?640:1280),height:screen?(economy?720:1080):(economy?360:720),fps:economy?(screen?5:15):30,max_bitrate:screen?(economy?2000000:6000000):(economy?400000:1700000),min_fps:economy?(screen?2:8):15};
 }
+

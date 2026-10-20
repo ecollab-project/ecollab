@@ -28,7 +28,7 @@ let cpuPrevious=cpuSnapshot(),cpuSamples=[],minimumFree=os.freemem();const loop=
 const meter=setInterval(()=>{const current=cpuSnapshot(),total=current.total-cpuPrevious.total;if(total>0)cpuSamples.push(100*(1-(current.idle-cpuPrevious.idle)/total));cpuPrevious=current;minimumFree=Math.min(minimumFree,os.freemem());},1000);
 const participants=selected.map(u=>({id:u.id,slot:u.slot,joined:false,closed_early:false,error:false,samples:[]}));
 let browser;let fullHold=false;let interrupted=false;const contexts=[];
-const profile={media,quality,encoding,room_size:target.room_size,total_users:users,ramp_seconds:ramp,hold_seconds:hold,video:media==='voice'?null:`VP8 ${encoding.width}x${encoding.height} ${encoding.fps}fps / max${encoding.max_bitrate}bps`,audio:'Opus max32kbps; every participant publishes non-silent synthetic audio',topology:'all-to-all subscriptions within each room',scope:'LiveKit media plane only; application invite/ringing/answer signaling, real capture devices and subjective quality are not measured'};
+const profile={media,quality,encoding,measurement_policy:'media-stats-2: complete quality coverage; transport-selected ICE RTT',room_size:target.room_size,total_users:users,ramp_seconds:ramp,hold_seconds:hold,video:media==='voice'?null:`VP8 ${encoding.width}x${encoding.height} ${encoding.fps}fps / max${encoding.max_bitrate}bps`,audio:'Opus max32kbps; every participant publishes non-silent synthetic audio',topology:'all-to-all subscriptions within each room',scope:'LiveKit media plane only; application invite/ringing/answer signaling, real capture devices and subjective quality are not measured'};
 const report={revision:'feature-capacity-1',kind:'media',run_id:target.run_id,sample_id:target.run_id+'-'+start,fixture_id:target.fixture_id,configured_users:selected.length,total_users:users,shard_count:shardCount,shard_index:shardIndex,start_at_ms:start,hold_start_ms:holdStart,hold_end_ms:holdEnd,profile,participants};
 process.once('SIGINT',()=>{interrupted=true;});
 try{
@@ -76,3 +76,4 @@ finally{
   console.log('Media test ended: '+(report.capacity_pass?'workload passed':shardCount>1&&report.shard_pass?'shard complete; aggregate ALL shards':'capacity NOT established')+'. Report: '+filename);
   if(!report.capacity_pass&&!(shardCount>1&&report.shard_pass))process.exitCode=1;
 }
+
