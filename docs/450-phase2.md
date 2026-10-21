@@ -104,6 +104,8 @@ Drain pending `code_lab` outbox events with the new dispatcher before reverting 
 
 Run `tests/phase2-*.php` as indicated by `.github/workflows/phase2.yml`; the MariaDB scripts require an **empty disposable** `ecollab_phase2_test` database on 127.0.0.1. Run the Jarred fixture first, then the MariaDB continuation. `LIVEKIT_FIXTURE_RPC=1` is only for an explicitly supplied localhost mock LiveKit endpoint. Default CI does not call a real LiveKit deployment. Run the Node polling/client fixtures and the Python HTTP fixture with PHP available. No test command targets production.
 
+Updated script version URLs ensure cached pre-queue clients refresh during the coordinated rollout.
+
 ## Changed-file inventory
 - `.github/workflows/phase2.yml`
 - `API/chat/livekit-counts.php`
@@ -124,6 +126,7 @@ Run `tests/phase2-*.php` as indicated by `.github/workflows/phase2.yml`; the Mar
 - `docs/450-phase2-execution-isolation.md`
 - `docs/450-phase2-media-experiment.md`
 - `docs/450-phase2.md`
+- `modules/chat/chat.php`
 - `modules/code-lab/index.php`
 - `scripts/jarred-worker.php`
 - `scripts/livekit-count-collector.php`
