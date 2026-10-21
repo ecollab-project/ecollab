@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/CodeLabService.php';
 require_once __DIR__.'/CodeLabRunner.php';
+require_once __DIR__.'/RealtimeOutbox.php';
 final class CodeLabExecutionService
 {
     private Closure $clock;
@@ -62,13 +63,13 @@ final class CodeLabExecutionService
             if($own)$this->db->commit();return ['job_id'=>$id];
         }catch(Throwable $e){if($own&&$this->db->inTransaction())$this->db->rollBack();throw $e;}
     }
-    public function result(int $sid,int $uid,int $id):array
+    public function result(int $sid,int $uid,int $id,bool $withPosition=true):array
     {
         (new CodeLabService($this->db,$this->clock))->member($sid,$uid);
         $j=$this->q('SELECT id,kind,state,result_json,created_at FROM code_lab_jobs WHERE id=? AND server_id=? AND user_id=?',[$id,$sid,$uid])->fetch(PDO::FETCH_ASSOC);
         if(!$j)$this->fail('Execution not found.',404);
         // Advisory position within this server, never IDs or data from another tenant.
-        $j['queue_position']=$j['state']==='queued'?1+(int)$this->q("SELECT COUNT(*) FROM code_lab_jobs WHERE server_id=? AND state='queued' AND (created_at<? OR (created_at=? AND id<?))",[$sid,$j['created_at'],$j['created_at'],$id])->fetchColumn():null;
+        $j['queue_position']=$withPosition&&$j['state']==='queued'?1+(int)$this->q("SELECT COUNT(*) FROM code_lab_jobs WHERE server_id=? AND state='queued' AND (created_at<? OR (created_at=? AND id<?))",[$sid,$j['created_at'],$j['created_at'],$id])->fetchColumn():null;
         $j['result']=$j['result_json']===null?null:json_decode($j['result_json'],true);unset($j['result_json'],$j['created_at']);return $j;
     }
     public static function matches(string $actual,string $expected):bool{return rtrim(str_replace("\r\n","\n",$actual),"\n")===rtrim(str_replace("\r\n","\n",$expected),"\n");}
@@ -141,6 +142,7 @@ final class CodeLabExecutionService
             $this->db->beginTransaction();
             if($this->q("UPDATE code_lab_jobs SET state='done',result_json=?,finished_at=? WHERE id=? AND state='running'",[json_encode($result,JSON_THROW_ON_ERROR),gmdate('Y-m-d H:i:s',($this->clock)()),$j['id']])->rowCount()!==1)throw new RuntimeException('Execution claim expired.');
             if($j['kind']==='grade')$this->q('UPDATE code_lab_attempts SET auto_score=?,score=CASE WHEN reviewed_by IS NULL THEN ? ELSE score END WHERE id=? AND submitted_at IS NOT NULL',[$score,$score,$j['attempt_id']]);
+            RealtimeOutbox::codeLabState($this->db,(int)$j['server_id'],(int)$j['id']);
             if($this->db->inTransaction())$this->db->commit();
             $finishedState='done';
             if($j['kind']==='grade'){ try {
@@ -148,7 +150,15 @@ final class CodeLabExecutionService
                 $actor=$this->q('SELECT t.created_by FROM code_lab_tasks t JOIN code_lab_attempts a ON a.task_id=t.id WHERE a.id=?',[$j['attempt_id']])->fetchColumn();
                 if($actor)NotificationService::create($this->db,(int)$j['user_id'],(int)$actor,'class_update','Code Lab grading ready','Automatic checks finished. Open your submission to review the result.','/modules/code-lab/index.php?server_id='.(int)$j['server_id'],'💻');
             } catch(Throwable $notificationError) { error_log('[code-lab/notifications] delivery unavailable'); } }
-        }catch(Throwable $e){if($this->db->inTransaction())$this->db->rollBack();$this->q("UPDATE code_lab_jobs SET state='failed',result_json=?,finished_at=? WHERE id=? AND state='running'",[json_encode(['error'=>'Execution service could not finish. No automatic score was recorded. Retry when the runner is ready.']),gmdate('Y-m-d H:i:s',($this->clock)()),$j['id']]);}
+        }catch(Throwable $e){
+            if($this->db->inTransaction())$this->db->rollBack();
+            $this->db->beginTransaction();
+            try {
+                $changed=$this->q("UPDATE code_lab_jobs SET state='failed',result_json=?,finished_at=? WHERE id=? AND state='running'",[json_encode(['error'=>'Execution service could not finish. No automatic score was recorded. Retry when the runner is ready.']),gmdate('Y-m-d H:i:s',($this->clock)()),$j['id']])->rowCount();
+                if($changed)RealtimeOutbox::codeLabState($this->db,(int)$j['server_id'],(int)$j['id']);
+                $this->db->commit();
+            }catch(Throwable $deliveryError){if($this->db->inTransaction())$this->db->rollBack();throw $deliveryError;}
+        }
         $this->lastTiming=['language'=>$j['language'],'kind'=>$j['kind'],'state'=>$finishedState,'runner_ms'=>round($runnerMs,3),'work_ms'=>round((hrtime(true)-$workStarted)/1e6,3)];
         return true;
     }

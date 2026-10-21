@@ -1125,13 +1125,13 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-timeline.css?v=1">
   <script src="<?= BASE_URL ?>/assets/js/chat/timeline.js?v=settings-speed-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=member-performance-1" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=member-performance-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=phase2-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js?v=media-1" defer></script>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-media.css?v=1">
   <script src="<?= BASE_URL ?>/assets/js/chat/media-picker.js?v=settings-speed-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=request-hardening-1" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.22.3/dist/livekit-client.umd.min.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/livekit-voice.js?v=sfx-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/livekit-voice.js?v=phase2-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/whiteboard.js" defer></script>
   <!-- ── Private Channel Manager Modal ────────────────────────────────── -->
   <div id="privateChannelManagerModal" style="display:none!important;position:fixed;inset:0;z-index:11000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this)closePrivateChannelManager()">
@@ -1178,9 +1178,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     </button>
   </div>
 
-  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=settings-speed-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=phase2-1" defer></script>
   <?php if (filter_var(env('CENTRIFUGO_ENABLED', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
-  <script src="<?= BASE_URL ?>/assets/js/chat/centrifugo-delivery.js?v=delivery-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/centrifugo-delivery.js?v=phase2-1" defer></script>
   <?php endif; ?>
   <script src="<?= BASE_URL ?>/assets/js/chat/dm-chat-settings.js?v=dm-settings-1" defer></script>
   <!--

@@ -659,18 +659,20 @@
     countFetchBusy = true;
     try {
       const res = await fetch((window.ECOLLAB?.baseUrl||'')+'/API/chat/livekit-counts.php?channel_ids='+ids.join(','),{credentials:'same-origin'});
-      if(!res.ok) return;
+      if(!res.ok) throw new Error('Counts unavailable');
       const data = await res.json();
       for(const [id,count] of Object.entries(data.counts||{})) {
         const badge=document.querySelector('.voice-channel[data-channel-id="'+Number(id)+'"] .vc-count');
-        if(badge)badge.textContent=String(Number(id)===activeChannelId&&room?room.remoteParticipants.size+1:count);
+        if(badge) { badge.textContent=String(Number(id)===activeChannelId&&room?room.remoteParticipants.size+1:(count===null?'—':count)); badge.title=data.stale?'Voice count temporarily unavailable':'Voice count snapshot'; }
       }
-    } catch (_) {} finally { countFetchBusy=false; }
+    } catch (_) { for(const id of ids){const badge=document.querySelector('.voice-channel[data-channel-id="'+id+'"] .vc-count');if(badge&&!(id===activeChannelId&&room)){badge.textContent='—';badge.title='Voice count temporarily unavailable';}} } finally { countFetchBusy=false; }
   }
   window.addEventListener('ecollab-media-settings-changed',()=>{screenQuality=null;window.EcollabMediaSettings.playback(room);});
-  setInterval(refreshSidebarCounts,10000);
+  function scheduleSidebarCounts() { setTimeout(()=>{ refreshSidebarCounts(); scheduleSidebarCounts(); },9000+Math.random()*2000); }
+  scheduleSidebarCounts();
+  window.addEventListener('online',refreshSidebarCounts);
   document.addEventListener('visibilitychange',refreshSidebarCounts);
-  setTimeout(refreshSidebarCounts,1000);
+  setTimeout(refreshSidebarCounts,Math.random()*5000);
 })();
 
 

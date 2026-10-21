@@ -4,13 +4,13 @@ require_once __DIR__.'/RealtimeDispatchMetrics.php';
 
 final class RealtimeOutbox
 {
-    public static function enabled(): bool { return filter_var(env('CENTRIFUGO_ENABLED','false'), FILTER_VALIDATE_BOOLEAN); }
+    public static function enabled(): bool { return filter_var(function_exists('env') ? env('CENTRIFUGO_ENABLED','false') : (getenv('CENTRIFUGO_ENABLED') ?: 'false'), FILTER_VALIDATE_BOOLEAN); }
 
     /** Save message and delivery intent together. No network calls in a chat request. */
     public static function record($db, string $kind, int $target, callable $save): int
     {
         if (!self::enabled()) return (int)$save();
-        if (!in_array($kind,['channel','dm','group'],true) || $target < 1) throw new InvalidArgumentException('Invalid delivery target');
+        if (!in_array($kind,['channel','dm','group','code_lab'],true) || $target < 1) throw new InvalidArgumentException('Invalid delivery target');
         $owns = !$db->inTransaction();
         if ($owns) $db->beginTransaction();
         try {
@@ -23,6 +23,15 @@ final class RealtimeOutbox
             if ($owns && $db->inTransaction()) $db->rollBack();
             throw $e;
         }
+    }
+
+    /** Replace an obsolete job-state hint with a new event ID; readers fetch authoritative state. */
+    public static function codeLabState(PDO $db,int $serverId,int $jobId): void
+    {
+        if (!self::enabled()) return;
+        if (!$db->inTransaction()) throw new LogicException('Job state delivery requires its transaction');
+        $db->prepare("DELETE FROM realtime_outbox WHERE kind='code_lab' AND message_id=?")->execute([$jobId]);
+        self::record($db,'code_lab',$serverId,fn()=>$jobId);
     }
 
     /** Audience is recalculated at delivery; no message body or attachment URL enters broker history. */
@@ -49,6 +58,11 @@ final class RealtimeOutbox
             $sql='SELECT DISTINCT u.id FROM dm_messages m JOIN dm_group_members gm ON gm.group_id=m.group_id
                 JOIN users u ON u.id=gm.user_id AND u.deleted_at IS NULL
                 WHERE m.id=:mid AND gm.group_id=:target AND m.is_deleted=0';
+        } elseif ($event['kind']==='code_lab') {
+            $sql="SELECT u.id FROM code_lab_jobs j JOIN users u ON u.id=j.user_id AND u.deleted_at IS NULL
+                JOIN server_members sm ON sm.user_id=u.id AND sm.server_id=j.server_id
+                JOIN servers s ON s.id=j.server_id AND s.status='active'
+                WHERE u.status NOT IN ('banned','suspended','deactivated') AND j.id=:mid AND j.server_id=:target AND j.state IN ('done','failed')";
         } else { throw new InvalidArgumentException('Unknown delivery kind'); }
         $params=[':mid'=>$id,':target'=>$target];
         if($event['kind']==='channel')$params+=[':admin_mid'=>$id,':admin_target'=>$target];
@@ -65,7 +79,7 @@ final class RealtimeOutbox
             $success=false;$recipientCount=0;
             try {
                 $users=$timed('recipients',fn()=>self::recipients($db,$event));$recipientCount=count($users);
-                if($users)$timed('broadcast',fn()=>$broker->broadcast($users,['type'=>'chat_changed','kind'=>$event['kind'],
+                if($users)$timed('broadcast',fn()=>$broker->broadcast($users,['type'=>$event['kind']==='code_lab'?'code_lab_changed':'chat_changed','kind'=>$event['kind'],
                     'target_id'=>(int)$event['target_id'],'message_id'=>(int)$event['message_id'],'event_id'=>(int)$event['id']]));
                 $timed('acknowledge',fn()=>$db->prepare('UPDATE realtime_outbox SET published_at=NOW(),last_error=NULL WHERE id=?')->execute([$event['id']]));
                 $sent++;$success=true;

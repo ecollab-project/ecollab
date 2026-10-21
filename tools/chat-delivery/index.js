@@ -18,7 +18,7 @@ export function startDelivery(Client = Centrifuge) {
   const sync = detail => window.dispatchEvent(new CustomEvent('ecollab:delivery-sync', {detail}));
   const seen = new Set();
   subscription.on('publication', ({data}) => {
-    if (data?.type !== 'chat_changed' || !['channel','dm','group'].includes(data.kind)
+    if (!((data?.type === 'chat_changed' && ['channel','dm','group'].includes(data.kind)) || (data?.type === 'code_lab_changed' && data.kind === 'code_lab'))
       || ![data.target_id, data.message_id, data.event_id].every(n => Number.isSafeInteger(n) && n > 0)) return;
     if (seen.has(data.event_id)) return;
     seen.add(data.event_id); if (seen.size > 512) seen.delete(seen.values().next().value);

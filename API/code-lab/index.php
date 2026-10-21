@@ -24,7 +24,7 @@ try {
         'GET:sample'=>$service->sample($sid,$uid,(string)($input['language']??'')),
         'POST:similarity'=>(new CodeLabSimilarityService(Database::getInstance()))->queue($sid,$uid,$tid),
         'GET:similarity'=>(new CodeLabSimilarityService(Database::getInstance()))->latest($sid,$uid,$tid),
-        'GET:job'=>$execution->result($sid,$uid,(int)($input['job_id']??0)),
+        'GET:job'=>$execution->result($sid,$uid,(int)($input['job_id']??0),($input['queue_position']??'1')!=='0'),
         'POST:run'=>$execution->run($sid,$uid,$input),
         'POST:grade'=>$execution->grade($sid,$uid,$tid),
         'GET:overview'=>$service->overview($sid,$uid),

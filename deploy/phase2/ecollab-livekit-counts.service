@@ -1,0 +1,17 @@
+# Staging template only. Review paths/user/limits before installation.
+[Unit]
+Description=eCollab shared LiveKit count collector
+After=network.target mariadb.service
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/srv/ecollab-staging
+ExecStart=/usr/bin/php /srv/ecollab-staging/scripts/livekit-count-collector.php
+Environment=LIVEKIT_COUNT_INTERVAL=5
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+MemoryMax=128M
+[Install]
+WantedBy=multi-user.target

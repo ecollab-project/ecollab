@@ -1,0 +1,17 @@
+# Staging template only. Review paths/user/limits before installation.
+[Unit]
+Description=eCollab Jarred inference queue (single database-locked worker)
+After=network.target mariadb.service
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/srv/ecollab-staging
+ExecStart=/usr/bin/php /srv/ecollab-staging/scripts/jarred-worker.php
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=120
+NoNewPrivileges=true
+PrivateTmp=true
+MemoryMax=256M
+[Install]
+WantedBy=multi-user.target

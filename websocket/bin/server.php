@@ -15,5 +15,6 @@ use React\EventLoop\Loop;
 $options=getopt('', ['port::','host::']);$port=(int)($options['port']??getenv('WS_PORT')?:8080);$host=$options['host']??getenv('WS_HOST')?:'0.0.0.0';
 echo "╔══════════════════════════════════════╗\n║     Ecollab WebSocket Server         ║\n╚══════════════════════════════════════╝\n";echo " Host : {$host}\n Port : {$port}\n PID  : ".getmypid()."\n Time : ".date('Y-m-d H:i:s')."\n──────────────────────────────────────\n";
 $loop=Loop::get();$chat=new ChatServer();$server=IoServer::factory(new HttpServer(new WsServer($chat)),$port,$host);
-$loop->addPeriodicTimer(0.2, static function() use($chat):void{$chat->drainRelayTable();$chat->persistDirtyCodeSessions();});
+$previousTick=microtime(true);
+$loop->addPeriodicTimer(0.2, static function() use($chat,&$previousTick):void{$now=microtime(true);$chat->observeLoop($now-$previousTick-0.2);$previousTick=$now;$chat->drainRelayTable();$chat->persistDirtyCodeSessions();});
 echo " Server running. Press Ctrl+C to stop.\n──────────────────────────────────────\n";$server->run();

@@ -117,7 +117,8 @@ final class TemporaryVoiceService
         $slug=substr($base,0,60);
         $pos=$this->db->prepare("SELECT COALESCE(MAX(position),0)+1 FROM channels WHERE server_id=?");
         $pos->execute([$serverId]);
-        $this->db->beginTransaction();
+        $owns=!$this->db->inTransaction();
+        if($owns)$this->db->beginTransaction();
         try {
             $ins=$this->db->prepare("INSERT INTO channels (server_id,name,slug,type,description,position,is_private,created_by,owner_id,visibility)
                 VALUES (?,?,?,?,?,?,?,?,?,?)");
@@ -130,8 +131,8 @@ final class TemporaryVoiceService
                 $member->execute([$channelId,$userId]);
                 foreach($invitees as $invitee) $member->execute([$channelId,(int)$invitee['id']]);
             }
-            $this->db->commit();
-        } catch(Throwable $e) { if($this->db->inTransaction())$this->db->rollBack(); throw $e; }
+            if($owns)$this->db->commit();
+        } catch(Throwable $e) { if($owns&&$this->db->inTransaction())$this->db->rollBack(); throw $e; }
 
         foreach($invitees as $invitee) {
             try {
