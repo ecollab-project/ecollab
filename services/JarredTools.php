@@ -5,6 +5,7 @@ require_once dirname(__DIR__) . '/database/config/db.php';
 require_once dirname(__DIR__) . '/services/ChannelService.php';
 require_once dirname(__DIR__) . '/services/PeerMatchingService.php';
 require_once dirname(__DIR__) . '/services/JarredCapabilityPolicy.php';
+require_once __DIR__.'/DocumentAccessService.php';
 
 /**
  * JarredTools
@@ -259,6 +260,10 @@ final class JarredTools
             $d->execute([':sid'=>$serverId,':uid'=>$requesterId,':uid2'=>$requesterId,':did'=>$documentId,':uid3'=>$requesterId,':uid4'=>$requesterId]);
             $doc=$d->fetch(PDO::FETCH_ASSOC) ?: null;
             if ($doc) {
+                try { DocumentAccessService::get($this->db,$documentId,$requesterId); }
+                catch(RuntimeException $e) { if(!in_array($e->getCode(),[403,404],true))throw $e;$doc=null; }
+            }
+            if ($doc) {
                 $p=$this->db->prepare("SELECT p.user_id,p.mode,p.last_seen,COALESCE(NULLIF(u.full_name,''),u.username) display_name FROM collab_document_presence p JOIN users u ON u.id=p.user_id WHERE p.document_id=:did AND p.last_seen >= (NOW()-INTERVAL 45 SECOND) ORDER BY p.mode,display_name");
                 $p->execute([':did'=>$documentId]);
                 $doc['presence']=$p->fetchAll(PDO::FETCH_ASSOC);
@@ -269,7 +274,7 @@ final class JarredTools
         $whiteboardId=(int)($surface['whiteboard_id'] ?? 0);
         if ($whiteboardId>0) {
             $w=$this->db->prepare(
-                "SELECT b.id,b.workspace_id,b.title,b.description,b.visibility,b.public_permission,b.created_by,b.updated_by,b.updated_at,b.state_json
+                "SELECT b.id,b.workspace_id,cw.channel_id,b.title,b.description,b.visibility,b.public_permission,b.created_by,b.updated_by,b.updated_at,b.state_json
                  FROM collab_whiteboards b
                  JOIN collab_workspaces cw ON cw.id=b.workspace_id
                  JOIN channels c ON c.id=cw.channel_id AND c.server_id=:sid
@@ -280,6 +285,7 @@ final class JarredTools
             );
             $w->execute([':sid'=>$serverId,':uid'=>$requesterId,':uid2'=>$requesterId,':bid'=>$whiteboardId,':uid3'=>$requesterId,':uid4'=>$requesterId]);
             $board=$w->fetch(PDO::FETCH_ASSOC) ?: null;
+            if ($board && !CoworkspaceService::resolveWhiteboardAccess($this->db,$whiteboardId,(int)$board['channel_id'],$requesterId)) $board=null;
             if ($board) {
                 $state=json_decode((string)$board['state_json'],true);
                 unset($board['state_json']);
@@ -299,7 +305,7 @@ final class JarredTools
               JOIN servers s ON s.id=c.server_id JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid
               WHERE m.is_deleted=0 AND m.content LIKE :q
                 AND (c.is_private=0 OR EXISTS(SELECT 1 FROM channel_members cm WHERE cm.channel_id=c.id AND cm.user_id=:uid2)
-                     OR sm.server_role IN ('owner','admin','moderator') OR c.created_by=:uid3)";
+                     OR sm.server_role IN ('owner','admin') OR c.created_by=:uid3)";
         $params=[':uid'=>$requesterId,':uid2'=>$requesterId,':uid3'=>$requesterId,':q'=>'%'.$query.'%'];
         if($serverId && $this->canAccessServer($requesterId,$serverId)){ $sql.=" AND c.server_id=:sid"; $params[':sid']=$serverId; }
         $sql.=" ORDER BY m.created_at DESC LIMIT {$limit}";

@@ -50,4 +50,16 @@ check($jobs->status(1,1,$id)['job']['state']==='done','Worker restart resumes ch
 check($jobs->status(1,1,$id)['job']['ai_usage']['input_tokens']===3,'Provider usage retained');
 $id=enqueue();$db->exec('UPDATE user_settings SET jarred_enabled=0 WHERE user_id=1');$jobs->workOne(fn()=>throw new LogicException('Disabled'),fn()=>throw new LogicException('Disabled'));
 check($jobs->status(1,1,$id)['job']['state']==='failed','Current preferences revoke queued work');
+// The database clock need not be UTC; fresh jobs must not expire or evade expiry.
+if($db->getAttribute(PDO::ATTR_DRIVER_NAME)==='mysql'){
+ $db->exec('UPDATE user_settings SET jarred_enabled=1');
+ foreach(['-07:00','+08:00'] as $zone){
+  $db->exec("SET time_zone=".$db->quote($zone));
+  $id=enqueue();$jobs->workOne(fn()=>null,fn()=>'timezone-safe');
+  check($jobs->status(1,1,$id)['job']['state']==='done','Fresh job in '.$zone);
+  $id=enqueue();$db->exec("UPDATE jarred_jobs SET created_at=DATE_SUB(CURRENT_TIMESTAMP,INTERVAL 31 MINUTE) WHERE id=".$id);
+  $jobs->workOne(fn()=>throw new LogicException('Expired action'),fn()=>throw new LogicException('Expired inference'));
+  check($jobs->status(1,1,$id)['job']['state']==='failed','Expired job in '.$zone);
+ }
+}
 echo "PASS Jarred admission, atomic source/job, retry checkpoint, action rollback, cancellation fencing, recovery, ownership and preferences\n";

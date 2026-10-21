@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once dirname(__DIR__) . '/database/config/db.php';
 require_once dirname(__DIR__) . '/services/TemporaryVoiceService.php';
+require_once __DIR__.'/DocumentAccessService.php';
 
 final class JarredActionService
 {
@@ -50,14 +51,19 @@ final class JarredActionService
         if ($documentId>0 && preg_match('/\b(?:document|doc|file)\b/i',$text)) {
             $s=$this->db->prepare("SELECT d.id,d.title,d.workspace_id FROM collab_documents d JOIN collab_workspaces w ON w.id=d.workspace_id JOIN channels c ON c.id=w.channel_id JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid WHERE d.id=:did AND c.server_id=:sid LIMIT 1");
             $s->execute([':uid'=>$userId,':did'=>$documentId,':sid'=>$serverId]);
-            if($r=$s->fetch(PDO::FETCH_ASSOC)) return ['reply'=>'Opening '.($r['title']?:'the document').'.','action'=>['type'=>'open_document','document_id'=>(int)$r['id'],'workspace_id'=>(int)$r['workspace_id']]];
+            if($r=$s->fetch(PDO::FETCH_ASSOC)) {
+                try { DocumentAccessService::get($this->db,(int)$r['id'],$userId); }
+                catch(RuntimeException $e) { if(in_array($e->getCode(),[403,404],true))return null;throw $e; }
+                return ['reply'=>'Opening '.($r['title']?:'the document').'.','action'=>['type'=>'open_document','document_id'=>(int)$r['id'],'workspace_id'=>(int)$r['workspace_id']]];
+            }
         }
 
         $whiteboardId=(int)($surface['whiteboard_id']??0);
         if ($whiteboardId>0 && preg_match('/\b(?:whiteboard|board)\b/i',$text)) {
-            $s=$this->db->prepare("SELECT b.id,b.title,b.workspace_id FROM collab_whiteboards b JOIN collab_workspaces w ON w.id=b.workspace_id JOIN channels c ON c.id=w.channel_id JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid WHERE b.id=:bid AND c.server_id=:sid LIMIT 1");
+            $s=$this->db->prepare("SELECT b.id,b.title,b.workspace_id,w.channel_id FROM collab_whiteboards b JOIN collab_workspaces w ON w.id=b.workspace_id JOIN channels c ON c.id=w.channel_id JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid WHERE b.id=:bid AND c.server_id=:sid LIMIT 1");
             $s->execute([':uid'=>$userId,':bid'=>$whiteboardId,':sid'=>$serverId]);
-            if($r=$s->fetch(PDO::FETCH_ASSOC)) return ['reply'=>'Opening '.($r['title']?:'the whiteboard').'.','action'=>['type'=>'open_whiteboard','whiteboard_id'=>(int)$r['id'],'workspace_id'=>(int)$r['workspace_id']]];
+            if(($r=$s->fetch(PDO::FETCH_ASSOC)) && CoworkspaceService::resolveWhiteboardAccess($this->db,(int)$r['id'],(int)$r['channel_id'],$userId))
+                return ['reply'=>'Opening '.($r['title']?:'the whiteboard').'.','action'=>['type'=>'open_whiteboard','whiteboard_id'=>(int)$r['id'],'workspace_id'=>(int)$r['workspace_id']]];
         }
 
         $channelId=(int)($surface['channel_id']??0);
