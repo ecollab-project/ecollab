@@ -819,6 +819,7 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
     const data = await apiFetch(BASE() + `/API/dm/open-conversation.php?partner_id=${partnerId}&read=${document.hidden?0:1}`);
     if (DM.activePartnerId !== partnerId || DM.activeGroupId) return;
     DM.activeConvId = Number(data.conversation_id);
+    if(DM.activePartnerIsAI)_watchJarredJob(DM.activeConvId);
 
     // Clear unread from list
     const conv = DM.conversations.find(c => c.conversation_id === DM.activeConvId);
@@ -1106,8 +1107,8 @@ window.sendDmMessage = async function() {
       if (existing) optimisticEl.remove(); else optimisticEl.dataset.msgId = String(data.message_id);
     }
 
-    // Human DMs still use WebSocket. The AI reply is returned directly
-    // from send-message.php and has no WebSocket client of its own.
+    // Human DMs keep their WebSocket delivery. Jarred replies use the durable
+    // worker outbox with an authorized status fallback.
     if (!data.is_ai) {
       _wsSend({
         type:            'dm_message',
@@ -1128,27 +1129,8 @@ window.sendDmMessage = async function() {
       _appendDmMessage(data.ai_message);
     }
 
-    // Jarred write actions are explicit backend results, never model-authored JS.
-    if (stillInChat() && data.is_ai && data.ai_action) {
-      const a = data.ai_action;
-      if (a.type === 'open_temporary_voice') {
-        if (typeof window.joinVoice === 'function') {
-          setTimeout(() => window.joinVoice(a.channel_slug || ('temp-voice-' + a.channel_id), null, Number(a.channel_id), a.channel_name || 'Temporary Room'), 250);
-        } else if (typeof joinVoice === 'function') {
-          setTimeout(() => joinVoice(a.channel_slug || ('temp-voice-' + a.channel_id), null, Number(a.channel_id), a.channel_name || 'Temporary Room'), 250);
-        } else {
-          showToast('Temporary room created, but the voice UI is not ready. Refresh the server to join it.', 'info');
-        }
-      } else if (a.type === 'open_channel') {
-        const target = document.querySelector('[data-channel-id="' + Number(a.channel_id) + '"]');
-        if (target) target.click();
-        else showToast('Channel found, but it is not currently rendered in the sidebar.', 'info');
-      } else if (a.type === 'open_document' || a.type === 'open_whiteboard') {
-        // Coworkspace owns the concrete resource opener. Dispatch instead of
-        // guessing URLs so the existing collaboration UI can handle it safely.
-        window.dispatchEvent(new CustomEvent('ecollab:jarred-action', { detail: a }));
-      }
-    }
+    if(stillInChat() && data.ai_action) _applyJarredAction(data.ai_action);
+    if(stillInChat() && data.ai_job_id) _watchJarredJob(targetConv,Number(data.ai_job_id));
 
     if (data.ai_error) {
       showToast('Jarred could not reply: ' + data.ai_error, 'info');
@@ -1301,3 +1283,60 @@ Object.assign(window, {
 
 
 window.addEventListener('ecollab:visible-chat',({detail})=>{if(detail?.area==='dmMessagesArea'&&!dmSyncBusy)_syncOpenDmMessages();});
+
+// A single authorized status request at a time; realtime events wake the same fallback loop.
+let _jarredWatchGeneration=0,_jarredStatusRequest=null,_jarredWake=null;
+const _jarredActionsSeen=new Set();
+function _applyJarredAction(action) {
+      const a = action;
+      if (a.type === 'open_temporary_voice') {
+        if (typeof window.joinVoice === 'function') {
+          setTimeout(() => window.joinVoice(a.channel_slug || ('temp-voice-' + a.channel_id), null, Number(a.channel_id), a.channel_name || 'Temporary Room'), 250);
+        } else if (typeof joinVoice === 'function') {
+          setTimeout(() => joinVoice(a.channel_slug || ('temp-voice-' + a.channel_id), null, Number(a.channel_id), a.channel_name || 'Temporary Room'), 250);
+        } else {
+          showToast('Temporary room created, but the voice UI is not ready. Refresh the server to join it.', 'info');
+        }
+      } else if (a.type === 'open_channel') {
+        const target = document.querySelector('[data-channel-id="' + Number(a.channel_id) + '"]');
+        if (target) target.click();
+        else showToast('Channel found, but it is not currently rendered in the sidebar.', 'info');
+      } else if (a.type === 'open_document' || a.type === 'open_whiteboard') {
+        // Coworkspace owns the concrete resource opener. Dispatch instead of
+        // guessing URLs so the existing collaboration UI can handle it safely.
+        window.dispatchEvent(new CustomEvent('ecollab:jarred-action', { detail: a }));
+      }
+
+}
+async function _watchJarredJob(conversationId,jobId=null) {
+ const generation=++_jarredWatchGeneration;let followAction=jobId!==null;
+ for(let attempt=0;attempt<240;attempt++) {
+  if(generation!==_jarredWatchGeneration||Number(DM.activeConvId)!==Number(conversationId))return;
+  if(!document.hidden) {
+   try {
+    while(_jarredStatusRequest)await _jarredStatusRequest.catch(()=>{});
+    if(generation!==_jarredWatchGeneration)return;
+    const request=apiFetch(BASE()+'/API/dm/jarred-job.php?conversation_id='+Number(conversationId)+(jobId?'&job_id='+Number(jobId):''));
+    _jarredStatusRequest=request;
+    let data;try{data=await request;}finally{if(_jarredStatusRequest===request)_jarredStatusRequest=null;}
+    if(generation!==_jarredWatchGeneration||Number(DM.activeConvId)!==Number(conversationId))return;
+    const job=data.job;if(!job){_hideAiTyping();return;}jobId=job.id;
+    if(job.state==='done') {
+     _hideAiTyping();if(job.ai_message)_appendDmMessage(job.ai_message);
+     // Reopening a completed conversation never repeats navigation from an old action.
+     if(followAction&&!_jarredActionsSeen.has(job.id)&&job.ai_action){_jarredActionsSeen.add(job.id);_applyJarredAction(job.ai_action);}
+     return;
+    }
+    if(['failed','cancelled'].includes(job.state)){_hideAiTyping();showToast(job.state==='cancelled'?'Jarred reply cancelled.':'Jarred could not finish. Try again.','info');return;}
+    followAction=true;_showAiTyping();
+    const typing=document.getElementById('dmTypingIndicator');
+    if(typing&&!typing.querySelector('[data-cancel-jarred]')){const cancel=document.createElement('button');cancel.dataset.cancelJarred='true';cancel.textContent='Cancel reply';cancel.onclick=async()=>{cancel.disabled=true;try{await apiFetch(BASE()+'/API/dm/jarred-job.php',{method:'POST',body:JSON.stringify({action:'cancel',conversation_id:conversationId,job_id:jobId})});_jarredWake?.();}catch(_){cancel.disabled=false;}};typing.append(cancel);}
+   } catch(error) {if(attempt===239)showToast('Jarred status unavailable. Reopen this conversation to check.','info');}
+  }
+  await new Promise(resolve=>{let timer;const done=()=>{clearTimeout(timer);if(_jarredWake===done)_jarredWake=null;resolve();};_jarredWake=done;timer=setTimeout(done,Math.min(10000,1500*Math.pow(1.5,attempt))*(0.8+Math.random()*0.2));});
+ }
+ _hideAiTyping();
+}
+window.addEventListener('ecollab:delivery-sync',({detail})=>{if(detail?.kind==='all'||(detail?.kind==='dm'&&Number(detail.target_id)===Number(DM.activeConvId)))_jarredWake?.();});
+window.addEventListener('online',()=>_jarredWake?.());
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)_jarredWake?.();});
