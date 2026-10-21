@@ -25,6 +25,26 @@ class ChatServer implements MessageComponentInterface
     protected array $codeSessions = [];
 
     private PDO $db;
+    private float $databaseCheckedAt = 0.0;
+    private float $metricsAt = 0.0;
+    private int $handledFrames = 0;
+    private int $openedConnections = 0;
+    private int $closedConnections = 0;
+    private float $maxHandlerMs = 0.0;
+    private float $maxLoopLagMs = 0.0;
+
+    /** Bounded process metrics: never log frames, identities, or channel IDs. */
+    public function observeLoop(float $lagSeconds): void
+    {
+        $this->maxLoopLagMs = max($this->maxLoopLagMs, max(0, $lagSeconds)*1000);
+        $now = microtime(true);
+        if ($now-$this->metricsAt < 60) return;
+        error_log(json_encode(['metric'=>'websocket_loop','connections'=>count($this->clients),
+            'opened'=>$this->openedConnections,'closed'=>$this->closedConnections,'frames'=>$this->handledFrames,'max_handler_ms'=>round($this->maxHandlerMs,2),
+            'max_loop_lag_ms'=>round($this->maxLoopLagMs,2)]));
+        $this->metricsAt=$now; $this->openedConnections=0; $this->closedConnections=0; $this->handledFrames=0; $this->maxHandlerMs=0; $this->maxLoopLagMs=0;
+    }
+
     private WhiteboardHandler $wbHandler;
     private WhiteboardPresenceService $wbPresence;
     private int $codePersistEveryChanges = 10;
@@ -43,7 +63,10 @@ class ChatServer implements MessageComponentInterface
 
     private function refreshDatabase(): void
     {
+        $now = microtime(true);
+        if ($now-$this->databaseCheckedAt < 5) return;
         $this->db = Database::getLiveInstance();
+        $this->databaseCheckedAt = $now;
     }
 
     public function drainRelayTable(): void
@@ -64,6 +87,7 @@ class ChatServer implements MessageComponentInterface
 
     public function onOpen(ConnectionInterface $conn): void
     {
+        $this->openedConnections++;
         $this->clients->attach($conn);
         $rid = $conn->resourceId;
         $this->connMeta[$rid] = [
@@ -80,18 +104,29 @@ class ChatServer implements MessageComponentInterface
 
     public function onMessage(ConnectionInterface $from, $rawMsg): void
     {
-        try {
-            $this->refreshDatabase();
-        } catch (\Throwable $e) {
-            echo "[WS] Database reconnect failed: {$e->getMessage()}\n";
+        $started=hrtime(true);
+        try { $this->dispatchFrame($from, $rawMsg); }
+        finally { $this->handledFrames++; $this->maxHandlerMs=max($this->maxHandlerMs,(hrtime(true)-$started)/1e6); }
+    }
+
+    private function dispatchFrame(ConnectionInterface $from, $rawMsg): void
+    {
+        if (!is_string($rawMsg) || strlen($rawMsg)>2097152) return;
+        $data = json_decode($rawMsg, true, 64);
+        if (!is_array($data) || !is_string($data['type']??null) || $data['type']==='') return;
+        $rid = $from->resourceId;
+        if (!isset($this->connMeta[$rid])) return;
+        $meta = &$this->connMeta[$rid];
+        $type = $data['type'];
+        if ($type !== 'auth' && !$meta['authed']) { $from->send(json_encode(['type'=>'error','message'=>'Unauthenticated'])); return; }
+        // Authenticated transport heartbeat carries no resource data and changes no persistent state.
+        if ($type === 'ping') { $from->send(json_encode(['type'=>'pong'])); return; }
+        try { $this->refreshDatabase(); }
+        catch (\Throwable $e) {
+            error_log('[WS] Database health check unavailable');
             $from->send(json_encode(['type'=>'error','message'=>'Realtime database temporarily unavailable']));
             return;
         }
-        $rid = $from->resourceId;
-        $meta = &$this->connMeta[$rid];
-        $data = json_decode($rawMsg, true);
-        if (!is_array($data) || empty($data['type'])) return;
-        $type = $data['type'];
         if($type==='chat_presence'){
             $data['channel_id']=(int)($meta['channel_id']??0);unset($data['whiteboard_id']);
             if(strlen($rawMsg)>4096)return;
@@ -168,6 +203,7 @@ class ChatServer implements MessageComponentInterface
 
     public function onClose(ConnectionInterface $conn): void
     {
+        $this->closedConnections++;
         $rid = $conn->resourceId;
         $meta = $this->connMeta[$rid] ?? [];
         $this->removeWbPresence($conn,$meta);
@@ -276,7 +312,7 @@ class ChatServer implements MessageComponentInterface
     private function ensureCodeSessionLoaded(int $sid):void{if(isset($this->codeSessions[$sid]))return;$stmt=$this->db->prepare('SELECT code_state,version FROM coding_sessions WHERE id=:sid LIMIT 1');$stmt->execute([':sid'=>$sid]);$row=$stmt->fetch(PDO::FETCH_ASSOC);if(!$row)throw new \RuntimeException('Coding session not found.');$this->loadCodeSession($sid,(string)$row['code_state'],(int)$row['version']);}
     private function sendCodeResync(ConnectionInterface $from,int $sid):void{$this->ensureCodeSessionLoaded($sid);$from->send(json_encode(['type'=>'code_resync','session_id'=>$sid,'content'=>$this->codeSessions[$sid]['content'],'version'=>(int)$this->codeSessions[$sid]['version']]));}
     private function maybePersistCodeSession(int $sid):void{if(isset($this->codeSessions[$sid])&&$this->codeSessions[$sid]['dirty_changes']>=$this->codePersistEveryChanges)$this->persistCodeSession($sid);}
-    private function persistDirtyCodeSessions():void{$now=microtime(true);foreach(array_keys($this->codeSessions) as $sid){if(($this->codeSessions[$sid]['dirty_changes']??0)<1)continue;if($now-(float)$this->codeSessions[$sid]['last_persist_at']>=$this->codePersistEverySeconds)$this->persistCodeSession((int)$sid);}}
+    public function persistDirtyCodeSessions():void{$now=microtime(true);foreach(array_keys($this->codeSessions) as $sid){if(($this->codeSessions[$sid]['dirty_changes']??0)<1)continue;if($now-(float)$this->codeSessions[$sid]['last_persist_at']>=$this->codePersistEverySeconds)$this->persistCodeSession((int)$sid);}}
     private function persistCodeSession(int $sid):void{if(!isset($this->codeSessions[$sid]))return;$stmt=$this->db->prepare('UPDATE coding_sessions SET code_state=:state,version=:version WHERE id=:sid');$stmt->execute([':state'=>$this->codeSessions[$sid]['content'],':version'=>(int)$this->codeSessions[$sid]['version'],':sid'=>$sid]);$this->codeSessions[$sid]['dirty_changes']=0;$this->codeSessions[$sid]['last_persist_at']=microtime(true);}
     private function broadcastCodeSession(int $sid,string $payload,?ConnectionInterface $exclude=null):void{foreach($this->codeSessions[$sid]['connections']??[] as $entry){$conn=$entry['conn'];if($exclude&&$conn===$exclude)continue;try{$conn->send($payload);}catch(\Exception){}}}
     private function codeError(ConnectionInterface $conn,string $message):void{$conn->send(json_encode(['type'=>'code_error','message'=>$message]));}
@@ -547,6 +583,6 @@ class ChatServer implements MessageComponentInterface
     }
 }
 
-if(PHP_SAPI==='cli'&&isset($_SERVER['SCRIPT_FILENAME'])&&realpath($_SERVER['SCRIPT_FILENAME'])===realpath(__FILE__)){$options=getopt('',['port::','host::']);$port=(int)($options['port']??getenv('WS_PORT')?:8080);$host=$options['host']??getenv('WS_HOST')?:'0.0.0.0';$loop=\React\EventLoop\Loop::get();$chat=new ChatServer();$server=\Ratchet\Server\IoServer::factory(new \Ratchet\Http\HttpServer(new \Ratchet\WebSocket\WsServer($chat)),$port,$host);$loop->addPeriodicTimer(0.2,static function()use($chat):void{$chat->drainRelayTable();$chat->persistDirtyCodeSessions();});echo "Ecollab WebSocket server running on {$host}:{$port}\n";$server->run();}
+if(PHP_SAPI==='cli'&&isset($_SERVER['SCRIPT_FILENAME'])&&realpath($_SERVER['SCRIPT_FILENAME'])===realpath(__FILE__)){$options=getopt('',['port::','host::']);$port=(int)($options['port']??getenv('WS_PORT')?:8080);$host=$options['host']??getenv('WS_HOST')?:'0.0.0.0';$loop=\React\EventLoop\Loop::get();$chat=new ChatServer();$server=\Ratchet\Server\IoServer::factory(new \Ratchet\Http\HttpServer(new \Ratchet\WebSocket\WsServer($chat)),$port,$host);$previousTick=microtime(true);$loop->addPeriodicTimer(0.2,static function()use($chat,&$previousTick):void{$now=microtime(true);$chat->observeLoop($now-$previousTick-0.2);$previousTick=$now;$chat->drainRelayTable();$chat->persistDirtyCodeSessions();});echo "Ecollab WebSocket server running on {$host}:{$port}\n";$server->run();}
 
 
