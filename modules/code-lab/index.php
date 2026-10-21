@@ -16,6 +16,9 @@ function clEscape(string $s): string {return htmlspecialchars($s,ENT_QUOTES,'UTF
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/code-lab.css?v=editor-1">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script><script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
+<script>window.ECOLLAB=<?= json_encode(['baseUrl'=>BASE_URL,'userId'=>(int)$user['id'],'centrifugoEnabled'=>filter_var(env('CENTRIFUGO_ENABLED','false'),FILTER_VALIDATE_BOOLEAN)],JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;
+window.apiFetch=async(url,options={})=>{const res=await fetch(url,{...options,credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':<?= json_encode($csrf) ?>,...options.headers}});const data=await res.json();if(!res.ok)throw new Error(data.error||'Request failed');return data;};</script>
+<script defer src="<?= BASE_URL ?>/assets/js/chat/centrifugo-delivery.js?v=phase2"></script>
 <script defer src="<?= BASE_URL ?>/assets/js/code-lab-editor.js?v=1"></script><script defer src="<?= BASE_URL ?>/assets/js/code-lab.js?v=editor-1"></script><script defer src="<?= BASE_URL ?>/assets/js/code-lab-integrity.js?v=editor-1"></script><?php require_once ROOT_PATH.'/includes/layout/color-theme.php'; ?>
 </head>
 <body data-mobile-surface="code-lab"><main class="cl-shell" id="codeLab" data-server-id="<?= $sid ?>" data-base="<?= clEscape(BASE_URL) ?>" data-csrf="<?= clEscape($csrf) ?>">
