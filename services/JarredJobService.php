@@ -68,7 +68,11 @@ final class JarredJobService
     {
         $this->db->beginTransaction();
         try {
-            $j=$this->q("SELECT * FROM jarred_jobs WHERE state='queued' ORDER BY id LIMIT 1".$this->lock())->fetch(PDO::FETCH_ASSOC);
+            // created_at uses the database session clock. Never reinterpret it as UTC in PHP.
+            $age = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME)==='sqlite'
+                ? "CAST(strftime('%s','now') AS INTEGER)-CAST(strftime('%s',created_at) AS INTEGER)"
+                : 'TIMESTAMPDIFF(SECOND,created_at,CURRENT_TIMESTAMP)';
+            $j=$this->q("SELECT *, $age AS age_seconds FROM jarred_jobs WHERE state='queued' ORDER BY id LIMIT 1".$this->lock())->fetch(PDO::FETCH_ASSOC);
             if (!$j) { $this->db->commit();return false; }
             $token=bin2hex(random_bytes(16));
             $this->q("UPDATE jarred_jobs SET state='running',attempts=attempts+1,lease_token=? WHERE id=?",[$token,$j['id']]);
@@ -76,8 +80,8 @@ final class JarredJobService
         } catch(Throwable $e) { if($this->db->inTransaction())$this->db->rollBack();throw $e; }
         try {
             $this->authorize($j);
-            error_log(json_encode(['metric'=>'jarred_queue','age_seconds'=>max(0,time()-(int)strtotime($j['created_at'].' UTC')),'attempt'=>(int)$j['attempts']+1]));
-            if (strtotime($j['created_at'].' UTC')<time()-1800) throw new RuntimeException('Queue timeout',408);
+            error_log(json_encode(['metric'=>'jarred_queue','age_seconds'=>max(0,(int)$j['age_seconds']),'attempt'=>(int)$j['attempts']+1]));
+            if ((int)$j['age_seconds']>1800) throw new RuntimeException('Queue timeout',408);
             $j['body']=(string)$this->q('SELECT body FROM dm_messages WHERE id=?',[$j['source_message_id']])->fetchColumn();
             if (!(int)$j['action_checked']) {
                 $this->db->beginTransaction();

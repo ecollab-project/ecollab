@@ -31,10 +31,11 @@ jobs:
         run: |
           set -e
           find API services scripts websocket tests -name '*.php' -print0 | xargs -0 -n1 php -l
-          for test in phase2-jarred phase2-livekit phase2-search phase2-websocket phase2-code-lab phase2-voice-action phase1-access phase1-temporary-voice phase1-peer-batch phase1-messages phase1-websocket; do php "tests/$test.php"; done
+          for test in phase2-jarred phase2-livekit phase2-search phase2-websocket phase2-code-lab phase2-voice-action review-jarred-resource-access phase1-access phase1-temporary-voice phase1-peer-batch phase1-messages phase1-websocket; do php "tests/$test.php"; done
           php vendor/bin/phpunit --testsuite Unit --stderr
           python3 tests/phase1-session.py
           python3 tests/phase2-jarred-http.py
+          python3 tests/review-realtime-crash.py
       - name: Real MariaDB transactional fixtures and migrations
         env:
           PHASE2_TEST_DSN: mysql:host=127.0.0.1;port=3306;dbname=ecollab_phase2_test

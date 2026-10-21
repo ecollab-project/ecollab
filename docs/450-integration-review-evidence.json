@@ -1,0 +1,555 @@
+{
+  "reviewed_heads": {
+    "66": {
+      "head": "8a2dcfd19db15c10d4711856835d68ef799660db",
+      "workflow_runs": [
+        {
+          "id": 39408644678,
+          "name": "Notification regression",
+          "status": "completed",
+          "conclusion": "success",
+          "run_number": 206,
+          "jobs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39408644678/jobs",
+          "logs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39408644678/logs",
+          "workflow_id": 376282128
+        },
+        {
+          "id": 39408644593,
+          "name": "Chat resumable uploads",
+          "status": "completed",
+          "conclusion": "success",
+          "run_number": 376,
+          "jobs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39408644593/jobs",
+          "logs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39408644593/logs",
+          "workflow_id": 379557160
+        },
+        {
+          "id": 39408644668,
+          "name": "Chat timeline and profiles",
+          "status": "completed",
+          "conclusion": "success",
+          "run_number": 86,
+          "jobs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39408644668/jobs",
+          "logs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39408644668/logs",
+          "workflow_id": 386451212
+        },
+        {
+          "id": 39408644805,
+          "name": "Phase 1 backend regression",
+          "status": "completed",
+          "conclusion": "success",
+          "run_number": 1,
+          "jobs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39408644805/jobs",
+          "logs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39408644805/logs",
+          "workflow_id": 390416254
+        },
+        {
+          "id": 39408644558,
+          "name": "Settings and Jarred runtime",
+          "status": "completed",
+          "conclusion": "success",
+          "run_number": 49,
+          "jobs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39408644558/jobs",
+          "logs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39408644558/logs",
+          "workflow_id": 387501214
+        }
+      ]
+    },
+    "67": {
+      "head": "e1fe79f7b2cdadf4719e9ef5f1bd82ae14db4b98",
+      "workflow_runs": [
+        {
+          "id": 39592321981,
+          "name": "Chat resumable uploads",
+          "status": "completed",
+          "conclusion": "success",
+          "run_number": 380,
+          "jobs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592321981/jobs",
+          "logs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592321981/logs",
+          "workflow_id": 379557160
+        },
+        {
+          "id": 39592322031,
+          "name": "Chat emoji and animated stickers",
+          "status": "completed",
+          "conclusion": "success",
+          "run_number": 52,
+          "jobs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592322031/jobs",
+          "logs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592322031/logs",
+          "workflow_id": 385485751
+        },
+        {
+          "id": 39592322099,
+          "name": "Chat timeline and profiles",
+          "status": "completed",
+          "conclusion": "success",
+          "run_number": 89,
+          "jobs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592322099/jobs",
+          "logs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592322099/logs",
+          "workflow_id": 386451212
+        },
+        {
+          "id": 39592322027,
+          "name": "UI behavior regression",
+          "status": "completed",
+          "conclusion": "success",
+          "run_number": 169,
+          "jobs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592322027/jobs",
+          "logs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592322027/logs",
+          "workflow_id": 376102460
+        },
+        {
+          "id": 39592322278,
+          "name": "Notification regression",
+          "status": "completed",
+          "conclusion": "success",
+          "run_number": 209,
+          "jobs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592322278/jobs",
+          "logs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592322278/logs",
+          "workflow_id": 376282128
+        },
+        {
+          "id": 39592322060,
+          "name": "Phase 2 backend regression",
+          "status": "completed",
+          "conclusion": "success",
+          "run_number": 2,
+          "jobs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592322060/jobs",
+          "logs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592322060/logs",
+          "workflow_id": 391626991
+        },
+        {
+          "id": 39592321989,
+          "name": "Code Lab isolation",
+          "status": "completed",
+          "conclusion": "success",
+          "run_number": 60,
+          "jobs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592321989/jobs",
+          "logs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592321989/logs",
+          "workflow_id": 384160781
+        },
+        {
+          "id": 39592322005,
+          "name": "Settings and Jarred runtime",
+          "status": "completed",
+          "conclusion": "success",
+          "run_number": 51,
+          "jobs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592322005/jobs",
+          "logs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592322005/logs",
+          "workflow_id": 387501214
+        },
+        {
+          "id": 39592322119,
+          "name": "Learning upgrades",
+          "status": "completed",
+          "conclusion": "success",
+          "run_number": 47,
+          "jobs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592322119/jobs",
+          "logs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592322119/logs",
+          "workflow_id": 386398497
+        },
+        {
+          "id": 39592321982,
+          "name": "Color palettes",
+          "status": "completed",
+          "conclusion": "success",
+          "run_number": 29,
+          "jobs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592321982/jobs",
+          "logs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592321982/logs",
+          "workflow_id": 387480840
+        },
+        {
+          "id": 39592322498,
+          "name": "Responsive page layouts",
+          "status": "completed",
+          "conclusion": "success",
+          "run_number": 65,
+          "jobs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592322498/jobs",
+          "logs_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/39592322498/logs",
+          "workflow_id": 383934226
+        }
+      ]
+    }
+  },
+  "local": {
+    "phase1-access": {
+      "code": 0,
+      "output": "PASS 200 role/membership/privacy/member/creator combinations, counts parity, ban/suspend/mute, revocation and server/channel state\n"
+    },
+    "phase1-temporary-voice": {
+      "code": 0,
+      "output": "PASS temporary voice: DDL-free constructor, occupancy, expiry reset, stale leave, denial rollback, permanent rooms\n"
+    },
+    "phase1-peer-batch": {
+      "code": 0,
+      "output": "{\n    \"scope\": \"SQLite synthetic profile-loading microbenchmark; not HTTP\\/VPS capacity\",\n    \"results\": [\n        {\n            \"candidates\": 0,\n            \"legacy_profile_statements\": 0,\n            \"batch_profile_statements\": 0,\n            \"legacy_profile_ms\": 0.001,\n            \"batch_profile_ms\": 0.009\n        },\n        {\n            \"candidates\": 1,\n            \"legacy_profile_statements\": 4,\n            \"batch_profile_statements\": 4,\n            \"legacy_profile_ms\": 0.244,\n            \"batch_profile_ms\": 0.066\n        },\n        {\n            \"candidates\": 50,\n            \"legacy_profile_statements\": 200,\n            \"batch_profile_statements\": 4,\n            \"legacy_profile_ms\": 1.655,\n            \"batch_profile_ms\": 0.462\n        },\n        {\n            \"candidates\": 100,\n            \"legacy_profile_statements\": 400,\n            \"batch_profile_statements\": 4,\n            \"legacy_profile_ms\": 3.027,\n            \"batch_profile_ms\": 1.067\n        }\n    ],\n    \"memory_peak_bytes\": 2097152\n}\nPASS peer batch: 0/1/50/100, reversed candidate order, exact profiles/scores/semantic inputs, relationships and empty profiles\n"
+    },
+    "phase1-messages": {
+      "code": 0,
+      "output": "PASS message limits, before/after, private and revoked access, deleted/cross-channel exclusion, pinned, reactions, attachments, polls\n"
+    },
+    "phase1-websocket": {
+      "code": 0,
+      "output": "[WS] Connection 1 closed\n[WS] Connection 2 closed\n[WS] Connection 3 closed\nPASS WebSocket multiple-tab final disconnect and stale room isolation\n"
+    },
+    "phase2-jarred": {
+      "code": 0,
+      "output": "PASS Jarred admission, atomic source/job, retry checkpoint, action rollback, cancellation fencing, recovery, ownership and preferences\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n[jarred_worker] retry\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":2}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0.04}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n[jarred_worker] retry\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":2}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":2}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n[jarred_worker] failed\n"
+    },
+    "phase2-livekit": {
+      "code": 0,
+      "output": "50 snapshot readers: passed; upstream RPCs from reader = 0 (code path has no upstream dependency)\n150 snapshot readers: passed; upstream RPCs from reader = 0 (code path has no upstream dependency)\n450 snapshot readers: passed; upstream RPCs from reader = 0 (code path has no upstream dependency)\nMissing/stale/future snapshot and authorized filtering passed\n"
+    },
+    "phase2-search": {
+      "code": 0,
+      "output": "PASS substring search, private visibility, cross-server isolation, moderation, bounded input and tied-timestamp pagination\n"
+    },
+    "phase2-websocket": {
+      "code": 0,
+      "output": "PASS 1850 authenticated heartbeats and malformed frames, zero DB access; total dispatch ms=1.154\n"
+    },
+    "phase2-code-lab": {
+      "code": 0,
+      "output": "PASS: private attempts, playground isolation, roles, cross-server access, submission locking, deadlines, timing and stale saves\nPASS: queue ownership, frozen submissions, weighted grading, hidden-case privacy, quotas, runtime/limit enforcement, outage retry and manual overrides\n50 clients: status SQL executions 150 -> 100 (position omitted)\n150 clients: status SQL executions 450 -> 300 (position omitted)\n450 clients: status SQL executions 1350 -> 900 (position omitted)\nPASS durable metadata-only event and current ownership/membership\n"
+    },
+    "phase2-voice-action": {
+      "code": 0,
+      "output": "PASS real temporary-room action joins outer transaction, rollback retains dialogue, retry creates one room\n"
+    },
+    "review-jarred-crashes": {
+      "code": 0,
+      "output": "PASS abrupt crash before_message\nPASS abrupt crash after_message\nPASS abrupt crash before_job\nPASS abrupt crash after_claim\nPASS abrupt crash during_inference\nPASS abrupt crash before_response_commit\nPASS abrupt crash after_response_commit\nPASS abrupt crash during_outbox_insert\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":2}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":2}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":2}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":2}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n"
+    },
+    "review-jarred-resource-access": {
+      "code": 0,
+      "output": "{\"private_document_navigation\":false,\"private_board_navigation\":false,\"private_board_context\":false}\nPASS Jarred resource privacy, explicit permission, revocation, owner and archived workspace\n"
+    },
+    "code-lab-execution-regression": {
+      "code": 0,
+      "output": "PASS: private attempts, playground isolation, roles, cross-server access, submission locking, deadlines, timing and stale saves\nPASS: queue ownership, frozen submissions, weighted grading, hidden-case privacy, quotas, runtime/limit enforcement, outage retry and manual overrides\n"
+    },
+    "code-lab-server-queue": {
+      "code": 0,
+      "output": "PASS: private attempts, playground isolation, roles, cross-server access, submission locking, deadlines, timing and stale saves\nPASS: server fairness, persistent cursor, retry arrival order, private advisory positions, late arrivals and unlocked compilation\n"
+    },
+    "code-lab-worker-pool": {
+      "code": 0,
+      "output": "PASS: two bounded workers, graceful drain, child-failure propagation, no orphan processes\n"
+    },
+    "code-lab-batch-regression": {
+      "code": 0,
+      "output": "PASS: capability negotiation, one batch per grade, strict completion, output decoding and legacy fallback\n"
+    },
+    "code-lab-integrity-policy": {
+      "code": 0,
+      "output": "PASS: Code Lab-only Jarred scope gate; chat, documents and dashboards unaffected\n"
+    },
+    "settings-runtime-regression": {
+      "code": 0,
+      "output": "PASS: profile/receipt privacy, Jarred preferences, bounded continuity, conversation lock, atomic exchange, isolation and greeting fast path\n"
+    },
+    "peer-ml-regression": {
+      "code": 0,
+      "output": "Peer ML regression checks passed\n"
+    },
+    "chat-read-regression": {
+      "code": 0,
+      "output": "PASS: legacy read fallback, unread snapshots, same-second delivery, monotonic and per-user/scope read state\n"
+    },
+    "centrifugo-regression": {
+      "code": 0,
+      "output": "Centrifugo token and transaction checks passed\n"
+    },
+    "whiteboard-scene-regression": {
+      "code": 0,
+      "output": "Whiteboard scene regression checks passed\n"
+    },
+    "whiteboard-presence-regression": {
+      "code": 0,
+      "output": "Presence checks passed: authenticated identity, room isolation, clocks, validation, expiry and multiple tabs.\n"
+    },
+    "whiteboard-realtime-regression": {
+      "code": 2,
+      "output": "Dedicated collabora_test database required; never run against production.\n"
+    },
+    "phase2-jarred-client": {
+      "code": 0,
+      "output": "PASS Jarred pending/cancel control, realtime wake, action deduplication and late conversation response\n"
+    },
+    "code-lab-ui-regression": {
+      "code": 0,
+      "output": "PASS: task dialog, weighted check authoring, execution output, no-deadline publishing, private editor flow, failed-save preservation, escaped titles, server navigation and four supported language options\n"
+    },
+    "code-lab-integrity-regression": {
+      "code": 0,
+      "output": "PASS: external/forged paste and drop blocked; internal copy/cut/paste, read-only protection, typing, authoring isolation and task boundaries verified\n"
+    },
+    "centrifugo-client-regression": {
+      "code": 0,
+      "output": "Browser adapter: scoped tokens, reconnect sync, duplicate events, queued reads and stale target guards passed\n"
+    },
+    "notification-routing-regression": {
+      "code": 0,
+      "output": "PASS exact DM, group, thread, missed-call routing; invite URL validation; unsafe links; keyboard and escaping\n"
+    },
+    "livekit-calls-regression": {
+      "code": 0,
+      "output": "PASS: independent cameras, local group preview, call-id isolation, six tiles, cleanup, quality and cancellation\n"
+    },
+    "livekit-voice-regression": {
+      "code": 0,
+      "output": "[LiveKit] participant connected: user-2\n[LiveKit] participant disconnected: user-2\nPASS: local/remote mute agreement, roster uniqueness, exact participant count\n"
+    },
+    "chat-media-regression": {
+      "code": 0,
+      "output": "PASS: search, recents, Unicode preservation, tones, sticker allowlist, code/link exclusions, reduced motion, channel/DM isolation, rich-editor insertion, disabled input, Escape and live messages\n"
+    },
+    "chat-uploads-regression": {
+      "code": 0,
+      "output": "Chat upload controls and navigation regression checks passed\n"
+    },
+    "request-security-regression": {
+      "code": 0,
+      "output": "PASS: absent/empty/malformed/mismatched CSRF rejected, header/form tokens accepted, strict cookie-only sessions\n"
+    },
+    "jarred-provider-regression": {
+      "code": 0,
+      "output": "PASS: real cURL, local-only URLs, proxy bypass, no redirects, token/CPU bounds, timings, warm-up and error lock release\n"
+    },
+    "jarred-session-race": {
+      "code": 0,
+      "output": "PASS: in-flight reply isolation, out-of-order session navigation and rename/delete races\n"
+    },
+    "realtime-settings-regression": {
+      "code": 0,
+      "output": "PASS: preference effects, explicit media reveal, screen-reader log, stable unread/date nodes and 1,000 incremental appends (115ms, local DOM test only)\n"
+    },
+    "phase2-polling": {
+      "code": 0,
+      "output": "{\"clients\":50,\"window_seconds\":60,\"before\":{\"calls\":1000,\"position\":1000},\"after\":{\"calls\":500,\"position\":100}}\n{\"clients\":100,\"window_seconds\":60,\"before\":{\"calls\":2000,\"position\":2000},\"after\":{\"calls\":1000,\"position\":200}}\n{\"clients\":200,\"window_seconds\":60,\"before\":{\"calls\":4000,\"position\":4000},\"after\":{\"calls\":2000,\"position\":400}}\n{\"clients\":300,\"window_seconds\":60,\"before\":{\"calls\":6000,\"position\":6000},\"after\":{\"calls\":3000,\"position\":600}}\n{\"clients\":350,\"window_seconds\":60,\"before\":{\"calls\":7000,\"position\":7000},\"after\":{\"calls\":3500,\"position\":700}}\n{\"clients\":400,\"window_seconds\":60,\"before\":{\"calls\":8000,\"position\":8000},\"after\":{\"calls\":4000,\"position\":800}}\n{\"clients\":450,\"window_seconds\":60,\"before\":{\"calls\":9000,\"position\":9000},\"after\":{\"calls\":4500,\"position\":900}}\n"
+    },
+    "unit": {
+      "code": 0,
+      "output": "PHPUnit 10.5.64 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.6\nConfiguration: WORKSPACE/integration-review/phpunit.xml\n\n.........................                                         25 / 25 (100%)\n\nTime: 00:00.013, Memory: 10.00 MB\n\nOK (25 tests, 56 assertions)\n"
+    },
+    "session": {
+      "code": 0,
+      "output": "[{\"route\": \"search-messages.php\", \"method\": \"GET\", \"parallel_probe_ms\": 1.02}, {\"route\": \"whiteboard-sync.php\", \"method\": \"GET\", \"parallel_probe_ms\": 1.05}, {\"route\": \"whiteboard-sync.php\", \"method\": \"POST\", \"parallel_probe_ms\": 1.05}]\nPASS actual endpoint auth/CSRF and same-session parallel requests (synthetic session; downstream DB behavior tested separately)\n"
+    },
+    "jarred-http": {
+      "code": 0,
+      "output": "{\"synthetic_ack_ms\": 7.96, \"worker_running\": false, \"status\": 202}\nPASS actual enqueue API: auth, CSRF, Code Lab denial, atomic busy rejection, ownership and cancellation\n"
+    },
+    "phpstan": {
+      "code": 1,
+      "output": "{\"totals\":{\"errors\":0,\"file_errors\":13},\"files\":{\"WORKSPACE/integration-review/API/auth/send-otp.php\":{\"errors\":1,\"messages\":[{\"message\":\"Constant MAIL_FROM not found.\",\"line\":56,\"ignorable\":true,\"tip\":\"Learn more at https://phpstan.org/user-guide/discovering-symbols\",\"identifier\":\"constant.notFound\"}]},\"WORKSPACE/integration-review/services/CodeLabExecutionService.php\":{\"errors\":2,\"messages\":[{\"message\":\"Variable $score might not be defined.\",\"line\":144,\"ignorable\":true,\"identifier\":\"variable.undefined\"},{\"message\":\"Variable $score might not be defined.\",\"line\":144,\"ignorable\":true,\"identifier\":\"variable.undefined\"}]},\"WORKSPACE/integration-review/services/WebPushService.php\":{\"errors\":3,\"messages\":[{\"message\":\"Instantiated class Minishlink\\\\WebPush\\\\WebPush not found.\",\"line\":70,\"ignorable\":true,\"tip\":\"Learn more at https://phpstan.org/user-guide/discovering-symbols\",\"identifier\":\"class.notFound\"},{\"message\":\"Call to method sendOneNotification() on an unknown class Minishlink\\\\WebPush\\\\WebPush.\",\"line\":71,\"ignorable\":true,\"tip\":\"Learn more at https://phpstan.org/user-guide/discovering-symbols\",\"identifier\":\"class.notFound\"},{\"message\":\"Call to static method create() on an unknown class Minishlink\\\\WebPush\\\\Subscription.\",\"line\":71,\"ignorable\":true,\"tip\":\"Learn more at https://phpstan.org/user-guide/discovering-symbols\",\"identifier\":\"class.notFound\"}]},\"WORKSPACE/integration-review/websocket/ChatServer.php\":{\"errors\":7,\"messages\":[{\"message\":\"Ignored error pattern #Access to an undefined property Ratchet\\\\\\\\ConnectionInterface::\\\\$resourceId# in path WORKSPACE/integration-review/websocket/ChatServer.php is expected to occur 9 times, but occurred 15 times.\",\"line\":92,\"ignorable\":false,\"identifier\":\"ignore.count\"},{\"message\":\"Access to an undefined property Ratchet\\\\ConnectionInterface::$resourceId.\",\"line\":468,\"ignorable\":true,\"tip\":\"Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property\",\"identifier\":\"property.notFound\"},{\"message\":\"Access to an undefined property Ratchet\\\\ConnectionInterface::$resourceId.\",\"line\":470,\"ignorable\":true,\"tip\":\"Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property\",\"identifier\":\"property.notFound\"},{\"message\":\"Access to an undefined property Ratchet\\\\ConnectionInterface::$resourceId.\",\"line\":479,\"ignorable\":true,\"tip\":\"Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property\",\"identifier\":\"property.notFound\"},{\"message\":\"Access to an undefined property Ratchet\\\\ConnectionInterface::$resourceId.\",\"line\":491,\"ignorable\":true,\"tip\":\"Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property\",\"identifier\":\"property.notFound\"},{\"message\":\"Access to an undefined property Ratchet\\\\ConnectionInterface::$resourceId.\",\"line\":499,\"ignorable\":true,\"tip\":\"Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property\",\"identifier\":\"property.notFound\"},{\"message\":\"Access to an undefined property Ratchet\\\\ConnectionInterface::$resourceId.\",\"line\":507,\"ignorable\":true,\"tip\":\"Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property\",\"identifier\":\"property.notFound\"}]}},\"errors\":[]}\n\u26a0\ufe0f  You're running an old version of PHPStan.\ufe0f\n\nThe last release in the 1.12.x series with new features\nand bugfixes was released on July 17th 2025,\nthat's 461 days ago.\n\nSince then more than 65 new PHPStan versions were released\nwith hundreds of new features, bugfixes, and other\nquality of life improvements.\n\nTo learn about what you're missing out on, check out\nthis blog with articles about the latest major releases:\nhttps://phpstan.org/blog\n\nUpgrade today to PHPStan 2.2 or newer by using\n\"phpstan/phpstan\": \"^2.2\" in your composer.json.\n\nNote: Using configuration file WORKSPACE/integration-review/phpstan.neon.\n"
+    },
+    "resource-final": {
+      "code": 0,
+      "output": "{\"private_document_navigation\":false,\"private_board_navigation\":false,\"private_board_context\":false}\nPASS Jarred resource privacy, explicit permission, revocation, owner and archived workspace\nPASS Jarred private-message search moderator/member boundary\n"
+    },
+    "settings-final": {
+      "code": 0,
+      "output": "PASS: profile/receipt privacy, Jarred preferences, bounded continuity, conversation lock, atomic exchange, isolation and greeting fast path\n"
+    },
+    "realtime-crash": {
+      "code": 0,
+      "output": "PASS abrupt crash before_message\nPASS abrupt crash after_message\nPASS abrupt crash before_job\nPASS abrupt crash after_claim\nPASS abrupt crash during_inference\nPASS abrupt crash before_response_commit\nPASS abrupt crash after_response_commit\nPASS abrupt crash during_outbox_insert\nPASS crash after broker broadcast before ACK; durable response unchanged\nPASS at-least-once hint replay: same event ID; metadata only; one persisted assistant reply\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":2}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0.01}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":2}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":2}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":2}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n"
+    },
+    "phpstan-patched": {
+      "code": 1,
+      "output": "{\"totals\":{\"errors\":0,\"file_errors\":13},\"files\":{\"WORKSPACE/integration-review/API/auth/send-otp.php\":{\"errors\":1,\"messages\":[{\"message\":\"Constant MAIL_FROM not found.\",\"line\":56,\"ignorable\":true,\"tip\":\"Learn more at https://phpstan.org/user-guide/discovering-symbols\",\"identifier\":\"constant.notFound\"}]},\"WORKSPACE/integration-review/services/CodeLabExecutionService.php\":{\"errors\":2,\"messages\":[{\"message\":\"Variable $score might not be defined.\",\"line\":144,\"ignorable\":true,\"identifier\":\"variable.undefined\"},{\"message\":\"Variable $score might not be defined.\",\"line\":144,\"ignorable\":true,\"identifier\":\"variable.undefined\"}]},\"WORKSPACE/integration-review/services/WebPushService.php\":{\"errors\":3,\"messages\":[{\"message\":\"Instantiated class Minishlink\\\\WebPush\\\\WebPush not found.\",\"line\":70,\"ignorable\":true,\"tip\":\"Learn more at https://phpstan.org/user-guide/discovering-symbols\",\"identifier\":\"class.notFound\"},{\"message\":\"Call to method sendOneNotification() on an unknown class Minishlink\\\\WebPush\\\\WebPush.\",\"line\":71,\"ignorable\":true,\"tip\":\"Learn more at https://phpstan.org/user-guide/discovering-symbols\",\"identifier\":\"class.notFound\"},{\"message\":\"Call to static method create() on an unknown class Minishlink\\\\WebPush\\\\Subscription.\",\"line\":71,\"ignorable\":true,\"tip\":\"Learn more at https://phpstan.org/user-guide/discovering-symbols\",\"identifier\":\"class.notFound\"}]},\"WORKSPACE/integration-review/websocket/ChatServer.php\":{\"errors\":7,\"messages\":[{\"message\":\"Ignored error pattern #Access to an undefined property Ratchet\\\\\\\\ConnectionInterface::\\\\$resourceId# in path WORKSPACE/integration-review/websocket/ChatServer.php is expected to occur 9 times, but occurred 15 times.\",\"line\":92,\"ignorable\":false,\"identifier\":\"ignore.count\"},{\"message\":\"Access to an undefined property Ratchet\\\\ConnectionInterface::$resourceId.\",\"line\":468,\"ignorable\":true,\"tip\":\"Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property\",\"identifier\":\"property.notFound\"},{\"message\":\"Access to an undefined property Ratchet\\\\ConnectionInterface::$resourceId.\",\"line\":470,\"ignorable\":true,\"tip\":\"Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property\",\"identifier\":\"property.notFound\"},{\"message\":\"Access to an undefined property Ratchet\\\\ConnectionInterface::$resourceId.\",\"line\":479,\"ignorable\":true,\"tip\":\"Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property\",\"identifier\":\"property.notFound\"},{\"message\":\"Access to an undefined property Ratchet\\\\ConnectionInterface::$resourceId.\",\"line\":491,\"ignorable\":true,\"tip\":\"Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property\",\"identifier\":\"property.notFound\"},{\"message\":\"Access to an undefined property Ratchet\\\\ConnectionInterface::$resourceId.\",\"line\":499,\"ignorable\":true,\"tip\":\"Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property\",\"identifier\":\"property.notFound\"},{\"message\":\"Access to an undefined property Ratchet\\\\ConnectionInterface::$resourceId.\",\"line\":507,\"ignorable\":true,\"tip\":\"Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property\",\"identifier\":\"property.notFound\"}]}},\"errors\":[]}"
+    }
+  },
+  "mariadb": {
+    "create-ecollab_phase1_test": {
+      "code": 0,
+      "output": ""
+    },
+    "create-ecollab_review_base_test": {
+      "code": 0,
+      "output": ""
+    },
+    "create-ecollab_review_combined_test": {
+      "code": 0,
+      "output": ""
+    },
+    "phase1-mariadb": {
+      "code": 0,
+      "output": "PASS MariaDB: additive migration rerun, both channel lock orderings, expiry, last leave, singleton, 100-row cache insert/update\n"
+    },
+    "base-migrate": {
+      "code": 1,
+      "output": "\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n  Ecollab Database Migration Runner\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\n  65 migration(s) to apply:\n    - 002_core_schema.sql\n    - 004_missing_tables.sql\n    - 005_oauth_columns.sql\n    - 006_chat_addon.sql\n    - 007_voice_presence.sql\n    - 008_dm_migration.sql\n    - 009_channel_access_requests.sql\n    - 010_channel_seen.sql\n    - 011_collab_tools.sql\n    - 012_collab_extra.sql\n    - 013_peer_matching.sql\n    - 014_security.sql\n    - 015_onlyoffice_documents.sql\n    - 015_seeds_v2.sql\n    - 016_seeds_chat.sql\n    - 017_user_plan_id.sql\n    - 018_free_for_all.sql\n    - 019_invites_and_members.sql\n    - 020_threads_v2.sql\n    - 021_thread_attachments.sql\n    - 021_user_settings.sql\n    - 022_whiteboard_sessions.sql\n    - 023_coworkspaces.sql\n    - 024_coworkspace_presence.sql\n    - 024_coworkspace_server_scope.sql\n    - 025_coworkspace_one_active_per_server.sql\n    - 026_coworkspace_document_presence.sql\n    - 027_coding_buddy_sessions.sql\n    - 028_polls.sql\n    - 029_user_settings_missing_columns.sql\n    - 030_dm_groups.sql\n    - 031_message_bookmarks.sql\n    - 032_dm_call_history.sql\n    - 033_notification_schema_canonical.sql\n    - 034_peer_matching_profile_sync.sql\n    - 035_peer_request_notifications.sql\n    - 036_collab_whiteboard.sql\n    - 037_backfill_peer_request_notifications.sql\n    - 038_whiteboard_sessions.sql\n    - 039_resource_access.sql\n    - 040_resource_public_permissions.sql\n    - 041_resource_comment_permissions.sql\n    - 042_facilitator_requests_and_role_policy.sql\n    - 043_server_channel_ownership_visibility.sql\n    - 044_facilitator_server_announcements.sql\n    - 044_owner_visibility_integrity.sql\n    - 045_add_thread_notification_types.sql\n    - 045_facilitator_server_permissions.sql\n    - 046_server_report_moderation.sql\n    - 047_dm_group_attachments.sql\n    - 048_thread_post_actions.sql\n    - 049_book_recommendation_events.sql\n    - 050_collabora_wopi.sql\n    - 051_document_reports.sql\n    - 052_realtime_outbox.sql\n    - 053_system_capacity.sql\n    - 054_code_lab.sql\n    - 055_code_lab_execution.sql\n    - 056_code_lab_similarity.sql\n    - 057_web_push.sql\n    - 058_chat_read_cursors.sql\n    - 059_color_palettes.sql\n    - 060_settings_runtime.sql\n    - 061_request_hardening.sql\n    - 062_code_lab_server_queue.sql\n\n  \u2192 Applying 002_core_schema.sql ... OK (388ms)\n  \u2192 Applying 004_missing_tables.sql ... OK (1ms)\n  \u2192 Applying 005_oauth_columns.sql ... OK (0ms)\n  \u2192 Applying 006_chat_addon.sql ... OK (1ms)\n  \u2192 Applying 007_voice_presence.sql ... OK (30ms)\n  \u2192 Applying 008_dm_migration.sql ... OK (10ms)\n  \u2192 Applying 009_channel_access_requests.sql ... OK (4ms)\n  \u2192 Applying 010_channel_seen.sql ... OK (5ms)\n  \u2192 Applying 011_collab_tools.sql ... OK (88ms)\n  \u2192 Applying 012_collab_extra.sql ... OK (65ms)\n  \u2192 Applying 013_peer_matching.sql ... OK (52ms)\n  \u2192 Applying 014_security.sql ... OK (41ms)\n  \u2192 Applying 015_onlyoffice_documents.sql ... OK (6ms)\n  \u2192 Applying 015_seeds_v2.sql ... OK (0ms)\n  \u2192 Applying 016_seeds_chat.sql ... OK (0ms)\n  \u2192 Applying 017_user_plan_id.sql ... OK (11ms)\n  \u2192 Applying 018_free_for_all.sql ... OK (1ms)\n  \u2192 Applying 019_invites_and_members.sql ... OK (10ms)\n  \u2192 Applying 020_threads_v2.sql ... OK (22ms)\n  \u2192 Applying 021_thread_attachments.sql ... OK (5ms)\n  \u2192 Applying 021_user_settings.sql ... OK (0ms)\n  \u2192 Applying 022_whiteboard_sessions.sql ... OK (11ms)\n  \u2192 Applying 023_coworkspaces.sql ... OK (42ms)\n  \u2192 Applying 024_coworkspace_presence.sql ... OK (10ms)\n  \u2192 Applying 024_coworkspace_server_scope.sql ... OK (34ms)\n  \u2192 Applying 025_coworkspace_one_active_per_server.sql ... FAILED\n      SQLSTATE[HY000]: General error: 1901 Function or expression 'server_id' cannot be used in the GENERATED ALWAYS AS clause of `active_server_id`\n\n  \u2717 Migration failed. Fix the error above and re-run.\n\n"
+    },
+    "base-integration": {
+      "code": 2,
+      "output": "PHPUnit 10.5.64 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.6\nConfiguration: WORKSPACE/review-baseline/phpunit.xml\n\n..F..FFFF..EEEEEE....                                             21 / 21 (100%)\n\nTime: 00:00.076, Memory: 10.00 MB\n\nThere were 6 errors:\n\n1) Tests\\Integration\\RateLimiterTest::testFirstAttemptIsAllowed\nPDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'ecollab_review_base_test.rate_limit_log' doesn't exist\n\nWORKSPACE/review-baseline/security/rate-limit/RateLimiter.php:29\nWORKSPACE/review-baseline/tests/Integration/RateLimiterTest.php:41\n\n2) Tests\\Integration\\RateLimiterTest::testAttemptsWithinLimitAreAllowedAndCounted\nPDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'ecollab_review_base_test.rate_limit_log' doesn't exist\n\nWORKSPACE/review-baseline/security/rate-limit/RateLimiter.php:29\nWORKSPACE/review-baseline/tests/Integration/RateLimiterTest.php:52\n\n3) Tests\\Integration\\RateLimiterTest::testAttemptOverLimitIsBlocked\nPDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'ecollab_review_base_test.rate_limit_log' doesn't exist\n\nWORKSPACE/review-baseline/security/rate-limit/RateLimiter.php:29\nWORKSPACE/review-baseline/tests/Integration/RateLimiterTest.php:68\n\n4) Tests\\Integration\\RateLimiterTest::testDifferentIdentitiesHaveIndependentLimits\nPDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'ecollab_review_base_test.rate_limit_log' doesn't exist\n\nWORKSPACE/review-baseline/security/rate-limit/RateLimiter.php:29\nWORKSPACE/review-baseline/tests/Integration/RateLimiterTest.php:83\n\n5) Tests\\Integration\\RateLimiterTest::testDifferentActionsHaveIndependentLimitsForSameIdentity\nPDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'ecollab_review_base_test.rate_limit_log' doesn't exist\n\nWORKSPACE/review-baseline/security/rate-limit/RateLimiter.php:29\nWORKSPACE/review-baseline/tests/Integration/RateLimiterTest.php:100\n\n6) Tests\\Integration\\RateLimiterTest::testClearResetsAttemptCount\nPDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'ecollab_review_base_test.rate_limit_log' doesn't exist\n\nWORKSPACE/review-baseline/security/rate-limit/RateLimiter.php:29\nWORKSPACE/review-baseline/tests/Integration/RateLimiterTest.php:115\n\n--\n\nThere were 5 failures:\n\n1) Tests\\Integration\\AuthServiceTest::testRegisterCreatesUserAndReturnsSuccess\nPlease verify your email address before creating your account.\nFailed asserting that false is true.\n\nWORKSPACE/review-baseline/tests/Integration/AuthServiceTest.php:77\n\n2) Tests\\Integration\\AuthServiceTest::testRegisterRejectsDuplicateEmail\nprecondition: first registration must succeed\nFailed asserting that false is true.\n\nWORKSPACE/review-baseline/tests/Integration/AuthServiceTest.php:104\n\n3) Tests\\Integration\\AuthServiceTest::testRegisterSeedsPmUserStudyPrefs\nPlease verify your email address before creating your account.\nFailed asserting that false is true.\n\nWORKSPACE/review-baseline/tests/Integration/AuthServiceTest.php:121\n\n4) Tests\\Integration\\AuthServiceTest::testRegisterFallsBackToDefaultsWhenStyleGoalUnrecognized\nPlease verify your email address before creating your account.\nFailed asserting that false is true.\n\nWORKSPACE/review-baseline/tests/Integration/AuthServiceTest.php:139\n\n5) Tests\\Integration\\AuthServiceTest::testLoginSucceedsWithCorrectCredentials\nprecondition: registration must succeed\nFailed asserting that false is true.\n\nWORKSPACE/review-baseline/tests/Integration/AuthServiceTest.php:154\n\nERRORS!\nTests: 21, Assertions: 40, Errors: 6, Failures: 5.\n"
+    },
+    "combined-migrate": {
+      "code": 1,
+      "output": "\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n  Ecollab Database Migration Runner\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\n  69 migration(s) to apply:\n    - 002_core_schema.sql\n    - 004_missing_tables.sql\n    - 005_oauth_columns.sql\n    - 006_chat_addon.sql\n    - 007_voice_presence.sql\n    - 008_dm_migration.sql\n    - 009_channel_access_requests.sql\n    - 010_channel_seen.sql\n    - 011_collab_tools.sql\n    - 012_collab_extra.sql\n    - 013_peer_matching.sql\n    - 014_security.sql\n    - 015_onlyoffice_documents.sql\n    - 015_seeds_v2.sql\n    - 016_seeds_chat.sql\n    - 017_user_plan_id.sql\n    - 018_free_for_all.sql\n    - 019_invites_and_members.sql\n    - 020_threads_v2.sql\n    - 021_thread_attachments.sql\n    - 021_user_settings.sql\n    - 022_whiteboard_sessions.sql\n    - 023_coworkspaces.sql\n    - 024_coworkspace_presence.sql\n    - 024_coworkspace_server_scope.sql\n    - 025_coworkspace_one_active_per_server.sql\n    - 026_coworkspace_document_presence.sql\n    - 027_coding_buddy_sessions.sql\n    - 028_polls.sql\n    - 029_user_settings_missing_columns.sql\n    - 030_dm_groups.sql\n    - 031_message_bookmarks.sql\n    - 032_dm_call_history.sql\n    - 033_notification_schema_canonical.sql\n    - 034_peer_matching_profile_sync.sql\n    - 035_peer_request_notifications.sql\n    - 036_collab_whiteboard.sql\n    - 037_backfill_peer_request_notifications.sql\n    - 038_whiteboard_sessions.sql\n    - 039_resource_access.sql\n    - 040_resource_public_permissions.sql\n    - 041_resource_comment_permissions.sql\n    - 042_facilitator_requests_and_role_policy.sql\n    - 043_server_channel_ownership_visibility.sql\n    - 044_facilitator_server_announcements.sql\n    - 044_owner_visibility_integrity.sql\n    - 045_add_thread_notification_types.sql\n    - 045_facilitator_server_permissions.sql\n    - 046_server_report_moderation.sql\n    - 047_dm_group_attachments.sql\n    - 048_thread_post_actions.sql\n    - 049_book_recommendation_events.sql\n    - 050_collabora_wopi.sql\n    - 051_document_reports.sql\n    - 052_realtime_outbox.sql\n    - 053_system_capacity.sql\n    - 054_code_lab.sql\n    - 055_code_lab_execution.sql\n    - 056_code_lab_similarity.sql\n    - 057_web_push.sql\n    - 058_chat_read_cursors.sql\n    - 059_color_palettes.sql\n    - 060_settings_runtime.sql\n    - 061_request_hardening.sql\n    - 062_code_lab_server_queue.sql\n    - 063_temporary_voice.sql\n    - 064_livekit_count_snapshot.sql\n    - 065_code_lab_delivery.sql\n    - 066_jarred_jobs.sql\n\n  \u2192 Applying 002_core_schema.sql ... OK (357ms)\n  \u2192 Applying 004_missing_tables.sql ... OK (2ms)\n  \u2192 Applying 005_oauth_columns.sql ... OK (0ms)\n  \u2192 Applying 006_chat_addon.sql ... OK (0ms)\n  \u2192 Applying 007_voice_presence.sql ... OK (29ms)\n  \u2192 Applying 008_dm_migration.sql ... OK (12ms)\n  \u2192 Applying 009_channel_access_requests.sql ... OK (5ms)\n  \u2192 Applying 010_channel_seen.sql ... OK (3ms)\n  \u2192 Applying 011_collab_tools.sql ... OK (106ms)\n  \u2192 Applying 012_collab_extra.sql ... OK (89ms)\n  \u2192 Applying 013_peer_matching.sql ... OK (75ms)\n  \u2192 Applying 014_security.sql ... OK (78ms)\n  \u2192 Applying 015_onlyoffice_documents.sql ... OK (7ms)\n  \u2192 Applying 015_seeds_v2.sql ... OK (0ms)\n  \u2192 Applying 016_seeds_chat.sql ... OK (0ms)\n  \u2192 Applying 017_user_plan_id.sql ... OK (16ms)\n  \u2192 Applying 018_free_for_all.sql ... OK (2ms)\n  \u2192 Applying 019_invites_and_members.sql ... OK (14ms)\n  \u2192 Applying 020_threads_v2.sql ... OK (22ms)\n  \u2192 Applying 021_thread_attachments.sql ... OK (5ms)\n  \u2192 Applying 021_user_settings.sql ... OK (0ms)\n  \u2192 Applying 022_whiteboard_sessions.sql ... OK (10ms)\n  \u2192 Applying 023_coworkspaces.sql ... OK (28ms)\n  \u2192 Applying 024_coworkspace_presence.sql ... OK (12ms)\n  \u2192 Applying 024_coworkspace_server_scope.sql ... OK (26ms)\n  \u2192 Applying 025_coworkspace_one_active_per_server.sql ... FAILED\n      SQLSTATE[HY000]: General error: 1901 Function or expression 'server_id' cannot be used in the GENERATED ALWAYS AS clause of `active_server_id`\n\n  \u2717 Migration failed. Fix the error above and re-run.\n\n"
+    },
+    "combined-integration": {
+      "code": 2,
+      "output": "PHPUnit 10.5.64 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.6\nConfiguration: WORKSPACE/integration-review/phpunit.xml\n\n..F..FFFF..EEEEEE....                                             21 / 21 (100%)\n\nTime: 00:00.087, Memory: 10.00 MB\n\nThere were 6 errors:\n\n1) Tests\\Integration\\RateLimiterTest::testFirstAttemptIsAllowed\nPDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'ecollab_review_combined_test.rate_limit_log' doesn't exist\n\nWORKSPACE/integration-review/security/rate-limit/RateLimiter.php:29\nWORKSPACE/integration-review/tests/Integration/RateLimiterTest.php:41\n\n2) Tests\\Integration\\RateLimiterTest::testAttemptsWithinLimitAreAllowedAndCounted\nPDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'ecollab_review_combined_test.rate_limit_log' doesn't exist\n\nWORKSPACE/integration-review/security/rate-limit/RateLimiter.php:29\nWORKSPACE/integration-review/tests/Integration/RateLimiterTest.php:52\n\n3) Tests\\Integration\\RateLimiterTest::testAttemptOverLimitIsBlocked\nPDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'ecollab_review_combined_test.rate_limit_log' doesn't exist\n\nWORKSPACE/integration-review/security/rate-limit/RateLimiter.php:29\nWORKSPACE/integration-review/tests/Integration/RateLimiterTest.php:68\n\n4) Tests\\Integration\\RateLimiterTest::testDifferentIdentitiesHaveIndependentLimits\nPDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'ecollab_review_combined_test.rate_limit_log' doesn't exist\n\nWORKSPACE/integration-review/security/rate-limit/RateLimiter.php:29\nWORKSPACE/integration-review/tests/Integration/RateLimiterTest.php:83\n\n5) Tests\\Integration\\RateLimiterTest::testDifferentActionsHaveIndependentLimitsForSameIdentity\nPDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'ecollab_review_combined_test.rate_limit_log' doesn't exist\n\nWORKSPACE/integration-review/security/rate-limit/RateLimiter.php:29\nWORKSPACE/integration-review/tests/Integration/RateLimiterTest.php:100\n\n6) Tests\\Integration\\RateLimiterTest::testClearResetsAttemptCount\nPDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'ecollab_review_combined_test.rate_limit_log' doesn't exist\n\nWORKSPACE/integration-review/security/rate-limit/RateLimiter.php:29\nWORKSPACE/integration-review/tests/Integration/RateLimiterTest.php:115\n\n--\n\nThere were 5 failures:\n\n1) Tests\\Integration\\AuthServiceTest::testRegisterCreatesUserAndReturnsSuccess\nPlease verify your email address before creating your account.\nFailed asserting that false is true.\n\nWORKSPACE/integration-review/tests/Integration/AuthServiceTest.php:77\n\n2) Tests\\Integration\\AuthServiceTest::testRegisterRejectsDuplicateEmail\nprecondition: first registration must succeed\nFailed asserting that false is true.\n\nWORKSPACE/integration-review/tests/Integration/AuthServiceTest.php:104\n\n3) Tests\\Integration\\AuthServiceTest::testRegisterSeedsPmUserStudyPrefs\nPlease verify your email address before creating your account.\nFailed asserting that false is true.\n\nWORKSPACE/integration-review/tests/Integration/AuthServiceTest.php:121\n\n4) Tests\\Integration\\AuthServiceTest::testRegisterFallsBackToDefaultsWhenStyleGoalUnrecognized\nPlease verify your email address before creating your account.\nFailed asserting that false is true.\n\nWORKSPACE/integration-review/tests/Integration/AuthServiceTest.php:139\n\n5) Tests\\Integration\\AuthServiceTest::testLoginSucceedsWithCorrectCredentials\nprecondition: registration must succeed\nFailed asserting that false is true.\n\nWORKSPACE/integration-review/tests/Integration/AuthServiceTest.php:154\n\nERRORS!\nTests: 21, Assertions: 40, Errors: 6, Failures: 5.\n"
+    },
+    "025-minimal-repro": {
+      "code": 0,
+      "output": "SQLSTATE[HY000]: General error: 1901 Function or expression 'server_id' cannot be used in the GENERATED ALWAYS AS clause of `active_server_id`"
+    }
+  },
+  "extra_mariadb": {
+    "create-collabora_test": {
+      "code": 0,
+      "output": ""
+    },
+    "whiteboard-mariadb": {
+      "code": 0,
+      "output": "PASS: workspace board accessible without chat membership\nPASS: wrong channel cannot reuse a board grant\nPASS: non-server-member rejected\nPASS: live viewer downgrade prevents scene edits\nPASS: comment permission cannot replace canvas\nPASS: private board requires grant\nPASS: explicit private board editor accepted\nPASS: board grant cannot bypass private workspace\nPASS: workspace member with board grant accepted\nPASS: revoked server membership takes effect\nPASS: suspended account rejected\nWhiteboard realtime regression checks passed\n"
+    },
+    "collabora-mariadb": {
+      "code": 0,
+      "output": "PASS: explicit viewer overrides public edit\nPASS: private document excluded\nPASS: equivalent timestamp formats\nPASS: viewer token cannot write\nPASS: token bound to document\nPASS: viewer save rejected\nPASS: stale save rejected\nPASS: new version published\nPASS: previous version retained\nPASS: save timestamp matches metadata\nPASS: live downgrade honored\nPASS: old viewer token cannot upgrade\nPASS: removed server access honored\nPASS: suspended account denied despite membership\nPASS: expired token rejected\nPASS: file path confined to storage\nCollabora regression checks passed\n"
+    }
+  },
+  "lint": {
+    "checked": 289,
+    "failures": []
+  },
+  "baseline_phpstan": {
+    "totals": {
+      "errors": 0,
+      "file_errors": 15
+    },
+    "files": {
+      "WORKSPACE/review-baseline/API/auth/send-otp.php": {
+        "errors": 1,
+        "messages": [
+          {
+            "message": "Constant MAIL_FROM not found.",
+            "line": 56,
+            "ignorable": true,
+            "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols",
+            "identifier": "constant.notFound"
+          }
+        ]
+      },
+      "WORKSPACE/review-baseline/services/CodeLabExecutionService.php": {
+        "errors": 2,
+        "messages": [
+          {
+            "message": "Variable $score might not be defined.",
+            "line": 143,
+            "ignorable": true,
+            "identifier": "variable.undefined"
+          },
+          {
+            "message": "Variable $score might not be defined.",
+            "line": 143,
+            "ignorable": true,
+            "identifier": "variable.undefined"
+          }
+        ]
+      },
+      "WORKSPACE/review-baseline/services/WebPushService.php": {
+        "errors": 3,
+        "messages": [
+          {
+            "message": "Instantiated class Minishlink\\WebPush\\WebPush not found.",
+            "line": 70,
+            "ignorable": true,
+            "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols",
+            "identifier": "class.notFound"
+          },
+          {
+            "message": "Call to method sendOneNotification() on an unknown class Minishlink\\WebPush\\WebPush.",
+            "line": 71,
+            "ignorable": true,
+            "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols",
+            "identifier": "class.notFound"
+          },
+          {
+            "message": "Call to static method create() on an unknown class Minishlink\\WebPush\\Subscription.",
+            "line": 71,
+            "ignorable": true,
+            "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols",
+            "identifier": "class.notFound"
+          }
+        ]
+      },
+      "WORKSPACE/review-baseline/websocket/ChatServer.php": {
+        "errors": 8,
+        "messages": [
+          {
+            "message": "Ignored error pattern #Access to an undefined property Ratchet\\\\ConnectionInterface::\\$resourceId# in path WORKSPACE/review-baseline/websocket/ChatServer.php is expected to occur 9 times, but occurred 15 times.",
+            "line": 65,
+            "ignorable": false,
+            "identifier": "ignore.count"
+          },
+          {
+            "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+            "line": 424,
+            "ignorable": true,
+            "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+            "identifier": "property.notFound"
+          },
+          {
+            "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+            "line": 426,
+            "ignorable": true,
+            "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+            "identifier": "property.notFound"
+          },
+          {
+            "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+            "line": 435,
+            "ignorable": true,
+            "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+            "identifier": "property.notFound"
+          },
+          {
+            "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+            "line": 447,
+            "ignorable": true,
+            "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+            "identifier": "property.notFound"
+          },
+          {
+            "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+            "line": 455,
+            "ignorable": true,
+            "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+            "identifier": "property.notFound"
+          },
+          {
+            "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+            "line": 463,
+            "ignorable": true,
+            "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+            "identifier": "property.notFound"
+          },
+          {
+            "message": "Call to private method persistDirtyCodeSessions() of class ChatServer.",
+            "line": 542,
+            "ignorable": true,
+            "identifier": "method.private"
+          }
+        ]
+      },
+      "WORKSPACE/review-baseline/websocket/bin/server.php": {
+        "errors": 1,
+        "messages": [
+          {
+            "message": "Call to private method persistDirtyCodeSessions() of class ChatServer.",
+            "line": 18,
+            "ignorable": true,
+            "identifier": "method.private"
+          }
+        ]
+      }
+    },
+    "errors": []
+  },
+  "scope": "Isolated local fixtures; not production capacity. phase2-jarred and phase2-mariadb also passed after timezone fix using local MariaDB at offsets -07:00 and +08:00."
+}
