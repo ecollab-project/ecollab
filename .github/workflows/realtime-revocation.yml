@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/realtime-revocation.yml'
+      - 'docs/450-phase3d-*'
       - 'tests/livekit-real-*'
       - 'tests/livekit-room-api.py'
       - 'tests/centrifugo-*.py'
