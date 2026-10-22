@@ -79,7 +79,7 @@ with tempfile.TemporaryDirectory(prefix='ecollab-real-media-') as folder:
                'db-restore': 'RENAME TABLE offline_moderation_actions TO moderation_actions'}
     class Control(http.server.BaseHTTPRequestHandler):
         def do_POST(self):
-            global worker
+            global worker, maria
             try:
                 assert self.headers.get('X-Fixture-Key') == 'local-disposable-only'
                 data = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
@@ -92,6 +92,17 @@ with tempfile.TemporaryDirectory(prefix='ecollab-real-media-') as folder:
                     worker = start([env['PHP_BIN'], '-d', 'error_log=/dev/stderr', '-d', 'log_errors=1', '-d', 'auto_prepend_file='+str(p/'prepend.php'), str(ROOT/'scripts/realtime-revocation-worker.php')], 'worker-'+str(len(processes)))
                 elif action == 'stop-worker':
                     if worker and worker.poll() is None: worker.terminate(); worker.wait(timeout=4)
+                elif action == 'worker-state': result = {'exit': None if worker is None else worker.poll()}
+                elif action == 'db-stop':
+                    maria.terminate(); maria.wait(timeout=15); processes.remove(maria)
+                elif action == 'db-start':
+                    maria = start(maria_args, 'maria-restarted')
+                    for _ in range(200):
+                        assert maria.poll() is None, 'Disposable restarted DB exited'
+                        try:
+                            with socket.create_connection(('127.0.0.1', ports['db']), .1): break
+                        except OSError: time.sleep(.025)
+                    else: raise RuntimeError('Restarted disposable DB unavailable')
                 elif action == 'cycle':
                     r = subprocess.run([env['PHP_BIN'], '-d', 'error_log=/dev/stderr', '-d', 'log_errors=1', '-d', 'auto_prepend_file='+str(p/'prepend.php'), str(ROOT/'scripts/realtime-revocation-worker.php'), '--once'], env=env, capture_output=True, text=True, timeout=12)
                     result = {'exit': r.returncode, 'stderr': r.stderr.strip()}
@@ -132,9 +143,10 @@ with tempfile.TemporaryDirectory(prefix='ecollab-real-media-') as folder:
     threading.Thread(target=control.serve_forever, daemon=True).start()
     try:
         # This datadir is explicitly supplied as expendable, never discovered from host config.
-        maria = start([env['MARIADBD_BIN'], '--no-defaults', '--user='+pwd.getpwuid(os.geteuid()).pw_name, '--datadir='+env['MARIADB_TEST_DATADIR'],
+        maria_args = [env['MARIADBD_BIN'], '--no-defaults', '--user='+pwd.getpwuid(os.geteuid()).pw_name, '--datadir='+env['MARIADB_TEST_DATADIR'],
                        '--bind-address=127.0.0.1', '--port='+str(ports['db']), '--socket=',
-                       '--pid-file='+str(p/'maria.pid'), '--skip-grant-tables'], 'maria')
+                       '--pid-file='+str(p/'maria.pid'), '--skip-grant-tables']
+        maria = start(maria_args, 'maria')
         ready(ports['db'])
         php('$d=new PDO("mysql:host=127.0.0.1;port='+str(ports['db'])+'","root","");$d->exec("DROP DATABASE IF EXISTS ecollab_media_test;CREATE DATABASE ecollab_media_test");')
         sql((ROOT/'tests/fixtures/livekit-admission.sql').read_text()); sql(restore)

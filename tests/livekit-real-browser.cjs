@@ -181,6 +181,19 @@ async function replayRejected(p) {
   await command('api-restore'); await command('cycle'); await until(async () => (await state(a)) !== 'connected');
   await disconnect(b);
   pass('RoomService HTTP-503 leaves stream active; gated rejoin denied; recovery cycle removes it', apiFailed);
+  await command('restore'); a = await page(1, roomName); b = await page(2, roomName); await publish(b, true);
+  await until(async () => (await stats(a)).some(s => s.kind === 'video' && s.framesDecoded > 2));
+  await command('start-worker'); await sleep(500); const networkCommit = await command('deactivate');
+  await command('db-stop'); await replayRejected(a); await sleep(5500);
+  assert.equal(await state(a), 'connected');
+  const deadWorker = await command('worker-state'); assert.notEqual(deadWorker.exit, null); assert.notEqual(deadWorker.exit, 0);
+  const networkFirst = await stats(a); await sleep(1000); const networkSecond = await stats(a);
+  assert(networkSecond.some(s => s.kind === 'video' && s.bytesReceived > networkFirst.find(x => x.kind === 'video').bytesReceived));
+  result.media.push({ scenario: 'actual MariaDB daemon stopped; revoked participant still receives private video', first: networkFirst, second: networkSecond });
+  await command('db-start'); await command('start-worker'); await until(async () => (await state(a)) !== 'connected'); await command('stop-worker');
+  result.timings.push({ operation: 'actual_DB_daemon_outage_and_worker_restart', commit_ack_to_disconnect_ms:
+    await a.evaluate(() => events.filter(x => x.event === 'disconnected').at(-1).unix_ms) - networkCommit.commit_ack_unix_ms, worker_exit_during_outage: deadWorker.exit });
+  await disconnect(b); pass('actual DB daemon failure preserves old media, denies reconnect; worker exits and recovers after explicit fixture restart');
   await browser.close(); browser = null;
   fs.writeFileSync(process.env.TEST_MEDIA_RESULT, JSON.stringify(result, null, 2));
 })().catch(e => { console.error(e); process.exitCode = 1; }).finally(async () => { if (browser) await browser.close(); });
