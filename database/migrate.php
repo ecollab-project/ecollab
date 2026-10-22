@@ -62,10 +62,37 @@ echo "════════════════════════�
 echo "  Ecollab Database Migration Runner\n";
 echo "═══════════════════════════════════════════════════════════════\n\n";
 
+// Historical 025 remains byte-for-byte unchanged. Its incompatible recipe is
+// superseded, not falsely recorded as executed. The replacement has its own
+// checksum/ledger row and also upgrades databases with a successful old 025.
+$historicalCoworkspace = '025_coworkspace_one_active_per_server.sql';
+$coworkspaceReplacement = '025_coworkspace_one_active_per_server_mariadb.sql';
+$historicalHash = 'a94f59170a94ae8d17f4bac6c27c01549b60644dd61cb825406984b5aee8ff59';
+if (!is_file($dir . '/' . $coworkspaceReplacement)
+    || hash_file('sha256', $dir . '/' . $historicalCoworkspace) !== $historicalHash) {
+    throw new RuntimeException('Coworkspace migration replacement contract changed; review required');
+}
+foreach ([$historicalCoworkspace => $historicalHash,
+          $coworkspaceReplacement => hash_file('sha256', $dir . '/' . $coworkspaceReplacement)] as $name => $expected) {
+    if (isset($appliedMap[$name]) && $appliedMap[$name]['checksum'] !== $expected) {
+        throw new RuntimeException('Coworkspace migration ledger checksum mismatch: ' . $name);
+    }
+}
+if ($force === $historicalCoworkspace) {
+    throw new RuntimeException('Historical 025 is superseded; force its named MariaDB replacement instead');
+}
+
 $pending = [];
 foreach ($files as $path) {
     $filename = basename($path);
     if ($filename === '000_migration_registry.sql') continue; // already handled
+    if ($filename === $historicalCoworkspace) {
+        if ($statusOnly) {
+            $label = !empty($appliedMap[$filename]['success']) ? 'applied; retained' : 'superseded';
+            printf("  [%s] %s -> %s\n", $label, $filename, $coworkspaceReplacement);
+        }
+        continue;
+    }
 
     $alreadyApplied = isset($appliedMap[$filename]) && $appliedMap[$filename]['success'];
     $isForced       = ($force === $filename);
@@ -84,7 +111,8 @@ foreach ($files as $path) {
 }
 
 if ($statusOnly) {
-    echo "\n" . count($appliedMap) . " applied, " . count($pending) . " pending.\n";
+    $successfulCount = count(array_filter($appliedMap, static fn(array $row): bool => (bool)$row['success']));
+    echo "\n" . $successfulCount . " successful ledger entries, " . count($pending) . " pending.\n";
     exit(0);
 }
 

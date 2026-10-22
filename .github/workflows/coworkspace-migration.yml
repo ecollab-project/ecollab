@@ -1,0 +1,46 @@
+name: Coworkspace migration 025
+on:
+  pull_request:
+    paths:
+      - 'database/migrate.php'
+      - 'database/migrations/023_coworkspaces.sql'
+      - 'database/migrations/024_coworkspace_server_scope.sql'
+      - 'database/migrations/025_coworkspace_one_active_per_server*'
+      - 'API/collaboration/workspaces.php'
+      - 'services/CoworkspaceService.php'
+      - 'tests/coworkspace-migration-*'
+      - '.github/workflows/coworkspace-migration.yml'
+      - 'docs/450-phase3f-*'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mariadb-10-11:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install disposable MariaDB and PHP dependencies
+        run: |
+          mkdir -p "$RUNNER_TEMP/cw-apt/empty" "$RUNNER_TEMP/cw-apt/lists/partial"
+          printf '%s\n' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble-updates main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://security.ubuntu.com/ubuntu noble-security main universe' \
+            > "$RUNNER_TEMP/cw-apt/sources.list"
+          apt_options=(-o "Dir::Etc::sourcelist=$RUNNER_TEMP/cw-apt/sources.list"
+            -o "Dir::Etc::sourceparts=$RUNNER_TEMP/cw-apt/empty"
+            -o "Dir::State::lists=$RUNNER_TEMP/cw-apt/lists"
+            -o Acquire::Retries=0 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20)
+          sudo apt-get "${apt_options[@]}" update
+          sudo apt-get "${apt_options[@]}" install -y mariadb-server php8.3-cli php8.3-mysql php8.3-sqlite3
+      - name: PHP syntax
+        run: |
+          php -l database/migrate.php
+          php -l API/collaboration/workspaces.php
+          php -l tests/coworkspace-migration-regression.php
+      - name: Fresh, legacy, partial, concurrent, registry and daemon recovery fixtures
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+        run: python3 -u tests/coworkspace-migration-integration.py
