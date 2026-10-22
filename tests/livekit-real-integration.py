@@ -100,8 +100,15 @@ with tempfile.TemporaryDirectory(prefix='ecollab-real-media-') as folder:
                 elif action == 'room-api':
                     result = json.loads(php('require_once '+repr(str(ROOT/'services/LiveKitService.php'))+';echo json_encode((new LiveKitService())->roomRequest('+repr(data['method'])+','+('json_decode('+repr(json.dumps(data.get('body', {})))+',true)')+','+('json_decode('+repr(json.dumps(data['grant']))+',true)')+'));', True))
                 elif action == 'routes':
-                    t = token('ecollab-channel-10')
+                    t = data.get('token') or token('ecollab-channel-10')
                     result = {route: request(route+'?access_token='+t)[0] for route in ['/rtc', '/rtc/validate', '/rtc/v1', '/rtc/v1/validate']}
+                elif action == 'origin':
+                    result = {'url': f"ws://127.0.0.1:{ports['livekit']}", 'binding': 'IPv4 loopback only'}
+                    try:
+                        with socket.socket(socket.AF_INET6) as v6:
+                            v6.bind(('::1', 0)); v6.settimeout(.3)
+                            result['ipv6_loopback_origin_reachable'] = v6.connect_ex(('::1', ports['livekit'])) == 0
+                    except OSError: result['ipv6_loopback_origin_reachable'] = 'BLOCKED: IPv6 loopback unavailable'
                 elif action == 'room-api-body-types':
                     for name, body in [('array', '[]'), ('object', '{}')]:
                         c = http.client.HTTPConnection('127.0.0.1', ports['livekit'], timeout=4)
@@ -166,9 +173,11 @@ php_admin_flag[display_errors] = off
         template = (ROOT/'deploy/phase2/livekit-admission.conf.example').read_text().replace('/var/www/ecollab', str(ROOT)).replace('unix:/run/php/php8.3-fpm.sock', f"127.0.0.1:{ports['fpm']}").replace('127.0.0.1:7880', f"127.0.0.1:{ports['livekit']}")
         # Fail only RoomService traffic on command; signaling/media continue through the real server.
         template = template.replace('access_log off;\n    proxy_pass', f'if (-f {p}/api-down) {{ return 503; }}\n    access_log off;\n    proxy_pass')
+        # Fixture-only route audit deliberately excludes query strings, credentials and bodies.
+        template = template.replace('access_log off;', f'access_log {p}/route-audit.log media_fixture;')
         (p/'nginx.conf').write_text(f'''daemon off; master_process off; user root root; pid {p}/nginx.pid; error_log {p}/nginx.log;
 events {{worker_connections 256;}}
-http {{access_log off; client_body_temp_path {p}/body; fastcgi_temp_path {p}/fcgi; proxy_temp_path {p}/proxy; uwsgi_temp_path {p}/uwsgi; scgi_temp_path {p}/scgi;
+http {{log_format media_fixture '$uri $status'; access_log off; client_body_temp_path {p}/body; fastcgi_temp_path {p}/fcgi; proxy_temp_path {p}/proxy; uwsgi_temp_path {p}/uwsgi; scgi_temp_path {p}/scgi;
 server {{listen 127.0.0.1:{ports['ingress']}; {template}
 location = /sdk.js {{alias {sdk}; default_type application/javascript;}}
 location = /fixture {{default_type text/html; return 200 '<html><body>synthetic media fixture</body></html>';}}
@@ -206,12 +215,17 @@ location = /fixture {{default_type text/html; return 200 '<html><body>synthetic 
         assert r.returncode == 0, 'Real browser suite failed'
         result = json.loads((p/'result.json').read_text())
         result['database_prepared_queries'] = len((p/'metrics.jsonl').read_text().splitlines())
+        from collections import Counter
+        result['signaling_route_audit'] = dict(Counter((p/'route-audit.log').read_text().splitlines()))
         result['fixture_resources'] = {label: {
             'sampled_cpu_core_seconds': sum(v['last_cpu_seconds']-v['first_cpu_seconds'] for (name, pid), v in resource_rows.items() if name == label and isinstance(pid, int)),
             **resource_rows.get((label, 'aggregate'), {}), 'sample_interval_seconds': .25,
             'observation_seconds': time.monotonic()-started
         } for label in ['LiveKit', 'MariaDB', 'Nginx', 'FPM']}
-        result['versions'] = {'LiveKit': '1.13.7', 'SDK': '2.22.3', 'MariaDB': php('$d=new PDO('+repr(dsn)+',"root","");echo $d->query("SELECT VERSION()")->fetchColumn();')}
+        result['versions'] = {'LiveKit': '1.13.7', 'SDK': '2.22.3', 'MariaDB': php('$d=new PDO('+repr(dsn)+',"root","");echo $d->query("SELECT VERSION()")->fetchColumn();'),
+                              'PHP': php('echo PHP_VERSION;'), 'Nginx': subprocess.check_output([env['NGINX_BIN'], '-v'], stderr=subprocess.STDOUT, text=True).strip()}
+        result['environment'] = {'kernel': os.uname().release, 'visible_logical_cpus': os.cpu_count(), 'production': False,
+                                 'maximum_simultaneous_media_participants': 2, 'FPM_slots': 10, 'TLS': False, 'TURN': False}
         print(json.dumps(result, indent=2))
         if env.get('TEST_MEDIA_EVIDENCE'): pathlib.Path(env['TEST_MEDIA_EVIDENCE']).write_text(json.dumps(result, indent=2)+'\n')
     except Exception:

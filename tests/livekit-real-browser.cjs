@@ -20,18 +20,18 @@ async function until(fn, timeout = 10000) {
 }
 let browser;
 const pages = [];
-async function page(uid, room, { ttl = 600, url = process.env.TEST_MEDIA_URL } = {}) {
-  const context = await browser.newContext({ permissions: ['camera', 'microphone'] });
+async function page(uid, room, { ttl = 600, url = process.env.TEST_MEDIA_URL, context, existingToken } = {}) {
+  context ||= await browser.newContext({ permissions: ['camera', 'microphone'] });
   const p = await context.newPage(); pages.push(p);
   await p.goto(base + '/fixture'); await p.addScriptTag({ url: base + '/sdk.js' });
   await p.evaluate(() => {
     window.events = []; window.room = new LivekitClient.Room({ adaptiveStream: false, dynacast: false });
-    for (const event of ['connected', 'disconnected', 'reconnecting', 'reconnected', 'signalReconnecting', 'trackSubscribed']) {
+    for (const event of ['connected', 'disconnected', 'reconnecting', 'reconnected', 'signalReconnecting', 'signalConnected', 'trackSubscribed']) {
       room.on(event, () => events.push({ event, time: performance.now(), unix_ms: Date.now() }));
     }
     room.on('trackSubscribed', track => { const e = track.attach(); e.autoplay = true; e.muted = true; document.body.appendChild(e); });
   });
-  const { token } = await command('token', { room, uid, ttl });
+  const token = existingToken || (await command('token', { room, uid, ttl })).token;
   p.fixtureToken = token; p.fixtureURL = url;
   const started = performance.now();
   await p.evaluate(async ({ url, token }) => { await room.connect(url, token, { autoSubscribe: true }); }, { url, token });
@@ -106,6 +106,12 @@ async function replayRejected(p) {
   result.timings.push({ operation: 'private_revocation_to_observed_disconnect_after_manual_cycle', dispatch_ms: performance.now()-t,
     commit_ack_to_observed_disconnect_ms: await a.evaluate(() => events.filter(x => x.event === 'disconnected').at(-1).unix_ms) - privateCommit.commit_ack_unix_ms, cycle });
   await replayRejected(a); pass('real reconciliation worker removes private-revoked participant and gated replay fails');
+  const deniedRoutes = await command('routes', { token: a.fixtureToken });
+  assert(Object.values(deniedRoutes).every(status => status === 403)); pass('all four signaling/validation paths reject retained revoked token', deniedRoutes);
+  const origin = await command('origin'); result.origin_binding = { ...origin }; delete result.origin_binding.url;
+  const direct = await page(1, roomName, { url: origin.url, existingToken: a.fixtureToken });
+  assert.equal(await state(direct), 'connected'); pass('actual direct-origin SDK stale-token join bypasses online gate when origin is reachable');
+  await command('cycle'); await until(async () => (await state(direct)) !== 'connected');
   await disconnect(b);
   for (const action of ['remove-member', 'suspend', 'ban', 'server-suspend', 'deactivate']) {
     await command('restore'); a = await page(1, roomName);
@@ -126,8 +132,9 @@ async function replayRejected(p) {
   await command('restore'); a = await page(1, roomName, { ttl: 3 });
   await sleep(4100); assert.equal(await state(a), 'connected');
   await replayRejected(a); // Original expired JWT must fail even if the SDK received a refreshed JWT.
+  const signals = await a.evaluate(() => events.filter(x => x.event === 'signalConnected').length);
   await a.evaluate(() => room.simulateScenario('signal-reconnect'));
-  await until(async () => await a.evaluate(() => events.some(x => x.event === 'reconnected')));
+  await until(async () => await a.evaluate(before => events.filter(x => x.event === 'signalConnected').length > before || events.some(x => x.event === 'reconnected'), signals));
   assert.equal(await state(a), 'connected');
   result.expiry = await a.evaluate(() => ({ state: room.state, events }));
   // A refreshed signaling token may be used by the SDK; admission must validate it too.
@@ -141,7 +148,7 @@ async function replayRejected(p) {
   await until(async () => (await state(a)) === 'connected');
   pass('authorized browser network interruption recovery', await a.evaluate(() => events));
   // Same user in same room: LiveKit identity is shared across browser tabs.
-  b = await page(1, roomName); await until(async () => (await state(a)) !== 'connected');
+  b = await page(1, roomName, { context: a.context() }); await until(async () => (await state(a)) !== 'connected');
   assert.equal(await state(b), 'connected'); pass('same-user second tab replaces first LiveKit identity');
   await disconnect(b);
   await command('restore'); a = await page(1, roomName); b = await page(2, roomName);
