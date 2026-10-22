@@ -106,6 +106,12 @@
       "stderr": ""
     },
     {
+      "test": "tests/collabora-regression.php",
+      "exit": 0,
+      "stdout": "PASS: explicit viewer overrides public edit\nPASS: private document excluded\nPASS: equivalent timestamp formats\nPASS: viewer token cannot write\nPASS: token bound to document\nPASS: viewer save rejected\nPASS: stale save rejected\nPASS: new version published\nPASS: previous version retained\nPASS: save timestamp matches metadata\nPASS: live downgrade honored\nPASS: old viewer token cannot upgrade\nPASS: removed server access honored\nPASS: suspended account denied despite membership\nPASS: expired token rejected\nPASS: file path confined to storage\nCollabora regression checks passed\n",
+      "stderr": ""
+    },
+    {
       "test": "tests/whiteboard-realtime-regression.php",
       "exit": 0,
       "stdout": "PASS: workspace board accessible without chat membership\nPASS: wrong channel cannot reuse a board grant\nPASS: non-server-member rejected\nPASS: live viewer downgrade prevents scene edits\nPASS: comment permission cannot replace canvas\nPASS: private board requires grant\nPASS: explicit private board editor accepted\nPASS: board grant cannot bypass private workspace\nPASS: workspace member with board grant accepted\nPASS: revoked server membership takes effect\nPASS: suspended account rejected\nWhiteboard realtime regression checks passed\n",
@@ -116,6 +122,12 @@
       "exit": 0,
       "stdout": "Database audience, atomic save, rollback, migration rerun and delivery retry checks passed\nDispatch phases: real successful/retried broker calls, failure timing, privacy and window reset passed\n",
       "stderr": "[Realtime delivery] Event 1 deferred; retry in 1 seconds\n"
+    },
+    {
+      "test": "tests/chat-read-profiler-regression.php",
+      "exit": 0,
+      "stdout": "Read profiler: large roster, full message page, plans, privacy and access checks passed\n",
+      "stderr": ""
     }
   ],
   "unit": {
@@ -136,7 +148,8 @@
     "phase1-session.py",
     "phase2-jarred-http.py",
     "r7-token-http.py",
-    "r7-resource-http.py"
+    "r7-resource-http.py",
+    "chat-tus-http-regression.cjs"
   ],
   "crash": "8 abrupt transitions and broker publish-before-ACK retry PASS",
   "phpstan": {
@@ -147,5 +160,9 @@
   "production_changes": false,
   "live_media_tests": "NOT RUN",
   "capacity_450": "UNVERIFIED",
-  "ci": "See exact published head runs; not inferred from parent"
+  "ci": "See exact published head runs; not inferred from parent",
+  "ci_initial_head": {
+    "sha": "b36dd6e07b855b61e4f8bbe41eacb7dcb0772fb9",
+    "note": "Fixture failures corrected; see subsequent head CI"
+  }
 }

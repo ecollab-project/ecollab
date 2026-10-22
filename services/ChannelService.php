@@ -38,7 +38,11 @@ class ChannelService
      */
     public function getChannel(int $channelId, int $userId): ?array
     {
-        try {return (new ChannelAccessService($this->db))->read($channelId,$userId);}
+        try {
+            $channel=(new ChannelAccessService($this->db))->read($channelId,$userId);
+            $q=$this->db->prepare('SELECT name FROM servers WHERE id=?');$q->execute([(int)$channel['server_id']]);
+            $channel['server_name']=$q->fetchColumn();return $channel;
+        }
         catch(RuntimeException $e){if($e->getCode()===403)return null;throw $e;}
     }
 
