@@ -2,6 +2,9 @@
 declare(strict_types=1);
 require_once __DIR__.'/RealtimeOutbox.php';
 require_once __DIR__.'/UserPreferences.php';
+require_once __DIR__.'/AccessPolicy.php';
+require_once __DIR__.'/ChannelAccessService.php';
+require_once __DIR__.'/DocumentAccessService.php';
 final class JarredJobService
 {
     public function __construct(private PDO $db) {}
@@ -12,6 +15,7 @@ final class JarredJobService
     {
         if (!$this->db->inTransaction()) throw new LogicException('A transaction is required');
         if (!$this->q('SELECT id FROM jarred_queue_gate WHERE id=1'.$this->lock())->fetchColumn()) throw new RuntimeException('Jarred queue migration is required',503);
+        (new AccessPolicy($this->db))->assertAccount($uid);
         if (!$this->q('SELECT id FROM dm_conversations WHERE id=? AND (user_a=? OR user_b=?)'.$this->lock(),[$cid,$uid,$uid])->fetchColumn()) throw new RuntimeException('Conversation unavailable',403);
         if ($this->q("SELECT id FROM jarred_jobs WHERE conversation_id=? AND state IN ('queued','running') LIMIT 1",[$cid])->fetchColumn()) throw new RuntimeException('Jarred is still replying. Wait or cancel the pending reply.',409);
         if ((int)$this->q("SELECT COUNT(*) FROM jarred_jobs WHERE state IN ('queued','running')")->fetchColumn()>=100) throw new RuntimeException('Jarred queue is busy. Try again shortly.',503);
@@ -28,10 +32,27 @@ final class JarredJobService
             JOIN users r ON r.id=? AND r.is_system=1 AND r.username='ecollab_ai' AND r.deleted_at IS NULL
             JOIN dm_messages m ON m.id=? AND m.conversation_id=c.id AND m.sender_id=u.id AND m.is_deleted=0
             WHERE c.id=? AND ((c.user_a=u.id AND c.user_b=r.id) OR (c.user_b=u.id AND c.user_a=r.id))",[$j['user_id'],$j['recipient_id'],$j['source_message_id'],$j['conversation_id']])->fetchColumn()) throw new RuntimeException('Conversation unavailable',403);
+        $this->authorizeSurface($j);
         UserPreferences::assertJarred(UserPreferences::get($this->db,(int)$j['user_id']));
     }
+    private function authorizeSurface(array $j): void
+    {
+        $policy=new AccessPolicy($this->db);$uid=(int)$j['user_id'];
+        $policy->assertAccount($uid);
+        $sid=(int)($j['active_server_id']??0);
+        if ($sid && !$policy->server($uid,$sid)) throw new RuntimeException('Server access revoked',403);
+        $surface=json_decode($j['surface_json'],true,512,JSON_THROW_ON_ERROR);
+        if (!empty($surface['document_id'])) DocumentAccessService::get($this->db,(int)$surface['document_id'],$uid);
+        elseif (!empty($surface['whiteboard_id'])) {
+            $q=$this->q('SELECT w.channel_id FROM collab_whiteboards b JOIN collab_workspaces w ON w.id=b.workspace_id WHERE b.id=?',[(int)$surface['whiteboard_id']]);
+            $cid=(int)$q->fetchColumn();
+            if (!CoworkspaceService::resolveWhiteboardAccess($this->db,(int)$surface['whiteboard_id'],$cid,$uid)) throw new RuntimeException('Whiteboard access revoked',403);
+        } elseif (!empty($surface['channel_id'])) (new ChannelAccessService($this->db))->read((int)$surface['channel_id'],$uid);
+    }
+
     public function status(int $uid,int $cid,?int $id=null): array
     {
+        (new AccessPolicy($this->db))->assertAccount($uid);
         if (!$this->q('SELECT id FROM dm_conversations WHERE id=? AND (user_a=? OR user_b=?)',[$cid,$uid,$uid])->fetchColumn()) throw new RuntimeException('Conversation unavailable',403);
         $j=$this->q('SELECT * FROM jarred_jobs WHERE user_id=? AND conversation_id=?'.($id===null?'':' AND id=?').' ORDER BY id DESC LIMIT 1',$id===null?[$uid,$cid]:[$uid,$cid,$id])->fetch(PDO::FETCH_ASSOC);
         if (!$j) return ['job'=>null];
@@ -87,7 +108,9 @@ final class JarredJobService
                 $this->db->beginTransaction();
                 $owned=$this->q("SELECT id FROM jarred_jobs WHERE id=? AND state='running' AND lease_token=?".$this->lock(),[$j['id'],$token])->fetchColumn();
                 if (!$owned) { $this->db->rollBack();return true; }
+                $this->authorize($j);
                 $result=$action($j);
+                $this->authorize($j);
                 $this->q('UPDATE jarred_jobs SET action_checked=1 WHERE id=?',[$j['id']]);
                 if ($result!==null) $this->saveReply($j,(string)$result['reply'],$result['action']??null);
                 $this->db->commit();
@@ -97,7 +120,12 @@ final class JarredJobService
             error_log(json_encode(['metric'=>'jarred_inference','duration_ms'=>round((hrtime(true)-$started)/1e6,2)]));
             $this->db->beginTransaction();
             $owned=$this->q("SELECT id FROM jarred_jobs WHERE id=? AND state='running' AND lease_token=?".$this->lock(),[$j['id'],$token])->fetchColumn();
-            if ($owned) { $this->authorize($j);$this->saveReply($j,is_array($text)?$text['text']:$text,null,is_array($text)?($text['usage']??null):null); }
+            if ($owned) { $this->authorize($j);
+                if (is_array($text) && isset($text['authorization_stamp'])) {
+                    require_once __DIR__.'/JarredTools.php';
+                    if (!hash_equals($text['authorization_stamp'],(new JarredTools())->authorizationStamp((int)$j['user_id']))) throw new RuntimeException('Context authorization changed',403);
+                }
+                $this->saveReply($j,is_array($text)?$text['text']:$text,null,is_array($text)?($text['usage']??null):null); }
             $this->db->commit();
         } catch(Throwable $e) {
             if ($this->db->inTransaction()) $this->db->rollBack();

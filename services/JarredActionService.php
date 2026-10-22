@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/database/config/db.php';
 require_once dirname(__DIR__) . '/services/TemporaryVoiceService.php';
 require_once __DIR__.'/DocumentAccessService.php';
+require_once __DIR__.'/ChannelAccessService.php';
 
 final class JarredActionService
 {
@@ -68,17 +69,15 @@ final class JarredActionService
 
         $channelId=(int)($surface['channel_id']??0);
         if ($channelId>0 && preg_match('/\bchannel\b/i',$text)) {
-            $s=$this->db->prepare("SELECT c.id,c.slug,c.name,c.type FROM channels c JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid WHERE c.id=:cid AND c.server_id=:sid AND (c.is_private=0 OR c.created_by=:uid2 OR EXISTS(SELECT 1 FROM channel_members cm WHERE cm.channel_id=c.id AND cm.user_id=:uid3)) LIMIT 1");
-            $s->execute([':uid'=>$userId,':cid'=>$channelId,':sid'=>$serverId,':uid2'=>$userId,':uid3'=>$userId]);
-            if($r=$s->fetch(PDO::FETCH_ASSOC)) return ['reply'=>'Opening #'.$r['name'].'.','action'=>['type'=>'open_channel','channel_id'=>(int)$r['id'],'channel_slug'=>$r['slug'],'channel_type'=>$r['type']]];
+            try {$r=(new ChannelAccessService($this->db))->read($channelId,$userId);}
+            catch(RuntimeException $e){if($e->getCode()===403)return null;throw $e;}
+            if((int)$r['server_id']===$serverId) return ['reply'=>'Opening #'.$r['name'].'.','action'=>['type'=>'open_channel','channel_id'=>(int)$r['id'],'channel_slug'=>$r['slug'],'channel_type'=>$r['type']]];
         }
         return null;
     }
 
     private function canAccessServer(int $userId,int $serverId): bool
     {
-        $s=$this->db->prepare("SELECT 1 FROM server_members WHERE server_id=? AND user_id=? LIMIT 1");
-        $s->execute([$serverId,$userId]);
-        return (bool)$s->fetchColumn();
+        return (new AccessPolicy($this->db))->server($userId,$serverId);
     }
 }

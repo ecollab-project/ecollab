@@ -7,8 +7,8 @@ require_once __DIR__.'/../websocket/handlers/WhiteboardHandler.php';
 $db=new PDO($dsn,'root',getenv('COLLABORA_TEST_PASSWORD')?:'',[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_EMULATE_PREPARES=>false]);
 (new ReflectionProperty(Database::class,'instance'))->setValue(null,$db);
 function check(bool $ok,string $label):void{if(!$ok)throw new RuntimeException($label);echo "PASS: $label\n";}
-foreach(['collab_whiteboards','collab_resource_permissions','collab_workspace_members','collab_workspaces','server_members','servers','users'] as $table)$db->exec('DROP TABLE IF EXISTS '.$table);
-$db->exec('CREATE TABLE users(id INT PRIMARY KEY,status VARCHAR(20),deleted_at DATETIME NULL); INSERT INTO users VALUES(1,"active",NULL),(2,"offline",NULL),(3,"active",NULL);
+foreach(['moderation_actions','collab_whiteboards','collab_resource_permissions','collab_workspace_members','collab_workspaces','server_members','servers','users'] as $table)$db->exec('DROP TABLE IF EXISTS '.$table);
+$db->exec('CREATE TABLE moderation_actions(target_user_id INT,server_id INT,action_type VARCHAR(20),is_active INT,expires_at DATETIME);CREATE TABLE users(id INT PRIMARY KEY,status VARCHAR(20),deleted_at DATETIME NULL); INSERT INTO users VALUES(1,"active",NULL),(2,"offline",NULL),(3,"active",NULL);
 CREATE TABLE servers(id INT PRIMARY KEY,status VARCHAR(20)); INSERT INTO servers VALUES(5,"active");
 CREATE TABLE server_members(server_id INT,user_id INT); INSERT INTO server_members VALUES(5,1),(5,2);
 CREATE TABLE collab_workspaces(id INT PRIMARY KEY,server_id INT,channel_id INT,host_id INT,visibility VARCHAR(20),archived INT); INSERT INTO collab_workspaces VALUES(2,5,20,1,"public",0);

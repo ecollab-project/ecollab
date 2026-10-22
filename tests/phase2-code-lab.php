@@ -10,7 +10,7 @@ foreach([50,150,450] as $clients){
  CountStatusStatement::$calls=0;for($i=0;$i<$clients;$i++)$reader->result(1,2,(int)$run['job_id'],false);$after=CountStatusStatement::$calls;
  clCheck($before===$clients*3&&$after===$clients*2,'Reduced SQL execution count');echo "$clients clients: status SQL executions $before -> $after (position omitted)\n";
 }
-$db->exec("CREATE TABLE realtime_outbox(id INTEGER PRIMARY KEY AUTOINCREMENT,kind TEXT,target_id INTEGER,message_id INTEGER)");
+$db->exec("CREATE TABLE moderation_actions(target_user_id INTEGER,server_id INTEGER,action_type TEXT,is_active INTEGER,expires_at TEXT);CREATE TABLE realtime_outbox(id INTEGER PRIMARY KEY AUTOINCREMENT,kind TEXT,target_id INTEGER,message_id INTEGER)");
 putenv('CENTRIFUGO_ENABLED=true');
 $db->beginTransaction();RealtimeOutbox::record($db,'code_lab',1,fn()=>(int)$run['job_id']);$db->commit();
 $db->exec("UPDATE code_lab_jobs SET state='done' WHERE id=".(int)$run['job_id']);

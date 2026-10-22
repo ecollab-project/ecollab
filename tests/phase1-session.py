@@ -9,6 +9,9 @@ with tempfile.TemporaryDirectory(prefix='ecollab-session-') as folder:
     router = path / 'router.php'
     router.write_text('''<?php
 require_once ''' + repr(str(ROOT / 'security/middleware/AuthMiddleware.php')) + ''';
+require_once ''' + repr(str(ROOT / 'database/config/db.php')) + ''';
+$fixture=new PDO('sqlite::memory:');$fixture->exec("CREATE TABLE users(id INTEGER,status TEXT,deleted_at TEXT);INSERT INTO users VALUES(1,'active',NULL);CREATE TABLE moderation_actions(target_user_id INTEGER,server_id INTEGER,action_type TEXT,is_active INTEGER,expires_at TEXT)");
+(new ReflectionProperty(Database::class,'instance'))->setValue(null,$fixture);
 if ($_SERVER['REQUEST_URI']==='/seed') {
  AuthMiddleware::startSession(); $_SESSION['user_id']=1; $_SESSION['csrf_token']='fixture-token'; session_write_close(); echo 'seeded'; return;
 }

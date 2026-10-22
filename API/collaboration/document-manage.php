@@ -22,6 +22,7 @@ try {
     }
     if(($data['action']??'')!=='upload') throw new RuntimeException('Unknown action.',400);
     $w=CoworkspaceService::get($db,(int)($data['workspace_id']??0),$uid);
+    CoworkspaceService::assertWritable($db,$w,$uid);
     $s=$db->prepare('SELECT 1 FROM server_members sm JOIN users u ON u.id=sm.user_id WHERE sm.server_id=? AND sm.user_id=? AND u.status IN ("active","offline","idle")');$s->execute([$w['server_id'],$uid]);
     if(!$s->fetchColumn() || ((int)$w['allow_create_documents']!==1 && !in_array($w['member_role'],['host','editor'],true))) throw new RuntimeException('Upload not allowed.',403);
     $file=$_FILES['file']??[];

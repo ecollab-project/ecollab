@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/RealtimeDispatchMetrics.php';
+require_once __DIR__.'/AccessPolicy.php';
 
 final class RealtimeOutbox
 {
@@ -40,6 +41,7 @@ final class RealtimeOutbox
         $target=(int)$event['target_id'];$id=(int)$event['message_id'];
         if ($event['kind']==='channel') {
             $sql="SELECT u.id FROM messages m JOIN channels c ON c.id=m.channel_id
+                JOIN servers s ON s.id=c.server_id AND s.status='active'
                 JOIN server_members sm ON sm.server_id=c.server_id
                 JOIN users u ON u.id=sm.user_id AND u.deleted_at IS NULL
                 WHERE m.id=:mid AND c.id=:target AND m.is_deleted=0 AND
@@ -64,7 +66,15 @@ final class RealtimeOutbox
                 JOIN servers s ON s.id=j.server_id AND s.status='active'
                 WHERE u.status NOT IN ('banned','suspended','deactivated') AND j.id=:mid AND j.server_id=:target AND j.state IN ('done','failed')";
         } else { throw new InvalidArgumentException('Unknown delivery kind'); }
+        $account=AccessPolicy::accountSql('recipient');
+        // Wrap UNION too: blocked platform administrators must not bypass account policy.
+        $sql="SELECT eligible.id FROM ($sql) eligible JOIN users recipient ON recipient.id=eligible.id WHERE $account";
+        if (in_array($event['kind'],['channel','code_lab'],true)) {
+            $server=$event['kind']==='channel' ? '(SELECT server_id FROM channels WHERE id=:policy_target)' : ':policy_target';
+            $sql.=" AND EXISTS(SELECT 1 FROM servers policy_server WHERE policy_server.id=$server AND policy_server.status='active' AND ".AccessPolicy::moderationSql('recipient','policy_server').')';
+        }
         $params=[':mid'=>$id,':target'=>$target];
+        if(in_array($event['kind'],['channel','code_lab'],true))$params[':policy_target']=$target;
         if($event['kind']==='channel')$params+=[':admin_mid'=>$id,':admin_target'=>$target];
         $stmt=$db->prepare($sql);$stmt->execute($params);
         return array_values(array_unique(array_map('intval',$stmt->fetchAll(PDO::FETCH_COLUMN))));

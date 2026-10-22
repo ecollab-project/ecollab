@@ -1,0 +1,16 @@
+# Uninstalled staging template. Deployment gate: verify transport versions and replay behavior.
+[Unit]
+Description=eCollab realtime authorization reconciliation
+After=network.target mariadb.service
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/srv/ecollab-staging
+ExecStart=/usr/bin/php /srv/ecollab-staging/scripts/realtime-revocation-worker.php
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+MemoryMax=128M
+[Install]
+WantedBy=multi-user.target

@@ -16,8 +16,9 @@ $schema=[
 'CREATE TABLE dm_messages(id INT PRIMARY KEY,conversation_id INT NULL,group_id INT NULL,is_deleted INT)',
 'CREATE TABLE dm_group_members(group_id INT,user_id INT)'];
 foreach($schema as $sql)$db->exec($sql);
+$db->exec("ALTER TABLE users ADD COLUMN status VARCHAR(20) DEFAULT 'active'; CREATE TABLE servers(id INT PRIMARY KEY,status VARCHAR(20)); INSERT INTO servers VALUES(2,'active'); CREATE TABLE moderation_actions(target_user_id INT,server_id INT,action_type VARCHAR(20),is_active INT,expires_at DATETIME)");
 $sql=file_get_contents(dirname(__DIR__).'/database/migrations/052_realtime_outbox.sql');$db->exec($sql);$db->exec($sql);
-$db->exec("INSERT INTO users VALUES (18,'student',NULL),(19,'student',NULL),(20,'student',NULL),(21,'admin',NULL),(22,'student',NOW()),(23,'student',NULL)");
+$db->exec("INSERT INTO users(id,role,deleted_at) VALUES (18,'student',NULL),(19,'student',NULL),(20,'student',NULL),(21,'admin',NULL),(22,'student',NOW()),(23,'student',NULL)");
 $db->exec("INSERT INTO channels VALUES(5,2,0,18),(6,2,1,18); INSERT INTO server_members VALUES(2,18,'member'),(2,19,'member'),(2,20,'owner'),(2,22,'member'); INSERT INTO channel_members VALUES(6,19); INSERT INTO messages VALUES(1,5,0),(2,6,0),(3,5,1); INSERT INTO dm_conversations VALUES(7,18,19); INSERT INTO dm_messages VALUES(4,7,NULL,0),(5,NULL,8,0); INSERT INTO dm_group_members VALUES(8,18),(8,19),(8,22)");
 function audience($db,$kind,$target,$mid){$a=RealtimeOutbox::recipients($db,['kind'=>$kind,'target_id'=>$target,'message_id'=>$mid]);sort($a);return $a;}
 check(audience($db,'channel',5,1)===[18,19,20,21],'Public channel audience excludes outsiders/deleted users');
@@ -25,7 +26,7 @@ check(audience($db,'channel',6,2)===[18,19,20,21],'Private channel member, creat
 $db->exec('DELETE FROM channel_members WHERE user_id=19');check(audience($db,'channel',6,2)===[18,20,21],'Revoked private membership excluded');
 check(audience($db,'channel',5,3)===[],'Deleted message excluded');
 check(audience($db,'channel',6,1)===[],'Mismatched channel target excluded, including admins');
-$db->exec("INSERT INTO users VALUES(24,'admin',NULL),(25,'super_admin',NULL),(26,'moderator',NULL); INSERT INTO server_members VALUES(2,24,'member')");
+$db->exec("INSERT INTO users(id,role,deleted_at) VALUES(24,'admin',NULL),(25,'super_admin',NULL),(26,'moderator',NULL); INSERT INTO server_members VALUES(2,24,'member')");
 check(audience($db,'channel',6,2)===[18,20,21,24,25],'Admin member deduplicated; super admin included; external moderator excluded');
 $db->exec("UPDATE users SET deleted_at=NOW() WHERE id=24; UPDATE users SET role='student' WHERE id=25");
 check(audience($db,'channel',6,2)===[18,20,21],'Audience reflects deleted admin and revoked global role');

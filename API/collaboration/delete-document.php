@@ -29,6 +29,7 @@ try {
     $db = Database::getInstance();
     $uid = (int)$user['id'];
     $workspace = CoworkspaceService::get($db,$wid,$uid);
+    CoworkspaceService::assertWritable($db,$workspace,$uid);
     $access = DocumentAccessService::get($db, $id, $uid);
     if (!$access['owner']) failDelete('Only document owners or workspace hosts can delete documents.',403);
     $role = (string)($workspace['member_role'] ?? '');

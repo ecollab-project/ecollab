@@ -231,6 +231,7 @@ try {
 
     if ($method !== 'POST') serverCoworkspaceFail('Method not allowed.',405);
     AuthMiddleware::verifyCsrf();
+    if(!(new AccessPolicy($db))->server($uid,$serverId,'edit'))serverCoworkspaceFail('Workspace is view-only.',403);
     $action = (string)($input['action'] ?? 'create');
 
     if ($action === 'create') {

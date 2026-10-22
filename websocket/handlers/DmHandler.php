@@ -6,9 +6,15 @@ use Ratchet\ConnectionInterface;
 
 require_once dirname(__DIR__, 2) . '/services/NotificationService.php';
 
+require_once dirname(__DIR__,2).'/services/AccessPolicy.php';
+require_once dirname(__DIR__,2).'/services/ChannelAccessService.php';
+
 class DmHandler
 {
     public static function handleDmMessage(ConnectionInterface $from, array $data, array $meta, array $userConns, PDO $db): void {
+        $policy=new AccessPolicy($db);
+        if(!$policy->account((int)$meta['user_id']))return;
+        $userConns=array_intersect_key($userConns,$policy->accounts(array_keys($userConns)));
         $recipientId=(int)($data['recipient_id']??0); $conversationId=(int)($data['conversation_id']??0); $messageId=(int)($data['message_id']??0);
         if (!$recipientId||!$conversationId||!$messageId) return;
         $messageStmt=$db->prepare('SELECT dm.body,dm.created_at,dm.attachment_path,dm.attachment_name,dm.attachment_size,dm.attachment_mime FROM dm_messages dm JOIN dm_conversations dc ON dc.id=dm.conversation_id WHERE dm.id=:mid AND dm.conversation_id=:cid AND dm.sender_id=:sender AND dm.is_deleted=0 AND ((dc.user_a=:sender_a AND dc.user_b=:recipient_a) OR (dc.user_b=:sender_b AND dc.user_a=:recipient_b)) LIMIT 1');
@@ -20,6 +26,9 @@ class DmHandler
     }
 
     public static function handleDmGroupMessage(ConnectionInterface $from, array $data, array $meta, array $userConns, PDO $db): void {
+        $policy=new AccessPolicy($db);
+        if(!$policy->account((int)$meta['user_id']))return;
+        $userConns=array_intersect_key($userConns,$policy->accounts(array_keys($userConns)));
         $groupId=(int)($data['group_id']??0); $messageId=(int)($data['message_id']??0); $callerId=(int)$meta['user_id'];
         if (!$groupId||!$messageId) return;
 
@@ -42,6 +51,9 @@ class DmHandler
     }
 
     public static function handleDmGroupTyping(ConnectionInterface $from, array $data, array $meta, array $userConns, PDO $db): void {
+        $policy=new AccessPolicy($db);
+        if(!$policy->account((int)$meta['user_id']))return;
+        $userConns=array_intersect_key($userConns,$policy->accounts(array_keys($userConns)));
         $groupId=(int)($data['group_id']??0); $callerId=(int)$meta['user_id'];
         if (!$groupId) return;
         $mem=$db->prepare('SELECT 1 FROM dm_group_members WHERE group_id=:gid AND user_id=:uid');
@@ -60,6 +72,9 @@ class DmHandler
     }
 
     public static function handleDmTyping(ConnectionInterface $from,array $data,array $meta,array $userConns, PDO $db): void {
+        $policy=new AccessPolicy($db);
+        if(!$policy->account((int)$meta['user_id']))return;
+        $userConns=array_intersect_key($userConns,$policy->accounts(array_keys($userConns)));
         $recipientId=(int)($data['recipient_id']??0); $conversationId=(int)($data['conversation_id']??0);
         if(!$recipientId||!$conversationId||!self::conversationPeer($db,$conversationId,(int)$meta['user_id'],$recipientId)||!isset($userConns[$recipientId])) return;
         $payload=json_encode(['type'=>'dm_typing','conversation_id'=>$conversationId,'sender_id'=>$meta['user_id'],'sender_name'=>$meta['full_name']??$meta['username'],'is_typing'=>(bool)($data['is_typing']??false)]);
@@ -67,6 +82,9 @@ class DmHandler
     }
 
     public static function handleNotifyConnReq(ConnectionInterface $from,array $data,array $meta,array $userConns, PDO $db): void {
+        $policy=new AccessPolicy($db);
+        if(!$policy->account((int)$meta['user_id']))return;
+        $userConns=array_intersect_key($userConns,$policy->accounts(array_keys($userConns)));
         $addresseeId=(int)($data['addressee_id']??0); $requestId=(int)($data['request_id']??0); $callerId=(int)$meta['user_id'];
         if(!$addresseeId||!$requestId||$addresseeId===$callerId) return;
         $stmt=$db->prepare('SELECT 1 FROM connection_requests WHERE id=:rid AND requester_id=:uid AND addressee_id=:aid LIMIT 1');
@@ -77,6 +95,9 @@ class DmHandler
     }
 
     public static function handleNotifyConnAccepted(ConnectionInterface $from,array $data,array $meta,array $userConns, PDO $db): void {
+        $policy=new AccessPolicy($db);
+        if(!$policy->account((int)$meta['user_id']))return;
+        $userConns=array_intersect_key($userConns,$policy->accounts(array_keys($userConns)));
         $requesterId=(int)($data['requester_id']??0); $requestId=(int)($data['request_id']??0); $callerId=(int)$meta['user_id'];
         if(!$requesterId||$requesterId===$callerId||!isset($userConns[$requesterId])) return;
         $where='requester_id=:requester AND addressee_id=:caller'; $params=[':requester'=>$requesterId,':caller'=>$callerId];
@@ -88,10 +109,16 @@ class DmHandler
     }
 
     public static function handleVoiceInvite(ConnectionInterface $from, array $data, array $meta, array $userConns, PDO $db): void {
+        $policy=new AccessPolicy($db);
+        if(!$policy->account((int)$meta['user_id']))return;
+        $userConns=array_intersect_key($userConns,$policy->accounts(array_keys($userConns)));
         $targetId  = (int)($data['target_user_id'] ?? 0);
         $channelId = (int)($data['channel_id'] ?? 0);
         $callerId  = (int)$meta['user_id'];
         if (!$targetId || !$channelId || $targetId === $callerId || !isset($userConns[$targetId])) return;
+
+        try {(new ChannelAccessService($db))->voice($channelId,$callerId);(new ChannelAccessService($db))->voice($channelId,$targetId);}
+        catch(RuntimeException $e){if($e->getCode()!==403)throw $e;return;}
 
         // Verify: the channel is real and voice-type, the caller belongs to that
         // server, and so does the target — otherwise this is just spam to a
@@ -121,6 +148,9 @@ class DmHandler
     }
 
     public static function handleDmGroupCallSignal(ConnectionInterface $from, array $data, array $meta, array $userConns, PDO $db, string $type): void {
+        $policy=new AccessPolicy($db);
+        if(!$policy->account((int)$meta['user_id']))return;
+        $userConns=array_intersect_key($userConns,$policy->accounts(array_keys($userConns)));
         $groupId = (int)($data['group_id'] ?? 0);
         $callerId = (int)$meta['user_id'];
         if (!$groupId) return;
@@ -170,6 +200,9 @@ class DmHandler
     }
 
     public static function handleDmCallSignal(ConnectionInterface $from, array $data, array $meta, array $userConns, PDO $db, string $type): void {
+        $policy=new AccessPolicy($db);
+        if(!$policy->account((int)$meta['user_id']))return;
+        $userConns=array_intersect_key($userConns,$policy->accounts(array_keys($userConns)));
         $callerId = (int)$meta['user_id'];
         $targetId = (int)($data['target_user_id'] ?? 0);
         $groupId  = (int)($data['group_id'] ?? 0);

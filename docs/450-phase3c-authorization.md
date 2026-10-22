@@ -1,0 +1,83 @@
+# Phase 3C — R7 authorization and active revocation
+
+2026-10-22. Review scope: confirmed authorization defects above PR #68. No production access/change, deployment, migration, restart, provisioning, load test or merge. PHP-FPM remains outside this workstream. **Draft / REQUEST CHANGES for integration readiness; deployment BLOCKED until the active-admission and transport gates below are resolved. R7 is not fully closed. 450-user readiness remains UNVERIFIED.**
+
+## Verified starting chain
+
+GitHub metadata at start: #66 open/unmerged, integration c838359711a14e9b6eb3f345c4386d184a178b25 → 8a2dcfd19db15c10d4711856835d68ef799660db; #67 open/draft/unmerged, exact #66 head → e1fe79f7b2cdadf4719e9ef5f1bd82ae14db4b98; #68 open/draft/unmerged, exact #67 head → 5e2fa5b57226ae07b6a02560d89ac436019b8b28. #68 tree a78359ceb1288c74561d3f3220aed62545b2c0e9. Feature branch security/r7-revocation-20261022 starts at that exact commit. Read docs/450-integration-review.md and the Phase 3A REPORT.md before changes. CI for the new head must be assessed independently.
+
+## Findings and corrective boundaries
+
+| Severity | Confirmed source / function | Previous behavior / evidence | Correction |
+|---|---|---|---|
+| P1 | security/middleware/AuthMiddleware.php::requireAuth | Existing session ID was sufficient even after account deletion/deactivation/suspension | Current account check on each authenticated HTTP request; deny blocked sessions, fail closed on DB failure. Presence states active/offline/idle remain valid. |
+| P1 | TemporaryVoiceService::canAccessServer, handleJarredMessage/createRoom | Membership-only guard; pending dialogue could survive a suspension/ban | Shared server voice policy, recheck pending dialogue and room creation, filter invitees. Chat mute still permits voice. |
+| P1 | JarredTools::canAccessServer/searchMessages/accessibleServersAndChannels | Stale memberships/status/bans admitted context; denied requested server could fall back to wider search | Current account/server policy; explicit denied server returns no results; channel privacy retains owner/admin semantics without moderator bypass. |
+| P1 | JarredJobService::authorize/authorizeSurface/workOne; JarredReplyGenerator::generate | Final account check did not validate surface grants or all permissions used by generated context | Recheck account/server/resource before action and response persistence. Metadata-only authorization stamp covers membership, roles, grants, privacy, archive and moderation changes during inference. Changed stamp discards generated result; source message remains persisted. |
+| P1 | RealtimeOutbox::recipients | Channel/DM/group audiences omitted account states; channel audience omitted active server and moderation | Recalculate account, membership, private-channel and server policy at dispatch, including admin UNION and Code Lab completion hints. Server suspension retains view events; server bans remove them. |
+| P1 | API/auth/realtime-token.php, ws-token.php; common HTTP auth | Blocked old sessions could mint new transport credentials | Current account policy precedes issuance, including actual endpoint tests with pre-existing sessions. Previously issued opaque WS token is rechecked at socket authentication. |
+| P1 | ChatServer::authorizeChannelMessage/broadcastToChannel/drainRelayTable/reconcileAccess | Divergent sender check; cached subscribers received data after revocation | Shared read/write channel policy; batch-filter receiver IDs before fanout and relay. Timer closes blocked accounts and removes revoked channel/board/voice participation. Errors close sockets; pings remain SQL-free. |
+| P1 | DmHandler public relay methods; ChatServer code/voice fanout | Active blocked recipients could retain DM/group payloads or room signaling | Current-account filtering, existing fresh conversation/group checks, fresh coding-session roles, voice peer/signaling checks and invite authorization. |
+| P1 | CoworkspaceService::get/resolveWhiteboardAccess/requireHost/assertWritable; DocumentAccessService::get | Workspace membership did not enforce server bans/account status; suspension did not reliably yield view-only access | Reuse shared server read/edit rules. Downgrade document/board permissions to view for server suspension. Chat mute does not remove document/board edit permission. Guard confirmed collaboration mutation endpoints, including owner mutations. |
+| P1 | API/collaboration/whiteboard.php; document-presence.php | Legacy workspace-only reads could expose private board state/document presence after a resource grant was removed | Resource authorization before return; legacy board writes update only the authorized board ID, and reject view-only edits. Local actual HTTP fixtures cover denial and unchanged state. |
+| P1 | deploy/centrifugo/config.json | User inbox history retained private target/message IDs after later membership revocation | Disable inbox history/recovery in proposed configuration. Clients already perform authorized HTTP catch-up on subscribe/reconnect. No durable messages removed. Real-broker regression now asserts no hint-history replay, live delivery and terminal disconnect. |
+
+Account status='suspended' is account-wide denial. A server moderation action 'suspend' is view-only within its scope; 'mute' blocks chat writes but preserves voice and collaboration editing; 'ban' removes access. Expired/inactive moderation does not restrict. Platform admin/super_admin channel bypass and server owner/admin private-channel semantics are retained; global account restrictions and applicable bans are not bypassed. Coworkspaces retain explicit server-membership/resource semantics rather than gaining an admin bypass. No moderator private-channel bypass is added.
+
+## Active connection strategy and its exact limits
+
+Ratchet: the existing 0.2-second event-loop callback drives a five-second **nominal** account/subscription reconciliation. Pings perform no policy SQL. Sensitive non-ping frames and channel/board/DM/group delivery check current policy. Timer reconciliation closes blocked users, prunes subscriptions and clears revoked voice presence. Actual latency includes event-loop delay and DB work; five seconds is not a proven SLA. Coding-session recipients are freshly checked before state broadcast. Already received data cannot be recalled.
+
+Centrifugo: new CLI scripts/realtime-revocation-worker.php uses a database-scoped singleton lock and server-side disconnect code4503 (terminal for compliant clients). It checks at most100 blocked accounts per cycle, with a cursor, plus up to25 recognized media rooms. Reconnect catch-up uses authorized reads; the proposed inbox namespace has no retained hints. A malicious client can manually reuse a still-valid signed JWT to reconnect; disconnect is not cryptographic JWT revocation. New issuance is denied, future outbox audiences are filtered, and the worker disconnects repeatedly. Strict account admission requires a separately reviewed online-auth/proxy design or equivalent broker enforcement; simply adding a connect proxy while still accepting connection JWTs is insufficient because JWT authentication bypasses the connect proxy.
+
+LiveKit: the same worker lists recognized application rooms, checks active participants against current account/channel/group/call policy, and removes unauthorized identities. Unknown application namespaces are not touched. Broker failure does not suppress media reconciliation. Individual transport failures are counted and retried on subsequent scans. Self-hosted LiveKit removal does **not** invalidate an already issued token; a malicious client can rejoin before a later scan. Tests explicitly simulate repeated stale-token rejoin/removal. This mitigates active sessions, **does not prevent transient unauthorized media reception**, and is a remaining P1 release gate. Token TTL is not presented as immediate revocation.
+
+Worker throughput is bounded per cycle, but ListRooms and individual HTTP calls add latency; many accounts/rooms require multiple cycles and outages increase the exposure window. The worker is an uninstalled staging template, not deployed infrastructure. No active-connection revocation guarantee is made while it is stopped or unhealthy. Account/DB/broker/media outages and replay must be tested on pinned real versions in isolated staging. Do not run the new worker against production as part of review.
+
+## Regression evidence
+
+Local PASS:
+
+- R7 account/moderation/owner/admin/member matrix on SQLite and isolated MariaDB10.11; private channel and scoped search denial, ban/suspension/mute distinctions, account deletion/deactivation, channel/server/group membership removal, outbox recipients and completion hints.
+- In-flight inference after server/channel/document/whiteboard/account revocation; no assistant response persisted; permission stamp catches context access changes beyond an explicit surface.
+- Actual HTTP token endpoints with old sessions; blocked account cannot mint connection/subscription/WS credentials, cross-user inbox denied.
+- Actual legacy board/document-presence endpoints: grant removal denies reads; suspension preserves board viewing while edits return403 and persisted state remains unchanged.
+- Real ChatServer fake-socket fixtures for active account closure, revoked subscription fanout/pruning, voice-state cleanup and previously issued opaque token rejection. Transport-controller fixtures verify removal calls, repeated rejoin and independent broker-failure handling. These are not live media measurements.
+- Existing focused Phase1/2 suites, actual same-session parallel HTTP checks, async enqueue/status/cancel HTTP fixture, eight abrupt queue transitions and broker publish-before-ACK crash/retry fixture.
+- Isolated MariaDB Jarred queue, whiteboard realtime and outbox audience/transaction/retry fixtures. The delivery fixture's authenticated HTTP broker is mocked locally; real Centrifugo is covered by the existing Chat delivery CI workflow.
+- PHPUnit Unit:25 tests /56 assertions. PHP syntax:305 files checked before final documentation; rerun affected files for final changes. No tests removed or disabled.
+
+Static analysis: PHPStan reports the same13 existing diagnostics as the reviewed #68 tree, with no introduced diagnostic messages and no added suppression. Initial local128MiB analysis exhausted its memory limit; rerun at512MiB completed. The full historical migration025 / full-integration baseline failures were not repaired or rerun here; see integration review. Full repository suite and live browser/media/reconnect capacity tests are NOT RUN locally. CI results belong to the published exact head and are reported in the PR/session, not presumed from parent CI.
+
+## Realtime performance assessment
+
+- Heartbeat regression:1,850 authenticated pings still pass without a PDO instance; zero DB access remains enforced by the fixture.
+- Common HTTP auth adds one current-account read per authenticated request; token endpoints retain a second check at issuance. This is a deliberate security cost, not a measured production latency improvement.
+- Account/subscriber fanout uses100-ID batches;450 users in one channel require five recipient queries per fanout, rather than450 per-recipient queries. Channel count, events/sec and live indexes still require staging measurements.
+- Every five seconds nominally, account batches plus subscribed-channel batches and board/voice checks add work. Board/resource checks can issue multiple reads per participant. No450-user performance bound is claimed.
+- AI authorization stamp adds11 metadata queries before context generation and11 at response commit. It excludes messages, document content, credentials and model output. Permission changes may conservatively fail a result even when unrelated to the actual prompt; the source message remains available for retry. Larger membership/resource inventories need measurement.
+- Revocation worker adds bounded control-plane RPCs; its cost is separate from the Phase2 room-count optimization. Measure scan duration, failures, oldest unreconciled batch and broker/media load before activation. Failure metrics contain counts only.
+
+## Deployment and rollback considerations — proposal only
+
+1. Keep this PR stacked directly on reviewed #68. Rerun required checks after any ancestry/code change. Do not merge merely because parent CI passed.
+2. Verify existing moderation/account/channel/resource schemas and complete migration025 compatibility separately. This PR adds no database migration or runtime schema change of its own; inherited startup DDL is not addressed here.
+3. Validate synthetic-role fixtures, backup restoration, current configuration and exact broker/LiveKit versions on isolated staging. No production secrets/student data in fixtures.
+4. Deploy compatible policy/API/WS/outbox code together only after approval. Coordinate long-lived process restart through the future deployment plan. Review the proposed broker history change, existing stored history and environment overrides; require real reconnect tests proving no previously retained hint replay. Preserve authoritative HTTP catch-up, unread state and all persisted messages.
+5. Validate worker paths/credentials/network access and activate exactly one reconciliation worker per DB only after active-admission gates are resolved. Test broker/media failures, DB outage, expired/replayed tokens, revocation during inference/fanout, multi-tab voice state and stopped-worker detection. Establish an observed revocation SLA and recovery alarms; do not infer them from the sleep interval.
+6. Rollback should preserve deny boundaries. Stop new async admissions, reconcile in-flight jobs and stop the new revocation worker before reverting incompatible code. Retain all messages/outbox/jobs and schema. Reverting to #68 reintroduces these R7 defects; do not silently restore access or re-enable private hint history as an operational fix. Prefer a reviewed forward fix, or restrict affected features under an explicitly approved incident procedure.
+
+## Remaining authorization risks / merge recommendation
+
+**REQUEST CHANGES for integration/deployment readiness.** Confirmed PHP/delivery fixes are reviewable, but R7 cannot be marked fully resolved:
+
+- P1: strict replay-resistant self-hosted LiveKit admission is not implemented; repeated eviction leaves an exposure window. Requires a transport/admission decision and real-version security validation.
+- P1: Centrifugo can accept an old connection JWT again. Filtered future hints plus disabled history protect this delivery path, but strict connection admission/refresh requires a reviewed integration change and outage policy.
+- P1: authorization checks are not a global atomic barrier with every concurrent revocation transaction. A send/commit already authorized can race with a later mutation; in-flight delivery cannot be recalled. Define and validate an acceptable revocation boundary/SLA.
+- P1: live transport behavior, configuration overrides/history cleanup and scan latency remain staging gates. Tests using fake sockets or a mock RoomService do not prove live eviction or production security.
+- P2: APIs that bypass common AuthMiddleware and legacy collaboration paths outside the reviewed endpoints require separate inventory; this is not certification of all application authorization. Session-role refresh after role reassignment is outside this targeted account-state patch.
+- P2: do not assume previously persisted Jarred responses/tool actions disappear after later access revocation; retention and deletion semantics remain R6 policy work. Active provider computation is not interrupted by fencing its result.
+
+After this workstream, prioritize the separate migration025 fresh/upgrade compatibility repair and dedicated Code Lab execution-host isolation plan. Do not execute hostile-code benchmarks until the execution boundary is verified. R6 policy and R8/R9 follow-ups remain separate. No450-user readiness claim follows from these fixes.
+
+Primary protocol references checked2026-10-22: https://docs.livekit.io/frontends/reference/tokens-grants/ and https://centrifugal.dev/docs/server/server_api and https://centrifugal.dev/docs/server/proxy .

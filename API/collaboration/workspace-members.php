@@ -49,6 +49,7 @@ try {
         exit;
     }
 
+    if(!in_array($action,['list','requests'],true))CoworkspaceService::assertWritable($db,$workspace,$uid);
     if ($action === 'invite') {
         $isHost = (int)$workspace['host_id'] === $uid;
         $role = (string)($workspace['member_role'] ?? '');

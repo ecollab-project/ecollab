@@ -16,6 +16,7 @@ CREATE TABLE collab_documents(id INTEGER PRIMARY KEY,workspace_id INTEGER,title 
 INSERT INTO collab_documents VALUES(1,1,'PRIVATE DOCUMENT',2,'private','view');
 CREATE TABLE collab_whiteboards(id INTEGER PRIMARY KEY,workspace_id INTEGER,title TEXT,description TEXT,visibility TEXT,public_permission TEXT,created_by INTEGER,updated_by INTEGER,updated_at TEXT,state_json TEXT);
 INSERT INTO collab_whiteboards VALUES(1,1,'PRIVATE BOARD','private description','private','view',2,2,'2026-01-01','{}');");
+$db->exec("ALTER TABLE users ADD COLUMN deleted_at TEXT;CREATE TABLE moderation_actions(target_user_id INTEGER,server_id INTEGER,action_type TEXT,is_active INTEGER,expires_at TEXT)");
 (new ReflectionProperty(Database::class,'instance'))->setValue(null,$db);
 $action=new JarredActionService();$nav=new ReflectionMethod($action,'currentSurfaceNavigation');
 $tools=new JarredTools();

@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__.'/AccessPolicy.php';
+
 /** Current database policy, never session-role or client-asserted authorization. */
 final class ChannelAccessService
 {
@@ -41,6 +43,35 @@ final class ChannelAccessService
     {
         return $this->voiceChannels([$channelId], $userId)[$channelId]
             ?? throw new RuntimeException('Voice channel access denied', 403);
+    }
+
+    public function readers(int $channelId, array $userIds): array
+    {
+        $out=[];
+        foreach(array_chunk(array_values(array_unique(array_map('intval',$userIds))),100) as $batch){
+            if(!$batch)continue;
+            $in=implode(',',array_fill(0,count($batch),'?'));
+            $q=$this->db->prepare("SELECT u.id FROM channels c JOIN servers s ON s.id=c.server_id
+                JOIN users u ON u.id IN ($in) LEFT JOIN server_members sm ON sm.server_id=s.id AND sm.user_id=u.id
+                WHERE c.id=? AND s.status='active' AND ".AccessPolicy::accountSql()." AND
+                (u.role IN ('admin','super_admin') OR (sm.user_id IS NOT NULL AND (c.is_private=0 OR
+                sm.server_role IN ('owner','admin') OR c.created_by=u.id OR EXISTS(SELECT 1 FROM channel_members cm WHERE cm.channel_id=c.id AND cm.user_id=u.id))))
+                AND ".AccessPolicy::moderationSql('u','s'));
+            $q->execute([...$batch,$channelId]);foreach($q->fetchAll(PDO::FETCH_COLUMN) as $id)$out[(int)$id]=true;
+        }
+        return $out;
+    }
+
+    public function write(int $channelId, int $userId): array
+    {
+        $channel=$this->read($channelId,$userId);
+        if (!(new AccessPolicy($this->db))->server($userId,(int)$channel['server_id'],'write',true))
+            throw new RuntimeException('Channel write access denied',403);
+        if (!empty($channel['is_locked'])) {
+            $q=$this->db->prepare('SELECT role FROM users WHERE id=?');$q->execute([$userId]);
+            if (!in_array($q->fetchColumn(),['admin','super_admin'],true)) throw new RuntimeException('Channel locked',403);
+        }
+        return $channel;
     }
 
     public function voiceChannels(array $ids, int $userId): array

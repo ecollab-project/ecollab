@@ -29,6 +29,7 @@ const path = require('node:path');
     foreach(['incomplete','rejected','http_error'] as $type){
       try{$broker->broadcast([1],['type'=>$type]);exit(2);}catch(RuntimeException $e){}
     }
+    $broker->disconnect(18);
     echo function_exists('curl_init')?'curl':'stream';`;
   try {
     const result = await new Promise((resolve,reject) => {
@@ -41,7 +42,8 @@ const path = require('node:path');
     assert.equal(new Set(requests.slice(0,3).flatMap(r=>r.body.channels)).size,1001);
     assert.equal(requests[2].body.channels[0],'inbox:user1001');
     if(result.out==='curl')assert.equal(new Set(requests.map(r=>r.port)).size,1,'HTTP connection must be reused');
-    assert.equal(requests.length,7,'Rejected responses must be tested');
+    assert.equal(requests.length,8,'Rejections and active disconnect must be tested');
+    assert.deepEqual(requests[7].body,{user:'18',disconnect:{code:4503,reason:'Account access revoked'}});
     console.log('Bounded fanout, deduplication, HTTP reuse and rejection checks passed');
   } finally { server.closeAllConnections();await new Promise(resolve=>server.close(resolve)); }
 })().catch(e=>{console.error(e);process.exitCode=1;});
