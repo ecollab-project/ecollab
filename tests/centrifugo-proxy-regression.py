@@ -48,6 +48,7 @@ require_once '''+repr(str(ROOT/'security/middleware/AuthMiddleware.php'))+''';
 require_once '''+repr(str(ROOT/'services/ChannelAccessService.php'))+''';
 require_once '''+repr(str(ROOT/'services/RealtimeOutbox.php'))+''';
 require_once '''+repr(str(ROOT/'services/CentrifugoService.php'))+''';
+set_exception_handler(static function(Throwable $e):void{http_response_code(500);echo json_encode(['fixture_error'=>get_class($e),'message'=>$e->getMessage()]);});
 header('Content-Type: application/json');header('Cache-Control: no-store');
 if(($_SERVER['HTTP_X_FIXTURE_KEY']??'')!=='fixture-local-only'){http_response_code(403);exit;}
 $route=parse_url($_SERVER['REQUEST_URI'],PHP_URL_PATH);$db=Database::getInstance();

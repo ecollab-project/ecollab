@@ -91,6 +91,8 @@ async function replayRejected(p) {
   result.media.push({ sample_interval_ms: 1000, first, second });
   pass('bidirectional real audio/video publication, subscription and increasing received bytes');
   console.log('ROUTES', JSON.stringify(await command('routes')));
+  result.room_api_body_types = await command('room-api-body-types');
+  console.log('ROOM_API_BODY_TYPES', JSON.stringify(result.room_api_body_types));
   const privateCommit = await command('remove-private');
   const bypass = await command('bypass'); result.origin = bypass;
   assert.equal(bypass.gated, 403); assert.equal(bypass.direct_origin, 200);
@@ -98,6 +100,7 @@ async function replayRejected(p) {
   pass('gated stale token denied; direct origin bypass reproduced on fixture loopback', bypass);
   await replayRejected(a);
   let t = performance.now(); const cycle = await command('cycle');
+  console.log('REAL_WORKER_CYCLE', JSON.stringify(cycle));
   await until(async () => (await state(a)) !== 'connected');
   result.timings.push({ operation: 'private_revocation_to_observed_disconnect_after_manual_cycle', dispatch_ms: performance.now()-t,
     commit_ack_to_observed_disconnect_ms: await a.evaluate(() => events.filter(x => x.event === 'disconnected').at(-1).unix_ms) - privateCommit.commit_ack_unix_ms, cycle });

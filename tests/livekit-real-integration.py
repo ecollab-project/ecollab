@@ -102,6 +102,11 @@ with tempfile.TemporaryDirectory(prefix='ecollab-real-media-') as folder:
                 elif action == 'routes':
                     t = token('ecollab-channel-10')
                     result = {route: request(route+'?access_token='+t)[0] for route in ['/rtc', '/rtc/validate', '/rtc/v1', '/rtc/v1/validate']}
+                elif action == 'room-api-body-types':
+                    for name, body in [('array', '[]'), ('object', '{}')]:
+                        c = http.client.HTTPConnection('127.0.0.1', ports['livekit'], timeout=4)
+                        c.request('POST', '/twirp/livekit.RoomService/ListRooms', body, {'Content-Type':'application/json', 'Authorization':'Bearer '+token('', grant={'roomList':True})})
+                        r = c.getresponse(); result[name] = {'status': r.status, 'body': r.read().decode()}; c.close()
                 elif action == 'bypass':
                     t = token('ecollab-channel-10'); path = '/rtc/validate?access_token='+t
                     result = {'gated': request(path)[0], 'direct_origin': request(path, True)[0],
@@ -213,5 +218,8 @@ location = /fixture {{default_type text/html; return 200 '<html><body>synthetic 
     finally:
         control.shutdown(); control.server_close()
         for proc in reversed(processes):
-            if proc.poll() is None: proc.terminate(); proc.wait(timeout=15)
+            if proc.poll() is None:
+                proc.terminate()
+                try: proc.wait(timeout=15)
+                except subprocess.TimeoutExpired: proc.kill(); proc.wait(timeout=5)
         for log in logs: log.close()
