@@ -1,0 +1,55 @@
+name: Real media revocation
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/realtime-revocation.yml'
+      - 'tests/livekit-real-*'
+      - 'services/RealtimeRevocationService.php'
+      - 'services/LiveKitAdmissionService.php'
+      - 'services/LiveKitService.php'
+      - 'scripts/realtime-revocation-worker.php'
+      - 'deploy/phase2/livekit-admission.conf.example'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-livekit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install disposable fixture dependencies
+        run: |
+          sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=20 update
+          sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=20 install -y nginx php8.3-cli php8.3-fpm php8.3-mysql php8.3-curl mariadb-server
+          npm install --prefix "$RUNNER_TEMP/media-browser" --no-save playwright@1.56.1
+          node "$RUNNER_TEMP/media-browser/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Download pinned server and application SDK
+        run: |
+          mkdir -p "$RUNNER_TEMP/media-runtime"
+          cd "$RUNNER_TEMP/media-runtime"
+          curl -fL --retry 2 --max-time 90 -o livekit.tar.gz https://github.com/livekit/livekit/releases/download/v1.13.7/livekit_1.13.7_linux_amd64.tar.gz
+          printf '%s  livekit.tar.gz\n' 6634aeeb2fb1366b6723708ae4320b9d5408106a4c63457c5e845ae3979c90e2 | sha256sum -c -
+          tar -xzf livekit.tar.gz livekit-server
+          curl -fL --retry 2 --max-time 60 -o sdk.js https://cdn.jsdelivr.net/npm/livekit-client@2.22.3/dist/livekit-client.umd.min.js
+          printf '%s  sdk.js\n' 03c99cd584ee6d7cdb855615df835bf893fa7760912f24f8b5cb5e831598d832 | sha256sum -c -
+          mariadb-install-db --no-defaults --datadir="$RUNNER_TEMP/media-db" --auth-root-authentication-method=normal
+      - name: Real SDK media, admission and actual worker
+        run: |
+          export LIVEKIT_BIN="$RUNNER_TEMP/media-runtime/livekit-server"
+          export NGINX_BIN=/usr/sbin/nginx PHP_FPM_BIN=/usr/sbin/php-fpm8.3 PHP_BIN=/usr/bin/php8.3
+          export MARIADBD_BIN=/usr/sbin/mariadbd MARIADB_TEST_DATADIR="$RUNNER_TEMP/media-db"
+          export LIVEKIT_BROWSER_SDK="$RUNNER_TEMP/media-runtime/sdk.js"
+          export PLAYWRIGHT_MODULE="$RUNNER_TEMP/media-browser/node_modules/playwright"
+          export CHROMIUM_BIN="$(node -e 'console.log(require(process.env.PLAYWRIGHT_MODULE).chromium.executablePath())')"
+          export TEST_MEDIA_EVIDENCE="$RUNNER_TEMP/media-evidence.json"
+          python3 -u tests/livekit-real-integration.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-media-evidence
+          path: ${{ runner.temp }}/media-evidence.json
+          if-no-files-found: ignore
