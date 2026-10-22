@@ -31,7 +31,7 @@ jobs:
         run: |
           set -e
           find API services scripts websocket tests -name '*.php' -print0 | xargs -0 -n1 php -l
-          for test in livekit-admission r7-authorization phase2-jarred phase2-livekit phase2-search phase2-websocket phase2-code-lab phase2-voice-action review-jarred-resource-access phase1-access phase1-temporary-voice phase1-peer-batch phase1-messages phase1-websocket; do php "tests/$test.php"; done
+          for test in centrifugo-proxy livekit-admission r7-authorization phase2-jarred phase2-livekit phase2-search phase2-websocket phase2-code-lab phase2-voice-action review-jarred-resource-access phase1-access phase1-temporary-voice phase1-peer-batch phase1-messages phase1-websocket; do php "tests/$test.php"; done
           php vendor/bin/phpunit --testsuite Unit --stderr
           python3 tests/phase1-session.py
           python3 tests/phase2-jarred-http.py
@@ -67,5 +67,11 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y nginx php8.3-fpm php8.3-sqlite3
-      - name: Real Nginx and FPM authorization/outage fixture
-        run: python3 tests/livekit-admission-ingress.py
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: npm ci --ignore-scripts --prefix tools/chat-delivery
+      - name: Real Nginx and FPM authorization/outage fixtures
+        run: |
+          python3 tests/livekit-admission-ingress.py
+          python3 tests/centrifugo-config.py
+          python3 tests/centrifugo-proxy-regression.py

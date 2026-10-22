@@ -1,0 +1,114 @@
+{
+  "date": "2026-10-22",
+  "base_pr": 70,
+  "base_sha": "8679d81dd575f828f12f42cd4820808fe0066475",
+  "broker_version": "6.9.6",
+  "go_version": "1.26.8",
+  "archive_sha256": "af50fec73b5fba0630bcce6685ed096f5841fd428aa55f820108174c44a7b347",
+  "runtime_scope": "Disposable local Nginx 1.24 / PHP-FPM 8.3 / SQLite synthetic fixture; not production or representative capacity",
+  "baseline_stale_connection_and_subscription_replay": "CONFIRMED",
+  "replacement_real_broker_suite": "PASS",
+  "reconnect_sample": {
+    "connections": 16,
+    "concurrency": 8,
+    "fpm_slots": 10,
+    "connect_p50_ms": 11.367385999998078,
+    "connect_p95_ms": 14.383646999998746,
+    "proxy_mean_ms": 1.4885962009429932,
+    "auth_queries": 16,
+    "errors": 0
+  },
+  "callback_deadline_rejection_ms": 1008.3,
+  "proxy_http_503_observation": {
+    "seconds": 6.5,
+    "existing_client_state": "connected",
+    "new_admission": "denied",
+    "max_existing_connection_lifetime": "NOT VERIFIED"
+  },
+  "callback_transport_stopped_new_admission": "denied",
+  "php_syntax_files": 311,
+  "phpstan": {
+    "classification": "FAIL \u2014 existing baseline",
+    "findings": 13,
+    "introduced": 0,
+    "new_suppressions": 0
+  },
+  "other_local_suites": [
+    {
+      "test": "centrifugo-proxy",
+      "exit": 0,
+      "output": "PASS cookie-derived identity, scoped server-side inbox, one-query admission, refresh mismatch, account/origin/moderation matrix and database failure\n",
+      "errors": ""
+    },
+    {
+      "test": "centrifugo-regression",
+      "exit": 0,
+      "output": "Centrifugo JWT retirement and transaction checks passed\n",
+      "errors": ""
+    },
+    {
+      "test": "r7-authorization",
+      "exit": 0,
+      "output": "PASS R7 account/status/moderation matrix, no moderator bypass, channel/DM/group/outbox/resource revocation, inference fences, active transport eviction and stale-media-token rejoin simulation\n",
+      "errors": ""
+    },
+    {
+      "test": "phase1-access",
+      "exit": 0,
+      "output": "PASS 200 role/membership/privacy/member/creator combinations, counts parity, ban/suspend/mute, revocation and server/channel state\n",
+      "errors": ""
+    },
+    {
+      "test": "phase2-websocket",
+      "exit": 0,
+      "output": "PASS 1850 authenticated heartbeats and malformed frames, zero DB access; total dispatch ms=1.118\n",
+      "errors": ""
+    },
+    {
+      "test": "phase2-livekit",
+      "exit": 0,
+      "output": "50 snapshot readers: passed; upstream RPCs from reader = 0 (code path has no upstream dependency)\n150 snapshot readers: passed; upstream RPCs from reader = 0 (code path has no upstream dependency)\n450 snapshot readers: passed; upstream RPCs from reader = 0 (code path has no upstream dependency)\nMissing/stale/future snapshot and authorized filtering passed\n",
+      "errors": ""
+    },
+    {
+      "test": "livekit-admission",
+      "exit": 0,
+      "output": "PASS LiveKit signed admission, JWT attacks, replay after account/channel/server/group/call revocation, mute semantics, synthetic fixture and DB outage\n",
+      "errors": ""
+    },
+    {
+      "test": "php vendor/bin/phpunit --testsuite Unit --stderr",
+      "exit": 0,
+      "output": "",
+      "errors": "PHPUnit 10.5.64 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.6\nConfiguration: /workspace/scratch/ec6b48439e5d/phase3c/phpunit.xml\n\n.........................                                         25 / 25 (100%)\n\nTime: 00:00.007, Memory: 10.00 MB\n\nOK (25 tests, 56 assertions)\n"
+    },
+    {
+      "test": "node tests/centrifugo-client-regression.cjs",
+      "exit": 0,
+      "output": "Browser adapter: cookie-only connection, server-side inbox, reconnect sync, duplicate events, queued reads and stale target guards passed\n",
+      "errors": ""
+    },
+    {
+      "test": "node tests/centrifugo-http-regression.cjs",
+      "exit": 0,
+      "output": "Bounded fanout, deduplication, HTTP reuse and rejection checks passed\n",
+      "errors": ""
+    },
+    {
+      "test": "python3 tests/centrifugo-config.py",
+      "exit": 0,
+      "output": "PASS isolated configuration: no production/API/legacy-key rotation, separate proxy secret retained, no broker JWT key, private file mode, disable works before migration\n",
+      "errors": ""
+    },
+    {
+      "test": "python3 tests/r7-token-http.py",
+      "exit": 0,
+      "output": "PASS actual token endpoints: old sessions cannot mint connection/subscription/WS tokens after account block/deletion/global ban; JWT endpoint retired for every inbox\n",
+      "errors": ""
+    }
+  ],
+  "production_actions": [],
+  "real_livekit_validation": "NOT RUN",
+  "vps_capacity": "UNVERIFIED",
+  "ci": "Exact-head CI recorded separately in PR"
+}
