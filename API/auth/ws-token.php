@@ -30,6 +30,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 $db = Database::getInstance();
+require_once ROOT_PATH.'/services/AccessPolicy.php';
+if (!(new AccessPolicy($db))->account((int)$user['id'])) {http_response_code(403);echo json_encode(['error'=>'Account access denied']);exit;}
+session_write_close();
+
 
 $db->exec("
     CREATE TABLE IF NOT EXISTS ws_tokens (

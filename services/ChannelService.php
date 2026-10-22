@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/database/config/db.php';
 require_once __DIR__.'/ChannelReadQueries.php';
+require_once __DIR__.'/ChannelAccessService.php';
 
 class ChannelService
 {
@@ -19,6 +20,7 @@ class ChannelService
      */
     public function getChannelsForUser(int $serverId, int $userId): array
     {
+        if (!(new AccessPolicy($this->db))->server($userId,$serverId,'read',true)) return [];
         // Migration 010 owns channel_seen; channel-list reads must not execute schema DDL.
 
         $roleStmt = $this->db->prepare("SELECT role FROM users WHERE id = :uid LIMIT 1");
@@ -36,31 +38,12 @@ class ChannelService
      */
     public function getChannel(int $channelId, int $userId): ?array
     {
-        $roleStmt = $this->db->prepare("SELECT role FROM users WHERE id=:uid LIMIT 1");
-        $roleStmt->execute([':uid'=>$userId]);
-        $role = $roleStmt->fetchColumn() ?: 'student';
-
-        if (in_array($role, ['admin','super_admin'], true)) {
-            // SysAdmin is an invisible platform member: no server_members row is required.
-            $stmt = $this->db->prepare("
-                SELECT c.*, s.name AS server_name
-                FROM channels c
-                JOIN servers s ON s.id=c.server_id
-                WHERE c.id=:channel_id AND s.status='active'
-            ");
-            $stmt->execute([':channel_id'=>$channelId]);
-        } else {
-            $stmt = $this->db->prepare("
-                SELECT c.*, s.name AS server_name
-                FROM channels c
-                JOIN servers s ON s.id=c.server_id
-                JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid
-                WHERE c.id=:channel_id
-            ");
-            $stmt->execute([':uid'=>$userId, ':channel_id'=>$channelId]);
+        try {
+            $channel=(new ChannelAccessService($this->db))->read($channelId,$userId);
+            $q=$this->db->prepare('SELECT name FROM servers WHERE id=?');$q->execute([(int)$channel['server_id']]);
+            $channel['server_name']=$q->fetchColumn();return $channel;
         }
-        $row=$stmt->fetch();
-        return $row ?: null;
+        catch(RuntimeException $e){if($e->getCode()===403)return null;throw $e;}
     }
 
     /**

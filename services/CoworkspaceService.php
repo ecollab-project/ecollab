@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../database/config/db.php';
 
+require_once __DIR__.'/AccessPolicy.php';
+
 final class CoworkspaceService
 {
     public static function get(PDO $db, int $workspaceId, int $userId, bool $requireAccess = true): array
@@ -24,6 +26,7 @@ final class CoworkspaceService
             $serverId = (int)($workspace['server_id'] ?? 0);
             if ($serverId < 1) throw new RuntimeException('Coworkspace is not linked to a server.', 500);
 
+            if (!(new AccessPolicy($db))->server($userId,$serverId)) throw new RuntimeException('Coworkspace access denied.',403);
             $serverStmt = $db->prepare(
                 'SELECT 1
                  FROM server_members sm
@@ -65,7 +68,7 @@ final class CoworkspaceService
         if (!$board || (int)$board['channel_id'] !== $channelId || !empty($board['archived'])) return null;
 
         $serverId = (int)$board['server_id'];
-        if ($serverId < 1) return null;
+        if ($serverId < 1 || !(new AccessPolicy($db))->server($userId,$serverId)) return null;
         $stmt = $db->prepare(
             'SELECT 1
              FROM server_members sm
@@ -103,6 +106,7 @@ final class CoworkspaceService
         $publicPermission = self::normPerm($board['public_permission'] ?? 'view');
         $effective = $isOwner ? 'edit' : ($explicit !== null ? $explicit : ($board['visibility'] === 'public' ? $publicPermission : null));
         if ($effective === null) return null;
+        if (!(new AccessPolicy($db))->server($userId,$serverId,'edit')) $effective='view';
 
         return [
             'whiteboard_id' => $whiteboardId,
@@ -122,6 +126,7 @@ final class CoworkspaceService
     public static function assertServerMember(PDO $db, int $serverId, int $userId): void
     {
         if ($serverId < 1) throw new RuntimeException('A server is required.', 400);
+        if (!(new AccessPolicy($db))->server($userId,$serverId,'edit')) throw new RuntimeException('Server write access denied.',403);
         $stmt = $db->prepare(
             'SELECT 1 FROM server_members sm
              INNER JOIN servers s ON s.id = sm.server_id
@@ -145,7 +150,7 @@ final class CoworkspaceService
     {
         $serverId=(int)($workspace['server_id']??0);
         if($serverId<1)return false;
-        try{self::assertServerMember($db,$serverId,$userId);}catch(Throwable){return false;}
+        if(!(new AccessPolicy($db))->server($userId,$serverId))return false;
         $stmt=$db->prepare('SELECT role FROM collab_workspace_members WHERE workspace_id=:wid AND user_id=:uid LIMIT 1');
         $stmt->execute([':wid'=>(int)$workspace['id'],':uid'=>$userId]);
         if($stmt->fetchColumn()!==false)return true;
@@ -161,10 +166,16 @@ final class CoworkspaceService
         return $role===false?null:(string)$role;
     }
 
+    public static function assertWritable(PDO $db,array $workspace,int $userId): void
+    {
+        if(!(new AccessPolicy($db))->server($userId,(int)$workspace['server_id'],'edit')) throw new RuntimeException('Workspace is view-only.',403);
+    }
+
     public static function requireHost(PDO $db,int $workspaceId,int $userId):array
     {
         $workspace=self::get($db,$workspaceId,$userId);
         if((int)$workspace['host_id']!==$userId)throw new RuntimeException('Only the Coworkspace host can perform this action.',403);
+        if (!(new AccessPolicy($db))->server($userId,(int)$workspace['server_id'],'edit')) throw new RuntimeException('Workspace write access denied.',403);
         return $workspace;
     }
 

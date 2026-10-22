@@ -11,8 +11,9 @@ $user=AuthMiddleware::requireAuth(true);
 if($_SERVER['REQUEST_METHOD']!=='POST'){http_response_code(405);exit;}
 AuthMiddleware::verifyCsrf();session_write_close();
 try {
-    $db=Database::getInstance();$stmt=$db->prepare('SELECT id FROM users WHERE id=? AND deleted_at IS NULL');$stmt->execute([$user['id']]);
-    if(!$stmt->fetchColumn())throw new RuntimeException('Unauthenticated',401);
+    $db=Database::getInstance();
+    require_once ROOT_PATH.'/services/AccessPolicy.php';
+    (new AccessPolicy($db))->assertAccount((int)$user['id']);
     $body=json_decode(file_get_contents('php://input'),true)??[];
     $mode=$body['mode']??'connection';
     if(!in_array($mode,['connection','subscription'],true))throw new RuntimeException('Invalid token request',400);

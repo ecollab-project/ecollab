@@ -29,7 +29,7 @@ final class CentrifugoService
     }
     public function command(string $method, array $body): array
     {
-        if(!in_array($method,['broadcast','info'],true))throw new InvalidArgumentException('Unsupported broker command');
+        if(!in_array($method,['broadcast','info','disconnect'],true))throw new InvalidArgumentException('Unsupported broker command');
         if (function_exists('curl_init')) {
             // Retain the handle so sequential batches reuse the local HTTP connection.
             $this->http ??= curl_init();
@@ -57,6 +57,12 @@ final class CentrifugoService
         if($status!==200 || !is_array($data) || isset($data['error']) || !isset($data['result']))throw new RuntimeException('Broker unavailable');
         return $data['result'];
     }
+    public function disconnect(int $uid): void
+    {
+        if($uid<1)throw new InvalidArgumentException('Invalid user');
+        $this->command('disconnect',['user'=>(string)$uid,'disconnect'=>['code'=>4503,'reason'=>'Account access revoked']]);
+    }
+
     public function broadcast(array $users, array $event): void
     {
         $channels=array_map(fn($uid)=>self::inbox((int)$uid),array_values(array_unique($users)));

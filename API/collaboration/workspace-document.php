@@ -34,6 +34,7 @@ try {
     if (!$access['owner']) docLinkFail('Only owners can move documents.', 403);
     if ((int)$access['document']['workspace_id'] !== $workspaceId) docLinkFail('Cross-workspace moves require a new sharing review and are not supported.', 409);
     $workspace = CoworkspaceService::get($db, $workspaceId, $uid);
+    CoworkspaceService::assertWritable($db,$workspace,$uid);
     $role = (string)($workspace['member_role'] ?? '');
     if ((int)$workspace['allow_create_documents'] !== 1 && !in_array($role, ['host','editor'], true)) {
         docLinkFail('Document linking is disabled for this Coworkspace.', 403);

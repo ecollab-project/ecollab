@@ -31,17 +31,22 @@ jobs:
         run: |
           set -e
           find API services scripts websocket tests -name '*.php' -print0 | xargs -0 -n1 php -l
-          for test in phase2-jarred phase2-livekit phase2-search phase2-websocket phase2-code-lab phase2-voice-action review-jarred-resource-access phase1-access phase1-temporary-voice phase1-peer-batch phase1-messages phase1-websocket; do php "tests/$test.php"; done
+          for test in r7-authorization phase2-jarred phase2-livekit phase2-search phase2-websocket phase2-code-lab phase2-voice-action review-jarred-resource-access phase1-access phase1-temporary-voice phase1-peer-batch phase1-messages phase1-websocket; do php "tests/$test.php"; done
           php vendor/bin/phpunit --testsuite Unit --stderr
           python3 tests/phase1-session.py
           python3 tests/phase2-jarred-http.py
+          python3 tests/r7-token-http.py
+          python3 tests/r7-resource-http.py
           python3 tests/review-realtime-crash.py
       - name: Real MariaDB transactional fixtures and migrations
         env:
           PHASE2_TEST_DSN: mysql:host=127.0.0.1;port=3306;dbname=ecollab_phase2_test
         run: |
+          set -e
           php tests/phase2-jarred.php
           php tests/phase2-mariadb.php
+          php -r '$db=new PDO("mysql:host=127.0.0.1;port=3306","root","");$db->exec("CREATE DATABASE ecollab_r7_test");'
+          R7_TEST_DSN="mysql:host=127.0.0.1;port=3306;dbname=ecollab_r7_test" php tests/r7-authorization.php
       - name: Client event, backoff and regression fixtures
         env:
           NODE_PATH: ${{ github.workspace }}/tools/chat-delivery/node_modules

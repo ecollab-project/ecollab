@@ -1,0 +1,168 @@
+{
+  "reviewed_parent": "5e2fa5b57226ae07b6a02560d89ac436019b8b28",
+  "focused": [
+    {
+      "test": "r7-authorization",
+      "exit": 0,
+      "stdout": "PASS R7 account/status/moderation matrix, no moderator bypass, channel/DM/group/outbox/resource revocation, inference fences, active transport eviction and stale-media-token rejoin simulation\n",
+      "stderr": ""
+    },
+    {
+      "test": "phase2-jarred",
+      "exit": 0,
+      "stdout": "PASS Jarred admission, atomic source/job, retry checkpoint, action rollback, cancellation fencing, recovery, ownership and preferences\n",
+      "stderr": ""
+    },
+    {
+      "test": "phase2-livekit",
+      "exit": 0,
+      "stdout": "50 snapshot readers: passed; upstream RPCs from reader = 0 (code path has no upstream dependency)\n150 snapshot readers: passed; upstream RPCs from reader = 0 (code path has no upstream dependency)\n450 snapshot readers: passed; upstream RPCs from reader = 0 (code path has no upstream dependency)\nMissing/stale/future snapshot and authorized filtering passed\n",
+      "stderr": ""
+    },
+    {
+      "test": "phase2-search",
+      "exit": 0,
+      "stdout": "PASS substring search, private visibility, cross-server isolation, moderation, bounded input and tied-timestamp pagination\n",
+      "stderr": ""
+    },
+    {
+      "test": "phase2-websocket",
+      "exit": 0,
+      "stdout": "PASS 1850 authenticated heartbeats and malformed frames, zero DB access; total dispatch ms=1.077\n",
+      "stderr": ""
+    },
+    {
+      "test": "phase2-code-lab",
+      "exit": 0,
+      "stdout": "PASS: private attempts, playground isolation, roles, cross-server access, submission locking, deadlines, timing and stale saves\nPASS: queue ownership, frozen submissions, weighted grading, hidden-case privacy, quotas, runtime/limit enforcement, outage retry and manual overrides\n50 clients: status SQL executions 150 -> 100 (position omitted)\n150 clients: status SQL executions 450 -> 300 (position omitted)\n450 clients: status SQL executions 1350 -> 900 (position omitted)\nPASS durable metadata-only event and current ownership/membership\n",
+      "stderr": ""
+    },
+    {
+      "test": "phase2-voice-action",
+      "exit": 0,
+      "stdout": "PASS real temporary-room action joins outer transaction, rollback retains dialogue, retry creates one room\n",
+      "stderr": ""
+    },
+    {
+      "test": "review-jarred-resource-access",
+      "exit": 0,
+      "stdout": "{\"private_document_navigation\":false,\"private_board_navigation\":false,\"private_board_context\":false}\nPASS Jarred resource privacy, explicit permission, revocation, owner and archived workspace\nPASS Jarred private-message search moderator/member boundary\n",
+      "stderr": ""
+    },
+    {
+      "test": "phase1-access",
+      "exit": 0,
+      "stdout": "PASS 200 role/membership/privacy/member/creator combinations, counts parity, ban/suspend/mute, revocation and server/channel state\n",
+      "stderr": ""
+    },
+    {
+      "test": "phase1-temporary-voice",
+      "exit": 0,
+      "stdout": "PASS temporary voice: DDL-free constructor, occupancy, expiry reset, stale leave, denial rollback, permanent rooms\n",
+      "stderr": ""
+    },
+    {
+      "test": "phase1-peer-batch",
+      "exit": 0,
+      "stdout": "{\n    \"scope\": \"SQLite synthetic profile-loading microbenchmark; not HTTP\\/VPS capacity\",\n    \"results\": [\n        {\n            \"candidates\": 0,\n            \"legacy_profile_statements\": 0,\n            \"batch_profile_statements\": 0,\n            \"legacy_profile_ms\": 0,\n            \"batch_profile_ms\": 0.007\n        },\n        {\n            \"candidates\": 1,\n            \"legacy_profile_statements\": 4,\n            \"batch_profile_statements\": 4,\n            \"legacy_profile_ms\": 0.07,\n            \"batch_profile_ms\": 0.049\n        },\n        {\n            \"candidates\": 50,\n            \"legacy_profile_statements\": 200,\n            \"batch_profile_statements\": 4,\n            \"legacy_profile_ms\": 1.244,\n            \"batch_profile_ms\": 0.637\n        },\n        {\n            \"candidates\": 100,\n            \"legacy_profile_statements\": 400,\n            \"batch_profile_statements\": 4,\n            \"legacy_profile_ms\": 2.396,\n            \"batch_profile_ms\": 0.752\n        }\n    ],\n    \"memory_peak_bytes\": 2097152\n}\nPASS peer batch: 0/1/50/100, reversed candidate order, exact profiles/scores/semantic inputs, relationships and empty profiles\n",
+      "stderr": ""
+    },
+    {
+      "test": "phase1-messages",
+      "exit": 0,
+      "stdout": "PASS message limits, before/after, private and revoked access, deleted/cross-channel exclusion, pinned, reactions, attachments, polls\n",
+      "stderr": ""
+    },
+    {
+      "test": "phase1-websocket",
+      "exit": 0,
+      "stdout": "[WS] Connection 1 closed\n[WS] Connection 2 closed\n[WS] Connection 3 closed\nPASS WebSocket multiple-tab final disconnect and stale room isolation\n",
+      "stderr": ""
+    },
+    {
+      "test": "centrifugo-regression",
+      "exit": 0,
+      "stdout": "Centrifugo token and transaction checks passed\n",
+      "stderr": ""
+    },
+    {
+      "test": "settings-runtime-regression",
+      "exit": 0,
+      "stdout": "PASS: profile/receipt privacy, Jarred preferences, bounded continuity, conversation lock, atomic exchange, isolation and greeting fast path\n",
+      "stderr": ""
+    }
+  ],
+  "mariadb": [
+    {
+      "test": "tests/r7-authorization.php",
+      "exit": 0,
+      "stdout": "PASS R7 account/status/moderation matrix, no moderator bypass, channel/DM/group/outbox/resource revocation, inference fences, active transport eviction and stale-media-token rejoin simulation\n",
+      "stderr": ""
+    },
+    {
+      "test": "tests/phase2-jarred.php",
+      "exit": 0,
+      "stdout": "PASS Jarred admission, atomic source/job, retry checkpoint, action rollback, cancellation fencing, recovery, ownership and preferences\n",
+      "stderr": ""
+    },
+    {
+      "test": "tests/collabora-regression.php",
+      "exit": 0,
+      "stdout": "PASS: explicit viewer overrides public edit\nPASS: private document excluded\nPASS: equivalent timestamp formats\nPASS: viewer token cannot write\nPASS: token bound to document\nPASS: viewer save rejected\nPASS: stale save rejected\nPASS: new version published\nPASS: previous version retained\nPASS: save timestamp matches metadata\nPASS: live downgrade honored\nPASS: old viewer token cannot upgrade\nPASS: removed server access honored\nPASS: suspended account denied despite membership\nPASS: expired token rejected\nPASS: file path confined to storage\nCollabora regression checks passed\n",
+      "stderr": ""
+    },
+    {
+      "test": "tests/whiteboard-realtime-regression.php",
+      "exit": 0,
+      "stdout": "PASS: workspace board accessible without chat membership\nPASS: wrong channel cannot reuse a board grant\nPASS: non-server-member rejected\nPASS: live viewer downgrade prevents scene edits\nPASS: comment permission cannot replace canvas\nPASS: private board requires grant\nPASS: explicit private board editor accepted\nPASS: board grant cannot bypass private workspace\nPASS: workspace member with board grant accepted\nPASS: revoked server membership takes effect\nPASS: suspended account rejected\nWhiteboard realtime regression checks passed\n",
+      "stderr": ""
+    },
+    {
+      "test": "tests/centrifugo-database-regression.php",
+      "exit": 0,
+      "stdout": "Database audience, atomic save, rollback, migration rerun and delivery retry checks passed\nDispatch phases: real successful/retried broker calls, failure timing, privacy and window reset passed\n",
+      "stderr": "[Realtime delivery] Event 1 deferred; retry in 1 seconds\n"
+    },
+    {
+      "test": "tests/chat-read-profiler-regression.php",
+      "exit": 0,
+      "stdout": "Read profiler: large roster, full message page, plans, privacy and access checks passed\n",
+      "stderr": ""
+    }
+  ],
+  "unit": {
+    "tests": 25,
+    "assertions": 56,
+    "status": "PASS"
+  },
+  "heartbeat": {
+    "frames": 1850,
+    "sql_calls": 0,
+    "status": "PASS"
+  },
+  "lint": {
+    "files": 305,
+    "status": "PASS"
+  },
+  "actual_http": [
+    "phase1-session.py",
+    "phase2-jarred-http.py",
+    "r7-token-http.py",
+    "r7-resource-http.py",
+    "chat-tus-http-regression.cjs"
+  ],
+  "crash": "8 abrupt transitions and broker publish-before-ACK retry PASS",
+  "phpstan": {
+    "baseline": 13,
+    "current": 13,
+    "new_diagnostics": 0
+  },
+  "production_changes": false,
+  "live_media_tests": "NOT RUN",
+  "capacity_450": "UNVERIFIED",
+  "ci": "See exact published head runs; not inferred from parent",
+  "ci_initial_head": {
+    "sha": "b36dd6e07b855b61e4f8bbe41eacb7dcb0772fb9",
+    "note": "Fixture failures corrected; see subsequent head CI"
+  }
+}

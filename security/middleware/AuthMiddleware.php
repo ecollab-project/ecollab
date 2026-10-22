@@ -64,6 +64,19 @@ class AuthMiddleware
             exit;
         }
 
+        require_once dirname(__DIR__,2).'/database/config/db.php';
+        require_once dirname(__DIR__,2).'/services/AccessPolicy.php';
+        try {$allowed=(new AccessPolicy(Database::getInstance()))->account((int)$_SESSION['user_id']);}
+        catch (Throwable) {
+            http_response_code(503);
+            if($apiMode){header('Content-Type: application/json');echo json_encode(['error'=>'Authentication temporarily unavailable']);}
+            exit;
+        }
+        if(!$allowed){
+            self::destroySession();
+            if($apiMode){http_response_code(403);header('Content-Type: application/json');echo json_encode(['error'=>'Account access denied']);exit;}
+            header('Location: '.BASE_URL.'/modules/auth/login.php');exit;
+        }
         return self::buildUserArray();
     }
 

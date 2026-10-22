@@ -6,6 +6,8 @@ require_once dirname(__DIR__) . '/services/ChannelService.php';
 require_once dirname(__DIR__) . '/services/PeerMatchingService.php';
 require_once dirname(__DIR__) . '/services/JarredCapabilityPolicy.php';
 require_once __DIR__.'/DocumentAccessService.php';
+require_once __DIR__.'/AccessPolicy.php';
+require_once __DIR__.'/ChannelAccessService.php';
 
 /**
  * JarredTools
@@ -22,6 +24,27 @@ final class JarredTools
     {
         $this->db = Database::getInstance();
         $this->channels = new ChannelService();
+    }
+
+    /** Permission metadata only: discard inference if its authorization context changed. */
+    public function authorizationStamp(int $uid): string
+    {
+        $queries=[
+            'SELECT id,status,role,deleted_at FROM users WHERE id=?',
+            'SELECT server_id,server_role FROM server_members WHERE user_id=? ORDER BY server_id',
+            'SELECT channel_id FROM channel_members WHERE user_id=? ORDER BY channel_id',
+            'SELECT workspace_id,role FROM collab_workspace_members WHERE user_id=? ORDER BY workspace_id',
+            'SELECT workspace_id,resource_type,resource_id,permission FROM collab_resource_permissions WHERE user_id=? ORDER BY workspace_id,resource_type,resource_id',
+            "SELECT server_id,action_type FROM moderation_actions WHERE target_user_id=? AND is_active=1 AND (expires_at IS NULL OR expires_at>CURRENT_TIMESTAMP) ORDER BY server_id,action_type",
+            'SELECT s.id,s.status FROM servers s JOIN server_members sm ON sm.server_id=s.id WHERE sm.user_id=? ORDER BY s.id',
+            'SELECT c.id,c.is_private,c.is_locked,c.created_by FROM channels c JOIN server_members sm ON sm.server_id=c.server_id WHERE sm.user_id=? ORDER BY c.id',
+            'SELECT w.id,w.visibility,w.archived,w.host_id FROM collab_workspaces w JOIN server_members sm ON sm.server_id=w.server_id WHERE sm.user_id=? ORDER BY w.id',
+            'SELECT d.id,d.visibility,d.public_permission,d.created_by FROM collab_documents d JOIN collab_workspaces w ON w.id=d.workspace_id JOIN server_members sm ON sm.server_id=w.server_id WHERE sm.user_id=? ORDER BY d.id',
+            'SELECT b.id,b.visibility,b.public_permission,b.created_by FROM collab_whiteboards b JOIN collab_workspaces w ON w.id=b.workspace_id JOIN server_members sm ON sm.server_id=w.server_id WHERE sm.user_id=? ORDER BY b.id',
+        ];
+        $state=[];
+        foreach($queries as $sql){$q=$this->db->prepare($sql);$q->execute([$uid]);$state[]=$q->fetchAll(PDO::FETCH_ASSOC);}
+        return hash('sha256',json_encode($state,JSON_THROW_ON_ERROR));
     }
 
     public function toolDefinitions(): array
@@ -298,6 +321,8 @@ final class JarredTools
 
     public function searchMessages(int $requesterId, string $query, int $limit = 12, ?int $serverId = null): array
     {
+        if (!(new AccessPolicy($this->db))->account($requesterId)) return [];
+        if ($serverId && !$this->canAccessServer($requesterId,$serverId)) return [];
         $query=trim($query); if($query==='') return [];
         $limit=max(1,min(25,$limit));
         $sql="SELECT m.id,m.channel_id,m.content,m.created_at,u.username,u.full_name,c.name channel_name,c.server_id,s.name server_name,m.parent_id
@@ -306,7 +331,8 @@ final class JarredTools
               WHERE m.is_deleted=0 AND m.content LIKE :q
                 AND (c.is_private=0 OR EXISTS(SELECT 1 FROM channel_members cm WHERE cm.channel_id=c.id AND cm.user_id=:uid2)
                      OR sm.server_role IN ('owner','admin') OR c.created_by=:uid3)";
-        $params=[':uid'=>$requesterId,':uid2'=>$requesterId,':uid3'=>$requesterId,':q'=>'%'.$query.'%'];
+        $sql.=" AND s.status='active' AND EXISTS(SELECT 1 FROM users requester WHERE requester.id=:requester AND ".AccessPolicy::accountSql('requester').' AND '.AccessPolicy::moderationSql('requester','s').')';
+        $params=[':requester'=>$requesterId,':uid'=>$requesterId,':uid2'=>$requesterId,':uid3'=>$requesterId,':q'=>'%'.$query.'%'];
         if($serverId && $this->canAccessServer($requesterId,$serverId)){ $sql.=" AND c.server_id=:sid"; $params[':sid']=$serverId; }
         $sql.=" ORDER BY m.created_at DESC LIMIT {$limit}";
         $stmt=$this->db->prepare($sql); $stmt->execute($params); return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -315,8 +341,10 @@ final class JarredTools
     public function accessibleServersAndChannels(int $requesterId): array
     {
         $result=[];
+        if (!(new AccessPolicy($this->db))->account($requesterId)) return [];
         foreach($this->channels->getServersForUser($requesterId) as $server){
             $sid=(int)$server['id'];
+            if (!$this->canAccessServer($requesterId,$sid)) continue;
             $result[]=['server'=>['id'=>$sid,'name'=>$server['name'],'server_role'=>$server['server_role']??'member'],
                 'channels'=>array_map(static fn(array $c):array=>['id'=>(int)$c['id'],'name'=>$c['name'],'type'=>$c['type'],'is_private'=>(int)($c['is_private']??0)],$this->channels->getChannelsForUser($sid,$requesterId))];
         }
@@ -468,8 +496,7 @@ final class JarredTools
 
     private function canAccessServer(int $requesterId,int $serverId): bool
     {
-        $stmt=$this->db->prepare('SELECT 1 FROM server_members WHERE server_id=:sid AND user_id=:uid LIMIT 1');
-        $stmt->execute([':sid'=>$serverId,':uid'=>$requesterId]); return (bool)$stmt->fetchColumn();
+        return (new AccessPolicy($this->db))->server($requesterId,$serverId);
     }
 
     private function resolveServerId(int $requesterId,string $prompt): ?int

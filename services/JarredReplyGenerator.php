@@ -27,6 +27,7 @@ final class JarredReplyGenerator
 
         $jarredTools = new JarredTools();
         $jarredSurface['personalization']=(bool)$prefs['jarred_personalization'];
+        $authorizationStamp=$jarredTools->authorizationStamp((int)$me['id']);
         $jarredContext = $jarredTools->contextForPrompt((int)$me['id'], $text, $activeServerId, $jarredSurface);
 
         // qwen3:1.7b on this VPS does not reliably emit native Ollama tool_calls.
@@ -65,6 +66,6 @@ JARRED_SYSTEM_PROMPT . JarredConversation::instructions($prefs),
             throw new RuntimeException('AI returned an empty response');
         }
 
-        return ['text'=>$aiText,'usage'=>['input_tokens'=>$result['input_tokens']??null,'output_tokens'=>$result['output_tokens']??null,'model'=>$result['model']??null]];
+        return ['authorization_stamp'=>$authorizationStamp,'text'=>$aiText,'usage'=>['input_tokens'=>$result['input_tokens']??null,'output_tokens'=>$result['output_tokens']??null,'model'=>$result['model']??null]];
     }
 }

@@ -12,7 +12,12 @@ const sub=c.newSubscription('inbox:user18',{token:token('inbox:user18')});let re
 let joined=once(sub,'subscribed');sub.subscribe();c.connect();await joined;
 await assert.rejects(sub.publish({id:99}),e=>e.code===103); // Browser publish denied.
 await publish(1);await new Promise(r=>setTimeout(r,80));assert.deepEqual(received,[1]);
-c.disconnect();await publish(2);await publish(3);joined=once(sub,'subscribed');c.connect();const recovery=await joined;await new Promise(r=>setTimeout(r,100));assert.equal(recovery.recovered,true);assert.deepEqual(received,[1,2,3]);
+c.disconnect();await publish(2);await publish(3);joined=once(sub,'subscribed');c.connect();const recovery=await joined;await new Promise(r=>setTimeout(r,100));assert.notEqual(recovery.recovered,true);assert.deepEqual(received,[1]);
+await publish(4);await new Promise(r=>setTimeout(r,80));assert.deepEqual(received,[1,4]);
+// Inbox hints have no replay history; reconnect synchronization uses authorized HTTP reads.
+const kicked=once(c,'disconnected');const kick=await fetch(base+'/disconnect',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':key},body:JSON.stringify({user:'18',disconnect:{code:4503,reason:'Account access revoked'}})});assert(!(await kick.json()).error);assert.equal((await kicked).code,4503);
+joined=once(sub,'subscribed');c.connect();await joined;assert.deepEqual(received,[1,4]);
+// A still-valid JWT can reconnect: current outbox filtering and reconciliation remain required.
 const denied=c.newSubscription('inbox:user19',{token:token('inbox:user18')});const rejected=once(c,'disconnected');denied.subscribe();const rejection=await rejected;assert(rejection.code >= 3500);c.disconnect();
-console.log('Real broker: private inbox, publish denial, message delivery and reconnect recovery passed');
+console.log('Real broker: private inbox, publish denial, message delivery, no private-hint replay and active disconnect passed');
 })().catch(e=>{console.error(e);process.exit(1);});

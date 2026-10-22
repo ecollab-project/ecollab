@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 // Abrupt child exits use temporary SQLite files only. No application database.
-function env($key,$default=''){return $key==='CENTRIFUGO_ENABLED'?'true':$default;}
+putenv('CENTRIFUGO_ENABLED=true');
 require_once __DIR__.'/../services/JarredJobService.php';
 final class CrashPDO extends PDO {
  public string $point=''; public int $commits=0;
@@ -23,7 +23,7 @@ function admit(PDO $db,string $point=''):void{
  $source=(int)$db->query("SELECT id FROM dm_messages WHERE sender_id=1")->fetchColumn();
  $jobs->enqueue(1,2,1,$source,null,[]);$db->commit();
 }
-$schema="CREATE TABLE users(id INTEGER PRIMARY KEY,deleted_at TEXT,status TEXT,is_system INTEGER,username TEXT);
+$schema="CREATE TABLE moderation_actions(target_user_id INTEGER,server_id INTEGER,action_type TEXT,is_active INTEGER,expires_at TEXT);CREATE TABLE users(id INTEGER PRIMARY KEY,deleted_at TEXT,status TEXT,is_system INTEGER,username TEXT);
 CREATE TABLE user_settings(user_id INTEGER PRIMARY KEY,jarred_enabled INTEGER);
 CREATE TABLE dm_conversations(id INTEGER PRIMARY KEY,user_a INTEGER,user_b INTEGER,last_message TEXT,last_msg_at TEXT);
 CREATE TABLE dm_messages(id INTEGER PRIMARY KEY AUTOINCREMENT,conversation_id INTEGER,sender_id INTEGER,body TEXT,is_deleted INTEGER DEFAULT 0,created_at TEXT DEFAULT CURRENT_TIMESTAMP);

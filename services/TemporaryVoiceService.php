@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/database/config/db.php';
 
+require_once __DIR__.'/AccessPolicy.php';
+
 final class TemporaryVoiceService
 {
     private PDO $db;
@@ -65,6 +67,10 @@ final class TemporaryVoiceService
     {
         $text = trim($text);
         $state = $this->state($userId, $conversationId);
+        if ($state && !$this->canAccessServer($userId,(int)$state['server_id'])) {
+            $this->clearState($userId,$conversationId);
+            throw new RuntimeException('Voice action access denied',403);
+        }
 
         if (!$state) {
             if (!preg_match('/\b(?:create|make|start|open|set up|setup)\b.*\b(?:temporary|temp)\b.*\b(?:voice|call|room|channel)\b|\b(?:temporary|temp)\b.*\b(?:voice|call|room|channel)\b/i', $text)) return null;
@@ -111,7 +117,7 @@ final class TemporaryVoiceService
 
     private function createRoom(int $userId,int $serverId,string $privacy,array $invitees): array
     {
-        if (!$this->canAccessServer($userId,$serverId)) throw new RuntimeException('You no longer have access to this server.');
+        if (!$this->canAccessServer($userId,$serverId)) throw new RuntimeException('You no longer have access to this server.',403);
         $name='Temporary Room';
         $base='temp-voice-'.$userId.'-'.time();
         $slug=substr($base,0,60);
@@ -129,12 +135,13 @@ final class TemporaryVoiceService
             if ($privacy==='private') {
                 $member=$this->db->prepare("INSERT IGNORE INTO channel_members(channel_id,user_id) VALUES(?,?)");
                 $member->execute([$channelId,$userId]);
-                foreach($invitees as $invitee) $member->execute([$channelId,(int)$invitee['id']]);
+                foreach($invitees as $invitee) if($this->canAccessServer((int)$invitee['id'],$serverId)) $member->execute([$channelId,(int)$invitee['id']]);
             }
             if($owns)$this->db->commit();
         } catch(Throwable $e) { if($owns&&$this->db->inTransaction())$this->db->rollBack(); throw $e; }
 
         foreach($invitees as $invitee) {
+            if (!$this->canAccessServer((int)$invitee['id'],$serverId)) continue;
             try {
                 $this->db->prepare("INSERT INTO notifications(recipient_id,actor_id,type,title,body,link_url,icon,is_read)
                     VALUES(?,?,'temporary_voice_invite','Temporary voice invitation',?,?,'🔊',0)")
@@ -205,7 +212,7 @@ final class TemporaryVoiceService
     }
 
     private function openAction(array $room): array { return ['type'=>'open_temporary_voice','channel_id'=>$room['id'],'channel_slug'=>$room['slug'],'channel_name'=>$room['name'],'privacy'=>$room['privacy']]; }
-    private function canAccessServer(int $uid,int $sid): bool {$s=$this->db->prepare("SELECT 1 FROM server_members WHERE server_id=? AND user_id=? LIMIT 1");$s->execute([$sid,$uid]);return(bool)$s->fetchColumn();}
+    private function canAccessServer(int $uid,int $sid): bool {return (new AccessPolicy($this->db))->server($uid,$sid,'voice');}
     private function isYes(string $s): bool {return(bool)preg_match('/^(?:yes|yeah|yep|yup|sure|ok|okay|go|do it|please)$/i',trim($s));}
     private function isNo(string $s): bool {return(bool)preg_match('/^(?:no|nope|nah|cancel|never mind|nevermind)$/i',trim($s));}
     private function state(int $uid,int $cid): ?array {$s=$this->db->prepare("SELECT * FROM jarred_pending_actions WHERE user_id=? AND conversation_id=? AND action_type='create_temp_voice' AND expires_at>NOW() LIMIT 1");$s->execute([$uid,$cid]);$r=$s->fetch(PDO::FETCH_ASSOC);return$r?:null;}

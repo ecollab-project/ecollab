@@ -10,7 +10,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 (async()=>{
   const socket=net.createServer();await new Promise(r=>socket.listen(0,'127.0.0.1',r));
   const port=socket.address().port;await new Promise(r=>socket.close(r));const base='http://127.0.0.1:'+port;
-  for(const name of ['API/chat/resumable-upload.php','services/ChatTusStorage.php','services/ChatUploadAccess.php','security/middleware/AuthMiddleware.php'])write(name,fs.readFileSync(path.join(root,name)));
+  for(const name of ['API/chat/resumable-upload.php','services/ChatTusStorage.php','services/ChatUploadAccess.php','services/AccessPolicy.php','services/ChannelAccessService.php','security/middleware/AuthMiddleware.php'])write(name,fs.readFileSync(path.join(root,name)));
   write('config.php',`<?php
     ini_set('session.save_path',${JSON.stringify(temporary)});
     define('ROOT_PATH',__DIR__);define('BASE_URL',${JSON.stringify(base)});define('UPLOAD_DIR',__DIR__.'/uploads/');
@@ -19,15 +19,13 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   `);
   write('database/config/db.php',String.raw`<?php
     class Database {
-      static function getInstance(){return new self;}
-      function prepare($sql){return new FixtureStatement($sql);}
-    }
-    class FixtureStatement {
-      private $sql;private $args;
-      function __construct($sql){$this->sql=$sql;}
-      function execute($args){$this->args=$args;}
-      function fetchColumn(){if(str_contains($this->sql,'FROM users'))return 'student';if(str_contains($this->sql,'moderation_actions'))return false;return 1;}
-      function fetch($mode){return ($this->args[':id']??0)===20?['type'=>'text','is_private'=>0,'created_by'=>5,'server_id'=>5,'server_role'=>'member','has_access'=>1]:false;}
+      private static ?PDO $db=null;
+      static function getInstance():PDO {
+        if(self::$db)return self::$db;
+        $db=new PDO('sqlite::memory:',null,null,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+        $db->exec("CREATE TABLE users(id INTEGER,role TEXT,status TEXT,deleted_at TEXT);INSERT INTO users VALUES(18,'student','active',NULL);CREATE TABLE servers(id INTEGER,status TEXT);INSERT INTO servers VALUES(5,'active');CREATE TABLE server_members(server_id INTEGER,user_id INTEGER,server_role TEXT);INSERT INTO server_members VALUES(5,18,'member');CREATE TABLE channels(id INTEGER,server_id INTEGER,type TEXT,is_private INTEGER,is_locked INTEGER,created_by INTEGER);INSERT INTO channels VALUES(20,5,'text',0,0,5);CREATE TABLE channel_members(channel_id INTEGER,user_id INTEGER);CREATE TABLE moderation_actions(target_user_id INTEGER,server_id INTEGER,action_type TEXT,is_active INTEGER,expires_at TEXT);CREATE TABLE dm_conversations(id INTEGER,user_a INTEGER,user_b INTEGER);INSERT INTO dm_conversations VALUES(3,18,19);CREATE TABLE dm_group_members(group_id INTEGER,user_id INTEGER)");
+        return self::$db=$db;
+      }
     }
   `);
   write('login.php',"<?php require 'config.php';require 'security/middleware/AuthMiddleware.php';AuthMiddleware::startSession();$_SESSION['user_id']=18;$_SESSION['csrf_token']='test-token';echo 'ok';");

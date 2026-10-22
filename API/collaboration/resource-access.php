@@ -66,7 +66,7 @@ try{
     }
 
     if($method==='PATCH'){
-        AuthMiddleware::verifyCsrf();
+        AuthMiddleware::verifyCsrf();CoworkspaceService::assertWritable($db,$workspace,$uid);
         if(!$isOwner)raJson(['success'=>false,'error'=>'Only the resource owner or Coworkspace host can manage access.'],403);
         $visibility=strtolower(trim((string)($data['visibility']??$r['visibility'])));
         $public=raPermission($data['public_permission']??$r['public_permission']);
@@ -78,7 +78,7 @@ try{
     }
 
     if($method!=='POST')raJson(['success'=>false,'error'=>'Method not allowed.'],405);
-    AuthMiddleware::verifyCsrf();
+    AuthMiddleware::verifyCsrf();CoworkspaceService::assertWritable($db,$workspace,$uid);
     if(!$isOwner)raJson(['success'=>false,'error'=>'Only the resource owner or Coworkspace host can manage access.'],403);
     $action=strtolower(trim((string)($data['action']??'')));
     $table=$type==='document'?'collab_documents':'collab_whiteboards';

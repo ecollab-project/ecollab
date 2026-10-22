@@ -9,6 +9,7 @@ ensure($db->query('SELECT DATABASE()')->fetchColumn()==='delivery_test','Refuse 
 $db->exec('CREATE DATABASE read_profile_test');$db->exec('USE read_profile_test');
 try {
     $schema=[
+        "CREATE TABLE moderation_actions(target_user_id INT,server_id INT,action_type VARCHAR(20),is_active INT,expires_at DATETIME)",
         "CREATE TABLE users(id INT PRIMARY KEY,username VARCHAR(60),full_name VARCHAR(80),avatar_url VARCHAR(200),avatar_color_gradient VARCHAR(40),status VARCHAR(20),role VARCHAR(20),deleted_at DATETIME NULL,last_active_at DATETIME,is_verified INT)",
         "CREATE TABLE channels(id INT PRIMARY KEY,server_id INT,is_private INT,created_by INT,name VARCHAR(60),type VARCHAR(20),position INT,created_at DATETIME,slug VARCHAR(60),description TEXT,is_locked INT DEFAULT 0,member_count INT DEFAULT 0)",
         "CREATE TABLE server_members(server_id INT,user_id INT,server_role VARCHAR(20),nickname VARCHAR(60),joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,PRIMARY KEY(server_id,user_id))",
@@ -68,7 +69,7 @@ try {
     // Exercise >50 visible channels, exact timestamp semantics and every private-access route.
     $add=$db->prepare("INSERT INTO channels(id,server_id,is_private,created_by,name,type,position,created_at) VALUES(?,19,?,2,?,'text',?,NOW())");
     for($i=81;$i<=135;$i++)$add->execute([$i,$i===82?1:0,'PRIVATE_CHANNEL_SENTINEL',$i]);
-    $db->exec("INSERT INTO channels(id,server_id,is_private,created_by,name,type,position,created_at) VALUES(200,20,0,2,'Other','text',1,NOW());UPDATE server_members SET server_role='owner' WHERE user_id=3;INSERT INTO channel_members VALUES(82,4)");
+    $db->exec("INSERT INTO servers(id,name,status,created_at) VALUES(20,'Other','active',NOW());INSERT INTO channels(id,server_id,is_private,created_by,name,type,position,created_at) VALUES(200,20,0,2,'Other','text',1,NOW());UPDATE server_members SET server_role='owner' WHERE user_id=3;INSERT INTO channel_members VALUES(82,4)");
     $message=$db->prepare("INSERT INTO messages(id,channel_id,sender_id,content,content_type,is_edited,is_pinned,reaction_count,created_at,updated_at,is_deleted) VALUES(?,81,1,'PRIVATE_MESSAGE_SENTINEL','text',0,0,0,?,NOW(),?)");
     foreach([[66,'2026-10-01 12:00:00',0],[67,'2026-10-01 12:00:01',0],[68,'2026-10-01 12:00:02',1],[69,'2026-10-01 11:59:59',0]]as$args)$message->execute($args);
     $db->exec("INSERT INTO message_reads VALUES(1,81,'2026-10-01 12:00:00')");
