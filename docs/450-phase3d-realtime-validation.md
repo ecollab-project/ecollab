@@ -40,7 +40,7 @@ Local LiveKit startup was **BLOCKED** by `route ip+net: netlinkrib: operation no
 
 ### F1 — P1: empty RoomService requests were malformed — FIXED
 
-**CONFIRMED BY RUNTIME and CODE.** `services/LiveKitService.php::roomRequest()` encoded the empty PHP array passed by `RealtimeRevocationService::reconcile()` and `scripts/livekit-count-collector.php` as `[]`. Actual LiveKit 1.13.7 rejected `ListRooms` with HTTP 400 / `malformed`; `{}` returned HTTP 200. Before correction the real worker logged incomplete reconciliation and the participant stayed connected.
+**CONFIRMED BY RUNTIME and CODE.** `services/LiveKitService.php::roomRequest()` encoded the empty PHP array passed by `RealtimeRevocationService::reconcile()` as `[]`. Actual LiveKit 1.13.7 rejected `ListRooms` with HTTP 400 / `malformed`; `{}` returned HTTP 200. Before correction the real worker logged incomplete reconciliation and the participant stayed connected. The room-count collector already passes `['names'=>[]]`, which encodes as a valid JSON object; it is not shown affected by this defect.
 
 The minimal patch encodes only an empty request body as `new stdClass()`. Nonempty request bodies and JWT grants are preserved. `tests/livekit-room-api.py` verifies actual PHP cURL serialization against a mock receiver; the real server test independently reproduces both wire forms and then proves actual worker eviction. No schema or token format changes are introduced.
 
@@ -162,7 +162,7 @@ Initial real CI reproduced F1 before the correction. Test-harness corrections ca
 
 ## Deployment prerequisites and rollback proposal — NOT EXECUTED
 
-1. Keep the stack draft until the remaining authorization/outage policy and deployment gates are reviewed. Verify exact stack heads and integrate the one-line RoomService fix before relying on collector/revocation health.
+1. Keep the stack draft until the remaining authorization/outage policy and deployment gates are reviewed. Verify exact stack heads and integrate the one-line RoomService fix before relying on revocation enforcement. Preserve the count collector's already valid request object.
 2. Validate backups/recovery and the separately required migration-025 compatibility work. This patch has no migration or schema change. Code Lab execution isolation remains a separate prerequisite for untrusted-code benchmarks.
 3. Use separately authorized staging with synthetic accounts. Verify effective TLS/FastCGI paths, current session storage, exact broker launcher/config, SDK bundle, cookie/Origin forwarding and private server API credentials. No secret or full environment dump is needed.
 4. Establish origin isolation from independent outside-client probes: IPv4, enabled IPv6, Docker publishing/host networking, alternate hostnames, listener inventory and every HTTP/signaling origin. Media/TURN ports require separate protocol-aware review. A browser on the same host can intentionally reach loopback; that is the fixture's negative control.
