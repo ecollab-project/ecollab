@@ -31,6 +31,7 @@ with tempfile.TemporaryDirectory(prefix='broker-proxy-') as folder:
  brokerport=port();proxyport=port();httpport=port();fpmport=port()
  prepend=p/'prepend.php';prepend.write_text('''<?php
 require_once '''+repr(str(ROOT/'database/config/db.php'))+''';
+if(PHP_SAPI==='cli')ini_set('error_log','/dev/stderr');
 class ProxyFixturePDO extends PDO {public int $prepared=0;public function prepare(string $q,array $opts=[]):PDOStatement|false{$this->prepared++;return parent::prepare($q,$opts);}}
 $fixtureDb=new ProxyFixturePDO('''+repr(dsn)+''',"root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
 (new ReflectionProperty(Database::class,'instance'))->setValue(null,$fixtureDb);
@@ -152,6 +153,13 @@ location / {{include fastcgi_params;fastcgi_param SCRIPT_FILENAME {router};fastc
   node({'TEST_LEGACY_REPLAY':'1'});legacybroker.terminate();legacybroker.wait(timeout=5);processes.remove(legacybroker)
   broker=start(['/bin/sh',str(ROOT/'deploy/centrifugo/proxy-entrypoint.sh'),str(conf)],'broker');ready(brokerport)
   node()
+  if os.environ.get('TEST_EXTENDED_REVOCATION'):
+   # Supported broker control, isolated experiment only. Do not change deployment config.
+   broker.terminate();broker.wait(timeout=5);processes.remove(broker)
+   config['client']['proxy']['refresh']['http']={'status_to_code_transforms':[{'status_code':503,'to_disconnect':{'code':4503,'reason':'Authorization unavailable'}}]}
+   conf.write_text(json.dumps(config))
+   broker=start(['/bin/sh',str(ROOT/'deploy/centrifugo/proxy-entrypoint.sh'),str(conf)],'broker-controls');ready(brokerport)
+   node({'TEST_REFRESH_TRANSFORM':'1'})
   # API/transaction fixture coverage can share this actual broker in disposable MySQL CI.
   if os.environ.get('TEST_DELIVERY_DSN'):
    for test in ['centrifugo-regression','centrifugo-database-regression']:

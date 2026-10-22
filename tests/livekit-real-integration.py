@@ -123,7 +123,7 @@ with tempfile.TemporaryDirectory(prefix='ecollab-real-media-') as folder:
         php('$d=new PDO("mysql:host=127.0.0.1;port='+str(ports['db'])+'","root","");$d->exec("DROP DATABASE IF EXISTS ecollab_media_test;CREATE DATABASE ecollab_media_test");')
         sql((ROOT/'tests/fixtures/livekit-admission.sql').read_text()); sql(restore)
         (p/'metrics.jsonl').touch(); (p/'api-mode').write_text('normal')
-        (p/'prepend.php').write_text('<?php require_once '+repr(str(ROOT/'database/config/db.php'))+';'
+        (p/'prepend.php').write_text('<?php require_once '+repr(str(ROOT/'database/config/db.php'))+';if(PHP_SAPI==="cli")ini_set("error_log","/dev/stderr");'
             +'class MediaFixturePDO extends PDO { public function prepare(string $q,array $o=[]):PDOStatement|false{file_put_contents('+repr(str(p/'metrics.jsonl'))+',"query\\n",FILE_APPEND|LOCK_EX);return parent::prepare($q,$o);}}'
             +'(new ReflectionProperty(Database::class,"instance"))->setValue(null,new MediaFixturePDO('+repr(dsn)+',"root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]));')
         (p/'livekit.yaml').write_text(f'''port: {ports['livekit']}

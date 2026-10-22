@@ -124,6 +124,15 @@ async function main(){
 }
 (async()=>{try{
  if(process.env.TEST_LEGACY_REPLAY)await legacy();
+ else if(process.env.TEST_REFRESH_TRANSFORM){
+  await control('restore');let cookie=await seed(),c=await connect(cookie),closed=once(c,'disconnected',15000),t=performance.now();
+  await control('deactivate');await control('proxy-outage');await closed;
+  console.log('MEASURED supported HTTP-503 transform '+JSON.stringify({disconnect_ms:performance.now()-t,state:c.state}));
+  await control('proxy-restore');await control('restore');cookie=await seed();c=await connect(cookie);
+  await control('deactivate');await control('proxy-timeout');await wait(6500);assert.equal(c.state,'connected');
+  console.log('CONFIRMED HTTP-status transform does not bound refresh transport timeout; established revoked client still connected after 6.5 seconds');
+  await control('proxy-restore');c.disconnect();fs.writeFileSync(process.env.TEST_COOKIE_FILE,cookie,{mode:0o600});
+ }
  else if(process.env.TEST_TRANSPORT_OUTAGE){await rejected(make(fs.readFileSync(process.env.TEST_COOKIE_FILE,'utf8')));console.log('PASS actual Nginx callback transport stopped: new broker admission denied');}
  else await main();
 }finally{for(const c of clients)c.disconnect();}})().catch(e=>{console.error(e);process.exitCode=1;});
