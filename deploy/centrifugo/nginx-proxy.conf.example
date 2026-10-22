@@ -1,0 +1,24 @@
+# Uninstalled template, include at Nginx http{} scope, NOT in the public vhost.
+# Requires Linux host-network broker, matching app path/FPM pool/session storage.
+log_format ecollab_broker_auth '$time_iso8601 $uri $status $upstream_http_x_ecollab_auth_outcome $request_time $upstream_response_time';
+server {
+    listen 127.0.0.1:8002;
+    server_name localhost;
+    # No query arguments, cookies, credentials, user IDs, bodies or client data.
+    access_log /var/log/nginx/ecollab-broker-auth.log ecollab_broker_auth;
+    error_log /dev/null;
+    client_max_body_size 16k;
+    location ~ ^/(connect|refresh)$ {
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME /home/ecollabadmin/ecollab-inspect/API/internal/centrifugo-proxy.php;
+        fastcgi_param ECOLLAB_INTERNAL_BROKER_PROXY 1;
+        fastcgi_param ECOLLAB_BROKER_PROXY_EVENT $1;
+        fastcgi_param HTTP_X_ECOLLAB_BROKER_SECRET $http_x_ecollab_broker_secret;
+        fastcgi_param HTTP_COOKIE $http_cookie;
+        fastcgi_param HTTP_ORIGIN $http_origin;
+        fastcgi_connect_timeout 1s;
+        fastcgi_read_timeout 2s;
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+    }
+    location / { return 404; }
+}

@@ -27,8 +27,8 @@ require '''+repr(str(ROOT))+'''.$route;
   for state in ['suspended','banned','deactivated','deleted','global-ban']:
    update("UPDATE users SET status='active',deleted_at=NULL;DELETE FROM moderation_actions")
    cookie=request('/seed')[2].split(';')[0]
-   ok=request('/API/auth/realtime-token.php',{'mode':'subscription','channel':'inbox:user1'},cookie);assert ok[0]==200,ok
-   assert request('/API/auth/realtime-token.php',{'mode':'subscription','channel':'inbox:user2'},cookie)[0]==403
+   ok=request('/API/auth/realtime-token.php',{'mode':'subscription','channel':'inbox:user1'},cookie);assert ok[0]==410,ok
+   assert request('/API/auth/realtime-token.php',{'mode':'subscription','channel':'inbox:user2'},cookie)[0]==410
    if state=='deleted':update("UPDATE users SET deleted_at='2026-01-01'")
    elif state=='global-ban':update("INSERT INTO moderation_actions VALUES(1,NULL,'ban',1,NULL)")
    else:update("UPDATE users SET status='"+state+"'")
@@ -36,5 +36,5 @@ require '''+repr(str(ROOT))+'''.$route;
    # A separate old authenticated session is denied by the actual WS-token endpoint too.
    old=request('/seed')[2].split(';')[0]
    assert request('/API/auth/ws-token.php',cookie=old)[0]==403,state
-  print('PASS actual token endpoints: old sessions cannot mint connection/subscription/WS tokens after account block/deletion/global ban; cross-user inbox denied')
+  print('PASS actual token endpoints: old sessions cannot mint connection/subscription/WS tokens after account block/deletion/global ban; JWT endpoint retired for every inbox')
  finally:server.terminate();server.wait(timeout=5)

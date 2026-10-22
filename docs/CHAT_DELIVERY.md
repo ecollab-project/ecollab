@@ -1,3 +1,5 @@
+> **R7 security migration:** the old JWT deployment instructions below are historical. The legacy automatic installer is disabled. Use `docs/450-phase3c-centrifugo-reauthorization.md`; do not deploy or restore the old verifier configuration.
+
 # Opt-in Centrifugo saved-message delivery
 
 Centrifugo v6.9.6 and the MIT-licensed Centrifuge JavaScript client 5.7.4 supplement eCollab's existing transport. Keep Ratchet running: calls, typing, Yjs presence, whiteboards, edits, deletes and reactions continue to use it. LiveKit and resumable uploads are unchanged. This integration covers saved channel, direct and group messages, including attachment messages and saved Jarred replies.

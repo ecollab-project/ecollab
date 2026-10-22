@@ -31,7 +31,7 @@ jobs:
         run: |
           set -e
           find API services scripts websocket tests -name '*.php' -print0 | xargs -0 -n1 php -l
-          for test in livekit-admission r7-authorization phase2-jarred phase2-livekit phase2-search phase2-websocket phase2-code-lab phase2-voice-action review-jarred-resource-access phase1-access phase1-temporary-voice phase1-peer-batch phase1-messages phase1-websocket; do php "tests/$test.php"; done
+          for test in centrifugo-proxy livekit-admission r7-authorization phase2-jarred phase2-livekit phase2-search phase2-websocket phase2-code-lab phase2-voice-action review-jarred-resource-access phase1-access phase1-temporary-voice phase1-peer-batch phase1-messages phase1-websocket; do php "tests/$test.php"; done
           php vendor/bin/phpunit --testsuite Unit --stderr
           python3 tests/phase1-session.py
           python3 tests/phase2-jarred-http.py
@@ -65,7 +65,24 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install disposable CI ingress dependencies
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y nginx php8.3-fpm php8.3-sqlite3
-      - name: Real Nginx and FPM authorization/outage fixture
-        run: python3 tests/livekit-admission-ingress.py
+          # Ignore unrelated runner/PPA repositories; this fixture needs Ubuntu packages only.
+          mkdir -p "$RUNNER_TEMP/ecollab-apt/empty" "$RUNNER_TEMP/ecollab-apt/lists/partial"
+          printf '%s\n' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble-updates main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://security.ubuntu.com/ubuntu noble-security main universe' \
+            > "$RUNNER_TEMP/ecollab-apt/sources.list"
+          apt_options=(-o "Dir::Etc::sourcelist=$RUNNER_TEMP/ecollab-apt/sources.list"
+            -o "Dir::Etc::sourceparts=$RUNNER_TEMP/ecollab-apt/empty"
+            -o "Dir::State::lists=$RUNNER_TEMP/ecollab-apt/lists"
+            -o Acquire::Retries=0 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20)
+          sudo apt-get "${apt_options[@]}" update
+          sudo apt-get "${apt_options[@]}" install -y nginx php8.3-fpm php8.3-sqlite3
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: npm ci --ignore-scripts --prefix tools/chat-delivery
+      - name: Real Nginx and FPM authorization/outage fixtures
+        run: |
+          python3 tests/livekit-admission-ingress.py
+          python3 tests/centrifugo-config.py
+          python3 tests/centrifugo-proxy-regression.py

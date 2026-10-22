@@ -2,7 +2,29 @@
   "client": {
     "allowed_origins": [
       "https://ecollab.tech"
-    ]
+    ],
+    "proxy": {
+      "connect": {
+        "enabled": true,
+        "endpoint": "http://127.0.0.1:8002/connect",
+        "timeout": "1s",
+        "http_headers": [
+          "Cookie",
+          "Origin"
+        ],
+        "emulated_headers": []
+      },
+      "refresh": {
+        "enabled": true,
+        "endpoint": "http://127.0.0.1:8002/refresh",
+        "timeout": "1s",
+        "http_headers": [
+          "Cookie",
+          "Origin"
+        ],
+        "emulated_headers": []
+      }
+    }
   },
   "channel": {
     "namespaces": [
@@ -10,5 +32,9 @@
         "name": "inbox"
       }
     ]
+  },
+  "http_server": {
+    "address": "127.0.0.1",
+    "port": 8001
   }
 }

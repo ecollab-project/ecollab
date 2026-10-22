@@ -3,14 +3,15 @@ const {JSDOM}=require('../tools/chat-delivery/node_modules/jsdom');
 const root=require('node:path').resolve(__dirname,'..');
 (async()=>{
 const dom=new JSDOM('<div id="dmMessagesArea"><div data-msg-id="10"></div></div>',{url:'https://ecollab.tech'});const w=dom.window;
-w.ECOLLAB={centrifugoEnabled:true,userId:18,baseUrl:''};w.apiFetch=async(_url,opts)=>({inbox:'inbox:user18',token:JSON.parse(opts.body).mode});
-class Mock {constructor(url,opts){this.url=url;this.opts=opts;Mock.instance=this;this.events={};this.state='connected';}on(k,fn){this.events[k]=fn;}newSubscription(ch,opts){this.sub={channel:ch,opts,events:{},on(k,fn){this.events[k]=fn;},subscribe(){}};return this.sub;}connect(){}disconnect(){}}
+w.ECOLLAB={centrifugoEnabled:true,userId:18,baseUrl:''};w.apiFetch=async()=>{throw Error('Retired token endpoint must not be called');};
+class Mock {constructor(url,opts){this.url=url;this.opts=opts||{};Mock.instance=this;this.events={};this.state='connected';}on(k,fn){this.events[k]=fn;}newSubscription(ch,opts){this.sub={channel:ch,opts,events:{},on(k,fn){this.events[k]=fn;},subscribe(){}};return this.sub;}connect(){}disconnect(){}}
 let src=fs.readFileSync(root+'/tools/chat-delivery/index.js','utf8').replace("import { Centrifuge } from 'centrifuge';",'const Centrifuge = Mock;').replace('export function','function');
 const context=vm.createContext({window:w,document:w.document,CustomEvent:w.CustomEvent,URL,console,Mock});vm.runInContext(src,context);const c=Mock.instance;
-assert.equal(c.url,'wss://ecollab.tech/realtime/connection/websocket');assert.equal(await c.opts.getToken(),'connection');assert.equal(await c.sub.opts.getToken(),'subscription');
-let events=[];w.addEventListener('ecollab:delivery-sync',e=>events.push(e.detail));c.sub.events.subscribed({});c.sub.events.subscribed({recovered:false});
-const publication={data:{type:'chat_changed',kind:'dm',target_id:2,message_id:10,event_id:5}};
-c.sub.events.publication(publication);c.sub.events.publication(publication);c.sub.events.publication({data:{...publication.data,target_id:-1}});
+assert.equal(c.url,'wss://ecollab.tech/realtime/connection/websocket');assert.equal(c.opts.getToken,undefined);assert.equal(c.opts.token,undefined);assert.equal(c.sub,undefined);
+let events=[];w.addEventListener('ecollab:delivery-sync',e=>events.push(e.detail));c.events.subscribed({channel:'inbox:user18'});c.events.subscribed({channel:'inbox:user18',recovered:false});c.events.subscribed({channel:'inbox:user19'});
+const publication={channel:'inbox:user18',data:{type:'chat_changed',kind:'dm',target_id:2,message_id:10,event_id:5}};
+c.events.publication(publication);c.events.publication(publication);c.events.publication({channel:'inbox:user18',data:{...publication.data,target_id:-1}});
+c.events.publication({...publication,channel:'inbox:user19',data:{...publication.data,event_id:999}});
 assert.deepEqual(events.map(e=>e.kind),['all','all','dm']);
 // Events arriving while a read is pending must cause another read; stale responses must not append.
 let release,requests=0,appended=[];
@@ -23,5 +24,5 @@ requests=0;appended=[];const stale=vm.runInContext('_syncOpenDmMessages()',syncC
 syncContext.DM.activeGroupId=7;syncContext.DM.activePartnerId=null;requests=0;appended=[];
 syncContext.apiFetch=async(url)=>{requests++;const after=Number(new URL('https://ecollab.tech'+url).searchParams.get('after'));return requests===1?{messages:Array.from({length:50},(_,i)=>({id:after+i+1})),has_more:true}:{messages:[{id:after+1}],has_more:false};};
 await vm.runInContext('_syncOpenDmMessages()',syncContext);assert.equal(requests,2);assert.equal(appended.length,51);assert.equal(appended[50],61);
-console.log('Browser adapter: scoped tokens, reconnect sync, duplicate events, queued reads and stale target guards passed');dom.window.close();
+console.log('Browser adapter: cookie-only connection, server-side inbox, reconnect sync, duplicate events, queued reads and stale target guards passed');dom.window.close();
 })().catch(e=>{console.error(e);process.exit(1);});

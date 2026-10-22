@@ -49,11 +49,10 @@ export default async function(){
   request('/API/chat/get-channel.php?id='+target.channel_id,'channel');
   request('/API/chat/get-messages.php?channel_id='+target.channel_id+'&limit=50','messages');
   const wsToken=request('/API/auth/ws-token.php','ratchet-token').data.token;
-  const connection=request('/API/auth/realtime-token.php','delivery-token','POST',{mode:'connection'}).data;
-  if(!connection.token||!connection.inbox){socketOk.add(false);exec.test.abort('Connection token or inbox missing; inspect API errors.');}
-  const inbox=connection.inbox;
-  const subscription=request('/API/auth/realtime-token.php','subscription-token','POST',{mode:'subscription',channel:inbox}).data;
-  if(!wsToken||!connection.token||!subscription.token){socketOk.add(false);exec.test.abort('WebSocket token unavailable; ensure Centrifugo is enabled.');}
+  const inbox='inbox:user'+accounts[exec.vu.idInTest-1].id;
+  const cookies=Object.entries(http.cookieJar().cookiesForURL(base+'/realtime/connection/websocket'))
+    .flatMap(([name,values])=>values.map(value=>name+'='+value)).join('; ');
+  if(!wsToken||!cookies){socketOk.add(false);exec.test.abort('Authenticated WebSocket session unavailable.');}
   const opening=Date.now(),deadline=opening+run.connection*1000;
   let joined=false,subscribed=false,closing=false,readBusy=false;
   const pending=new Map(),seen=new Map(),sockets=[];
@@ -62,10 +61,10 @@ export default async function(){
   ratchet.onopen=()=>ratchet.send(JSON.stringify({type:'auth',ws_token:wsToken}));
   ratchet.onmessage=e=>{let data;try{data=JSON.parse(e.data);}catch(_){socketFailure('ratchet','invalid_json');return;}if(data.type==='auth_ok')ratchet.send(JSON.stringify({type:'join_channel',channel_id:target.channel_id}));if(data.type==='joined_channel')joined=true;if(data.type==='error'){const message=String(data.message||'');socketFailure('ratchet',/token|auth/i.test(message)?'authentication_rejected':/channel|access/i.test(message)?'channel_access_rejected':'server_error');}};
   ratchet.onerror=e=>socketFailure('ratchet','connection_error',socketContext(e,ratchet,opening));ratchet.onclose=e=>{if(!plannedClose(closing,exec.scenario.progress,run))socketFailure('ratchet','unexpected_close',socketContext(e,ratchet,opening));};
-  const delivery=new WebSocket(base.replace(/^http/,'ws')+'/realtime/connection/websocket',[],{headers:{Origin:base},tags:{name:'centrifugo'}});sockets.push(delivery);
-  delivery.onopen=()=>delivery.send(JSON.stringify({id:1,connect:{token:connection.token}}));
+  const delivery=new WebSocket(base.replace(/^http/,'ws')+'/realtime/connection/websocket',[],{headers:{Origin:base,Cookie:cookies},tags:{name:'centrifugo'}});sockets.push(delivery);
+  delivery.onopen=()=>delivery.send(JSON.stringify({id:1,connect:{}}));
   delivery.onmessage=e=>{for(const line of String(e.data).split('\n')){if(!line.trim())continue;let data;try{data=JSON.parse(line);}catch(_){socketFailure('centrifugo','invalid_json');continue;}
-    if(Object.keys(data).length===0){delivery.send('{}');continue;}if(data.error){socketFailure('centrifugo',data.id===1?'connection_rejected':data.id===2?'subscription_rejected':'command_rejected');continue;}if(data.id===1)delivery.send(JSON.stringify({id:2,subscribe:{channel:inbox,token:subscription.token}}));if(data.id===2)subscribed=true;if(data.push?.pub)publication(data.push.pub.data);if(data.push?.disconnect)socketFailure('centrifugo','server_disconnect');
+    if(Object.keys(data).length===0){delivery.send('{}');continue;}if(data.error){socketFailure('centrifugo',data.id===1?'connection_rejected':data.id===2?'subscription_rejected':'command_rejected');continue;}if(data.id===1)subscribed=Object.prototype.hasOwnProperty.call(data.connect?.subs||{},inbox);if(data.push?.pub&&data.push.channel===inbox)publication(data.push.pub.data);if(data.push?.disconnect)socketFailure('centrifugo','server_disconnect');
   }};
   delivery.onerror=e=>socketFailure('centrifugo','connection_error',socketContext(e,delivery,opening));delivery.onclose=e=>{if(!plannedClose(closing,exec.scenario.progress,run))socketFailure('centrifugo','unexpected_close',socketContext(e,delivery,opening));};
   async function activity(){if(readBusy||closing)return;readBusy=true;

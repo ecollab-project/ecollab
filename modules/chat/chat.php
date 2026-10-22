@@ -1180,7 +1180,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
   <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=phase2-1" defer></script>
   <?php if (filter_var(env('CENTRIFUGO_ENABLED', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
-  <script src="<?= BASE_URL ?>/assets/js/chat/centrifugo-delivery.js?v=phase2-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/centrifugo-delivery.js?v=r7-proxy-1" defer></script>
   <?php endif; ?>
   <script src="<?= BASE_URL ?>/assets/js/chat/dm-chat-settings.js?v=dm-settings-1" defer></script>
   <!--

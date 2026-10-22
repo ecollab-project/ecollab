@@ -14,10 +14,6 @@ try {
     $db=Database::getInstance();
     require_once ROOT_PATH.'/services/AccessPolicy.php';
     (new AccessPolicy($db))->assertAccount((int)$user['id']);
-    $body=json_decode(file_get_contents('php://input'),true)??[];
-    $mode=$body['mode']??'connection';
-    if(!in_array($mode,['connection','subscription'],true))throw new RuntimeException('Invalid token request',400);
-    $broker=new CentrifugoService();$channel=$mode==='subscription'?(string)($body['channel']??''):null;
-    echo json_encode(['token'=>$broker->token((int)$user['id'],$channel),'inbox'=>CentrifugoService::inbox((int)$user['id'])]);
+    throw new RuntimeException('Realtime JWT authentication retired; reload the client',410);
 } catch(Throwable $e){$code=$e instanceof RuntimeException && $e->getCode()>=400 && $e->getCode()<500?$e->getCode():503;
     http_response_code($code);echo json_encode(['error'=>$code===503?'Realtime service unavailable':$e->getMessage()]);}
