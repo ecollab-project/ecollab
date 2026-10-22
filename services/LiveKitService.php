@@ -108,7 +108,8 @@ final class LiveKitService
         curl_setopt_array($ch, [CURLOPT_POST=>true, CURLOPT_RETURNTRANSFER=>true,
             CURLOPT_CONNECTTIMEOUT=>3, CURLOPT_TIMEOUT=>8,
             CURLOPT_HTTPHEADER=>['Content-Type: application/json', 'Authorization: Bearer '.$token],
-            CURLOPT_POSTFIELDS=>json_encode($body, JSON_THROW_ON_ERROR)]);
+            // Twirp requests are JSON objects, including an empty ListRooms request.
+            CURLOPT_POSTFIELDS=>json_encode($body === [] ? new stdClass() : $body, JSON_THROW_ON_ERROR)]);
         try {
             $response = curl_exec($ch);
             $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);

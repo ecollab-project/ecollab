@@ -106,7 +106,11 @@ with tempfile.TemporaryDirectory(prefix='ecollab-real-media-') as folder:
                     for name, body in [('array', '[]'), ('object', '{}')]:
                         c = http.client.HTTPConnection('127.0.0.1', ports['livekit'], timeout=4)
                         c.request('POST', '/twirp/livekit.RoomService/ListRooms', body, {'Content-Type':'application/json', 'Authorization':'Bearer '+token('', grant={'roomList':True})})
-                        r = c.getresponse(); result[name] = {'status': r.status, 'body': r.read().decode()}; c.close()
+                        r = c.getresponse(); decoded = json.loads(r.read()); result[name] = {'status': r.status}
+                        # Room records contain TURN credentials. Never emit the raw RoomService response.
+                        if r.status == 200: result[name]['room_count'] = len(decoded.get('rooms', []))
+                        else: result[name]['error_code'] = decoded.get('code')
+                        c.close()
                 elif action == 'bypass':
                     t = token('ecollab-channel-10'); path = '/rtc/validate?access_token='+t
                     result = {'gated': request(path)[0], 'direct_origin': request(path, True)[0],

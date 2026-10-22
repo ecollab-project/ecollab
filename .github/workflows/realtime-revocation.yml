@@ -4,6 +4,7 @@ on:
     paths:
       - '.github/workflows/realtime-revocation.yml'
       - 'tests/livekit-real-*'
+      - 'tests/livekit-room-api.py'
       - 'tests/centrifugo-*.py'
       - 'tests/centrifugo-broker-regression.cjs'
       - 'services/RealtimeRevocationService.php'
@@ -58,6 +59,7 @@ jobs:
           export PLAYWRIGHT_MODULE="$RUNNER_TEMP/media-browser/node_modules/playwright"
           export CHROMIUM_BIN="$(node -e 'console.log(require(process.env.PLAYWRIGHT_MODULE).chromium.executablePath())')"
           export TEST_MEDIA_EVIDENCE="$RUNNER_TEMP/media-evidence.json"
+          python3 tests/livekit-room-api.py
           python3 -u tests/livekit-real-integration.py
       - uses: actions/upload-artifact@v4
         if: always()

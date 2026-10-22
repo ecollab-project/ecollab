@@ -8,7 +8,7 @@ const wsURL=base.replace('http','ws').replace('/api','/connection/websocket'),cl
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 function token(uid=1,channel){const b=x=>Buffer.from(JSON.stringify(x)).toString('base64url');const value=b({alg:'HS256',typ:'JWT'})+'.'+b({sub:String(uid),exp:Math.floor(Date.now()/1000)+300,...(channel?{channel}:{})});return value+'.'+createHmac('sha256','a'.repeat(64)).update(value).digest('base64url');}
 function once(c,e,ms=12000){return new Promise((resolve,reject)=>{const f=x=>{clearTimeout(t);resolve(x);},t=setTimeout(()=>{c.off(e,f);reject(Error('Timeout: '+e));},ms);c.once(e,f);});}
-async function http(path,{cookie='',body,method}={}){const r=await fetch(fixture+path,{method:method||(body?'POST':'GET'),headers:{'X-Fixture-Key':'fixture-local-only','Content-Type':'application/json',Cookie:cookie},...(body?{body:JSON.stringify(body)}:{})});return {status:r.status,data:await r.json(),cookie:r.headers.get('set-cookie')?.split(';')[0]};}
+async function http(path,{cookie='',body,method}={}){const r=await fetch(fixture+path,{method:method||(body?'POST':'GET'),headers:{'X-Fixture-Key':'fixture-local-only','Content-Type':'application/json',Cookie:cookie},...(body?{body:JSON.stringify(body)}:{})});const raw=await r.text();assert(raw.startsWith('{')||raw.startsWith('['),'Fixture HTTP '+path+' status='+r.status+' returned no JSON');return {status:r.status,data:JSON.parse(raw),cookie:r.headers.get('set-cookie')?.split(';')[0]};}
 async function control(action,cookie=''){const r=await http('/control',{body:{action},cookie});assert.equal(r.status,200);}
 async function seed(uid=1){const r=await http('/seed?user='+uid);assert(r.cookie);return r.cookie;}
 function make(cookie='',opts={},origin='https://ecollab.tech'){
@@ -125,9 +125,9 @@ async function main(){
 (async()=>{try{
  if(process.env.TEST_LEGACY_REPLAY)await legacy();
  else if(process.env.TEST_REFRESH_TRANSFORM){
-  await control('restore');let cookie=await seed(),c=await connect(cookie),closed=once(c,'disconnected',15000),t=performance.now();
+  await control('restore');let cookie=await seed(),c=await connect(cookie),closed=once(c,'connecting',15000),t=performance.now();
   await control('deactivate');await control('proxy-outage');await closed;
-  console.log('MEASURED supported HTTP-503 transform '+JSON.stringify({disconnect_ms:performance.now()-t,state:c.state}));
+  assert.notEqual(c.state,'connected');console.log('MEASURED supported HTTP-503 transform '+JSON.stringify({old_connection_closed_ms:performance.now()-t,state:c.state}));
   await control('proxy-restore');await control('restore');cookie=await seed();c=await connect(cookie);
   await control('deactivate');await control('proxy-timeout');await wait(6500);assert.equal(c.state,'connected');
   console.log('CONFIRMED HTTP-status transform does not bound refresh transport timeout; established revoked client still connected after 6.5 seconds');

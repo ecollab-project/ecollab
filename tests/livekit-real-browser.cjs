@@ -93,6 +93,7 @@ async function replayRejected(p) {
   console.log('ROUTES', JSON.stringify(await command('routes')));
   result.room_api_body_types = await command('room-api-body-types');
   console.log('ROOM_API_BODY_TYPES', JSON.stringify(result.room_api_body_types));
+  assert.equal(result.room_api_body_types.array.status, 400); assert.equal(result.room_api_body_types.object.status, 200);
   const privateCommit = await command('remove-private');
   const bypass = await command('bypass'); result.origin = bypass;
   assert.equal(bypass.gated, 403); assert.equal(bypass.direct_origin, 200);
