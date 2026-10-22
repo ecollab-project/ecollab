@@ -59,7 +59,7 @@ with tempfile.TemporaryDirectory(prefix='ecollab-real-media-') as folder:
         assert r.returncode == 0, 'Fixture PHP operation failed: '+r.stderr[-500:]
         return r.stdout
     def sql(query):
-        php('$d=new PDO('+repr(dsn)+',"root","");$d->exec('+repr(query)+');')
+        return float(php('$d=new PDO('+repr(dsn)+',"root","");$d->exec('+repr(query)+');echo sprintf("%.6f",microtime(true)*1000);'))
     def request(path, direct=False, headers=None):
         c = http.client.HTTPConnection('127.0.0.1', ports['livekit' if direct else 'ingress'], timeout=4)
         c.request('GET', path, headers=headers or {})
@@ -85,15 +85,15 @@ with tempfile.TemporaryDirectory(prefix='ecollab-real-media-') as folder:
                 data = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
                 action = data['action']; result = {}
                 if action in actions:
-                    sql(actions[action]); result['commit_monotonic_ms'] = time.monotonic()*1000
+                    result['commit_ack_unix_ms'] = sql(actions[action])
                 elif action == 'token': result = {'token': token(data['room'], data.get('uid', 1), data.get('ttl', 600))}
                 elif action == 'start-worker':
                     assert worker is None or worker.poll() is not None
-                    worker = start([env['PHP_BIN'], '-d', 'auto_prepend_file='+str(p/'prepend.php'), str(ROOT/'scripts/realtime-revocation-worker.php')], 'worker-'+str(len(processes)))
+                    worker = start([env['PHP_BIN'], '-d', 'error_log=/dev/stderr', '-d', 'log_errors=1', '-d', 'auto_prepend_file='+str(p/'prepend.php'), str(ROOT/'scripts/realtime-revocation-worker.php')], 'worker-'+str(len(processes)))
                 elif action == 'stop-worker':
                     if worker and worker.poll() is None: worker.terminate(); worker.wait(timeout=4)
                 elif action == 'cycle':
-                    r = subprocess.run([env['PHP_BIN'], '-d', 'auto_prepend_file='+str(p/'prepend.php'), str(ROOT/'scripts/realtime-revocation-worker.php'), '--once'], env=env, capture_output=True, text=True, timeout=12)
+                    r = subprocess.run([env['PHP_BIN'], '-d', 'error_log=/dev/stderr', '-d', 'log_errors=1', '-d', 'auto_prepend_file='+str(p/'prepend.php'), str(ROOT/'scripts/realtime-revocation-worker.php'), '--once'], env=env, capture_output=True, text=True, timeout=12)
                     result = {'exit': r.returncode, 'stderr': r.stderr.strip()}
                 elif action == 'api-outage': (p/'api-down').touch()
                 elif action == 'api-restore': (p/'api-down').unlink(missing_ok=True)
@@ -169,10 +169,39 @@ location = /fixture {{default_type text/html; return 200 '<html><body>synthetic 
         nginx = start([env['NGINX_BIN'], '-p', folder+'/', '-c', str(p/'nginx.conf')], 'nginx'); ready(ports['ingress'])
         browser_env = env | {'TEST_MEDIA_CONTROL': f'http://127.0.0.1:{control.server_port}',
                              'TEST_MEDIA_URL': env['LIVEKIT_URL'], 'TEST_MEDIA_RESULT': str(p/'result.json')}
-        r = subprocess.run(['node', str(ROOT/'tests/livekit-real-browser.cjs')], env=browser_env, text=True, timeout=240)
+        # Sample only owned fixture processes, never unrelated host processes.
+        resource_rows = {}; sampling = threading.Event(); started = time.monotonic()
+        def sample():
+            while not sampling.wait(.25):
+                for label, proc in [('LiveKit', livekit), ('MariaDB', maria), ('Nginx', nginx), ('FPM', fpm)]:
+                    ids = [proc.pid]
+                    try: ids += [int(n) for n in pathlib.Path(f'/proc/{proc.pid}/task/{proc.pid}/children').read_text().split()]
+                    except OSError: pass
+                    pss = 0
+                    for pid in ids:
+                        try:
+                            row = pathlib.Path(f'/proc/{pid}/stat').read_text().split(') ', 1)[1].split()
+                            cpu = (int(row[11])+int(row[12]))/os.sysconf('SC_CLK_TCK')
+                            item = resource_rows.setdefault((label, pid), {'first_cpu_seconds': cpu, 'last_cpu_seconds': cpu})
+                            item['last_cpu_seconds'] = cpu
+                            for line in pathlib.Path(f'/proc/{pid}/smaps_rollup').read_text().splitlines():
+                                if line.startswith('Pss:'): pss += int(line.split()[1])
+                        except (OSError, ValueError): pass
+                    key = (label, 'aggregate')
+                    resource_rows[key] = {'peak_sampled_pss_kib': max(pss, resource_rows.get(key, {}).get('peak_sampled_pss_kib', 0))}
+        sampler = threading.Thread(target=sample, daemon=True); sampler.start()
+        try:
+            r = subprocess.run(['node', str(ROOT/'tests/livekit-real-browser.cjs')], env=browser_env, text=True, timeout=240)
+        finally:
+            sampling.set(); sampler.join()
         assert r.returncode == 0, 'Real browser suite failed'
         result = json.loads((p/'result.json').read_text())
         result['database_prepared_queries'] = len((p/'metrics.jsonl').read_text().splitlines())
+        result['fixture_resources'] = {label: {
+            'sampled_cpu_core_seconds': sum(v['last_cpu_seconds']-v['first_cpu_seconds'] for (name, pid), v in resource_rows.items() if name == label and isinstance(pid, int)),
+            **resource_rows.get((label, 'aggregate'), {}), 'sample_interval_seconds': .25,
+            'observation_seconds': time.monotonic()-started
+        } for label in ['LiveKit', 'MariaDB', 'Nginx', 'FPM']}
         result['versions'] = {'LiveKit': '1.13.7', 'SDK': '2.22.3', 'MariaDB': php('$d=new PDO('+repr(dsn)+',"root","");echo $d->query("SELECT VERSION()")->fetchColumn();')}
         print(json.dumps(result, indent=2))
         if env.get('TEST_MEDIA_EVIDENCE'): pathlib.Path(env['TEST_MEDIA_EVIDENCE']).write_text(json.dumps(result, indent=2)+'\n')

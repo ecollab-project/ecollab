@@ -27,7 +27,7 @@ async function page(uid, room, { ttl = 600, url = process.env.TEST_MEDIA_URL } =
   await p.evaluate(() => {
     window.events = []; window.room = new LivekitClient.Room({ adaptiveStream: false, dynacast: false });
     for (const event of ['connected', 'disconnected', 'reconnecting', 'reconnected', 'signalReconnecting', 'trackSubscribed']) {
-      room.on(event, () => events.push({ event, time: performance.now() }));
+      room.on(event, () => events.push({ event, time: performance.now(), unix_ms: Date.now() }));
     }
     room.on('trackSubscribed', track => { const e = track.attach(); e.autoplay = true; e.muted = true; document.body.appendChild(e); });
   });
@@ -91,7 +91,7 @@ async function replayRejected(p) {
   result.media.push({ sample_interval_ms: 1000, first, second });
   pass('bidirectional real audio/video publication, subscription and increasing received bytes');
   console.log('ROUTES', JSON.stringify(await command('routes')));
-  await command('remove-private');
+  const privateCommit = await command('remove-private');
   const bypass = await command('bypass'); result.origin = bypass;
   assert.equal(bypass.gated, 403); assert.equal(bypass.direct_origin, 200);
   assert.equal(bypass.alternate_host, 403); assert.equal(bypass.unknown_route, 404);
@@ -99,15 +99,17 @@ async function replayRejected(p) {
   await replayRejected(a);
   let t = performance.now(); const cycle = await command('cycle');
   await until(async () => (await state(a)) !== 'connected');
-  result.timings.push({ operation: 'private_revocation_to_observed_disconnect_after_manual_cycle', milliseconds: performance.now()-t, cycle });
+  result.timings.push({ operation: 'private_revocation_to_observed_disconnect_after_manual_cycle', dispatch_ms: performance.now()-t,
+    commit_ack_to_observed_disconnect_ms: await a.evaluate(() => events.filter(x => x.event === 'disconnected').at(-1).unix_ms) - privateCommit.commit_ack_unix_ms, cycle });
   await replayRejected(a); pass('real reconciliation worker removes private-revoked participant and gated replay fails');
   await disconnect(b);
   for (const action of ['remove-member', 'suspend', 'ban', 'server-suspend', 'deactivate']) {
     await command('restore'); a = await page(1, roomName);
-    await command(action); await replayRejected(a);
+    const committed = await command(action); await replayRejected(a);
     const started = performance.now(); const c = await command('cycle');
     await until(async () => (await state(a)) !== 'connected');
-    result.timings.push({ operation: action+'_manual_cycle', milliseconds: performance.now()-started, cycle: c });
+    result.timings.push({ operation: action+'_manual_cycle', dispatch_ms: performance.now()-started,
+      commit_ack_to_observed_disconnect_ms: await a.evaluate(() => events.filter(x => x.event === 'disconnected').at(-1).unix_ms) - committed.commit_ack_unix_ms, cycle: c });
     pass(action+' stale-token rejection and real eviction');
   }
   for (const [room, action] of [['ecollab-dm-group-v2-1', 'remove-group'], ['ecollab-dm-call-1', 'end-call']]) {
@@ -119,14 +121,19 @@ async function replayRejected(p) {
   }
   await command('restore'); a = await page(1, roomName, { ttl: 3 });
   await sleep(4100); assert.equal(await state(a), 'connected');
-  await a.context().setOffline(true); await sleep(700); await a.context().setOffline(false);
-  await sleep(2500);
+  await replayRejected(a); // Original expired JWT must fail even if the SDK received a refreshed JWT.
+  await a.evaluate(() => room.simulateScenario('signal-reconnect'));
+  await until(async () => await a.evaluate(() => events.some(x => x.event === 'reconnected')));
+  assert.equal(await state(a), 'connected');
   result.expiry = await a.evaluate(() => ({ state: room.state, events }));
   // A refreshed signaling token may be used by the SDK; admission must validate it too.
   console.log('EXPIRY_RECONNECT', JSON.stringify(result.expiry));
+  pass('original JWT expires; server-refreshed SDK credential resumes through gated signaling');
   await disconnect(a);
   await command('restore'); a = await page(1, roomName);
   await a.context().setOffline(true); await sleep(700); await a.context().setOffline(false);
+  await a.evaluate(() => room.simulateScenario('full-reconnect'));
+  await until(async () => await a.evaluate(() => events.some(x => x.event === 'reconnected')));
   await until(async () => (await state(a)) === 'connected');
   pass('authorized browser network interruption recovery', await a.evaluate(() => events));
   // Same user in same room: LiveKit identity is shared across browser tabs.
@@ -135,17 +142,23 @@ async function replayRejected(p) {
   await disconnect(b);
   await command('restore'); a = await page(1, roomName); b = await page(2, roomName);
   await command('start-worker'); await sleep(500);
-  t = performance.now(); await command('both-deactivate');
+  t = performance.now(); const bothCommit = await command('both-deactivate');
   await until(async () => (await state(a)) !== 'connected' && (await state(b)) !== 'connected', 15000);
-  result.timings.push({ operation: 'two_accounts_running_worker_commit_request_to_both_disconnects', milliseconds: performance.now()-t });
+  result.timings.push({ operation: 'two_accounts_running_worker', request_to_both_disconnects_ms: performance.now()-t,
+    commit_ack_to_last_disconnect_ms: Math.max(await a.evaluate(() => events.filter(x => x.event === 'disconnected').at(-1).unix_ms), await b.evaluate(() => events.filter(x => x.event === 'disconnected').at(-1).unix_ms)) - bothCommit.commit_ack_unix_ms });
   await command('stop-worker'); pass('periodic real worker removes multiple revoked participants');
   await command('restore'); a = await page(1, roomName); await command('deactivate');
-  await sleep(1100); assert.equal(await state(a), 'connected');
+  await sleep(10500); assert.equal(await state(a), 'connected');
   await command('db-outage'); const failed = await command('cycle');
   assert.equal(await state(a), 'connected'); assert.match(failed.stderr, /incomplete/);
   await command('db-restore'); await command('start-worker');
   await until(async () => (await state(a)) !== 'connected'); await command('stop-worker');
   pass('stopped-worker and DB/schema failure leave existing stream; restart after recovery removes it', failed);
+  await command('restore'); a = await page(1, roomName); await command('deactivate');
+  await command('api-outage'); const apiFailed = await command('cycle');
+  assert.equal(await state(a), 'connected'); assert.match(apiFailed.stderr, /incomplete/); await replayRejected(a);
+  await command('api-restore'); await command('cycle'); await until(async () => (await state(a)) !== 'connected');
+  pass('RoomService HTTP-503 leaves stream active; gated rejoin denied; recovery cycle removes it', apiFailed);
   await browser.close(); browser = null;
   fs.writeFileSync(process.env.TEST_MEDIA_RESULT, JSON.stringify(result, null, 2));
 })().catch(e => { console.error(e); process.exitCode = 1; }).finally(async () => { if (browser) await browser.close(); });

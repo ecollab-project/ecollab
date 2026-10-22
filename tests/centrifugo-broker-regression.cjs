@@ -90,8 +90,27 @@ async function main(){
  await control('restore');cookie=await seed();c=await connect(cookie);
  await control('deactivate');await control('proxy-outage');await rejected(make(cookie));
  let outageHints=0;c.on('publication',()=>outageHints++);assert.equal((await http('/deliver?event=20')).data.recipients,0);
- await wait(6500);console.log('OBSERVED proxy HTTP-503 outage after 6.5 seconds: existing client state='+c.state+'; new admission denied; this is not a bounded eviction guarantee');
+ const outageStart=performance.now();
+ await wait(process.env.TEST_EXTENDED_REVOCATION?75000:6500);
+ console.log('OBSERVED proxy HTTP-503 outage '+JSON.stringify({milliseconds:performance.now()-outageStart,state:c.state,refreshFailures:(await http('/stats')).data.filter(x=>x.event==='refresh'&&x.status===503).length}));
+ assert.equal(c.state,'connected');
  assert.equal(outageHints,0);
+ if(process.env.TEST_EXTENDED_REVOCATION){
+  // Model a recipient snapshot selected before revocation, delayed until after commit.
+  // The direct server API has no current-policy callback. Only a synthetic hint is sent.
+  await publish({type:'chat_changed',event_id:999,target_id:10});await wait(100);assert.equal(outageHints,1);
+  console.log('CONFIRMED delayed preselected hint can reach revoked established inbox during proxy outage; fresh outbox recipient lookup returned zero');
+  const recoveredClose=once(c,'disconnected',70000),recoveryStart=performance.now();await control('proxy-restore');await recoveredClose;
+  console.log('MEASURED callback recovery '+JSON.stringify({restore_to_disconnect_ms:performance.now()-recoveryStart,observed_revoked_connection_ms:performance.now()-outageStart}));
+  await control('restore');cookie=await seed();c=await connect(cookie);await control('deactivate');await control('proxy-outage');await wait(5500);
+  const failed=await http('/reconcile?fail_api=1');assert.equal(failed.status,200);assert.equal(c.state,'connected');
+  const closedByWorker=once(c,'disconnected'),workerStart=performance.now();const reconciled=await http('/reconcile');assert.equal(reconciled.data.exit,0);await closedByWorker;
+  console.log('MEASURED actual singleton CLI worker during refresh outage '+JSON.stringify({dispatch_to_disconnect_ms:performance.now()-workerStart,api_failure_left_connected:true,media_api_unavailable:true,worker_stderr:reconciled.data.stderr.trim()}));
+  await control('proxy-restore');await control('restore');cookie=await seed();c=await connect(cookie);await control('deactivate');await control('proxy-outage');await control('db-outage');
+  const dbFailed=await http('/reconcile');assert.match(dbFailed.data.stderr,/incomplete/);assert.equal(c.state,'connected');
+  await control('db-restore');const afterDB=once(c,'disconnected');await http('/reconcile');await afterDB;
+  console.log('PASS actual CLI worker cannot enforce during policy DB failure, then disconnects after DB recovery without callback recovery');
+ }
  await control('proxy-restore');c.disconnect();await rejected(make(cookie));
  await control('restore');cookie=await seed();
  // Bounded reconnect sample: 16 connections, concurrency 8, ten FPM slots, one session.

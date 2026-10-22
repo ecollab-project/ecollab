@@ -4,6 +4,8 @@ on:
     paths:
       - '.github/workflows/realtime-revocation.yml'
       - 'tests/livekit-real-*'
+      - 'tests/centrifugo-*.py'
+      - 'tests/centrifugo-broker-regression.cjs'
       - 'services/RealtimeRevocationService.php'
       - 'services/LiveKitAdmissionService.php'
       - 'services/LiveKitService.php'
@@ -23,10 +25,20 @@ jobs:
           node-version: '22'
       - name: Install disposable fixture dependencies
         run: |
-          sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=20 update
-          sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=20 install -y nginx php8.3-cli php8.3-fpm php8.3-mysql php8.3-curl mariadb-server
+          mkdir -p "$RUNNER_TEMP/media-apt/empty" "$RUNNER_TEMP/media-apt/lists/partial"
+          printf '%s\n' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble-updates main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://security.ubuntu.com/ubuntu noble-security main universe' \
+            > "$RUNNER_TEMP/media-apt/sources.list"
+          apt_options=(-o "Dir::Etc::sourcelist=$RUNNER_TEMP/media-apt/sources.list"
+            -o "Dir::Etc::sourceparts=$RUNNER_TEMP/media-apt/empty"
+            -o "Dir::State::lists=$RUNNER_TEMP/media-apt/lists"
+            -o Acquire::Retries=0 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20)
+          sudo apt-get "${apt_options[@]}" update
+          sudo apt-get "${apt_options[@]}" install -y nginx php8.3-cli php8.3-fpm php8.3-mysql php8.3-curl mariadb-server
           npm install --prefix "$RUNNER_TEMP/media-browser" --no-save playwright@1.56.1
-          node "$RUNNER_TEMP/media-browser/node_modules/playwright/cli.js" install --with-deps chromium
+          node "$RUNNER_TEMP/media-browser/node_modules/playwright/cli.js" install chromium
       - name: Download pinned server and application SDK
         run: |
           mkdir -p "$RUNNER_TEMP/media-runtime"
@@ -53,3 +65,33 @@ jobs:
           name: real-media-evidence
           path: ${{ runner.temp }}/media-evidence.json
           if-no-files-found: ignore
+  real-broker:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install disposable broker fixture dependencies
+        run: |
+          mkdir -p "$RUNNER_TEMP/media-apt/empty" "$RUNNER_TEMP/media-apt/lists/partial"
+          printf '%s\n' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble-updates main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://security.ubuntu.com/ubuntu noble-security main universe' \
+            > "$RUNNER_TEMP/media-apt/sources.list"
+          apt_options=(-o "Dir::Etc::sourcelist=$RUNNER_TEMP/media-apt/sources.list"
+            -o "Dir::Etc::sourceparts=$RUNNER_TEMP/media-apt/empty"
+            -o "Dir::State::lists=$RUNNER_TEMP/media-apt/lists"
+            -o Acquire::Retries=0 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20)
+          sudo apt-get "${apt_options[@]}" update
+          sudo apt-get "${apt_options[@]}" install -y nginx php8.3-cli php8.3-fpm php8.3-mysql php8.3-curl mariadb-server
+          npm ci --ignore-scripts --prefix tools/chat-delivery
+          mariadb-install-db --no-defaults --datadir="$RUNNER_TEMP/broker-db" --auth-root-authentication-method=normal
+      - name: Extended real-broker outage and actual CLI worker
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          MARIADB_TEST_DATADIR: ${{ runner.temp }}/broker-db
+        run: python3 -u tests/centrifugo-revocation-integration.py
