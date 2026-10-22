@@ -14,7 +14,7 @@ with tempfile.TemporaryDirectory(prefix='broker-proxy-') as folder:
   assert hashlib.sha256(archive.read_bytes()).hexdigest()=='af50fec73b5fba0630bcce6685ed096f5841fd428aa55f820108174c44a7b347'
   with tarfile.open(archive) as t:t.extract(next(m for m in t.getmembers() if m.name=='centrifugo'),p,filter='data')
   binary=str(p/'centrifugo')
- version=subprocess.check_output([binary,'version'],text=True).strip();assert version.startswith('Centrifugo v6.9.6 '),version
+ version=subprocess.check_output([binary,'version'],text=True).strip();assert version.startswith('Centrifugo v6.9.6-phase3e-proposal ' if os.environ.get('TEST_FAIL_CLOSED_PROPOSAL') else 'Centrifugo v6.9.6 '),version
  # Launcher resolves only this pinned executable through PATH; no copied executable in the repository.
  (p/'bin').mkdir();(p/'bin/centrifugo').symlink_to(pathlib.Path(binary).resolve())
  dbfile=p/'fixture.sqlite';dsn=os.environ.get('BROKER_TEST_DSN','sqlite:'+str(dbfile))
@@ -75,6 +75,17 @@ if($route==='/reconcile'){
  echo json_encode(['exit'=>proc_close($proc),'stderr'=>$stderr]);exit;
 }
 if($route==='/messages'){$user=AuthMiddleware::requireAuth(true);session_write_close();try{(new ChannelAccessService($db))->read(10,(int)$user['id']);echo json_encode(['messages'=>$db->query('SELECT id,content FROM messages')->fetchAll(PDO::FETCH_ASSOC)]);}catch(RuntimeException){http_response_code(403);echo '{}';}exit;}
+// Fixture-only split at the exact recipient-selection/publication boundary.
+// This deliberately retains the snapshot across a committed permission change.
+if($route==='/select-delivery'){$selected=RealtimeOutbox::recipients($db,['kind'=>'channel','target_id'=>10,'message_id'=>1]);file_put_contents('''+repr(str(p/'selected.json'))+''',json_encode($selected));echo json_encode(['recipients'=>count($selected)]);exit;}
+if($route==='/publish-selected'){
+ $selected=json_decode(file_get_contents('''+repr(str(p/'selected.json'))+'''),true);$broker=new CentrifugoService();
+ foreach($selected as $uid){
+  $event=isset($_GET['opaque'])?['type'=>'inbox_changed','v'=>1,'event_id'=>rtrim(strtr(base64_encode(hash_hmac('sha256',"ecollab-invalidation-v1:".(int)$uid.":1001",str_repeat('b',64),true)),'+/','-_'),'=')]:['type'=>'chat_changed','kind'=>'channel','target_id'=>10,'message_id'=>1,'event_id'=>1001];
+  $broker->broadcast([(int)$uid],$event);
+ }
+ echo json_encode(['recipients'=>count($selected)]);exit;
+}
 if($route==='/deliver'){$users=RealtimeOutbox::recipients($db,['kind'=>'channel','target_id'=>10,'message_id'=>1]);if($users)(new CentrifugoService())->broadcast($users,['type'=>'chat_changed','kind'=>'channel','target_id'=>10,'message_id'=>1,'event_id'=>(int)($_GET['event']??1)]);echo json_encode(['recipients'=>count($users)]);exit;}
 http_response_code(404);
 ''')
@@ -141,7 +152,7 @@ location / {{include fastcgi_params;fastcgi_param SCRIPT_FILENAME {router};fastc
    except OSError:time.sleep(.02)
   raise RuntimeError('Fixture did not start')
  def node(extra=None):
-  r=subprocess.run(['node','tests/centrifugo-broker-regression.cjs'],cwd=ROOT,env=env|(extra or {}),capture_output=True,text=True,timeout=350)
+  r=subprocess.run(['node','tests/centrifugo-broker-regression.cjs'],cwd=ROOT,env=env|{'TEST_FAIL_CLOSED_PROPOSAL':''}|(extra or {}),capture_output=True,text=True,timeout=350)
   print(r.stdout,end='');assert r.returncode==0,r.stderr
  try:
   fpm=start([FPM,'-R','-F','-y',str(p/'fpm.conf')],'fpm');ready(fpmport)
@@ -153,8 +164,8 @@ location / {{include fastcgi_params;fastcgi_param SCRIPT_FILENAME {router};fastc
   legacybroker=start([binary,'--config='+str(legacyfile)],'legacy',{'CENTRIFUGO_CLIENT_INSECURE':'false'});ready(brokerport)
   node({'TEST_LEGACY_REPLAY':'1'});legacybroker.terminate();legacybroker.wait(timeout=5);processes.remove(legacybroker)
   broker=start(['/bin/sh',str(ROOT/'deploy/centrifugo/proxy-entrypoint.sh'),str(conf)],'broker');ready(brokerport)
-  node()
-  if os.environ.get('TEST_EXTENDED_REVOCATION'):
+  node({'TEST_FAIL_CLOSED_PROPOSAL':'1'}) if os.environ.get('TEST_FAIL_CLOSED_PROPOSAL') else node()
+  if os.environ.get('TEST_EXTENDED_REVOCATION') and not os.environ.get('TEST_FAIL_CLOSED_PROPOSAL'):
    # Supported broker control, isolated experiment only. Do not change deployment config.
    broker.terminate();broker.wait(timeout=5);processes.remove(broker)
    config['client']['proxy']['refresh']['http']={'status_to_code_transforms':[{'status_code':503,'to_disconnect':{'code':4503,'reason':'Authorization unavailable'}}]}
