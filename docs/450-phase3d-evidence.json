@@ -1,0 +1,570 @@
+{
+  "date": "2026-10-22",
+  "scope": "Disposable GitHub Actions synthetic fixtures; no production access",
+  "measured_commit": "1e33bbc777be951fda0d00b01a252ac65949ec15",
+  "stack_base": "38900c09fbfd59599ed30905a8a5f9255b27dfe3",
+  "ci": {
+    "run_id": 39781596880,
+    "livekit_job": 119833962337,
+    "broker_job": 119833961721,
+    "run_url": "https://github.com/ecollab-project/ecollab/actions/runs/39781596880",
+    "conclusion": "success"
+  },
+  "livekit": {
+    "tests": [
+      {
+        "name": "authorized private voice join and actual audio subscription",
+        "status": "PASS"
+      },
+      {
+        "name": "bidirectional real audio/video publication, subscription and increasing received bytes",
+        "status": "PASS"
+      },
+      {
+        "name": "gated stale token denied; direct origin bypass reproduced on fixture loopback",
+        "status": "PASS",
+        "evidence": {
+          "gated": 403,
+          "direct_origin": 200,
+          "alternate_host": 403,
+          "unknown_route": 404
+        }
+      },
+      {
+        "name": "real reconciliation worker removes private-revoked participant and gated replay fails",
+        "status": "PASS"
+      },
+      {
+        "name": "all four signaling/validation paths reject retained revoked token",
+        "status": "PASS",
+        "evidence": {
+          "/rtc": 403,
+          "/rtc/validate": 403,
+          "/rtc/v1": 403,
+          "/rtc/v1/validate": 403
+        }
+      },
+      {
+        "name": "actual direct-origin SDK stale-token join bypasses online gate when origin is reachable",
+        "status": "PASS"
+      },
+      {
+        "name": "remove-member stale-token rejection and real eviction",
+        "status": "PASS"
+      },
+      {
+        "name": "suspend stale-token rejection and real eviction",
+        "status": "PASS"
+      },
+      {
+        "name": "ban stale-token rejection and real eviction",
+        "status": "PASS"
+      },
+      {
+        "name": "server-suspend stale-token rejection and real eviction",
+        "status": "PASS"
+      },
+      {
+        "name": "deactivate stale-token rejection and real eviction",
+        "status": "PASS"
+      },
+      {
+        "name": "ecollab-dm-group-v2-1 actual media and revocation",
+        "status": "PASS"
+      },
+      {
+        "name": "ecollab-dm-call-1 actual media and revocation",
+        "status": "PASS"
+      },
+      {
+        "name": "original JWT expires; server-refreshed SDK credential resumes through gated signaling",
+        "status": "PASS"
+      },
+      {
+        "name": "authorized browser network interruption recovery",
+        "status": "PASS",
+        "evidence": [
+          {
+            "event": "signalConnected",
+            "time": 108.89999999999418,
+            "unix_ms": 1792673553080
+          },
+          {
+            "event": "connected",
+            "time": 160,
+            "unix_ms": 1792673553131
+          },
+          {
+            "event": "reconnecting",
+            "time": 866.2999999999884,
+            "unix_ms": 1792673553838
+          },
+          {
+            "event": "reconnected",
+            "time": 2882.399999999994,
+            "unix_ms": 1792673555854
+          }
+        ]
+      },
+      {
+        "name": "same-user second tab replaces first LiveKit identity",
+        "status": "PASS"
+      },
+      {
+        "name": "periodic real worker removes multiple revoked participants",
+        "status": "PASS"
+      },
+      {
+        "name": "stopped-worker and DB/schema failure leave existing stream; restart after recovery removes it",
+        "status": "PASS",
+        "evidence": {
+          "exit": 0,
+          "stderr": "[22-Oct-2026 12:52:53 UTC] [revocation_worker] Reconciliation incomplete; access enforcement requires recovery"
+        }
+      },
+      {
+        "name": "RoomService HTTP-503 leaves stream active; gated rejoin denied; recovery cycle removes it",
+        "status": "PASS",
+        "evidence": {
+          "exit": 0,
+          "stderr": "[22-Oct-2026 12:52:55 UTC] [revocation_worker] Reconciliation incomplete; access enforcement requires recovery"
+        }
+      },
+      {
+        "name": "actual DB daemon failure preserves old media, denies reconnect; worker exits and recovers after explicit fixture restart",
+        "status": "PASS"
+      }
+    ],
+    "timings": [
+      {
+        "operation": "browser_join",
+        "milliseconds": 189.67147
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 93.71585800000003
+      },
+      {
+        "operation": "private_revocation_to_observed_disconnect_after_manual_cycle",
+        "dispatch_ms": 57.63286599999992,
+        "commit_ack_to_observed_disconnect_ms": 85.430908203125,
+        "cycle": {
+          "exit": 0,
+          "stderr": "[22-Oct-2026 12:52:22 UTC] {\"metric\":\"realtime_revocation\",\"broker_disconnects\":0,\"media_removals\":1,\"rooms_checked\":1,\"failures\":0}"
+        }
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 90.20403499999975
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 83.47707499999979
+      },
+      {
+        "operation": "remove-member_manual_cycle",
+        "dispatch_ms": 41.53146800000013,
+        "commit_ack_to_observed_disconnect_ms": 54.491943359375,
+        "cycle": {
+          "exit": 0,
+          "stderr": "[22-Oct-2026 12:52:23 UTC] {\"metric\":\"realtime_revocation\",\"broker_disconnects\":0,\"media_removals\":1,\"rooms_checked\":1,\"failures\":0}"
+        }
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 82.79580699999951
+      },
+      {
+        "operation": "suspend_manual_cycle",
+        "dispatch_ms": 52.47407299999941,
+        "commit_ack_to_observed_disconnect_ms": 68.505126953125,
+        "cycle": {
+          "exit": 0,
+          "stderr": "[22-Oct-2026 12:52:23 UTC] {\"metric\":\"realtime_revocation\",\"broker_disconnects\":1,\"media_removals\":1,\"rooms_checked\":1,\"failures\":0}"
+        }
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 85.25824600000033
+      },
+      {
+        "operation": "ban_manual_cycle",
+        "dispatch_ms": 40.03084100000069,
+        "commit_ack_to_observed_disconnect_ms": 53.192138671875,
+        "cycle": {
+          "exit": 0,
+          "stderr": "[22-Oct-2026 12:52:24 UTC] {\"metric\":\"realtime_revocation\",\"broker_disconnects\":0,\"media_removals\":1,\"rooms_checked\":1,\"failures\":0}"
+        }
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 86.58494200000041
+      },
+      {
+        "operation": "server-suspend_manual_cycle",
+        "dispatch_ms": 41.86099099999956,
+        "commit_ack_to_observed_disconnect_ms": 55.348876953125,
+        "cycle": {
+          "exit": 0,
+          "stderr": "[22-Oct-2026 12:52:24 UTC] {\"metric\":\"realtime_revocation\",\"broker_disconnects\":0,\"media_removals\":1,\"rooms_checked\":1,\"failures\":0}"
+        }
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 83.64774599999964
+      },
+      {
+        "operation": "deactivate_manual_cycle",
+        "dispatch_ms": 41.12190600000031,
+        "commit_ack_to_observed_disconnect_ms": 53.7880859375,
+        "cycle": {
+          "exit": 0,
+          "stderr": "[22-Oct-2026 12:52:24 UTC] {\"metric\":\"realtime_revocation\",\"broker_disconnects\":1,\"media_removals\":1,\"rooms_checked\":1,\"failures\":0}"
+        }
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 84.07086999999956
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 91.83929900000021
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 86.2296550000001
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 85.67342700000063
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 82.16271099999994
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 101.88064600000143
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 81.09665700000187
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 93.0120390000011
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 83.60857000000033
+      },
+      {
+        "operation": "two_accounts_running_worker",
+        "request_to_both_disconnects_ms": 4616.008211,
+        "commit_ack_to_last_disconnect_ms": 4453.462890625
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 103.33434100000159
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 82.44817300000068
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 87.29586199999903
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 82.2271069999988
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 84.4966179999974
+      },
+      {
+        "operation": "browser_join",
+        "milliseconds": 85.26181799999904
+      },
+      {
+        "operation": "actual_DB_daemon_outage_and_worker_restart",
+        "commit_ack_to_disconnect_ms": 6908.954833984375,
+        "worker_exit_during_outage": 255
+      }
+    ],
+    "media": [
+      {
+        "sample_interval_ms": 1000,
+        "first": [
+          {
+            "kind": "audio",
+            "packetsReceived": 30,
+            "bytesReceived": 3810,
+            "packetsLost": 0,
+            "jitter": 0
+          },
+          {
+            "kind": "video",
+            "packetsReceived": 11,
+            "bytesReceived": 3918,
+            "framesDecoded": 11,
+            "packetsLost": 0,
+            "jitter": 0
+          }
+        ],
+        "second": [
+          {
+            "kind": "audio",
+            "packetsReceived": 58,
+            "bytesReceived": 7460,
+            "packetsLost": 0,
+            "jitter": 0
+          },
+          {
+            "kind": "video",
+            "packetsReceived": 44,
+            "bytesReceived": 27021,
+            "framesDecoded": 32,
+            "packetsLost": 0,
+            "jitter": 0.001
+          }
+        ]
+      },
+      {
+        "scenario": "revoked participant still receives private media during DB/schema outage",
+        "first": [
+          {
+            "kind": "audio",
+            "packetsReceived": 327,
+            "bytesReceived": 37576,
+            "packetsLost": 0,
+            "jitter": 0
+          },
+          {
+            "kind": "video",
+            "packetsReceived": 880,
+            "bytesReceived": 892596,
+            "framesDecoded": 218,
+            "packetsLost": 0,
+            "jitter": 0
+          }
+        ],
+        "second": [
+          {
+            "kind": "audio",
+            "packetsReceived": 355,
+            "bytesReceived": 40304,
+            "packetsLost": 0,
+            "jitter": 0
+          },
+          {
+            "kind": "video",
+            "packetsReceived": 971,
+            "bytesReceived": 984928,
+            "framesDecoded": 237,
+            "packetsLost": 0,
+            "jitter": 0
+          }
+        ]
+      },
+      {
+        "scenario": "revoked participant still receives private audio during RoomService HTTP-503",
+        "first": [
+          {
+            "kind": "audio",
+            "packetsReceived": 9,
+            "bytesReceived": 980,
+            "packetsLost": 0,
+            "jitter": 0
+          }
+        ],
+        "second": [
+          {
+            "kind": "audio",
+            "packetsReceived": 37,
+            "bytesReceived": 4582,
+            "packetsLost": 0,
+            "jitter": 0
+          }
+        ]
+      },
+      {
+        "scenario": "actual MariaDB daemon stopped; revoked participant still receives private video",
+        "first": [
+          {
+            "kind": "audio",
+            "packetsReceived": 202,
+            "bytesReceived": 24015,
+            "packetsLost": 0,
+            "jitter": 0
+          },
+          {
+            "kind": "video",
+            "packetsReceived": 473,
+            "bytesReceived": 476615,
+            "framesDecoded": 132,
+            "packetsLost": 0,
+            "jitter": 0
+          }
+        ],
+        "second": [
+          {
+            "kind": "audio",
+            "packetsReceived": 232,
+            "bytesReceived": 27177,
+            "packetsLost": 0,
+            "jitter": 0
+          },
+          {
+            "kind": "video",
+            "packetsReceived": 565,
+            "bytesReceived": 573762,
+            "framesDecoded": 152,
+            "packetsLost": 0,
+            "jitter": 0
+          }
+        ]
+      }
+    ],
+    "browser": "141.0.7390.37",
+    "room_api_body_types": {
+      "array": {
+        "status": 400,
+        "error_code": "malformed"
+      },
+      "object": {
+        "status": 200,
+        "room_count": 1
+      }
+    },
+    "origin": {
+      "gated": 403,
+      "direct_origin": 200,
+      "alternate_host": 403,
+      "unknown_route": 404
+    },
+    "origin_binding": {
+      "binding": "IPv4 loopback only",
+      "ipv6_loopback_origin_reachable": false
+    },
+    "expiry": {
+      "state": "connected",
+      "events": [
+        {
+          "event": "signalConnected",
+          "time": 90.30000000001746,
+          "unix_ms": 1792673546693
+        },
+        {
+          "event": "connected",
+          "time": 140.89999999999418,
+          "unix_ms": 1792673546744
+        },
+        {
+          "event": "signalReconnecting",
+          "time": 4263.5,
+          "unix_ms": 1792673550867
+        },
+        {
+          "event": "reconnected",
+          "time": 6276.899999999994,
+          "unix_ms": 1792673552880
+        }
+      ]
+    },
+    "database_prepared_queries": 209,
+    "signaling_route_audit": {
+      "/rtc 404": 1,
+      "/rtc/validate 200": 1,
+      "/rtc/v1 404": 1,
+      "/rtc/v1/validate 400": 1,
+      "/rtc/validate 403": 3,
+      "/rtc/v1 403": 12,
+      "/rtc/v1/validate 403": 12,
+      "/twirp/livekit.RoomService/ListRooms 200": 15,
+      "/twirp/livekit.RoomService/ListParticipants 200": 22,
+      "/rtc/v1 101": 24,
+      "/twirp/livekit.RoomService/RemoveParticipant 200": 15,
+      "/rtc 403": 1,
+      "/twirp/livekit.RoomService/ListRooms 503": 1,
+      "/rtc/v1 500": 1,
+      "/rtc/v1/validate 500": 1
+    },
+    "fixture_resources": {
+      "LiveKit": {
+        "sampled_cpu_core_seconds": 1.1099999999999999,
+        "peak_sampled_pss_kib": 119452,
+        "sample_interval_seconds": 0.25,
+        "observation_seconds": 46.056856115000016
+      },
+      "MariaDB": {
+        "sampled_cpu_core_seconds": 0.1,
+        "peak_sampled_pss_kib": 89708,
+        "sample_interval_seconds": 0.25,
+        "observation_seconds": 46.05686104200001
+      },
+      "Nginx": {
+        "sampled_cpu_core_seconds": 0.05,
+        "peak_sampled_pss_kib": 2670,
+        "sample_interval_seconds": 0.25,
+        "observation_seconds": 46.05686250400001
+      },
+      "FPM": {
+        "sampled_cpu_core_seconds": 0,
+        "peak_sampled_pss_kib": 38582,
+        "sample_interval_seconds": 0.25,
+        "observation_seconds": 46.05686510800001
+      }
+    },
+    "versions": {
+      "LiveKit": "1.13.7",
+      "SDK": "2.22.3",
+      "MariaDB": "10.11.14-MariaDB-0ubuntu0.24.04.1",
+      "PHP": "8.3.6",
+      "Nginx": "nginx version: nginx/1.24.0 (Ubuntu)"
+    },
+    "environment": {
+      "kernel": "7.0.0-1017-azure",
+      "visible_logical_cpus": 4,
+      "production": false,
+      "maximum_simultaneous_media_participants": 2,
+      "FPM_slots": 10,
+      "TLS": false,
+      "TURN": false
+    }
+  },
+  "centrifugo": {
+    "version": "6.9.6",
+    "client": "Centrifuge JS 5.7.4",
+    "observations": [
+      "CONFIRMED baseline v6.9.6: old connection AND cached inbox subscription JWT restore broker access after account deactivation + disconnect",
+      "OBSERVED callback deadline rejection ms=1004.11",
+      "OBSERVED proxy HTTP-503 outage {\"milliseconds\":75000.329033,\"state\":\"connected\",\"refreshFailures\":2}",
+      "CONFIRMED delayed preselected hint can reach revoked established inbox during proxy outage; fresh outbox recipient lookup returned zero",
+      "MEASURED callback recovery {\"restore_to_disconnect_ms\":50018.847255,\"observed_revoked_connection_ms\":125123.45872400001}",
+      "MEASURED actual singleton CLI worker during refresh outage {\"dispatch_to_disconnect_ms\":48.65691399999196,\"api_failure_left_connected\":true,\"media_api_unavailable\":true,\"worker_stderr\":\"[22-Oct-2026 12:53:38 UTC] [revocation_worker] Reconciliation incomplete; access enforcement requires recovery\"}",
+      "PASS actual CLI worker cannot enforce during policy DB failure, then disconnects after DB recovery without callback recovery",
+      "MEASURED synthetic reconnect sample {\"connections\":16,\"concurrency\":8,\"fpm_slots\":10,\"connect_p50_ms\":9.362919999985024,\"connect_p95_ms\":10.813628000003519,\"proxy_mean_ms\":0.7908940315246582,\"auth_queries\":16,\"errors\":0}",
+      "MEASURED supported HTTP-503 transform {\"old_connection_closed_ms\":5003.748396,\"state\":\"connecting\"}",
+      "CONFIRMED HTTP-status transform does not bound refresh transport timeout; established revoked client still connected after 6.5 seconds",
+      "PASS actual Nginx callback transport stopped: new broker admission denied",
+      "PASS pinned Centrifugo v6.9.6 (Go version: go1.26.8); production launcher, private Nginx callbacks, 10-worker PHP-FPM; synthetic fixture only"
+    ]
+  },
+  "local_checks": {
+    "phpunit_unit": {
+      "status": "PASS",
+      "tests": 25,
+      "assertions": 56
+    },
+    "phpstan": {
+      "status": "FAIL-existing-baseline",
+      "file_errors": 13,
+      "introduced": 0
+    },
+    "full_phpunit_database_suite": "NOT RUN locally: database-name safety guard refused default name before connection",
+    "livekit_local_runtime": "BLOCKED: route ip+net: netlinkrib: operation not permitted; real media executed in CI"
+  },
+  "capacity_450": "UNVERIFIED"
+}

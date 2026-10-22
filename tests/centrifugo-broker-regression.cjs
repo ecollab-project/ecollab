@@ -8,7 +8,7 @@ const wsURL=base.replace('http','ws').replace('/api','/connection/websocket'),cl
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 function token(uid=1,channel){const b=x=>Buffer.from(JSON.stringify(x)).toString('base64url');const value=b({alg:'HS256',typ:'JWT'})+'.'+b({sub:String(uid),exp:Math.floor(Date.now()/1000)+300,...(channel?{channel}:{})});return value+'.'+createHmac('sha256','a'.repeat(64)).update(value).digest('base64url');}
 function once(c,e,ms=12000){return new Promise((resolve,reject)=>{const f=x=>{clearTimeout(t);resolve(x);},t=setTimeout(()=>{c.off(e,f);reject(Error('Timeout: '+e));},ms);c.once(e,f);});}
-async function http(path,{cookie='',body,method}={}){const r=await fetch(fixture+path,{method:method||(body?'POST':'GET'),headers:{'X-Fixture-Key':'fixture-local-only','Content-Type':'application/json',Cookie:cookie},...(body?{body:JSON.stringify(body)}:{})});return {status:r.status,data:await r.json(),cookie:r.headers.get('set-cookie')?.split(';')[0]};}
+async function http(path,{cookie='',body,method}={}){const r=await fetch(fixture+path,{method:method||(body?'POST':'GET'),headers:{'X-Fixture-Key':'fixture-local-only','Content-Type':'application/json',Cookie:cookie},...(body?{body:JSON.stringify(body)}:{})});const raw=await r.text();assert(raw.startsWith('{')||raw.startsWith('['),'Fixture HTTP '+path+' status='+r.status+' returned no JSON');return {status:r.status,data:JSON.parse(raw),cookie:r.headers.get('set-cookie')?.split(';')[0]};}
 async function control(action,cookie=''){const r=await http('/control',{body:{action},cookie});assert.equal(r.status,200);}
 async function seed(uid=1){const r=await http('/seed?user='+uid);assert(r.cookie);return r.cookie;}
 function make(cookie='',opts={},origin='https://ecollab.tech'){
@@ -90,8 +90,27 @@ async function main(){
  await control('restore');cookie=await seed();c=await connect(cookie);
  await control('deactivate');await control('proxy-outage');await rejected(make(cookie));
  let outageHints=0;c.on('publication',()=>outageHints++);assert.equal((await http('/deliver?event=20')).data.recipients,0);
- await wait(6500);console.log('OBSERVED proxy HTTP-503 outage after 6.5 seconds: existing client state='+c.state+'; new admission denied; this is not a bounded eviction guarantee');
+ const outageStart=performance.now();
+ await wait(process.env.TEST_EXTENDED_REVOCATION?75000:6500);
+ console.log('OBSERVED proxy HTTP-503 outage '+JSON.stringify({milliseconds:performance.now()-outageStart,state:c.state,refreshFailures:(await http('/stats')).data.filter(x=>x.event==='refresh'&&x.status===503).length}));
+ assert.equal(c.state,'connected');
  assert.equal(outageHints,0);
+ if(process.env.TEST_EXTENDED_REVOCATION){
+  // Model a recipient snapshot selected before revocation, delayed until after commit.
+  // The direct server API has no current-policy callback. Only a synthetic hint is sent.
+  await publish({type:'chat_changed',event_id:999,target_id:10});await wait(100);assert.equal(outageHints,1);
+  console.log('CONFIRMED delayed preselected hint can reach revoked established inbox during proxy outage; fresh outbox recipient lookup returned zero');
+  const recoveredClose=once(c,'disconnected',70000),recoveryStart=performance.now();await control('proxy-restore');await recoveredClose;
+  console.log('MEASURED callback recovery '+JSON.stringify({restore_to_disconnect_ms:performance.now()-recoveryStart,observed_revoked_connection_ms:performance.now()-outageStart}));
+  await control('restore');cookie=await seed();c=await connect(cookie);await control('deactivate');await control('proxy-outage');await wait(5500);
+  const failed=await http('/reconcile?fail_api=1');assert.equal(failed.status,200);assert.equal(c.state,'connected');
+  const closedByWorker=once(c,'disconnected'),workerStart=performance.now();const reconciled=await http('/reconcile');assert.equal(reconciled.data.exit,0);await closedByWorker;
+  console.log('MEASURED actual singleton CLI worker during refresh outage '+JSON.stringify({dispatch_to_disconnect_ms:performance.now()-workerStart,api_failure_left_connected:true,media_api_unavailable:true,worker_stderr:reconciled.data.stderr.trim()}));
+  await control('proxy-restore');await control('restore');cookie=await seed();c=await connect(cookie);await control('deactivate');await control('proxy-outage');await control('db-outage');
+  const dbFailed=await http('/reconcile');assert.match(dbFailed.data.stderr,/incomplete/);assert.equal(c.state,'connected');
+  await control('db-restore');const afterDB=once(c,'disconnected');await http('/reconcile');await afterDB;
+  console.log('PASS actual CLI worker cannot enforce during policy DB failure, then disconnects after DB recovery without callback recovery');
+ }
  await control('proxy-restore');c.disconnect();await rejected(make(cookie));
  await control('restore');cookie=await seed();
  // Bounded reconnect sample: 16 connections, concurrency 8, ten FPM slots, one session.
@@ -105,6 +124,15 @@ async function main(){
 }
 (async()=>{try{
  if(process.env.TEST_LEGACY_REPLAY)await legacy();
+ else if(process.env.TEST_REFRESH_TRANSFORM){
+  await control('restore');let cookie=await seed(),c=await connect(cookie),closed=once(c,'connecting',15000),t=performance.now();
+  await control('deactivate');await control('proxy-outage');await closed;
+  assert.notEqual(c.state,'connected');console.log('MEASURED supported HTTP-503 transform '+JSON.stringify({old_connection_closed_ms:performance.now()-t,state:c.state}));
+  await control('proxy-restore');await control('restore');cookie=await seed();c=await connect(cookie);
+  await control('deactivate');await control('proxy-timeout');await wait(6500);assert.equal(c.state,'connected');
+  console.log('CONFIRMED HTTP-status transform does not bound refresh transport timeout; established revoked client still connected after 6.5 seconds');
+  await control('proxy-restore');c.disconnect();fs.writeFileSync(process.env.TEST_COOKIE_FILE,cookie,{mode:0o600});
+ }
  else if(process.env.TEST_TRANSPORT_OUTAGE){await rejected(make(fs.readFileSync(process.env.TEST_COOKIE_FILE,'utf8')));console.log('PASS actual Nginx callback transport stopped: new broker admission denied');}
  else await main();
 }finally{for(const c of clients)c.disconnect();}})().catch(e=>{console.error(e);process.exitCode=1;});

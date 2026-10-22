@@ -17,14 +17,23 @@ with tempfile.TemporaryDirectory(prefix='broker-proxy-') as folder:
  version=subprocess.check_output([binary,'version'],text=True).strip();assert version.startswith('Centrifugo v6.9.6 '),version
  # Launcher resolves only this pinned executable through PATH; no copied executable in the repository.
  (p/'bin').mkdir();(p/'bin/centrifugo').symlink_to(pathlib.Path(binary).resolve())
- dbfile=p/'fixture.sqlite';db=sqlite3.connect(dbfile)
- db.executescript((ROOT/'tests/fixtures/livekit-admission.sql').read_text()+"CREATE TABLE messages(id INTEGER PRIMARY KEY,channel_id INTEGER,is_deleted INTEGER,content TEXT);INSERT INTO messages VALUES(1,10,0,'synthetic saved message');")
- db.close();metrics=p/'metrics.jsonl';mode=p/'mode';mode.write_text('normal')
+ dbfile=p/'fixture.sqlite';dsn=os.environ.get('BROKER_TEST_DSN','sqlite:'+str(dbfile))
+ schema=(ROOT/'tests/fixtures/livekit-admission.sql').read_text()+"CREATE TABLE messages(id INTEGER PRIMARY KEY,channel_id INTEGER,is_deleted INTEGER,content TEXT);INSERT INTO messages VALUES(1,10,0,'synthetic saved message');"
+ if dsn.startswith('mysql:'):
+  import re
+  assert re.fullmatch(r'mysql:host=127\.0\.0\.1;port=[0-9]+;dbname=ecollab_broker_test',dsn),'Explicit disposable loopback DB only'
+  setup=p/'setup.php';setup.write_text('<?php $d=new PDO('+repr(dsn)+',"root","");if((int)$d->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE()")->fetchColumn()!==0)throw new RuntimeException("Fixture schema must be empty");$d->exec('+repr(schema)+');')
+  subprocess.run([os.environ.get('PHP_BIN','php'),str(setup)],check=True)
+ else:
+  assert not os.environ.get('TEST_EXTENDED_REVOCATION'),'Actual CLI singleton worker requires MariaDB'
+  db=sqlite3.connect(dbfile);db.executescript(schema);db.close()
+ metrics=p/'metrics.jsonl';mode=p/'mode';mode.write_text('normal')
  brokerport=port();proxyport=port();httpport=port();fpmport=port()
  prepend=p/'prepend.php';prepend.write_text('''<?php
 require_once '''+repr(str(ROOT/'database/config/db.php'))+''';
+if(PHP_SAPI==='cli')ini_set('error_log','/dev/stderr');
 class ProxyFixturePDO extends PDO {public int $prepared=0;public function prepare(string $q,array $opts=[]):PDOStatement|false{$this->prepared++;return parent::prepare($q,$opts);}}
-$fixtureDb=new ProxyFixturePDO('sqlite:'''+str(dbfile)+'''',null,null,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+$fixtureDb=new ProxyFixturePDO('''+repr(dsn)+''',"root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
 (new ReflectionProperty(Database::class,'instance'))->setValue(null,$fixtureDb);
 if(isset($_SERVER['ECOLLAB_BROKER_PROXY_EVENT'])){
  $started=microtime(true);$event=$_SERVER['ECOLLAB_BROKER_PROXY_EVENT'];
@@ -39,6 +48,7 @@ require_once '''+repr(str(ROOT/'security/middleware/AuthMiddleware.php'))+''';
 require_once '''+repr(str(ROOT/'services/ChannelAccessService.php'))+''';
 require_once '''+repr(str(ROOT/'services/RealtimeOutbox.php'))+''';
 require_once '''+repr(str(ROOT/'services/CentrifugoService.php'))+''';
+set_exception_handler(static function(Throwable $e):void{http_response_code(500);echo json_encode(['fixture_error'=>get_class($e),'message'=>$e->getMessage()]);});
 header('Content-Type: application/json');header('Cache-Control: no-store');
 if(($_SERVER['HTTP_X_FIXTURE_KEY']??'')!=='fixture-local-only'){http_response_code(403);exit;}
 $route=parse_url($_SERVER['REQUEST_URI'],PHP_URL_PATH);$db=Database::getInstance();
@@ -56,6 +66,14 @@ if($route==='/control'){
  else{http_response_code(400);exit;}echo '{}';exit;
 }
 if($route==='/stats'){$lines=@file('''+repr(str(metrics))+''',FILE_IGNORE_NEW_LINES)?:[];echo json_encode(array_map(fn($l)=>json_decode($l,true),$lines));exit;}
+if($route==='/reconcile'){
+ if(!getenv('TEST_EXTENDED_REVOCATION')){http_response_code(404);exit;}
+ $args=[getenv('PHP_BIN'),'-d','error_log=/dev/stderr','-d','log_errors=1','-d','auto_prepend_file='.'''+repr(str(prepend))+''','''+repr(str(ROOT/'scripts/realtime-revocation-worker.php'))+''','--once'];
+ $childEnv=getenv();if(isset($_GET['fail_api']))$childEnv['CENTRIFUGO_API_URL']='http://127.0.0.1:1/api';
+ $proc=proc_open($args,[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes,null,$childEnv);
+ fclose($pipes[0]);$stdout=stream_get_contents($pipes[1]);fclose($pipes[1]);$stderr=stream_get_contents($pipes[2]);fclose($pipes[2]);
+ echo json_encode(['exit'=>proc_close($proc),'stderr'=>$stderr]);exit;
+}
 if($route==='/messages'){$user=AuthMiddleware::requireAuth(true);session_write_close();try{(new ChannelAccessService($db))->read(10,(int)$user['id']);echo json_encode(['messages'=>$db->query('SELECT id,content FROM messages')->fetchAll(PDO::FETCH_ASSOC)]);}catch(RuntimeException){http_response_code(403);echo '{}';}exit;}
 if($route==='/deliver'){$users=RealtimeOutbox::recipients($db,['kind'=>'channel','target_id'=>10,'message_id'=>1]);if($users)(new CentrifugoService())->broadcast($users,['type'=>'chat_changed','kind'=>'channel','target_id'=>10,'message_id'=>1,'event_id'=>(int)($_GET['event']??1)]);echo json_encode(['recipients'=>count($users)]);exit;}
 http_response_code(404);
@@ -101,7 +119,7 @@ location / {{include fastcgi_params;fastcgi_param SCRIPT_FILENAME {router};fastc
  for event in ['connect','refresh']:config['client']['proxy'][event]['endpoint']=f'http://127.0.0.1:{proxyport}/{event}'
  config['client']['ping_interval']='1s';config['client']['pong_timeout']='500ms'
  conf=p/'broker.json';conf.write_text(json.dumps(config))
- env=os.environ|{'PATH':str(p/'bin')+':'+os.environ['PATH'],'CENTRIFUGO_ENABLED':'true','CENTRIFUGO_PROXY_SECRET':'c'*64,'CENTRIFUGO_HTTP_API_KEY':'b'*64,'CENTRIFUGO_API_KEY':'b'*64,'CENTRIFUGO_API_URL':f'http://127.0.0.1:{brokerport}/api','CENTRIFUGO_ALLOWED_ORIGIN':'https://ecollab.tech','CENTRIFUGO_REFRESH_SECONDS':'5',
+ env=os.environ|{'PATH':str(p/'bin')+':'+os.environ['PATH'],'CENTRIFUGO_ENABLED':'true','CENTRIFUGO_PROXY_SECRET':'c'*64,'CENTRIFUGO_HTTP_API_KEY':'b'*64,'CENTRIFUGO_API_KEY':'b'*64,'CENTRIFUGO_API_URL':f'http://127.0.0.1:{brokerport}/api','CENTRIFUGO_ALLOWED_ORIGIN':'https://ecollab.tech','CENTRIFUGO_REFRESH_SECONDS':'5','LIVEKIT_URL':'ws://127.0.0.1:1','LIVEKIT_API_KEY':'fixture-key','LIVEKIT_API_SECRET':'s'*64,
  # Poison inherited auth/insecure settings; the production launcher must strip them.
  'CENTRIFUGO_CLIENT_TOKEN_HMAC_SECRET_KEY':'a'*64,'CENTRIFUGO_CLIENT_INSECURE':'true',
  'TEST_BROKER_API':f'http://127.0.0.1:{brokerport}/api','TEST_PROXY_BASE':f'http://127.0.0.1:{proxyport}','TEST_FIXTURE_BASE':f'http://127.0.0.1:{httpport}','TEST_COOKIE_FILE':str(p/'cookie')}
@@ -123,7 +141,7 @@ location / {{include fastcgi_params;fastcgi_param SCRIPT_FILENAME {router};fastc
    except OSError:time.sleep(.02)
   raise RuntimeError('Fixture did not start')
  def node(extra=None):
-  r=subprocess.run(['node','tests/centrifugo-broker-regression.cjs'],cwd=ROOT,env=env|(extra or {}),capture_output=True,text=True,timeout=150)
+  r=subprocess.run(['node','tests/centrifugo-broker-regression.cjs'],cwd=ROOT,env=env|(extra or {}),capture_output=True,text=True,timeout=350)
   print(r.stdout,end='');assert r.returncode==0,r.stderr
  try:
   fpm=start([FPM,'-R','-F','-y',str(p/'fpm.conf')],'fpm');ready(fpmport)
@@ -136,6 +154,13 @@ location / {{include fastcgi_params;fastcgi_param SCRIPT_FILENAME {router};fastc
   node({'TEST_LEGACY_REPLAY':'1'});legacybroker.terminate();legacybroker.wait(timeout=5);processes.remove(legacybroker)
   broker=start(['/bin/sh',str(ROOT/'deploy/centrifugo/proxy-entrypoint.sh'),str(conf)],'broker');ready(brokerport)
   node()
+  if os.environ.get('TEST_EXTENDED_REVOCATION'):
+   # Supported broker control, isolated experiment only. Do not change deployment config.
+   broker.terminate();broker.wait(timeout=5);processes.remove(broker)
+   config['client']['proxy']['refresh']['http']={'status_to_code_transforms':[{'status_code':503,'to_disconnect':{'code':4503,'reason':'Authorization unavailable'}}]}
+   conf.write_text(json.dumps(config))
+   broker=start(['/bin/sh',str(ROOT/'deploy/centrifugo/proxy-entrypoint.sh'),str(conf)],'broker-controls');ready(brokerport)
+   node({'TEST_REFRESH_TRANSFORM':'1'})
   # API/transaction fixture coverage can share this actual broker in disposable MySQL CI.
   if os.environ.get('TEST_DELIVERY_DSN'):
    for test in ['centrifugo-regression','centrifugo-database-regression']:
