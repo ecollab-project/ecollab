@@ -70,6 +70,21 @@ async function main(){
  for(const action of ['server-mute','server-suspend']){
   await control('restore');await control(action);c=await connect(cookie);assert.equal((await http('/messages',{cookie})).status,200);c.disconnect();
  }
+ // Controlled TOCTOU: actual application recipient lookup, committed SQL revoke,
+ // then actual CentrifugoService publication of the retained recipient snapshot.
+ for(const opaque of [false,true]){
+  await control('restore');c=await connect(cookie);const hints=[];c.on('publication',x=>hints.push(x.data));
+  assert.equal((await http('/select-delivery')).data.recipients,1);
+  await control('remove-private');const commitAck=performance.now();
+  const arrived=once(c,'publication').then(event=>({event,receivedAt:performance.now()}));assert.equal((await http('/publish-selected'+(opaque?'?opaque=1':''))).data.recipients,1);
+  const received=await arrived,hint=received.event.data;const elapsed=received.receivedAt-commitAck;
+  assert.equal((await http('/deliver?event=1002')).data.recipients,0);
+  assert.equal((await http('/messages',{cookie})).status,403);
+  if(opaque){assert.deepEqual(Object.keys(hint).sort(),['event_id','type','v']);assert.match(hint.event_id,/^[A-Za-z0-9_-]{43}$/);assert.equal(hint.type,'inbox_changed');const retry=once(c,'publication');await http('/publish-selected?opaque=1');assert.deepEqual((await retry).data,hint,'Prototype retry ID must be stable');}
+  else assert.deepEqual(hint,{type:'chat_changed',kind:'channel',target_id:10,message_id:1,event_id:1001});
+  console.log('MEASURED controlled selected-recipient race '+JSON.stringify({opaque_prototype:opaque,commit_ack_to_hint_ms:elapsed,post_revocation_delivery:true,resource_identifiers_exposed:!opaque,private_activity_timing_exposed:true}));
+  c.disconnect();await control('restore');assert.equal((await http('/messages',{cookie})).data.messages[0].content,'synthetic saved message');
+ }
  console.log('PASS stage: resource audience checks');
  for(const action of ['deactivate','suspend','delete','global-ban']){
   await control('restore');c=await connect(cookie);const closed=once(c,'disconnected');await control(action);await kick();assert.equal((await closed).code,4503);
@@ -124,6 +139,22 @@ async function main(){
 }
 (async()=>{try{
  if(process.env.TEST_LEGACY_REPLAY)await legacy();
+ else if(process.env.TEST_FAIL_CLOSED_PROPOSAL){
+  // Custom upstream experiment, not the released broker and never deployed.
+  for(const action of ['proxy-outage','proxy-timeout']){
+   await control('proxy-restore');await control('restore');const cookie=await seed(),c=await connect(cookie);
+   await control('deactivate');const closed=once(c,'connecting',15000);const t=performance.now();await control(action);await closed;
+   assert.notEqual(c.state,'connected');
+   console.log('MEASURED custom fail-closed proposal '+JSON.stringify({fault:action,revocation_commit_ack_to_connection_close_ms:performance.now()-t,state:c.state,fixture_expiry_seconds:5,callback_deadline_seconds:1}));
+   await rejected(make(cookie));await control('proxy-restore');await rejected(make(cookie));
+   await control('restore');const recovered=await connect(cookie);assert.equal((await http('/messages',{cookie})).data.messages[0].content,'synthetic saved message');recovered.disconnect();c.disconnect();
+   fs.writeFileSync(process.env.TEST_COOKIE_FILE,cookie,{mode:0o600});
+  }
+  await control('restore');const cookie=await seed(),c=await connect(cookie);const closed=once(c,'connecting',15000),t=performance.now();
+  await control('db-outage');await closed;const elapsed=performance.now()-t;assert.notEqual(c.state,'connected');await rejected(make(cookie));
+  console.log('MEASURED custom proposal policy-table failure '+JSON.stringify({fault_request_start_to_close_ms:elapsed}));
+  await control('db-restore');await control('restore');const recovered=await connect(cookie);assert.equal((await http('/messages',{cookie})).data.messages[0].content,'synthetic saved message');recovered.disconnect();c.disconnect();
+ }
  else if(process.env.TEST_REFRESH_TRANSFORM){
   await control('restore');let cookie=await seed(),c=await connect(cookie),closed=once(c,'connecting',15000),t=performance.now();
   await control('deactivate');await control('proxy-outage');await closed;

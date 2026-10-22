@@ -1,0 +1,38 @@
+--- a/internal/proxy/refresh_handler.go
++++ b/internal/proxy/refresh_handler.go
+@@ -75,13 +75,10 @@
+ 			h.histogram.Observe(duration)
+ 			h.errors.Inc()
+ 			log.Error().Err(err).Msg("error proxying refresh")
+-			// In case of an error give connection one more minute to live and
+-			// then try to check again. This way we gracefully handle temporary
+-			// problems on application backend side.
+-			// NOTE: this interval must be configurable maybe, but for now looks
+-			// like a reasonable value.
++			// EXPERIMENT ONLY: require successful renewal instead of extending
++			// authorization when the policy service cannot be reached.
+ 			return centrifuge.RefreshReply{
+-				ExpireAt: time.Now().Unix() + 60,
++				Expired: true,
+ 			}, RefreshExtra{}, nil
+ 		}
+ 		h.summary.Observe(duration)
+--- a/internal/proxy/refresh_handler_test.go
++++ b/internal/proxy/refresh_handler_test.go
+@@ -7,7 +7,6 @@
+ 	"log"
+ 	"net/http"
+ 	"testing"
+-	"time"
+ 
+ 	"github.com/centrifugal/centrifugo/v6/internal/tools"
+ 
+@@ -193,7 +192,7 @@
+ 		require.NoError(t, err, c.protocol)
+ 
+ 		expectedReply := centrifuge.RefreshReply{
+-			ExpireAt: time.Now().Unix() + 60,
++			Expired: true,
+ 		}
+ 		require.Equal(t, expectedReply, reply, c.protocol)
+ 	}

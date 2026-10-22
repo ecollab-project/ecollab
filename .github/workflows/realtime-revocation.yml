@@ -4,6 +4,8 @@ on:
     paths:
       - '.github/workflows/realtime-revocation.yml'
       - 'docs/450-phase3d-*'
+      - 'docs/450-phase3e-*'
+      - 'tests/proposals/centrifugo-6.9.6-fail-closed.patch'
       - 'tests/livekit-real-*'
       - 'tests/livekit-room-api.py'
       - 'tests/centrifugo-*.py'
@@ -70,7 +72,7 @@ jobs:
           if-no-files-found: ignore
   real-broker:
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -98,3 +100,18 @@ jobs:
           MARIADBD_BIN: /usr/sbin/mariadbd
           MARIADB_TEST_DATADIR: ${{ runner.temp }}/broker-db
         run: python3 -u tests/centrifugo-revocation-integration.py
+      - uses: actions/checkout@v4
+        with:
+          repository: centrifugal/centrifugo
+          ref: f2e575ffe83c62d9b277602bfcce40cf0c2dc9fb
+          path: _fixture_centrifugo
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.8'
+          cache-dependency-path: _fixture_centrifugo/go.sum
+      - name: Experimental upstream fail-closed proposal (not deployed)
+        env:
+          CENTRIFUGO_PROPOSAL_SOURCE_DIR: ${{ github.workspace }}/_fixture_centrifugo
+          GO_BIN: go
+          PHP_BIN: /usr/bin/php8.3
+        run: python3 -u tests/centrifugo-fail-closed-proposal.py

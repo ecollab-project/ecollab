@@ -1,0 +1,114 @@
+{
+  "phase": "3E",
+  "date_utc": "2026-10-22",
+  "parent_sha": "127fd08231861cd62be72dbc16d31a473794511f",
+  "production_access": false,
+  "application_code_changed": false,
+  "fixture": "real broker/Nginx/PHP-FPM ten workers/synthetic SQLite; local observations, not capacity proof",
+  "records": [
+    {
+      "run": "broker-local-final.log",
+      "scenario": "MEASURED controlled selected-recipient race",
+      "measurement": {
+        "opaque_prototype": false,
+        "commit_ack_to_hint_ms": 4.5291550000001735,
+        "post_revocation_delivery": true,
+        "resource_identifiers_exposed": true,
+        "private_activity_timing_exposed": true
+      }
+    },
+    {
+      "run": "broker-local-final.log",
+      "scenario": "MEASURED controlled selected-recipient race",
+      "measurement": {
+        "opaque_prototype": true,
+        "commit_ack_to_hint_ms": 4.063637999999628,
+        "post_revocation_delivery": true,
+        "resource_identifiers_exposed": false,
+        "private_activity_timing_exposed": true
+      }
+    },
+    {
+      "run": "broker-local-final.log",
+      "scenario": "OBSERVED proxy HTTP-503 outage",
+      "measurement": {
+        "milliseconds": 6501.1343739999975,
+        "state": "connected",
+        "refreshFailures": 1
+      }
+    },
+    {
+      "run": "broker-local-final.log",
+      "scenario": "MEASURED synthetic reconnect sample",
+      "measurement": {
+        "connections": 16,
+        "concurrency": 8,
+        "fpm_slots": 10,
+        "connect_p50_ms": 6.196906000001036,
+        "connect_p95_ms": 9.532461999999214,
+        "proxy_mean_ms": 0.8947849273681641,
+        "auth_queries": 16,
+        "errors": 0
+      }
+    },
+    {
+      "run": "proposal-local.log",
+      "scenario": "MEASURED custom fail-closed proposal",
+      "measurement": {
+        "fault": "proxy-outage",
+        "revocation_commit_ack_to_connection_close_ms": 4994.562518,
+        "state": "connecting",
+        "fixture_expiry_seconds": 5,
+        "callback_deadline_seconds": 1
+      }
+    },
+    {
+      "run": "proposal-local.log",
+      "scenario": "MEASURED custom fail-closed proposal",
+      "measurement": {
+        "fault": "proxy-timeout",
+        "revocation_commit_ack_to_connection_close_ms": 5997.192257000001,
+        "state": "connecting",
+        "fixture_expiry_seconds": 5,
+        "callback_deadline_seconds": 1
+      }
+    },
+    {
+      "run": "proposal-local.log",
+      "scenario": "MEASURED custom proposal policy-table failure",
+      "measurement": {
+        "fault_request_start_to_close_ms": 5004.29672
+      }
+    }
+  ],
+  "fixture_sha256": {
+    "tests/centrifugo-broker-regression.cjs": "08c6f92a3811a8d7fd72c73265252b9f45fde6d56dd730c06b95079ca4e5c535",
+    "tests/centrifugo-proxy-regression.py": "0e3a21c87e269e295a4115409e6322f26049e53607c1e3c55e73803b9393f6f0",
+    "tests/centrifugo-fail-closed-proposal.py": "dbea388868ddbe5085ad7817629cadd2a36500bbe4c1b5498c68180c81a5f5e3",
+    "tests/proposals/centrifugo-6.9.6-fail-closed.patch": "2c13252e55e99360bbdb8b9dd542e5c694096ac0520da5ffb008a5a640b4e44e"
+  },
+  "phpunit": {
+    "status": "PASS",
+    "tests": 25,
+    "assertions": 56
+  },
+  "phpstan": {
+    "status": "FAIL-existing-baseline",
+    "diagnostics": 13,
+    "introduced": 0
+  },
+  "r7": "REQUEST CHANGES",
+  "capacity_450": "UNVERIFIED",
+  "additional_local_regressions": {
+    "browser_adapter": "PASS",
+    "bounded_fanout_http_reuse": "PASS",
+    "python_syntax": "PASS",
+    "workflow_yaml": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "timing_boundaries": {
+    "selected_recipient_race": "SQL revocation HTTP acknowledgement -> SDK publication callback timestamp, excluding subsequent publisher HTTP response",
+    "custom_proxy_failure": "SQL account deactivation HTTP acknowledgement -> SDK connecting event, callback fault injected immediately after start",
+    "policy_table_failure": "fault injection HTTP request start -> SDK connecting event"
+  }
+}
