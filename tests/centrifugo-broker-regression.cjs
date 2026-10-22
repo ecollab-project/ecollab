@@ -76,8 +76,8 @@ async function main(){
   await control('restore');c=await connect(cookie);const hints=[];c.on('publication',x=>hints.push(x.data));
   assert.equal((await http('/select-delivery')).data.recipients,1);
   await control('remove-private');const commitAck=performance.now();
-  const arrived=once(c,'publication');assert.equal((await http('/publish-selected'+(opaque?'?opaque=1':''))).data.recipients,1);
-  const hint=(await arrived).data;const elapsed=performance.now()-commitAck;
+  const arrived=once(c,'publication').then(event=>({event,receivedAt:performance.now()}));assert.equal((await http('/publish-selected'+(opaque?'?opaque=1':''))).data.recipients,1);
+  const received=await arrived,hint=received.event.data;const elapsed=received.receivedAt-commitAck;
   assert.equal((await http('/deliver?event=1002')).data.recipients,0);
   assert.equal((await http('/messages',{cookie})).status,403);
   if(opaque){assert.deepEqual(Object.keys(hint).sort(),['event_id','type','v']);assert.match(hint.event_id,/^[A-Za-z0-9_-]{43}$/);assert.equal(hint.type,'inbox_changed');const retry=once(c,'publication');await http('/publish-selected?opaque=1');assert.deepEqual((await retry).data,hint,'Prototype retry ID must be stable');}
@@ -151,8 +151,8 @@ async function main(){
    fs.writeFileSync(process.env.TEST_COOKIE_FILE,cookie,{mode:0o600});
   }
   await control('restore');const cookie=await seed(),c=await connect(cookie);const closed=once(c,'connecting',15000),t=performance.now();
-  await control('db-outage');await closed;assert.notEqual(c.state,'connected');await rejected(make(cookie));
-  console.log('MEASURED custom proposal policy-table failure '+JSON.stringify({fault_request_start_to_close_ms:performance.now()-t}));
+  await control('db-outage');await closed;const elapsed=performance.now()-t;assert.notEqual(c.state,'connected');await rejected(make(cookie));
+  console.log('MEASURED custom proposal policy-table failure '+JSON.stringify({fault_request_start_to_close_ms:elapsed}));
   await control('db-restore');await control('restore');const recovered=await connect(cookie);assert.equal((await http('/messages',{cookie})).data.messages[0].content,'synthetic saved message');recovered.disconnect();c.disconnect();
  }
  else if(process.env.TEST_REFRESH_TRANSFORM){

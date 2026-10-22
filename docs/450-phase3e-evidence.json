@@ -11,7 +11,7 @@
       "scenario": "MEASURED controlled selected-recipient race",
       "measurement": {
         "opaque_prototype": false,
-        "commit_ack_to_hint_ms": 5.098195999999916,
+        "commit_ack_to_hint_ms": 4.5291550000001735,
         "post_revocation_delivery": true,
         "resource_identifiers_exposed": true,
         "private_activity_timing_exposed": true
@@ -22,7 +22,7 @@
       "scenario": "MEASURED controlled selected-recipient race",
       "measurement": {
         "opaque_prototype": true,
-        "commit_ack_to_hint_ms": 4.061815999999908,
+        "commit_ack_to_hint_ms": 4.063637999999628,
         "post_revocation_delivery": true,
         "resource_identifiers_exposed": false,
         "private_activity_timing_exposed": true
@@ -32,7 +32,7 @@
       "run": "broker-local-final.log",
       "scenario": "OBSERVED proxy HTTP-503 outage",
       "measurement": {
-        "milliseconds": 6501.232186000001,
+        "milliseconds": 6501.1343739999975,
         "state": "connected",
         "refreshFailures": 1
       }
@@ -44,9 +44,9 @@
         "connections": 16,
         "concurrency": 8,
         "fpm_slots": 10,
-        "connect_p50_ms": 7.543431999998575,
-        "connect_p95_ms": 14.46336700000029,
-        "proxy_mean_ms": 1.0897964239120483,
+        "connect_p50_ms": 6.196906000001036,
+        "connect_p95_ms": 9.532461999999214,
+        "proxy_mean_ms": 0.8947849273681641,
         "auth_queries": 16,
         "errors": 0
       }
@@ -56,7 +56,7 @@
       "scenario": "MEASURED custom fail-closed proposal",
       "measurement": {
         "fault": "proxy-outage",
-        "revocation_commit_ack_to_connection_close_ms": 5004.551953,
+        "revocation_commit_ack_to_connection_close_ms": 4994.562518,
         "state": "connecting",
         "fixture_expiry_seconds": 5,
         "callback_deadline_seconds": 1
@@ -67,7 +67,7 @@
       "scenario": "MEASURED custom fail-closed proposal",
       "measurement": {
         "fault": "proxy-timeout",
-        "revocation_commit_ack_to_connection_close_ms": 5997.2063530000005,
+        "revocation_commit_ack_to_connection_close_ms": 5997.192257000001,
         "state": "connecting",
         "fixture_expiry_seconds": 5,
         "callback_deadline_seconds": 1
@@ -77,12 +77,12 @@
       "run": "proposal-local.log",
       "scenario": "MEASURED custom proposal policy-table failure",
       "measurement": {
-        "fault_request_start_to_close_ms": 5015.073837000002
+        "fault_request_start_to_close_ms": 5004.29672
       }
     }
   ],
   "fixture_sha256": {
-    "tests/centrifugo-broker-regression.cjs": "756b22585aa6d4709fa87b18f0eab49d2a7676e65b3cb7396c10a2d2afbbb8cf",
+    "tests/centrifugo-broker-regression.cjs": "08c6f92a3811a8d7fd72c73265252b9f45fde6d56dd730c06b95079ca4e5c535",
     "tests/centrifugo-proxy-regression.py": "0e3a21c87e269e295a4115409e6322f26049e53607c1e3c55e73803b9393f6f0",
     "tests/centrifugo-fail-closed-proposal.py": "dbea388868ddbe5085ad7817629cadd2a36500bbe4c1b5498c68180c81a5f5e3",
     "tests/proposals/centrifugo-6.9.6-fail-closed.patch": "2c13252e55e99360bbdb8b9dd542e5c694096ac0520da5ffb008a5a640b4e44e"
@@ -105,5 +105,10 @@
     "python_syntax": "PASS",
     "workflow_yaml": "PASS",
     "git_diff_check": "PASS"
+  },
+  "timing_boundaries": {
+    "selected_recipient_race": "SQL revocation HTTP acknowledgement -> SDK publication callback timestamp, excluding subsequent publisher HTTP response",
+    "custom_proxy_failure": "SQL account deactivation HTTP acknowledgement -> SDK connecting event, callback fault injected immediately after start",
+    "policy_table_failure": "fault injection HTTP request start -> SDK connecting event"
   }
 }
