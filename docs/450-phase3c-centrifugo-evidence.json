@@ -120,5 +120,9 @@
     "ratchet_rejection_detection": "PASS",
     "premature_close_detection": "PASS",
     "retired_JWT_endpoint_calls": 0
+  },
+  "ci_dependency_setup": {
+    "initial_ingress_attempt": "BLOCKED \u2014 ten-minute cancellation in apt-get update before tests",
+    "correction": "Isolate signed Ubuntu package sources with bounded network timeouts; no test skipped"
   }
 }
