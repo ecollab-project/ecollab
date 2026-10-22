@@ -110,5 +110,15 @@
   "production_actions": [],
   "real_livekit_validation": "NOT RUN",
   "vps_capacity": "UNVERIFIED",
-  "ci": "Exact-head CI recorded separately in PR"
+  "ci": "Exact-head CI recorded separately in PR",
+  "k6_client_migration": {
+    "version": "2.3.0",
+    "scope": "Two synthetic VUs against local loopback mock; no application/production load test",
+    "plan_ratchet_diagnostics_contracts": "PASS",
+    "normal_smoke": "PASS",
+    "failed_write_detection": "PASS",
+    "ratchet_rejection_detection": "PASS",
+    "premature_close_detection": "PASS",
+    "retired_JWT_endpoint_calls": 0
+  }
 }
