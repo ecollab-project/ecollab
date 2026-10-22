@@ -1,0 +1,17 @@
+CREATE TABLE users(id INTEGER PRIMARY KEY,role VARCHAR(30),status VARCHAR(30),deleted_at VARCHAR(30),username VARCHAR(100),email VARCHAR(180));
+INSERT INTO users VALUES(1,'student','active',NULL,'student','student@example.invalid'),(2,'moderator','active',NULL,'mod','mod@example.invalid');
+CREATE TABLE servers(id INTEGER PRIMARY KEY,status VARCHAR(30),slug VARCHAR(100),type VARCHAR(30));
+INSERT INTO servers VALUES(1,'active','k6-20261022-120000-aabbccdd','private');
+CREATE TABLE server_members(server_id INTEGER,user_id INTEGER,server_role VARCHAR(30));
+INSERT INTO server_members VALUES(1,1,'member'),(1,2,'moderator');
+CREATE TABLE channels(id INTEGER PRIMARY KEY,server_id INTEGER,type VARCHAR(30),is_private INTEGER,is_locked INTEGER,created_by INTEGER);
+INSERT INTO channels VALUES(10,1,'voice',1,0,99);
+CREATE TABLE channel_members(channel_id INTEGER,user_id INTEGER);
+INSERT INTO channel_members VALUES(10,1);
+CREATE TABLE moderation_actions(target_user_id INTEGER,server_id INTEGER,action_type VARCHAR(30),is_active INTEGER,expires_at VARCHAR(30));
+CREATE TABLE dm_groups(id INTEGER PRIMARY KEY);
+INSERT INTO dm_groups VALUES(1);
+CREATE TABLE dm_group_members(group_id INTEGER,user_id INTEGER);
+INSERT INTO dm_group_members VALUES(1,1);
+CREATE TABLE dm_call_history(id INTEGER PRIMARY KEY,group_id INTEGER,caller_id INTEGER,callee_id INTEGER,status VARCHAR(30),started_at DATETIME);
+INSERT INTO dm_call_history VALUES(1,NULL,1,2,'answered',CURRENT_TIMESTAMP);

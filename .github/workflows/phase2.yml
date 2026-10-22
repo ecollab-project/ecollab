@@ -31,7 +31,7 @@ jobs:
         run: |
           set -e
           find API services scripts websocket tests -name '*.php' -print0 | xargs -0 -n1 php -l
-          for test in r7-authorization phase2-jarred phase2-livekit phase2-search phase2-websocket phase2-code-lab phase2-voice-action review-jarred-resource-access phase1-access phase1-temporary-voice phase1-peer-batch phase1-messages phase1-websocket; do php "tests/$test.php"; done
+          for test in livekit-admission r7-authorization phase2-jarred phase2-livekit phase2-search phase2-websocket phase2-code-lab phase2-voice-action review-jarred-resource-access phase1-access phase1-temporary-voice phase1-peer-batch phase1-messages phase1-websocket; do php "tests/$test.php"; done
           php vendor/bin/phpunit --testsuite Unit --stderr
           python3 tests/phase1-session.py
           python3 tests/phase2-jarred-http.py
@@ -47,6 +47,8 @@ jobs:
           php tests/phase2-mariadb.php
           php -r '$db=new PDO("mysql:host=127.0.0.1;port=3306","root","");$db->exec("CREATE DATABASE ecollab_r7_test");'
           R7_TEST_DSN="mysql:host=127.0.0.1;port=3306;dbname=ecollab_r7_test" php tests/r7-authorization.php
+          php -r '$db=new PDO("mysql:host=127.0.0.1;port=3306","root","");$db->exec("CREATE DATABASE ecollab_admission_test");'
+          ADMISSION_TEST_DSN="mysql:host=127.0.0.1;port=3306;dbname=ecollab_admission_test" php tests/livekit-admission.php
       - name: Client event, backoff and regression fixtures
         env:
           NODE_PATH: ${{ github.workspace }}/tools/chat-delivery/node_modules
@@ -55,3 +57,15 @@ jobs:
           npm run build --prefix tools/chat-delivery
           git diff --exit-code -- assets/js/chat/centrifugo-delivery.js assets/js/chat/centrifugo-delivery.NOTICES.txt
           for test in phase2-jarred-client phase2-polling code-lab-ui-regression centrifugo-client-regression livekit-voice-regression livekit-calls-regression notification-routing-regression; do node "tests/$test.cjs"; done
+
+  media-admission-ingress:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install disposable CI ingress dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y nginx php8.3-fpm php8.3-sqlite3
+      - name: Real Nginx and FPM authorization/outage fixture
+        run: python3 tests/livekit-admission-ingress.py
