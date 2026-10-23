@@ -4,7 +4,7 @@ on:
     branches: [ecollab-collabs, 'fix/realtime-throughput-*']
     paths: ['services/ChannelReadQueries.php', 'services/RealtimeDispatchMetrics.php', 'services/ChannelService.php', 'services/RealtimeOutbox.php', 'services/CentrifugoService.php', 'services/MessageService.php', 'scripts/realtime-worker.php', 'scripts/check-centrifugo.php', 'scripts/profile-chat-reads.php', 'services/ChatReadProfiler.php', 'tests/chat-read-profiler-regression.php', 'API/auth/realtime-token.php', 'API/dm/**', 'assets/js/chat/**', 'tools/chat-delivery/**', 'deploy/centrifugo/**', 'tests/centrifugo-*', 'database/migrations/052_realtime_outbox.sql', '.github/workflows/chat-delivery.yml']
   pull_request:
-    paths: ['services/ChannelReadQueries.php', 'services/RealtimeDispatchMetrics.php', 'services/ChannelService.php','services/ChatReadProfiler.php','tests/chat-read-profiler-regression.php','.github/workflows/chat-delivery.yml']
+    paths: ['API/dm/**', 'services/ChannelReadQueries.php', 'services/RealtimeDispatchMetrics.php', 'services/ChannelService.php','services/ChatReadProfiler.php','tests/chat-read-profiler-regression.php','.github/workflows/chat-delivery.yml']
   workflow_dispatch:
 jobs:
   delivery:
