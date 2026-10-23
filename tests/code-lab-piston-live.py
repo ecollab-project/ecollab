@@ -11,7 +11,7 @@ import urllib.request
 
 state=pathlib.Path(os.environ['CODE_LAB_RUNNER_STATE'])
 config=json.loads((state/'profiles.json').read_text())
-address='http://127.0.0.1:2358'
+address=os.environ.get('CODE_LAB_TEST_ADAPTER_URL','http://127.0.0.1:2358')
 env=dict(os.environ,CODE_LAB_JUDGE0_URL=address,CODE_LAB_JUDGE0_TOKEN=config['token'],CODE_LAB_LANGUAGE_IDS=json.dumps((dict(zip(['c','cpp','python','java','javascript'],[p['id']for p in config['profiles']])) | {'java':10006})))
 headers={'X-Auth-Token':config['token'],'Content-Type':'application/json'}
 for attempt in range(30):

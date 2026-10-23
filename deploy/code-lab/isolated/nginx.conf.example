@@ -16,6 +16,7 @@ server {
     # Recheck peer credentials on each TLS connection, including after CRL change.
     ssl_session_cache off;
     ssl_session_tickets off;
+    keepalive_timeout 0;
     limit_conn runner_clients 16;
     client_max_body_size 256k;
     client_body_buffer_size 256k;

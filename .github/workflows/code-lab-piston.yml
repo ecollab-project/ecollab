@@ -39,6 +39,9 @@ jobs:
     timeout-minutes: 20
     env:
       CODE_LAB_RUNNER_STATE: /tmp/ecollab-code-lab-ci
+      CODE_LAB_EXECUTION_SUBNET: 172.30.254.0/28
+      CODE_LAB_ADAPTER_IPV4: 172.30.254.3
+      CODE_LAB_TEST_ADAPTER_URL: http://172.30.254.3:2358
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
@@ -84,7 +87,7 @@ jobs:
         run: python3 -B tests/code-lab-isolated-live.py
       - name: Real remote protocol through mTLS gateway
         env:
-          CODE_LAB_TLS_UPSTREAM: 127.0.0.1:2358
+          CODE_LAB_TLS_UPSTREAM: 172.30.254.3:2358
           CODE_LAB_TLS_RESTART_ADAPTER: '1'
         run: python3 -B -u tests/code-lab-mtls-integration.py
       - name: Diagnostic status

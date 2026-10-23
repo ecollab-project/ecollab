@@ -3,7 +3,8 @@ import base64,json,os,pathlib,subprocess,time,urllib.request
 assert os.environ.get('GITHUB_ACTIONS')=='true', 'Resource probes are restricted to disposable CI'
 assert os.environ.get('DOCKER_HOST','unix:///var/run/docker.sock')=='unix:///var/run/docker.sock', 'Only owned local CI Docker allowed'
 config=json.loads(pathlib.Path(os.environ['CODE_LAB_RUNNER_STATE'],'profiles.json').read_text())
-address='http://127.0.0.1:2358';headers={'X-Auth-Token':config['token'],'Content-Type':'application/json'}
+address=os.environ['CODE_LAB_TEST_ADAPTER_URL'];assert address=='http://'+os.environ['CODE_LAB_ADAPTER_IPV4']+':2358'
+headers={'X-Auth-Token':config['token'],'Content-Type':'application/json'}
 def execute(source,language_id=10003):
  body={'language_id':language_id,'source_code':base64.b64encode(source.encode()).decode(),'stdin':'','enable_network':False}
  with urllib.request.urlopen(urllib.request.Request(address+'/submissions',data=json.dumps(body).encode(),headers=headers),timeout=3) as r:token=json.load(r)['token']

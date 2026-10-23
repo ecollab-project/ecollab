@@ -135,8 +135,14 @@ review. The legacy Compose tag remains unchanged outside the opt-in overlay.
 
 `deploy/code-lab/isolated/nginx.conf.example` is a native private-interface gateway
 with mandatory dedicated-client-CA authentication and CRL verification; TLS session
-resumption is disabled. It forwards only the existing language/submission/grading
-routes to loopback2358; package-management routes are not exposed. It bounds
+resumption and HTTP keepalive are disabled. Each new request rechecks TLS
+credentials; this does not establish an instantaneous in-flight revocation SLA.
+It forwards only the existing language/submission/grading
+routes to the adapter's reviewed private Docker bridge address on2358; neither
+container publishes ports. `execution.env.example` requires an unused private
+subnet and adapter address. The native Linux gateway reaches that address
+directly. Compose must support `!reset` to remove inherited ports; staging
+requires reviewed Compose2.24.4+. Package-management routes are not exposed. It bounds
 connections/body/deadlines, forbids upstream failover, and logs no raw requests,
 source, credentials or result tokens. `application.env.example` contains paths and
 placeholders only; no production or generated private keys are committed.
@@ -212,7 +218,7 @@ No Docker daemon or separately authorized execution VM is available locally.
 | Runtime package migration/provenance | **BLOCKED** until exact existing profiles/artifacts are audited and matched; no production package volume inspected |
 
 The mTLS fixture records12 authenticated GET/languages timings per mTLS/direct-
-loopback HTTP path and one known
+adapter HTTP path and one known
 Python-source request. Mock backend CPU is recorded as unavailable, not measured.
 Actual runtime CPU comes only from an actual backend response when CI uses Piston;
 memory, hostCPU/RAM, queue-wait time and mixed resource contention remain unmeasured
@@ -265,3 +271,17 @@ Final verdicts: transport implementation testable; repository functionality
 regressions subject to exact-head CI; **Code Lab remote isolation BLOCKED** pending
 actual independent-host/network/package proof and accepted cross-student threat
 model. R7 remains REQUEST CHANGES.450-user capacity remains UNVERIFIED.
+
+## Initial CI defect and correction
+
+At initial head `5771967f4e436ec97b312ad2275648d9632dc951`, the protocol job
+passed, but real sandbox CI failed readiness because the inherited published
+loopback port was unreachable on the internal Docker network. This was an
+introduced configuration failure, not a successful runtime test. The correction
+removes port publication and routes the native gateway directly to a configured
+private adapter bridge address. Internal-only networking remains enforced and
+all real compiler/resource tests remain enabled. Exact corrected-head outcomes
+are reported in PR75; independent-host evidence remains BLOCKED.
+
+Docker references: [internal networking and host reachability](https://docs.docker.com/engine/network/port-publishing/)
+and [Compose merge/reset semantics](https://docs.docker.com/reference/compose-file/merge/).

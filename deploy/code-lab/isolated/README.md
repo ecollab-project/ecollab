@@ -38,12 +38,15 @@ Preparation gates (separate authorization required before doing any of this):
    `scripts/setup-code-lab-piston.sh`: it assumes a colocated app, changes app
    configuration and installs services. It is not this deployment procedure.
 4. Render `nginx.conf.example` with a verified private listen address/port, local
-   adapter127.0.0.1:2358 and a gateway-only TLS directory. Keep TLS keys out of
+   adapter address `CODE_LAB_ADAPTER_IPV4:2358` and a gateway-only TLS directory.
+   Choose a nonoverlapping private subnet/address using `execution.env.example`;
+   the native Linux gateway reaches the internal bridge address directly. Keep TLS keys out of
    container mounts. No public/alternate/IPv6 listener may bypass mTLS.
 5. Review the **effective** configuration produced by both Compose files:
    `deploy/code-lab/piston/compose.yml` and `compose.isolated.yml`. Their shared
-   execution network is internal; Piston is unpublished; the adapter is loopback
-   only. The overlay intentionally retains privilegedPiston and existing quotas.
+   execution network is internal; neither Piston nor the adapter publishes ports.
+   Use a reviewed Compose2.24.4+ installation supporting the `!reset` merge tag
+   to remove inherited adapter port publication. The overlay intentionally retains privilegedPiston and existing quotas.
    It adds a bounded512MiB isolate scratch tmpfs; this is defense in depth, not
    an escape-proof host boundary. Runtime artifact preparation precedes the
    offline network. Bootstrap egress must never be left enabled during execution.

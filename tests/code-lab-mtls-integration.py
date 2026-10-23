@@ -1,7 +1,7 @@
 """Disposable real Nginx mTLS -> real adapter -> mock backend, or explicit CI Piston.
 No student source is executed locally. Private keys never leave this temp directory.
 """
-import base64, importlib.util, json, os, pathlib, pwd, shutil, socket, subprocess, tempfile, threading, time
+import base64, http.client, importlib.util, ipaddress, json, os, pathlib, pwd, shutil, socket, ssl, subprocess, tempfile, threading, time
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 PHP=os.environ.get('PHP_BIN','php');NGINX=os.environ.get('NGINX_BIN') or shutil.which('nginx')
 assert NGINX, 'Actual Nginx required; do not silently skip mTLS tests'
@@ -49,7 +49,8 @@ keyUsage=digitalSignature,keyEncipherment
     upstream=os.environ.get('CODE_LAB_TLS_UPSTREAM')
     fixture=None;seen=[]
     if upstream:
-        assert upstream=='127.0.0.1:2358', 'Only explicit CI loopback adapter supported'
+        assert os.environ.get('GITHUB_ACTIONS')=='true' and upstream==os.environ['CODE_LAB_ADAPTER_IPV4']+':2358', 'Only explicitly owned CI adapter supported'
+        assert ipaddress.ip_address(os.environ['CODE_LAB_ADAPTER_IPV4']).is_private
         config=json.loads(pathlib.Path(os.environ['CODE_LAB_RUNNER_STATE'],'profiles.json').read_text())
     else:
         config={'token':'fixture-bearer-'*5,'profiles':[{'id':10001+i,'name':name,'language':lang,'filename':filename,'version':'1.2.3'} for i,(name,lang,filename) in enumerate([('C','c','main.c'),('C++','c++','main.cpp'),('Python','python','main.py'),('Java','java','Main.java'),('JavaScript','javascript','main.js'),('Compiled Java','ecollab-java-compiled','Main.java')])]}
@@ -87,6 +88,10 @@ keyUsage=digitalSignature,keyEncipherment
     queued=None
     try:
         start()
+        context=ssl.create_default_context(cafile=str(p/'server-ca.crt'));context.load_cert_chain(str(p/'client.crt'),str(p/'client.key'))
+        persistent=http.client.HTTPSConnection('127.0.0.1',port,context=context,timeout=3)
+        persistent.request('GET','/languages',headers={'X-Auth-Token':config['token'],'Connection':'keep-alive'})
+        response=persistent.getresponse();assert response.status==200 and response.getheader('Connection').lower()=='close';response.read();persistent.close()
         profiles=json.loads(php('echo json_encode((new CodeLabRunner())->request("GET","/languages"));'))
         assert {v['id'] for v in profiles}=={v['id'] for v in config['profiles']}
         for changes in [
@@ -154,7 +159,7 @@ except (ssl.SSLError,urllib.error.URLError):pass
             assert all('expected_output' not in body and 'enable_network' not in body for _,body in seen)
         report={'fixture':'actual Nginx mTLS + PHP cURL + '+('actual Piston adapter' if os.environ.get('CODE_LAB_TLS_UPSTREAM') else 'real adapter with mocked backend; no source execution'),
             'language_profiles':len(profiles),'transport_samples':len(latencies),'transport_p50_ms':sorted(latencies)[5],
-            'transport_p95_ms':max(latencies),'direct_loopback_http_p50_ms':sorted(baseline)[5],'direct_loopback_http_p95_ms':max(baseline),
+            'transport_p95_ms':max(latencies),'direct_adapter_http_p50_ms':sorted(baseline)[5],'direct_adapter_http_p95_ms':max(baseline),
             'median_gateway_plus_tls_increment_ms':sorted(latencies)[5]-sorted(baseline)[5],'unexpected_positive_probe_errors':0,'known_python_request_end_to_end_ms':execution_ms,'runtime_cpu_seconds':result.get('time') if os.environ.get('CODE_LAB_TLS_UPSTREAM') else None,
             'runtime_memory':result.get('memory'),'queue_wait_ms':None,'host_cpu_memory':None,
             'unauthorized_wrong_ca_hostname_plaintext_revoked_and_unavailable':'PASS','separate_kernel_isolation':'BLOCKED'}
