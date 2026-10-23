@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/RealtimeDispatchMetrics.php';
+require_once __DIR__.'/AccessPolicy.php';
 
 final class RealtimeOutbox
 {
@@ -50,6 +51,7 @@ final class RealtimeOutbox
                 JOIN users u ON u.id=gm.user_id AND u.deleted_at IS NULL
                 WHERE m.id=:mid AND gm.group_id=:target AND m.is_deleted=0';
         } else { throw new InvalidArgumentException('Unknown delivery kind'); }
+        if($event['kind']==='dm') $sql="SELECT eligible.id FROM ($sql) eligible JOIN users recipient ON recipient.id=eligible.id WHERE ".AccessPolicy::accountSql('recipient');
         $params=[':mid'=>$id,':target'=>$target];
         if($event['kind']==='channel')$params+=[':admin_mid'=>$id,':admin_target'=>$target];
         $stmt=$db->prepare($sql);$stmt->execute($params);
@@ -72,7 +74,7 @@ final class RealtimeOutbox
             } catch(Throwable $e) {
                 $delay=min(60,2 ** min(6,(int)$event['attempts']));
                 $timed('retry',fn()=>$db->prepare("UPDATE realtime_outbox SET attempts=attempts+1,available_at=DATE_ADD(NOW(),INTERVAL $delay SECOND),last_error='Delivery unavailable' WHERE id=?")->execute([$event['id']]));
-                error_log('[Realtime delivery] Event '.(int)$event['id'].' deferred; retry in '.$delay.' seconds');
+                error_log('[Realtime delivery] deferred; retry in '.$delay.' seconds');
             }finally{$metrics?->outcome($success,$recipientCount);}
         }
         return $sent;

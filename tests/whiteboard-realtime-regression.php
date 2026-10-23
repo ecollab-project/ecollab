@@ -7,7 +7,7 @@ require_once __DIR__.'/../websocket/handlers/WhiteboardHandler.php';
 $db=new PDO($dsn,'root',getenv('COLLABORA_TEST_PASSWORD')?:'',[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_EMULATE_PREPARES=>false]);
 (new ReflectionProperty(Database::class,'instance'))->setValue(null,$db);
 function check(bool $ok,string $label):void{if(!$ok)throw new RuntimeException($label);echo "PASS: $label\n";}
-foreach(['collab_whiteboards','collab_resource_permissions','collab_workspace_members','collab_workspaces','server_members','servers','users'] as $table)$db->exec('DROP TABLE IF EXISTS '.$table);
+foreach(['moderation_actions','collab_whiteboards','collab_resource_permissions','collab_workspace_members','collab_workspaces','server_members','servers','users'] as $table)$db->exec('DROP TABLE IF EXISTS '.$table);
 $db->exec('CREATE TABLE users(id INT PRIMARY KEY,status VARCHAR(20),deleted_at DATETIME NULL); INSERT INTO users VALUES(1,"active",NULL),(2,"offline",NULL),(3,"active",NULL);
 CREATE TABLE servers(id INT PRIMARY KEY,status VARCHAR(20)); INSERT INTO servers VALUES(5,"active");
 CREATE TABLE server_members(server_id INT,user_id INT); INSERT INTO server_members VALUES(5,1),(5,2);
@@ -15,6 +15,7 @@ CREATE TABLE collab_workspaces(id INT PRIMARY KEY,server_id INT,channel_id INT,h
 CREATE TABLE collab_workspace_members(workspace_id INT,user_id INT,role VARCHAR(20));
 CREATE TABLE collab_resource_permissions(resource_type VARCHAR(20),resource_id INT,workspace_id INT,user_id INT,permission VARCHAR(20));
 CREATE TABLE collab_whiteboards(id INT PRIMARY KEY,workspace_id INT,visibility VARCHAR(20),public_permission VARCHAR(20),created_by INT); INSERT INTO collab_whiteboards VALUES(10,2,"public","edit",1)');
+$db->exec('CREATE TABLE moderation_actions(target_user_id INT,server_id INT NULL,action_type VARCHAR(20),is_active INT,expires_at DATETIME NULL)');
 $handler=new WhiteboardHandler();
 check($handler->authorize(20,2,10)['permission']==='edit','workspace board accessible without chat membership');
 check($handler->authorize(21,2,10)===null,'wrong channel cannot reuse a board grant');

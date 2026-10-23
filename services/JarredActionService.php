@@ -2,6 +2,8 @@
 declare(strict_types=1);
 require_once dirname(__DIR__) . '/database/config/db.php';
 require_once dirname(__DIR__) . '/services/TemporaryVoiceService.php';
+require_once __DIR__.'/DocumentAccessService.php';
+require_once __DIR__.'/ChannelAccessService.php';
 
 final class JarredActionService
 {
@@ -50,29 +52,32 @@ final class JarredActionService
         if ($documentId>0 && preg_match('/\b(?:document|doc|file)\b/i',$text)) {
             $s=$this->db->prepare("SELECT d.id,d.title,d.workspace_id FROM collab_documents d JOIN collab_workspaces w ON w.id=d.workspace_id JOIN channels c ON c.id=w.channel_id JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid WHERE d.id=:did AND c.server_id=:sid LIMIT 1");
             $s->execute([':uid'=>$userId,':did'=>$documentId,':sid'=>$serverId]);
-            if($r=$s->fetch(PDO::FETCH_ASSOC)) return ['reply'=>'Opening '.($r['title']?:'the document').'.','action'=>['type'=>'open_document','document_id'=>(int)$r['id'],'workspace_id'=>(int)$r['workspace_id']]];
+            if($r=$s->fetch(PDO::FETCH_ASSOC)) {
+                try { DocumentAccessService::get($this->db,(int)$r['id'],$userId); }
+                catch(RuntimeException $e) { if(in_array($e->getCode(),[403,404],true))return null;throw $e; }
+                return ['reply'=>'Opening '.($r['title']?:'the document').'.','action'=>['type'=>'open_document','document_id'=>(int)$r['id'],'workspace_id'=>(int)$r['workspace_id']]];
+            }
         }
 
         $whiteboardId=(int)($surface['whiteboard_id']??0);
         if ($whiteboardId>0 && preg_match('/\b(?:whiteboard|board)\b/i',$text)) {
-            $s=$this->db->prepare("SELECT b.id,b.title,b.workspace_id FROM collab_whiteboards b JOIN collab_workspaces w ON w.id=b.workspace_id JOIN channels c ON c.id=w.channel_id JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid WHERE b.id=:bid AND c.server_id=:sid LIMIT 1");
+            $s=$this->db->prepare("SELECT b.id,b.title,b.workspace_id,w.channel_id FROM collab_whiteboards b JOIN collab_workspaces w ON w.id=b.workspace_id JOIN channels c ON c.id=w.channel_id JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid WHERE b.id=:bid AND c.server_id=:sid LIMIT 1");
             $s->execute([':uid'=>$userId,':bid'=>$whiteboardId,':sid'=>$serverId]);
-            if($r=$s->fetch(PDO::FETCH_ASSOC)) return ['reply'=>'Opening '.($r['title']?:'the whiteboard').'.','action'=>['type'=>'open_whiteboard','whiteboard_id'=>(int)$r['id'],'workspace_id'=>(int)$r['workspace_id']]];
+            if(($r=$s->fetch(PDO::FETCH_ASSOC)) && CoworkspaceService::resolveWhiteboardAccess($this->db,(int)$r['id'],(int)$r['channel_id'],$userId))
+                return ['reply'=>'Opening '.($r['title']?:'the whiteboard').'.','action'=>['type'=>'open_whiteboard','whiteboard_id'=>(int)$r['id'],'workspace_id'=>(int)$r['workspace_id']]];
         }
 
         $channelId=(int)($surface['channel_id']??0);
         if ($channelId>0 && preg_match('/\bchannel\b/i',$text)) {
-            $s=$this->db->prepare("SELECT c.id,c.slug,c.name,c.type FROM channels c JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid WHERE c.id=:cid AND c.server_id=:sid AND (c.is_private=0 OR c.created_by=:uid2 OR EXISTS(SELECT 1 FROM channel_members cm WHERE cm.channel_id=c.id AND cm.user_id=:uid3)) LIMIT 1");
-            $s->execute([':uid'=>$userId,':cid'=>$channelId,':sid'=>$serverId,':uid2'=>$userId,':uid3'=>$userId]);
-            if($r=$s->fetch(PDO::FETCH_ASSOC)) return ['reply'=>'Opening #'.$r['name'].'.','action'=>['type'=>'open_channel','channel_id'=>(int)$r['id'],'channel_slug'=>$r['slug'],'channel_type'=>$r['type']]];
+            try {$r=(new ChannelAccessService($this->db))->read($channelId,$userId);}
+            catch(RuntimeException $e){if($e->getCode()===403)return null;throw $e;}
+            if((int)$r['server_id']===$serverId) return ['reply'=>'Opening #'.$r['name'].'.','action'=>['type'=>'open_channel','channel_id'=>(int)$r['id'],'channel_slug'=>$r['slug'],'channel_type'=>$r['type']]];
         }
         return null;
     }
 
     private function canAccessServer(int $userId,int $serverId): bool
     {
-        $s=$this->db->prepare("SELECT 1 FROM server_members WHERE server_id=? AND user_id=? LIMIT 1");
-        $s->execute([$serverId,$userId]);
-        return (bool)$s->fetchColumn();
+        return (new AccessPolicy($this->db))->server($userId,$serverId);
     }
 }

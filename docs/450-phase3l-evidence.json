@@ -1,0 +1,557 @@
+{
+  "source_base": "3b5983ba86ee1b0ba59b4cfa45d331b6f516a908",
+  "async_source": "19a8845665dc72d8bf4d062f634b25410fad9961",
+  "ci": "Pending publication; final exact-head record will be in draft PR",
+  "verdicts": {
+    "R7": "REQUEST CHANGES",
+    "Jarred": "PARTIAL/BLOCKED",
+    "CodeLab": "BLOCKED",
+    "450": "UNVERIFIED"
+  },
+  "async-mariadb-http-2.log": "PASS unauthenticated submission denied\nPASS forged CSRF denied\nPASS existing protected Code Lab surface policy retained\nPASS malformed fields safely rejected\nPASS malformed JSON safely rejected\nPASS disabled preference before source insertion\nPASS current account/conversation denial\nPASS current account/conversation denial\nPASS current account/conversation denial\nPASS simultaneous same-conversation requests admit one\nPASS atomic source/job/outbox admission\nPASS HTTP admission never performs synchronous inference\nPASS unauthorized job retrieval denied\nPASS duplicate polling is read-only\nPASS duplicate polling is read-only\nPASS authorized cancellation\nPASS safe HTTP error for actual TCP before_enqueue\nPASS actual TCP before_enqueue leaves complete pair or nothing\nPASS safe HTTP error for actual TCP before_commit\nPASS actual TCP before_commit leaves complete pair or nothing\nPASS safe HTTP error for actual TCP after_commit\nPASS actual TCP after_commit leaves complete pair or nothing\nPASS ambiguous committed acknowledgment never encourages blind replay\nPASS SQL diagnostic marker never reaches HTTP\nPASS client disconnect retains durable admission\nPASS existing queue saturation bound enforced\nPASS worker fixture source queued\nPASS real worker reached HTTP inference\nPASS fresh singleton worker recovers claim\nPASS one persisted assistant response after inference crash/retry\nPASS completed job not replayed by duplicate worker invocation\nPASS provider failure fixture queued outage\nPASS safe worker failure accounting outage\nPASS safe worker failure accounting outage\nPASS safe worker failure accounting outage\nPASS no persisted partial/invalid reply outage\nPASS provider failure fixture queued incomplete\nPASS safe worker failure accounting incomplete\nPASS safe worker failure accounting incomplete\nPASS safe worker failure accounting incomplete\nPASS no persisted partial/invalid reply incomplete\nPASS provider failure fixture queued malformed\nPASS safe worker failure accounting malformed\nPASS safe worker failure accounting malformed\nPASS safe worker failure accounting malformed\nPASS no persisted partial/invalid reply malformed\nPASS provider failure fixture queued timeout\nPASS safe worker failure accounting timeout\nPASS safe worker failure accounting timeout\nPASS safe worker failure accounting timeout\nPASS no persisted partial/invalid reply timeout\nPASS human DM behavior retained\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":1.54}\nPASS no reply after cancel\nPASS terminal policy state cancel\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0.42}\n[jarred_worker] failed\nPASS no reply after source_deleted\nPASS terminal policy state source_deleted\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0.33}\n[jarred_worker] failed\nPASS no reply after conversation_removed\nPASS terminal policy state conversation_removed\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0.44}\n[jarred_worker] failed\nPASS no reply after suspended\nPASS terminal policy state suspended\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0.56}\n[jarred_worker] failed\nPASS no reply after account_deleted\nPASS terminal policy state account_deleted\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0.49}\n[jarred_worker] failed\nPASS no reply after disabled\nPASS terminal policy state disabled\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0.44}\n[jarred_worker] failed\nPASS no reply after server_removed\nPASS terminal policy state server_removed\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0.54}\n[jarred_worker] failed\nPASS no reply after server_ban\nPASS terminal policy state server_ban\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0.55}\n[jarred_worker] failed\nPASS no reply after channel_removed\nPASS terminal policy state channel_removed\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0.43}\n[jarred_worker] failed\nPASS no reply after document_removed\nPASS terminal policy state document_removed\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":4.56}\n[jarred_worker] failed\nPASS no reply after stamp_changed\nPASS terminal policy state stamp_changed\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n[jarred_worker] retry\nPASS failed action rolls back effect\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":2}\nPASS one committed action effect\nPASS action reply committed\nPASS done job is not reexecuted\nPASS duplicate authorized status read\nPASS duplicate authorized status read\nPASS duplicate authorized status read\nPASS polling never inserts a reply\nPASS other account status denied\nPASS active DM recipient\nPASS suspended DM recipient excluded\nPASS MariaDB policy, action transaction and persistence contracts; no exactly-once inference claim\nPASS operational logs exclude synthetic secrets/prompts/provider bodies\nPASS actual MariaDB/HTTP admission, TCP commit ambiguity, CLI recovery and privacy matrix; model execution may repeat\n",
+  "migration.log": "VERSION 10.11.14-MariaDB-0ubuntu0.24.04.1\nREPRODUCED unchanged historical 025: MariaDB error1901\nPASS fresh upgrade/rerun/data preservation/archive/create/reactivation conflict\nPASS successful-old upgrade/rerun/data preservation/archive/create/reactivation conflict\nPASS partial-old-column upgrade/rerun/data preservation/archive/create/reactivation conflict\nPASS partial-slot upgrade/rerun/data preservation/archive/create/reactivation conflict\nPASS complete upgrade/rerun/data preservation/archive/create/reactivation conflict\nPASS duplicate actives rejected without archiving/deleting/merging\nPASS unknown ordinary partial slot rejected without data changes\nPASS parent cascade/delete, ownership and direct server-reference changes\nPASS concurrent create with winner commit\nPASS concurrent create with winner rollback\nPASS metadata-lock failure and retry; no partial DDL/data loss\nPASS actual legacy create SQL populates originating server\nPASS coworkspace authorized service read\nPASS actual runner absent ledger / supersession / dry-run / continuation / rerun / lost-ACK retry / checksum rejection\nPASS actual runner failed ledger / supersession / dry-run / continuation / rerun / lost-ACK retry / checksum rejection\nPASS actual runner successful ledger / supersession / dry-run / continuation / rerun / lost-ACK retry / checksum rejection\nPASS: explicit viewer overrides public edit\nPASS: private document excluded\nPASS: equivalent timestamp formats\nPASS: viewer token cannot write\nPASS: token bound to document\nPASS: viewer save rejected\nPASS: stale save rejected\nPASS: new version published\nPASS: previous version retained\nPASS: save timestamp matches metadata\nPASS: live downgrade honored\nPASS: old viewer token cannot upgrade\nPASS: removed server access honored\nPASS: suspended account denied despite membership\nPASS: expired token rejected\nPASS: file path confined to storage\nCollabora regression checks passed\nPASS: workspace board accessible without chat membership\nPASS: wrong channel cannot reuse a board grant\nPASS: non-server-member rejected\nPASS: live viewer downgrade prevents scene edits\nPASS: comment permission cannot replace canvas\nPASS: private board requires grant\nPASS: explicit private board editor accepted\nPASS: board grant cannot bypass private workspace\nPASS: workspace member with board grant accepted\nPASS: revoked server membership takes effect\nPASS: suspended account rejected\nWhiteboard realtime regression checks passed\nPASS existing Collabora and whiteboard database regression suites\nFIXTURE_STOP_DATABASE\nFIXTURE_START_DATABASE\nPASS actual database daemon failure/restart/retry preserves records\nALL coworkspace migration checks passed\n",
+  "phpunit.log": "PHPUnit 10.5.64 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.6\nConfiguration: /workspace/scratch/ec6b48439e5d/phase3l-async/phpunit.xml\n\n.........................                                         25 / 25 (100%)\n\nTime: 00:00.007, Memory: 10.00 MB\n\nOK (25 tests, 56 assertions)\n",
+  "static_analysis": {
+    "totals": {
+      "errors": 0,
+      "file_errors": 15
+    },
+    "files": {
+      "/workspace/scratch/ec6b48439e5d/phase3l-async/API/auth/send-otp.php": {
+        "errors": 1,
+        "messages": [
+          {
+            "message": "Constant MAIL_FROM not found.",
+            "line": 56,
+            "ignorable": true,
+            "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols",
+            "identifier": "constant.notFound"
+          }
+        ]
+      },
+      "/workspace/scratch/ec6b48439e5d/phase3l-async/services/CodeLabExecutionService.php": {
+        "errors": 2,
+        "messages": [
+          {
+            "message": "Variable $score might not be defined.",
+            "line": 143,
+            "ignorable": true,
+            "identifier": "variable.undefined"
+          },
+          {
+            "message": "Variable $score might not be defined.",
+            "line": 143,
+            "ignorable": true,
+            "identifier": "variable.undefined"
+          }
+        ]
+      },
+      "/workspace/scratch/ec6b48439e5d/phase3l-async/services/WebPushService.php": {
+        "errors": 3,
+        "messages": [
+          {
+            "message": "Instantiated class Minishlink\\WebPush\\WebPush not found.",
+            "line": 70,
+            "ignorable": true,
+            "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols",
+            "identifier": "class.notFound"
+          },
+          {
+            "message": "Call to method sendOneNotification() on an unknown class Minishlink\\WebPush\\WebPush.",
+            "line": 71,
+            "ignorable": true,
+            "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols",
+            "identifier": "class.notFound"
+          },
+          {
+            "message": "Call to static method create() on an unknown class Minishlink\\WebPush\\Subscription.",
+            "line": 71,
+            "ignorable": true,
+            "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols",
+            "identifier": "class.notFound"
+          }
+        ]
+      },
+      "/workspace/scratch/ec6b48439e5d/phase3l-async/websocket/ChatServer.php": {
+        "errors": 8,
+        "messages": [
+          {
+            "message": "Ignored error pattern #Access to an undefined property Ratchet\\\\ConnectionInterface::\\$resourceId# in path /workspace/scratch/ec6b48439e5d/phase3l-async/websocket/ChatServer.php is expected to occur 9 times, but occurred 15 times.",
+            "line": 65,
+            "ignorable": false,
+            "identifier": "ignore.count"
+          },
+          {
+            "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+            "line": 424,
+            "ignorable": true,
+            "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+            "identifier": "property.notFound"
+          },
+          {
+            "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+            "line": 426,
+            "ignorable": true,
+            "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+            "identifier": "property.notFound"
+          },
+          {
+            "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+            "line": 435,
+            "ignorable": true,
+            "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+            "identifier": "property.notFound"
+          },
+          {
+            "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+            "line": 447,
+            "ignorable": true,
+            "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+            "identifier": "property.notFound"
+          },
+          {
+            "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+            "line": 455,
+            "ignorable": true,
+            "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+            "identifier": "property.notFound"
+          },
+          {
+            "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+            "line": 463,
+            "ignorable": true,
+            "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+            "identifier": "property.notFound"
+          },
+          {
+            "message": "Call to private method persistDirtyCodeSessions() of class ChatServer.",
+            "line": 542,
+            "ignorable": true,
+            "identifier": "method.private"
+          }
+        ]
+      },
+      "/workspace/scratch/ec6b48439e5d/phase3l-async/websocket/bin/server.php": {
+        "errors": 1,
+        "messages": [
+          {
+            "message": "Call to private method persistDirtyCodeSessions() of class ChatServer.",
+            "line": 18,
+            "ignorable": true,
+            "identifier": "method.private"
+          }
+        ]
+      }
+    },
+    "errors": []
+  },
+  "local_attempts": {
+    "async_first": "FAILED harness did not intercept native prepared SQL; fixed without deleting assertions",
+    "async_second": "PASS full HTTP/CLI/matrix; before added legacy timezone fixture",
+    "async_third": "FAILED fixture environment enabled outbox without its schema; separated fixtures",
+    "async_final": "See complete verified stdout below"
+  },
+  "async_verified_stdout": "VERIFIED MariaDB 10.11.14-MariaDB-0ubuntu0.24.04.1\nPASS unauthenticated submission denied\nPASS forged CSRF denied\nPASS existing protected Code Lab surface policy retained\nPASS malformed fields safely rejected\nPASS malformed JSON safely rejected\nPASS disabled preference before source insertion\nPASS current account/conversation denial\nPASS current account/conversation denial\nPASS current account/conversation denial\nPASS simultaneous same-conversation requests admit one\nPASS atomic source/job/outbox admission\nPASS HTTP admission never performs synchronous inference\nPASS unauthorized job retrieval denied\nPASS duplicate polling is read-only\nPASS duplicate polling is read-only\nPASS authorized cancellation\nPASS safe HTTP error for actual TCP before_enqueue\nPASS actual TCP before_enqueue leaves complete pair or nothing\nPASS safe HTTP error for actual TCP before_commit\nPASS actual TCP before_commit leaves complete pair or nothing\nPASS safe HTTP error for actual TCP after_commit\nPASS actual TCP after_commit leaves complete pair or nothing\nPASS ambiguous committed acknowledgment never encourages blind replay\nPASS SQL diagnostic marker never reaches HTTP\nPASS client disconnect retains durable admission\nPASS existing queue saturation bound enforced\nPASS worker fixture source queued\nPASS real worker reached HTTP inference\nPASS fresh singleton worker recovers claim\nPASS one persisted assistant response after inference crash/retry\nPASS completed job not replayed by duplicate worker invocation\nPASS provider failure fixture queued outage\nPASS safe worker failure accounting outage\nPASS safe worker failure accounting outage\nPASS safe worker failure accounting outage\nPASS no persisted partial/invalid reply outage\nPASS provider failure fixture queued incomplete\nPASS safe worker failure accounting incomplete\nPASS safe worker failure accounting incomplete\nPASS safe worker failure accounting incomplete\nPASS no persisted partial/invalid reply incomplete\nPASS provider failure fixture queued malformed\nPASS safe worker failure accounting malformed\nPASS safe worker failure accounting malformed\nPASS safe worker failure accounting malformed\nPASS no persisted partial/invalid reply malformed\nPASS provider failure fixture queued timeout\nPASS safe worker failure accounting timeout\nPASS safe worker failure accounting timeout\nPASS safe worker failure accounting timeout\nPASS no persisted partial/invalid reply timeout\nPASS human DM behavior retained\nPASS safe exception allowlist 400\nPASS safe exception allowlist 403\nPASS safe exception allowlist 409\nPASS safe exception allowlist 503\nPASS safe exception allowlist 0\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":1.08}\nPASS no reply after cancel\nPASS terminal policy state cancel\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0.3}\n[jarred_worker] failed\nPASS no reply after source_deleted\nPASS terminal policy state source_deleted\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0.25}\n[jarred_worker] failed\nPASS no reply after conversation_removed\nPASS terminal policy state conversation_removed\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0.51}\n[jarred_worker] failed\nPASS no reply after suspended\nPASS terminal policy state suspended\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0.4}\n[jarred_worker] failed\nPASS no reply after account_deleted\nPASS terminal policy state account_deleted\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0.4}\n[jarred_worker] failed\nPASS no reply after disabled\nPASS terminal policy state disabled\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0.3}\n[jarred_worker] failed\nPASS no reply after server_removed\nPASS terminal policy state server_removed\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0.23}\n[jarred_worker] failed\nPASS no reply after server_ban\nPASS terminal policy state server_ban\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0.29}\n[jarred_worker] failed\nPASS no reply after channel_removed\nPASS terminal policy state channel_removed\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0.39}\n[jarred_worker] failed\nPASS no reply after document_removed\nPASS terminal policy state document_removed\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":3.37}\n[jarred_worker] failed\nPASS no reply after stamp_changed\nPASS terminal policy state stamp_changed\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n[jarred_worker] retry\nPASS failed action rolls back effect\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":2}\nPASS one committed action effect\nPASS action reply committed\nPASS done job is not reexecuted\nPASS duplicate authorized status read\nPASS duplicate authorized status read\nPASS duplicate authorized status read\nPASS polling never inserts a reply\nPASS other account status denied\nPASS active DM recipient\nPASS suspended DM recipient excluded\nPASS MariaDB policy, action transaction and persistence contracts; no exactly-once inference claim\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n[jarred_worker] retry\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":2}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0.81}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n[jarred_worker] retry\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":2}\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":2}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n[jarred_worker] failed\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":1860,\"attempt\":1}\n[jarred_worker] failed\n{\"metric\":\"jarred_queue\",\"age_seconds\":0,\"attempt\":1}\n{\"metric\":\"jarred_inference\",\"duration_ms\":0}\n{\"metric\":\"jarred_queue\",\"age_seconds\":1860,\"attempt\":1}\n[jarred_worker] failed\nPASS Jarred admission, atomic source/job, retry checkpoint, action rollback, cancellation fencing, recovery, ownership and preferences\nPASS worker refuses a missing common lock without a temp fallback\nPASS operational logs exclude synthetic secrets/prompts/provider bodies\nPASS actual MariaDB/HTTP admission, TCP commit ambiguity, CLI recovery and privacy matrix; model execution may repeat\n",
+  "regressions": {
+    "ui": [
+      {
+        "command": "node tests/settings-runtime-browser.cjs",
+        "exit": 1,
+        "seconds": 0.12,
+        "log": "ui-0.log"
+      },
+      {
+        "command": "node tests/learning-workspace-ui-regression.cjs",
+        "exit": 0,
+        "seconds": 3.79,
+        "log": "ui-1.log"
+      },
+      {
+        "command": "node tests/code-lab-ui-regression.cjs",
+        "exit": 0,
+        "seconds": 1.07,
+        "log": "ui-2.log"
+      },
+      {
+        "command": "node tests/chat-timeline-regression.cjs",
+        "exit": 0,
+        "seconds": 0.77,
+        "log": "ui-3.log"
+      },
+      {
+        "command": "node tests/notification-routing-regression.cjs",
+        "exit": 0,
+        "seconds": 0.72,
+        "log": "ui-4.log"
+      },
+      {
+        "command": "node tests/centrifugo-client-regression.cjs",
+        "exit": 1,
+        "seconds": 0.06,
+        "log": "ui-5.log"
+      },
+      {
+        "command": "node tests/whiteboard-socket-regression.cjs",
+        "exit": 0,
+        "seconds": 0.11,
+        "log": "ui-6.log"
+      },
+      {
+        "command": "node tests/code-lab-integrity-regression.cjs",
+        "exit": 0,
+        "seconds": 0.72,
+        "log": "ui-7.log"
+      },
+      {
+        "command": "node tests/yjs-channel-presence-regression.cjs",
+        "exit": 1,
+        "seconds": 0.57,
+        "log": "ui-8.log"
+      },
+      {
+        "command": "node tests/chat-composer-regression.cjs",
+        "exit": 1,
+        "seconds": 0.11,
+        "log": "ui-9.log"
+      }
+    ],
+    "protocol": [
+      {
+        "command": "python3 -B tests/code-lab-private-backend-test.py",
+        "exit": 0,
+        "seconds": 0.68,
+        "log": "protocol-0.log"
+      },
+      {
+        "command": "python3 -B -u tests/code-lab-mtls-integration.py",
+        "exit": 0,
+        "seconds": 3.81,
+        "log": "protocol-1.log"
+      },
+      {
+        "command": "node tests/code-lab-piston-batch.cjs",
+        "exit": 0,
+        "seconds": 0.26,
+        "log": "protocol-2.log"
+      },
+      {
+        "command": "python3 -B tests/code-lab-piston-test.py",
+        "exit": 0,
+        "seconds": 4.18,
+        "log": "protocol-3.log"
+      }
+    ],
+    "ai": [
+      {
+        "command": "node tests/jarred-governance-http.cjs",
+        "exit": 0,
+        "seconds": 0.27,
+        "log": "ai-0.log"
+      },
+      {
+        "command": "node tests/jarred-governance-lock.cjs",
+        "exit": 0,
+        "seconds": 0.16,
+        "log": "ai-1.log"
+      },
+      {
+        "command": "node tests/shared-ai-provider.cjs",
+        "exit": 0,
+        "seconds": 1.9,
+        "log": "ai-2.log"
+      },
+      {
+        "command": "node tests/jarred-provider-regression.cjs",
+        "exit": 0,
+        "seconds": 0.17,
+        "log": "ai-3.log"
+      },
+      {
+        "command": "node tests/jarred-session-race.cjs",
+        "exit": 0,
+        "seconds": 1.07,
+        "log": "ai-4.log"
+      },
+      {
+        "command": "node tests/realtime-settings-regression.cjs",
+        "exit": 0,
+        "seconds": 0.92,
+        "log": "ai-5.log"
+      },
+      {
+        "command": "node tests/request-security-regression.cjs",
+        "exit": 0,
+        "seconds": 0.49,
+        "log": "ai-6.log"
+      }
+    ],
+    "database": [
+      {
+        "test": "rate-limit-concurrency.php",
+        "exit": 0
+      },
+      {
+        "test": "settings-migration-regression.php",
+        "exit": 0
+      },
+      {
+        "test": "book-events-regression.php",
+        "exit": 0
+      },
+      {
+        "test": "collabora-regression.php",
+        "exit": 0
+      },
+      {
+        "test": "whiteboard-realtime-regression.php",
+        "exit": 0
+      },
+      {
+        "test": "migration-rerun-regression.php",
+        "exit": 0
+      },
+      {
+        "test": "centrifugo-database-regression.php",
+        "exit": 255
+      },
+      {
+        "test": "chat-read-profiler-regression.php",
+        "exit": 0
+      },
+      {
+        "test": "load-test-fixture-regression.php",
+        "exit": 0
+      }
+    ],
+    "php": [
+      {
+        "command": "php tests/whiteboard-presence-regression.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-0.log"
+      },
+      {
+        "command": "php tests/book-events-regression.php",
+        "exit": 1,
+        "seconds": 0.06,
+        "log": "php-1.log"
+      },
+      {
+        "command": "php tests/centrifugo-database-regression.php",
+        "exit": 255,
+        "seconds": 0.06,
+        "log": "php-2.log"
+      },
+      {
+        "command": "php tests/system-capacity-regression.php",
+        "exit": 0,
+        "seconds": 0.06,
+        "log": "php-3.log"
+      },
+      {
+        "command": "php tests/code-lab-execution-regression.php",
+        "exit": 0,
+        "seconds": 0.07,
+        "log": "php-4.log"
+      },
+      {
+        "command": "php tests/learning-upgrades-regression.php",
+        "exit": 0,
+        "seconds": 0.06,
+        "log": "php-5.log"
+      },
+      {
+        "command": "php tests/chat-read-regression.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-6.log"
+      },
+      {
+        "command": "php tests/chat-tus-regression.php",
+        "exit": 0,
+        "seconds": 0.06,
+        "log": "php-7.log"
+      },
+      {
+        "command": "php tests/learning-tools-regression.php",
+        "exit": 0,
+        "seconds": 0.06,
+        "log": "php-8.log"
+      },
+      {
+        "command": "php tests/code-lab-regression.php",
+        "exit": 0,
+        "seconds": 0.07,
+        "log": "php-9.log"
+      },
+      {
+        "command": "php tests/whiteboard-realtime-regression.php",
+        "exit": 2,
+        "seconds": 0.03,
+        "log": "php-10.log"
+      },
+      {
+        "command": "php tests/whiteboard-scene-regression.php",
+        "exit": 0,
+        "seconds": 0.04,
+        "log": "php-11.log"
+      },
+      {
+        "command": "php tests/chat-upload-access-regression.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-12.log"
+      },
+      {
+        "command": "php tests/learning-workspace-regression.php",
+        "exit": 0,
+        "seconds": 0.07,
+        "log": "php-13.log"
+      },
+      {
+        "command": "php tests/notification-service-regression.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-14.log"
+      },
+      {
+        "command": "php tests/admin-workspace-regression.php",
+        "exit": 0,
+        "seconds": 0.52,
+        "log": "php-15.log"
+      },
+      {
+        "command": "php tests/color-palettes-regression.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-16.log"
+      },
+      {
+        "command": "php tests/admin-connected-regression.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-17.log"
+      },
+      {
+        "command": "php tests/collabora-regression.php",
+        "exit": 2,
+        "seconds": 0.03,
+        "log": "php-18.log"
+      },
+      {
+        "command": "php tests/peer-ml-regression.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-19.log"
+      },
+      {
+        "command": "php tests/client-ip-regression.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-20.log"
+      },
+      {
+        "command": "php tests/centrifugo-regression.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-21.log"
+      },
+      {
+        "command": "php tests/code-lab-batch-regression.php",
+        "exit": 0,
+        "seconds": 0.22,
+        "log": "php-22.log"
+      },
+      {
+        "command": "php tests/load-test-fixture-regression.php",
+        "exit": 255,
+        "seconds": 0.03,
+        "log": "php-23.log"
+      },
+      {
+        "command": "php tests/settings-runtime-regression.php",
+        "exit": 0,
+        "seconds": 0.04,
+        "log": "php-24.log"
+      },
+      {
+        "command": "php tests/chat-read-profiler-regression.php",
+        "exit": 255,
+        "seconds": 0.03,
+        "log": "php-25.log"
+      },
+      {
+        "command": "php tests/code-lab-server-queue.php",
+        "exit": 0,
+        "seconds": 0.07,
+        "log": "php-26.log"
+      },
+      {
+        "command": "php tests/code-lab-worker-pool.php",
+        "exit": 0,
+        "seconds": 1.13,
+        "log": "php-27.log"
+      },
+      {
+        "command": "php tests/code-lab-runner-wait.php",
+        "exit": 255,
+        "seconds": 0.03,
+        "log": "php-28.log"
+      },
+      {
+        "command": "php tests/code-lab-integrity-policy.php",
+        "exit": 0,
+        "seconds": 0.04,
+        "log": "php-29.log"
+      },
+      {
+        "command": "php tests/jarred-governance-provider.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-30.log"
+      },
+      {
+        "command": "php tests/jarred-governance-retention.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-31.log"
+      },
+      {
+        "command": "php vendor/bin/phpunit --testsuite Unit",
+        "exit": 0,
+        "seconds": 0.12,
+        "log": "php-32.log"
+      },
+      {
+        "command": "php tests/phase1-access.php",
+        "exit": 0,
+        "seconds": 0.12,
+        "log": "php-33.log"
+      },
+      {
+        "command": "php tests/phase1-temporary-voice.php",
+        "exit": 0,
+        "seconds": 0.22,
+        "log": "php-34.log"
+      },
+      {
+        "command": "php tests/phase2-jarred.php",
+        "exit": 0,
+        "seconds": 0.07,
+        "log": "php-35.log"
+      },
+      {
+        "command": "php tests/review-jarred-crashes.php",
+        "exit": 0,
+        "seconds": 0.63,
+        "log": "php-36.log"
+      },
+      {
+        "command": "php tests/review-jarred-resource-access.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-37.log"
+      }
+    ]
+  }
+}

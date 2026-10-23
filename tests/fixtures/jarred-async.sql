@@ -1,0 +1,28 @@
+-- Synthetic isolated fixture only; no production schema or student records.
+CREATE TABLE users(id BIGINT UNSIGNED PRIMARY KEY,username VARCHAR(80),full_name VARCHAR(80),avatar_url TEXT,avatar_color_gradient TEXT,is_system INT DEFAULT 0,status VARCHAR(20),role VARCHAR(20),deleted_at DATETIME NULL,voice_channel_id INT NULL);
+INSERT INTO users VALUES(1,'student','Student','','',0,'active','student',NULL,NULL),(2,'ecollab_ai','Jarred','','',1,'active','student',NULL,NULL),(3,'other','Other','','',0,'active','student',NULL,NULL);
+CREATE TABLE user_settings(user_id BIGINT UNSIGNED PRIMARY KEY,jarred_enabled INT DEFAULT 1);
+INSERT INTO user_settings VALUES(1,1),(3,1);
+CREATE TABLE moderation_actions(target_user_id BIGINT UNSIGNED,server_id INT NULL,action_type VARCHAR(20),is_active INT,expires_at DATETIME NULL);
+CREATE TABLE dm_conversations(id BIGINT UNSIGNED PRIMARY KEY,user_a BIGINT UNSIGNED,user_b BIGINT UNSIGNED,last_message TEXT,last_msg_at DATETIME NULL);
+INSERT INTO dm_conversations VALUES(1,1,2,NULL,NULL),(2,1,3,NULL,NULL),(3,3,2,NULL,NULL);
+CREATE TABLE dm_messages(id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,conversation_id BIGINT UNSIGNED,group_id BIGINT UNSIGNED NULL,sender_id BIGINT UNSIGNED,body TEXT,attachment_path TEXT,attachment_name TEXT,attachment_size INT,attachment_mime TEXT,is_deleted INT DEFAULT 0,created_at DATETIME DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE dm_reads(user_id BIGINT UNSIGNED,conversation_id BIGINT UNSIGNED,last_read_at DATETIME,PRIMARY KEY(user_id,conversation_id));
+CREATE TABLE notifications(id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,recipient_id BIGINT UNSIGNED,actor_id BIGINT UNSIGNED,type VARCHAR(50),title TEXT,body TEXT,link_url TEXT,icon VARCHAR(20),is_read INT);
+CREATE TABLE servers(id INT PRIMARY KEY,status VARCHAR(20),name TEXT);
+INSERT INTO servers VALUES(1,'active','Fixture');
+CREATE TABLE server_members(server_id INT,user_id BIGINT UNSIGNED,server_role VARCHAR(20));
+INSERT INTO server_members VALUES(1,1,'member'),(1,3,'owner');
+CREATE TABLE channels(id INT PRIMARY KEY,server_id INT,type VARCHAR(20),name VARCHAR(50),slug VARCHAR(80),is_private INT,is_locked INT,created_by BIGINT UNSIGNED);
+INSERT INTO channels VALUES(1,1,'text','Private','private',1,0,3);
+CREATE TABLE channel_members(channel_id INT,user_id BIGINT UNSIGNED);
+INSERT INTO channel_members VALUES(1,1);
+CREATE TABLE collab_workspaces(id INT PRIMARY KEY,server_id INT,channel_id INT,host_id BIGINT UNSIGNED,visibility VARCHAR(20),archived INT);
+INSERT INTO collab_workspaces VALUES(1,1,1,3,'public',0);
+CREATE TABLE collab_workspace_members(workspace_id INT,user_id BIGINT UNSIGNED,role VARCHAR(20));
+CREATE TABLE collab_resource_permissions(workspace_id INT,resource_type VARCHAR(20),resource_id INT,user_id BIGINT UNSIGNED,permission VARCHAR(20));
+CREATE TABLE collab_documents(id INT PRIMARY KEY,workspace_id INT,visibility VARCHAR(20),public_permission VARCHAR(20),created_by BIGINT UNSIGNED);
+INSERT INTO collab_documents VALUES(1,1,'private','view',3);
+INSERT INTO collab_resource_permissions VALUES(1,'document',1,1,'view');
+CREATE TABLE collab_whiteboards(id INT PRIMARY KEY,workspace_id INT,visibility VARCHAR(20),public_permission VARCHAR(20),created_by BIGINT UNSIGNED);
+CREATE TABLE effects(id INT PRIMARY KEY,body TEXT);
