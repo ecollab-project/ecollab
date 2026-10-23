@@ -7,6 +7,7 @@ final class CodeLabRunner
     private string $token;
     private ?Closure $transport;
     private ?array $batchRuntimes=null;
+    private bool $mutualTls=false;
     public function __construct(?string $url=null,?string $token=null,?callable $transport=null)
     {
         $this->url=rtrim($url??(string)(getenv('CODE_LAB_JUDGE0_URL')?:''),'/');
@@ -17,6 +18,25 @@ final class CodeLabRunner
             $private=$host==='localhost'||$host==='127.0.0.1'||filter_var($host,FILTER_VALIDATE_IP,FILTER_FLAG_IPV4) && !filter_var($host,FILTER_VALIDATE_IP,FILTER_FLAG_NO_PRIV_RANGE);
             if (!$p||!in_array($p['scheme']??'',['https','http'],true)||($p['scheme']==='http'&&!$private)||isset($p['user'])||isset($p['pass'])||isset($p['query'])||isset($p['fragment'])||preg_match('/[\r\n]/',$this->token)) throw new RuntimeException('Invalid Code Lab runner configuration.');
         }
+        $mode=(string)(getenv('CODE_LAB_RUNNER_TRANSPORT')?:'legacy');
+        if(!in_array($mode,['legacy','mtls'],true))throw new RuntimeException('Invalid Code Lab transport mode.');
+        $this->mutualTls=$mode==='mtls';
+    }
+    /** Credential I/O belongs to the worker request, never task start/save. */
+    private function tlsOptions():array
+    {
+        $p=parse_url($this->url);
+        if(($p['scheme']??'')!=='https'||strlen($this->token)<32)throw new RuntimeException('Mutual TLS runner configuration required.');
+        $files=[];
+        foreach(['CA','CERT','KEY']as$name){
+            $file=(string)(getenv('CODE_LAB_RUNNER_TLS_'.$name)?:'');
+            if(!str_starts_with($file,'/')||!is_file($file)||!is_readable($file))throw new RuntimeException('Runner TLS credential file unavailable.');
+            if($name==='KEY'&&((int)fileperms($file)&0007)!==0)throw new RuntimeException('Runner client key must not be world accessible.');
+            $files[$name]=$file;
+        }
+        return [CURLOPT_CAINFO=>$files['CA'],CURLOPT_SSLCERT=>$files['CERT'],CURLOPT_SSLKEY=>$files['KEY'],
+            CURLOPT_SSL_VERIFYPEER=>true,CURLOPT_SSL_VERIFYHOST=>2,CURLOPT_SSLVERSION=>CURL_SSLVERSION_TLSv1_2,
+            CURLOPT_PROTOCOLS=>CURLPROTO_HTTPS];
     }
     public function enabled(): bool {return $this->url!=='';}
     public static function runtime(string $language): ?int
@@ -30,9 +50,11 @@ final class CodeLabRunner
         if (!$this->enabled()) throw new RuntimeException('Code runner is not configured.');
         if ($this->transport) return ($this->transport)($method,$path,$body);
         if (!function_exists('curl_init')) throw new RuntimeException('PHP cURL is required for Code Lab execution.');
+        $tls=$this->mutualTls?$this->tlsOptions():[];
         $ch=curl_init($this->url.$path);$raw='';
         try {
             curl_setopt_array($ch,[CURLOPT_CUSTOMREQUEST=>$method,CURLOPT_HTTPHEADER=>['Content-Type: application/json','X-Auth-Token: '.$this->token],CURLOPT_CONNECTTIMEOUT=>3,CURLOPT_TIMEOUT=>12,CURLOPT_FOLLOWLOCATION=>false,CURLOPT_PROXY=>'',CURLOPT_WRITEFUNCTION=>static function($handle,string $chunk)use(&$raw):int{if(strlen($raw)+strlen($chunk)>1048576)return 0;$raw.=$chunk;return strlen($chunk);}]);
+            if($tls)curl_setopt_array($ch,$tls);
             if ($body!==null) curl_setopt($ch,CURLOPT_POSTFIELDS,json_encode($body,JSON_THROW_ON_ERROR));
             $ok=curl_exec($ch);$status=(int)curl_getinfo($ch,CURLINFO_RESPONSE_CODE);
             if ($ok===false||$status<200||$status>=300) throw new RuntimeException('Code runner request failed.');
