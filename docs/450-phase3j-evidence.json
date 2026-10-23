@@ -1,0 +1,41 @@
+{
+  "phase": "3J",
+  "date_timezone": "2026-10-23 Asia/Manila",
+  "parent_pr": 76,
+  "parent_sha": "2e65196fca7448155c19519fda61fdda82c6c80d",
+  "production_actions": false,
+  "model_inference_executed": false,
+  "baseline_two_process_bypass": "REPRODUCED: ordinary lock held, admin raw cURL produced second backend call",
+  "local": {
+    "actual_route_shared_http_guard_both_orders": "PASS",
+    "compact_and_legacy_group_schema_all80": "PASS",
+    "auth_csrf_synthetic_boundaries": "PASS",
+    "invalid_oversized_incomplete_output_no_retry": "PASS",
+    "timeout_killed_worker_release_and_restart": "PASS",
+    "distinct_TMPDIR_shared_file": "PASS (not mount namespaces)",
+    "actual_linux_mount_namespace": "BLOCKED: unshare Operation not permitted",
+    "phase3i_regressions": "PASS",
+    "phpunit_unit": {
+      "status": "PASS",
+      "tests": 25,
+      "assertions": 56
+    }
+  },
+  "ci": "New head CI required; namespace test is required, not inherited",
+  "deployment_fpm_cli_namespaces": "NOT RUN",
+  "real_daemon_cancellation_and_context": "NOT RUN",
+  "governance": "PARTIAL/BLOCKED",
+  "code_lab_isolation": "BLOCKED",
+  "r7": "REQUEST CHANGES",
+  "capacity_450": "UNVERIFIED",
+  "source_sha256": {
+    ".github/workflows/settings-runtime.yml": "302fbf93b3463b9dd3f75afdbb35f2c39b81deb66af5a4c351fe08640fafb41c",
+    "API/admin/group-recommendations.php": "81c0b434556ac46eae8ea273f292a44f200db73bb4f9d4da982c2bae4caec3ce",
+    "services/OllamaService.php": "7c7cd87c2bdf3b8905b99a02291db213d975a649e8381426c45774a2c942b266",
+    "deploy/ai-provider/README.md": "88ebb250aa030ba0f44abdc59d4b43d88b192681b381ea02a2945ebf0e85888d",
+    "deploy/ai-provider/shared-lock.env.example": "1f08addb0796eef71313459d46a84f6aa6b37a267e9c31244e0569f2e5ebeecc",
+    "docs/450-phase3j-shared-provider.md": "9f70800bb2a7863898813d410f993aa358895bf5ee423966f7c7c54348dfe6fa",
+    "services/AdminGroupRecommendationService.php": "e18b66a6d7867230b7c3bed86834529af1d94447248b4f3f0f9892f3c2b1fcd8",
+    "tests/shared-ai-provider.cjs": "2b55841441f773dea560474651b0da7ce54cb91e4c56fc96fdad370aef2e5e56"
+  }
+}

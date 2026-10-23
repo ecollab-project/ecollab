@@ -5,9 +5,12 @@ final class OllamaService
 {
     private string $baseUrl;
     private string $model;
+    public const JSON_INPUT_MAX_BYTES = 8192;
+    private const RESPONSE_MAX_BYTES = 1048576;
 
-    public function __construct(?string $baseUrl = null, ?string $model = null)
+    public function __construct(?string $baseUrl = null, ?string $model = null, private int $timeout = 90)
     {
+        if ($timeout < 1 || $timeout > 90) throw new InvalidArgumentException('Invalid local provider timeout.');
         $this->baseUrl = rtrim($baseUrl ?: (getenv('OLLAMA_URL') ?: 'http://127.0.0.1:11434'), '/');
         $this->model = $model ?: (getenv('OLLAMA_MODEL') ?: 'qwen3:1.7b');
         $parts = parse_url($this->baseUrl);
@@ -102,35 +105,85 @@ final class OllamaService
         throw new RuntimeException('Jarred exceeded the maximum tool-call rounds');
     }
 
-    private function requestChat(array $payload): array
+    /** Explicit shared files must be provisioned outside PrivateTmp; never fall back. */
+    private function inferenceLock()
     {
-        $lock = @fopen(sys_get_temp_dir() . '/ecollab-ollama-inference.lock', 'c');
+        $shared = (string)(getenv('OLLAMA_INFERENCE_LOCK_FILE') ?: '');
+        $path = $shared !== '' ? $shared : sys_get_temp_dir() . '/ecollab-ollama-inference.lock';
+        if ($shared !== '' && (!str_starts_with($path, '/') || !is_file($path) || is_link($path)
+            || ((int)fileperms($path) & 0007) !== 0 || ((int)fileperms(dirname($path)) & 0002) !== 0)) {
+            throw new RuntimeException('Shared inference coordination is unavailable.', 503);
+        }
+        $lock = @fopen($path, 'c');
         if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) {
             if (is_resource($lock)) fclose($lock);
-            throw new RuntimeException('Jarred is busy with another request. Please try again shortly.', 503);
+            throw new RuntimeException('Jarred is busy or inference coordination is unavailable.', 503);
         }
+        $opened = fstat($lock); $named = @lstat($path);
+        if (!$opened || !$named || ($opened['mode'] & 0170000) !== 0100000
+            || $opened['ino'] !== $named['ino'] || $opened['dev'] !== $named['dev']) {
+            flock($lock, LOCK_UN); fclose($lock);
+            throw new RuntimeException('Shared inference coordination is unavailable.', 503);
+        }
+        return $lock;
+    }
+
+    private function requestChat(array $payload, ?int $deadline = null): array
+    {
+        $lock = $this->inferenceLock();
         $ch = null;
         try {
+            $raw = '';
             $ch = curl_init($this->baseUrl . '/api/chat');
+            if ($ch === false) { $ch=null; throw new RuntimeException('Local model is unavailable.',503); }
             curl_setopt_array($ch, [
-                CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => false,
+                CURLOPT_WRITEFUNCTION => static function($handle, string $chunk) use (&$raw): int {
+                    if (strlen($raw) + strlen($chunk) > self::RESPONSE_MAX_BYTES) return 0;
+                    $raw .= $chunk; return strlen($chunk);
+                },
                 CURLOPT_FOLLOWLOCATION => false, CURLOPT_PROXY => '',
                 CURLOPT_PROTOCOLS => CURLPROTO_HTTP,
                 CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
                 CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
-                CURLOPT_CONNECTTIMEOUT => 5, CURLOPT_TIMEOUT => 90,
+                CURLOPT_CONNECTTIMEOUT => 5, CURLOPT_TIMEOUT => min($this->timeout, $deadline ?? 90),
             ]);
-            $raw = curl_exec($ch);
-            if ($raw === false) throw new RuntimeException('Ollama request failed: ' . curl_error($ch));
+            $ok = curl_exec($ch);
+            if ($ok === false) throw new RuntimeException('Local model request unavailable or response limit exceeded.', 503);
             $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            if ($status < 200 || $status >= 300) throw new RuntimeException('Ollama returned HTTP ' . $status);
-            $data=json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+            if ($status < 200 || $status >= 300) throw new RuntimeException('Local model request unavailable.', 503);
+            try { $data=json_decode($raw, true, 64, JSON_THROW_ON_ERROR); }
+            catch (JsonException) { throw new RuntimeException('Local model returned an invalid response.',503); }
             if(!is_array($data)||isset($data['error']))throw new RuntimeException('Local model returned an invalid response.',503);
             return $data;
         } finally {
             if ($ch !== null) curl_close($ch);
             flock($lock, LOCK_UN); fclose($lock);
         }
+    }
+
+    /** Structured, bounded inference; consumers must still validate domain semantics. */
+    public function generateJson(array $messages): array
+    {
+        if (strlen(json_encode($messages, JSON_THROW_ON_ERROR)) > self::JSON_INPUT_MAX_BYTES) {
+            throw new RuntimeException('Grouping input exceeds the safe provider envelope; no candidates were omitted.', 422);
+        }
+        $data = $this->requestChat([
+            'model'=>$this->model, 'messages'=>$messages, 'stream'=>false, 'format'=>'json',
+            'truncate'=>false, 'shift'=>false, 'think'=>false, 'keep_alive'=>'10m',
+            'options'=>['temperature'=>0.2, 'num_ctx'=>4096,
+                'num_thread'=>max(1,min(2,(int)(getenv('OLLAMA_NUM_THREADS') ?: 1))), 'num_predict'=>1024],
+        ], 45);
+        if (($data['done'] ?? null) !== true || ($data['done_reason'] ?? '') !== 'stop') {
+            throw new RuntimeException('Local model did not complete the grouping response.', 502);
+        }
+        if (!is_array($data['message']??null)) throw new RuntimeException('Invalid grouping response.',502);
+        $text = $data['message']['content'] ?? null;
+        if (!is_string($text) || !str_starts_with(ltrim($text), '{')) throw new RuntimeException('Invalid grouping response.',502);
+        try { $parsed=json_decode($text,true,32,JSON_THROW_ON_ERROR); }
+        catch (JsonException) { throw new RuntimeException('Invalid grouping response.',502); }
+        if (!is_array($parsed) || array_is_list($parsed)) throw new RuntimeException('Invalid grouping response.',502);
+        return ['data'=>$parsed, 'model'=>$this->model];
     }
 
     public function generate(array $messages, string $systemPrompt = '', int $maxTokens = 400): array

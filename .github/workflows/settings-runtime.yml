@@ -30,6 +30,10 @@ jobs:
       - run: php tests/jarred-governance-provider.php
       - run: node tests/jarred-governance-http.cjs
       - run: node tests/jarred-governance-lock.cjs
+      - run: node tests/shared-ai-provider.cjs
+      - name: Shared inference across separate Linux temporary mount views
+        run: node tests/shared-ai-provider.cjs
+        env: {JARRED_TEST_MOUNT_NS: '1'}
       - run: node tests/jarred-provider-regression.cjs
       - run: node tests/jarred-session-race.cjs
       - run: node tests/realtime-settings-regression.cjs
