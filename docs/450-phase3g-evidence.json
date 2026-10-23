@@ -1,0 +1,66 @@
+{
+  "phase": "3G",
+  "date_manila": "2026-10-23",
+  "base_branch": "ecollab-collabs",
+  "base_sha": "c838359711a14e9b6eb3f345c4386d184a178b25",
+  "independent_of_pr74_and_r7": true,
+  "production_access": false,
+  "separate_execution_host_provisioned": false,
+  "local_fixture": "actual Nginx1.24/PHP8.3.6 cURL + real adapter with mocked Piston; no source execution locally",
+  "local_mtls_measurements": {
+    "fixture": "actual Nginx mTLS + PHP cURL + real adapter with mocked backend; no source execution",
+    "language_profiles": 6,
+    "transport_samples": 12,
+    "transport_p50_ms": 3.719816,
+    "transport_p95_ms": 6.71499,
+    "direct_adapter_http_p50_ms": 0.674176,
+    "direct_adapter_http_p95_ms": 2.371269,
+    "median_gateway_plus_tls_increment_ms": 3.0456399999999997,
+    "unexpected_positive_probe_errors": 0,
+    "known_python_request_end_to_end_ms": 31.159498999841162,
+    "runtime_cpu_seconds": null,
+    "runtime_memory": null,
+    "queue_wait_ms": null,
+    "host_cpu_memory": null,
+    "unauthorized_wrong_ca_hostname_plaintext_revoked_and_unavailable": "PASS",
+    "separate_kernel_isolation": "BLOCKED"
+  },
+  "local_queue_mtls_checks": "PASS: missing worker key does not block immutable submission, actual TLS outage, actual adapter/gateway restart, no zero score, same job retry, hidden filtering, no duplicate grade",
+  "existing_adapter_tests": {
+    "status": "PASS",
+    "tests": 11
+  },
+  "private_backend_proxy_redirect_checks": "PASS",
+  "php_execution_batch_pool_server_queue_artifact_regressions": "PASS",
+  "phpunit_unit": {
+    "status": "PASS",
+    "tests": 25,
+    "assertions": 56
+  },
+  "local_real_piston_runtime_and_docker_boundary": "NOT RUN: no local Docker daemon",
+  "independent_host_external_egress_vm_boundary": "BLOCKED",
+  "r7": "REQUEST CHANGES",
+  "capacity_450": "UNVERIFIED",
+  "source_sha256": {
+    "services/CodeLabRunner.php": "84ff363f91dcca5f8a9b2ee5cb75c235e84df52d7a891ad56248bce91bb210da",
+    "deploy/code-lab/piston/bridge.py": "cc80700e9c4864dd91fbcec1d529300b87eeb95977ab88afc87e1c7dd2075a8c",
+    "deploy/code-lab/piston/compose.isolated.yml": "dc6c0313db08876ef25e2a36086b1b84a02b83b112e2dd6f41341ddfc4b86f7c",
+    "deploy/code-lab/isolated/nginx.conf.example": "35d377f5c1947aa204d87a63d8514e3634c259587f6d7a1d6005f0e746ed4f09",
+    "deploy/code-lab/isolated/application.env.example": "690423766973dbcfcd7a15564d477131d740511057ca03455c6a6c249da39dd5",
+    "tests/code-lab-mtls-integration.py": "6f60349a842487ce4a2c9dbd909ef839a44737478979388163f5688379d84fb4",
+    "tests/code-lab-mtls-queue.php": "b6301aa8c29c8f2df978ba30a43edc2694de3254942754e28d761aea5b929d05",
+    "tests/code-lab-private-backend-test.py": "16ec76ae3068169061b3fa2cb5303f34102f0413dbd10918e1503e9348bd578c",
+    "tests/code-lab-isolation-config.py": "1b0c3e3c81326f40b6c2e95ce0695b3b0a394e7826f1a7f2ff6b6a9e800df485",
+    "tests/code-lab-isolated-live.py": "dcfb9e3862a5c9eafc10d5f661268e243277cc445a129e2bdd42addca4653fee",
+    ".github/workflows/code-lab-piston.yml": "44022ba4093755a5ba5818d91d0a70c49d56a1b3b70094759a55a71e9a239458",
+    "deploy/code-lab/isolated/execution.env.example": "0b159c90d9509c4f5b62c1e6e1a497efd35517af474b858d9c9b971cc69bd4cc",
+    "tests/code-lab-piston-live.py": "6a9d3932650f79eff8c69a31d442047b25d6e23fe4976a68e604a73ead3b23ec"
+  },
+  "initial_ci": {
+    "head": "5771967f4e436ec97b312ad2275648d9632dc951",
+    "protocol": "PASS",
+    "sandbox": "FAIL \u2014 introduced: adapter published loopback unreachable on internal network",
+    "correction": "unpublished adapter with reviewed private bridge IP; real tests retained",
+    "corrected_head_ci": "See PR75 exact-head results"
+  }
+}

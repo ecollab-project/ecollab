@@ -1,7 +1,7 @@
 name: Code Lab cgroup v2 sandbox
 on:
   pull_request:
-    paths: ['examples/code-lab/**', 'scripts/test-code-lab-languages.php', 'deploy/code-lab/piston/**', 'scripts/setup-code-lab-piston.sh', 'services/CodeLabRunner.php', 'tests/code-lab-piston*', 'tests/code-lab-runner-wait.php', 'tests/code-lab-batch-regression.php', '.github/workflows/code-lab-piston.yml']
+    paths: ['examples/code-lab/**', 'scripts/test-code-lab-languages.php', 'deploy/code-lab/piston/**', 'deploy/code-lab/isolated/**', 'tests/code-lab-isolated-live.py', 'tests/code-lab-isolation-config.py', 'tests/code-lab-mtls-integration.py', 'tests/code-lab-mtls-queue.php', 'tests/code-lab-private-backend-test.py', 'docs/450-phase3g-*', 'scripts/setup-code-lab-piston.sh', 'services/CodeLabRunner.php', 'tests/code-lab-piston*', 'tests/code-lab-runner-wait.php', 'tests/code-lab-batch-regression.php', '.github/workflows/code-lab-piston.yml']
 permissions:
   contents: read
 jobs:
@@ -10,7 +10,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
-        with: {php-version: '8.3', extensions: curl}
+        with: {php-version: '8.3', extensions: 'curl, pdo_sqlite, dom'}
+      - name: Install isolated test gateway
+        run: |
+          mkdir -p "$RUNNER_TEMP/runner-apt/empty" "$RUNNER_TEMP/runner-apt/lists/partial"
+          printf '%s\n' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble-updates main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://security.ubuntu.com/ubuntu noble-security main universe' \
+            > "$RUNNER_TEMP/runner-apt/sources.list"
+          apt_options=(-o "Dir::Etc::sourcelist=$RUNNER_TEMP/runner-apt/sources.list"
+            -o "Dir::Etc::sourceparts=$RUNNER_TEMP/runner-apt/empty"
+            -o "Dir::State::lists=$RUNNER_TEMP/runner-apt/lists"
+            -o Acquire::Retries=0 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20)
+          sudo apt-get "${apt_options[@]}" update
+          sudo apt-get "${apt_options[@]}" install -y nginx
+      - run: python3 -B tests/code-lab-private-backend-test.py
+      - run: python3 -B -u tests/code-lab-mtls-integration.py
+      - run: php tests/code-lab-execution-regression.php
+      - run: php tests/code-lab-server-queue.php
+      - run: php tests/code-lab-worker-pool.php
       - run: node tests/code-lab-piston-batch.cjs
       - run: php tests/code-lab-batch-regression.php
       - run: python3 -B tests/code-lab-piston-test.py
@@ -20,12 +39,29 @@ jobs:
     timeout-minutes: 20
     env:
       CODE_LAB_RUNNER_STATE: /tmp/ecollab-code-lab-ci
+      CODE_LAB_EXECUTION_SUBNET: 172.30.254.0/28
+      CODE_LAB_ADAPTER_IPV4: 172.30.254.3
+      CODE_LAB_TEST_ADAPTER_URL: http://172.30.254.3:2358
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: curl
+          extensions: curl, pdo_sqlite, dom
+      - name: Install isolated test gateway
+        run: |
+          mkdir -p "$RUNNER_TEMP/runner-apt/empty" "$RUNNER_TEMP/runner-apt/lists/partial"
+          printf '%s\n' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble-updates main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://security.ubuntu.com/ubuntu noble-security main universe' \
+            > "$RUNNER_TEMP/runner-apt/sources.list"
+          apt_options=(-o "Dir::Etc::sourcelist=$RUNNER_TEMP/runner-apt/sources.list"
+            -o "Dir::Etc::sourceparts=$RUNNER_TEMP/runner-apt/empty"
+            -o "Dir::State::lists=$RUNNER_TEMP/runner-apt/lists"
+            -o Acquire::Retries=0 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20)
+          sudo apt-get "${apt_options[@]}" update
+          sudo apt-get "${apt_options[@]}" install -y nginx
       - name: Prepare private cgroup-v2 sandbox
         run: |
           test "$(stat -fc %T /sys/fs/cgroup)" = cgroup2fs
@@ -40,14 +76,26 @@ jobs:
           docker compose -f deploy/code-lab/piston/compose.yml run --rm --no-deps adapter python -B /runner/java_profile.py > "$CODE_LAB_RUNNER_STATE/profiles.compiled.json"
           mv "$CODE_LAB_RUNNER_STATE/profiles.compiled.json" "$CODE_LAB_RUNNER_STATE/profiles.json"
           docker compose -f deploy/code-lab/piston/compose.yml up -d adapter
+      - name: Apply execution-host staging overlay after frozen package bootstrap
+        run: |
+          docker compose -f deploy/code-lab/piston/compose.yml -f deploy/code-lab/piston/compose.isolated.yml up -d --force-recreate piston adapter
+          python3 -B tests/code-lab-isolation-config.py
+          docker compose -f deploy/code-lab/piston/compose.yml -f deploy/code-lab/piston/compose.isolated.yml exec -T piston bash -c 'box=$(isolate --init --cg -b998); isolate --cleanup --cg -b998; test "$box" = /var/local/lib/isolate/998'
       - name: Actual compiler and isolation smoke checks
         run: python3 -B tests/code-lab-piston-live.py
+      - name: Harmless bounded resource probes
+        run: python3 -B tests/code-lab-isolated-live.py
+      - name: Real remote protocol through mTLS gateway
+        env:
+          CODE_LAB_TLS_UPSTREAM: 172.30.254.3:2358
+          CODE_LAB_TLS_RESTART_ADAPTER: '1'
+        run: python3 -B -u tests/code-lab-mtls-integration.py
       - name: Diagnostic status
         if: failure()
         run: |
-          docker compose -f deploy/code-lab/piston/compose.yml ps
-          docker compose -f deploy/code-lab/piston/compose.yml logs --tail 50 piston adapter
+          docker compose -f deploy/code-lab/piston/compose.yml -f deploy/code-lab/piston/compose.isolated.yml ps
+          docker compose -f deploy/code-lab/piston/compose.yml -f deploy/code-lab/piston/compose.isolated.yml logs --tail 50 piston adapter
       - name: Clean sandbox
         if: always()
-        run: docker compose -f deploy/code-lab/piston/compose.yml down -v
+        run: docker compose -f deploy/code-lab/piston/compose.yml -f deploy/code-lab/piston/compose.isolated.yml down -v
 

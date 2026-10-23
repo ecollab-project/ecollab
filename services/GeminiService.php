@@ -78,7 +78,8 @@ final class GeminiService
             throw new RuntimeException('Gemini returned invalid JSON.', 502);
         }
         if ($httpCode < 200 || $httpCode >= 300) {
-            throw new RuntimeException((string)($data['error']['message'] ?? 'Gemini API error.'), 502);
+            // Provider errors may echo prompts, document excerpts or credentials.
+            throw new RuntimeException('Gemini returned HTTP ' . $httpCode . '.', 502);
         }
 
         $text = trim((string)($data['candidates'][0]['content']['parts'][0]['text'] ?? ''));

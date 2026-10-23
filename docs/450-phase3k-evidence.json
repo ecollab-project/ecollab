@@ -1,0 +1,391 @@
+{
+  "scope": "isolated combined source only; no production changes",
+  "base": "c838359711a14e9b6eb3f345c4386d184a178b25",
+  "parents": [
+    "67a90c6cc94701521d4648ed29f8b21e5eea5683",
+    "aa9b6b35ba86a50024987a60400b13488a9acbb5",
+    "2e7a3aafe91fb88673e16c0ad78c7c46212ec9b7"
+  ],
+  "local_attempts": {
+    "ui": [
+      {
+        "command": "node tests/settings-runtime-browser.cjs",
+        "exit": 1,
+        "seconds": 0.11,
+        "log": "ui-0.log"
+      },
+      {
+        "command": "node tests/learning-workspace-ui-regression.cjs",
+        "exit": 0,
+        "seconds": 3.49,
+        "log": "ui-1.log"
+      },
+      {
+        "command": "node tests/code-lab-ui-regression.cjs",
+        "exit": 0,
+        "seconds": 0.87,
+        "log": "ui-2.log"
+      },
+      {
+        "command": "node tests/chat-timeline-regression.cjs",
+        "exit": 0,
+        "seconds": 0.67,
+        "log": "ui-3.log"
+      },
+      {
+        "command": "node tests/notification-routing-regression.cjs",
+        "exit": 0,
+        "seconds": 0.67,
+        "log": "ui-4.log"
+      },
+      {
+        "command": "node tests/centrifugo-client-regression.cjs",
+        "exit": 1,
+        "seconds": 0.06,
+        "log": "ui-5.log"
+      },
+      {
+        "command": "node tests/whiteboard-socket-regression.cjs",
+        "exit": 0,
+        "seconds": 0.11,
+        "log": "ui-6.log"
+      },
+      {
+        "command": "node tests/code-lab-integrity-regression.cjs",
+        "exit": 0,
+        "seconds": 0.67,
+        "log": "ui-7.log"
+      },
+      {
+        "command": "node tests/yjs-channel-presence-regression.cjs",
+        "exit": 1,
+        "seconds": 0.52,
+        "log": "ui-8.log"
+      },
+      {
+        "command": "node tests/chat-composer-regression.cjs",
+        "exit": 1,
+        "seconds": 0.11,
+        "log": "ui-9.log"
+      }
+    ],
+    "protocol": [
+      {
+        "command": "python3 -B tests/code-lab-private-backend-test.py",
+        "exit": 0,
+        "seconds": 0.17,
+        "log": "protocol-0.log"
+      },
+      {
+        "command": "python3 -B -u tests/code-lab-mtls-integration.py",
+        "exit": 0,
+        "seconds": 3.48,
+        "log": "protocol-1.log"
+      },
+      {
+        "command": "node tests/code-lab-piston-batch.cjs",
+        "exit": 0,
+        "seconds": 0.22,
+        "log": "protocol-2.log"
+      },
+      {
+        "command": "python3 -B tests/code-lab-piston-test.py",
+        "exit": 0,
+        "seconds": 4.13,
+        "log": "protocol-3.log"
+      }
+    ],
+    "ai": [
+      {
+        "command": "node tests/jarred-governance-http.cjs",
+        "exit": 0,
+        "seconds": 0.27,
+        "log": "ai-0.log"
+      },
+      {
+        "command": "node tests/jarred-governance-lock.cjs",
+        "exit": 0,
+        "seconds": 0.16,
+        "log": "ai-1.log"
+      },
+      {
+        "command": "node tests/shared-ai-provider.cjs",
+        "exit": 0,
+        "seconds": 1.93,
+        "log": "ai-2.log"
+      },
+      {
+        "command": "node tests/jarred-provider-regression.cjs",
+        "exit": 0,
+        "seconds": 0.12,
+        "log": "ai-3.log"
+      },
+      {
+        "command": "node tests/jarred-session-race.cjs",
+        "exit": 0,
+        "seconds": 0.87,
+        "log": "ai-4.log"
+      },
+      {
+        "command": "node tests/realtime-settings-regression.cjs",
+        "exit": 0,
+        "seconds": 0.72,
+        "log": "ai-5.log"
+      },
+      {
+        "command": "node tests/request-security-regression.cjs",
+        "exit": 0,
+        "seconds": 0.37,
+        "log": "ai-6.log"
+      }
+    ],
+    "database": [
+      {
+        "test": "rate-limit-concurrency.php",
+        "exit": 0
+      },
+      {
+        "test": "settings-migration-regression.php",
+        "exit": 0
+      },
+      {
+        "test": "book-events-regression.php",
+        "exit": 0
+      },
+      {
+        "test": "collabora-regression.php",
+        "exit": 0
+      },
+      {
+        "test": "whiteboard-realtime-regression.php",
+        "exit": 0
+      },
+      {
+        "test": "migration-rerun-regression.php",
+        "exit": 0
+      },
+      {
+        "test": "centrifugo-database-regression.php",
+        "exit": 255
+      },
+      {
+        "test": "chat-read-profiler-regression.php",
+        "exit": 0
+      },
+      {
+        "test": "load-test-fixture-regression.php",
+        "exit": 0
+      }
+    ],
+    "php": [
+      {
+        "command": "php tests/whiteboard-presence-regression.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-0.log"
+      },
+      {
+        "command": "php tests/book-events-regression.php",
+        "exit": 1,
+        "seconds": 0.06,
+        "log": "php-1.log"
+      },
+      {
+        "command": "php tests/centrifugo-database-regression.php",
+        "exit": 255,
+        "seconds": 0.03,
+        "log": "php-2.log"
+      },
+      {
+        "command": "php tests/system-capacity-regression.php",
+        "exit": 0,
+        "seconds": 0.07,
+        "log": "php-3.log"
+      },
+      {
+        "command": "php tests/code-lab-execution-regression.php",
+        "exit": 0,
+        "seconds": 0.07,
+        "log": "php-4.log"
+      },
+      {
+        "command": "php tests/learning-upgrades-regression.php",
+        "exit": 0,
+        "seconds": 0.06,
+        "log": "php-5.log"
+      },
+      {
+        "command": "php tests/chat-read-regression.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-6.log"
+      },
+      {
+        "command": "php tests/chat-tus-regression.php",
+        "exit": 0,
+        "seconds": 0.11,
+        "log": "php-7.log"
+      },
+      {
+        "command": "php tests/learning-tools-regression.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-8.log"
+      },
+      {
+        "command": "php tests/code-lab-regression.php",
+        "exit": 0,
+        "seconds": 0.07,
+        "log": "php-9.log"
+      },
+      {
+        "command": "php tests/whiteboard-realtime-regression.php",
+        "exit": 2,
+        "seconds": 0.03,
+        "log": "php-10.log"
+      },
+      {
+        "command": "php tests/whiteboard-scene-regression.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-11.log"
+      },
+      {
+        "command": "php tests/chat-upload-access-regression.php",
+        "exit": 0,
+        "seconds": 0.04,
+        "log": "php-12.log"
+      },
+      {
+        "command": "php tests/learning-workspace-regression.php",
+        "exit": 0,
+        "seconds": 0.07,
+        "log": "php-13.log"
+      },
+      {
+        "command": "php tests/notification-service-regression.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-14.log"
+      },
+      {
+        "command": "php tests/admin-workspace-regression.php",
+        "exit": 0,
+        "seconds": 0.57,
+        "log": "php-15.log"
+      },
+      {
+        "command": "php tests/color-palettes-regression.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-16.log"
+      },
+      {
+        "command": "php tests/admin-connected-regression.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-17.log"
+      },
+      {
+        "command": "php tests/collabora-regression.php",
+        "exit": 2,
+        "seconds": 0.03,
+        "log": "php-18.log"
+      },
+      {
+        "command": "php tests/peer-ml-regression.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-19.log"
+      },
+      {
+        "command": "php tests/client-ip-regression.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-20.log"
+      },
+      {
+        "command": "php tests/centrifugo-regression.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-21.log"
+      },
+      {
+        "command": "php tests/code-lab-batch-regression.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-22.log"
+      },
+      {
+        "command": "php tests/load-test-fixture-regression.php",
+        "exit": 255,
+        "seconds": 0.03,
+        "log": "php-23.log"
+      },
+      {
+        "command": "php tests/settings-runtime-regression.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-24.log"
+      },
+      {
+        "command": "php tests/chat-read-profiler-regression.php",
+        "exit": 255,
+        "seconds": 0.03,
+        "log": "php-25.log"
+      },
+      {
+        "command": "php tests/code-lab-server-queue.php",
+        "exit": 0,
+        "seconds": 0.06,
+        "log": "php-26.log"
+      },
+      {
+        "command": "php tests/code-lab-worker-pool.php",
+        "exit": 0,
+        "seconds": 1.12,
+        "log": "php-27.log"
+      },
+      {
+        "command": "php tests/code-lab-runner-wait.php",
+        "exit": 255,
+        "seconds": 0.03,
+        "log": "php-28.log"
+      },
+      {
+        "command": "php tests/code-lab-integrity-policy.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-29.log"
+      },
+      {
+        "command": "php tests/jarred-governance-provider.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-30.log"
+      },
+      {
+        "command": "php tests/jarred-governance-retention.php",
+        "exit": 0,
+        "seconds": 0.03,
+        "log": "php-31.log"
+      },
+      {
+        "command": "php vendor/bin/phpunit --testsuite Unit",
+        "exit": 0,
+        "seconds": 0.12,
+        "log": "php-32.log"
+      }
+    ]
+  },
+  "migration_log": "VERSION 10.11.14-MariaDB-0ubuntu0.24.04.1\nREPRODUCED unchanged historical 025: MariaDB error1901\nPASS fresh upgrade/rerun/data preservation/archive/create/reactivation conflict\nPASS successful-old upgrade/rerun/data preservation/archive/create/reactivation conflict\nPASS partial-old-column upgrade/rerun/data preservation/archive/create/reactivation conflict\nPASS partial-slot upgrade/rerun/data preservation/archive/create/reactivation conflict\nPASS complete upgrade/rerun/data preservation/archive/create/reactivation conflict\nPASS duplicate actives rejected without archiving/deleting/merging\nPASS unknown ordinary partial slot rejected without data changes\nPASS parent cascade/delete, ownership and direct server-reference changes\nPASS concurrent create with winner commit\nPASS concurrent create with winner rollback\nPASS metadata-lock failure and retry; no partial DDL/data loss\nPASS actual legacy create SQL populates originating server\nPASS coworkspace authorized service read\nPASS actual runner absent ledger / supersession / dry-run / continuation / rerun / lost-ACK retry / checksum rejection\nPASS actual runner failed ledger / supersession / dry-run / continuation / rerun / lost-ACK retry / checksum rejection\nPASS actual runner successful ledger / supersession / dry-run / continuation / rerun / lost-ACK retry / checksum rejection\nPASS: explicit viewer overrides public edit\nPASS: private document excluded\nPASS: equivalent timestamp formats\nPASS: viewer token cannot write\nPASS: token bound to document\nPASS: viewer save rejected\nPASS: stale save rejected\nPASS: new version published\nPASS: previous version retained\nPASS: save timestamp matches metadata\nPASS: live downgrade honored\nPASS: old viewer token cannot upgrade\nPASS: removed server access honored\nPASS: suspended account denied despite membership\nPASS: expired token rejected\nPASS: file path confined to storage\nCollabora regression checks passed\nPASS: workspace board accessible without chat membership\nPASS: wrong channel cannot reuse a board grant\nPASS: non-server-member rejected\nPASS: live viewer downgrade prevents scene edits\nPASS: comment permission cannot replace canvas\nPASS: private board requires grant\nPASS: explicit private board editor accepted\nPASS: board grant cannot bypass private workspace\nPASS: workspace member with board grant accepted\nPASS: revoked server membership takes effect\nPASS: suspended account rejected\nWhiteboard realtime regression checks passed\nPASS existing Collabora and whiteboard database regression suites\nFIXTURE_STOP_DATABASE\nFIXTURE_START_DATABASE\nPASS actual database daemon failure/restart/retry preserves records\nALL coworkspace migration checks passed\n",
+  "phpunit_log": "PHPUnit 10.5.64 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.6\nConfiguration: /workspace/scratch/ec6b48439e5d/phase3k-integration/phpunit.xml\n\n.........................                                         25 / 25 (100%)\n\nTime: 00:00.007, Memory: 10.00 MB\n\nOK (25 tests, 56 assertions)\n",
+  "php_lint": "No syntax errors detected in API/admin/group-recommendations.php\nNo syntax errors detected in API/ai/message.php\nNo syntax errors detected in API/ai/session.php\nNo syntax errors detected in API/ai/sessions.php\nNo syntax errors detected in API/chat/ai-assist.php\nNo syntax errors detected in API/collaboration/workspaces.php\nNo syntax errors detected in API/dm/send-message.php\nNo syntax errors detected in API/facilitator/jarred.php\nNo syntax errors detected in database/migrate.php\nNo syntax errors detected in services/AdminGroupRecommendationService.php\nNo syntax errors detected in services/CodeLabRunner.php\nNo syntax errors detected in services/GeminiService.php\nNo syntax errors detected in services/OllamaService.php\nNo syntax errors detected in tests/code-lab-mtls-queue.php\nNo syntax errors detected in tests/coworkspace-migration-regression.php\nNo syntax errors detected in tests/jarred-governance-provider.php\nNo syntax errors detected in tests/jarred-governance-retention.php\n",
+  "ci": "pending publication; source PR results are not combined CI",
+  "verdicts": {
+    "Jarred": "PARTIAL/BLOCKED",
+    "CodeLabIsolation": "BLOCKED",
+    "R7": "REQUEST CHANGES",
+    "450": "UNVERIFIED"
+  }
+}

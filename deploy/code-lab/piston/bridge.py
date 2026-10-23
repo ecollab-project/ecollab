@@ -14,12 +14,24 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit, parse_qs
 
 
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, request, response, code, message, headers, url):
+        raise ValueError('Execution backend redirect forbidden')
+
+
 def piston_request(path, body=None, timeout=45):
+    # This is an execution-host management hop, never an arbitrary remote URL.
+    base=os.environ.get('PISTON_URL','http://piston:2000')
+    parts=urlsplit(base)
+    if (parts.scheme!='http' or parts.hostname not in ('piston','127.0.0.1','localhost')
+            or parts.username or parts.password or parts.query or parts.fragment or parts.path not in ('','/')
+            or path not in ('/packages','/runtimes','/execute','/ecollab-grade')):
+        raise ValueError('Invalid private execution backend')
     data=None if body is None else json.dumps(body).encode()
-    req=urllib.request.Request(os.environ.get('PISTON_URL','http://piston:2000')+'/api/v2'+path,data=data,headers={'Content-Type':'application/json'})
+    req=urllib.request.Request(base.rstrip('/')+'/api/v2'+path,data=data,headers={'Content-Type':'application/json'})
     # Ten bounded case outputs can expand under JSON control-character escaping.
     limit=4194304 if path=='/ecollab-grade' else 1048576
-    with urllib.request.urlopen(req,timeout=125 if path=='/ecollab-grade' else timeout) as response:
+    with urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect()).open(req,timeout=125 if path=='/ecollab-grade' else timeout) as response:
         raw=response.read(limit+1)
     if len(raw)>limit:
         raise ValueError('Oversize execution response')

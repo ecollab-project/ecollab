@@ -1,0 +1,57 @@
+{
+  "phase": "3I",
+  "date_timezone": "2026-10-23 Asia/Manila",
+  "base": "c838359711a14e9b6eb3f345c4386d184a178b25",
+  "production_actions": false,
+  "baseline_reproduction": {
+    "disabled_suggestion_preference": "FAIL expected",
+    "provider_error_content": "FAIL expected"
+  },
+  "patched_local": {
+    "actual_suggestion_route_synthetic_boundaries": "PASS",
+    "gemini_stubbed_http_client": "PASS",
+    "ollama_two_process_shared_namespace_real_http": "PASS",
+    "synthetic_retention_ownership_and_fk": "PASS",
+    "settings_runtime": "PASS",
+    "existing_local_http_provider": "PASS",
+    "code_lab_scope_classifier": "PASS (not assessment enforcement)",
+    "php_syntax": "PASS",
+    "phpunit_unit": {
+      "status": "PASS",
+      "tests": 25,
+      "assertions": 56
+    }
+  },
+  "not_run": [
+    "production diagnostics/inference",
+    "real local model inference",
+    "cloud-provider integration",
+    "local MariaDB concurrency",
+    "mixed workload and FPM resource measurements",
+    "new private-resource/current-role revocation integration tests"
+  ],
+  "blocked": [
+    "aggregate quota/refund policy",
+    "retention/deletion schedule",
+    "trusted assessment-wide policy",
+    "Code Lab independent execution boundary"
+  ],
+  "r7": "REQUEST CHANGES",
+  "capacity_450": "UNVERIFIED",
+  "ci": "Check draft PR reviewed-head runs; no inherited CI claimed",
+  "source_sha256": {
+    ".github/workflows/settings-runtime.yml": "4ef6f698a4ce4efb87c8d9884822ddaec70cb13aed7ddaabee9967650cd37104",
+    "API/ai/message.php": "5114b4c47e1ee474df79b341ef0a9f67512f04128b434f798b9dd3f3e5e730ed",
+    "API/ai/session.php": "a9fa70e64e8ec132409d71dfc98395e34ebac1d10491c87ff2c6da6e0118d730",
+    "API/ai/sessions.php": "a04bc096f03afdc5297f65536ccf4b997c3bdd34d08400cf20e12d27827697a6",
+    "API/chat/ai-assist.php": "4ef516d197c4d3fcce76bfc7e055a51ac9ae726a542dbbf661c20e930c815a72",
+    "API/dm/send-message.php": "6581bcb269dac7781c2541623ca99482e70010a4cb30728496fe6ba61f5b016e",
+    "API/facilitator/jarred.php": "4763cc868b9b359dd8b1d18778f17bc037320c225ca7500b3afa23d95fb658d8",
+    "services/GeminiService.php": "a74044ecdf9d75750b559bedfe2562a8906bba8e64ad2cc649a4ed75d9d583c7",
+    "docs/450-phase3i-jarred-governance.md": "99534f37354daf34ed5b17c035ba34259eb22a50fa0afc06b3878fce21ffb9fd",
+    "tests/jarred-governance-http.cjs": "84d92070861686b264ff65fe8668ca22b4f4668861f6c3c7ffd40eb77c2265bc",
+    "tests/jarred-governance-lock.cjs": "283465e380732ff11e832aeb5bdb92ccb6c76dfb77204df744a2ddd9e488be0b",
+    "tests/jarred-governance-provider.php": "abfc7925d8f6d51d8dd220ac399c62cb37e73c81a13cfd00b7a6e86d3a14ab02",
+    "tests/jarred-governance-retention.php": "3e8240753d5388f39242f19c65fefd80fafb6907bdf20a669bb966e886b0b95f"
+  }
+}
