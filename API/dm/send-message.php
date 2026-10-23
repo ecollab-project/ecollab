@@ -292,7 +292,7 @@ JARRED_SYSTEM_PROMPT . JarredConversation::instructions($prefs),
             ],
         ]);
     } catch (Throwable $aiError) {
-        error_log('[dm/send-message][AI] ' . $aiError->getMessage());
+        error_log('[dm/send-message][AI] request failed');
         echo json_encode([
             'success' => true,
             'message_id' => $msgId,
@@ -305,7 +305,7 @@ JARRED_SYSTEM_PROMPT . JarredConversation::instructions($prefs),
         ]);
     }
 } catch (Throwable $e) {
-    error_log('[dm/send-message] ' . $e->getMessage());
+    error_log('[dm/send-message] request failed');
     $status=in_array($e->getCode(),[403,409,503],true)?$e->getCode():500;http_response_code($status);
     echo json_encode(['error' => $status===500?'Server error':$e->getMessage()]);
 }

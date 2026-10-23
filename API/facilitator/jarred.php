@@ -96,7 +96,7 @@ try{
 
     echo json_encode(['success'=>true,'reply'=>$text,'model'=>$result['model']??null]);
 }catch(Throwable $e){
-    error_log('[facilitator/jarred] '.$e->getMessage());
+    error_log('[facilitator/jarred] request failed');
     http_response_code(in_array($e->getCode(),[403,409,503],true)?$e->getCode():500);
     echo json_encode(['error'=>$e->getCode()===403?$e->getMessage():'Jarred is temporarily unavailable.']);
 }
