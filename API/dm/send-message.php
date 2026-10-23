@@ -5,10 +5,8 @@ require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/services/RealtimeOutbox.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
-require_once dirname(__DIR__, 2) . '/services/OllamaService.php';
-require_once dirname(__DIR__, 2) . '/services/JarredConversation.php';
-require_once dirname(__DIR__, 2) . '/services/JarredTools.php';
-require_once dirname(__DIR__, 2) . '/services/JarredActionService.php';
+require_once dirname(__DIR__, 2) . '/services/JarredJobService.php';
+require_once dirname(__DIR__, 2) . '/services/JarredErrorResponse.php';
 require_once dirname(__DIR__, 2) . '/services/CodeLabIntegrityPolicy.php';
 
 require_once dirname(__DIR__, 2) . '/services/NotificationService.php';
@@ -27,7 +25,22 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 AuthMiddleware::verifyCsrf();if(session_status()===PHP_SESSION_ACTIVE)session_write_close();
 
-$body   = json_decode(file_get_contents('php://input'), true) ?? [];
+$raw = file_get_contents('php://input', false, null, 0, 32769);
+if ($raw === false || strlen($raw) > 32768) {
+    http_response_code(413); echo json_encode(['error'=>'Message request is too large']); exit;
+}
+try { $body = json_decode($raw, true, 32, JSON_THROW_ON_ERROR); }
+catch (JsonException) { $body = null; }
+$strings=['body','attachment_path','attachment_name','attachment_mime','surface'];
+$integers=['conversation_id','attachment_size','active_server_id','channel_id','voice_channel_id','workspace_id','document_id','whiteboard_id'];
+$valid=is_array($body) && !array_is_list($body);
+if ($valid) {
+    foreach ($strings as $field) if (isset($body[$field]) && !is_string($body[$field])) $valid=false;
+    foreach ($integers as $field) if (isset($body[$field]) && filter_var($body[$field],FILTER_VALIDATE_INT) === false) $valid=false;
+}
+if (!$valid) { http_response_code(400); echo json_encode(['error'=>'Invalid message request']); exit; }
+ignore_user_abort(true); // A lost HTTP client must not interrupt an admitted database transaction.
+$commitStarted=false;
 $convId = (int)($body['conversation_id'] ?? 0);
 $text   = trim($body['body'] ?? '');
 $attachmentPath = trim((string)($body['attachment_path'] ?? ''));
@@ -52,6 +65,7 @@ if (!$convId || ($text === '' && $attachmentPath === '') || mb_strlen($text) > 4
 
 try {
     $db = Database::getInstance();
+    (new AccessPolicy($db))->assertAccount((int)$me['id']);
 
     $check = $db->prepare(
         "SELECT id, user_a, user_b FROM dm_conversations
@@ -92,7 +106,11 @@ try {
 
     if ($isAiConversation && CodeLabIntegrityPolicy::isCodeLab($jarredSurface,(string)($_SERVER['HTTP_REFERER']??''))) {http_response_code(403);echo json_encode(['success'=>false,'error'=>CodeLabIntegrityPolicy::AI_MESSAGE]);exit;}
 
-    if($isAiConversation){$prefs=UserPreferences::get($db,(int)$me['id']);UserPreferences::assertJarred($prefs);$turnLock=JarredConversation::lock((int)$me['id'],'dm',$convId);}
+    if($isAiConversation){
+        $prefs=UserPreferences::get($db,(int)$me['id']); UserPreferences::assertJarred($prefs);
+        $db->beginTransaction();
+        (new JarredJobService($db))->reserveConversation((int)$me['id'],$convId);
+    }
 
     $msgId = RealtimeOutbox::record($db, 'dm', $convId, function () use ($db, $convId, $me, $text, $attachmentPath, $attachmentName, $attachmentSize, $attachmentMime) {
         $ins = $db->prepare(
@@ -122,7 +140,7 @@ try {
              ON DUPLICATE KEY UPDATE last_read_at = UTC_TIMESTAMP()"
         )->execute([':uid' => $me['id'], ':cid' => $convId]);
     } catch (Throwable $e) {
-        error_log('[dm/send-message] read cursor update skipped: ' . $e->getMessage());
+        error_log('[dm/send-message] read_cursor_unavailable');
     }
 
     if (!$isAiConversation) {
@@ -140,7 +158,7 @@ try {
                 ':link'      => BASE_URL . '/modules/chat/chat.php?dm=' . $convId . '&partner_id=' . (int)$me['id'] . '&message_id=' . $msgId,
             ]);
         } catch (Throwable $e) {
-            error_log('[dm/send-message] notification insert skipped: ' . $e->getMessage());
+            error_log('[dm/send-message] notification_unavailable');
         }
 
         NotificationService::invitationsFromMessage($db,$recipientId,(int)$me['id'],$text);
@@ -161,154 +179,19 @@ try {
         exit;
     }
 
-    try {
-        $historyStmt = $db->prepare(
-            "SELECT m.sender_id, m.body
-             FROM dm_messages m
-             WHERE m.conversation_id = :cid AND m.is_deleted = 0
-             ORDER BY m.id DESC
-             LIMIT 12"
-        );
-        $historyStmt->execute([':cid' => $convId]);
-        $history = array_reverse($historyStmt->fetchAll(PDO::FETCH_ASSOC));
+    $jobId=(new JarredJobService($db))->enqueue((int)$me['id'],$recipientId,$convId,$msgId,$activeServerId,$jarredSurface);
+    $commitStarted=true;
+    $db->commit();
+    $commitStarted=false;
+    http_response_code(202);
+    echo json_encode(['success'=>true,'message_id'=>$msgId,'sender_id'=>$me['id'],'body'=>$text,
+        'created_at'=>$createdAt,'recipient_id'=>$recipientId,'is_ai'=>true,'ai_job_id'=>$jobId,'ai_state'=>'queued']);
 
-        $prior=array_map(static fn($row)=>['role'=>(int)$row['sender_id']===$recipientId?'assistant':'user','content'=>(string)$row['body']],$history);array_pop($prior);
-        $messages = JarredConversation::history($prior,5000);$messages[]=['role'=>'user','content'=>$text];
-
-        $jarredTools = new JarredTools();
-
-        // Central action authority runs before Qwen. PHP owns action state,
-        // authorization and execution; the model never receives write access.
-        $jarredActions = new JarredActionService();
-        $actionResult = $jarredActions->handleMessage((int)$me['id'], $convId, $text, $activeServerId, $jarredSurface);
-        if ($actionResult !== null) {
-            $aiText = (string)$actionResult['reply'];
-            $aiMsgId = RealtimeOutbox::record($db, 'dm', $convId, function () use ($db, $convId, $recipientId, $aiText) {
-                $aiInsert = $db->prepare("INSERT INTO dm_messages (conversation_id, sender_id, body) VALUES (:cid, :uid, :body)");
-                $aiInsert->execute([':cid'=>$convId, ':uid'=>$recipientId, ':body'=>$aiText]);
-                return (int)$db->lastInsertId();
-            });
-            $aiCreatedStmt = $db->prepare("SELECT created_at FROM dm_messages WHERE id=:id LIMIT 1");
-            $aiCreatedStmt->execute([':id'=>$aiMsgId]);
-            $aiCreatedAt = (string)($aiCreatedStmt->fetchColumn() ?: gmdate('Y-m-d H:i:s'));
-            $db->prepare("UPDATE dm_conversations SET last_message=:body,last_msg_at=:created_at WHERE id=:cid")
-               ->execute([':body'=>mb_substr($aiText,0,120),':created_at'=>$aiCreatedAt,':cid'=>$convId]);
-            echo json_encode([
-                'success'=>true,'message_id'=>$msgId,'sender_id'=>$me['id'],'body'=>$text,'created_at'=>$createdAt,
-                'recipient_id'=>$recipientId,'is_ai'=>true,
-                'ai_message'=>['id'=>$aiMsgId,'conversation_id'=>$convId,'sender_id'=>$recipientId,'sender_name'=>'Jarred','sender_username'=>$recipient['username'],'sender_avatar_url'=>$recipient['avatar_url']??'','sender_gradient'=>$recipient['avatar_color_gradient']?:'#6366f1,#8b5cf6','body'=>$aiText,'created_at'=>$aiCreatedAt],
-                'ai_action'=>$actionResult['action'] ?? null,
-            ]);
-            exit;
-        }
-
-        $jarredSurface['personalization']=(bool)$prefs['jarred_personalization'];
-        $jarredContext = $jarredTools->contextForPrompt((int)$me['id'], $text, $activeServerId, $jarredSurface);
-
-        // qwen3:1.7b on this VPS does not reliably emit native Ollama tool_calls.
-        // Use permission-scoped context routing, then let Qwen answer naturally from those facts.
-        $ollama = new OllamaService();
-        if ($jarredContext !== '') {
-            array_unshift($messages, [
-                'role' => 'system',
-                'content' => "Authoritative live eCollab context for the current request. Use these application results as facts. Do not claim you lack access when the requested data is present here.\n\n" . $jarredContext,
-            ]);
-        }
-        $result = $ollama->generate(
-            $messages,
-            <<<'JARRED_SYSTEM_PROMPT'
-You are Jarred, a member-like assistant inside eCollab. In normal conversation, talk like a real person in DMs: relaxed, direct, concise, and natural. Do not sound like customer support, a tutorial bot, or an AI disclaimer. Do not open with canned phrases such as "How can I assist you today?", "Welcome to the channel", "I am here to help", or "As an AI". Match the user's energy appropriately: greetings can be as simple as "hey", "yo, what's up?", or "hey, what's good?" when that fits. You may use contractions, casual wording, light humor, and occasional emoji, but do not force slang or emojis into every reply.
-
-Your name is Jarred; never call the user Jarred unless they say that is their name. Never pretend to be a human or another real student. If directly asked whether you are human or AI, say plainly that you are Jarred, eCollab's built-in assistant, then continue naturally. Do not fabricate personal experiences, feelings, classes, relationships, memories, or actions.
-
-Permission-scoped eCollab context, when supplied, is authoritative. JARRED AUTHORITY CONTEXT is authoritative for role and surface capabilities, but never use role alone to bypass resource permissions.
-
-In documents, act like a helpful classmate reviewing the work: preserve the user's voice and tone unless they request a rewrite, point out missing steps or inconsistencies, and explain suggestions.
-
-In whiteboards, reason from the supplied board context. If the project purpose is unclear, ask what the diagram is supposed to represent, then suggest plans, missing relationships, or questionable connectors without claiming you changed the board.
-
-For facilitators, analyze only supplied authorized evidence and distinguish measured facts from interpretation. Never invent quiz timing, skill scores, dashboard metrics, users, messages, presence, documents, permissions, or compatibility scores.
-
-You can create temporary public/private voice rooms through the authorized workflow; answer from authorized eCollab context; report active members; explain deterministic peer matches; search authorized message context when supplied; describe accessible servers/channels; discuss authorized Coworkspace/document/whiteboard context; recommend academic library material; and have normal conversation. Do not claim actions the backend did not provide.
-
-Keep ordinary DM replies short and conversational unless the user asks for detail.
-JARRED_SYSTEM_PROMPT . JarredConversation::instructions($prefs),
-            JarredConversation::tokens($prefs)
-        );
-
-        $aiText = trim((string)($result['text'] ?? ''));
-        if ($aiText === '') {
-            throw new RuntimeException('AI returned an empty response');
-        }
-
-        $aiMsgId = RealtimeOutbox::record($db, 'dm', $convId, function () use ($db, $convId, $recipientId, $aiText) {
-            $aiInsert = $db->prepare(
-                "INSERT INTO dm_messages (conversation_id, sender_id, body)
-                 VALUES (:cid, :uid, :body)"
-            );
-            $aiInsert->execute([
-                ':cid' => $convId,
-                ':uid' => $recipientId,
-                ':body' => $aiText,
-            ]);
-            return (int)$db->lastInsertId();
-        });
-
-        $aiCreatedStmt = $db->prepare("SELECT created_at FROM dm_messages WHERE id = :id LIMIT 1");
-        $aiCreatedStmt->execute([':id' => $aiMsgId]);
-        $aiCreatedAt = (string)($aiCreatedStmt->fetchColumn() ?: gmdate('Y-m-d H:i:s'));
-
-        $db->prepare(
-            "UPDATE dm_conversations SET last_message = :body, last_msg_at = :created_at WHERE id = :cid"
-        )->execute([
-            ':body' => mb_substr($aiText, 0, 120),
-            ':created_at' => $aiCreatedAt,
-            ':cid' => $convId,
-        ]);
-
-        echo json_encode([
-            'success' => true,
-            'message_id' => $msgId,
-            'sender_id' => $me['id'],
-            'body' => $text,
-            'created_at' => $createdAt,
-            'recipient_id' => $recipientId,
-            'is_ai' => true,
-            'ai_message' => [
-                'id' => $aiMsgId,
-                'conversation_id' => $convId,
-                'sender_id' => $recipientId,
-                'sender_name' => 'Jarred',
-                'sender_username' => $recipient['username'],
-                'sender_avatar_url' => $recipient['avatar_url'] ?? '',
-                'sender_gradient' => $recipient['avatar_color_gradient'] ?: '#6366f1,#8b5cf6',
-                'body' => $aiText,
-                'created_at' => $aiCreatedAt,
-            ],
-            'ai_usage' => [
-                'input_tokens' => $result['input_tokens'] ?? null,
-                'output_tokens' => $result['output_tokens'] ?? null,
-                'model' => $result['model'] ?? null,
-            ],
-        ]);
-    } catch (Throwable $aiError) {
-        error_log('[dm/send-message][AI] request failed');
-        echo json_encode([
-            'success' => true,
-            'message_id' => $msgId,
-            'sender_id' => $me['id'],
-            'body' => $text,
-            'created_at' => $createdAt,
-            'recipient_id' => $recipientId,
-            'is_ai' => true,
-            'ai_error' => in_array($aiError->getCode(),[409,503],true)?'Jarred is busy. Wait briefly and try again.':'AI is temporarily unavailable',
-        ]);
-    }
 } catch (Throwable $e) {
-    error_log('[dm/send-message] request failed');
-    $status=in_array($e->getCode(),[403,409,503],true)?$e->getCode():500;http_response_code($status);
-    echo json_encode(['error' => $status===500?'Server error':$e->getMessage()]);
+    try { if(isset($db) && $db->inTransaction()) $db->rollBack(); }
+    catch (Throwable) { error_log('[dm/send-message] rollback_unavailable'); }
+    [$status,$message]=JarredErrorResponse::map($e, $commitStarted);
+    error_log('[dm/send-message] '.($commitStarted?'commit_outcome_unknown':'request_rejected').' status='.$status);
+    http_response_code($status);
+    echo json_encode(['error'=>$message]);
 }
-
-
-

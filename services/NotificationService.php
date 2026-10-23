@@ -8,7 +8,7 @@ final class NotificationService {
         try {
             $db->prepare('INSERT INTO notifications (recipient_id,actor_id,type,title,body,link_url,icon,is_read) VALUES (?,?,?,?,?,?,?,0)')
                 ->execute([$recipient,$actor,$type,mb_substr($title,0,120),mb_substr($body,0,500),$link,$icon]);
-        } catch (Throwable $e) { error_log('[notifications/create] '.$e->getMessage()); }
+        } catch (Throwable $e) { error_log('[notifications/create] operation_unavailable'); }
     }
     public static function invitationsFromMessage(PDO $db, int $recipient, int $actor, string $text): void {
         preg_match_all('~https?://[^\s<>"\x27]+~u', $text, $matches);
@@ -33,7 +33,7 @@ final class NotificationService {
                             'Open this invitation to join. Access is checked when you open it.',
                             '/modules/chat/chat.php?'.$key.'='.rawurlencode($token),'🔒');
                     }
-                } catch (Throwable $e) { error_log('[notifications/invite] '.$e->getMessage()); }
+                } catch (Throwable $e) { error_log('[notifications/invite] operation_unavailable'); }
             }
         }
     }
@@ -50,6 +50,6 @@ final class NotificationService {
                     'You missed a call. Open the conversation to respond.',
                     '/modules/chat/chat.php?partner_id='.(int)$call['caller_id'].'&missed_call='.(int)$call['id'],'📞');
             }
-        } catch (Throwable $e) { error_log('[notifications/missed-call] '.$e->getMessage()); }
+        } catch (Throwable $e) { error_log('[notifications/missed-call] operation_unavailable'); }
     }
 }

@@ -27,6 +27,7 @@ final class DocumentAccessService
         $p = $s->fetchColumn();
         $owner = (int)$d['created_by'] === $uid || (int)$w['host_id'] === $uid;
         $permission = self::permission($owner, $p === false ? null : (string)$p, (string)$d['visibility'], (string)$d['public_permission']);
+        if ($permission !== null && !(new AccessPolicy($db))->server($uid,(int)$w['server_id'],'edit')) $permission='view';
         if ($permission === null) throw new RuntimeException('Document access denied.', 403);
         return ['document' => $d, 'workspace' => $w, 'permission' => $permission, 'owner' => $owner];
     }

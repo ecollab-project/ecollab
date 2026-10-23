@@ -186,7 +186,7 @@ final class OllamaService
         return ['data'=>$parsed, 'model'=>$this->model];
     }
 
-    public function generate(array $messages, string $systemPrompt = '', int $maxTokens = 400): array
+    public function generate(array $messages, string $systemPrompt = '', int $maxTokens = 400, bool $requireComplete = false): array
     {
         $payloadMessages = [];
         if ($systemPrompt !== '') {
@@ -220,6 +220,10 @@ final class OllamaService
         ];
 
         $data = $this->requestChat($payload);
+        if ($requireComplete && (($data['done'] ?? null) !== true || ($data['done_reason'] ?? '') !== 'stop'
+            || !is_array($data['message'] ?? null) || !is_string($data['message']['content'] ?? null))) {
+            throw new RuntimeException('Local model did not complete the response.',503);
+        }
 
         return [
             'text' => (string)($data['message']['content'] ?? ''),
