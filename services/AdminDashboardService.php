@@ -58,11 +58,11 @@ class AdminDashboardService
 
                     (SELECT COUNT(*)
                         FROM study_room_sessions
-                        WHERE DATE(scheduled_start) = CURDATE()) AS sessions_today,
+                        WHERE scheduled_start >= CURDATE() AND scheduled_start < CURDATE() + INTERVAL 1 DAY) AS sessions_today,
 
                     (SELECT COUNT(*)
                         FROM messages
-                        WHERE DATE(created_at) = CURDATE()
+                        WHERE created_at >= CURDATE() AND created_at < CURDATE() + INTERVAL 1 DAY
                           AND is_deleted = 0) AS messages_today,
 
                     (SELECT COUNT(*)

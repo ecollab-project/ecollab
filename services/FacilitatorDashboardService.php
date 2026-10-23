@@ -118,7 +118,7 @@ class FacilitatorDashboardService
                         SELECT COUNT(DISTINCT m.sender_id)
                         FROM messages m
                         WHERE m.channel_id = :cid
-                          AND DATE(m.created_at) = CURDATE()
+                          AND m.created_at >= CURDATE() AND m.created_at < CURDATE() + INTERVAL 1 DAY
                           AND m.is_deleted = 0
                     ) AS active_today,
 
@@ -126,7 +126,7 @@ class FacilitatorDashboardService
                         SELECT COUNT(*)
                         FROM messages m2
                         WHERE m2.channel_id = :cid2
-                          AND DATE(m2.created_at) = CURDATE()
+                          AND m2.created_at >= CURDATE() AND m2.created_at < CURDATE() + INTERVAL 1 DAY
                           AND m2.is_deleted = 0
                     ) AS messages_today,
 

@@ -213,7 +213,8 @@ try {
             $matches = [];
 
             $candidates = $users->fetchAll(PDO::FETCH_ASSOC);
-            $profiles = array_map(static fn($candidate) => $loadProfile((int)$candidate['id'], $db), $candidates);
+            $byId = $service->loadProfiles($db, array_column($candidates, 'id'));
+            $profiles = array_map(static fn($candidate) => $byId[(int)$candidate['id']], $candidates);
             $semantic = (new PeerSemanticClient())->scores($profile, $profiles);
             foreach ($candidates as $index => $candidate) {
                 $cid = (int)$candidate['id'];
@@ -310,7 +311,8 @@ try {
             $service = new PeerMatchingService();
             $mine = $loadProfile($uid,$db);
             $candidates = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $profiles = array_map(static fn($candidate) => $loadProfile((int)$candidate['id'], $db), $candidates);
+            $byId = $service->loadProfiles($db, array_column($candidates, 'id'));
+            $profiles = array_map(static fn($candidate) => $byId[(int)$candidate['id']], $candidates);
             $semantic = (new PeerSemanticClient())->scores($mine, $profiles);
             foreach ($candidates as $index => $candidate) {
                 $cp = $profiles[$index];

@@ -77,7 +77,8 @@ try {
     $matches = [];
 
     if ($currentProfileReady) {
-        $profiles = array_map(static fn($candidate) => $service->loadProfile($db, (int)$candidate['id']), $users);
+        $byId = $service->loadProfiles($db, array_column($users, 'id'));
+        $profiles = array_map(static fn($candidate) => $byId[(int)$candidate['id']], $users);
         $semantic = (new PeerSemanticClient())->scores($currentProfile, $profiles);
         foreach ($users as $index => $candidate) {
             $candidateId = (int)$candidate['id'];
