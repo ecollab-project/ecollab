@@ -79,7 +79,7 @@ try {
 
     aiJson(['success' => false, 'error' => 'Method not allowed.'], 405);
 } catch (Throwable $e) {
-    error_log('[ai/sessions] ' . $e->getMessage());
+    error_log('[ai/sessions] request failed');
     $status = $e->getCode();
     if ($status < 400 || $status > 599) $status = 500;
     aiJson(['success' => false, 'error' => APP_DEBUG ? $e->getMessage() : 'Server error.'], $status);

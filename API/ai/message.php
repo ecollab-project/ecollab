@@ -83,7 +83,7 @@ try {
     JarredConversation::unlock($turnLock);
     aiJson(['success'=>true,'session_id'=>(int)$sessionId,'message'=>['id'=>(int)$assistantMessage['id'],'role'=>'assistant','content'=>$result['text'],'token_count'=>$outputTokens,'created_at'=>$assistantMessage['created_at']],'usage'=>['input_tokens'=>$inputTokens,'output_tokens'=>$outputTokens]]);
 } catch (Throwable $e) {
-    error_log('[ai/message] '.$e->getMessage());
+    error_log('[ai/message] request failed');
     $status = $e->getCode(); if ($status < 400 || $status > 599) $status = 500;
     aiJson(['success'=>false,'error'=>defined('APP_DEBUG') && APP_DEBUG ? $e->getMessage() : (in_array($status,[403,409],true)?$e->getMessage():($status === 503 ? 'Jarred is temporarily busy or unavailable. Please try again shortly.' : 'AI service error.'))],$status);
 }
