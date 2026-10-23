@@ -133,6 +133,7 @@ final immutable head/merge/tree identities, workflow runs and actual CI logs.
 | Cancel/source deletion/conversation change/account/preference/server/channel/document revocation during generation | PASS actual MariaDB workOne fixtures, no reply persisted |
 | Context authorization stamp change | PASS reply discarded |
 | Action effect rollback/retry/checkpoint and duplicate status/worker calls | PASS one committed DB effect and reply |
+| Actual temporary-voice confirmation/create through production CLI action router | PASS: one room, no inference; duplicate worker does not create another room |
 | DMs current account outbox audience | PASS suspended recipient excluded; no delivery-fence claim |
 | Missing worker common lock | PASS startup failure, no temp fallback |
 | Existing queue tests incl. non-UTC database clock | PASS SQLite and actual MariaDB |

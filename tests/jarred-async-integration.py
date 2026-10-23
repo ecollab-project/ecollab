@@ -154,6 +154,13 @@ require '''+repr(str(ROOT))+'''.$route;
    for _ in range(3):check(start_worker().wait(timeout=8)==0,'safe worker failure accounting '+mode)
    check(sql('SELECT state FROM jarred_jobs',True)[0]['state']=='failed' and count('dm_messages')==1,'no persisted partial/invalid reply '+mode);clear()
   Model.mode='normal'
+  before=Model.calls
+  for text in ['create a temporary voice room','yes','public']:
+   check(request(body=body|{'body':text,'active_server_id':1},cookie=cookie)[0]==202,'temporary voice action queued')
+   check(start_worker().wait(timeout=8)==0,'actual temporary voice action committed')
+   check(sql('SELECT state FROM jarred_jobs ORDER BY id DESC LIMIT 1',True)[0]['state']=='done','temporary voice action transaction retained')
+  check(count('temporary_voice_rooms')==1 and Model.calls==before,'real tool action has one room and no model inference')
+  check(start_worker().wait(timeout=8)==0 and count('temporary_voice_rooms')==1,'duplicate worker does not repeat real room creation');clear()
   # Human DM contract remains synchronous and contains no AI job.
   status,raw,_=request(body=body|{'conversation_id':2},cookie=cookie);check(status==200 and not json.loads(raw)['is_ai'] and count('jarred_jobs')==0,'human DM behavior retained');clear()
   subprocess.run([PHP,str(ROOT/'tests/jarred-async-contract.php')],cwd=ROOT,env=env,check=True,timeout=30)
