@@ -1,0 +1,19 @@
+# STAGING ONLY. Apply with compose.yml on a separately isolated execution host.
+# Frozen packages/profiles must exist before enabling this egress-denied network.
+# This overlay does NOT make privileged Piston safe on the application host.
+services:
+  piston:
+    networks: [execution]
+    environment:
+      PISTON_DISABLE_NETWORKING: "true"
+      PISTON_MAX_FILE_SIZE: "10000000"
+    tmpfs:
+      - /var/local/lib/isolate:exec,size=512m
+  adapter:
+    image: python@sha256:6a0e06f5ba0b373d051aabd3fffb9b873f27f9a2a3a14bcbe37dee6f0e3bbc70
+    networks: [execution]
+    environment:
+      PISTON_URL: http://piston:2000
+networks:
+  execution:
+    internal: true

@@ -1,0 +1,57 @@
+{
+  "phase": "3G",
+  "date_manila": "2026-10-23",
+  "base_branch": "ecollab-collabs",
+  "base_sha": "c838359711a14e9b6eb3f345c4386d184a178b25",
+  "independent_of_pr74_and_r7": true,
+  "production_access": false,
+  "separate_execution_host_provisioned": false,
+  "local_fixture": "actual Nginx1.24/PHP8.3.6 cURL + real adapter with mocked Piston; no source execution locally",
+  "local_mtls_measurements": {
+    "fixture": "actual Nginx mTLS + PHP cURL + real adapter with mocked backend; no source execution",
+    "language_profiles": 6,
+    "transport_samples": 12,
+    "transport_p50_ms": 3.765033,
+    "transport_p95_ms": 6.814029,
+    "direct_loopback_http_p50_ms": 0.435286,
+    "direct_loopback_http_p95_ms": 1.012286,
+    "median_gateway_plus_tls_increment_ms": 3.329747,
+    "unexpected_positive_probe_errors": 0,
+    "known_python_request_end_to_end_ms": 30.309716999909142,
+    "runtime_cpu_seconds": null,
+    "runtime_memory": null,
+    "queue_wait_ms": null,
+    "host_cpu_memory": null,
+    "unauthorized_wrong_ca_hostname_plaintext_revoked_and_unavailable": "PASS",
+    "separate_kernel_isolation": "BLOCKED"
+  },
+  "local_queue_mtls_checks": "PASS: missing worker key does not block immutable submission, actual TLS outage, actual adapter/gateway restart, no zero score, same job retry, hidden filtering, no duplicate grade",
+  "existing_adapter_tests": {
+    "status": "PASS",
+    "tests": 11
+  },
+  "private_backend_proxy_redirect_checks": "PASS",
+  "php_execution_batch_pool_server_queue_artifact_regressions": "PASS",
+  "phpunit_unit": {
+    "status": "PASS",
+    "tests": 25,
+    "assertions": 56
+  },
+  "local_real_piston_runtime_and_docker_boundary": "NOT RUN: no local Docker daemon",
+  "independent_host_external_egress_vm_boundary": "BLOCKED",
+  "r7": "REQUEST CHANGES",
+  "capacity_450": "UNVERIFIED",
+  "source_sha256": {
+    "services/CodeLabRunner.php": "84ff363f91dcca5f8a9b2ee5cb75c235e84df52d7a891ad56248bce91bb210da",
+    "deploy/code-lab/piston/bridge.py": "cc80700e9c4864dd91fbcec1d529300b87eeb95977ab88afc87e1c7dd2075a8c",
+    "deploy/code-lab/piston/compose.isolated.yml": "dba996c30a671405a64eadd4100a9d387b88b206273accc52805cc24c1b690bf",
+    "deploy/code-lab/isolated/nginx.conf.example": "f55ceb21c51837d7497942078c326a9ebaaf8a9f82c2e7f22f0cd9ee52120190",
+    "deploy/code-lab/isolated/application.env.example": "690423766973dbcfcd7a15564d477131d740511057ca03455c6a6c249da39dd5",
+    "tests/code-lab-mtls-integration.py": "2400aa21aa56a4041d17e6a987840d05e576e322e2897c551b6c63fa311c0932",
+    "tests/code-lab-mtls-queue.php": "b6301aa8c29c8f2df978ba30a43edc2694de3254942754e28d761aea5b929d05",
+    "tests/code-lab-private-backend-test.py": "16ec76ae3068169061b3fa2cb5303f34102f0413dbd10918e1503e9348bd578c",
+    "tests/code-lab-isolation-config.py": "48ba1ee903879d5b5e95839658d0faaf299bc49ce995da44078a75fea9498ac3",
+    "tests/code-lab-isolated-live.py": "50794b9894b8927efe10382b9253f71fd87e567d2e2358fe4f40be30366abfb1",
+    ".github/workflows/code-lab-piston.yml": "bfd3a6222cd12e560dc01855ef7b4c983be81e007b84e909323920d2253bde5a"
+  }
+}
