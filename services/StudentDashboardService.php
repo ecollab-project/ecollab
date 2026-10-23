@@ -25,11 +25,18 @@ class StudentDashboardService
 
     public function getStudentDashboardData(int $userId): array
     {
+        // Reuse only within this response; a later call must read current data.
+        $courses = $this->getStudentCourses($userId);
+        $chatUnread = $this->getChatUnreadCount($userId);
+        $sessions = $this->getTotalSessions($userId);
+        $hours = $this->getHoursStudied($userId);
+        $messages = $this->getMessagesSent($userId);
+
         return [
-            'courses' => $this->getStudentCourses($userId),
+            'courses' => $courses,
             'upcoming_sessions' => $this->getUpcomingSessions($userId),
-            'notifications' => $this->getNotifications($userId),
-            'unread_notifications' => $this->getUnreadNotificationCount($userId),
+            'notifications' => $this->getNotifications($userId, $chatUnread),
+            'unread_notifications' => $this->getUnreadNotificationCount($userId, $chatUnread),
             'friends_online' => $this->getFriendsOnline($userId),
             'study_rooms' => $this->getActiveStudyRooms($userId),
             'recommended_servers' => $this->getRecommendedServers($userId),
@@ -37,19 +44,19 @@ class StudentDashboardService
             'notes' => $this->getStudentNotes($userId),
             'coworkspaces' => $this->getCoworkspaces($userId),
             'activity_chart' => $this->getActivityChartData($userId),
-            'total_sessions' => $this->getTotalSessions($userId),
-            'hours_studied' => $this->getHoursStudied($userId),
+            'total_sessions' => $sessions,
+            'hours_studied' => $hours,
             'study_streak' => $this->getStudyStreak($userId),
-            'focus_time' => $this->getFocusTime($userId),
+            'focus_time' => $hours,
             'achievement_count' => $this->getAchievementCount($userId),
             'quiz_accuracy' => $this->getQuizAccuracy($userId),
             'best_subject' => $this->getBestSubject($userId),
-            'messages_sent' => $this->getMessagesSent($userId),
-            'chat_unread' => $this->getChatUnreadCount($userId),
+            'messages_sent' => $messages,
+            'chat_unread' => $chatUnread,
             'chat_recent' => $this->getRecentChat($userId),
             'membership' => $this->membershipService->getMembershipSummary($userId),
-            'channels_entered' => count($this->getStudentCourses($userId)),
-            'activity_progression' => $this->getActivityProgression($userId),
+            'channels_entered' => count($courses),
+            'activity_progression' => $this->getActivityProgression(count($courses), $sessions, $hours, $messages),
         ];
     }
 
@@ -95,12 +102,8 @@ class StudentDashboardService
     }
 
 
-    private function getActivityProgression(int $userId): array
+    private function getActivityProgression(int $channels, int $sessions, float $hours, int $messages): array
     {
-        $channels = count($this->getStudentCourses($userId));
-        $sessions = $this->getTotalSessions($userId);
-        $hours = $this->getHoursStudied($userId);
-        $messages = $this->getMessagesSent($userId);
         $xp = ($channels * 100) + ($sessions * 25) + ((int)floor($hours * 10)) + ($messages * 2);
         $level = max(1, (int)floor($xp / 500) + 1);
         $currentFloor = ($level - 1) * 500;
@@ -139,7 +142,7 @@ class StudentDashboardService
         }
     }
 
-    private function getNotifications(int $userId): array
+    private function getNotifications(int $userId, int $chatUnread): array
     {
         try {
             $stmt = $this->db->prepare("
@@ -160,7 +163,6 @@ class StudentDashboardService
             $stmt->execute([':uid' => $userId]);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            $chatUnread = $this->getChatUnreadCount($userId);
             if ($chatUnread > 0) {
                 array_unshift($rows, [
                     'id' => 'chat-unread',
@@ -179,14 +181,14 @@ class StudentDashboardService
         }
     }
 
-    private function getUnreadNotificationCount(int $userId): int
+    private function getUnreadNotificationCount(int $userId, int $chatUnread): int
     {
         try {
             $stmt = $this->db->prepare('SELECT COUNT(*) FROM notifications WHERE recipient_id = :uid AND is_read = 0');
             $stmt->execute([':uid' => $userId]);
-            return (int)$stmt->fetchColumn() + $this->getChatUnreadCount($userId);
+            return (int)$stmt->fetchColumn() + $chatUnread;
         } catch (Throwable) {
-            return $this->getChatUnreadCount($userId);
+            return $chatUnread;
         }
     }
 
@@ -367,11 +369,6 @@ class StudentDashboardService
         try{$s=$this->db->prepare("SELECT COUNT(DISTINCT DATE(created_at)) FROM messages WHERE sender_id=:uid AND created_at>=DATE_SUB(NOW(),INTERVAL 30 DAY)");$s->execute([':uid'=>$userId]);return (int)$s->fetchColumn();}catch(Throwable){return 0;}
     }
 
-    private function getFocusTime(int $userId): float
-    {
-        try{$s=$this->db->prepare("SELECT COALESCE(SUM(COALESCE(duration_mins,0))/60.0,0) FROM study_sessions WHERE user_id=:uid AND started_at>=DATE_SUB(NOW(),INTERVAL 7 DAY)");$s->execute([':uid'=>$userId]);return round((float)$s->fetchColumn(),1);}catch(Throwable){return 0.0;}
-    }
-
     private function getAchievementCount(int $userId): int
     {
         try{$s=$this->db->prepare('SELECT COUNT(*) FROM user_achievements WHERE user_id=:uid');$s->execute([':uid'=>$userId]);return (int)$s->fetchColumn();}catch(Throwable){return 0;}
@@ -399,7 +396,7 @@ class StudentDashboardService
     {
         $count=0;
         try{$s=$this->db->prepare('SELECT COUNT(*) FROM direct_messages WHERE recipient_id=:uid AND is_read=0 AND is_deleted=0');$s->execute([':uid'=>$userId]);$count+=(int)$s->fetchColumn();}catch(Throwable){}
-        try{$s=$this->db->prepare("SELECT COUNT(*) FROM messages m JOIN server_members sm ON sm.server_id=(SELECT server_id FROM channels WHERE id=m.channel_id) AND sm.user_id=:uid LEFT JOIN message_reads mr ON mr.channel_id=m.channel_id AND mr.user_id=:uid2 WHERE m.is_deleted=0 AND m.sender_id<>:uid3 AND m.created_at>COALESCE(mr.last_read_at,'1970-01-01')");$s->execute([':uid'=>$userId,':uid2'=>$userId,':uid3'=>$userId]);$count+=(int)$s->fetchColumn();}catch(Throwable){}
+        try{$s=$this->db->prepare("SELECT COUNT(*) FROM messages m JOIN channels c ON c.id=m.channel_id JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid LEFT JOIN message_reads mr ON mr.channel_id=m.channel_id AND mr.user_id=:uid2 WHERE m.is_deleted=0 AND m.sender_id<>:uid3 AND m.created_at>COALESCE(mr.last_read_at,'1970-01-01')");$s->execute([':uid'=>$userId,':uid2'=>$userId,':uid3'=>$userId]);$count+=(int)$s->fetchColumn();}catch(Throwable){}
         return $count;
     }
 

@@ -610,6 +610,33 @@ class PeerMatchingService
         ];
     }
 
+    /** Load independent profiles in bounded batches, keyed by user ID. No shared cache. */
+    public function loadProfiles(PDO $db, array $userIds): array
+    {
+        $ids = array_values(array_unique(array_map('intval', $userIds)));
+        $profiles = [];
+        foreach ($ids as $id) $profiles[$id] = ['prefs'=>[], 'subjects'=>[], 'interests'=>[], 'hobbies'=>[]];
+        foreach (array_chunk($ids, 100) as $batch) {
+            $in = implode(',', array_fill(0, count($batch), '?'));
+            $queries = [
+                'prefs' => "SELECT * FROM pm_user_study_prefs WHERE user_id IN ($in)",
+                'subjects' => "SELECT p.user_id, p.subject_id, p.role, p.proficiency, t.name FROM pm_user_subjects p JOIN pm_subjects t ON t.id=p.subject_id WHERE p.user_id IN ($in) ORDER BY p.user_id,p.subject_id",
+                'interests' => "SELECT p.user_id, p.interest_id, t.name FROM pm_user_interests p JOIN pm_interest_tags t ON t.id=p.interest_id WHERE p.user_id IN ($in) ORDER BY p.user_id,p.interest_id",
+                'hobbies' => "SELECT p.user_id, p.hobby_id, t.name FROM pm_user_hobbies p JOIN pm_hobby_tags t ON t.id=p.hobby_id WHERE p.user_id IN ($in) ORDER BY p.user_id,p.hobby_id",
+            ];
+            foreach ($queries as $kind => $sql) {
+                $stmt = $db->prepare($sql);
+                $stmt->execute($batch);
+                while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    $id = (int)$row['user_id'];
+                    if ($kind === 'prefs') $profiles[$id]['prefs'] = $row;
+                    else { unset($row['user_id']); $profiles[$id][$kind][] = $row; }
+                }
+            }
+        }
+        return $profiles;
+    }
+
     /**
      * Compute a database-backed compatibility score.
      *

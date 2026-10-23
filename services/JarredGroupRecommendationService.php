@@ -29,8 +29,7 @@ final class JarredGroupRecommendationService
         if(!$students) return ['basis'=>'profile_compatibility','groups'=>[],'unassigned'=>[]];
 
         $engine=new PeerMatchingService();
-        $profiles=[];
-        foreach($students as $s) $profiles[(int)$s['id']]=$engine->loadProfile($this->db,(int)$s['id']);
+        $profiles=$engine->loadProfiles($this->db,array_column($students,'id'));
 
         // Seed groups round-robin, then place each remaining student into the
         // group with the strongest average compatibility while respecting size.
