@@ -24,7 +24,7 @@ Return the first8 only if all9 timestamps are non-NULL and strictly descending. 
 
 The LIMIT bounds logical candidate rows, **not physical engine effort**. MVCC versions, tombstones and an unhelpful/missing existing index can still add work. Empty/sparse/tied workloads may incur a second round trip. The fixture deliberately records those costs rather than claiming a universal speedup.
 
-## Recent-chat results and SQL plans
+## Initial recent-chat results and SQL plans
 
 Native PHP 8.3/MariaDB 10.11,900 synthetic users,20 servers,100 channels and100,005 messages. Seven alternating samples per side/case; exact complete output arrays match on every sample. Tests run with and without existing optional migration067, and also verify a later inserted message, another user and removed membership on the same service instance.
 
@@ -111,3 +111,25 @@ CHAT_BROWSER_EVIDENCE=/tmp/chat-browser.json node tests/chat-list-browser.cjs
 The runner owns its temporary datadir/databases, ports, lock files and HTTP responder. It accepts no external database DSN. There is no production operation. Synthetic migrations are used only to construct disposable fixtures; 067 is unchanged and is not activated on production.
 
 **Verdict: staging-only performance candidate, conditional on exact-head CI and representative workload acceptance.** No new schema/write maintenance is added; rollback is code/assets only and preserves jobs/history/read markers. Remaining opportunities are the facilitator member aggregate, DM unread SQL and sustained CPU/memory/queue behavior. The next meaningful capacity milestone is an authorized 50–100-user staging workload. **450-user readiness remains UNVERIFIED.**
+
+## Follow-up: empty-after-delete covering-index regression
+
+The first exact-head CI passed all ten returned workflows, including real Chromium. Its raw artifact exposed an indexed empty-after-delete regression: original 3.39ms versus candidate 78.69ms. EXPLAIN selected the covering index for the existence gate; bulk-deleted versions made that supposedly small check costly. An explicit join-order experiment did not fix this (74.54ms), so it was discarded. The final implementation instead constrains only the existence gate to PRIMARY. No new index or migration change is added.
+
+The full 22-case comparison, exact-output/freshness checks and both actual worker loops reran locally after this correction. Final medians follow; the earlier table/CPU/read/worker numbers remain the initial local snapshot rather than a claim about this follow-up run. The raw evidence file now contains this final local run.
+
+| Distribution | No067 original→final ms | With067 original→final ms |
+|---|---:|---:|
+| distributed | 56.29→0.70 | 57.75→0.67 |
+| sparse_membership | 10.30→0.73 | 10.00→0.71 |
+| no_membership | 0.77→127.20 | 0.33→129.30 |
+| recent_busy_channel | 60.10→0.98 | 59.67→0.91 |
+| old_accessible_only | 59.89→59.70 | 85.74→87.36 |
+| deleted_recent | 55.88→0.68 | 58.03→0.70 |
+| all_timestamps_tied | 56.67→57.80 | 83.93→89.29 |
+| only_eight_visible | 35.46→43.68 | 32.95→42.08 |
+| null_dates | 57.75→138.59 | 89.55→168.91 |
+| empty_messages | 2.91→6.19 | 3.16→6.52 |
+| many_memberships | 168.14→0.64 | 169.16→0.70 |
+
+This removes the large indexed-empty regression, while the second query still roughly doubles tiny empty/no-membership reads. NULL-date/MVCC stress still regresses substantially and is explicitly not resolved. Query-count/semantic assertions remain unchanged. The final PR description records CI for the corrected head; prior-head passes are not counted for it.

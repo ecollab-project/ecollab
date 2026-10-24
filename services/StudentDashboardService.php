@@ -404,6 +404,8 @@ class StudentDashboardService
     {
         // Probe a bounded global head using the existing created_at index. This is
         // only an acceleration: sparse results and ties always use the complete query.
+        // The existence gate uses PRIMARY to avoid a covering-index MVCC scan
+        // after bulk deletes; this is measured with and without migration 067.
         try {
             $probe = $this->db->prepare("SELECT m.id,m.content,m.created_at,c.name AS channel_name,s.name AS server_name
                 FROM (SELECT id,created_at FROM messages ORDER BY created_at DESC LIMIT 256) recent
@@ -411,7 +413,7 @@ class StudentDashboardService
                 JOIN servers s ON s.id=c.server_id
                 JOIN server_members sm ON sm.server_id=s.id AND sm.user_id=:uid
                 WHERE m.is_deleted=0 AND EXISTS(
-                    SELECT 1 FROM messages gate JOIN channels gc ON gc.id=gate.channel_id
+                    SELECT 1 FROM messages gate FORCE INDEX (PRIMARY) JOIN channels gc ON gc.id=gate.channel_id
                     JOIN server_members gsm ON gsm.server_id=gc.server_id AND gsm.user_id=:gate_uid
                     WHERE gate.is_deleted=0 LIMIT 1)
                 ORDER BY recent.created_at DESC LIMIT 9");
