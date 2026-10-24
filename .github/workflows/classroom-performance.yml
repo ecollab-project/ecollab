@@ -1,0 +1,82 @@
+name: Classroom application performance preview
+on:
+  pull_request:
+    paths:
+      - 'services/LearningWorkspaceService.php'
+      - 'tests/classroom-*'
+      - 'tests/chat-worker-profile.py'
+      - '.github/workflows/classroom-performance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-comparison:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install disposable MariaDB and PHP dependencies
+        run: |
+          mkdir -p "$RUNNER_TEMP/perf-apt/empty" "$RUNNER_TEMP/perf-apt/lists/partial"
+          printf '%s\n' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble-updates main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://security.ubuntu.com/ubuntu noble-security main universe' \
+            > "$RUNNER_TEMP/perf-apt/sources.list"
+          apt_options=(-o "Dir::Etc::sourcelist=$RUNNER_TEMP/perf-apt/sources.list"
+            -o "Dir::Etc::sourceparts=$RUNNER_TEMP/perf-apt/empty"
+            -o "Dir::State::lists=$RUNNER_TEMP/perf-apt/lists"
+            -o Acquire::Retries=0 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20)
+          sudo apt-get "${apt_options[@]}" update
+          sudo apt-get "${apt_options[@]}" install -y mariadb-server php8.3-fpm php8.3-cli php8.3-mysql php8.3-sqlite3 php8.3-curl php8.3-mbstring php8.3-xml
+      - name: Syntax and existing peer/learning regressions
+        run: |
+          set -e
+          for file in services/{LearningWorkspaceService,StudentDashboardService,AdminDashboardService,FacilitatorDashboardService,PeerMatchingService,JarredGroupRecommendationService}.php API/chat/peer-match.php API/chat/get-matches.php tests/application-performance.php; do php8.3 -l "$file"; done
+          node --check assets/js/chat/dm-notifications.js
+          for file in tests/classroom-bootstrap.php tests/classroom-facilitator-profile.php tests/chat-worker-wrapper.php; do php8.3 -l "$file"; done
+          php8.3 tests/peer-ml-regression.php
+          php8.3 tests/learning-tools-regression.php
+          php8.3 tests/phase2-jarred.php
+          composer install --no-interaction --prefer-dist --no-progress
+          php8.3 vendor/bin/phpunit --testsuite Unit
+      - name: Existing chat, workspace and queue regressions
+        run: |
+          npm install --no-save --ignore-scripts jsdom@30.1.2 playwright@1.58.2
+          npx playwright install --with-deps chromium
+          php8.3 tests/code-lab-execution-regression.php
+          php8.3 tests/code-lab-batch-regression.php
+          php8.3 tests/learning-workspace-regression.php
+          PHP_BIN=/usr/bin/php8.3 node tests/learning-workspace-ui-regression.cjs
+          node tests/chat-list-performance.cjs
+      - name: Baseline bounded FPM HTTP preview
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          PHP_FPM_BIN: /usr/sbin/php-fpm8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          CLASSROOM_PROFILE: '0'
+          CLASSROOM_VARIANT: baseline
+          CLASSROOM_EVIDENCE: classroom-baseline.json
+        run: python3 -B -u tests/classroom-performance.py
+      - name: Candidate exact SQL, bounded FPM, workers and actual pages
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          PHP_FPM_BIN: /usr/sbin/php-fpm8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          CLASSROOM_RUN_WORKERS: '1'
+          CLASSROOM_RUN_BROWSER: '1'
+          CLASSROOM_EVIDENCE: classroom-candidate.json
+        run: python3 -B -u tests/classroom-performance.py
+      - name: Existing chat history/sidebar behavior in Chromium
+        env: {CHAT_BROWSER_EVIDENCE: classroom-chat-browser.json}
+        run: node tests/chat-list-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: classroom-owned-fixture-evidence
+          path: |
+            classroom-*.json
+            profile-progress.log

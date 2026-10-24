@@ -59,7 +59,7 @@ def run(root,p,env,php,port):
      children=pathlib.Path(f'/proc/{pid}/task/{pid}/children').read_text().split();pid=int(children[0]) if children else None
     except OSError:pid=None
    time.sleep(.3);assert proc.poll() is None,(p/(kind+'-worker.log')).read_text()
-   first=usage(pid);q0=questions();started=time.monotonic();time.sleep(4);q1=questions();last=usage(pid);elapsed=time.monotonic()-started
+   first=usage(pid);q0=questions();started=time.monotonic();idle_seconds=float(env.get('WORKER_PROFILE_IDLE_SECONDS','4'));assert 4<=idle_seconds<=30;time.sleep(idle_seconds);q1=questions();last=usage(pid);elapsed=time.monotonic()-started
    # Global counter sampling adds one observer SHOW; no other workload runs during idle interval.
    idle={'seconds':elapsed,'global_questions_delta_less_one_observer':q1-q0-1,'questions_per_second':(q1-q0-1)/elapsed,'cpu_seconds':((last['cpu_ticks']-first['cpu_ticks'])/os.sysconf('SC_CLK_TCK') if first['cpu_ticks'] is not None and last['cpu_ticks'] is not None else None),'pss_start_kib':first['pss_kib'],'pss_end_kib':last['pss_kib']}
    started=time.monotonic();calls=Provider.calls;enqueued=[]

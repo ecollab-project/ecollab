@@ -1,0 +1,36 @@
+-- Additions to the existing synthetic application-performance fixture, not a migration.
+ALTER TABLE users ADD avatar_url TEXT,ADD is_verified INT DEFAULT 0,ADD bio TEXT;
+ALTER TABLE messages ADD content_type VARCHAR(20) DEFAULT 'text',ADD parent_id BIGINT NULL,ADD is_edited INT DEFAULT 0,ADD reaction_count INT DEFAULT 0,MODIFY id BIGINT NOT NULL AUTO_INCREMENT;
+CREATE TABLE message_reactions(message_id BIGINT,user_id BIGINT,emoji VARCHAR(20));
+ALTER TABLE study_room_sessions ADD channel_id INT DEFAULT 1;
+CREATE TABLE channel_members(channel_id INT,user_id BIGINT);
+CREATE TABLE moderation_actions(id INT,server_id INT,target_user_id BIGINT,action_type VARCHAR(20),is_active INT,expires_at DATETIME);
+CREATE TABLE calendar_events(id INT AUTO_INCREMENT PRIMARY KEY,user_id BIGINT,title TEXT,description TEXT,event_type VARCHAR(20),starts_at DATETIME,ends_at DATETIME);
+ALTER TABLE student_notes MODIFY id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,MODIFY updated_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE notifications ADD actor_id BIGINT NULL,ADD ref_id BIGINT NULL,ADD read_at DATETIME NULL;
+CREATE TABLE dm_call_history(id BIGINT PRIMARY KEY,callee_id BIGINT,caller_id BIGINT,group_id BIGINT NULL,status VARCHAR(20),started_at DATETIME,ended_at DATETIME);
+CREATE TABLE dm_conversations(id BIGINT PRIMARY KEY,user_a BIGINT,user_b BIGINT,last_message TEXT,last_msg_at DATETIME,created_at DATETIME);
+CREATE TABLE dm_messages(id BIGINT PRIMARY KEY,conversation_id BIGINT,sender_id BIGINT,body TEXT,is_deleted INT DEFAULT 0,created_at DATETIME,INDEX idx_conv(conversation_id,created_at));
+CREATE TABLE dm_reads(user_id BIGINT,conversation_id BIGINT,last_read_at DATETIME,PRIMARY KEY(user_id,conversation_id));
+INSERT INTO dm_conversations SELECT seq,seq,seq+100,'Synthetic',NOW(),NOW() FROM seq_1_to_100;
+INSERT INTO dm_messages SELECT seq,1+MOD(seq-1,100),101+MOD(seq-1,100),'Synthetic',0,DATE_SUB(NOW(),INTERVAL seq SECOND) FROM seq_1_to_20000;
+CREATE TABLE user_settings(user_id BIGINT UNSIGNED PRIMARY KEY,theme VARCHAR(20) DEFAULT 'dark',activity_status INT DEFAULT 1,ai_matching INT DEFAULT 1);
+CREATE TABLE rate_limit_log(id BIGINT AUTO_INCREMENT PRIMARY KEY,lookup_key VARCHAR(80),created_at DATETIME,INDEX lookup_time(lookup_key,created_at));
+CREATE TABLE threads(id BIGINT PRIMARY KEY,title TEXT,body TEXT,scope VARCHAR(20),server_id INT,channel_id INT,created_by BIGINT,is_locked INT DEFAULT 0,is_pinned INT DEFAULT 0,is_bookmarked INT DEFAULT 0,is_deleted INT DEFAULT 0,created_at DATETIME,updated_at DATETIME);
+CREATE TABLE thread_votes(thread_id BIGINT,user_id BIGINT,vote INT,PRIMARY KEY(thread_id,user_id));
+CREATE TABLE thread_replies(id BIGINT,thread_id BIGINT,parent_reply_id BIGINT,created_by BIGINT,body TEXT,is_deleted INT,created_at DATETIME);
+CREATE TABLE thread_attachments(id BIGINT,thread_id BIGINT,reply_id BIGINT,file_url TEXT,file_name TEXT,mime_type TEXT,file_size INT,created_by BIGINT,created_at DATETIME,INDEX(thread_id));
+INSERT INTO threads SELECT seq,CONCAT('Synthetic thread ',seq),'Synthetic discussion','public',NULL,NULL,1,0,0,0,0,DATE_SUB(NOW(),INTERVAL seq SECOND),NOW() FROM seq_1_to_100;
+INSERT INTO student_notes(user_id,title,content) SELECT 1,CONCAT('Note ',seq),'Synthetic note' FROM seq_1_to_199;
+INSERT INTO notifications SELECT seq+1,1,'Update','Synthetic',MOD(seq,2),'N','message','/synthetic',NOW(),NULL,NULL,NULL FROM seq_1_to_99;
+INSERT INTO pm_user_study_prefs(user_id,study_style) SELECT seq,'group' FROM seq_1_to_900;
+INSERT IGNORE INTO pm_subjects(id,name,slug) VALUES(9001,'Fixture A','fixture-a');
+INSERT INTO pm_user_subjects(user_id,subject_id,role,proficiency) SELECT seq,9001,'studying','intermediate' FROM seq_1_to_900;
+-- Cohorts are deliberately synthetic, not observed student usage.
+DELETE FROM server_members WHERE user_id BETWEEN 21 AND 100;
+INSERT INTO server_members SELECT 1+MOD(seq,3),seq,'member',NOW() FROM seq_21_to_40;
+INSERT INTO servers SELECT seq,CONCAT('Tiny ',seq),CONCAT('tiny-',seq),'Synthetic','S','public','active',900,1,'study' FROM seq_21_to_22;
+INSERT INTO channels SELECT seq+80,seq,'Synthetic','synthetic','Fixture','text',20,900,1,0,0,NOW() FROM seq_21_to_22;
+INSERT INTO server_members SELECT IF(seq<=60,21,22),seq,'member',NOW() FROM seq_41_to_80;
+INSERT INTO messages(channel_id,sender_id,content,is_deleted,created_at) SELECT 101,900,'Tiny fixture',0,'2020-01-01' FROM seq_1_to_8;
+INSERT INTO messages(channel_id,sender_id,content,is_deleted,created_at) SELECT 102,900,'Tied fixture',0,'2021-01-01' FROM seq_1_to_50;
