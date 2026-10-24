@@ -40,7 +40,7 @@ def execute(language_id, source):
 legacy, output = execute(10005, 'console.log(process.version)')
 assert legacy['status']['id'] == 3 and output.strip() == b'v20.11.1', 'Legacy JavaScript mapping changed'
 modern, output = execute(10007, 'console.log(process.version);console.log(20+22)')
-assert modern['status']['id'] == 3 and output.splitlines() == [b'v24.22.1', b'42'], 'Node 24 execution failed'
+assert modern['status']['id'] == 3 and output.splitlines() == [b'v24.22.1', b'42'], ('Node 24 execution failed; status=%r exit=%r stdout=%r stderr=%r' % (modern['status']['id'], modern.get('exit_code'), output[:160], base64.b64decode(modern.get('stderr') or '')[:400]))
 network, output = execute(10007, "const net=require('node:net');let s=net.connect(443,'1.1.1.1');s.on('error',()=>console.log('BLOCKED'));s.on('connect',()=>{console.log('NETWORK_OPEN');s.destroy()});s.setTimeout(1500,()=>{console.log('BLOCKED');s.destroy()})")
 assert network['status']['id'] == 3 and b'BLOCKED' in output and b'NETWORK_OPEN' not in output, 'Node 24 networking was not blocked'
 isolated, output = execute(10007, "const fs=require('fs');console.log(fs.existsSync('/runner/profiles.json')?'LEAK':'ISOLATED')")
