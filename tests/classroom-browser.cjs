@@ -5,6 +5,7 @@ const {chromium}=require('playwright');
  const browser=await chromium.launch({headless:true,args:['--no-sandbox']});const results=[];
  try{
   for(const mode of ['student','facilitator'])for(const viewport of [{width:1440,height:900},{width:390,height:844}]){
+   console.log('CLASSROOM_BROWSER_CASE '+JSON.stringify({mode,viewport}));
    const context=await browser.newContext({viewport});let excluded=0;const errors=[];
    await context.route('**/*',async route=>{const u=new URL(route.request().url());if(u.origin!==origin){excluded++;return route.abort();}if(u.pathname.startsWith('/API/')&&!['/API/student/workspace.php','/API/profile/settings.php'].includes(u.pathname)){excluded++;return route.fulfill({contentType:'application/json',body:JSON.stringify({success:true,user:{},settings:{},notifications:[],preferences:{}})});}return route.continue();});
    await context.addInitScript(()=>{window.__long=[];window.__shifts=[];new PerformanceObserver(l=>window.__long.push(...l.getEntries().map(e=>e.duration))).observe({type:'longtask',buffered:true});new PerformanceObserver(l=>window.__shifts.push(...l.getEntries().filter(e=>!e.hadRecentInput).map(e=>e.value))).observe({type:'layout-shift',buffered:true});});
@@ -17,7 +18,7 @@ const {chromium}=require('playwright');
    await page.evaluate(()=>{window.__mutations=0;window.__observer=new MutationObserver(r=>window.__mutations+=r.length);window.__observer.observe(document.querySelector('#lw-view'),{childList:true,subtree:true});});
    const before=(await cdp.send('Performance.getMetrics')).metrics,samples=[];
    for(let i=0;i<10;i++)samples.push(await page.evaluate(async i=>{const t=performance.now();const button=[...document.querySelectorAll('.lw-pagination button')].find(n=>n.textContent===(i%2?'Previous':'Next'));if(!button||button.disabled)throw new Error('Pagination fixture missing');button.click();document.querySelector('#lw-view').getBoundingClientRect();await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));return performance.now()-t;},i));
-   await page.locator('#lw-search').fill(mode==='student'?'Note 24':'Student 1');assert((await page.locator('#lw-view').textContent()).includes(mode==='student'?'Note 24':'Student 1'));await page.locator('#lw-search').fill('');
+   await page.locator('#lw-search').fill(mode==='student'?'Note 199':'Student 1');assert((await page.locator('#lw-view').textContent()).includes(mode==='student'?'Note 199':'Student 1'));if(mode==='student')assert.equal(await page.locator('#lw-view .lw-row').count(),1,'Search narrows the retained note');await page.locator('#lw-search').fill('');
    await page.locator('#lw-refresh').click();await page.waitForFunction(()=>document.querySelector('#lw-view').getAttribute('aria-busy')==='false');assert.equal(await page.locator('#lw-status').textContent(),'');
    await page.keyboard.press('/');assert(await page.locator('#lw-search').evaluate(n=>n===document.activeElement));
    if(viewport.width<600){await page.locator('#lw-menu').click();assert.equal(await page.locator('#lw-menu').getAttribute('aria-expanded'),'true');await page.locator('nav [data-page="'+section+'"]').click();assert.equal(await page.locator('#lw-menu').getAttribute('aria-expanded'),'false');}
