@@ -7,7 +7,20 @@ $root = getenv('PEER_THREADS_APP');
 require_once __DIR__.'/dashboard-profile.php';
 require_once $root.'/config.php';
 require_once $root.'/database/config/db.php';
-$db = new PDO($dsn, 'root', '', [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC,PDO::ATTR_EMULATE_PREPARES=>false,PDO::ATTR_STATEMENT_CLASS=>[DashboardStatement::class]]);
+final class PeerThreadsPDO extends PDO
+{
+    public function query(string $query, ?int $fetchMode = null, mixed ...$fetchModeArgs): PDOStatement|false
+    {
+        $t=hrtime(true);$ok=false;
+        try {
+            $result=$fetchMode===null ? parent::query($query) : parent::query($query,$fetchMode,...$fetchModeArgs);
+            $ok=$result!==false;return $result;
+        } finally {
+            DashboardProfile::$queries[]=['sql'=>$query,'params'=>null,'ms'=>(hrtime(true)-$t)/1e6,'success'=>$ok];
+        }
+    }
+}
+$db = new PeerThreadsPDO($dsn, 'root', '', [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC,PDO::ATTR_EMULATE_PREPARES=>false,PDO::ATTR_STATEMENT_CLASS=>[DashboardStatement::class]]);
 $db->exec('SET timestamp=1792800000');
 (new ReflectionProperty(Database::class, 'instance'))->setValue(null, $db);
 parse_str(getenv('PEER_THREADS_QUERY'), $_GET);
