@@ -7,6 +7,7 @@ umask 022
 target=/piston/packages/ecollab-node24/24.22.1
 if [[ -e "$target" ]]; then
   [[ -f "$target/.ppman-installed" && -f "$target/.ecollab-node24-1" && -x "$target/bin/node" ]]
+  [[ "$(stat -c %a "$target")" == 755 && "$(stat -c %a "$target/bin")" == 755 ]]
   [[ "$("$target/bin/node" --version)" == v24.22.1 ]]
   cmp /usr/local/bin/node "$target/bin/node"
   printf 'UNCHANGED\n'
@@ -16,6 +17,8 @@ mkdir -p /piston/packages/ecollab-node24
 stage=$(mktemp -d /piston/packages/ecollab-node24/staging-XXXXXXXX)
 trap 'rm -rf "$stage"' EXIT
 mkdir -p "$stage/bin"
+# mktemp creates 0700 directories; unprivileged Isolate must be able to traverse the package.
+chmod 755 "$stage" "$stage/bin"
 install -m 755 /usr/local/bin/node "$stage/bin/node"
 cat > "$stage/run" <<'RUN'
 #!/usr/bin/env bash
