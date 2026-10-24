@@ -396,7 +396,7 @@ class StudentDashboardService
     {
         $count=0;
         try{$s=$this->db->prepare('SELECT COUNT(*) FROM direct_messages WHERE recipient_id=:uid AND is_read=0 AND is_deleted=0');$s->execute([':uid'=>$userId]);$count+=(int)$s->fetchColumn();}catch(Throwable){}
-        try{$s=$this->db->prepare("SELECT COUNT(*) FROM messages m JOIN channels c ON c.id=m.channel_id JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid LEFT JOIN message_reads mr ON mr.channel_id=m.channel_id AND mr.user_id=:uid2 WHERE m.is_deleted=0 AND m.sender_id<>:uid3 AND m.created_at>COALESCE(mr.last_read_at,'1970-01-01')");$s->execute([':uid'=>$userId,':uid2'=>$userId,':uid3'=>$userId]);$count+=(int)$s->fetchColumn();}catch(Throwable){}
+        try{$s=$this->db->prepare("SELECT COALESCE(SUM((SELECT COUNT(*) FROM messages m WHERE m.channel_id=c.id AND m.is_deleted=0 AND m.sender_id<>:uid3 AND m.created_at>COALESCE(mr.last_read_at,'1970-01-01'))),0) FROM channels c JOIN server_members sm ON sm.server_id=c.server_id AND sm.user_id=:uid LEFT JOIN message_reads mr ON mr.channel_id=c.id AND mr.user_id=:uid2");$s->execute([':uid'=>$userId,':uid2'=>$userId,':uid3'=>$userId]);$count+=(int)$s->fetchColumn();}catch(Throwable){}
         return $count;
     }
 
