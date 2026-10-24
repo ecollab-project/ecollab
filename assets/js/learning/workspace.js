@@ -15,7 +15,8 @@ function empty(title,text=''){return el('div',{class:'lw-empty'},el('strong',{},
 function available(key){return data[key]?.available===true;}
 function items(key){return data[key]?.items||[];}
 function filtered(rows){const q=search.toLocaleLowerCase();return q?rows.filter(r=>Object.values(r).some(v=>String(v??'').toLocaleLowerCase().includes(q))):rows;}
-function date(raw){if(!raw)return 'Not recorded';const d=new Date(String(raw).replace(' ','T'));return Number.isNaN(d.getTime())?String(raw):new Intl.DateTimeFormat('en-PH',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Manila'}).format(d);}
+let workspaceDateFormatter;
+function date(raw){if(!raw)return 'Not recorded';const d=new Date(String(raw).replace(' ','T'));return Number.isNaN(d.getTime())?String(raw):(workspaceDateFormatter??=new Intl.DateTimeFormat('en-PH',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Manila'})).format(d);}
 function toast(message){const n=$('#lw-toast');n.textContent=message;n.hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>n.hidden=true,4500);}
 window.toast=toast;
 async function request(path,body){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);try{const r=await fetch(base+path,{credentials:'same-origin',cache:'no-store',signal:controller.signal,...(body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify(body)})});const d=await r.json();if(!r.ok||d.success===false)throw new Error(d.error||'Unable to complete request.');return d;}catch(e){if(e.name==='AbortError')throw new Error('The request took too long. Please try again.');throw e;}finally{clearTimeout(timer);}}
