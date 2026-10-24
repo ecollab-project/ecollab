@@ -38,6 +38,17 @@ INSERT INTO pm_user_hobbies(user_id,hobby_id) SELECT seq,9001 FROM seq_1_to_900 
             import importlib.util
             spec=importlib.util.spec_from_file_location('chat_worker',ROOT/'tests/chat-worker-profile.py');worker=importlib.util.module_from_spec(spec);spec.loader.exec_module(worker)
             evidence={'recent_chat':json.loads(result.stdout),'read_paths':json.loads(read_paths.stdout),'workers':worker.run(ROOT,p,env,PHP,port)}
+            from statistics import median
+            summary={}
+            for state,cases in evidence['recent_chat'].items():
+                summary[state]={}
+                for name,case in cases.items():
+                    row={'fast_path_hits':case['fast_path_hits']}
+                    for side,runs in case['runs'].items():
+                        row[side]={key:median(run[key] for run in runs) for key in ['ms','php_cpu_ms','peak_delta_bytes','queries']}
+                    summary[state][name]=row
+            print('CHAT_READ_SUMMARY '+json.dumps(summary),flush=True)
+            print('CHAT_PATH_SUMMARY '+json.dumps({name:{'elapsed_ms':row['elapsed_ms'],'queries':len(row['queries'])} for name,row in evidence['read_paths'].items()}),flush=True)
             print('CHAT_PERF_SUMMARY '+json.dumps(evidence['workers']),flush=True)
             pathlib.Path(os.environ['CHAT_PERF_EVIDENCE']).write_text(json.dumps(evidence,indent=2)+'\n')
         finally:
