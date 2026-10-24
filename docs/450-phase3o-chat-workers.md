@@ -48,7 +48,7 @@ Distributed PHP CPU: 0.192→0.148ms. Incremental PHP peak: 45688→46856bytes. 
 
 Query count:1 on accepted probes,2 on fallback, versus1 originally. A normal full dashboard can stay at25 or rise to26 when the recent-chat probe falls back. Do not weaken the older dashboard query-count tests merely to hide a failure; common-fixture budgets remain checked by inherited CI.
 
-EXPLAIN records are included for every case in [raw evidence](450-phase3o-evidence.json). The original plan orders a potentially large joined history. The probe materializes256 IDs through existing `idx_created`, then uses primary-key/channel/membership lookups and a small final ordering. Optimizer `rows` figures are estimates, not observed physical scan counts. No FORCE INDEX, new migration, approximate aggregation or original-index removal is used.
+EXPLAIN records are included for every case in [raw evidence](450-phase3o-evidence.json). The original plan orders a potentially large joined history. The probe materializes256 IDs through existing `idx_created`, then uses primary-key/channel/membership lookups and a small final ordering. Optimizer `rows` figures are estimates, not observed physical scan counts. The final existence gate uses FORCE INDEX(PRIMARY); no new migration, approximate aggregation or original-index removal is used.
 
 ## Other read-path profiles
 
@@ -116,9 +116,9 @@ The runner owns its temporary datadir/databases, ports, lock files and HTTP resp
 
 The first exact-head CI passed all ten returned workflows, including real Chromium. Its raw artifact exposed an indexed empty-after-delete regression: original 3.39ms versus candidate 78.69ms. EXPLAIN selected the covering index for the existence gate; bulk-deleted versions made that supposedly small check costly. An explicit join-order experiment did not fix this (74.54ms), so it was discarded. The final implementation instead constrains only the existence gate to PRIMARY. No new index or migration change is added.
 
-The full 22-case comparison, exact-output/freshness checks and both actual worker loops reran locally after this correction. Final medians follow; the earlier table/CPU/read/worker numbers remain the initial local snapshot rather than a claim about this follow-up run. The raw evidence file now contains this final local run.
+The full 22-case comparison, exact-output/freshness checks and both actual worker loops reran locally after this correction. Intermediate PRIMARY-only medians follow; the earlier table/CPU/read/worker numbers remain the initial local snapshot rather than a claim about this follow-up run. The raw evidence file now contains this final local run.
 
-| Distribution | No067 original→final ms | With067 original→final ms |
+| Distribution | No067 original→PRIMARY-only ms | With067 original→PRIMARY-only ms |
 |---|---:|---:|
 | distributed | 56.29→0.70 | 57.75→0.67 |
 | sparse_membership | 10.30→0.73 | 10.00→0.71 |
@@ -132,4 +132,10 @@ The full 22-case comparison, exact-output/freshness checks and both actual worke
 | empty_messages | 2.91→6.19 | 3.16→6.52 |
 | many_memberships | 168.14→0.64 | 169.16→0.70 |
 
-This removes the large indexed-empty regression, while the second query still roughly doubles tiny empty/no-membership reads. NULL-date/MVCC stress still regresses substantially and is explicitly not resolved. Query-count/semantic assertions remain unchanged. The final PR description records CI for the corrected head; prior-head passes are not counted for it.
+This removed the large indexed-empty regression, but introduced a substantial no-membership regression (127–129ms locally and145–146ms in CI). The PRIMARY-only revision is not accepted as a performance improvement for that distribution. NULL-date/MVCC stress still regresses substantially and is explicitly not resolved. Query-count/semantic assertions remain unchanged. The final PR description records CI for the corrected head; prior-head passes are not counted for it.
+
+## Membership short-circuit correction
+
+The final candidate evaluates an indexed server-membership existence check in a SQL CASE before the message existence gate. With no memberships the CASE returns false without evaluating the message scan. The original complete read remains the fallback; output, visibility and tie behavior remain unchanged. The profiler binds the additional parameter when explaining the actual captured statement. No extra SQL round trip is introduced.
+
+The local environment disconnected during the follow-up benchmark; its completion and output are NOT VERIFIED. Validation for this correction must come from new exact-head CI and its raw artifact. Earlier passes and intermediate tables do not certify this correction. The PR description records the final CI and acceptance decision. The committed JSON retains the intermediate PRIMARY-only evidence, including its adverse no-membership results; the new artifact is the authoritative final-run record. NULL/MVCC stress remains a known adverse case.

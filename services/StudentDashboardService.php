@@ -412,12 +412,14 @@ class StudentDashboardService
                 JOIN messages m ON m.id=recent.id JOIN channels c ON c.id=m.channel_id
                 JOIN servers s ON s.id=c.server_id
                 JOIN server_members sm ON sm.server_id=s.id AND sm.user_id=:uid
-                WHERE m.is_deleted=0 AND EXISTS(
+                WHERE m.is_deleted=0 AND CASE WHEN EXISTS(
+                    SELECT 1 FROM server_members WHERE user_id=:membership_uid LIMIT 1
+                ) THEN EXISTS(
                     SELECT 1 FROM messages gate FORCE INDEX (PRIMARY) JOIN channels gc ON gc.id=gate.channel_id
                     JOIN server_members gsm ON gsm.server_id=gc.server_id AND gsm.user_id=:gate_uid
-                    WHERE gate.is_deleted=0 LIMIT 1)
+                    WHERE gate.is_deleted=0 LIMIT 1) ELSE 0 END
                 ORDER BY recent.created_at DESC LIMIT 9");
-            $probe->execute([':uid'=>$userId, ':gate_uid'=>$userId]);
+            $probe->execute([':uid'=>$userId, ':gate_uid'=>$userId, ':membership_uid'=>$userId]);
             $rows = $probe->fetchAll(PDO::FETCH_ASSOC);
             if (count($rows) === 9) {
                 $previous = null;
