@@ -25,7 +25,7 @@ const assert = require('node:assert/strict');
    const cwd=b.dir+'/submission';
    if(phase==='compile'){
     compiles++;assert.equal(job.stdin,'');assert.equal(cpu,10000);
-    await fs.mkdir(cwd+'/classes');await fs.writeFile(cwd+'/classes/artifact','pristine',{mode:0o755});return {code:0};
+    await fs.mkdir(cwd+'/classes');await fs.writeFile(cwd+'/classes/artifact','pristine',{mode:0o755});await fs.chmod(cwd+'/classes/artifact',0o755);return {code:0};
    }
    assert.equal(wall,8000);assert.equal(cpu,2000);assert.equal(memory,268435456);
    assert.equal(await fs.readFile(cwd+'/classes/artifact','utf8'),'pristine');

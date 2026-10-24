@@ -1,0 +1,72 @@
+name: Code Lab Node 24 staging
+on:
+  push:
+    branches: ['security/piston-node24-20261023']
+    paths: ['deploy/code-lab/piston/**', 'tests/code-lab-node24*', '.github/workflows/code-lab-node24.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  protocol:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      CODE_LAB_RUNNER_STATE: /tmp/ecollab-node24-ci-protocol
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify frozen profiles and syntax
+        run: |
+          python3 -B tests/code-lab-node24-test.py
+          python3 -B tests/code-lab-piston-test.py
+          bash -n deploy/code-lab/piston/node24/install.sh
+          python3 -m py_compile deploy/code-lab/piston/node24/profile.py deploy/code-lab/piston/bridge.py
+          docker compose -f deploy/code-lab/piston/compose.yml -f deploy/code-lab/piston/compose.node24.staging.yml config --quiet
+
+  sandbox:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CODE_LAB_RUNNER_STATE: /tmp/ecollab-node24-ci-private
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl
+      - name: Confirm isolated cgroup-v2 runner
+        run: |
+          test "$(stat -fc %T /sys/fs/cgroup)" = cgroup2fs
+          test ! -e /var/lib/ecollab-code-lab/profiles.json
+          mkdir -p "$CODE_LAB_RUNNER_STATE"
+          chmod 700 "$CODE_LAB_RUNNER_STATE"
+          printf '{}\n' > "$CODE_LAB_RUNNER_STATE/profiles.json"
+      - name: Build modern Piston (native addons and source-hash gates)
+        run: |
+          docker compose -f deploy/code-lab/piston/compose.yml -f deploy/code-lab/piston/compose.node24.staging.yml build --no-cache piston
+          test "$(docker run --rm --entrypoint node ecollab-piston-node24:staging --version)" = v24.22.1
+      - name: Stage frozen legacy and versioned runtimes
+        run: |
+          docker compose -f deploy/code-lab/piston/compose.yml -f deploy/code-lab/piston/compose.node24.staging.yml up -d piston
+          docker compose -f deploy/code-lab/piston/compose.yml -f deploy/code-lab/piston/compose.node24.staging.yml run --rm --no-deps adapter python -B /runner/prepare.py > "$CODE_LAB_RUNNER_STATE/profiles.new.json"
+          mv "$CODE_LAB_RUNNER_STATE/profiles.new.json" "$CODE_LAB_RUNNER_STATE/profiles.json"
+          docker compose -f deploy/code-lab/piston/compose.yml -f deploy/code-lab/piston/compose.node24.staging.yml exec -T piston bash /ecollab-java-runtime/install.sh
+          docker compose -f deploy/code-lab/piston/compose.yml -f deploy/code-lab/piston/compose.node24.staging.yml exec -T piston bash /ecollab-node24-runtime/install.sh
+          docker compose -f deploy/code-lab/piston/compose.yml -f deploy/code-lab/piston/compose.node24.staging.yml restart piston
+          docker compose -f deploy/code-lab/piston/compose.yml -f deploy/code-lab/piston/compose.node24.staging.yml run --rm --no-deps adapter python -B /runner/java_profile.py > "$CODE_LAB_RUNNER_STATE/profiles.java.json"
+          mv "$CODE_LAB_RUNNER_STATE/profiles.java.json" "$CODE_LAB_RUNNER_STATE/profiles.json"
+          docker compose -f deploy/code-lab/piston/compose.yml -f deploy/code-lab/piston/compose.node24.staging.yml run --rm --no-deps adapter python -B /runner/node24_profile.py > "$CODE_LAB_RUNNER_STATE/profiles.node24.json"
+          mv "$CODE_LAB_RUNNER_STATE/profiles.node24.json" "$CODE_LAB_RUNNER_STATE/profiles.json"
+          docker compose -f deploy/code-lab/piston/compose.yml -f deploy/code-lab/piston/compose.node24.staging.yml up -d adapter
+      - name: Real compiler, grading, concurrency and sandbox tests
+        run: |
+          python3 -B tests/code-lab-piston-live.py
+          python3 -B tests/code-lab-node24-live.py
+      - name: Diagnostics (failure only; never print profiles or secrets)
+        if: failure()
+        run: |
+          docker compose -f deploy/code-lab/piston/compose.yml -f deploy/code-lab/piston/compose.node24.staging.yml ps
+          docker compose -f deploy/code-lab/piston/compose.yml -f deploy/code-lab/piston/compose.node24.staging.yml logs --tail 50 piston
+      - name: Destroy isolated staging volumes
+        if: always()
+        run: |
+          docker compose -f deploy/code-lab/piston/compose.yml -f deploy/code-lab/piston/compose.node24.staging.yml down -v --remove-orphans

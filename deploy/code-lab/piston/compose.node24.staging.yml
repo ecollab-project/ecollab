@@ -1,0 +1,14 @@
+# Use only on an isolated, authorized staging runner.
+# Never run against production Docker volumes, credentials or the production VPS.
+name: ecollab-node24-staging
+services:
+  piston:
+    image: ecollab-piston-node24:staging
+    build:
+      context: .
+      dockerfile: node24/Dockerfile
+    volumes:
+      - ./node24:/ecollab-node24-runtime:ro
+  adapter:
+    volumes:
+      - ./node24/profile.py:/runner/node24_profile.py:ro
