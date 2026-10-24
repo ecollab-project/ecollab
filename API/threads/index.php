@@ -6,6 +6,7 @@ require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 
 require_once dirname(__DIR__, 2) . '/services/NotificationService.php';
+require_once dirname(__DIR__, 2) . '/services/ThreadAttachmentService.php';
 
 header('Content-Type: application/json; charset=utf-8');
 AuthMiddleware::startSession();
@@ -201,9 +202,10 @@ try {
         $s = $db->prepare($sql);
         $s->execute($params);
         $threads=$s->fetchAll(PDO::FETCH_ASSOC);
+        $attachmentsByThread=ThreadAttachmentService::forThreads($db,array_column($threads,'id'));
         foreach($threads as &$thread){
             $thread['is_owner'] = ((int)$thread['created_by'] === (int)$me['id']) ? 1 : 0;
-            $thread['attachments']=attachmentRows($db,(int)$thread['id']);
+            $thread['attachments']=$attachmentsByThread[(int)$thread['id']] ?? [];
         }unset($thread);
         threadJson(['threads'=>$threads, 'scope'=>$scope, 'server_id'=>$serverId, 'channel_id'=>$channelId, 'current_user_id'=>(int)$me['id']]);
     }

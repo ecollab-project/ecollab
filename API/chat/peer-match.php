@@ -7,6 +7,7 @@ require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 require_once dirname(__DIR__, 2) . '/services/PeerMatchingService.php';
 require_once dirname(__DIR__, 2) . '/services/PeerSemanticClient.php';
+require_once dirname(__DIR__, 2) . '/services/PeerMatchBatch.php';
 require_once dirname(__DIR__, 2) . '/security/SecurityHeaders.php';
 require_once dirname(__DIR__, 2) . '/security/rate-limit/RateLimiter.php';
 
@@ -216,6 +217,8 @@ try {
             $byId = $service->loadProfiles($db, array_column($candidates, 'id'));
             $profiles = array_map(static fn($candidate) => $byId[(int)$candidate['id']], $candidates);
             $semantic = (new PeerSemanticClient())->scores($profile, $profiles);
+            $requestStatuses = null;
+            $compatibilityRows = [];
             foreach ($candidates as $index => $candidate) {
                 $cid = (int)$candidate['id'];
                 $candidateProfile = $profiles[$index];
@@ -228,11 +231,7 @@ try {
                 if ($score['total'] < $minScore) continue;
 
                 $a = min($uid, $cid); $b = max($uid, $cid);
-                $cache = $db->prepare("INSERT INTO pm_compatibility
-                    (user_a_id,user_b_id,score_total,score_subjects,score_interests,score_hobbies,score_style,shared_subjects,shared_interests,shared_hobbies,match_tags)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?)
-                    ON DUPLICATE KEY UPDATE score_total=VALUES(score_total),score_subjects=VALUES(score_subjects),score_interests=VALUES(score_interests),score_hobbies=VALUES(score_hobbies),score_style=VALUES(score_style),shared_subjects=VALUES(shared_subjects),shared_interests=VALUES(shared_interests),shared_hobbies=VALUES(shared_hobbies),match_tags=VALUES(match_tags),computed_at=CURRENT_TIMESTAMP");
-                $cache->execute([$a,$b,$score['rule_total'],$score['subjects'],$score['interests'],$score['hobbies'],$score['style'],$score['shared_subjects'],$score['shared_interests'],$score['shared_hobbies'],json_encode($service->scoreProfiles($profile, $candidateProfile)['tags'], JSON_UNESCAPED_UNICODE)]);
+                $compatibilityRows[] = [$a,$b,$score['rule_total'],$score['subjects'],$score['interests'],$score['hobbies'],$score['style'],$score['shared_subjects'],$score['shared_interests'],$score['shared_hobbies'],json_encode($service->scoreProfiles($profile, $candidateProfile)['tags'], JSON_UNESCAPED_UNICODE)];
 
                 $name = (string)($candidate['full_name'] ?: $candidate['username']);
                 $mySubjectIds = array_map(static fn($x) => (int)$x['subject_id'], $profile['subjects']);
@@ -245,9 +244,8 @@ try {
                 $friendStmt = $db->prepare("SELECT status FROM friendships WHERE (requester_id=? AND addressee_id=?) OR (requester_id=? AND addressee_id=?) LIMIT 1");
                 $friendStmt->execute([$uid,$cid,$cid,$uid]);
                 $friendship = $friendStmt->fetchColumn();
-                $requestStmt = $db->prepare("SELECT status FROM pm_match_requests WHERE requester_id=? AND addressee_id=? LIMIT 1");
-                $requestStmt->execute([$uid,$cid]);
-                $requestStatus = $requestStmt->fetchColumn() ?: null;
+                $requestStatuses ??= PeerMatchBatch::requestStatuses($db, $uid, array_column($candidates, 'id'));
+                $requestStatus = $requestStatuses[$cid] ?? null;
 
                 $matches[] = [
                     'id'=>$cid,
@@ -278,6 +276,8 @@ try {
                     'grad'=>(string)($candidate['avatar_color_gradient'] ?? '#a855f7,#ec4899'),
                 ];
             }
+
+            PeerMatchBatch::persistCompatibility($db, $compatibilityRows);
 
             usort($matches, static function (array $a, array $b) use ($sort): int {
                 return match ($sort) {

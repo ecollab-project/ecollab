@@ -1,0 +1,2427 @@
+{
+  "base": "051cae2ee1005ab063675e8054c2ff5b1801294b",
+  "scope": "Owned MariaDB actual API CLI; not FPM/network/capacity. Fixed clock; semantic provider disabled except one deterministic loopback protocol fixture.",
+  "database": [
+    {
+      "version": "10.11.14-MariaDB-0ubuntu0.24.04.1"
+    }
+  ],
+  "php": "PHP 8.3.6 (cli) (built: Oct 19 2026 15:16:58) (NTS)",
+  "cpu_affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "application_sha256": {
+    "candidate": {
+      "API/chat/peer-match.php": "3627cfd4252245a089c68ab35ded978660d38bdf37af3260eb3bdf393a39005c",
+      "API/threads/index.php": "45533ee113ea37a33c2b1d189f7650de8e9fbf5ce746c22c0f55477b6972b962",
+      "services/PeerMatchBatch.php": "0b3e624c996e7673d822fa9d4feb7ac4f8264f2c37e1ef7bfb0773278923b729",
+      "services/ThreadAttachmentService.php": "53dcc17b528bcbb8d363d54ffd0319a66751fe4ef6f7ade4ccbd130173590acc"
+    },
+    "baseline": {
+      "API/chat/peer-match.php": "66df733f09173f486b3a820c87aac4fd14b95c62f078952b517293271262224b",
+      "API/threads/index.php": "b6e0187ed1916ba7b25abccd14ab70d9312041040666816139ab16117499e97a",
+      "services/PeerMatchBatch.php": null,
+      "services/ThreadAttachmentService.php": null
+    }
+  },
+  "plans": {
+    "candidate:peer100:SELECT status FROM friendships WHERE (requester_id=? AND addressee_id=?) OR (requester_id=? AND addressee_id=?) LIMIT 1": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "friendships",
+        "type": "range",
+        "possible_keys": "uq_friendship,idx_addressee",
+        "key": "uq_friendship",
+        "key_len": "18",
+        "ref": null,
+        "rows": "2",
+        "Extra": "Using index condition"
+      }
+    ],
+    "candidate:peer100:SELECT addressee_id,status FROM pm_match_requests WHERE requester_id=? AND addressee_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "pm_match_requests",
+        "type": "ALL",
+        "possible_keys": "uk_pair,idx_addressee",
+        "key": null,
+        "key_len": null,
+        "ref": null,
+        "rows": "100",
+        "Extra": "Using where"
+      }
+    ],
+    "baseline:peer100:SELECT status FROM friendships WHERE (requester_id=? AND addressee_id=?) OR (requester_id=? AND addressee_id=?) LIMIT 1": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "friendships",
+        "type": "range",
+        "possible_keys": "uq_friendship,idx_addressee",
+        "key": "uq_friendship",
+        "key_len": "18",
+        "ref": null,
+        "rows": "2",
+        "Extra": "Using index condition"
+      }
+    ],
+    "baseline:peer100:SELECT status FROM pm_match_requests WHERE requester_id=? AND addressee_id=? LIMIT 1": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "pm_match_requests",
+        "type": "const",
+        "possible_keys": "uk_pair,idx_addressee",
+        "key": "uk_pair",
+        "key_len": "16",
+        "ref": "const,const",
+        "rows": "1",
+        "Extra": ""
+      }
+    ],
+    "candidate:threads1:SELECT id, thread_id, reply_id, file_url, file_name, mime_type, file_size, created_by, created_at FROM thread_attachments WHERE thread_id IN (?) ORDER BY thread_id ASC,id ASC": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "thread_attachments",
+        "type": "ref",
+        "possible_keys": "thread_id",
+        "key": "thread_id",
+        "key_len": "9",
+        "ref": "const",
+        "rows": "1",
+        "Extra": "Using where"
+      }
+    ],
+    "baseline:threads1:SELECT id, thread_id, reply_id, file_url, file_name, mime_type, file_size, created_by, created_at FROM thread_attachments WHERE thread_id=? ORDER BY id ASC": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "thread_attachments",
+        "type": "ref",
+        "possible_keys": "thread_id",
+        "key": "thread_id",
+        "key_len": "9",
+        "ref": "const",
+        "rows": "1",
+        "Extra": "Using where"
+      }
+    ],
+    "candidate:threads10:SELECT id, thread_id, reply_id, file_url, file_name, mime_type, file_size, created_by, created_at FROM thread_attachments WHERE thread_id IN (?,?,?,?,?,?,?,?,?,?) ORDER BY thread_id ASC,id ASC": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "thread_attachments",
+        "type": "range",
+        "possible_keys": "thread_id",
+        "key": "thread_id",
+        "key_len": "9",
+        "ref": null,
+        "rows": "26",
+        "Extra": "Using index condition"
+      }
+    ],
+    "baseline:threads10:SELECT id, thread_id, reply_id, file_url, file_name, mime_type, file_size, created_by, created_at FROM thread_attachments WHERE thread_id=? ORDER BY id ASC": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "thread_attachments",
+        "type": "ref",
+        "possible_keys": "thread_id",
+        "key": "thread_id",
+        "key_len": "9",
+        "ref": "const",
+        "rows": "1",
+        "Extra": "Using where"
+      }
+    ],
+    "candidate:threads50:SELECT id, thread_id, reply_id, file_url, file_name, mime_type, file_size, created_by, created_at FROM thread_attachments WHERE thread_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ORDER BY thread_id ASC,id ASC": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "thread_attachments",
+        "type": "ALL",
+        "possible_keys": "thread_id",
+        "key": null,
+        "key_len": null,
+        "ref": null,
+        "rows": "175",
+        "Extra": "Using where; Using filesort"
+      }
+    ],
+    "baseline:threads50:SELECT id, thread_id, reply_id, file_url, file_name, mime_type, file_size, created_by, created_at FROM thread_attachments WHERE thread_id=? ORDER BY id ASC": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "thread_attachments",
+        "type": "ref",
+        "possible_keys": "thread_id",
+        "key": "thread_id",
+        "key_len": "9",
+        "ref": "const",
+        "rows": "1",
+        "Extra": "Using where"
+      }
+    ],
+    "candidate:peer1:SELECT status FROM friendships WHERE (requester_id=? AND addressee_id=?) OR (requester_id=? AND addressee_id=?) LIMIT 1": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "friendships",
+        "type": "range",
+        "possible_keys": "uq_friendship,idx_addressee",
+        "key": "uq_friendship",
+        "key_len": "18",
+        "ref": null,
+        "rows": "2",
+        "Extra": "Using index condition"
+      }
+    ],
+    "candidate:peer1:SELECT addressee_id,status FROM pm_match_requests WHERE requester_id=? AND addressee_id IN (?)": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "pm_match_requests",
+        "type": "const",
+        "possible_keys": "uk_pair,idx_addressee",
+        "key": "uk_pair",
+        "key_len": "16",
+        "ref": "const,const",
+        "rows": "1",
+        "Extra": ""
+      }
+    ],
+    "baseline:peer1:SELECT status FROM friendships WHERE (requester_id=? AND addressee_id=?) OR (requester_id=? AND addressee_id=?) LIMIT 1": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "friendships",
+        "type": "range",
+        "possible_keys": "uq_friendship,idx_addressee",
+        "key": "uq_friendship",
+        "key_len": "18",
+        "ref": null,
+        "rows": "2",
+        "Extra": "Using index condition"
+      }
+    ],
+    "baseline:peer1:SELECT status FROM pm_match_requests WHERE requester_id=? AND addressee_id=? LIMIT 1": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "pm_match_requests",
+        "type": "const",
+        "possible_keys": "uk_pair,idx_addressee",
+        "key": "uk_pair",
+        "key_len": "16",
+        "ref": "const,const",
+        "rows": "1",
+        "Extra": ""
+      }
+    ],
+    "candidate:peer10:SELECT status FROM friendships WHERE (requester_id=? AND addressee_id=?) OR (requester_id=? AND addressee_id=?) LIMIT 1": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "friendships",
+        "type": "range",
+        "possible_keys": "uq_friendship,idx_addressee",
+        "key": "uq_friendship",
+        "key_len": "18",
+        "ref": null,
+        "rows": "2",
+        "Extra": "Using index condition"
+      }
+    ],
+    "candidate:peer10:SELECT addressee_id,status FROM pm_match_requests WHERE requester_id=? AND addressee_id IN (?,?,?,?,?,?,?,?,?,?)": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "pm_match_requests",
+        "type": "ref",
+        "possible_keys": "uk_pair,idx_addressee",
+        "key": "uk_pair",
+        "key_len": "8",
+        "ref": "const",
+        "rows": "10",
+        "Extra": "Using index condition"
+      }
+    ],
+    "baseline:peer10:SELECT status FROM friendships WHERE (requester_id=? AND addressee_id=?) OR (requester_id=? AND addressee_id=?) LIMIT 1": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "friendships",
+        "type": "range",
+        "possible_keys": "uq_friendship,idx_addressee",
+        "key": "uq_friendship",
+        "key_len": "18",
+        "ref": null,
+        "rows": "2",
+        "Extra": "Using index condition"
+      }
+    ],
+    "baseline:peer10:SELECT status FROM pm_match_requests WHERE requester_id=? AND addressee_id=? LIMIT 1": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "pm_match_requests",
+        "type": "const",
+        "possible_keys": "uk_pair,idx_addressee",
+        "key": "uk_pair",
+        "key_len": "16",
+        "ref": "const,const",
+        "rows": "1",
+        "Extra": ""
+      }
+    ],
+    "candidate:peer_semantic:SELECT status FROM friendships WHERE (requester_id=? AND addressee_id=?) OR (requester_id=? AND addressee_id=?) LIMIT 1": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "friendships",
+        "type": "range",
+        "possible_keys": "uq_friendship,idx_addressee",
+        "key": "uq_friendship",
+        "key_len": "18",
+        "ref": null,
+        "rows": "2",
+        "Extra": "Using index condition"
+      }
+    ],
+    "candidate:peer_semantic:SELECT addressee_id,status FROM pm_match_requests WHERE requester_id=? AND addressee_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "pm_match_requests",
+        "type": "ALL",
+        "possible_keys": "uk_pair,idx_addressee",
+        "key": null,
+        "key_len": null,
+        "ref": null,
+        "rows": "100",
+        "Extra": "Using where"
+      }
+    ],
+    "baseline:peer_semantic:SELECT status FROM friendships WHERE (requester_id=? AND addressee_id=?) OR (requester_id=? AND addressee_id=?) LIMIT 1": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "friendships",
+        "type": "range",
+        "possible_keys": "uq_friendship,idx_addressee",
+        "key": "uq_friendship",
+        "key_len": "18",
+        "ref": null,
+        "rows": "2",
+        "Extra": "Using index condition"
+      }
+    ],
+    "baseline:peer_semantic:SELECT status FROM pm_match_requests WHERE requester_id=? AND addressee_id=? LIMIT 1": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "pm_match_requests",
+        "type": "const",
+        "possible_keys": "uk_pair,idx_addressee",
+        "key": "uk_pair",
+        "key_len": "16",
+        "ref": "const,const",
+        "rows": "1",
+        "Extra": ""
+      }
+    ],
+    "candidate:peer_filtered:SELECT status FROM friendships WHERE (requester_id=? AND addressee_id=?) OR (requester_id=? AND addressee_id=?) LIMIT 1": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "friendships",
+        "type": "range",
+        "possible_keys": "uq_friendship,idx_addressee",
+        "key": "uq_friendship",
+        "key_len": "18",
+        "ref": null,
+        "rows": "2",
+        "Extra": "Using index condition"
+      }
+    ],
+    "candidate:peer_filtered:SELECT addressee_id,status FROM pm_match_requests WHERE requester_id=? AND addressee_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "pm_match_requests",
+        "type": "ALL",
+        "possible_keys": "uk_pair,idx_addressee",
+        "key": null,
+        "key_len": null,
+        "ref": null,
+        "rows": "100",
+        "Extra": "Using where"
+      }
+    ],
+    "baseline:peer_filtered:SELECT status FROM friendships WHERE (requester_id=? AND addressee_id=?) OR (requester_id=? AND addressee_id=?) LIMIT 1": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "friendships",
+        "type": "range",
+        "possible_keys": "uq_friendship,idx_addressee",
+        "key": "uq_friendship",
+        "key_len": "18",
+        "ref": null,
+        "rows": "2",
+        "Extra": "Using index condition"
+      }
+    ],
+    "baseline:peer_filtered:SELECT status FROM pm_match_requests WHERE requester_id=? AND addressee_id=? LIMIT 1": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "pm_match_requests",
+        "type": "const",
+        "possible_keys": "uk_pair,idx_addressee",
+        "key": "uk_pair",
+        "key_len": "16",
+        "ref": "const,const",
+        "rows": "1",
+        "Extra": ""
+      }
+    ],
+    "candidate:thread_detail:SELECT id, thread_id, reply_id, file_url, file_name, mime_type, file_size, created_by, created_at FROM thread_attachments WHERE thread_id=? ORDER BY id ASC": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "thread_attachments",
+        "type": "ref",
+        "possible_keys": "thread_id",
+        "key": "thread_id",
+        "key_len": "9",
+        "ref": "const",
+        "rows": "1",
+        "Extra": "Using where"
+      }
+    ],
+    "baseline:thread_detail:SELECT id, thread_id, reply_id, file_url, file_name, mime_type, file_size, created_by, created_at FROM thread_attachments WHERE thread_id=? ORDER BY id ASC": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "thread_attachments",
+        "type": "ref",
+        "possible_keys": "thread_id",
+        "key": "thread_id",
+        "key_len": "9",
+        "ref": "const",
+        "rows": "1",
+        "Extra": "Using where"
+      }
+    ],
+    "candidate:peer_eligibility:SELECT status FROM friendships WHERE (requester_id=? AND addressee_id=?) OR (requester_id=? AND addressee_id=?) LIMIT 1": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "friendships",
+        "type": "range",
+        "possible_keys": "uq_friendship,idx_addressee",
+        "key": "uq_friendship",
+        "key_len": "18",
+        "ref": null,
+        "rows": "2",
+        "Extra": "Using index condition"
+      }
+    ],
+    "candidate:peer_eligibility:SELECT addressee_id,status FROM pm_match_requests WHERE requester_id=? AND addressee_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "pm_match_requests",
+        "type": "ALL",
+        "possible_keys": "uk_pair,idx_addressee",
+        "key": null,
+        "key_len": null,
+        "ref": null,
+        "rows": "100",
+        "Extra": "Using where"
+      }
+    ],
+    "baseline:peer_eligibility:SELECT status FROM friendships WHERE (requester_id=? AND addressee_id=?) OR (requester_id=? AND addressee_id=?) LIMIT 1": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "friendships",
+        "type": "range",
+        "possible_keys": "uq_friendship,idx_addressee",
+        "key": "uq_friendship",
+        "key_len": "18",
+        "ref": null,
+        "rows": "2",
+        "Extra": "Using index condition"
+      }
+    ],
+    "baseline:peer_eligibility:SELECT status FROM pm_match_requests WHERE requester_id=? AND addressee_id=? LIMIT 1": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "pm_match_requests",
+        "type": "const",
+        "possible_keys": "uk_pair,idx_addressee",
+        "key": "uk_pair",
+        "key_len": "16",
+        "ref": "const,const",
+        "rows": "1",
+        "Extra": ""
+      }
+    ],
+    "candidate:peer_large_history:SELECT status FROM friendships WHERE (requester_id=? AND addressee_id=?) OR (requester_id=? AND addressee_id=?) LIMIT 1": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "friendships",
+        "type": "range",
+        "possible_keys": "uq_friendship,idx_addressee",
+        "key": "uq_friendship",
+        "key_len": "18",
+        "ref": null,
+        "rows": "2",
+        "Extra": "Using index condition"
+      }
+    ],
+    "candidate:peer_large_history:SELECT addressee_id,status FROM pm_match_requests WHERE requester_id=? AND addressee_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "pm_match_requests",
+        "type": "range",
+        "possible_keys": "uk_pair,idx_addressee",
+        "key": "uk_pair",
+        "key_len": "16",
+        "ref": null,
+        "rows": "100",
+        "Extra": "Using index condition"
+      }
+    ],
+    "baseline:peer_large_history:SELECT status FROM friendships WHERE (requester_id=? AND addressee_id=?) OR (requester_id=? AND addressee_id=?) LIMIT 1": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "friendships",
+        "type": "range",
+        "possible_keys": "uq_friendship,idx_addressee",
+        "key": "uq_friendship",
+        "key_len": "18",
+        "ref": null,
+        "rows": "2",
+        "Extra": "Using index condition"
+      }
+    ],
+    "baseline:peer_large_history:SELECT status FROM pm_match_requests WHERE requester_id=? AND addressee_id=? LIMIT 1": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "pm_match_requests",
+        "type": "const",
+        "possible_keys": "uk_pair,idx_addressee",
+        "key": "uk_pair",
+        "key_len": "16",
+        "ref": "const,const",
+        "rows": "1",
+        "Extra": ""
+      }
+    ],
+    "candidate:threads_large_history:SELECT id, thread_id, reply_id, file_url, file_name, mime_type, file_size, created_by, created_at FROM thread_attachments WHERE thread_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ORDER BY thread_id ASC,id ASC": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "thread_attachments",
+        "type": "range",
+        "possible_keys": "thread_id",
+        "key": "thread_id",
+        "key_len": "9",
+        "ref": null,
+        "rows": "146",
+        "Extra": "Using index condition"
+      }
+    ],
+    "baseline:threads_large_history:SELECT id, thread_id, reply_id, file_url, file_name, mime_type, file_size, created_by, created_at FROM thread_attachments WHERE thread_id=? ORDER BY id ASC": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "thread_attachments",
+        "type": "ref",
+        "possible_keys": "thread_id",
+        "key": "thread_id",
+        "key_len": "9",
+        "ref": "const",
+        "rows": "1",
+        "Extra": "Using where"
+      }
+    ],
+    "candidate:threads_many_attachments:SELECT id, thread_id, reply_id, file_url, file_name, mime_type, file_size, created_by, created_at FROM thread_attachments WHERE thread_id IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ORDER BY thread_id ASC,id ASC": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "thread_attachments",
+        "type": "range",
+        "possible_keys": "thread_id",
+        "key": "thread_id",
+        "key_len": "9",
+        "ref": null,
+        "rows": "5145",
+        "Extra": "Using index condition"
+      }
+    ],
+    "baseline:threads_many_attachments:SELECT id, thread_id, reply_id, file_url, file_name, mime_type, file_size, created_by, created_at FROM thread_attachments WHERE thread_id=? ORDER BY id ASC": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "thread_attachments",
+        "type": "ref",
+        "possible_keys": "thread_id",
+        "key": "thread_id",
+        "key_len": "9",
+        "ref": "const",
+        "rows": "100",
+        "Extra": "Using where"
+      }
+    ]
+  },
+  "batch_regression": "PASS: empty and bounded batches, fresh/upsert/retry, caller rollback, statement failure atomicity, concurrent lock timeout/recovery, database error propagation\n",
+  "settings_migration_regression": "PASS: complete settings schema from original baseline, 23 repeatable additions and preservation of saved preferences\n",
+  "raw_evidence_sha256": "0e646f557d557ce676a7299d0e2215fe615f8c5e7510ba1d6c7339b5725aa56a",
+  "cases": {
+    "peer100": {
+      "complete_response_and_cache_equal": true,
+      "runs": {
+        "candidate": [
+          {
+            "ms": 23.826977,
+            "cpu_ms": 6.816000000000001,
+            "memory_increment_bytes": 1341176,
+            "peak_bytes": 1893952,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 117,
+            "sql_ms": 12.596153,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 1.265249
+          },
+          {
+            "ms": 32.636238,
+            "cpu_ms": 12.225999999999999,
+            "memory_increment_bytes": 1341176,
+            "peak_bytes": 1893952,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 117,
+            "sql_ms": 16.713927,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 1.509184
+          },
+          {
+            "ms": 32.654675,
+            "cpu_ms": 11.956,
+            "memory_increment_bytes": 1341176,
+            "peak_bytes": 1893952,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 117,
+            "sql_ms": 16.881538,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 1.55336
+          },
+          {
+            "ms": 23.703636,
+            "cpu_ms": 7.5809999999999995,
+            "memory_increment_bytes": 1341176,
+            "peak_bytes": 1893952,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 117,
+            "sql_ms": 12.104063,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 1.267986
+          }
+        ],
+        "baseline": [
+          {
+            "ms": 89.77298,
+            "cpu_ms": 16.483,
+            "memory_increment_bytes": 1256680,
+            "peak_bytes": 1809600,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 315,
+            "sql_ms": 62.38649,
+            "writes": 102,
+            "compatibility_write_statements": 100,
+            "compatibility_write_ms": 41.792814
+          },
+          {
+            "ms": 88.062098,
+            "cpu_ms": 17.751,
+            "memory_increment_bytes": 1256680,
+            "peak_bytes": 1809600,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 315,
+            "sql_ms": 59.364526,
+            "writes": 102,
+            "compatibility_write_statements": 100,
+            "compatibility_write_ms": 37.502378
+          },
+          {
+            "ms": 87.703257,
+            "cpu_ms": 22.537000000000003,
+            "memory_increment_bytes": 1256680,
+            "peak_bytes": 1809600,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 315,
+            "sql_ms": 55.902525,
+            "writes": 102,
+            "compatibility_write_statements": 100,
+            "compatibility_write_ms": 34.181015
+          },
+          {
+            "ms": 81.458313,
+            "cpu_ms": 17.718000000000004,
+            "memory_increment_bytes": 1256680,
+            "peak_bytes": 1809600,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 315,
+            "sql_ms": 54.147292,
+            "writes": 102,
+            "compatibility_write_statements": 100,
+            "compatibility_write_ms": 34.415174
+          }
+        ]
+      }
+    },
+    "threads1": {
+      "complete_response_and_cache_equal": true,
+      "runs": {
+        "candidate": [
+          {
+            "ms": 1.798092,
+            "cpu_ms": 0.8290000000000006,
+            "memory_increment_bytes": 326992,
+            "peak_bytes": 879688,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 0.5759420000000001,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 1.793315,
+            "cpu_ms": 0.8230000000000004,
+            "memory_increment_bytes": 326992,
+            "peak_bytes": 879688,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 0.67526,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 1.806314,
+            "cpu_ms": 0.9879999999999995,
+            "memory_increment_bytes": 326992,
+            "peak_bytes": 879688,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 0.512539,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 1.889887,
+            "cpu_ms": 0.8420000000000005,
+            "memory_increment_bytes": 326992,
+            "peak_bytes": 879688,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 0.761807,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          }
+        ],
+        "baseline": [
+          {
+            "ms": 1.820945,
+            "cpu_ms": 0.9789999999999992,
+            "memory_increment_bytes": 326488,
+            "peak_bytes": 879328,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 0.502764,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 1.942295,
+            "cpu_ms": 0.782,
+            "memory_increment_bytes": 326488,
+            "peak_bytes": 879328,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 0.836028,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 1.937097,
+            "cpu_ms": 0.8830000000000027,
+            "memory_increment_bytes": 326488,
+            "peak_bytes": 879328,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 0.7456240000000001,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 1.843669,
+            "cpu_ms": 0.9900000000000002,
+            "memory_increment_bytes": 326488,
+            "peak_bytes": 879328,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 0.47746600000000006,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          }
+        ]
+      }
+    },
+    "threads10": {
+      "complete_response_and_cache_equal": true,
+      "runs": {
+        "candidate": [
+          {
+            "ms": 2.00632,
+            "cpu_ms": 0.9800000000000004,
+            "memory_increment_bytes": 326992,
+            "peak_bytes": 879728,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 0.690732,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 2.164965,
+            "cpu_ms": 1.1090000000000018,
+            "memory_increment_bytes": 326992,
+            "peak_bytes": 879728,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 0.923106,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 1.879071,
+            "cpu_ms": 0.8840000000000003,
+            "memory_increment_bytes": 326992,
+            "peak_bytes": 879728,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 0.624063,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 2.065107,
+            "cpu_ms": 1.091000000000001,
+            "memory_increment_bytes": 326992,
+            "peak_bytes": 879728,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 0.633798,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          }
+        ],
+        "baseline": [
+          {
+            "ms": 3.591877,
+            "cpu_ms": 1.5350000000000001,
+            "memory_increment_bytes": 326488,
+            "peak_bytes": 879368,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 11,
+            "sql_ms": 1.554421,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 3.024947,
+            "cpu_ms": 1.1729999999999983,
+            "memory_increment_bytes": 326488,
+            "peak_bytes": 879368,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 11,
+            "sql_ms": 1.366426,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 3.484228,
+            "cpu_ms": 1.112,
+            "memory_increment_bytes": 326488,
+            "peak_bytes": 879368,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 11,
+            "sql_ms": 1.21586,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 2.785924,
+            "cpu_ms": 1.084999999999999,
+            "memory_increment_bytes": 326488,
+            "peak_bytes": 879368,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 11,
+            "sql_ms": 1.187537,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          }
+        ]
+      }
+    },
+    "threads50": {
+      "complete_response_and_cache_equal": true,
+      "runs": {
+        "candidate": [
+          {
+            "ms": 2.41813,
+            "cpu_ms": 1.1489999999999991,
+            "memory_increment_bytes": 462888,
+            "peak_bytes": 1015624,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 0.962994,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 2.782628,
+            "cpu_ms": 1.3239999999999998,
+            "memory_increment_bytes": 462888,
+            "peak_bytes": 1015624,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 1.198454,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 2.473111,
+            "cpu_ms": 1.1400000000000006,
+            "memory_increment_bytes": 462888,
+            "peak_bytes": 1015624,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 1.0657670000000001,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 2.549023,
+            "cpu_ms": 1.3120000000000012,
+            "memory_increment_bytes": 462888,
+            "peak_bytes": 1015624,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 0.966731,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          }
+        ],
+        "baseline": [
+          {
+            "ms": 7.813415,
+            "cpu_ms": 2.2349999999999994,
+            "memory_increment_bytes": 484664,
+            "peak_bytes": 1037544,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 51,
+            "sql_ms": 4.207415,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 7.91797,
+            "cpu_ms": 2.2200000000000006,
+            "memory_increment_bytes": 484664,
+            "peak_bytes": 1037544,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 51,
+            "sql_ms": 4.171617,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 9.115623,
+            "cpu_ms": 2.5649999999999995,
+            "memory_increment_bytes": 484664,
+            "peak_bytes": 1037544,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 51,
+            "sql_ms": 4.833436,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 8.415567,
+            "cpu_ms": 2.421000000000001,
+            "memory_increment_bytes": 484664,
+            "peak_bytes": 1037544,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 51,
+            "sql_ms": 4.662921,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          }
+        ]
+      }
+    },
+    "peer1": {
+      "complete_response_and_cache_equal": true,
+      "runs": {
+        "candidate": [
+          {
+            "ms": 6.091787,
+            "cpu_ms": 2.258000000000001,
+            "memory_increment_bytes": 520872,
+            "peak_bytes": 1073608,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 18,
+            "sql_ms": 2.690426,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 0.446441
+          },
+          {
+            "ms": 6.534142,
+            "cpu_ms": 2.734,
+            "memory_increment_bytes": 520872,
+            "peak_bytes": 1073608,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 18,
+            "sql_ms": 2.962447,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 0.5467
+          },
+          {
+            "ms": 6.987343,
+            "cpu_ms": 2.5810000000000013,
+            "memory_increment_bytes": 520872,
+            "peak_bytes": 1073608,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 18,
+            "sql_ms": 3.394514,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 0.803179
+          },
+          {
+            "ms": 5.860024,
+            "cpu_ms": 2.1930000000000014,
+            "memory_increment_bytes": 520872,
+            "peak_bytes": 1073608,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 18,
+            "sql_ms": 2.659614,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 0.496906
+          }
+        ],
+        "baseline": [
+          {
+            "ms": 6.177804,
+            "cpu_ms": 2.171999999999999,
+            "memory_increment_bytes": 513424,
+            "peak_bytes": 1066304,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 18,
+            "sql_ms": 3.086631,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 0.724432
+          },
+          {
+            "ms": 6.259536,
+            "cpu_ms": 2.4499999999999993,
+            "memory_increment_bytes": 513424,
+            "peak_bytes": 1066304,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 18,
+            "sql_ms": 2.814005,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 0.519038
+          },
+          {
+            "ms": 6.157003,
+            "cpu_ms": 2.135,
+            "memory_increment_bytes": 513424,
+            "peak_bytes": 1066304,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 18,
+            "sql_ms": 3.160778,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 0.512899
+          },
+          {
+            "ms": 7.291443,
+            "cpu_ms": 2.2699999999999996,
+            "memory_increment_bytes": 513424,
+            "peak_bytes": 1066304,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 18,
+            "sql_ms": 3.533329,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 0.677783
+          }
+        ]
+      }
+    },
+    "peer10": {
+      "complete_response_and_cache_equal": true,
+      "runs": {
+        "candidate": [
+          {
+            "ms": 8.000302,
+            "cpu_ms": 2.7040000000000006,
+            "memory_increment_bytes": 534880,
+            "peak_bytes": 1087656,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 27,
+            "sql_ms": 3.871514,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 0.602622
+          },
+          {
+            "ms": 9.024268,
+            "cpu_ms": 2.689,
+            "memory_increment_bytes": 534880,
+            "peak_bytes": 1087656,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 27,
+            "sql_ms": 4.890359,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 0.597344
+          },
+          {
+            "ms": 8.471169,
+            "cpu_ms": 2.8100000000000005,
+            "memory_increment_bytes": 534880,
+            "peak_bytes": 1087656,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 27,
+            "sql_ms": 4.211493,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 0.667067
+          },
+          {
+            "ms": 8.428476,
+            "cpu_ms": 3.0580000000000016,
+            "memory_increment_bytes": 534880,
+            "peak_bytes": 1087656,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 27,
+            "sql_ms": 3.9439349999999997,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 0.700136
+          }
+        ],
+        "baseline": [
+          {
+            "ms": 12.656164,
+            "cpu_ms": 3.4529999999999994,
+            "memory_increment_bytes": 575520,
+            "peak_bytes": 1128440,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 45,
+            "sql_ms": 7.506617,
+            "writes": 12,
+            "compatibility_write_statements": 10,
+            "compatibility_write_ms": 3.720144
+          },
+          {
+            "ms": 11.724615,
+            "cpu_ms": 3.164999999999999,
+            "memory_increment_bytes": 575520,
+            "peak_bytes": 1128440,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 45,
+            "sql_ms": 6.911202,
+            "writes": 12,
+            "compatibility_write_statements": 10,
+            "compatibility_write_ms": 3.411022
+          },
+          {
+            "ms": 12.895578,
+            "cpu_ms": 3.9559999999999995,
+            "memory_increment_bytes": 575520,
+            "peak_bytes": 1128440,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 45,
+            "sql_ms": 6.992749,
+            "writes": 12,
+            "compatibility_write_statements": 10,
+            "compatibility_write_ms": 3.352342
+          },
+          {
+            "ms": 13.746497,
+            "cpu_ms": 3.3930000000000007,
+            "memory_increment_bytes": 575520,
+            "peak_bytes": 1128440,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 45,
+            "sql_ms": 8.384422,
+            "writes": 12,
+            "compatibility_write_statements": 10,
+            "compatibility_write_ms": 3.957348
+          }
+        ]
+      }
+    },
+    "peer_semantic": {
+      "complete_response_and_cache_equal": true,
+      "runs": {
+        "candidate": [
+          {
+            "ms": 33.900599,
+            "cpu_ms": 12.905999999999999,
+            "memory_increment_bytes": 1341240,
+            "peak_bytes": 1894016,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 117,
+            "sql_ms": 16.49875,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 1.386713
+          },
+          {
+            "ms": 24.224852,
+            "cpu_ms": 7.654,
+            "memory_increment_bytes": 1341240,
+            "peak_bytes": 1894016,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 117,
+            "sql_ms": 11.959865,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 1.379486
+          },
+          {
+            "ms": 24.560627,
+            "cpu_ms": 7.943000000000001,
+            "memory_increment_bytes": 1341240,
+            "peak_bytes": 1894016,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 117,
+            "sql_ms": 12.570661,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 1.330803
+          },
+          {
+            "ms": 26.068258,
+            "cpu_ms": 8.3,
+            "memory_increment_bytes": 1341240,
+            "peak_bytes": 1894016,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 117,
+            "sql_ms": 12.880526,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 1.351113
+          }
+        ],
+        "baseline": [
+          {
+            "ms": 87.422435,
+            "cpu_ms": 17.936,
+            "memory_increment_bytes": 1260840,
+            "peak_bytes": 1813760,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 315,
+            "sql_ms": 59.540987,
+            "writes": 102,
+            "compatibility_write_statements": 100,
+            "compatibility_write_ms": 40.0952
+          },
+          {
+            "ms": 85.367145,
+            "cpu_ms": 18.336999999999996,
+            "memory_increment_bytes": 1260840,
+            "peak_bytes": 1813760,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 315,
+            "sql_ms": 56.315738,
+            "writes": 102,
+            "compatibility_write_statements": 100,
+            "compatibility_write_ms": 36.547303
+          },
+          {
+            "ms": 80.734471,
+            "cpu_ms": 16.098,
+            "memory_increment_bytes": 1260840,
+            "peak_bytes": 1813760,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 315,
+            "sql_ms": 53.531177,
+            "writes": 102,
+            "compatibility_write_statements": 100,
+            "compatibility_write_ms": 34.498333
+          },
+          {
+            "ms": 86.185038,
+            "cpu_ms": 19.612,
+            "memory_increment_bytes": 1260840,
+            "peak_bytes": 1813760,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 315,
+            "sql_ms": 54.823084,
+            "writes": 102,
+            "compatibility_write_statements": 100,
+            "compatibility_write_ms": 34.398423
+          }
+        ]
+      }
+    },
+    "peer_filtered": {
+      "complete_response_and_cache_equal": true,
+      "runs": {
+        "candidate": [
+          {
+            "ms": 14.596903,
+            "cpu_ms": 4.66,
+            "memory_increment_bytes": 953912,
+            "peak_bytes": 1507016,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 51,
+            "sql_ms": 7.789989,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 0.779422
+          },
+          {
+            "ms": 13.957531,
+            "cpu_ms": 4.840999999999999,
+            "memory_increment_bytes": 953912,
+            "peak_bytes": 1507016,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 51,
+            "sql_ms": 7.345759,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 0.809427
+          },
+          {
+            "ms": 14.242921,
+            "cpu_ms": 4.195000000000002,
+            "memory_increment_bytes": 953912,
+            "peak_bytes": 1507016,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 51,
+            "sql_ms": 8.190903,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 0.893587
+          },
+          {
+            "ms": 13.369714,
+            "cpu_ms": 4.337,
+            "memory_increment_bytes": 953912,
+            "peak_bytes": 1507016,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 51,
+            "sql_ms": 7.0947569999999995,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 0.829116
+          }
+        ],
+        "baseline": [
+          {
+            "ms": 34.091135,
+            "cpu_ms": 7.389999999999999,
+            "memory_increment_bytes": 941200,
+            "peak_bytes": 1494448,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 117,
+            "sql_ms": 22.705956,
+            "writes": 36,
+            "compatibility_write_statements": 34,
+            "compatibility_write_ms": 13.197135
+          },
+          {
+            "ms": 31.15576,
+            "cpu_ms": 6.860999999999999,
+            "memory_increment_bytes": 941200,
+            "peak_bytes": 1494448,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 117,
+            "sql_ms": 20.289063,
+            "writes": 36,
+            "compatibility_write_statements": 34,
+            "compatibility_write_ms": 11.513576
+          },
+          {
+            "ms": 34.194559,
+            "cpu_ms": 8.863999999999999,
+            "memory_increment_bytes": 941200,
+            "peak_bytes": 1494448,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 117,
+            "sql_ms": 21.466627,
+            "writes": 36,
+            "compatibility_write_statements": 34,
+            "compatibility_write_ms": 11.896044999999999
+          },
+          {
+            "ms": 29.572791,
+            "cpu_ms": 7.2170000000000005,
+            "memory_increment_bytes": 941200,
+            "peak_bytes": 1494448,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 117,
+            "sql_ms": 18.676313,
+            "writes": 36,
+            "compatibility_write_statements": 34,
+            "compatibility_write_ms": 10.296346
+          }
+        ]
+      }
+    },
+    "peer_no_matches": {
+      "complete_response_and_cache_equal": true,
+      "runs": {
+        "candidate": [
+          {
+            "ms": 7.123796,
+            "cpu_ms": 2.4640000000000004,
+            "memory_increment_bytes": 770056,
+            "peak_bytes": 1322872,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 15,
+            "sql_ms": 3.89823,
+            "writes": 2,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 8.149831,
+            "cpu_ms": 2.7920000000000016,
+            "memory_increment_bytes": 770056,
+            "peak_bytes": 1322872,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 15,
+            "sql_ms": 4.26484,
+            "writes": 2,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 7.201076,
+            "cpu_ms": 2.3979999999999997,
+            "memory_increment_bytes": 770056,
+            "peak_bytes": 1322872,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 15,
+            "sql_ms": 4.011322,
+            "writes": 2,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 7.342196,
+            "cpu_ms": 2.526,
+            "memory_increment_bytes": 770056,
+            "peak_bytes": 1322872,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 15,
+            "sql_ms": 4.069869,
+            "writes": 2,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          }
+        ],
+        "baseline": [
+          {
+            "ms": 7.118048,
+            "cpu_ms": 2.3519999999999985,
+            "memory_increment_bytes": 762608,
+            "peak_bytes": 1315568,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 15,
+            "sql_ms": 3.982977,
+            "writes": 2,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 8.286875,
+            "cpu_ms": 2.4829999999999988,
+            "memory_increment_bytes": 762608,
+            "peak_bytes": 1315568,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 15,
+            "sql_ms": 4.989962,
+            "writes": 2,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 7.436551,
+            "cpu_ms": 2.478999999999999,
+            "memory_increment_bytes": 762608,
+            "peak_bytes": 1315568,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 15,
+            "sql_ms": 4.145525,
+            "writes": 2,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 6.947942,
+            "cpu_ms": 2.3579999999999988,
+            "memory_increment_bytes": 762608,
+            "peak_bytes": 1315568,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 15,
+            "sql_ms": 3.8053179999999998,
+            "writes": 2,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          }
+        ]
+      }
+    },
+    "thread_detail": {
+      "complete_response_and_cache_equal": true,
+      "runs": {
+        "candidate": [
+          {
+            "ms": 1.779826,
+            "cpu_ms": 0.8120000000000012,
+            "memory_increment_bytes": 327024,
+            "peak_bytes": 879672,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 3,
+            "sql_ms": 0.563154,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 1.840806,
+            "cpu_ms": 0.8300000000000001,
+            "memory_increment_bytes": 327024,
+            "peak_bytes": 879672,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 3,
+            "sql_ms": 0.544206,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 1.879333,
+            "cpu_ms": 0.8789999999999996,
+            "memory_increment_bytes": 327024,
+            "peak_bytes": 879672,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 3,
+            "sql_ms": 0.6366430000000001,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 2.107492,
+            "cpu_ms": 0.9380000000000006,
+            "memory_increment_bytes": 327024,
+            "peak_bytes": 879672,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 3,
+            "sql_ms": 0.677895,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          }
+        ],
+        "baseline": [
+          {
+            "ms": 1.79606,
+            "cpu_ms": 0.9130000000000003,
+            "memory_increment_bytes": 326520,
+            "peak_bytes": 879312,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 3,
+            "sql_ms": 0.610364,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 2.249462,
+            "cpu_ms": 0.802999999999999,
+            "memory_increment_bytes": 326520,
+            "peak_bytes": 879312,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 3,
+            "sql_ms": 1.025769,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 1.763583,
+            "cpu_ms": 0.7859999999999996,
+            "memory_increment_bytes": 326520,
+            "peak_bytes": 879312,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 3,
+            "sql_ms": 0.552378,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 1.928676,
+            "cpu_ms": 0.907,
+            "memory_increment_bytes": 326520,
+            "peak_bytes": 879312,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 3,
+            "sql_ms": 0.652426,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          }
+        ]
+      }
+    },
+    "threads_empty": {
+      "complete_response_and_cache_equal": true,
+      "runs": {
+        "candidate": [
+          {
+            "ms": 1.891432,
+            "cpu_ms": 0.8029999999999973,
+            "memory_increment_bytes": 326992,
+            "peak_bytes": 879728,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 1,
+            "sql_ms": 0.832994,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 1.253036,
+            "cpu_ms": 0.7350000000000012,
+            "memory_increment_bytes": 326992,
+            "peak_bytes": 879728,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 1,
+            "sql_ms": 0.279134,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 1.691415,
+            "cpu_ms": 0.8559999999999999,
+            "memory_increment_bytes": 326992,
+            "peak_bytes": 879728,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 1,
+            "sql_ms": 0.307735,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 1.742922,
+            "cpu_ms": 1.147000000000002,
+            "memory_increment_bytes": 326992,
+            "peak_bytes": 879728,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 1,
+            "sql_ms": 0.375076,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          }
+        ],
+        "baseline": [
+          {
+            "ms": 1.378171,
+            "cpu_ms": 0.75,
+            "memory_increment_bytes": 326488,
+            "peak_bytes": 879368,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 1,
+            "sql_ms": 0.351391,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 1.251404,
+            "cpu_ms": 0.7119999999999997,
+            "memory_increment_bytes": 326488,
+            "peak_bytes": 879368,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 1,
+            "sql_ms": 0.313955,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 1.618337,
+            "cpu_ms": 0.7309999999999999,
+            "memory_increment_bytes": 326488,
+            "peak_bytes": 879368,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 1,
+            "sql_ms": 0.630174,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 1.432482,
+            "cpu_ms": 0.8849999999999998,
+            "memory_increment_bytes": 326488,
+            "peak_bytes": 879368,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 1,
+            "sql_ms": 0.308657,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          }
+        ]
+      }
+    },
+    "peer_disabled": {
+      "complete_response_and_cache_equal": true,
+      "runs": {
+        "candidate": [
+          {
+            "ms": 1.90361,
+            "cpu_ms": 1.6820000000000004,
+            "memory_increment_bytes": 387888,
+            "peak_bytes": 940560,
+            "status": 403,
+            "database_cpu_ms": null,
+            "query_count": 1,
+            "sql_ms": 0.135591,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 1.963719,
+            "cpu_ms": 1.657,
+            "memory_increment_bytes": 387888,
+            "peak_bytes": 940560,
+            "status": 403,
+            "database_cpu_ms": null,
+            "query_count": 1,
+            "sql_ms": 0.216171,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 1.966192,
+            "cpu_ms": 1.700000000000001,
+            "memory_increment_bytes": 387888,
+            "peak_bytes": 940560,
+            "status": 403,
+            "database_cpu_ms": null,
+            "query_count": 1,
+            "sql_ms": 0.174359,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 2.4773,
+            "cpu_ms": 2.0420000000000016,
+            "memory_increment_bytes": 387888,
+            "peak_bytes": 940560,
+            "status": 403,
+            "database_cpu_ms": null,
+            "query_count": 1,
+            "sql_ms": 0.296068,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          }
+        ],
+        "baseline": [
+          {
+            "ms": 1.757603,
+            "cpu_ms": 1.529,
+            "memory_increment_bytes": 389168,
+            "peak_bytes": 941984,
+            "status": 403,
+            "database_cpu_ms": null,
+            "query_count": 1,
+            "sql_ms": 0.157243,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 1.943789,
+            "cpu_ms": 1.6829999999999998,
+            "memory_increment_bytes": 389168,
+            "peak_bytes": 941984,
+            "status": 403,
+            "database_cpu_ms": null,
+            "query_count": 1,
+            "sql_ms": 0.160728,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 1.860906,
+            "cpu_ms": 1.5709999999999997,
+            "memory_increment_bytes": 389168,
+            "peak_bytes": 941984,
+            "status": 403,
+            "database_cpu_ms": null,
+            "query_count": 1,
+            "sql_ms": 0.177223,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 2.2951,
+            "cpu_ms": 2.0139999999999993,
+            "memory_increment_bytes": 389168,
+            "peak_bytes": 941984,
+            "status": 403,
+            "database_cpu_ms": null,
+            "query_count": 1,
+            "sql_ms": 0.215289,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          }
+        ]
+      }
+    },
+    "peer_eligibility": {
+      "complete_response_and_cache_equal": true,
+      "runs": {
+        "candidate": [
+          {
+            "ms": 34.066031,
+            "cpu_ms": 12.552999999999997,
+            "memory_increment_bytes": 1341208,
+            "peak_bytes": 1893984,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 117,
+            "sql_ms": 17.257706,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 1.697204
+          },
+          {
+            "ms": 25.95067,
+            "cpu_ms": 8.059999999999999,
+            "memory_increment_bytes": 1341208,
+            "peak_bytes": 1893984,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 117,
+            "sql_ms": 14.072311,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 1.451009
+          },
+          {
+            "ms": 25.24864,
+            "cpu_ms": 7.780000000000001,
+            "memory_increment_bytes": 1341208,
+            "peak_bytes": 1893984,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 117,
+            "sql_ms": 13.723372,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 1.426263
+          },
+          {
+            "ms": 26.474255,
+            "cpu_ms": 7.658000000000001,
+            "memory_increment_bytes": 1341208,
+            "peak_bytes": 1893984,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 117,
+            "sql_ms": 14.791878,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 1.652818
+          }
+        ],
+        "baseline": [
+          {
+            "ms": 97.567082,
+            "cpu_ms": 20.764000000000003,
+            "memory_increment_bytes": 1256648,
+            "peak_bytes": 1809568,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 315,
+            "sql_ms": 66.852406,
+            "writes": 102,
+            "compatibility_write_statements": 100,
+            "compatibility_write_ms": 44.521135
+          },
+          {
+            "ms": 100.978721,
+            "cpu_ms": 20.380000000000003,
+            "memory_increment_bytes": 1256648,
+            "peak_bytes": 1809568,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 315,
+            "sql_ms": 66.728583,
+            "writes": 102,
+            "compatibility_write_statements": 100,
+            "compatibility_write_ms": 43.579269
+          },
+          {
+            "ms": 87.523996,
+            "cpu_ms": 16.035,
+            "memory_increment_bytes": 1256648,
+            "peak_bytes": 1809568,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 315,
+            "sql_ms": 60.087974,
+            "writes": 102,
+            "compatibility_write_statements": 100,
+            "compatibility_write_ms": 38.854364
+          },
+          {
+            "ms": 85.972448,
+            "cpu_ms": 15.627,
+            "memory_increment_bytes": 1256648,
+            "peak_bytes": 1809568,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 315,
+            "sql_ms": 59.327121,
+            "writes": 102,
+            "compatibility_write_statements": 100,
+            "compatibility_write_ms": 38.831591
+          }
+        ]
+      }
+    },
+    "peer_large_history": {
+      "complete_response_and_cache_equal": true,
+      "runs": {
+        "candidate": [
+          {
+            "ms": 32.079984,
+            "cpu_ms": 10.935,
+            "memory_increment_bytes": 1341176,
+            "peak_bytes": 1893952,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 117,
+            "sql_ms": 17.173644,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 1.680128
+          },
+          {
+            "ms": 31.036058,
+            "cpu_ms": 10.485000000000001,
+            "memory_increment_bytes": 1341176,
+            "peak_bytes": 1893952,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 117,
+            "sql_ms": 16.4737,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 1.652958
+          },
+          {
+            "ms": 26.991782,
+            "cpu_ms": 8.337000000000002,
+            "memory_increment_bytes": 1341176,
+            "peak_bytes": 1893952,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 117,
+            "sql_ms": 14.317114,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 1.913244
+          },
+          {
+            "ms": 25.478866,
+            "cpu_ms": 7.431999999999999,
+            "memory_increment_bytes": 1341176,
+            "peak_bytes": 1893952,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 117,
+            "sql_ms": 13.731026,
+            "writes": 3,
+            "compatibility_write_statements": 1,
+            "compatibility_write_ms": 1.717524
+          }
+        ],
+        "baseline": [
+          {
+            "ms": 94.771072,
+            "cpu_ms": 18.844,
+            "memory_increment_bytes": 1256680,
+            "peak_bytes": 1809600,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 315,
+            "sql_ms": 64.594351,
+            "writes": 102,
+            "compatibility_write_statements": 100,
+            "compatibility_write_ms": 43.674114
+          },
+          {
+            "ms": 89.542301,
+            "cpu_ms": 17.522999999999996,
+            "memory_increment_bytes": 1256680,
+            "peak_bytes": 1809600,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 315,
+            "sql_ms": 61.153128,
+            "writes": 102,
+            "compatibility_write_statements": 100,
+            "compatibility_write_ms": 41.009252
+          },
+          {
+            "ms": 98.873523,
+            "cpu_ms": 17.252000000000002,
+            "memory_increment_bytes": 1256680,
+            "peak_bytes": 1809600,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 315,
+            "sql_ms": 70.83434,
+            "writes": 102,
+            "compatibility_write_statements": 100,
+            "compatibility_write_ms": 50.641572000000004
+          },
+          {
+            "ms": 94.793569,
+            "cpu_ms": 18.462000000000003,
+            "memory_increment_bytes": 1256680,
+            "peak_bytes": 1809600,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 315,
+            "sql_ms": 64.176675,
+            "writes": 102,
+            "compatibility_write_statements": 100,
+            "compatibility_write_ms": 40.562189
+          }
+        ]
+      }
+    },
+    "threads_large_history": {
+      "complete_response_and_cache_equal": true,
+      "runs": {
+        "candidate": [
+          {
+            "ms": 3.243405,
+            "cpu_ms": 1.3149999999999995,
+            "memory_increment_bytes": 462888,
+            "peak_bytes": 1015624,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 1.6373659999999999,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 2.898183,
+            "cpu_ms": 1.1029999999999998,
+            "memory_increment_bytes": 462888,
+            "peak_bytes": 1015624,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 1.507684,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 3.179896,
+            "cpu_ms": 1.237,
+            "memory_increment_bytes": 462888,
+            "peak_bytes": 1015624,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 1.659338,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 3.26727,
+            "cpu_ms": 1.2200000000000006,
+            "memory_increment_bytes": 462888,
+            "peak_bytes": 1015624,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 1.7793160000000001,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          }
+        ],
+        "baseline": [
+          {
+            "ms": 8.569964,
+            "cpu_ms": 2.3009999999999984,
+            "memory_increment_bytes": 484664,
+            "peak_bytes": 1037544,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 51,
+            "sql_ms": 4.703788,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 8.986451,
+            "cpu_ms": 2.694000000000001,
+            "memory_increment_bytes": 484664,
+            "peak_bytes": 1037544,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 51,
+            "sql_ms": 4.936510999999999,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 12.061096,
+            "cpu_ms": 2.9989999999999988,
+            "memory_increment_bytes": 484664,
+            "peak_bytes": 1037544,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 51,
+            "sql_ms": 6.982562,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 9.588904,
+            "cpu_ms": 2.764000000000001,
+            "memory_increment_bytes": 484664,
+            "peak_bytes": 1037544,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 51,
+            "sql_ms": 5.193772,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          }
+        ]
+      }
+    },
+    "threads_many_attachments": {
+      "complete_response_and_cache_equal": true,
+      "runs": {
+        "candidate": [
+          {
+            "ms": 15.956666,
+            "cpu_ms": 7.760999999999999,
+            "memory_increment_bytes": 5954976,
+            "peak_bytes": 6507712,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 7.931249,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 15.289948,
+            "cpu_ms": 7.492000000000001,
+            "memory_increment_bytes": 5954976,
+            "peak_bytes": 6507712,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 7.772874,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 16.412771,
+            "cpu_ms": 7.864999999999998,
+            "memory_increment_bytes": 5954976,
+            "peak_bytes": 6507712,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 8.561833,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 15.377133,
+            "cpu_ms": 7.249000000000002,
+            "memory_increment_bytes": 5954976,
+            "peak_bytes": 6507712,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 2,
+            "sql_ms": 8.027997000000001,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          }
+        ],
+        "baseline": [
+          {
+            "ms": 21.717289,
+            "cpu_ms": 8.855,
+            "memory_increment_bytes": 5978712,
+            "peak_bytes": 6531592,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 51,
+            "sql_ms": 11.111386,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 24.906343,
+            "cpu_ms": 9.361,
+            "memory_increment_bytes": 5978712,
+            "peak_bytes": 6531592,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 51,
+            "sql_ms": 13.279622,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 23.839262,
+            "cpu_ms": 8.955000000000002,
+            "memory_increment_bytes": 5978712,
+            "peak_bytes": 6531592,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 51,
+            "sql_ms": 12.684016,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          },
+          {
+            "ms": 26.978007,
+            "cpu_ms": 10.730999999999998,
+            "memory_increment_bytes": 5978712,
+            "peak_bytes": 6531592,
+            "status": 200,
+            "database_cpu_ms": null,
+            "query_count": 51,
+            "sql_ms": 14.392825,
+            "writes": 0,
+            "compatibility_write_statements": 0,
+            "compatibility_write_ms": 0
+          }
+        ]
+      }
+    }
+  },
+  "phpstan": {
+    "baseline": {
+      "exit_code": 1,
+      "totals": {
+        "errors": 0,
+        "file_errors": 15
+      }
+    },
+    "candidate": {
+      "exit_code": 1,
+      "totals": {
+        "errors": 0,
+        "file_errors": 15
+      }
+    },
+    "additional_diagnostics": []
+  }
+}
