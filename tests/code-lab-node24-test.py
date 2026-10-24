@@ -1,9 +1,11 @@
 """Offline profile compatibility checks. Real execution requires isolated staging CI."""
 import importlib.util
 import pathlib
+import sys
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'deploy/code-lab/piston'))
 path = ROOT / 'deploy/code-lab/piston/node24/profile.py'
 spec = importlib.util.spec_from_file_location('node24_profile', path)
 module = importlib.util.module_from_spec(spec)
