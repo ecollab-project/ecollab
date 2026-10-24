@@ -1,0 +1,71 @@
+name: Chat read and worker performance
+on:
+  pull_request:
+    paths:
+      - 'services/StudentDashboardService.php'
+      - 'assets/js/chat/dm-notifications.js'
+      - 'tests/chat-performance.py'
+      - 'tests/chat-read-*'
+      - 'tests/chat-worker-*'
+      - 'tests/chat-list-*'
+      - '.github/workflows/chat-performance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-comparison:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install disposable MariaDB and PHP dependencies
+        run: |
+          mkdir -p "$RUNNER_TEMP/perf-apt/empty" "$RUNNER_TEMP/perf-apt/lists/partial"
+          printf '%s\n' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble-updates main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://security.ubuntu.com/ubuntu noble-security main universe' \
+            > "$RUNNER_TEMP/perf-apt/sources.list"
+          apt_options=(-o "Dir::Etc::sourcelist=$RUNNER_TEMP/perf-apt/sources.list"
+            -o "Dir::Etc::sourceparts=$RUNNER_TEMP/perf-apt/empty"
+            -o "Dir::State::lists=$RUNNER_TEMP/perf-apt/lists"
+            -o Acquire::Retries=0 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20)
+          sudo apt-get "${apt_options[@]}" update
+          sudo apt-get "${apt_options[@]}" install -y mariadb-server php8.3-cli php8.3-mysql php8.3-sqlite3 php8.3-curl php8.3-mbstring php8.3-xml
+      - name: Syntax and existing peer/learning regressions
+        run: |
+          set -e
+          for file in services/{StudentDashboardService,AdminDashboardService,FacilitatorDashboardService,PeerMatchingService,JarredGroupRecommendationService}.php API/chat/peer-match.php API/chat/get-matches.php tests/application-performance.php; do php8.3 -l "$file"; done
+          node --check assets/js/chat/dm-notifications.js
+          for file in tests/chat-read-profile.php tests/chat-read-paths.php tests/chat-worker-wrapper.php; do php8.3 -l "$file"; done
+          php8.3 tests/peer-ml-regression.php
+          php8.3 tests/learning-tools-regression.php
+          composer install --no-interaction --prefer-dist --no-progress
+          php8.3 vendor/bin/phpunit --testsuite Unit
+      - name: Existing chat, workspace and queue regressions
+        run: |
+          npm install --no-save --ignore-scripts jsdom@30.1.2 playwright@1.58.2
+          npx playwright install --with-deps chromium
+          php8.3 tests/code-lab-execution-regression.php
+          php8.3 tests/code-lab-batch-regression.php
+          php8.3 tests/learning-workspace-regression.php
+          PHP_BIN=/usr/bin/php8.3 node tests/learning-workspace-ui-regression.cjs
+          node tests/chat-list-performance.cjs
+      - name: Real MariaDB recent/read/worker profiles
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          CHAT_PERF_EVIDENCE: chat-read-worker-ci.json
+        run: python3 -B -u tests/chat-performance.py
+      - name: Chromium lists and accumulated message history
+        env: {CHAT_BROWSER_EVIDENCE: chat-list-browser-ci.json}
+        run: node tests/chat-list-browser.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chat-read-worker-browser-evidence
+          path: |
+            chat-read-worker-ci.json
+            chat-list-browser-ci.json

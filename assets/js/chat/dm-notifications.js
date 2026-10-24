@@ -553,16 +553,33 @@ async function loadDmList() {
   } catch (_) {}
 }
 
+// Keep unchanged sidebar rows (and their scroll position) without hiding external DOM changes.
+const _dmListRenderState = new WeakMap();
+function _setDmListHTML(container, html) {
+  if (typeof MutationObserver === 'undefined') { container.innerHTML = html; return; }
+  let state = _dmListRenderState.get(container);
+  if (!state) {
+    state = { html: null, observer: new MutationObserver(() => { state.html = null; }) };
+    state.observer.observe(container, { childList: true, subtree: true, attributes: true, characterData: true });
+    _dmListRenderState.set(container, state);
+  }
+  if (state.observer.takeRecords().length) state.html = null;
+  if (state.html === html) return;
+  container.innerHTML = html;
+  state.observer.takeRecords();
+  state.html = html;
+}
+
 function _renderGroupList() {
   const container = document.getElementById('groupList');
   if (!container) return;
 
   if (!DM.groups.length) {
-    container.innerHTML = `<div style="padding:8px 16px;font-size:12px;color:var(--text-muted);">No group messages yet</div>`;
+    _setDmListHTML(container, `<div style="padding:8px 16px;font-size:12px;color:var(--text-muted);">No group messages yet</div>`);
     return;
   }
 
-  container.innerHTML = DM.groups.map(g => {
+  _setDmListHTML(container, DM.groups.map(g => {
     const isActive = DM.activeGroupId === g.id;
     const members = g.members || [];
     const preview = g.last_message ? String(g.last_message).slice(0, 40) : 'No messages yet';
@@ -576,7 +593,7 @@ function _renderGroupList() {
           <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(preview)}</div>
         </div>
       </div>`;
-  }).join('');
+  }).join(''));
 }
 
 function _renderDmList() {
@@ -584,11 +601,11 @@ function _renderDmList() {
   if (!container) return;
 
   if (DM.conversations.length === 0) {
-    container.innerHTML = `<div style="padding:8px 16px;font-size:12px;color:var(--text-muted);">No direct messages yet</div>`;
+    _setDmListHTML(container, `<div style="padding:8px 16px;font-size:12px;color:var(--text-muted);">No direct messages yet</div>`);
     return;
   }
 
-  container.innerHTML = DM.conversations.map(c => {
+  _setDmListHTML(container, DM.conversations.map(c => {
     const isActive  = DM.activeConvId === c.conversation_id;
     const isJarred  = c.partner_username === 'ecollab_ai' || c.partner_is_system == 1;
     const name      = isJarred ? 'Jarred' : (c.partner_name || c.partner_username || 'Unknown');
@@ -606,7 +623,7 @@ function _renderDmList() {
         </div>
         ${unread > 0 ? `<span style="background:var(--accent-purple);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;flex-shrink:0;">${unread}</span>` : ''}
       </div>`;
-  }).join('');
+  }).join(''));
 }
 
 // ═══════════════════════════════════════════════════════════════
