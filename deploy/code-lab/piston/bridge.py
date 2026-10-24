@@ -66,8 +66,11 @@ class Adapter:
             raise ValueError('Private API token required')
         self.token=config['token']
         self.profiles={int(p['id']):p for p in config['profiles']}
-        if set(self.profiles) not in (set(range(10001,10006)),set(range(10001,10007))) or not all(p['id']>=10000 and p.get('language') and p.get('version') and p.get('filename') for p in self.profiles.values()):
-            raise ValueError('Five legacy profiles and optional compiled Java profile required')
+        ids=[p['id'] for p in config['profiles']]
+        allowed=(set(range(10001,10006)),set(range(10001,10007)),set(range(10001,10008)))
+        node24=self.profiles.get(10007)
+        if len(ids)!=len(set(ids)) or set(ids) not in allowed or not all(p['id']>=10000 and p.get('language') and p.get('version') and p.get('filename') for p in self.profiles.values()) or (node24 is not None and (node24['language']!='ecollab-node24' or node24['version']!='24.22.1' or node24['filename']!='main.js')):
+            raise ValueError('Five legacy profiles, optional compiled Java and immutable Node 24 profile required')
         self.request=request
         self.lock=threading.Lock()
         self.completed=threading.Condition(self.lock)
