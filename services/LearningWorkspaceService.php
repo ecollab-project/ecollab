@@ -23,7 +23,15 @@ final class LearningWorkspaceService {
         $d['resources']=$this->source(fn()=>$this->rows('SELECT f.id,f.original_name title,f.file_size,c.id channel_id,c.server_id,s.name server_name,f.created_at FROM uploaded_files f JOIN channels c ON c.id=f.channel_id JOIN servers s ON s.id=c.server_id WHERE f.deleted_at IS NULL AND '.$this->access().$filter.' ORDER BY f.created_at DESC LIMIT 200',$params));
         $d['activity']=$this->source(fn()=>$this->rows("SELECT DATE(created_at) day,COUNT(*) messages FROM messages WHERE sender_id=? AND is_deleted=0 AND created_at>=DATE_SUB(NOW(),INTERVAL 30 DAY) GROUP BY DATE(created_at) ORDER BY day",[$uid]));
         if(!$fac){$d['discover']=$this->source(function()use($uid){$columns=$this->rows('SHOW COLUMNS FROM servers');$hasVisibility=in_array('visibility',array_column($columns,'Field'),true);return $this->rows("SELECT s.id,s.name,s.description,s.type FROM servers s WHERE s.status='active' AND ".($hasVisibility?"s.visibility='public'":"s.type='public'")." AND s.owner_id<>? AND NOT EXISTS(SELECT 1 FROM server_members sm WHERE sm.server_id=s.id AND sm.user_id=?) AND NOT EXISTS(SELECT 1 FROM moderation_actions ma WHERE ma.server_id=s.id AND ma.target_user_id=? AND ma.action_type='ban' AND ma.is_active=1 AND (ma.expires_at IS NULL OR ma.expires_at>NOW())) ORDER BY s.name LIMIT 100",[$uid,$uid,$uid]);});}
-        if($fac){$d['members']=$this->source(fn()=>$this->rows("SELECT u.id,u.username,u.full_name,sm.server_role,(SELECT COUNT(*) FROM messages m JOIN channels c ON c.id=m.channel_id WHERE c.server_id=sm.server_id AND m.sender_id=u.id AND m.is_deleted=0 AND m.created_at>=DATE_SUB(NOW(),INTERVAL 30 DAY)) messages,(SELECT MAX(m.created_at) FROM messages m JOIN channels c ON c.id=m.channel_id WHERE c.server_id=sm.server_id AND m.sender_id=u.id AND m.is_deleted=0) last_message FROM server_members sm JOIN users u ON u.id=sm.user_id WHERE sm.server_id=? AND u.id<>? AND u.deleted_at IS NULL ORDER BY messages DESC,u.username LIMIT 500",[$sid,$uid]));}
+        if($fac){
+            // Aggregate each server's history once instead of two correlated scans per member.
+            $d['members']=$this->source(fn()=>$this->rows("SELECT u.id,u.username,u.full_name,sm.server_role,COALESCE(activity.messages,0) messages,activity.last_message
+                FROM server_members sm JOIN users u ON u.id=sm.user_id
+                LEFT JOIN (SELECT m.sender_id,COUNT(CASE WHEN m.created_at>=DATE_SUB(NOW(),INTERVAL 30 DAY) THEN 1 END) messages,MAX(m.created_at) last_message
+                    FROM messages m JOIN channels c ON c.id=m.channel_id
+                    WHERE c.server_id=? AND m.is_deleted=0 GROUP BY m.sender_id) activity ON activity.sender_id=u.id
+                WHERE sm.server_id=? AND u.id<>? AND u.deleted_at IS NULL ORDER BY messages DESC,u.username LIMIT 500",[$sid,$sid,$uid]));
+        }
         $offset=$this->clockOffset();
         foreach(['notes','notifications','calendar','sessions','resources','members'] as $key){
             if(!isset($d[$key]))continue;
