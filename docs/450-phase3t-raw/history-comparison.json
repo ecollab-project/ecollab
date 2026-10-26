@@ -1,0 +1,101 @@
+{
+  "intended_head": "d161f3d23e8e0e66cfcc45483002a1ea7be42442",
+  "base": "2716766ab71f27d32d0d435d555f19801d7d0aa7",
+  "harness_head": "6e6eec29541aec459f0d8d291f906b9da81d36e8",
+  "runs": [
+    {
+      "side": "baseline",
+      "opcache": "off",
+      "exit_code": 0,
+      "file": "0-off-baseline.json",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "-u",
+        "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py"
+      ],
+      "raw_sha256": "3786086ef6f553004cd4d34a7b49b94bb9c4906aa83756693c53b1f4157daeb6",
+      "gzip_sha256": "8874356e1b4bad3311079f7005033df771e904487bf0db1104e7c4393346b969"
+    },
+    {
+      "side": "candidate",
+      "opcache": "off",
+      "exit_code": 0,
+      "file": "1-off-candidate.json",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "-u",
+        "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py"
+      ],
+      "raw_sha256": "8d1136e7e9d38b9b89473e8c0bae53e10451351d60f4828e3c8cf9c29209359f",
+      "gzip_sha256": "a9663251bed4030b6c6e14ac31b0f592b302b0a31a8c473105db12268e91e378"
+    },
+    {
+      "side": "candidate",
+      "opcache": "off",
+      "exit_code": 0,
+      "file": "2-off-candidate.json",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "-u",
+        "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py"
+      ],
+      "raw_sha256": "7f9ff8b994fc70fa9f803302caa24c2dd44d238dd091862a818d1d1af4a28b08",
+      "gzip_sha256": "b4c1ef960e7c32059eaf0def296d0fd33451f57ce62f11548db49a48c22bf312"
+    },
+    {
+      "side": "baseline",
+      "opcache": "off",
+      "exit_code": 0,
+      "file": "3-off-baseline.json",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "-u",
+        "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py"
+      ],
+      "raw_sha256": "b2ba1ba5d8cc1d46d26ddd3fb233517f35cf39b562e23f199dd495a872d79808",
+      "gzip_sha256": "dd61cf717e98a32c056dbec583359fe8ae570f507297520e90168e61e8bdad15"
+    }
+  ],
+  "response_comparisons": [
+    {
+      "run": 0,
+      "equal": true,
+      "mismatches": [],
+      "complete_payloads": 339,
+      "normalized_fields": [
+        "dashboard envelope generated_at only"
+      ]
+    },
+    {
+      "run": 1,
+      "equal": true,
+      "mismatches": [],
+      "complete_payloads": 339,
+      "normalized_fields": [
+        "dashboard envelope generated_at only"
+      ]
+    },
+    {
+      "run": 2,
+      "equal": true,
+      "mismatches": [],
+      "complete_payloads": 339,
+      "normalized_fields": [
+        "dashboard envelope generated_at only"
+      ]
+    },
+    {
+      "run": 3,
+      "equal": true,
+      "mismatches": [],
+      "complete_payloads": 339,
+      "normalized_fields": [
+        "dashboard envelope generated_at only"
+      ]
+    }
+  ]
+}

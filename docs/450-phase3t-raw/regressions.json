@@ -1,0 +1,80 @@
+[
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "-d",
+      "session.save_path=/tmp",
+      "-d",
+      "output_buffering=4096",
+      "vendor/bin/phpunit",
+      "--testsuite",
+      "Unit"
+    ],
+    "exit_code": 0,
+    "stdout": "PHPUnit 10.5.64 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.6\nConfiguration: /workspace/scratch/5c9d94f07e76/ecollab/phpunit.xml\n\n.........................                                         25 / 25 (100%)\n\nTime: 00:00.007, Memory: 10.00 MB\n\nOK (25 tests, 56 assertions)\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "tests/peer-ml-regression.php"
+    ],
+    "exit_code": 0,
+    "stdout": "Peer ML regression checks passed\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "tests/learning-tools-regression.php"
+    ],
+    "exit_code": 0,
+    "stdout": "Learning connected tools regression checks passed.\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "tests/learning-workspace-regression.php"
+    ],
+    "exit_code": 0,
+    "stdout": "Learning workspace regression checks passed.\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "tests/settings-runtime-regression.php"
+    ],
+    "exit_code": 0,
+    "stdout": "PASS: profile/receipt privacy, Jarred preferences, bounded continuity, conversation lock, atomic exchange, isolation and greeting fast path\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "tests/phase2-jarred.php"
+    ],
+    "exit_code": 0,
+    "stdout": "PASS Jarred admission, atomic source/job, retry checkpoint, action rollback, cancellation fencing, recovery, ownership and preferences\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "tests/chat-upload-access-regression.php"
+    ],
+    "exit_code": 0,
+    "stdout": "Chat upload access regression checks passed\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "node",
+      "tests/learning-workspace-ui-regression.cjs"
+    ],
+    "exit_code": 0,
+    "stdout": "Student and facilitator UI regression checks passed.\n",
+    "stderr": ""
+  }
+]

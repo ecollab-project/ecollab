@@ -59,38 +59,32 @@ class FacilitatorDashboardService
         try {
             $stmt = $this->db->prepare("
                 SELECT
-                    c.id,
-                    c.name,
-                    c.description,
-                    c.member_count,
-                    c.created_at,
-                    s.name AS server_name,
+                    chosen.id,
+                    chosen.name,
+                    chosen.description,
+                    chosen.member_count,
+                    chosen.created_at,
+                    chosen.server_name,
                     (
-                        SELECT COUNT(*)
-                        FROM messages m
-                        WHERE m.channel_id = c.id
-                          AND m.is_deleted = 0
+                        SELECT COUNT(*) FROM messages m
+                        WHERE m.channel_id = chosen.id AND m.is_deleted = 0
                     ) AS message_count,
                     (
-                        SELECT COUNT(*)
-                        FROM message_attachments ma
-                        JOIN messages m2
-                            ON m2.id = ma.message_id
-                        WHERE m2.channel_id = c.id
+                        SELECT COUNT(*) FROM message_attachments ma
+                        JOIN messages m2 ON m2.id = ma.message_id
+                        WHERE m2.channel_id = chosen.id
                     ) AS file_count
-                FROM channels c
-                JOIN servers s
-                    ON s.id = c.server_id
-                JOIN server_members sm
-                    ON sm.server_id = c.server_id
-                    AND sm.user_id = :uid
-                WHERE sm.server_role IN (
-                    'owner',
-                    'admin',
-                    'moderator'
-                )
-                ORDER BY c.position ASC
-                LIMIT 1
+                FROM (
+                    SELECT c.id,c.name,c.description,c.member_count,c.created_at,
+                           s.name AS server_name
+                    FROM channels c
+                    JOIN servers s ON s.id = c.server_id
+                    JOIN server_members sm ON sm.server_id = c.server_id
+                        AND sm.user_id = :uid
+                    WHERE sm.server_role IN ('owner','admin','moderator')
+                    ORDER BY c.position ASC
+                    LIMIT 1
+                ) chosen
             ");
 
             $stmt->execute([':uid' => $userId]);
