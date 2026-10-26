@@ -5,6 +5,8 @@ on:
       - 'API/chat/peer-match.php'
       - 'API/threads/index.php'
       - 'services/PeerMatchBatch.php'
+      - 'services/PeerMatchingService.php'
+      - 'tests/peer-ml-regression.php'
       - 'services/ThreadAttachmentService.php'
       - 'tests/peer-threads-*'
       - '.github/workflows/peer-threads-performance.yml'
@@ -53,9 +55,14 @@ jobs:
           PHP_BIN: /usr/bin/php8.3
           MARIADBD_BIN: /usr/sbin/mariadbd
           PEER_THREADS_EVIDENCE: peer-threads-evidence.json
+          PEER_THREADS_BASE: d3748527d77ac471ace8613f2a2bfb2a6c45627c
+          PEER_THREADS_PHASE3R: '1'
+          PEER_THREADS_SAMPLES: '12'
         run: python3 -B -u tests/peer-threads-performance.py
       - name: Full base and candidate static analysis, reject added diagnostics
-        env: {PHP_BIN: /usr/bin/php8.3}
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          PEER_THREADS_BASE: d3748527d77ac471ace8613f2a2bfb2a6c45627c
         run: python3 -B -u tests/peer-threads-static.py
       - uses: actions/upload-artifact@v4
         if: always()

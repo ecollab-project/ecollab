@@ -1,7 +1,7 @@
 """Owns an ephemeral MariaDB. Actual API scripts, synthetic sessions, no external targets."""
 import hashlib,json,os,pathlib,pwd,socket,subprocess,tempfile,time,statistics,sys,http.server,threading
 ROOT=pathlib.Path(__file__).resolve().parents[1]
-BASE='051cae2ee1005ab063675e8054c2ff5b1801294b'
+BASE=os.environ.get('PEER_THREADS_BASE', '051cae2ee1005ab063675e8054c2ff5b1801294b')
 PHP=os.environ.get('PHP_BIN','php8.3')
 def usage(pid):
  try:
@@ -60,6 +60,21 @@ def main():
     'peer_large_history':('API/chat/peer-match.php','action=get_matches&limit=50'),
     'threads_large_history':('API/threads/index.php','scope=public&limit=50'),
     'threads_many_attachments':('API/threads/index.php','scope=public&limit=50')}
+   # Opt-in Phase 3R edge cases. Preserve the historical Phase 3Q workload by default.
+   if os.environ.get('PEER_THREADS_PHASE3R') == '1':
+    cases |= {
+     'peer_dense':('API/chat/peer-match.php','action=get_matches&limit=50'),
+     'peer_missing_candidate':('API/chat/peer-match.php','action=get_matches&limit=50'),
+     'peer_missing_current':('API/chat/peer-match.php','action=get_matches'),
+     'peer_empty_candidates':('API/chat/peer-match.php','action=get_matches'),
+     'peer_min_score':('API/chat/peer-match.php','action=get_matches&min_score=100'),
+     'peer_role_filter':('API/chat/peer-match.php','action=get_matches&role=facilitator'),
+     **{'peer_sort_'+sort:('API/chat/peer-match.php','action=get_matches&sort='+sort) for sort in ['style','interests','hobbies']}}
+   samples=int(os.environ.get('PEER_THREADS_SAMPLES','4'));assert 2<=samples<=100
+   evidence['samples_per_side']=samples
+   evidence['warmup_per_side']=1
+   evidence['candidate_commit']=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
+   evidence['working_tree_diff_sha256']=hashlib.sha256(subprocess.check_output(['git','diff','HEAD'],cwd=ROOT)).hexdigest()
    plans={}
    for label,(route,query) in cases.items():
     if label=='peer_large_history':sql("INSERT INTO pm_match_requests(requester_id,addressee_id,status) SELECT 2+MOD(seq-1,500),100+FLOOR((seq-1)/500),'pending' FROM seq_1_to_50000")
@@ -74,8 +89,21 @@ def main():
     if label in ['peer1','peer10']:sql('UPDATE users SET is_system=1 WHERE id>'+('2' if label=='peer1' else '11'))
     sql('UPDATE threads SET is_deleted=0')
     if label=='threads_empty':sql('UPDATE threads SET is_deleted=1')
+    if label=='peer_dense':
+     for tags,links,column in [('pm_subjects','pm_user_subjects','subject_id'),('pm_interest_tags','pm_user_interests','interest_id'),('pm_hobby_tags','pm_user_hobbies','hobby_id')]:
+      n=19 if column=='subject_id' else 15
+      sql("INSERT INTO "+tags+"(id,name,slug) SELECT 10000+seq,CONCAT('Dense ',seq),CONCAT('dense-',seq) FROM seq_1_to_"+str(n))
+      sql('INSERT INTO '+links+'(user_id,'+column+') SELECT u.id,10000+s.seq FROM users u CROSS JOIN seq_1_to_'+str(n)+' s')
+    # Roll back missing-profile fixtures before the next case.
+    removed_profiles = label in ['peer_missing_candidate', 'peer_missing_current']
+    if removed_profiles:
+     removed_id = 1 if label == 'peer_missing_current' else 3
+     # Each sql() opens a new connection, so save/restore rows explicitly.
+     saved = {table:sql('SELECT * FROM '+table+' WHERE user_id='+str(removed_id),True) for table in ['pm_user_subjects','pm_user_interests','pm_user_hobbies','pm_user_study_prefs']}
+     for table in saved:sql('DELETE FROM '+table+' WHERE user_id='+str(removed_id))
+    if label=='peer_empty_candidates':sql('UPDATE users SET is_system=1 WHERE id<>1')
     allruns={side:[] for side in apps};expected=None;expectedcache=None
-    for iteration in range(4):
+    for iteration in range(samples+1):
      order=list(apps) if iteration%2==0 else list(reversed(apps))
      for side in order:
       sql('TRUNCATE rate_limit_log;TRUNCATE pm_compatibility')
@@ -85,10 +113,21 @@ def main():
       assert r.returncode==0,(r.stderr,r.stdout)
       payload=json.loads(r.stdout);assert payload.get('ok',payload.get('success')) is (label!='peer_disabled'),payload
       cache=sql('SELECT * FROM pm_compatibility ORDER BY user_a_id,user_b_id',True)
+      if label in ['peer_missing_current','peer_empty_candidates','peer_min_score','peer_role_filter']:
+       assert payload['matches']==[] and cache==[],(label,'expected empty response and cache')
+      if label=='peer_missing_current':assert payload['profile_ready'] is False
+      if label=='peer_missing_candidate':
+       assert all(int(row['user_b_id'])!=3 for row in cache),'unready candidate persisted'
+       assert len(cache)==99,'expected exactly one skipped candidate'
+      if label=='peer_semantic':
+       assert any('Related study topics' in row['tags'] for row in payload['matches']),'semantic tag fixture ineffective'
+       assert all('Related study topics' not in json.loads(row['match_tags']) for row in cache),'semantic-only tag leaked into rule cache'
+      if label=='peer100':assert len(cache)==100,'display limit must not truncate persisted candidates'
       if expected is None:expected=payload;expectedcache=cache
       assert payload==expected,(label,side,'response mismatch')
       assert cache==expectedcache,(label,side,'persisted mismatch')
-      m=json.loads(metrics.read_text());m['database_cpu_ms']=None if native_before is None or native_after is None else (native_after-native_before)*1000;m['query_count']=len(m['queries']);m['sql_ms']=sum(q['ms'] for q in m['queries']);m['writes']=sum(q['sql'].lstrip().startswith(('INSERT','UPDATE','DELETE')) for q in m['queries']);allruns[side].append(m)
+      m=json.loads(metrics.read_text());m['database_cpu_ms']=None if native_before is None or native_after is None else (native_after-native_before)*1000;m['query_count']=len(m['queries']);m['sql_ms']=sum(q['ms'] for q in m['queries']);m['writes']=sum(q['sql'].lstrip().startswith(('INSERT','UPDATE','DELETE')) for q in m['queries']);
+      if iteration>0:allruns[side].append(m)
     evidence['cases'][label]={'runs':allruns,'complete_response_and_cache_equal':True}
     print(label,{side:{k:round(statistics.median(r[k] for r in runs),3) for k in ['query_count','writes','ms','cpu_ms','sql_ms','memory_increment_bytes']} for side,runs in allruns.items()},flush=True)
     for side,runs in allruns.items():
@@ -100,6 +139,13 @@ def main():
        code='$d=new PDO($argv[1],"root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_EMULATE_PREPARES=>false]);$s=$d->prepare("EXPLAIN ".$argv[2]);$s->execute(json_decode($argv[3],true));echo json_encode($s->fetchAll(PDO::FETCH_ASSOC));'
        r=subprocess.run([PHP,'-r',code,'--',dsn,text,json.dumps(q['params'])],env=env,capture_output=True,text=True,timeout=10);assert r.returncode==0,r.stderr
        plans[key]=json.loads(r.stdout)
+    if label=='peer_dense':
+     for table,column in [('pm_user_subjects','subject_id'),('pm_user_interests','interest_id'),('pm_user_hobbies','hobby_id')]:sql('DELETE FROM '+table+' WHERE '+column+'>10000')
+    if removed_profiles:
+     for table,rows in saved.items():
+      for row in rows:
+       values=','.join('NULL' if v is None else "'"+str(v).replace("'","''")+"'" for v in row.values())
+       sql('INSERT INTO '+table+' ('+','.join(row)+') VALUES ('+values+')')
    evidence['plans']=plans
    regression=subprocess.run([PHP,str(ROOT/'tests/peer-threads-regression.php')],env=env|{'PEER_THREADS_DSN':dsn},capture_output=True,text=True,timeout=30)
    assert regression.returncode==0,(regression.stdout,regression.stderr)
