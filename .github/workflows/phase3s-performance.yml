@@ -1,0 +1,64 @@
+name: Phase 3S native FPM read profiling
+on:
+  pull_request:
+    paths:
+      - 'services/FacilitatorDashboardService.php'
+      - 'tests/classroom-*'
+      - 'tests/phase3s-*'
+      - '.github/workflows/phase3s-performance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  owned-fpm-comparison:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Install disposable MariaDB and PHP dependencies
+        run: |
+          mkdir -p "$RUNNER_TEMP/perf-apt/empty" "$RUNNER_TEMP/perf-apt/lists/partial"
+          printf '%s\n' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble-updates main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://security.ubuntu.com/ubuntu noble-security main universe' \
+            > "$RUNNER_TEMP/perf-apt/sources.list"
+          apt_options=(-o "Dir::Etc::sourcelist=$RUNNER_TEMP/perf-apt/sources.list"
+            -o "Dir::Etc::sourceparts=$RUNNER_TEMP/perf-apt/empty"
+            -o "Dir::State::lists=$RUNNER_TEMP/perf-apt/lists"
+            -o Acquire::Retries=0 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20)
+          sudo apt-get "${apt_options[@]}" update
+          sudo apt-get "${apt_options[@]}" install -y mariadb-server php8.3-fpm php8.3-cli php8.3-mysql php8.3-sqlite3 php8.3-curl php8.3-mbstring php8.3-xml
+      - name: Unit and focused existing regressions
+        run: |
+          set -e
+          composer install --no-interaction --prefer-dist --no-progress
+          php8.3 -l services/FacilitatorDashboardService.php
+          php8.3 -l tests/classroom-bootstrap.php
+          php8.3 -l tests/phase3s-regression.php
+          php8.3 -d session.save_path=/tmp -d output_buffering=4096 vendor/bin/phpunit --testsuite Unit
+          php8.3 tests/peer-ml-regression.php
+          php8.3 tests/learning-tools-regression.php
+          php8.3 tests/learning-workspace-regression.php
+          php8.3 tests/settings-runtime-regression.php
+          php8.3 tests/phase2-jarred.php
+          php8.3 tests/chat-upload-access-regression.php
+      - name: Four alternating exact-base native FPM and HTTP runs
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          PHP_FPM_BIN: /usr/sbin/php-fpm8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          PHASE3S_OUTPUT: phase3s-raw
+        run: python3 -B -u tests/phase3s-compare.py
+      - name: Full static comparison against exact Phase 3S base
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          PEER_THREADS_BASE: 2716766ab71f27d32d0d435d555f19801d7d0aa7
+          PEER_THREADS_STATIC_EVIDENCE: phase3s-raw/static.json
+        run: python3 -B -u tests/peer-threads-static.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase3s-owned-fpm-evidence
+          path: phase3s-raw/
