@@ -231,7 +231,7 @@ try {
                 if ($score['total'] < $minScore) continue;
 
                 $a = min($uid, $cid); $b = max($uid, $cid);
-                $compatibilityRows[] = [$a,$b,$score['rule_total'],$score['subjects'],$score['interests'],$score['hobbies'],$score['style'],$score['shared_subjects'],$score['shared_interests'],$score['shared_hobbies'],json_encode($service->scoreProfiles($profile, $candidateProfile)['tags'], JSON_UNESCAPED_UNICODE)];
+                $compatibilityRows[] = [$a,$b,$score['rule_total'],$score['subjects'],$score['interests'],$score['hobbies'],$score['style'],$score['shared_subjects'],$score['shared_interests'],$score['shared_hobbies'],json_encode($score['tags'], JSON_UNESCAPED_UNICODE)];
 
                 $name = (string)($candidate['full_name'] ?: $candidate['username']);
                 $mySubjectIds = array_map(static fn($x) => (int)$x['subject_id'], $profile['subjects']);
