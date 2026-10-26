@@ -5,7 +5,8 @@ require_once __DIR__.'/../services/FacilitatorDashboardService.php';
 require_once __DIR__.'/../services/StudentDashboardService.php';
 $dsn=getenv('CLASSROOM_DSN');if(!$dsn||!preg_match('/^mysql:host=127\.0\.0\.1;port=\d+;dbname=classroom_perf_test$/D',$dsn))throw new RuntimeException('Owned fixture required');
 $db=new PDO($dsn,'root','',[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_EMULATE_PREPARES=>false,PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC,PDO::ATTR_STATEMENT_CLASS=>[DashboardStatement::class]]);$db->exec('SET timestamp=1792800000');
-$service=new FacilitatorDashboardService($db);$method=new ReflectionMethod($service,'getFacilitatorPrimaryChannel');
+$baseSource=file_get_contents(getenv('PHASE3T_BASELINE_SERVICE'));$baseSource=preg_replace('/^<\?php\s*/','',$baseSource);$baseSource=preg_replace('/^require_once .*;\s*$/m','',$baseSource);eval(str_replace('class FacilitatorDashboardService','class DiscoveryBaselineService',$baseSource));
+$service=new DiscoveryBaselineService($db);$method=new ReflectionMethod($service,'getFacilitatorPrimaryChannel');
 $late="SELECT chosen.id,chosen.name,chosen.description,chosen.member_count,chosen.created_at,chosen.server_name,
  (SELECT COUNT(*) FROM messages m WHERE m.channel_id=chosen.id AND m.is_deleted=0) message_count,
  (SELECT COUNT(*) FROM message_attachments ma JOIN messages m2 ON m2.id=ma.message_id WHERE m2.channel_id=chosen.id) file_count

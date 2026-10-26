@@ -109,13 +109,13 @@ def run(port,cookies,folder,sql,request,process_usage,dbpid,env,target,operation
             seen.add(q['sql']);output['plans'].append({'dataset':dataset,'query':q,'explain':sql('EXPLAIN '+q['sql'],True,q['params'])})
             if len(seen)>=8:break
         if env.get('PHASE3T_SURVEY_ONLY')=='1':continue
-        for repetition in range(2):
+        for repetition in range(4 if env.get('PHASE3T_HISTORY_CONTROL')=='1' else 2):
           for actors in [25,100]:
             # At most 100 in-flight requests. Each slot makes one request at a time.
             # Eleven routes rotate across a fixed synthetic mix; facilitator shares owner900.
             jobs=[(ROUTES[i%len(ROUTES)],1+i%actors) for i in range(max(33,actors*3))]
             cell(dataset+'-burst-'+str(actors)+'-repeat-'+str(repetition),jobs,actors)
-        if dataset=='large':
+        if dataset=='large' and env.get('PHASE3T_HISTORY_CONTROL')!='1':
             for actors in [25,100]:
                 cell(dataset+'-steady-'+str(actors),[],actors,steady_seconds=int(env.get('PHASE3T_STEADY_SECONDS','10')))
     output['stored_data_after']=sql('CHECKSUM TABLE '+state_tables,True)

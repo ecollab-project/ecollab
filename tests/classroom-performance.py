@@ -192,7 +192,8 @@ def main():
                 assert r.returncode==0,r.stderr+r.stdout
                 return
             if env.get('CLASSROOM_PHASE3T_DISCOVERY')=='1':
-                r=subprocess.run([PHP,str(ROOT/'tests/phase3t-discovery.php')],env=env|{'CLASSROOM_DSN':f'mysql:host=127.0.0.1;port={dbport};dbname=classroom_perf_test'},capture_output=True,text=True,timeout=90)
+                discovery_base=p/'discovery-base.php';discovery_base.write_bytes(subprocess.check_output(['git','show',BASE+':services/FacilitatorDashboardService.php'],cwd=ROOT))
+                r=subprocess.run([PHP,str(ROOT/'tests/phase3t-discovery.php')],env=env|{'CLASSROOM_DSN':f'mysql:host=127.0.0.1;port={dbport};dbname=classroom_perf_test','PHASE3T_BASELINE_SERVICE':str(discovery_base)},capture_output=True,text=True,timeout=90)
                 evidence['discovery']={'exit_code':r.returncode,'stdout':r.stdout,'stderr':r.stderr}
                 assert r.returncode==0,r.stderr
                 return
@@ -299,10 +300,12 @@ php_admin_value[opcache.file_update_protection] = 0
                 import importlib.util
                 spec=importlib.util.spec_from_file_location('phase3t_sample',ROOT/'tests/phase3t-sample.py');module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
                 evidence['phase3t']=module.run(port,cookies,folder,sql,request,process_usage,DB_PID,env,target,operation)
-                old_service=p/'facilitator-base.php';old_service.write_bytes(subprocess.check_output(['git','show',BASE+':services/FacilitatorDashboardService.php'],cwd=ROOT))
-                regression=subprocess.run([PHP,str(ROOT/'tests/phase3t-regression.php')],env=fenv|{'PHASE3T_BASELINE_SERVICE':str(old_service)},capture_output=True,text=True,timeout=120)
-                evidence['phase3t_regression']={'exit_code':regression.returncode,'stdout':regression.stdout,'stderr':regression.stderr}
-                assert regression.returncode==0,regression.stderr+regression.stdout
+                if env.get('PHASE3T_HISTORY_CONTROL')!='1':
+                    old_service=p/'facilitator-base.php';old_service.write_bytes(subprocess.check_output(['git','show',BASE+':services/FacilitatorDashboardService.php'],cwd=ROOT))
+                    regression=subprocess.run([PHP,str(ROOT/'tests/phase3t-regression.php')],env=fenv|{'PHASE3T_BASELINE_SERVICE':str(old_service)},capture_output=True,text=True,timeout=120)
+                    evidence['phase3t_regression']={'exit_code':regression.returncode,'stdout':regression.stdout,'stderr':regression.stderr}
+                    assert regression.returncode==0,regression.stderr+regression.stdout
+                else:evidence['phase3t_regression']={'status':'NOT_RUN','reason':'Historical control validates exact HTTP refs; Phase3T native cases are in the main eight runs'}
             elif env.get('CLASSROOM_PHASE3S')=='1':
                 import importlib.util
                 spec=importlib.util.spec_from_file_location('phase3s_sample',ROOT/'tests/phase3s-sample.py');module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
