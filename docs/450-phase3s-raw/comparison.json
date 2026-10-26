@@ -1,0 +1,96 @@
+{
+  "base": "2716766ab71f27d32d0d435d555f19801d7d0aa7",
+  "candidate_head": "2716766ab71f27d32d0d435d555f19801d7d0aa7",
+  "runs": [
+    {
+      "side": "baseline",
+      "exit_code": 0,
+      "file": "0-baseline.json",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "-u",
+        "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py"
+      ],
+      "raw_sha256": "de5f626c6795240267c297575247bec23e5c3b1277d549389e886e31262b316c",
+      "gzip_sha256": "589ea8a4823ad1090499b3b4de8cada0fea0a0a34ed5e96bd21c8f2790d6f0b7"
+    },
+    {
+      "side": "candidate",
+      "exit_code": 0,
+      "file": "1-candidate.json",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "-u",
+        "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py"
+      ],
+      "raw_sha256": "47077466273b984003d0cb14dfac73d92a631d6a9e4bf1e2d2ec248e2c6cec03",
+      "gzip_sha256": "8d5e8ea5a0ea569ba5aa0953272896807fde920269e3748d6dd74e6069cf2fe8"
+    },
+    {
+      "side": "candidate",
+      "exit_code": 0,
+      "file": "2-candidate.json",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "-u",
+        "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py"
+      ],
+      "raw_sha256": "29f27ad8ab0ac8db75c5d6705be133ca0014ce8665b63e40d1921671e0252e20",
+      "gzip_sha256": "90b340459f7dd4b02b3226cc2dcaacf7000b9740d1c48e5a3c9219324233c98f"
+    },
+    {
+      "side": "baseline",
+      "exit_code": 0,
+      "file": "3-baseline.json",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "-u",
+        "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py"
+      ],
+      "raw_sha256": "daadc23a66b7f7c8368db635404a572da13dc67484817c2d4a928d20dcaab6bb",
+      "gzip_sha256": "c1b7291481f621f498eebab5659620a53989232842def4dd87108dd6731f2bdd"
+    }
+  ],
+  "response_comparisons": [
+    {
+      "run": 0,
+      "equal": true,
+      "mismatches": [],
+      "complete_payloads": 660,
+      "normalized_fields": [
+        "dashboard envelope generated_at only"
+      ]
+    },
+    {
+      "run": 1,
+      "equal": true,
+      "mismatches": [],
+      "complete_payloads": 660,
+      "normalized_fields": [
+        "dashboard envelope generated_at only"
+      ]
+    },
+    {
+      "run": 2,
+      "equal": true,
+      "mismatches": [],
+      "complete_payloads": 660,
+      "normalized_fields": [
+        "dashboard envelope generated_at only"
+      ]
+    },
+    {
+      "run": 3,
+      "equal": true,
+      "mismatches": [],
+      "complete_payloads": 660,
+      "normalized_fields": [
+        "dashboard envelope generated_at only"
+      ]
+    }
+  ]
+}

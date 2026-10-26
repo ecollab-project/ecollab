@@ -1,0 +1,15 @@
+Preparing worktree (detached HEAD 2716766)
+PHASE3S small-warmup requests 11 seconds 0.127 errors 0 queue_peak 0
+PHASE3S small-survey requests 66 seconds 0.876 errors 0 queue_peak 0
+PHASE3S small-burst-1 requests 33 seconds 0.412 errors 0 queue_peak 0
+PHASE3S small-burst-10 requests 33 seconds 0.112 errors 0 queue_peak 0
+PHASE3S small-burst-25 requests 75 seconds 0.273 errors 0 queue_peak 0
+PHASE3S small-burst-50 requests 150 seconds 0.495 errors 0 queue_peak 0
+PHASE3S small-burst-100 requests 300 seconds 0.934 errors 0 queue_peak 20
+PHASE3S large-warmup requests 11 seconds 0.341 errors 0 queue_peak 0
+PHASE3S large-survey requests 66 seconds 3.103 errors 0 queue_peak 0
+PHASE3S large-burst-1 requests 33 seconds 1.588 errors 0 queue_peak 0
+PHASE3S large-burst-10 requests 33 seconds 0.433 errors 0 queue_peak 0
+PHASE3S large-burst-25 requests 75 seconds 0.767 errors 0 queue_peak 19
+PHASE3S large-burst-50 requests 150 seconds 1.83 errors 0 queue_peak 43
+PHASE3S large-burst-100 requests 300 seconds 3.426 errors 0 queue_peak 91
