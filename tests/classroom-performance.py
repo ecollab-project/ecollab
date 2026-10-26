@@ -6,7 +6,7 @@ import concurrent.futures, hashlib, http.client, http.server, json, os, pathlib,
 import signal, socket, statistics, struct, subprocess, tempfile, threading, time
 
 ROOT=pathlib.Path(__file__).resolve().parents[1]
-BASE='54228eb0f662bd8272dea2f32ab446ca6cc207c3'
+BASE=os.environ.get('CLASSROOM_BASE','54228eb0f662bd8272dea2f32ab446ca6cc207c3')
 PHP=os.environ.get('PHP_BIN','php8.3')
 PEER_COUNTS={};PEER_LOCK=threading.Lock();DB_PID=None
 READS=['dashboard','workspace','navigation','history','dm','threads','notifications','settings','peer','facilitator']
@@ -162,10 +162,12 @@ def main():
     evidence={'base':BASE,'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'tree':subprocess.check_output(['git','rev-parse','HEAD^{tree}'],cwd=ROOT,text=True).strip(),'scope':'Owned loopback FPM/MariaDB sampler, not authorized representative external two-tier staging','staging':'BLOCKED: no authorized external staging identified','load_limits':{'levels':[1,10],'outstanding':10,'scheduled_rps':8,'steady_seconds':8,'warmup':'one complete cycle, separately recorded','recovery_seconds':1,'request_timeout_seconds':8,'stop':'SQL/error, worker exit, pending-cap exhaustion or p99>=5000ms'},'runs':[]}
     with tempfile.TemporaryDirectory(prefix='ecollab-classroom-') as tmp:
         p=pathlib.Path(tmp);dbport=freeport();env=os.environ|{'APP_ENV':'testing','APP_DEBUG':'false','PEER_ML_ENABLED':'false','CENTRIFUGO_ENABLED':'false'}
-        def sql(statement,fetch=False):
+        def sql(statement,fetch=False,params=None):
             code='$d=new PDO('+json.dumps(f'mysql:host=127.0.0.1;port={dbport};dbname=classroom_perf_test')+',"root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);'
+            if env.get('CLASSROOM_FIXED_CLOCK'):code+='$d->exec("SET timestamp='+str(int(env['CLASSROOM_FIXED_CLOCK']))+'");'
             code+=('echo json_encode($d->query($argv[1])->fetchAll(PDO::FETCH_ASSOC));' if fetch else '$d->exec($argv[1]);')
-            r=subprocess.run([PHP,'-r',code,'--',statement],env=env,capture_output=True,text=True,timeout=45);assert r.returncode==0,r.stderr+r.stdout
+            if params is not None:code=code[:code.index('echo json_encode')]+'$s=$d->prepare($argv[1]);$s->execute(json_decode($argv[2],true));echo json_encode($s->fetchAll(PDO::FETCH_ASSOC));'
+            r=subprocess.run([PHP,'-r',code,'--',statement]+([json.dumps(params)] if params is not None else []),env=env,capture_output=True,text=True,timeout=45);assert r.returncode==0,r.stderr+r.stdout
             return json.loads(r.stdout) if fetch else None
         args=[env.get('MARIADB_INSTALL_DB_BIN','mariadb-install-db'),'--no-defaults','--datadir='+str(p/'data'),'--auth-root-authentication-method=normal','--skip-test-db']
         if env.get('MARIADB_BASEDIR'):args+=['--basedir='+env['MARIADB_BASEDIR']]
@@ -198,8 +200,10 @@ def main():
             if env.get('CLASSROOM_VARIANT')=='baseline':
                 baseline_app=p/'baseline-app';subprocess.run(['git','worktree','add','--detach',str(baseline_app),BASE],cwd=ROOT,check=True,stdout=subprocess.DEVNULL);app=baseline_app
             evidence['variant']=env.get('CLASSROOM_VARIANT','candidate')
+            evidence['phase3s_application_sha256']={name:hashlib.sha256((app/name).read_bytes()).hexdigest() for name in ['services/FacilitatorDashboardService.php','services/LearningWorkspaceService.php','API/chat/peer-match.php']}
+            evidence['working_tree_diff_sha256']=hashlib.sha256(subprocess.check_output(['git','diff','HEAD'],cwd=ROOT)).hexdigest()
             evidence['application_file_sha256']=hashlib.sha256((app/'services/LearningWorkspaceService.php').read_bytes()).hexdigest()
-            sock=freeport();port=freeport();folder=p/'http';folder.mkdir();(folder/'requests.jsonl').touch()
+            sock=freeport();statussock=freeport();port=freeport();folder=p/'http';folder.mkdir();(folder/'requests.jsonl').touch()
             fenv=env|{'CLASSROOM_ROOT':str(app),'CLASSROOM_FOLDER':str(folder),'CLASSROOM_DSN':f'mysql:host=127.0.0.1;port={dbport};dbname=classroom_perf_test','APP_URL':f'http://127.0.0.1:{port}'}
             config=p/'fpm.conf';config.write_text(f'''[global]
 error_log = {p}/fpm.log
@@ -214,6 +218,7 @@ pm.start_servers = 6
 pm.min_spare_servers = 4
 pm.max_spare_servers = 6
 pm.status_path = /fpm-status
+pm.status_listen = 127.0.0.1:{statussock}
 clear_env = no
 catch_workers_output = yes
 php_admin_value[session.save_path] = {folder}
@@ -245,47 +250,58 @@ php_admin_value[log_errors] = 1
                     body=self.rfile.read(int(self.headers.get('Content-Length','0')))
                     params={'SCRIPT_FILENAME':str(file),'SCRIPT_NAME':route,'REQUEST_URI':self.path,'QUERY_STRING':self.path.partition('?')[2],'REQUEST_METHOD':self.command,'SERVER_PROTOCOL':'HTTP/1.1','SERVER_NAME':'127.0.0.1','SERVER_PORT':port,'HTTP_HOST':f'127.0.0.1:{port}','REMOTE_ADDR':'127.0.0.1','DOCUMENT_ROOT':str(app),'CONTENT_TYPE':self.headers.get('Content-Type',''),'CONTENT_LENGTH':len(body),'HTTP_COOKIE':self.headers.get('Cookie',''),'HTTP_X_CSRF_TOKEN':self.headers.get('X-CSRF-Token',''),'HTTP_X_FIXTURE_REQUEST':self.headers.get('X-Fixture-Request','browser')}
                     try:
-                        raw,err=fcgi(sock,params,body);head,_,data=raw.partition(b'\r\n\r\n');headers=[line.decode().split(':',1) for line in head.split(b'\r\n') if b':' in line];code=next((int(v.strip().split()[0]) for k,v in headers if k.lower()=='status'),200)
+                        raw,err=fcgi(statussock if route=='/fpm-status' else sock,params,body);head,_,data=raw.partition(b'\r\n\r\n');headers=[line.decode().split(':',1) for line in head.split(b'\r\n') if b':' in line];code=next((int(v.strip().split()[0]) for k,v in headers if k.lower()=='status'),200)
                         self.send_response(code)
                         for k,v in headers:
                             if k.lower()!='status':self.send_header(k,v.strip())
                         self.end_headers();self.wfile.write(data)
                     except Exception:self.send_error(502)
                 def log_message(self,*a):pass
-            server=http.server.ThreadingHTTPServer(('127.0.0.1',port),Gateway);threading.Thread(target=server.serve_forever,daemon=True).start()
+            class OwnedHTTPServer(http.server.ThreadingHTTPServer):
+                request_queue_size=128
+            server=OwnedHTTPServer(('127.0.0.1',port),Gateway);threading.Thread(target=server.serve_forever,daemon=True).start()
             cookies={}
             for uid in list(range(1,101))+[900]:
                 r=request(port,'/fixture/seed?uid='+str(uid));assert r['status']==200,(r['status'],r['body']);cookies[uid]=r['cookie'].split(';')[0];evidence['runtime']=json.loads(r['body'])
             evidence['fpm_status_initial']=json.loads(request(port,'/fpm-status?json&full')['body'])
-            for index in [False,True]:
-                if index:
-                    import importlib.util
-                    spec=importlib.util.spec_from_file_location('index_fixture',ROOT/'tests/classroom-index.py');module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
-                    evidence['index_cost']=module.measure(ROOT,p,env,PHP,dbport,sql)
-                    print('INDEX_COST '+json.dumps(evidence['index_cost']),flush=True)
-                for mix in ['read','write','mixed']:
-                    for users in [1,10]:
-                        label=('indexed' if index else 'unindexed')+'-'+mix+'-'+str(users)
-                        before={r['Variable_name']:int(r['Value']) for r in sql("SHOW GLOBAL STATUS WHERE Variable_name IN ('Questions','Innodb_row_lock_waits','Innodb_row_lock_time','Created_tmp_disk_tables','Innodb_buffer_pool_reads','Innodb_buffer_pool_read_requests','Innodb_buffer_pool_wait_free','Com_insert','Com_update')",True)}
-                        run=sample(port,cookies,folder,label,users,mix,seconds=int(env.get('CLASSROOM_SECONDS','8')))
-                        after={r['Variable_name']:int(r['Value']) for r in sql("SHOW GLOBAL STATUS WHERE Variable_name IN ('Questions','Innodb_row_lock_waits','Innodb_row_lock_time','Created_tmp_disk_tables','Innodb_buffer_pool_reads','Innodb_buffer_pool_read_requests','Innodb_buffer_pool_wait_free','Com_insert','Com_update')",True)}
-                        run['database_counter_delta']={k:after[k]-before[k] for k in before};evidence['runs'].append(run)
-                        print('CLASSROOM_RUN '+json.dumps({k:v for k,v in run.items() if k not in ['requests','warmup','status_samples','top_sql']}),flush=True)
-                        target.write_text(json.dumps(evidence,indent=2)+'\n');time.sleep(1)
-            if env.get('CLASSROOM_RUN_WORKERS')=='1':
+            if env.get('CLASSROOM_PHASE3S')=='1':
                 import importlib.util
-                sql('CREATE DATABASE chat_perf_test')
-                spec=importlib.util.spec_from_file_location('actual_workers',ROOT/'tests/chat-worker-profile.py');worker=importlib.util.module_from_spec(spec);spec.loader.exec_module(worker)
-                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-                    job=pool.submit(worker.run,ROOT,p,env|{'WORKER_PROFILE_IDLE_SECONDS':'15'},PHP,dbport)
-                    evidence['worker_overlap_application']=sample(port,cookies,folder,'worker-overlap',10,'mixed',seconds=30)
-                    evidence['workers_with_application']=job.result(timeout=45)
-                print('CLASSROOM_WORKER_OVERLAP '+json.dumps(evidence['workers_with_application']),flush=True)
-                # Global Questions counters include application/observers during overlap: not isolated worker QPS.
-            if env.get('CLASSROOM_RUN_BROWSER')=='1':
-                browser_env=env|{'CLASSROOM_BROWSER_URL':f'http://127.0.0.1:{port}','CLASSROOM_BROWSER_EVIDENCE':str(target.parent/'classroom-browser.json')}
-                subprocess.run(['node',str(ROOT/'tests/classroom-browser.cjs')],env=browser_env,cwd=ROOT,check=True,timeout=180)
-                evidence['browser']=json.loads((target.parent/'classroom-browser.json').read_text())
+                spec=importlib.util.spec_from_file_location('phase3s_sample',ROOT/'tests/phase3s-sample.py');module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+                evidence['phase3s']=module.run(port,cookies,folder,sql,request,process_usage,DB_PID,env,target,operation)
+                old_service=p/'facilitator-base.php';old_service.write_bytes(subprocess.check_output(['git','show',BASE+':services/FacilitatorDashboardService.php'],cwd=ROOT))
+                regression=subprocess.run([PHP,str(ROOT/'tests/phase3s-regression.php')],env=fenv|{'PHASE3S_BASELINE_SERVICE':str(old_service)},capture_output=True,text=True,timeout=90)
+                evidence['phase3s_regression']={'exit_code':regression.returncode,'stdout':regression.stdout,'stderr':regression.stderr}
+                assert regression.returncode==0,regression.stderr+regression.stdout
+            else:
+                for index in [False,True]:
+                    if index:
+                        import importlib.util
+                        spec=importlib.util.spec_from_file_location('index_fixture',ROOT/'tests/classroom-index.py');module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+                        evidence['index_cost']=module.measure(ROOT,p,env,PHP,dbport,sql)
+                        print('INDEX_COST '+json.dumps(evidence['index_cost']),flush=True)
+                    for mix in ['read','write','mixed']:
+                        for users in [1,10]:
+                            label=('indexed' if index else 'unindexed')+'-'+mix+'-'+str(users)
+                            before={r['Variable_name']:int(r['Value']) for r in sql("SHOW GLOBAL STATUS WHERE Variable_name IN ('Questions','Innodb_row_lock_waits','Innodb_row_lock_time','Created_tmp_disk_tables','Innodb_buffer_pool_reads','Innodb_buffer_pool_read_requests','Innodb_buffer_pool_wait_free','Com_insert','Com_update')",True)}
+                            run=sample(port,cookies,folder,label,users,mix,seconds=int(env.get('CLASSROOM_SECONDS','8')))
+                            after={r['Variable_name']:int(r['Value']) for r in sql("SHOW GLOBAL STATUS WHERE Variable_name IN ('Questions','Innodb_row_lock_waits','Innodb_row_lock_time','Created_tmp_disk_tables','Innodb_buffer_pool_reads','Innodb_buffer_pool_read_requests','Innodb_buffer_pool_wait_free','Com_insert','Com_update')",True)}
+                            run['database_counter_delta']={k:after[k]-before[k] for k in before};evidence['runs'].append(run)
+                            print('CLASSROOM_RUN '+json.dumps({k:v for k,v in run.items() if k not in ['requests','warmup','status_samples','top_sql']}),flush=True)
+                            target.write_text(json.dumps(evidence,indent=2)+'\n');time.sleep(1)
+                if env.get('CLASSROOM_RUN_WORKERS')=='1':
+                    import importlib.util
+                    sql('CREATE DATABASE chat_perf_test')
+                    spec=importlib.util.spec_from_file_location('actual_workers',ROOT/'tests/chat-worker-profile.py');worker=importlib.util.module_from_spec(spec);spec.loader.exec_module(worker)
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                        job=pool.submit(worker.run,ROOT,p,env|{'WORKER_PROFILE_IDLE_SECONDS':'15'},PHP,dbport)
+                        evidence['worker_overlap_application']=sample(port,cookies,folder,'worker-overlap',10,'mixed',seconds=30)
+                        evidence['workers_with_application']=job.result(timeout=45)
+                    print('CLASSROOM_WORKER_OVERLAP '+json.dumps(evidence['workers_with_application']),flush=True)
+                    # Global Questions counters include application/observers during overlap: not isolated worker QPS.
+                if env.get('CLASSROOM_RUN_BROWSER')=='1':
+                    browser_env=env|{'CLASSROOM_BROWSER_URL':f'http://127.0.0.1:{port}','CLASSROOM_BROWSER_EVIDENCE':str(target.parent/'classroom-browser.json')}
+                    subprocess.run(['node',str(ROOT/'tests/classroom-browser.cjs')],env=browser_env,cwd=ROOT,check=True,timeout=180)
+                    evidence['browser']=json.loads((target.parent/'classroom-browser.json').read_text())
             evidence['fpm_status_final']=json.loads(request(port,'/fpm-status?json&full')['body'])
         finally:
             if server:server.shutdown()

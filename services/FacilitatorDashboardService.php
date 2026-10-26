@@ -174,7 +174,7 @@ class FacilitatorDashboardService
                     u.full_name,
                     u.avatar_color_gradient,
                     u.last_active_at,
-                    COUNT(m.id) AS messages,
+                    COALESCE(MAX(activity.messages), 0) AS messages,
                     0 AS sessions,
                     0 AS wb_edits,
                     0 AS files_uploaded,
@@ -218,11 +218,11 @@ class FacilitatorDashboardService
                     ) AS joined_date,
 
                     CASE
-                        WHEN COUNT(m.id) >= 50
+                        WHEN COALESCE(MAX(activity.messages), 0) >= 50
                             THEN 'very_active'
-                        WHEN COUNT(m.id) >= 20
+                        WHEN COALESCE(MAX(activity.messages), 0) >= 20
                             THEN 'active'
-                        WHEN COUNT(m.id) >= 5
+                        WHEN COALESCE(MAX(activity.messages), 0) >= 5
                             THEN 'moderate'
                         ELSE 'inactive'
                     END AS activity_status
@@ -233,10 +233,12 @@ class FacilitatorDashboardService
                 JOIN channels c
                     ON c.server_id = sm2.server_id
                     AND c.id = :cid
-                LEFT JOIN messages m
-                    ON m.sender_id = u.id
-                    AND m.channel_id = :cid2
-                    AND m.is_deleted = 0
+                LEFT JOIN (
+                    SELECT sender_id, COUNT(*) AS messages
+                    FROM messages
+                    WHERE channel_id = :cid2 AND is_deleted = 0
+                    GROUP BY sender_id
+                ) activity ON activity.sender_id = u.id
                 WHERE u.deleted_at IS NULL
                 GROUP BY u.id
                 ORDER BY messages DESC

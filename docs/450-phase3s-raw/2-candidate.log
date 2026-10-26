@@ -1,0 +1,14 @@
+PHASE3S small-warmup requests 11 seconds 0.148 errors 0 queue_peak 0
+PHASE3S small-survey requests 66 seconds 0.742 errors 0 queue_peak 0
+PHASE3S small-burst-1 requests 33 seconds 0.411 errors 0 queue_peak 0
+PHASE3S small-burst-10 requests 33 seconds 0.141 errors 0 queue_peak 0
+PHASE3S small-burst-25 requests 75 seconds 0.255 errors 0 queue_peak 0
+PHASE3S small-burst-50 requests 150 seconds 0.546 errors 0 queue_peak 0
+PHASE3S small-burst-100 requests 300 seconds 0.97 errors 0 queue_peak 0
+PHASE3S large-warmup requests 11 seconds 0.308 errors 0 queue_peak 0
+PHASE3S large-survey requests 66 seconds 1.919 errors 0 queue_peak 0
+PHASE3S large-burst-1 requests 33 seconds 0.874 errors 0 queue_peak 0
+PHASE3S large-burst-10 requests 33 seconds 0.344 errors 0 queue_peak 0
+PHASE3S large-burst-25 requests 75 seconds 0.715 errors 0 queue_peak 6
+PHASE3S large-burst-50 requests 150 seconds 1.506 errors 0 queue_peak 43
+PHASE3S large-burst-100 requests 300 seconds 3.312 errors 0 queue_peak 92

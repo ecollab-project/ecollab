@@ -1,0 +1,22 @@
+[
+  {
+    "run": "0-baseline.json",
+    "keys": 1002,
+    "mismatches": []
+  },
+  {
+    "run": "1-candidate.json",
+    "keys": 1002,
+    "mismatches": []
+  },
+  {
+    "run": "2-candidate.json",
+    "keys": 1002,
+    "mismatches": []
+  },
+  {
+    "run": "3-baseline.json",
+    "keys": 1002,
+    "mismatches": []
+  }
+]
