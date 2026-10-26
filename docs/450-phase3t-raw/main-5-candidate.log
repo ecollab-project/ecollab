@@ -1,0 +1,17 @@
+Preparing worktree (detached HEAD c61201e)
+PHASE3T small-first-api-pass requests 11 seconds 0.121 errors 0 queue_peak 0
+PHASE3T small-warm-corpus requests 110 seconds 0.988 errors 0 queue_peak 0
+PHASE3T small-survey requests 66 seconds 0.585 errors 0 queue_peak 0
+PHASE3T small-burst-25-repeat-0 requests 75 seconds 0.224 errors 0 queue_peak 0
+PHASE3T small-burst-100-repeat-0 requests 300 seconds 0.823 errors 0 queue_peak 0
+PHASE3T small-burst-25-repeat-1 requests 75 seconds 0.236 errors 0 queue_peak 0
+PHASE3T small-burst-100-repeat-1 requests 300 seconds 0.833 errors 0 queue_peak 14
+PHASE3T large-first-api-pass requests 11 seconds 0.261 errors 0 queue_peak 0
+PHASE3T large-warm-corpus requests 110 seconds 2.164 errors 0 queue_peak 0
+PHASE3T large-survey requests 66 seconds 1.265 errors 0 queue_peak 0
+PHASE3T large-burst-25-repeat-0 requests 75 seconds 0.391 errors 0 queue_peak 0
+PHASE3T large-burst-100-repeat-0 requests 300 seconds 0.981 errors 0 queue_peak 3
+PHASE3T large-burst-25-repeat-1 requests 75 seconds 0.422 errors 0 queue_peak 0
+PHASE3T large-burst-100-repeat-1 requests 300 seconds 1.088 errors 0 queue_peak 15
+PHASE3T large-steady-25 requests 991 seconds 10.054 errors 0 queue_peak 10
+PHASE3T large-steady-100 requests 993 seconds 10.075 errors 0 queue_peak 3

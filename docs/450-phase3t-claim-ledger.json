@@ -1,0 +1,93 @@
+{
+  "project": "eCollab",
+  "phase": "3T",
+  "scope": "Engineering self-verification; independent audit outstanding",
+  "base": "d161f3d23e8e0e66cfcc45483002a1ea7be42442",
+  "local_application_head": "c61201e7aff9de087867e6cbade8772c39e37499",
+  "claims": [
+    {
+      "id": "T1",
+      "claim": "PR88 matches accepted base and nine returned workflows pass",
+      "check": "Fresh GitHub PR metadata and exact-head workflow lookup",
+      "result": "PASS retrieved",
+      "limitation": "Parent CI only, not Phase3T CI"
+    },
+    {
+      "id": "T2",
+      "claim": "Primary counts perform unnecessary work before LIMIT",
+      "check": "Native ANALYZE with actual bound uid on base/candidate SQL",
+      "result": "PASS reproduced:100 scalar-subquery executions versus1",
+      "evidence": "450-phase3t-raw/main-0-off-baseline.json.gz: phase3t_regression.stdout cases.populated.analyze",
+      "limitation": "Fixture/query diagnostic, not capacity"
+    },
+    {
+      "id": "T3",
+      "claim": "Selection, numeric types, roles, counts and empty/tied cases match",
+      "check": "41 real MariaDB private-method cases and strict PHP full-service equality, each main run",
+      "result": "PASS reproduced",
+      "limitation": "Existing secondary tie order is unspecified; no new tie breaker, no arbitrary optimizer-version guarantee"
+    },
+    {
+      "id": "T4",
+      "claim": "API payloads and selected stored data are preserved",
+      "check": "Eight main HTTP runs;678 complete payloads, finite hash sets and every admitted fixed-arrival response;12 table checksums before/after",
+      "result": "PASS reproduced",
+      "evidence": "450-phase3t-raw/main-comparison.json",
+      "limitation": "Only generated_at envelope normalized; owned rate/cache fixture tables reset and normal peer cache writes remain"
+    },
+    {
+      "id": "T5",
+      "claim": "Candidate/source provenance is explicit",
+      "check": "Immutable application worktrees; intended base/head, actual app commit/tree/diff, driver commit/tree/hashes and empty application overlays",
+      "result": "PASS reproduced",
+      "limitation": "Local main app snapshot c61201e7; historical driver6e6eec29; final CI identity must be checked separately"
+    },
+    {
+      "id": "T6",
+      "claim": "Warm facilitator HTTP latency improves locally",
+      "check": "Alternating paired runs per verified OPcache state, physical10,005/100,005-row histories",
+      "result": "PASS observed:large-history off108.579\u219220.326ms;on105.704\u219219.520ms",
+      "limitation": "Synthetic, two pools/side/cache; no universal or production promise"
+    },
+    {
+      "id": "T7",
+      "claim": "All offered fixed-rate arrivals succeed",
+      "check": "Compare offered, not-admitted and admitted/completed counters",
+      "result": "FAIL as an all-arrivals claim:base1007 and candidate4 arrivals not admitted at cap",
+      "limitation": "Zero executed HTTP errors does not include generator admission refusals"
+    },
+    {
+      "id": "T8",
+      "claim": "Historical25-slot slowdown is consistent",
+      "check": "Separate exact original Phase3S2716766\u2192d161f3d control, four repeats/pool and two pools/side",
+      "result": "NOT REPRODUCED consistently:median494.73\u2192452.99ms, ranges overlap",
+      "evidence": "450-phase3t-raw/history-comparison.json",
+      "limitation": "Updated documented warm corpus/runtime; not proof of a particular environmental cause or replacement for historical observations"
+    },
+    {
+      "id": "T9",
+      "claim": "Full static analysis is clean",
+      "check": "Full PHPStan on exact base and candidate",
+      "result": "FAIL existing baseline:15 findings each;PASS zero additional",
+      "evidence": "450-phase3t-raw/static.json"
+    },
+    {
+      "id": "T10",
+      "claim": "Relevant existing regressions complete",
+      "check": "Unit25/56;peer ML/workspace/settings/Jarred/upload/jsdom commands and exits",
+      "result": "PASS reproduced",
+      "evidence": "450-phase3t-raw/regressions.json"
+    },
+    {
+      "id": "T11",
+      "claim": "Final-head hosted CI passes",
+      "result": "PENDING publication; require exact-head jobs/steps and artifact identity"
+    },
+    {
+      "id": "T12",
+      "claim": "50\u2013100 simultaneous students or450 users are certified",
+      "result": "BLOCKED/UNVERIFIED",
+      "limitation": "Short owned synthetic read scenarios, shared facilitator, different host, no representative production/model/media/mixed-write/long-soak acceptance"
+    }
+  ]
+}

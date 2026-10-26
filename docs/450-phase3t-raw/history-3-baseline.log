@@ -1,0 +1,12 @@
+Preparing worktree (detached HEAD 2716766)
+PHASE3T large-first-api-pass requests 11 seconds 0.375 errors 0 queue_peak 0
+PHASE3T large-warm-corpus requests 110 seconds 4.97 errors 0 queue_peak 0
+PHASE3T large-survey requests 66 seconds 3.181 errors 0 queue_peak 0
+PHASE3T large-burst-25-repeat-0 requests 75 seconds 0.769 errors 0 queue_peak 19
+PHASE3T large-burst-100-repeat-0 requests 300 seconds 3.383 errors 0 queue_peak 93
+PHASE3T large-burst-25-repeat-1 requests 75 seconds 0.777 errors 0 queue_peak 27
+PHASE3T large-burst-100-repeat-1 requests 300 seconds 3.482 errors 0 queue_peak 90
+PHASE3T large-burst-25-repeat-2 requests 75 seconds 1.009 errors 0 queue_peak 0
+PHASE3T large-burst-100-repeat-2 requests 300 seconds 3.644 errors 0 queue_peak 90
+PHASE3T large-burst-25-repeat-3 requests 75 seconds 0.81 errors 0 queue_peak 0
+PHASE3T large-burst-100-repeat-3 requests 300 seconds 3.348 errors 0 queue_peak 90
