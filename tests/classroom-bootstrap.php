@@ -17,7 +17,7 @@ if(getenv('CLASSROOM_FIXED_CLOCK'))$db->exec('SET timestamp='.(int)getenv('CLASS
 if(parse_url($_SERVER['REQUEST_URI'],PHP_URL_PATH)==='/fixture/seed'){
  require_once $root.'/security/middleware/AuthMiddleware.php';AuthMiddleware::startSession();$uid=(int)($_GET['uid']??1);
  if(($uid<1||$uid>100)&&$uid!==900)throw new RuntimeException('Synthetic actor only');
- $_SESSION=['user_id'=>$uid,'username'=>'student'.$uid,'full_name'=>'Fixture Student '.$uid,'role'=>$uid===900?'facilitator':'student','csrf_token'=>'classroom-fixture'];session_write_close();echo json_encode(['php'=>PHP_VERSION,'sapi'=>PHP_SAPI,'opcache_loaded'=>extension_loaded('Zend OPcache'),'opcache_enabled'=>function_exists('opcache_get_status')&&opcache_get_status(false)!==false]);exit;
+ $_SESSION=['user_id'=>$uid,'username'=>'student'.$uid,'full_name'=>'Fixture Student '.$uid,'role'=>$uid===900?'facilitator':'student','csrf_token'=>'classroom-fixture'];session_write_close();$opcache=function_exists('opcache_get_status')?opcache_get_status(false):false;echo json_encode(['php'=>PHP_VERSION,'sapi'=>PHP_SAPI,'opcache_loaded'=>extension_loaded('Zend OPcache'),'opcache_enabled'=>(bool)($opcache['opcache_enabled']??false),'opcache_ini_enabled'=>ini_get('opcache.enable'),'opcache_statistics'=>$opcache['opcache_statistics']??null,'opcache_memory'=>$opcache['memory_usage']??null]);exit;
 }
 DashboardProfile::$queries=[];$start=microtime(true);$cpu=DashboardProfile::cpu();if(function_exists('memory_reset_peak_usage'))memory_reset_peak_usage();ob_start();
 register_shutdown_function(static function()use($start,$cpu,$folder){

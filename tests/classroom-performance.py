@@ -250,11 +250,11 @@ php_admin_value[session.save_path] = {folder}
 php_admin_value[auto_prepend_file] = {ROOT}/tests/classroom-bootstrap.php
 php_admin_value[display_errors] = 0
 php_admin_value[log_errors] = 1
-php_admin_value[opcache.enable] = {1 if env.get('CLASSROOM_OPCACHE','on')=='on' else 0}
+php_admin_flag[opcache.enable] = {'on' if env.get('CLASSROOM_OPCACHE','on')=='on' else 'off'}
 php_admin_value[opcache.file_update_protection] = 0
 ''')
             evidence['fpm_config']=config.read_text();evidence['fpm_config_sha256']=hashlib.sha256(config.read_bytes()).hexdigest()
-            flog=open(p/'fpm-stdio.log','w');fpm_args=[env.get('PHP_FPM_BIN','php-fpm8.3'),'-F','-R','-y',str(config)]
+            flog=open(p/'fpm-stdio.log','w');fpm_args=[env.get('PHP_FPM_BIN','php-fpm8.3'),'-F','-R','-y',str(config),'-d','opcache.enable='+('1' if env.get('CLASSROOM_OPCACHE','on')=='on' else '0')]
             if env.get('PHASE3T_OPCACHE_EXTENSION'):fpm_args+=['-d','zend_extension='+env['PHASE3T_OPCACHE_EXTENSION']]
             fpm=subprocess.Popen(fpm_args,env=fenv,stdout=flog,stderr=flog)
             for _ in range(100):
