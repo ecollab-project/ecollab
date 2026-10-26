@@ -219,6 +219,10 @@ try {
             $semantic = (new PeerSemanticClient())->scores($profile, $profiles);
             $requestStatuses = null;
             $compatibilityRows = [];
+            // Current-user tag IDs stay constant across all candidate comparisons.
+            $mySubjectIds = array_map(static fn($x) => (int)$x['subject_id'], $profile['subjects']);
+            $myInterestIds = array_map(static fn($x) => (int)$x['interest_id'], $profile['interests']);
+            $myHobbyIds = array_map(static fn($x) => (int)$x['hobby_id'], $profile['hobbies']);
             foreach ($candidates as $index => $candidate) {
                 $cid = (int)$candidate['id'];
                 $candidateProfile = $profiles[$index];
@@ -231,12 +235,9 @@ try {
                 if ($score['total'] < $minScore) continue;
 
                 $a = min($uid, $cid); $b = max($uid, $cid);
-                $compatibilityRows[] = [$a,$b,$score['rule_total'],$score['subjects'],$score['interests'],$score['hobbies'],$score['style'],$score['shared_subjects'],$score['shared_interests'],$score['shared_hobbies'],json_encode($service->scoreProfiles($profile, $candidateProfile)['tags'], JSON_UNESCAPED_UNICODE)];
+                $compatibilityRows[] = [$a,$b,$score['rule_total'],$score['subjects'],$score['interests'],$score['hobbies'],$score['style'],$score['shared_subjects'],$score['shared_interests'],$score['shared_hobbies'],json_encode(array_values(array_filter($score['tags'], static fn(string $tag): bool => $tag !== 'Related study topics')), JSON_UNESCAPED_UNICODE)];
 
                 $name = (string)($candidate['full_name'] ?: $candidate['username']);
-                $mySubjectIds = array_map(static fn($x) => (int)$x['subject_id'], $profile['subjects']);
-                $myInterestIds = array_map(static fn($x) => (int)$x['interest_id'], $profile['interests']);
-                $myHobbyIds = array_map(static fn($x) => (int)$x['hobby_id'], $profile['hobbies']);
                 $sharedSubjects = array_values(array_filter($candidateProfile['subjects'], static fn($s) => in_array((int)$s['subject_id'], $mySubjectIds, true)));
                 $sharedInterests = array_values(array_filter($candidateProfile['interests'], static fn($s) => in_array((int)$s['interest_id'], $myInterestIds, true)));
                 $sharedHobbies = array_values(array_filter($candidateProfile['hobbies'], static fn($s) => in_array((int)$s['hobby_id'], $myHobbyIds, true)));
