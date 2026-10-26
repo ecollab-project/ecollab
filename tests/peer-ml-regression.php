@@ -31,6 +31,21 @@ $hybrid = $service->scoreProfiles($profile, $profile, 80.);
 check(abs($hybrid['total'] - round($rules['total']*.75+20,2)) < .011, 'Hybrid weighting');
 check(array_sum($hybrid['weights']) === 100.0, 'Weights must sum to 100');
 check($hybrid['subjects'] === $rules['subjects'], 'Explainable components retained');
+// Phase 3R: removing the semantic-only explanation must preserve rule-cache tags,
+// including boundaries and invalid-provider fallbacks. Names never become tags.
+foreach ([$profile, [], ['subjects'=>[], 'interests'=>[], 'hobbies'=>[]],
+    ['subjects'=>[['subject_id'=>1,'role'=>'tutoring','proficiency'=>'expert']],
+     'interests'=>[['interest_id'=>1,'name'=>'Related study topics']], 'hobbies'=>[]]] as $candidate) {
+    $rule = $service->scoreProfiles($profile, $candidate);
+    foreach ([null, -1., 0., 59.99, 60., 100., 101., NAN, INF] as $semantic) {
+        $mixed = $service->scoreProfiles($profile, $candidate, $semantic);
+        $cacheTags = array_values(array_filter($mixed['tags'], static fn(string $tag): bool => $tag !== 'Related study topics'));
+        check($cacheTags === $rule['tags'], 'Hybrid explanations must preserve exact ordered rule tags');
+        foreach (['rule_total','subjects','style','interests','hobbies','shared_subjects','shared_interests','shared_hobbies'] as $key) {
+            check($mixed[$key] === $rule[$key], 'Cached rule component must remain semantic-independent: '.$key);
+        }
+    }
+}
 check(PeerSemanticClient::profileText($profile) === 'Databases; PHP', 'Only allowed labels leave PHP');
 check(PeerSemanticClient::profileText(['subjects'=>[['subject_id'=>9]]]) === '', 'IDs are not semantic text');
 $client = new StubSemanticClient();

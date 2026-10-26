@@ -1,7 +1,7 @@
 """Run full PHPStan on both trees; retain failures, fail on any additional diagnostic."""
 import collections,json,os,pathlib,shutil,subprocess,tempfile
 ROOT=pathlib.Path(__file__).resolve().parents[1]
-PHP=os.environ.get('PHP_BIN','php8.3');BASE='051cae2ee1005ab063675e8054c2ff5b1801294b'
+PHP=os.environ.get('PHP_BIN','php8.3');BASE=os.environ.get('PEER_THREADS_BASE', '051cae2ee1005ab063675e8054c2ff5b1801294b')
 def main():
  with tempfile.TemporaryDirectory(prefix='ecollab-static-') as tmp:
   base=pathlib.Path(tmp)/'base'
