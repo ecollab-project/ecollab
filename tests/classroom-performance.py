@@ -185,6 +185,17 @@ def main():
             else:raise AssertionError('Database startup')
             for name in ['tests/fixtures/application-performance.sql','database/migrations/013_peer_matching.sql','tests/classroom-fixture.sql','database/migrations/058_chat_read_cursors.sql']:sql((ROOT/name).read_text())
             evidence['database_version']=sql('SELECT VERSION() version',True)
+            if env.get('CLASSROOM_PHASE3T_REGRESSION_ONLY')=='1':
+                old_service=p/'primary-base.php';old_service.write_bytes(subprocess.check_output(['git','show',BASE+':services/FacilitatorDashboardService.php'],cwd=ROOT))
+                r=subprocess.run([PHP,str(ROOT/'tests/phase3t-regression.php')],env=env|{'CLASSROOM_DSN':f'mysql:host=127.0.0.1;port={dbport};dbname=classroom_perf_test','PHASE3T_BASELINE_SERVICE':str(old_service)},capture_output=True,text=True,timeout=120)
+                evidence['regression']={'exit_code':r.returncode,'stdout':r.stdout,'stderr':r.stderr}
+                assert r.returncode==0,r.stderr+r.stdout
+                return
+            if env.get('CLASSROOM_PHASE3T_DISCOVERY')=='1':
+                r=subprocess.run([PHP,str(ROOT/'tests/phase3t-discovery.php')],env=env|{'CLASSROOM_DSN':f'mysql:host=127.0.0.1;port={dbport};dbname=classroom_perf_test'},capture_output=True,text=True,timeout=90)
+                evidence['discovery']={'exit_code':r.returncode,'stdout':r.stdout,'stderr':r.stderr}
+                assert r.returncode==0,r.stderr
+                return
             if env.get('CLASSROOM_PROFILE','1')=='1':
                 baseline=p/'baseline-workspace.php';source=subprocess.check_output(['git','show',BASE+':services/LearningWorkspaceService.php'],cwd=ROOT,text=True).replace('class LearningWorkspaceService','class BaselineLearningWorkspaceService').replace("__DIR__.'/../database/config/db.php'",repr(str(ROOT/'database/config/db.php'))).replace("__DIR__.'/RealtimeOutbox.php'",repr(str(ROOT/'services/RealtimeOutbox.php')));baseline.write_text(source)
                 profile_env=env|{'CLASSROOM_DSN':f'mysql:host=127.0.0.1;port={dbport};dbname=classroom_perf_test','CLASSROOM_BASELINE_SERVICE':str(baseline)}
@@ -197,9 +208,23 @@ def main():
                 sql('DROP DATABASE classroom_perf_test;CREATE DATABASE classroom_perf_test')
                 for name in ['tests/fixtures/application-performance.sql','database/migrations/013_peer_matching.sql','tests/classroom-fixture.sql','database/migrations/058_chat_read_cursors.sql']:sql((ROOT/name).read_text())
             evidence['php_cli_version']=subprocess.check_output([PHP,'-v'],env=env,text=True).splitlines()[0]
-            if env.get('CLASSROOM_VARIANT')=='baseline':
-                baseline_app=p/'baseline-app';subprocess.run(['git','worktree','add','--detach',str(baseline_app),BASE],cwd=ROOT,check=True,stdout=subprocess.DEVNULL);app=baseline_app
+            selected_ref=env.get('CLASSROOM_APP_REF') or (BASE if env.get('CLASSROOM_VARIANT')=='baseline' else None)
+            if selected_ref:
+                baseline_app=p/'application-worktree';subprocess.run(['git','worktree','add','--detach',str(baseline_app),selected_ref],cwd=ROOT,check=True,stdout=subprocess.DEVNULL);app=baseline_app
             evidence['variant']=env.get('CLASSROOM_VARIANT','candidate')
+            evidence['source_provenance']={
+                'intended_base':BASE,'intended_head':env.get('CLASSROOM_INTENDED_HEAD'),
+                'application_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=app,text=True).strip(),
+                'application_tree':subprocess.check_output(['git','rev-parse','HEAD^{tree}'],cwd=app,text=True).strip(),
+                'application_diff':subprocess.check_output(['git','diff','HEAD'],cwd=app,text=True),
+                'harness_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
+                'harness_tree':subprocess.check_output(['git','rev-parse','HEAD^{tree}'],cwd=ROOT,text=True).strip(),
+                'harness_sha256':{name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest() for name in ['tests/classroom-performance.py','tests/classroom-bootstrap.php']+(['tests/phase3t-sample.py','tests/phase3t-compare.py','tests/phase3t-regression.php'] if env.get('CLASSROOM_PHASE3T')=='1' else [])},
+                'uncommitted_substitutions':[]}
+            if selected_ref:assert not evidence['source_provenance']['application_diff'],'Application overlay forbidden for immutable comparisons'
+            if env.get('CLASSROOM_PHASE3T')=='1':
+                evidence['head']=evidence['source_provenance']['application_commit'];evidence['tree']=evidence['source_provenance']['application_tree']
+            if env.get('CLASSROOM_PHASE3T')=='1':evidence['load_limits']={'type':'bounded mixed read bursts and fixed-duration closed-loop reads','levels':[25,100],'steady_seconds':int(env.get('PHASE3T_STEADY_SECONDS','10')),'maximum_inflight':100,'request_timeout_seconds':8,'stop':'SQL/error, missing metric, worker exit or individual request >=7.5s'}
             evidence['phase3s_application_sha256']={name:hashlib.sha256((app/name).read_bytes()).hexdigest() for name in ['services/FacilitatorDashboardService.php','services/LearningWorkspaceService.php','API/chat/peer-match.php']}
             evidence['working_tree_diff_sha256']=hashlib.sha256(subprocess.check_output(['git','diff','HEAD'],cwd=ROOT)).hexdigest()
             evidence['application_file_sha256']=hashlib.sha256((app/'services/LearningWorkspaceService.php').read_bytes()).hexdigest()
@@ -225,8 +250,13 @@ php_admin_value[session.save_path] = {folder}
 php_admin_value[auto_prepend_file] = {ROOT}/tests/classroom-bootstrap.php
 php_admin_value[display_errors] = 0
 php_admin_value[log_errors] = 1
+php_admin_value[opcache.enable] = {1 if env.get('CLASSROOM_OPCACHE','on')=='on' else 0}
+php_admin_value[opcache.file_update_protection] = 0
 ''')
-            flog=open(p/'fpm-stdio.log','w');fpm=subprocess.Popen([env.get('PHP_FPM_BIN','php-fpm8.3'),'-F','-R','-y',str(config)],env=fenv,stdout=flog,stderr=flog)
+            evidence['fpm_config']=config.read_text();evidence['fpm_config_sha256']=hashlib.sha256(config.read_bytes()).hexdigest()
+            flog=open(p/'fpm-stdio.log','w');fpm_args=[env.get('PHP_FPM_BIN','php-fpm8.3'),'-F','-R','-y',str(config)]
+            if env.get('PHASE3T_OPCACHE_EXTENSION'):fpm_args+=['-d','zend_extension='+env['PHASE3T_OPCACHE_EXTENSION']]
+            fpm=subprocess.Popen(fpm_args,env=fenv,stdout=flog,stderr=flog)
             for _ in range(100):
                 assert fpm.poll() is None,(p/'fpm-stdio.log').read_text()+(p/'fpm.log').read_text()
                 try:
@@ -264,7 +294,16 @@ php_admin_value[log_errors] = 1
             for uid in list(range(1,101))+[900]:
                 r=request(port,'/fixture/seed?uid='+str(uid));assert r['status']==200,(r['status'],r['body']);cookies[uid]=r['cookie'].split(';')[0];evidence['runtime']=json.loads(r['body'])
             evidence['fpm_status_initial']=json.loads(request(port,'/fpm-status?json&full')['body'])
-            if env.get('CLASSROOM_PHASE3S')=='1':
+            if env.get('CLASSROOM_PHASE3T')=='1':
+                assert evidence['runtime']['opcache_enabled']==(env.get('CLASSROOM_OPCACHE')=='on'),'OPcache state not as requested'
+                import importlib.util
+                spec=importlib.util.spec_from_file_location('phase3t_sample',ROOT/'tests/phase3t-sample.py');module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+                evidence['phase3t']=module.run(port,cookies,folder,sql,request,process_usage,DB_PID,env,target,operation)
+                old_service=p/'facilitator-base.php';old_service.write_bytes(subprocess.check_output(['git','show',BASE+':services/FacilitatorDashboardService.php'],cwd=ROOT))
+                regression=subprocess.run([PHP,str(ROOT/'tests/phase3t-regression.php')],env=fenv|{'PHASE3T_BASELINE_SERVICE':str(old_service)},capture_output=True,text=True,timeout=120)
+                evidence['phase3t_regression']={'exit_code':regression.returncode,'stdout':regression.stdout,'stderr':regression.stderr}
+                assert regression.returncode==0,regression.stderr+regression.stdout
+            elif env.get('CLASSROOM_PHASE3S')=='1':
                 import importlib.util
                 spec=importlib.util.spec_from_file_location('phase3s_sample',ROOT/'tests/phase3s-sample.py');module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
                 evidence['phase3s']=module.run(port,cookies,folder,sql,request,process_usage,DB_PID,env,target,operation)
