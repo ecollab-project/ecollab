@@ -1,0 +1,16 @@
+Preparing worktree (detached HEAD e6f864d)
+PHASE3V large-initial-first-api-pass requests 11 seconds 0.342 errors 0 queue_peak 0
+PHASE3V large-initial-survey requests 33 seconds 0.868 errors 0 queue_peak 0
+PHASE3V large-warm-corpus requests 110 seconds 2.503 errors 0 queue_peak 0
+PHASE3V large-survey requests 66 seconds 1.133 errors 0 queue_peak 0
+Traceback (most recent call last):
+  File "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py", line 394, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py", line 334, in main
+    assert regression.returncode==0,regression.stderr+regression.stdout
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: PDOException: SQLSTATE[21S01]: Insert value list does not match column list: 1136 Column count doesn't match value count at row 1 in /workspace/scratch/5c9d94f07e76/ecollab/tests/phase3v-regression.php:33
+Stack trace:
+#0 /workspace/scratch/5c9d94f07e76/ecollab/tests/phase3v-regression.php(33): PDO->exec('UPDATE channels...')
+#1 {main}

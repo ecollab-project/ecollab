@@ -1,0 +1,12 @@
+control_a 0 cells 18
+control_b 0 cells 18
+control_a 0 cells 18
+control_b 1 cells None
+Traceback (most recent call last):
+  File "/workspace/scratch/5c9d94f07e76/ecollab/tests/phase3v-compare.py", line 70, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/workspace/scratch/5c9d94f07e76/ecollab/tests/phase3v-compare.py", line 67, in main
+    assert r.returncode==0,'Inspect retained run logs and partial evidence'
+           ^^^^^^^^^^^^^^^
+AssertionError: Inspect retained run logs and partial evidence

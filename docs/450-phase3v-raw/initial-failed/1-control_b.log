@@ -1,0 +1,19 @@
+Preparing worktree (detached HEAD e6f864d)
+PHASE3V small-initial-first-api-pass requests 11 seconds 0.126 errors 0 queue_peak 0
+PHASE3V small-initial-survey requests 33 seconds 0.35 errors 0 queue_peak 0
+PHASE3V small-warm-corpus requests 110 seconds 1.061 errors 0 queue_peak 0
+PHASE3V small-survey requests 66 seconds 0.666 errors 0 queue_peak 0
+PHASE3V small-burst-25-repeat-0 requests 75 seconds 0.244 errors 0 queue_peak 0
+PHASE3V small-burst-100-repeat-0 requests 300 seconds 0.98 errors 0 queue_peak 0
+PHASE3V small-burst-25-repeat-1 requests 75 seconds 0.274 errors 0 queue_peak 3
+PHASE3V small-burst-100-repeat-1 requests 300 seconds 0.92 errors 0 queue_peak 3
+PHASE3V large-initial-first-api-pass requests 11 seconds 0.236 errors 0 queue_peak 0
+PHASE3V large-initial-survey requests 33 seconds 0.558 errors 0 queue_peak 0
+PHASE3V large-warm-corpus requests 110 seconds 1.824 errors 0 queue_peak 0
+PHASE3V large-survey requests 66 seconds 0.738 errors 0 queue_peak 0
+PHASE3V large-burst-25-repeat-0 requests 75 seconds 0.334 errors 0 queue_peak 0
+PHASE3V large-burst-100-repeat-0 requests 300 seconds 1.011 errors 0 queue_peak 53
+PHASE3V large-burst-25-repeat-1 requests 75 seconds 0.379 errors 0 queue_peak 53
+PHASE3V large-burst-100-repeat-1 requests 300 seconds 0.99 errors 0 queue_peak 73
+PHASE3V large-steady-25 requests 997 seconds 10.015 errors 0 queue_peak 73
+PHASE3V large-steady-100 requests 995 seconds 10.006 errors 0 queue_peak 0
