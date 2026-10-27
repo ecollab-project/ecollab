@@ -1,0 +1,277 @@
+{
+  "baseline": {
+    "exit_code": 1,
+    "report": {
+      "totals": {
+        "errors": 0,
+        "file_errors": 15
+      },
+      "files": {
+        "/tmp/ecollab-static-artsa2r_/base/API/auth/send-otp.php": {
+          "errors": 1,
+          "messages": [
+            {
+              "message": "Constant MAIL_FROM not found.",
+              "line": 56,
+              "ignorable": true,
+              "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols",
+              "identifier": "constant.notFound"
+            }
+          ]
+        },
+        "/tmp/ecollab-static-artsa2r_/base/services/CodeLabExecutionService.php": {
+          "errors": 2,
+          "messages": [
+            {
+              "message": "Variable $score might not be defined.",
+              "line": 143,
+              "ignorable": true,
+              "identifier": "variable.undefined"
+            },
+            {
+              "message": "Variable $score might not be defined.",
+              "line": 143,
+              "ignorable": true,
+              "identifier": "variable.undefined"
+            }
+          ]
+        },
+        "/tmp/ecollab-static-artsa2r_/base/services/WebPushService.php": {
+          "errors": 3,
+          "messages": [
+            {
+              "message": "Instantiated class Minishlink\\WebPush\\WebPush not found.",
+              "line": 70,
+              "ignorable": true,
+              "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols",
+              "identifier": "class.notFound"
+            },
+            {
+              "message": "Call to method sendOneNotification() on an unknown class Minishlink\\WebPush\\WebPush.",
+              "line": 71,
+              "ignorable": true,
+              "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols",
+              "identifier": "class.notFound"
+            },
+            {
+              "message": "Call to static method create() on an unknown class Minishlink\\WebPush\\Subscription.",
+              "line": 71,
+              "ignorable": true,
+              "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols",
+              "identifier": "class.notFound"
+            }
+          ]
+        },
+        "/tmp/ecollab-static-artsa2r_/base/websocket/ChatServer.php": {
+          "errors": 8,
+          "messages": [
+            {
+              "message": "Ignored error pattern #Access to an undefined property Ratchet\\\\ConnectionInterface::\\$resourceId# in path /tmp/ecollab-static-artsa2r_/base/websocket/ChatServer.php is expected to occur 9 times, but occurred 15 times.",
+              "line": 65,
+              "ignorable": false,
+              "identifier": "ignore.count"
+            },
+            {
+              "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+              "line": 424,
+              "ignorable": true,
+              "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+              "identifier": "property.notFound"
+            },
+            {
+              "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+              "line": 426,
+              "ignorable": true,
+              "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+              "identifier": "property.notFound"
+            },
+            {
+              "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+              "line": 435,
+              "ignorable": true,
+              "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+              "identifier": "property.notFound"
+            },
+            {
+              "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+              "line": 447,
+              "ignorable": true,
+              "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+              "identifier": "property.notFound"
+            },
+            {
+              "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+              "line": 455,
+              "ignorable": true,
+              "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+              "identifier": "property.notFound"
+            },
+            {
+              "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+              "line": 463,
+              "ignorable": true,
+              "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+              "identifier": "property.notFound"
+            },
+            {
+              "message": "Call to private method persistDirtyCodeSessions() of class ChatServer.",
+              "line": 542,
+              "ignorable": true,
+              "identifier": "method.private"
+            }
+          ]
+        },
+        "/tmp/ecollab-static-artsa2r_/base/websocket/bin/server.php": {
+          "errors": 1,
+          "messages": [
+            {
+              "message": "Call to private method persistDirtyCodeSessions() of class ChatServer.",
+              "line": 18,
+              "ignorable": true,
+              "identifier": "method.private"
+            }
+          ]
+        }
+      },
+      "errors": []
+    }
+  },
+  "candidate": {
+    "exit_code": 1,
+    "report": {
+      "totals": {
+        "errors": 0,
+        "file_errors": 15
+      },
+      "files": {
+        "/workspace/scratch/5c9d94f07e76/ecollab/API/auth/send-otp.php": {
+          "errors": 1,
+          "messages": [
+            {
+              "message": "Constant MAIL_FROM not found.",
+              "line": 56,
+              "ignorable": true,
+              "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols",
+              "identifier": "constant.notFound"
+            }
+          ]
+        },
+        "/workspace/scratch/5c9d94f07e76/ecollab/services/CodeLabExecutionService.php": {
+          "errors": 2,
+          "messages": [
+            {
+              "message": "Variable $score might not be defined.",
+              "line": 143,
+              "ignorable": true,
+              "identifier": "variable.undefined"
+            },
+            {
+              "message": "Variable $score might not be defined.",
+              "line": 143,
+              "ignorable": true,
+              "identifier": "variable.undefined"
+            }
+          ]
+        },
+        "/workspace/scratch/5c9d94f07e76/ecollab/services/WebPushService.php": {
+          "errors": 3,
+          "messages": [
+            {
+              "message": "Instantiated class Minishlink\\WebPush\\WebPush not found.",
+              "line": 70,
+              "ignorable": true,
+              "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols",
+              "identifier": "class.notFound"
+            },
+            {
+              "message": "Call to method sendOneNotification() on an unknown class Minishlink\\WebPush\\WebPush.",
+              "line": 71,
+              "ignorable": true,
+              "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols",
+              "identifier": "class.notFound"
+            },
+            {
+              "message": "Call to static method create() on an unknown class Minishlink\\WebPush\\Subscription.",
+              "line": 71,
+              "ignorable": true,
+              "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols",
+              "identifier": "class.notFound"
+            }
+          ]
+        },
+        "/workspace/scratch/5c9d94f07e76/ecollab/websocket/ChatServer.php": {
+          "errors": 8,
+          "messages": [
+            {
+              "message": "Ignored error pattern #Access to an undefined property Ratchet\\\\ConnectionInterface::\\$resourceId# in path /workspace/scratch/5c9d94f07e76/ecollab/websocket/ChatServer.php is expected to occur 9 times, but occurred 15 times.",
+              "line": 65,
+              "ignorable": false,
+              "identifier": "ignore.count"
+            },
+            {
+              "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+              "line": 424,
+              "ignorable": true,
+              "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+              "identifier": "property.notFound"
+            },
+            {
+              "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+              "line": 426,
+              "ignorable": true,
+              "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+              "identifier": "property.notFound"
+            },
+            {
+              "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+              "line": 435,
+              "ignorable": true,
+              "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+              "identifier": "property.notFound"
+            },
+            {
+              "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+              "line": 447,
+              "ignorable": true,
+              "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+              "identifier": "property.notFound"
+            },
+            {
+              "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+              "line": 455,
+              "ignorable": true,
+              "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+              "identifier": "property.notFound"
+            },
+            {
+              "message": "Access to an undefined property Ratchet\\ConnectionInterface::$resourceId.",
+              "line": 463,
+              "ignorable": true,
+              "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property",
+              "identifier": "property.notFound"
+            },
+            {
+              "message": "Call to private method persistDirtyCodeSessions() of class ChatServer.",
+              "line": 542,
+              "ignorable": true,
+              "identifier": "method.private"
+            }
+          ]
+        },
+        "/workspace/scratch/5c9d94f07e76/ecollab/websocket/bin/server.php": {
+          "errors": 1,
+          "messages": [
+            {
+              "message": "Call to private method persistDirtyCodeSessions() of class ChatServer.",
+              "line": 18,
+              "ignorable": true,
+              "identifier": "method.private"
+            }
+          ]
+        }
+      },
+      "errors": []
+    }
+  },
+  "additional_diagnostics": []
+}

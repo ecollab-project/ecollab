@@ -1,0 +1,93 @@
+name: Phase 3U learning-workspace and sustained read profiling
+on:
+  pull_request:
+    paths:
+      - 'services/LearningWorkspaceService.php'
+      - 'tests/classroom-*'
+      - 'tests/phase3u-*'
+      - '.github/workflows/phase3u-performance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  owned-fpm-comparison:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Install disposable MariaDB and PHP dependencies
+        run: |
+          mkdir -p "$RUNNER_TEMP/perf-apt/empty" "$RUNNER_TEMP/perf-apt/lists/partial"
+          printf '%s\n' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble-updates main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://security.ubuntu.com/ubuntu noble-security main universe' \
+            > "$RUNNER_TEMP/perf-apt/sources.list"
+          apt_options=(-o "Dir::Etc::sourcelist=$RUNNER_TEMP/perf-apt/sources.list"
+            -o "Dir::Etc::sourceparts=$RUNNER_TEMP/perf-apt/empty"
+            -o "Dir::State::lists=$RUNNER_TEMP/perf-apt/lists"
+            -o Acquire::Retries=0 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20)
+          sudo apt-get "${apt_options[@]}" update
+          sudo apt-get "${apt_options[@]}" install -y mariadb-server php8.3-fpm php8.3-cli php8.3-mysql php8.3-sqlite3 php8.3-curl php8.3-mbstring php8.3-xml
+      - name: Unit and focused existing regressions
+        run: |
+          set -e
+          composer install --no-interaction --prefer-dist --no-progress
+          git diff --exit-code f77506a874c4650ec6c69637461c368876fa178d -- services API database assets
+          php8.3 -l services/LearningWorkspaceService.php
+          php8.3 -l tests/classroom-bootstrap.php
+          php8.3 -l tests/phase3u-regression.php
+          php8.3 -d session.save_path=/tmp -d output_buffering=4096 vendor/bin/phpunit --testsuite Unit
+          php8.3 tests/peer-ml-regression.php
+          php8.3 tests/learning-tools-regression.php
+          php8.3 tests/learning-workspace-regression.php
+          php8.3 tests/settings-runtime-regression.php
+          php8.3 tests/phase2-jarred.php
+          php8.3 tests/chat-upload-access-regression.php
+      - name: JavaScript workspace and dashboard regressions
+        run: |
+          npm install --no-save --no-package-lock jsdom
+          node tests/learning-workspace-ui-regression.cjs
+          node tests/ai-dashboard-regression.cjs
+          node tests/dashboard-date-regression.cjs
+      - name: Reproduce the rejected join-order trial across statistics and distributions
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          CLASSROOM_BASE: f77506a874c4650ec6c69637461c368876fa178d
+          CLASSROOM_PHASE3U_PLAN_CONTROL: '1'
+          CLASSROOM_FIXED_CLOCK: '1792800000'
+          CLASSROOM_EVIDENCE: phase3u-raw/plan-control.json
+          TZ: UTC
+        run: python3 -B -u tests/classroom-performance.py
+      - name: Eight alternating final-source equivalence and unchanged-code controls
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          PHP_FPM_BIN: /usr/sbin/php-fpm8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          PHASE3U_OUTPUT: phase3u-raw
+          PHASE3U_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python3 -B -u tests/phase3u-compare.py
+      - name: Full static comparison against exact Phase 3T base
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          PEER_THREADS_BASE: f77506a874c4650ec6c69637461c368876fa178d
+          PEER_THREADS_STATIC_EVIDENCE: phase3u-raw/static.json
+        run: python3 -B -u tests/peer-threads-static.py
+      - name: Keep lossless raw archives without duplicate expanded JSON
+        if: success()
+        run: |
+          python3 - <<'PY'
+          import pathlib
+          for folder in ['phase3u-raw']:
+              for p in pathlib.Path(folder).glob('*.json'):
+                  if p.name[0].isdigit():
+                      p.unlink()
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase3u-owned-fpm-evidence
+          path: |
+            phase3u-raw/
