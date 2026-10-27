@@ -1,0 +1,62 @@
+[
+  {
+    "claim": "A safe application optimization is retained",
+    "status": "FAIL",
+    "evidence": "native_profile.rejected_flat_join; services/API/database/assets empty diff",
+    "limit": "Flat join rejected; no application patch."
+  },
+  {
+    "claim": "Corrected identical-source controls, response equivalence and stored-data checks",
+    "status": "PASS",
+    "evidence": "eight run archives, comparison.json, evidence summary",
+    "limit": "Executed synthetic read coverage; expected failure injection separate."
+  },
+  {
+    "claim": "Dominant plan topology stable at analyzed checkpoints",
+    "status": "PASS",
+    "evidence": "plan_checkpoints and same_schema_pool_plan_comparisons",
+    "limit": "Fixed actors/four statement shapes; no per-execution guarantee."
+  },
+  {
+    "claim": "Cause of previous Phase3U optimizer transition established",
+    "status": "NOT RUN",
+    "evidence": "initial and analyzed states recorded, but no isolated trigger experiment",
+    "limit": "Cause UNPROVEN."
+  },
+  {
+    "claim": "Existing067 schema improves measured dashboard path",
+    "status": "PASS",
+    "evidence": "serial_schema_comparisons; native ranks",
+    "limit": "Owned test schema only; not an application improvement or production recommendation."
+  },
+  {
+    "claim": "No additional PHPStan diagnostics",
+    "status": "PASS",
+    "evidence": "checks/final-static.json.gz",
+    "limit": "Full PHPStan remains FAIL with15 inherited diagnostics."
+  },
+  {
+    "claim": "All SQL query plans have captured bindings",
+    "status": "NOT RUN",
+    "evidence": "plans entries with missing bindValue inputs explicitly NOT RUN",
+    "limit": "Dominant checkpoint plans have recorded execute-array parameters."
+  },
+  {
+    "claim": "Final-head hosted CI",
+    "status": "PENDING",
+    "evidence": "See final draft PR body/handoff for exact-head update",
+    "limit": "Committed snapshot predates CI; no parent-head substitution."
+  },
+  {
+    "claim": "Worker/database process CPU and PSS available locally",
+    "status": "BLOCKED",
+    "evidence": "status_samples process counter unavailable records",
+    "limit": "PHP CPU/allocated peak and FPM status remain available."
+  },
+  {
+    "claim": "Representative continuous-write capacity for50\u2013100 students",
+    "status": "BLOCKED",
+    "evidence": "isolated eight-CPU-equivalent synthetic loopback10-second cells",
+    "limit": "Slots are not students; target two-vCPU VPS untested."
+  }
+]

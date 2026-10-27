@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py", line 389, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py", line 191, in main
+    assert r.returncode==0,r.stderr+r.stdout
+           ^^^^^^^^^^^^^^^
+AssertionError: 
+Parse error: Unclosed '{' on line 20 does not match ')' in /workspace/scratch/5c9d94f07e76/ecollab/tests/phase3v-profile.php on line 27
+

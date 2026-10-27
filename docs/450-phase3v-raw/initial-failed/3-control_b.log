@@ -1,0 +1,25 @@
+Preparing worktree (detached HEAD e6f864d)
+PHASE3V small-initial-first-api-pass requests 11 seconds 0.158 errors 0 queue_peak 0
+PHASE3V small-initial-survey requests 33 seconds 0.442 errors 0 queue_peak 0
+PHASE3V small-warm-corpus requests 110 seconds 1.13 errors 0 queue_peak 0
+PHASE3V small-survey requests 66 seconds 0.689 errors 0 queue_peak 0
+Traceback (most recent call last):
+  File "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py", line 404, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py", line 339, in main
+    evidence['phase3v' if env.get('CLASSROOM_PHASE3V')=='1' else ('phase3u' if env.get('CLASSROOM_PHASE3U')=='1' else 'phase3t')]=module.run(port,cookies,folder,sql,request,process_usage,DB_PID,env,target,operation)
+                                                                                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/5c9d94f07e76/ecollab/tests/phase3v-sample.py", line 153, in run
+    seen.add(q['sql']);output['plans'].append({'dataset':dataset,'query':q,'explain':sql('EXPLAIN '+q['sql'],True,q['params'])})
+                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py", line 174, in sql
+    r=subprocess.run([PHP,'-r',code,'--',statement]+([json.dumps(params)] if params is not None else []),env=env,capture_output=True,text=True,timeout=45);assert r.returncode==0,r.stderr+r.stdout
+                                                                                                                                                                  ^^^^^^^^^^^^^^^
+AssertionError: 
+Fatal error: Uncaught PDOException: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':cid AND m.is_deleted = 0 ORDER BY m.id DESC LIMIT :limit' at line 1 in Command line code:1
+Stack trace:
+#0 Command line code(1): PDO->query('EXPLAIN SELECT ...')
+#1 {main}
+  thrown in Command line code on line 1
+
