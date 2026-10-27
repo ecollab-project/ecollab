@@ -1,0 +1,10 @@
+Preparing worktree (detached HEAD e818bbd)
+PHASE3W initial-survey completed 12 refused 0 errors 0 queue 0
+PHASE3W static-corpus completed 40 refused 0 errors 0 queue 0
+PHASE3W analyzed-survey completed 12 refused 0 errors 0 queue 0
+PHASE3W read-burst-25-0 completed 75 refused 0 errors 0 queue 19
+PHASE3W read-burst-100-0 completed 300 refused 0 errors 0 queue 91
+PHASE3W read-burst-25-1 completed 75 refused 0 errors 0 queue 20
+PHASE3W read-burst-100-1 completed 300 refused 0 errors 0 queue 89
+PHASE3W mixed-steady-25 completed 1789 refused 0 errors 0 queue 8
+PHASE3W mixed-steady-100 completed 1774 refused 0 errors 0 queue 2

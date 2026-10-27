@@ -1,0 +1,9 @@
+PHASE3W CONTROL 0 minimal absent exit 0 responses_equal True
+PHASE3W CONTROL 1 minimal present exit 0 responses_equal True
+PHASE3W CONTROL 2 minimal present exit 0 responses_equal True
+PHASE3W CONTROL 3 minimal absent exit 0 responses_equal True
+PHASE3W CONTROL 4 full absent exit 0 responses_equal True
+PHASE3W CONTROL 5 full present exit 0 responses_equal True
+PHASE3W CONTROL 6 full present exit 0 responses_equal True
+PHASE3W CONTROL 7 full absent exit 0 responses_equal True
+PASS eight same-source controls, typed history plans, native counts and operation-log invariants

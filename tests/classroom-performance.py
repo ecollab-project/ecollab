@@ -164,14 +164,20 @@ def main():
         names=['tests/classroom-performance.py','tests/classroom-bootstrap.php','tests/classroom-fixture.sql','tests/fixtures/application-performance.sql','tests/phase3v-compare.py','tests/phase3v-sample.py','tests/phase3v-profile.php','tests/phase3v-regression.php','database/migrations/067_dashboard_unread_covering.sql']
         evidence['phase3v_driver_source']={'application_ref':BASE,'driver_commit':evidence['head'],'driver_tree':evidence['tree'],'driver_diff':subprocess.check_output(['git','diff','HEAD'],cwd=ROOT,text=True),'sha256':{name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest() for name in names},'application_directory_diff':subprocess.check_output(['git','diff',BASE,'--','services','API','database','assets'],cwd=ROOT,text=True)}
         assert not evidence['phase3v_driver_source']['application_directory_diff'],'Phase3V is an investigation with accepted application source'
+    if any(os.environ.get(k)=='1' for k in ['CLASSROOM_PHASE3W','CLASSROOM_PHASE3W_SCHEMA','CLASSROOM_PHASE3W_TELEMETRY']):
+        names=['tests/dashboard-profile.php','tests/classroom-bootstrap.php','tests/classroom-performance.py','tests/classroom-fixture.sql','tests/fixtures/application-performance.sql','database/migrations/067_dashboard_unread_covering.sql']+[str(p.relative_to(ROOT)) for p in sorted((ROOT/'tests').glob('phase3w-*')) if p.is_file()]
+        evidence['phase3w_driver_source']={'driver_commit':evidence['head'],'driver_tree':evidence['tree'],'driver_diff':subprocess.check_output(['git','diff','HEAD'],cwd=ROOT,text=True),'sha256':{name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest() for name in names},'application_ref':BASE,'application_directory_diff':subprocess.check_output(['git','diff',BASE,'--','services','API','database','assets','security','websocket'],cwd=ROOT,text=True)}
+        assert not evidence['phase3w_driver_source']['application_directory_diff'],'Application source change forbidden in this tooling investigation'
     with tempfile.TemporaryDirectory(prefix='ecollab-classroom-') as tmp:
         p=pathlib.Path(tmp);dbport=freeport();env=os.environ|{'APP_ENV':'testing','APP_DEBUG':'false','PEER_ML_ENABLED':'false','CENTRIFUGO_ENABLED':'false'}
-        def sql(statement,fetch=False,params=None):
-            code='$d=new PDO('+json.dumps(f'mysql:host=127.0.0.1;port={dbport};dbname=classroom_perf_test')+',"root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);'
+        def sql(statement,fetch=False,params=None,bindings=None):
+            code='$d=new PDO('+json.dumps(f'mysql:host=127.0.0.1;port={dbport};dbname=classroom_perf_test')+',"root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_EMULATE_PREPARES=>false]);'
             if env.get('CLASSROOM_FIXED_CLOCK'):code+='$d->exec("SET timestamp='+str(int(env['CLASSROOM_FIXED_CLOCK']))+'");'
             code+=('echo json_encode($d->query($argv[1])->fetchAll(PDO::FETCH_ASSOC));' if fetch else '$d->exec($argv[1]);')
             if params is not None:code=code[:code.index('echo json_encode')]+'$s=$d->prepare($argv[1]);$s->execute(json_decode($argv[2],true));echo json_encode($s->fetchAll(PDO::FETCH_ASSOC));'
-            r=subprocess.run([PHP,'-r',code,'--',statement]+([json.dumps(params)] if params is not None else []),env=env,capture_output=True,text=True,timeout=45);assert r.returncode==0,r.stderr+r.stdout
+            if bindings is not None:
+                code=code[:code.index('echo json_encode')]+"$s=$d->prepare($argv[1]);foreach(json_decode($argv[2],true)as$b){if(!($b['captured']??false))throw new RuntimeException('Uncaptured binding');$s->bindValue($b['parameter'],$b['value'],$b['pdo_type']);}$s->execute();echo json_encode($s->fetchAll(PDO::FETCH_ASSOC));"
+            r=subprocess.run([PHP,'-r',code,'--',statement]+([json.dumps(bindings)] if bindings is not None else ([json.dumps(params)] if params is not None else [])),env=env,capture_output=True,text=True,timeout=45);assert r.returncode==0,r.stderr+r.stdout
             return json.loads(r.stdout) if fetch else None
         args=[env.get('MARIADB_INSTALL_DB_BIN','mariadb-install-db'),'--no-defaults','--datadir='+str(p/'data'),'--auth-root-authentication-method=normal','--skip-test-db']
         if env.get('MARIADB_BASEDIR'):args+=['--basedir='+env['MARIADB_BASEDIR']]
@@ -187,8 +193,31 @@ def main():
                 if r.returncode==0:break
                 time.sleep(.1)
             else:raise AssertionError('Database startup')
-            for name in ['tests/fixtures/application-performance.sql','database/migrations/013_peer_matching.sql','tests/classroom-fixture.sql','database/migrations/058_chat_read_cursors.sql']:sql((ROOT/name).read_text())
+            if env.get('CLASSROOM_PHASE3W_SCHEMA')=='1':
+                suite_env={}
+                if env.get('PHASE3W_FULL_PHPUNIT')=='1':
+                    import shutil
+                    baseline_app=p/'suite-base';subprocess.run(['git','worktree','add','--detach',str(baseline_app),BASE],cwd=ROOT,check=True,capture_output=True)
+                    shutil.copytree(ROOT/'vendor',baseline_app/'vendor')
+                    composer=env.get('COMPOSER_BIN') or shutil.which('composer');assert composer
+                    subprocess.run([PHP,composer,'dump-autoload','--no-interaction'],cwd=baseline_app,env=env,check=True,capture_output=True)
+                    suite_env['PHASE3W_SUITE_BASE']=str(baseline_app)
+                r=subprocess.run([PHP,str(ROOT/'tests/phase3w-schema.php')],env=env|suite_env|{'CLASSROOM_DSN':f'mysql:host=127.0.0.1;port={dbport};dbname=classroom_perf_test'},capture_output=True,text=True,timeout=180)
+                evidence['phase3w_schema']={'exit_code':r.returncode,'stdout':r.stdout,'stderr':r.stderr}
+                assert r.returncode==0,r.stderr+r.stdout
+                return
+            if env.get('CLASSROOM_PHASE3W')=='1' and env.get('PHASE3W_SCHEMA')=='full':
+                r=subprocess.run([PHP,str(ROOT/'tests/phase3w-full-fixture.php')],env=env|{'CLASSROOM_DSN':f'mysql:host=127.0.0.1;port={dbport};dbname=classroom_perf_test'},capture_output=True,text=True,timeout=180)
+                evidence['phase3w_full_fixture']={'exit_code':r.returncode,'stdout':r.stdout,'stderr':r.stderr}
+                assert r.returncode==0,r.stderr+r.stdout
+            else:
+                for name in ['tests/fixtures/application-performance.sql','database/migrations/013_peer_matching.sql','tests/classroom-fixture.sql','database/migrations/058_chat_read_cursors.sql']:sql((ROOT/name).read_text())
             evidence['database_version']=sql('SELECT VERSION() version',True)
+            if env.get('CLASSROOM_PHASE3W_TELEMETRY')=='1':
+                r=subprocess.run([PHP,str(ROOT/'tests/phase3w-telemetry-regression.php')],env=env|{'CLASSROOM_DSN':f'mysql:host=127.0.0.1;port={dbport};dbname=classroom_perf_test'},capture_output=True,text=True,timeout=90)
+                evidence['phase3w_telemetry']={'exit_code':r.returncode,'stdout':r.stdout,'stderr':r.stderr}
+                assert r.returncode==0,r.stderr+r.stdout
+                return
             if env.get('CLASSROOM_PHASE3V_REGRESSION_ONLY')=='1':
                 old_service=p/'student-base.php';old_service.write_bytes(subprocess.check_output(['git','show',BASE+':services/StudentDashboardService.php'],cwd=ROOT))
                 r=subprocess.run([PHP,str(ROOT/'tests/phase3v-regression.php')],env=env|{'CLASSROOM_DSN':f'mysql:host=127.0.0.1;port={dbport};dbname=classroom_perf_test','PHASE3V_BASELINE_SERVICE':str(old_service)},capture_output=True,text=True,timeout=120)
@@ -265,7 +294,7 @@ def main():
             if (env.get('CLASSROOM_PHASE3T')=='1' or env.get('CLASSROOM_PHASE3U')=='1' or env.get('CLASSROOM_PHASE3V')=='1'):evidence['load_limits']={'type':'bounded mixed read bursts and fixed-arrival reads','levels':[25,100],'steady_seconds':int(env.get('PHASE3V_STEADY_SECONDS' if env.get('CLASSROOM_PHASE3V')=='1' else 'PHASE3T_STEADY_SECONDS','10')),'maximum_inflight':100,'request_timeout_seconds':8,'stop':'SQL/error, missing metric, worker exit or individual request >=7.5s'}
             evidence['phase3s_application_sha256']={name:hashlib.sha256((app/name).read_bytes()).hexdigest() for name in ['services/FacilitatorDashboardService.php','services/LearningWorkspaceService.php','API/chat/peer-match.php']}
             evidence['working_tree_diff_sha256']=hashlib.sha256(subprocess.check_output(['git','diff','HEAD'],cwd=ROOT)).hexdigest()
-            evidence['application_file_sha256']=hashlib.sha256((app/('services/StudentDashboardService.php' if env.get('CLASSROOM_PHASE3V')=='1' else 'services/LearningWorkspaceService.php')).read_bytes()).hexdigest()
+            evidence['application_file_sha256']=hashlib.sha256((app/('services/StudentDashboardService.php' if env.get('CLASSROOM_PHASE3V')=='1' or env.get('CLASSROOM_PHASE3W')=='1' else 'services/LearningWorkspaceService.php')).read_bytes()).hexdigest()
             sock=freeport();statussock=freeport();port=freeport();folder=p/'http';folder.mkdir();(folder/'requests.jsonl').touch()
             fenv=env|{'CLASSROOM_ROOT':str(app),'CLASSROOM_FOLDER':str(folder),'CLASSROOM_DSN':f'mysql:host=127.0.0.1;port={dbport};dbname=classroom_perf_test','APP_URL':f'http://127.0.0.1:{port}'}
             config=p/'fpm.conf';config.write_text(f'''[global]
@@ -332,6 +361,13 @@ php_admin_value[opcache.file_update_protection] = 0
             for uid in list(range(1,101))+[900]:
                 r=request(port,'/fixture/seed?uid='+str(uid));assert r['status']==200,(r['status'],r['body']);cookies[uid]=r['cookie'].split(';')[0];evidence['runtime']=json.loads(r['body'])
             evidence['fpm_status_initial']=json.loads(request(port,'/fpm-status?json&full')['body'])
+            if env.get('CLASSROOM_PHASE3W')=='1':
+                import importlib.util
+                assert evidence['runtime']['opcache_enabled']==(env.get('CLASSROOM_OPCACHE')=='on')
+                spec=importlib.util.spec_from_file_location('write_sample',ROOT/'tests/phase3w-sample.py');module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+                evidence['phase3w']=module.run(port,cookies,folder,sql,request,process_usage,DB_PID,fenv,target,operation)
+                evidence['fpm_status_final']=json.loads(request(port,'/fpm-status?json&full')['body'])
+                return
             if (env.get('CLASSROOM_PHASE3T')=='1' or env.get('CLASSROOM_PHASE3U')=='1' or env.get('CLASSROOM_PHASE3V')=='1'):
                 assert evidence['runtime']['opcache_enabled']==(env.get('CLASSROOM_OPCACHE')=='on'),'OPcache state not as requested'
                 import importlib.util

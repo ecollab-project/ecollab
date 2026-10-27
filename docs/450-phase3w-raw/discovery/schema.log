@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py", line 411, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py", line 195, in main
+    assert r.returncode==0,r.stderr+r.stdout
+           ^^^^^^^^^^^^^^^
+AssertionError: PDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'classroom_perf_test.schema_migrations' doesn't exist in /workspace/scratch/5c9d94f07e76/ecollab/tests/phase3w-schema.php:13
+Stack trace:
+#0 /workspace/scratch/5c9d94f07e76/ecollab/tests/phase3w-schema.php(13): PDO->query('SELECT * FROM s...')
+#1 {main}
