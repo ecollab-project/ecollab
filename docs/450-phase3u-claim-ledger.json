@@ -1,0 +1,38 @@
+[
+  {
+    "claim": "A safe workspace optimization is retained",
+    "result": "FAIL / REJECTED",
+    "evidence": "plan-control-reproduced.json archive, one_channel_large analyzed",
+    "limitation": "The final application is restored; no performance improvement is claimed."
+  },
+  {
+    "claim": "Early trial serial workspace latency improves",
+    "result": "PASS within recorded initial plan state",
+    "evidence": "eight raw trials and serial summaries",
+    "limitation": "Baseline later changes to the same plan; this is not sustained benefit."
+  },
+  {
+    "claim": "Full trial responses and stored data match",
+    "result": "PASS executed coverage",
+    "evidence": "678 retained payloads/run, 36 native cases/run, named table checksums",
+    "limitation": "Only generated_at normalized; rate/cache fixtures intentionally reset."
+  },
+  {
+    "claim": "No additional static diagnostics",
+    "result": "PASS comparison; full PHPStan FAIL inherited15",
+    "evidence": "final-static.json",
+    "limitation": "Full static analysis is not clean."
+  },
+  {
+    "claim": "Final exact-head hosted CI",
+    "result": "PENDING at publication",
+    "evidence": "Final PR90 body and handoff must supersede this publication snapshot",
+    "limitation": "Initial trial-head CI is not substituted."
+  },
+  {
+    "claim": "Capacity of50\u2013100 students",
+    "result": "BLOCKED / NOT CERTIFIED",
+    "evidence": "Synthetic host, fixed mix,10-second cells, no representative VPS",
+    "limitation": "Request slots are not students."
+  }
+]

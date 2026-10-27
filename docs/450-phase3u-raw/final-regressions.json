@@ -1,0 +1,154 @@
+[
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "-l",
+      "services/LearningWorkspaceService.php"
+    ],
+    "exit_code": 0,
+    "seconds": 0.02006510499995784,
+    "stdout": "No syntax errors detected in services/LearningWorkspaceService.php\n",
+    "stderr": "",
+    "application_sha256": "ab5eb71291d10c92d1590673132c5139f079e3da887d1477261039e40406eda7"
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "-l",
+      "tests/phase3u-regression.php"
+    ],
+    "exit_code": 0,
+    "seconds": 0.01565660599999319,
+    "stdout": "No syntax errors detected in tests/phase3u-regression.php\n",
+    "stderr": "",
+    "application_sha256": "ab5eb71291d10c92d1590673132c5139f079e3da887d1477261039e40406eda7"
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "-l",
+      "tests/phase3u-discovery.php"
+    ],
+    "exit_code": 0,
+    "seconds": 0.01883412600000156,
+    "stdout": "No syntax errors detected in tests/phase3u-discovery.php\n",
+    "stderr": "",
+    "application_sha256": "ab5eb71291d10c92d1590673132c5139f079e3da887d1477261039e40406eda7"
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "-d",
+      "session.save_path=/tmp",
+      "-d",
+      "output_buffering=4096",
+      "vendor/bin/phpunit",
+      "--testsuite",
+      "Unit"
+    ],
+    "exit_code": 0,
+    "seconds": 0.07406556400019326,
+    "stdout": "PHPUnit 10.5.64 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.6\nConfiguration: /workspace/scratch/5c9d94f07e76/ecollab/phpunit.xml\n\n.........................                                         25 / 25 (100%)\n\nTime: 00:00.008, Memory: 10.00 MB\n\nOK (25 tests, 56 assertions)\n",
+    "stderr": "",
+    "application_sha256": "ab5eb71291d10c92d1590673132c5139f079e3da887d1477261039e40406eda7"
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "tests/peer-ml-regression.php"
+    ],
+    "exit_code": 0,
+    "seconds": 0.016381367000121827,
+    "stdout": "Peer ML regression checks passed\n",
+    "stderr": "",
+    "application_sha256": "ab5eb71291d10c92d1590673132c5139f079e3da887d1477261039e40406eda7"
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "tests/learning-tools-regression.php"
+    ],
+    "exit_code": 0,
+    "seconds": 0.01909199100009573,
+    "stdout": "Learning connected tools regression checks passed.\n",
+    "stderr": "",
+    "application_sha256": "ab5eb71291d10c92d1590673132c5139f079e3da887d1477261039e40406eda7"
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "tests/learning-workspace-regression.php"
+    ],
+    "exit_code": 0,
+    "seconds": 0.01979314899995188,
+    "stdout": "Learning workspace regression checks passed.\n",
+    "stderr": "",
+    "application_sha256": "ab5eb71291d10c92d1590673132c5139f079e3da887d1477261039e40406eda7"
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "tests/settings-runtime-regression.php"
+    ],
+    "exit_code": 0,
+    "seconds": 0.01969115499991858,
+    "stdout": "PASS: profile/receipt privacy, Jarred preferences, bounded continuity, conversation lock, atomic exchange, isolation and greeting fast path\n",
+    "stderr": "",
+    "application_sha256": "ab5eb71291d10c92d1590673132c5139f079e3da887d1477261039e40406eda7"
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "tests/phase2-jarred.php"
+    ],
+    "exit_code": 0,
+    "seconds": 0.02813360200002535,
+    "stdout": "PASS Jarred admission, atomic source/job, retry checkpoint, action rollback, cancellation fencing, recovery, ownership and preferences\n",
+    "stderr": "",
+    "application_sha256": "ab5eb71291d10c92d1590673132c5139f079e3da887d1477261039e40406eda7"
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "tests/chat-upload-access-regression.php"
+    ],
+    "exit_code": 0,
+    "seconds": 0.01838846299983743,
+    "stdout": "Chat upload access regression checks passed\n",
+    "stderr": "",
+    "application_sha256": "ab5eb71291d10c92d1590673132c5139f079e3da887d1477261039e40406eda7"
+  },
+  {
+    "command": [
+      "node",
+      "tests/learning-workspace-ui-regression.cjs"
+    ],
+    "exit_code": 0,
+    "seconds": 3.114282236000008,
+    "stdout": "Student and facilitator UI regression checks passed.\n",
+    "stderr": "",
+    "application_sha256": "ab5eb71291d10c92d1590673132c5139f079e3da887d1477261039e40406eda7"
+  },
+  {
+    "command": [
+      "node",
+      "tests/ai-dashboard-regression.cjs"
+    ],
+    "exit_code": 0,
+    "seconds": 0.7886329810000916,
+    "stdout": "PASS AI modal show, late loading, send, duplicate guard and recoverable errors\n",
+    "stderr": "",
+    "application_sha256": "ab5eb71291d10c92d1590673132c5139f079e3da887d1477261039e40406eda7"
+  },
+  {
+    "command": [
+      "node",
+      "tests/dashboard-date-regression.cjs"
+    ],
+    "exit_code": 0,
+    "seconds": 0.14928524300012214,
+    "stdout": "{\"scope\":\"Actual date helper under Node Intl; not browser rendering\",\"before\":{\"output\":[\"Oct 24, 2026, 9:00 AM\",\"Oct 24, 2026, 3:00 AM\",\"invalid\",\"Not recorded\",\"Not recorded\"],\"format_1000_ms\":52.59613900000001},\"after\":{\"output\":[\"Oct 24, 2026, 9:00 AM\",\"Oct 24, 2026, 3:00 AM\",\"invalid\",\"Not recorded\",\"Not recorded\"],\"format_1000_ms\":2.3366590000000116}}\n",
+    "stderr": "",
+    "application_sha256": "ab5eb71291d10c92d1590673132c5139f079e3da887d1477261039e40406eda7"
+  }
+]

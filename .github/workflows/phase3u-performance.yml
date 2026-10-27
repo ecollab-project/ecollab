@@ -34,6 +34,7 @@ jobs:
         run: |
           set -e
           composer install --no-interaction --prefer-dist --no-progress
+          git diff --exit-code f77506a874c4650ec6c69637461c368876fa178d -- services API database assets
           php8.3 -l services/LearningWorkspaceService.php
           php8.3 -l tests/classroom-bootstrap.php
           php8.3 -l tests/phase3u-regression.php
@@ -50,7 +51,17 @@ jobs:
           node tests/learning-workspace-ui-regression.cjs
           node tests/ai-dashboard-regression.cjs
           node tests/dashboard-date-regression.cjs
-      - name: Eight alternating exact-base native FPM and HTTP runs
+      - name: Reproduce the rejected join-order trial across statistics and distributions
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          CLASSROOM_BASE: f77506a874c4650ec6c69637461c368876fa178d
+          CLASSROOM_PHASE3U_PLAN_CONTROL: '1'
+          CLASSROOM_FIXED_CLOCK: '1792800000'
+          CLASSROOM_EVIDENCE: phase3u-raw/plan-control.json
+          TZ: UTC
+        run: python3 -B -u tests/classroom-performance.py
+      - name: Eight alternating final-source equivalence and unchanged-code controls
         env:
           PHP_BIN: /usr/bin/php8.3
           PHP_FPM_BIN: /usr/sbin/php-fpm8.3

@@ -1,0 +1,141 @@
+[
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "-l",
+      "services/LearningWorkspaceService.php"
+    ],
+    "exit_code": 0,
+    "seconds": 0.018324847000002364,
+    "stdout": "No syntax errors detected in services/LearningWorkspaceService.php\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "-l",
+      "tests/phase3u-regression.php"
+    ],
+    "exit_code": 0,
+    "seconds": 0.014104822999996713,
+    "stdout": "No syntax errors detected in tests/phase3u-regression.php\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "-l",
+      "tests/phase3u-discovery.php"
+    ],
+    "exit_code": 0,
+    "seconds": 0.015356736999990517,
+    "stdout": "No syntax errors detected in tests/phase3u-discovery.php\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "-d",
+      "session.save_path=/tmp",
+      "-d",
+      "output_buffering=4096",
+      "vendor/bin/phpunit",
+      "--testsuite",
+      "Unit"
+    ],
+    "exit_code": 0,
+    "seconds": 0.06440753200001836,
+    "stdout": "PHPUnit 10.5.64 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.6\nConfiguration: /workspace/scratch/5c9d94f07e76/ecollab/phpunit.xml\n\n.........................                                         25 / 25 (100%)\n\nTime: 00:00.006, Memory: 10.00 MB\n\nOK (25 tests, 56 assertions)\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "tests/peer-ml-regression.php"
+    ],
+    "exit_code": 0,
+    "seconds": 0.018759273000000576,
+    "stdout": "Peer ML regression checks passed\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "tests/learning-tools-regression.php"
+    ],
+    "exit_code": 0,
+    "seconds": 0.02247663800000055,
+    "stdout": "Learning connected tools regression checks passed.\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "tests/learning-workspace-regression.php"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0182049660000132,
+    "stdout": "Learning workspace regression checks passed.\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "tests/settings-runtime-regression.php"
+    ],
+    "exit_code": 0,
+    "seconds": 0.017831673000017645,
+    "stdout": "PASS: profile/receipt privacy, Jarred preferences, bounded continuity, conversation lock, atomic exchange, isolation and greeting fast path\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "tests/phase2-jarred.php"
+    ],
+    "exit_code": 0,
+    "seconds": 0.021007354999994732,
+    "stdout": "PASS Jarred admission, atomic source/job, retry checkpoint, action rollback, cancellation fencing, recovery, ownership and preferences\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+      "tests/chat-upload-access-regression.php"
+    ],
+    "exit_code": 0,
+    "seconds": 0.015452711999984103,
+    "stdout": "Chat upload access regression checks passed\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "node",
+      "tests/learning-workspace-ui-regression.cjs"
+    ],
+    "exit_code": 0,
+    "seconds": 3.0338616880000018,
+    "stdout": "Student and facilitator UI regression checks passed.\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "node",
+      "tests/ai-dashboard-regression.cjs"
+    ],
+    "exit_code": 0,
+    "seconds": 0.7306316670000115,
+    "stdout": "PASS AI modal show, late loading, send, duplicate guard and recoverable errors\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "node",
+      "tests/dashboard-date-regression.cjs"
+    ],
+    "exit_code": 0,
+    "seconds": 4.871156310999993,
+    "stdout": "{\"scope\":\"Actual date helper under Node Intl; not browser rendering\",\"before\":{\"output\":[\"Oct 24, 2026, 9:00 AM\",\"Oct 24, 2026, 3:00 AM\",\"invalid\",\"Not recorded\",\"Not recorded\"],\"format_1000_ms\":62.23581099999956},\"after\":{\"output\":[\"Oct 24, 2026, 9:00 AM\",\"Oct 24, 2026, 3:00 AM\",\"invalid\",\"Not recorded\",\"Not recorded\"],\"format_1000_ms\":2.2567959999996674}}\n",
+    "stderr": ""
+  }
+]

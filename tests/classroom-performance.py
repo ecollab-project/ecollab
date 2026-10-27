@@ -185,6 +185,13 @@ def main():
             else:raise AssertionError('Database startup')
             for name in ['tests/fixtures/application-performance.sql','database/migrations/013_peer_matching.sql','tests/classroom-fixture.sql','database/migrations/058_chat_read_cursors.sql']:sql((ROOT/name).read_text())
             evidence['database_version']=sql('SELECT VERSION() version',True)
+            if env.get('CLASSROOM_PHASE3U_PLAN_CONTROL')=='1':
+                old_service=p/'workspace-control-base.php';old_service.write_bytes(subprocess.check_output(['git','show',BASE+':services/LearningWorkspaceService.php'],cwd=ROOT))
+                trial_service=p/'workspace-rejected-trial.php';trial_service.write_bytes(subprocess.check_output(['git','show','5366f48f1a128aa40077bf01e938157202759911:services/LearningWorkspaceService.php'],cwd=ROOT))
+                r=subprocess.run([PHP,str(ROOT/'tests/phase3u-plan-control.php')],env=env|{'CLASSROOM_DSN':f'mysql:host=127.0.0.1;port={dbport};dbname=classroom_perf_test','PHASE3U_BASELINE_SERVICE':str(old_service),'PHASE3U_TRIAL_SERVICE':str(trial_service)},capture_output=True,text=True,timeout=180)
+                evidence['plan_control']={'exit_code':r.returncode,'stdout':r.stdout,'stderr':r.stderr}
+                assert r.returncode==0,r.stderr+r.stdout
+                return
             if env.get('CLASSROOM_PHASE3U_REGRESSION_ONLY')=='1':
                 old_service=p/'workspace-base.php';old_service.write_bytes(subprocess.check_output(['git','show',BASE+':services/LearningWorkspaceService.php'],cwd=ROOT))
                 r=subprocess.run([PHP,str(ROOT/'tests/phase3u-regression.php')],env=env|{'CLASSROOM_DSN':f'mysql:host=127.0.0.1;port={dbport};dbname=classroom_perf_test','PHASE3U_BASELINE_SERVICE':str(old_service)},capture_output=True,text=True,timeout=120)
