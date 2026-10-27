@@ -1,5 +1,5 @@
 """Bounded, owned HTTP/FPM read sampler. No external targets or capacity verdict."""
-import concurrent.futures, hashlib, json, math, pathlib, statistics, threading, time
+import concurrent.futures, hashlib, json, math, pathlib, re, statistics, threading, time
 
 ROUTES=['dashboard','workspace','navigation','history','dm','threads','notifications','settings','peer','facilitator','facilitator_dashboard']
 
@@ -50,6 +50,7 @@ def run(port,cookies,folder,sql,request,process_usage,dbpid,env,target,operation
                 text=query['sql']
                 if not any(marker in text for marker in ['SUM((SELECT COUNT(*) FROM messages','COALESCE(activity.messages','COUNT(DISTINCT CASE WHEN ui.user_id','FROM (SELECT id,created_at FROM messages']):continue
                 key=hashlib.sha256(json.dumps([text,query['params']],sort_keys=True).encode()).hexdigest();watched_queries[key]=query
+        assert len(watched_queries)>=4,('Missing dominant-query plan observations',label,list(watched_queries))
         observations=[];transitions=[]
         for key,query in watched_queries.items():
             plan=sql('EXPLAIN FORMAT=JSON '+query['sql'],True,query['params']);parsed=json.loads(next(iter(plan[0].values())));topology=shape(parsed);digest=hashlib.sha256(json.dumps(topology,sort_keys=True,separators=(',',':')).encode()).hexdigest()
@@ -141,6 +142,9 @@ def run(port,cookies,folder,sql,request,process_usage,dbpid,env,target,operation
         output['statistics_states'][dataset]['initial_plans_after_samples']=initial_queries
         tables=[next(iter(r.values())) for r in sql('SHOW TABLES',True)]
         output['statistics_states'][dataset]['analyze_table_result']=sql('ANALYZE TABLE '+','.join('`'+t.replace('`','``')+'`' for t in tables),True)
+        analyzed=output['statistics_states'][dataset]['analyze_table_result']
+        assert len([r for r in analyzed if r['Msg_type']=='status' and r['Msg_text']=='OK'])==len(tables),('ANALYZE TABLE incomplete',analyzed)
+        assert not any(r['Msg_type']=='error' for r in analyzed),analyzed
         output['statistics_states'][dataset]['analyzed_before_warmup']=snapshot()
         stable=True
         cell(dataset+'-warm-corpus',[(name,uid) for uid in range(1,11) for name in ROUTES],1,True)
@@ -150,7 +154,11 @@ def run(port,cookies,folder,sql,request,process_usage,dbpid,env,target,operation
         seen=set()
         for q in queries:
             if q['sql'] in seen:continue
-            seen.add(q['sql']);output['plans'].append({'dataset':dataset,'query':q,'explain':sql('EXPLAIN '+q['sql'],True,q['params'])})
+            seen.add(q['sql'])
+            if q['params'] is None and re.search(r'(?<!:):[A-Za-z_][A-Za-z_0-9]*|\?',q['sql']):
+                output['plans'].append({'dataset':dataset,'query':q,'status':'NOT RUN','reason':'Bound parameters unavailable from execute-only instrumentation; bindValue inputs were not recorded.'})
+            else:
+                output['plans'].append({'dataset':dataset,'query':q,'status':'PASS','explain':sql('EXPLAIN '+q['sql'],True,q['params'])})
             if len(seen)>=8:break
         if env.get('PHASE3V_SURVEY_ONLY')=='1':
             output['statistics_states'][dataset]['after_measurement']=snapshot()
