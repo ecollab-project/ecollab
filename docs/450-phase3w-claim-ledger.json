@@ -1,0 +1,80 @@
+[
+  {
+    "claim": "Application optimization retained",
+    "status": "NOT RUN",
+    "evidence": "No service/API/database/assets/security/WebSocket diff from accepted base",
+    "limitation": "Tooling and evidence phase only; both rejected joins stay rejected."
+  },
+  {
+    "claim": "Requested scalar PDO execution-time binding/type and failure contracts",
+    "status": "PASS",
+    "evidence": "12 red/green cases; frozen MariaDB contract run; typed history EXPLAIN in all8 pools",
+    "limitation": "Resource/object/non-UTF8 inputs explicitly unreplayable; no server-wide/wire-protocol claim."
+  },
+  {
+    "claim": "Complete repository-derived migration sequence reproduced",
+    "status": "PASS",
+    "evidence": "70 file hashes;68 successful ledger entries+registry; historical025 superseded;160 tables",
+    "limitation": "Not deployed schema parity. Controlled index overlays and seed adjustments recorded."
+  },
+  {
+    "claim": "Read/write correctness and within-flavour static API equivalence",
+    "status": "PASS",
+    "evidence": "eight frozen archives; operation logs/state checks;40 static payloads/pool",
+    "limitation": "Mutable concurrent snapshots retained, not forced equal across interleavings."
+  },
+  {
+    "claim": "Full-schema existing067 synthetic read effect",
+    "status": "PASS scoped observed comparison",
+    "evidence": "serial/load/native absent/present controls with exact source",
+    "limitation": "No application speedup/deployment recommendation; adverse write/route samples retained."
+  },
+  {
+    "claim": "Every sampled scalar binding captured",
+    "status": "PASS",
+    "evidence": "0 uncaptured sampled bindings; typed history plans",
+    "limitation": "Not exhaustive of every possible PDO input/transaction-control API."
+  },
+  {
+    "claim": "Natural lock waits in selected new mix",
+    "status": "PASS observed zero increments",
+    "evidence": "per-cell counters and lock samples",
+    "limitation": "Induced controls separate; old peer-containing workload not reproduced; historical cause UNPROVEN."
+  },
+  {
+    "claim": "FPM status queue is an exact instantaneous per-cell queue",
+    "status": "PARTIAL",
+    "evidence": "6 status anomalies above cap; raw observations retained",
+    "limitation": "Freshness/cross-boundary mechanism not isolated."
+  },
+  {
+    "claim": "Fresh-empty schema performance established",
+    "status": "PARTIAL",
+    "evidence": "native empty uses DELETE after populated tables",
+    "limitation": "Logical empty count verified; physical page/purge state not controlled."
+  },
+  {
+    "claim": "No additional full-PHPUnit failures",
+    "status": "PASS comparison",
+    "evidence": "baseline/current46 tests each; same5 failed AuthService cases",
+    "limitation": "Full PHPUnit FAIL; email-verification gate not weakened."
+  },
+  {
+    "claim": "No additional PHPStan findings",
+    "status": "PASS comparison",
+    "evidence": "15 per side,0 additions",
+    "limitation": "Full PHPStan FAIL existing diagnostics."
+  },
+  {
+    "claim": "Final-head hosted CI",
+    "status": "PENDING publication snapshot",
+    "evidence": "Final draft PR body/handoff must record exact-head jobs/steps/artifact verification",
+    "limitation": "Do not substitute Phase3V results."
+  },
+  {
+    "claim": "Process CPU/PSS and representative50\u2013100-student capacity",
+    "status": "BLOCKED",
+    "evidence": "namespace-inaccessible process counters; synthetic loopback,10 accounts,30-second cells",
+    "limitation": "No target VPS, broker/WebSocket or real-student certification."
+  }
+]

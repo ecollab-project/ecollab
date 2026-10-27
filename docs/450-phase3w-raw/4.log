@@ -1,0 +1,11 @@
+Preparing worktree (detached HEAD e818bbd)
+Updating files:  78% (1312/1682)Updating files:  79% (1329/1682)Updating files:  80% (1346/1682)Updating files:  81% (1363/1682)Updating files:  82% (1380/1682)Updating files:  83% (1397/1682)Updating files:  84% (1413/1682)Updating files:  85% (1430/1682)Updating files:  86% (1447/1682)Updating files:  87% (1464/1682)Updating files:  88% (1481/1682)Updating files:  89% (1497/1682)Updating files:  90% (1514/1682)Updating files:  91% (1531/1682)Updating files:  92% (1548/1682)Updating files:  93% (1565/1682)Updating files:  94% (1582/1682)Updating files:  95% (1598/1682)Updating files:  96% (1615/1682)Updating files:  97% (1632/1682)Updating files:  98% (1649/1682)Updating files:  99% (1666/1682)Updating files: 100% (1682/1682)Updating files: 100% (1682/1682), done.
+PHASE3W initial-survey completed 12 refused 0 errors 0 queue 0
+PHASE3W static-corpus completed 40 refused 0 errors 0 queue 0
+PHASE3W analyzed-survey completed 12 refused 0 errors 0 queue 0
+PHASE3W read-burst-25-0 completed 75 refused 0 errors 0 queue 19
+PHASE3W read-burst-100-0 completed 300 refused 0 errors 0 queue 92
+PHASE3W read-burst-25-1 completed 75 refused 0 errors 0 queue 15
+PHASE3W read-burst-100-1 completed 300 refused 0 errors 0 queue 90
+PHASE3W mixed-steady-25 completed 1789 refused 0 errors 0 queue 8
+PHASE3W mixed-steady-100 completed 1770 refused 0 errors 0 queue 5

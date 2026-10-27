@@ -1,0 +1,205 @@
+{
+  "base": "e818bbd84ae85d67aa71a38460fe154a5128a930",
+  "application_ref": "e818bbd84ae85d67aa71a38460fe154a5128a930",
+  "application_change": "NONE",
+  "harness_commit": "622a6d50bddad42e3256c2163905d5d24f297c1b",
+  "harness_tree": "6da545617d189cc30dc0a43b76670af16b748032",
+  "intended_harness_head": "622a6d50bddad42e3256c2163905d5d24f297c1b",
+  "opcache": "on in every pool",
+  "runs": [
+    {
+      "schema": "minimal",
+      "index": "absent",
+      "exit_code": 0,
+      "file": "0-minimal-absent.json",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "-u",
+        "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py"
+      ],
+      "raw_sha256": "344feb18dafa930c72a12205ba3e23e031c276bd4cd0ed668663b44df6a785f4",
+      "gzip_sha256": "7ddcf59691e4de92b8b2b27841167c5205e63ca9a1f45678d37164193dca178e"
+    },
+    {
+      "schema": "minimal",
+      "index": "present",
+      "exit_code": 0,
+      "file": "1-minimal-present.json",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "-u",
+        "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py"
+      ],
+      "raw_sha256": "c3bd7baff4153c093de30e4f22312cce20e9da60ab83713fc5e55d077b044cfd",
+      "gzip_sha256": "062f764eb021f7a755a459a65e83aacad0556ca97f2182baf66cf8d1a0530fbf"
+    },
+    {
+      "schema": "minimal",
+      "index": "present",
+      "exit_code": 0,
+      "file": "2-minimal-present.json",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "-u",
+        "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py"
+      ],
+      "raw_sha256": "3daf8d3ea2f968117ec020a3ae5c2a6beb90ee3ab40bf1101c53d422cf1a8518",
+      "gzip_sha256": "ada0d82a7a8b96c95cb0f1469eef1aaceba0e8f03b4e13294fa505ab86e8da5e"
+    },
+    {
+      "schema": "minimal",
+      "index": "absent",
+      "exit_code": 0,
+      "file": "3-minimal-absent.json",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "-u",
+        "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py"
+      ],
+      "raw_sha256": "5e075125df1c6559344e0fa62be8a7262e22b48c5c277930e95e0c3642065fa2",
+      "gzip_sha256": "073deceeaa8a83b21222f80fd3c9b118e4919e7c337e2dc85b1c492947d93485"
+    },
+    {
+      "schema": "full",
+      "index": "absent",
+      "exit_code": 0,
+      "file": "4-full-absent.json",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "-u",
+        "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py"
+      ],
+      "raw_sha256": "b80883aa42730ae8810bca233153051f61d98d0cb7794f7f04b076f85670c4c7",
+      "gzip_sha256": "dc4ee34bbb4fa01eec30ba7d269b75f7ad8cccf6f408fb491e569b9356919cb0"
+    },
+    {
+      "schema": "full",
+      "index": "present",
+      "exit_code": 0,
+      "file": "5-full-present.json",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "-u",
+        "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py"
+      ],
+      "raw_sha256": "af02365d033125c970e9148f0735ec259ab019edfba79157b3f7055258d2b4ca",
+      "gzip_sha256": "a78fa4d93f027e8a725dc91db00bfbd26018197d2886bc2fdf172ddf680211be"
+    },
+    {
+      "schema": "full",
+      "index": "present",
+      "exit_code": 0,
+      "file": "6-full-present.json",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "-u",
+        "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py"
+      ],
+      "raw_sha256": "49ddde30ca49c24bd20d6686d51fdbd836ff329df72fea33682172ba4cd033ae",
+      "gzip_sha256": "df448b0b5fbb7d65acd46f21391de54848a5274a13851a926e642bb54fab0cb2"
+    },
+    {
+      "schema": "full",
+      "index": "absent",
+      "exit_code": 0,
+      "file": "7-full-absent.json",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "-u",
+        "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py"
+      ],
+      "raw_sha256": "756ceed4f00ef26579afa41a0abc077e863597f8c159ad2f54b7cf4976e63aa7",
+      "gzip_sha256": "92ebf44787afb458a40897d7f48ef10459a377df106078fe30f778910ca99a13"
+    }
+  ],
+  "response_comparisons": [
+    {
+      "run": 0,
+      "schema": "minimal",
+      "complete_payloads": 40,
+      "equal": true,
+      "normalized": [
+        "dashboard envelope generated_at only"
+      ],
+      "dynamic_read_snapshots": "Retained but not compared across different write interleavings."
+    },
+    {
+      "run": 1,
+      "schema": "minimal",
+      "complete_payloads": 40,
+      "equal": true,
+      "normalized": [
+        "dashboard envelope generated_at only"
+      ],
+      "dynamic_read_snapshots": "Retained but not compared across different write interleavings."
+    },
+    {
+      "run": 2,
+      "schema": "minimal",
+      "complete_payloads": 40,
+      "equal": true,
+      "normalized": [
+        "dashboard envelope generated_at only"
+      ],
+      "dynamic_read_snapshots": "Retained but not compared across different write interleavings."
+    },
+    {
+      "run": 3,
+      "schema": "minimal",
+      "complete_payloads": 40,
+      "equal": true,
+      "normalized": [
+        "dashboard envelope generated_at only"
+      ],
+      "dynamic_read_snapshots": "Retained but not compared across different write interleavings."
+    },
+    {
+      "run": 4,
+      "schema": "full",
+      "complete_payloads": 40,
+      "equal": true,
+      "normalized": [
+        "dashboard envelope generated_at only"
+      ],
+      "dynamic_read_snapshots": "Retained but not compared across different write interleavings."
+    },
+    {
+      "run": 5,
+      "schema": "full",
+      "complete_payloads": 40,
+      "equal": true,
+      "normalized": [
+        "dashboard envelope generated_at only"
+      ],
+      "dynamic_read_snapshots": "Retained but not compared across different write interleavings."
+    },
+    {
+      "run": 6,
+      "schema": "full",
+      "complete_payloads": 40,
+      "equal": true,
+      "normalized": [
+        "dashboard envelope generated_at only"
+      ],
+      "dynamic_read_snapshots": "Retained but not compared across different write interleavings."
+    },
+    {
+      "run": 7,
+      "schema": "full",
+      "complete_payloads": 40,
+      "equal": true,
+      "normalized": [
+        "dashboard envelope generated_at only"
+      ],
+      "dynamic_read_snapshots": "Retained but not compared across different write interleavings."
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+Preparing worktree (detached HEAD e818bbd)
+PHASE3V large-initial-first-api-pass requests 11 seconds 0.247 errors 0 queue_peak 0
+PHASE3V large-initial-survey requests 33 seconds 0.771 errors 0 queue_peak 0
+PHASE3V large-warm-corpus requests 110 seconds 1.988 errors 0 queue_peak 0
+PHASE3V large-survey requests 66 seconds 0.979 errors 0 queue_peak 0

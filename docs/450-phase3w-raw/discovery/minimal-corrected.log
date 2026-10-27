@@ -1,0 +1,20 @@
+Preparing worktree (detached HEAD e818bbd)
+PHASE3W initial-survey completed 12 refused 0 errors 0 queue 0
+PHASE3W static-corpus completed 40 refused 0 errors 0 queue 0
+PHASE3W read-burst-25-0 completed 75 refused 0 errors 0 queue 19
+PHASE3W read-burst-100-0 completed 300 refused 0 errors 0 queue 93
+PHASE3W read-burst-25-1 completed 75 refused 0 errors 0 queue 32
+PHASE3W read-burst-100-1 completed 300 refused 0 errors 0 queue 90
+PHASE3W mixed-steady-25 completed 120 refused 0 errors 0 queue 32
+PHASE3W mixed-steady-100 completed 120 refused 0 errors 0 queue 0
+Traceback (most recent call last):
+  File "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py", line 428, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/workspace/scratch/5c9d94f07e76/ecollab/tests/classroom-performance.py", line 356, in main
+    evidence['phase3w']=module.run(port,cookies,folder,sql,request,process_usage,DB_PID,fenv,target,operation)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/5c9d94f07e76/ecollab/tests/phase3w-sample.py", line 147, in run
+    for r in inserts:assert byid[r['id']]['content']==r['content']and int(byid[r['id']]['sender_id'])==r['uid']and int(byid[r['id']]['channel_id'])==r['channel']and int(byid[r['id']]['is_deleted'])==0,r
+                                                                                                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'

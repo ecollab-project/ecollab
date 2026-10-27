@@ -1,0 +1,2 @@
+Recomputed 35028 HTTP errors 0 SQL errors 0 missing 0 cap refusals 0
+Schemas [('minimal', 'absent', 50), ('minimal', 'present', 50), ('minimal', 'present', 50), ('minimal', 'absent', 50), ('full', 'absent', 160), ('full', 'present', 160), ('full', 'present', 160), ('full', 'absent', 160)]
