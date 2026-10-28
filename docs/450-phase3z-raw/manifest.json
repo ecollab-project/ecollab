@@ -1,0 +1,256 @@
+{
+  "format": "gzip with zero mtime; preserve bytes of redacted runtime JSON/logs",
+  "files": [
+    {
+      "source_label": "accepted-phase3x.json",
+      "archive": "accepted-phase3x.json.gz",
+      "raw_bytes": 452808,
+      "raw_sha256": "168ca70d1a328f6cefc8eba2e177653db9172a6c139f887a9d1dd7b84a11a8ea",
+      "gzip_bytes": 54284,
+      "gzip_sha256": "6f4ccb22ed40e53e0f927005e354cf179a0f670b6374abe6103898b6159e776c",
+      "lossless": true
+    },
+    {
+      "source_label": "accepted-phase3y.json",
+      "archive": "accepted-phase3y.json.gz",
+      "raw_bytes": 451367,
+      "raw_sha256": "eaf7a6596d37080a6d8da66a09b3f569206b271ab38a4d2a381a5414fc6a5a48",
+      "gzip_bytes": 53654,
+      "gzip_sha256": "04012939f72d88f412722fa5e54ec02da920911464b31d34295e0721ef340ed0",
+      "lossless": true
+    },
+    {
+      "source_label": "discovery-timezone.json",
+      "archive": "discovery-timezone.json.gz",
+      "raw_bytes": 126320,
+      "raw_sha256": "33667d58dc7961a47e6fe3a6122c5a77da30b01e9f63f6380edc89e14ec8587b",
+      "gzip_bytes": 7917,
+      "gzip_sha256": "4c368a8c1f5af624334a8e421698ecc2cc8f2e6ef0b04a2b1aeb2efa62258420",
+      "lossless": true
+    },
+    {
+      "source_label": "discovery2-timezone.json",
+      "archive": "discovery2-timezone.json.gz",
+      "raw_bytes": 2010854,
+      "raw_sha256": "bc97139d1e970a7d4ad10cbe45f2498710a97ae17e0f91daa166157b0634c652",
+      "gzip_bytes": 142080,
+      "gzip_sha256": "9d4f0b410bbe1e6ed424f9f6449e5d15506f1d0574c5896d202de27625468651",
+      "lossless": true
+    },
+    {
+      "source_label": "final-http-summary.json",
+      "archive": "final-http-summary.json.gz",
+      "raw_bytes": 6679,
+      "raw_sha256": "77814d56ce9a2035a593830734f6c6329ecf6080e42b330c11ab71dab6bf38c7",
+      "gzip_bytes": 2524,
+      "gzip_sha256": "568df215aacc7fb1e6992972256baede60c4ea0296a265c5c33ecaa077bdb530",
+      "lossless": true
+    },
+    {
+      "source_label": "final-http.json",
+      "archive": "final-http.json.gz",
+      "raw_bytes": 1781872,
+      "raw_sha256": "9c6aab59c8bef46f2d70a3f16abd4ba39f5787f21d72efffbf91efdac687385a",
+      "gzip_bytes": 109743,
+      "gzip_sha256": "f6392c38990abb342c5666b20bf4dc35b1066f07d7680f7a364a951bdbe477b2",
+      "lossless": true
+    },
+    {
+      "source_label": "final-timezone-summary.json",
+      "archive": "final-timezone-summary.json.gz",
+      "raw_bytes": 5704,
+      "raw_sha256": "a4afa4fd5eade60d227318294397497e16f1ddadb5cbca7bdb8709bee518e918",
+      "gzip_bytes": 1513,
+      "gzip_sha256": "ac66d40c7d9ab62f8062ffb53ccc8f57ceb42ee64d14251b59ffdc57ec4e799a",
+      "lossless": true
+    },
+    {
+      "source_label": "final-timezone.json",
+      "archive": "final-timezone.json.gz",
+      "raw_bytes": 2169879,
+      "raw_sha256": "6931db0764ec51989af18456a41b816d17edbc1b35ba3dcdc7d4edf707428afe",
+      "gzip_bytes": 147369,
+      "gzip_sha256": "dbcd1c7528fa54b0b2d90c85303736d497ebdb26b9decebb2ba87e42b4c6c30c",
+      "lossless": true
+    },
+    {
+      "source_label": "frozen-checks.json",
+      "archive": "frozen-checks.json.gz",
+      "raw_bytes": 2024,
+      "raw_sha256": "867c1bb536e672fec296772e7e589ec8e1210d0a2924c2f08b6615c23532dc18",
+      "gzip_bytes": 735,
+      "gzip_sha256": "4c4edc472e6b4ca1c27f000e8f99c73b2665839bbb17afb461cf1dc05852ed64",
+      "lossless": true
+    },
+    {
+      "source_label": "frozen-full-summary.json",
+      "archive": "frozen-full-summary.json.gz",
+      "raw_bytes": 3832,
+      "raw_sha256": "6932590fa8e1410d55b5d94c851b3b258ef49a81138ea56b5d97c63817078dd7",
+      "gzip_bytes": 1446,
+      "gzip_sha256": "b6195d875bc01567050f9db045b44a49c4c83a39e0d772957fd0b2108bf6e39a",
+      "lossless": true
+    },
+    {
+      "source_label": "frozen-full.json",
+      "archive": "frozen-full.json.gz",
+      "raw_bytes": 2226163,
+      "raw_sha256": "b7c60e0404d1e68b86ae83430c676cca636f83489f0cf84a86b526ead94ab61a",
+      "gzip_bytes": 226539,
+      "gzip_sha256": "e51954269d9fa196bc3f009ee09d7fbba34bb92d8d0ea2a64b560b2df1986a5d",
+      "lossless": true
+    },
+    {
+      "source_label": "frozen-static.json",
+      "archive": "frozen-static.json.gz",
+      "raw_bytes": 11107,
+      "raw_sha256": "d9d079fcb362b5a63e37d199d88a527be846e4065400750efa59478e04341601",
+      "gzip_bytes": 954,
+      "gzip_sha256": "4ce5445f08284a1fdf9795b48d73c91c9e4b97b46c5746c7d6ec645b600e5bcd",
+      "lossless": true
+    },
+    {
+      "source_label": "frozen-timezone-summary.json",
+      "archive": "frozen-timezone-summary.json.gz",
+      "raw_bytes": 5675,
+      "raw_sha256": "606d0f053502444e835bb14620d596a69560d440542c18e796e3c239618f0e01",
+      "gzip_bytes": 1534,
+      "gzip_sha256": "00c83f7be8b6b5da6fa317544e734e05241afe4b3e3e8967038720f7437bd51d",
+      "lossless": true
+    },
+    {
+      "source_label": "frozen-timezone.json",
+      "archive": "frozen-timezone.json.gz",
+      "raw_bytes": 2119302,
+      "raw_sha256": "aa15d9413f49bd706d6663b4d9dc35954f781fe2890940e0c866ce018f313b99",
+      "gzip_bytes": 145128,
+      "gzip_sha256": "57e778c28977759815492c225db65b5538d92964fee18afc95f98bc3fe3e7f88",
+      "lossless": true
+    },
+    {
+      "source_label": "local-commands.json",
+      "archive": "local-commands.json.gz",
+      "raw_bytes": 5141,
+      "raw_sha256": "23c6c10ff54c19fbd86e761fdcb105de5901d699743656d268c60c0fd2c3486d",
+      "gzip_bytes": 1097,
+      "gzip_sha256": "7b41d47b7f458cd70793d15ec27feb1915eb65311a8b3cb37f64fdba038d0947",
+      "lossless": true
+    },
+    {
+      "source_label": "phase3z-discovery.log",
+      "archive": "phase3z-discovery.log.gz",
+      "raw_bytes": 654,
+      "raw_sha256": "21db04096acafe0a6d55aae2176e98f0153fef0ac8c9ec890b8f474a30cebfa5",
+      "gzip_bytes": 314,
+      "gzip_sha256": "094c69bb03908998798b593f69cb382d8ad8c8daa25c58cca47c69794c2ed9e0",
+      "lossless": true
+    },
+    {
+      "source_label": "phase3z-discovery2.log",
+      "archive": "phase3z-discovery2.log.gz",
+      "raw_bytes": 249,
+      "raw_sha256": "9e50d3ae42172fd33a22253ad33aa4ee7b7cc3fe8633f96a2d9819101aa447ed",
+      "gzip_bytes": 107,
+      "gzip_sha256": "31b89786c747c39914389ba30bc2a615fa820e11cfc9c3e68e1fe231d42bb71a",
+      "lossless": true
+    },
+    {
+      "source_label": "phase3z-frozen-timezone.log",
+      "archive": "phase3z-frozen-timezone.log.gz",
+      "raw_bytes": 249,
+      "raw_sha256": "53488e3563ba74839bac1bced15a81cfcfb37ee049d5f670488de6d3684a638f",
+      "gzip_bytes": 107,
+      "gzip_sha256": "b4785a48856c91292d7efdc50c95edf841e7d1bb3b9fe2187c9282ffb826309d",
+      "lossless": true
+    },
+    {
+      "source_label": "phase3z-static.log",
+      "archive": "phase3z-static.log.gz",
+      "raw_bytes": 109,
+      "raw_sha256": "4f4587f3721d7a0819b4c6715d1f512a9141d304ac23d808f3ff3565b3079b28",
+      "gzip_bytes": 87,
+      "gzip_sha256": "9ebf5059995bbe1e47ace4953b56869eb08063ad21cfc6e34cecb297c5d463ab",
+      "lossless": true
+    },
+    {
+      "source_label": "phase3z-full.log",
+      "archive": "phase3z-full.log.gz",
+      "raw_bytes": 0,
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_bytes": 20,
+      "gzip_sha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+      "lossless": true
+    },
+    {
+      "source_label": "phase3z-local.log",
+      "archive": "phase3z-local.log.gz",
+      "raw_bytes": 126,
+      "raw_sha256": "2176ce53bc59d0937a2d876686661970644bebd9ab5a8703c2ef44eb96963188",
+      "gzip_bytes": 98,
+      "gzip_sha256": "1609706ed0c68b2c18f0c457a863f41ac7899dcd0e01258340c563f1d493d198",
+      "lossless": true
+    },
+    {
+      "source_label": "phase3z-composer.log",
+      "archive": "phase3z-composer.log.gz",
+      "raw_bytes": 347,
+      "raw_sha256": "e21ac3f9a22a0bf5c10955d84c9a56d6e58ef09e64e8ea0b25257d8ff11caa1f",
+      "gzip_bytes": 244,
+      "gzip_sha256": "a5f1c1482bb9f18082b522a19ac3020fe455a8d58c9d1958720e09e5c7df242a",
+      "lossless": true
+    },
+    {
+      "source_label": "phase3y-hosted-success-accepted-base.json",
+      "archive": "phase3y-hosted-success-accepted-base.json.gz",
+      "raw_bytes": 450897,
+      "raw_sha256": "4f4ab6267ece8246a0dae7a06f79c37c2e8178f2d87b964e656b31dbe3194233",
+      "gzip_bytes": 53487,
+      "gzip_sha256": "09b4beeab870c95d8523a23a4c16d30c7750117522b1ad4982ddb8b13b23ac53",
+      "lossless": true
+    },
+    {
+      "source_label": "phase3y-hosted-success-full.json",
+      "archive": "phase3y-hosted-success-full.json.gz",
+      "raw_bytes": 2221763,
+      "raw_sha256": "8b25b4fb17263480ee32cc13adf27e009fd24a5979227c5f06126ac1a3990965",
+      "gzip_bytes": 225749,
+      "gzip_sha256": "35e63888368cfd77fc2e897bf3c7684e034407f601a972d41284f99b98a33c9d",
+      "lossless": true
+    },
+    {
+      "source_label": "phase3y-hosted-success-http.json",
+      "archive": "phase3y-hosted-success-http.json.gz",
+      "raw_bytes": 1772722,
+      "raw_sha256": "04802af73a5005ab27805e8e8df227da59d5a1b758cfe2618ae50e7c7c504ac6",
+      "gzip_bytes": 109707,
+      "gzip_sha256": "c23deadfbc66ffd190404a9e81ff028a174ad2d90ee2e648126f185bc4f8d1b2",
+      "lossless": true
+    },
+    {
+      "source_label": "phase3y-hosted-success-static.json",
+      "archive": "phase3y-hosted-success-static.json.gz",
+      "raw_bytes": 11023,
+      "raw_sha256": "643224f6494290d85a47787371eae3b7cf2b65fa499319ad25f454b4e066baa7",
+      "gzip_bytes": 936,
+      "gzip_sha256": "d524fb01db00163aba900d14bcf13df38974906d317bfbcb2746dbc2f602e362",
+      "lossless": true
+    }
+  ],
+  "prior_phase3y_artifacts": [
+    {
+      "head": "b09e66c3fcba5066c63da8bece245ae5f4068410",
+      "run": 40640822107,
+      "artifact": 12795482558,
+      "status": "PASS",
+      "zip_sha256": "cfb082a00415e6a1d95643bec4d4f5791a900c62c7503911d1733b6946366b29"
+    },
+    {
+      "head": "79fa2c3c38ef8f011239a4edd628e65cdd599248",
+      "run": 40639806122,
+      "artifact": 12794239744,
+      "status": "FAIL; static SKIPPED",
+      "zip_sha256": "e1e7b273b23708dfe82f3424d7a887ad1de7905f12bbaa912de9439030507a7c",
+      "retained_in": "docs/450-phase3y-raw/hosted-79fa2c3-* (unchanged accepted base)"
+    }
+  ]
+}
