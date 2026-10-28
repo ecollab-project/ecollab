@@ -1,0 +1,14 @@
+{
+  "status": "INCOMPLETE discovery checkpoint",
+  "base": "bc1f1bc3cff91ce61cf531853e7220f1cfca590a",
+  "raw_sha256": "198dc216672404925ebf837fd7445fd1fd166992dd4a34eb4396ff8459d9ec4e",
+  "gzip_sha256": "d6cb151dde6f48b463b5bf8c9ed637e8e6b7815fee82c585157bfd02a3aef2ce",
+  "clock_records": 360,
+  "trial_clock_records": 180,
+  "race_rounds": 10,
+  "double_reset_token_rounds": 10,
+  "production_correction": "NOT AUTHORIZED / NOT IMPLEMENTED",
+  "hosted_ci": "NOT RUN",
+  "browser_regression": "NOT RUN this phase",
+  "full_suite": "RUNNING at checkpoint"
+}

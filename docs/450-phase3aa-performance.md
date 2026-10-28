@@ -1,0 +1,21 @@
+# Phase3AA decision investigation — incomplete checkpoint
+
+Base bc1f1bc3cff91ce61cf531853e7220f1cfca590a. Branch investigation/phase3aa-utc-decision-20261028. Production-facing files are unchanged. This checkpoint is not final acceptance or an implementation approval request.
+
+TASK: Prepare UTC clock decision and isolated validation. SOURCE: exact accepted Phase3Z. PRIMARY DEPARTMENT: security. SUPPORTING DEPARTMENTS: backend, database, QA; deployment additionally reviews transition/rollback. EXPERT LENSES: authentication-session lead, transaction concurrency, PHP service contract, release rollback, integration-test QA. KNOWN FLOW: auth APIs → unchanged AuthService → original OtpService; CLI trial injects only a test class through Reflection, never the FPM/API application.
+
+Discovery executed five cohorts: four accepted timezone combinations at TTL600 and UTC at configuredTTL120. Both original and test-only UTC implementations produced36 clock records per cohort,360 total. Candidate180 records retain600/120s as configured despite timezone changes; original adverse -21000/29400s intervals remain in separate records. Boundaries and real reset-service outcomes are retained. SET SESSION timestamp affects only database simulation, not PHP elapsed time.
+
+Separate independent-session/connection equal-start races: five original and five UTC trial rounds each yielded two successful reset-token issuances. There is no barrier or hook inside the application SELECT/hash/UPDATE path. This is a confirmed double-consumption interleaving in owned fixtures, not a production incidence estimate. Single-use safety FAIL remains; no atomic redesign is included.
+
+Private transition experiments demonstrate that a UTC reader still accepts unconverted legacy local DATETIME values beyond nominalTTL; deleting only owned actor records prevents their reuse; rolling the private deletion back restores unsafe rows; an old writer can reintroduce incompatible rows. Production transition is NOT AUTHORIZED.
+
+Reviewable recommendation: consistent UTC_TIMESTAMP for generation, creation, invalidation, verification, counting, consumption and purge in security/forgot-password/OtpService.php only, with strict expiry and existing session/token/API behavior preserved. No global config or marker TTL change. A coordinated cutover must stop every OTP writer/reader, explicitly resolve all legacy expires_at/created_at/used_at interpretation, and require re-request of invalidated persisted codes. Table-wide removal including already-used OTP rows is one proposal, requiring separate approval of retention loss and exact scope. No such operation is executed. Versioned compatibility requires trustworthy old-record provenance and reader/writer isolation; provenance is currently absent.
+
+Already-issued PHP reset tokens and pre-signup session codes/verified markers are separate state and must not silently acquire a new policy. Failed delivery retains existing behavior: forgotPassword can return success while delivery fails and a newly generated unused row persists. Trial and original are characterized, not newly approved.
+
+Rollback of a future UTC correction cannot restore invalidated codes or blindly revert mixed writers. Keep OTP traffic paused after cutover failure; prefer reviewed roll-forward. A code rollback against UTC rows requires another explicit compatibility/invalidation decision. No schema/data/production action is authorized.
+
+Verification incomplete: discovery helpers exit0, but current-phase complete native controls, HTTP/browser, static, frozen source rerun, hosted CI/artifact and draft PR remain outstanding. The full suite was started at checkpoint. Raw discovery is losslessly redacted and compressed with hashes in evidence JSON. Source hashes/uncommitted status are recorded in raw. No final-head claim.
+
+RISKS & ROLLBACK: confirmed clock defect in unchanged application and independent consumption race; tests-only trial is CLI-guarded and absent from application autoload/routes. Revert this phase's test/docs files to base; no application/schema rollback. HANDOFF: finish regression/evidence publication before independent acceptance or seeking correction authorization.
