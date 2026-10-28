@@ -32,6 +32,8 @@ for c in data['cohorts']:
  assert c['native_clock']['regeneration']['old_code_success']is False and c['native_clock']['regeneration']['new_code_success']is True
  assert len(c['native_clock']['purge'])==6
  for r in c['native_clock']['purge']:assert r['row_exists']is(r['seconds_relative_24h_cutoff']>=0)and r['removed']==int(r['seconds_relative_24h_cutoff']<0)
+ con=c['otp_concurrent']
+ if key==('UTC','+00:00'):assert sum(con['successes'])==1 and con['overlap']and con['before']['business']['users']['rows']==con['after']['business']['users']['rows']and con['after']['session']['authenticated']
  marker=c['verified_marker']
  if key==('UTC','+00:00'):assert marker['registration_success']and marker['before']['session']['signup_verified']and 'pending_signup_email_expires'not in marker['before']['session']['keys']and not marker['before_registration']['session']['signup_intent_valid']
  rejects=0

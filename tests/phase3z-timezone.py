@@ -12,7 +12,8 @@ class CheckedClient(h.Client):
      inspect(x)
    elif isinstance(v,list):
     for x in v:inspect(x)
-  inspect(r['json']);self.o.debug_response_checks=getattr(self.o,'debug_response_checks',0)+1
+  inspect(r['json'])
+  with self.o.labels_lock:self.o.debug_response_checks=getattr(self.o,'debug_response_checks',0)+1
   return r
 h.Client=CheckedClient
 BASE='b09e66c3fcba5066c63da8bece245ae5f4068410'
@@ -49,8 +50,18 @@ class Owned(h.Owned):
     self.reject(c.req('/API/auth/login.php','POST',{'identifier':d['email'],'password':d['password']}),401)
     r=c.req('/API/auth/login.php','POST',{'identifier':d['email'],'password':new});h.check(r['json']['success'],'new password login')
    self.case('password_reset_http_debug_absence_and_replay',reset_journey)
+   def concurrent_verify():
+    c,d=self.registered();c.req('/API/auth/logout.php','POST',{});c.csrf();self.control('optional_login',session_id=c.sid(),email=d['email'],password=d['password']);before=c.state();code=self.code(d,'2fa')
+    children=[h.Client(self,ip=c.ip,cookie=c.cookie)for _ in range(2)]
+    for x in children:x.token=c.token
+    with h.concurrent.futures.ThreadPoolExecutor(max_workers=2)as pool:rr=list(pool.map(lambda x:x.req('/API/auth/verify-otp.php','POST',{'user_id':c.uid,'otp':code},capture=False),children))
+    success=[bool(r['json'].get('success'))for r in rr];pair=self.records[-2:];overlap=max(r['start_monotonic']for r in pair)<min(r['end_monotonic']for r in pair)
+    h.check(sum(success)==1 and overlap,'one overlapping same-session OTP verification succeeds');after=children[success.index(True)].state()
+    h.check(after['session']['authenticated']and after['session']['user_id']==c.uid,'only bound actor authenticates');h.check(before['business']['users']['rows']==after['business']['users']['rows'],'OTP verification creates no account')
+    self.otp_concurrent={'successes':success,'statuses':[r['status']for r in rr],'overlap':overlap,'before':before,'after':after,'scope':'Same original session handle; does not establish cross-session atomic consumption'}
+   self.case('two_overlapping_same_session_otp_verifications',concurrent_verify)
  def result(self):
-  r=super().result();r['native_clock']=self.native_clock;r['debug_response_checks']=self.debug_response_checks;r['verified_marker']=getattr(self,'marker',None);return r
+  r=super().result();r['native_clock']=self.native_clock;r['debug_response_checks']=self.debug_response_checks;r['otp_concurrent']=getattr(self,'otp_concurrent',None);r['verified_marker']=getattr(self,'marker',None);return r
 
 def main():
  target=pathlib.Path(os.environ.get('PHASE3Z_EVIDENCE','phase3z-raw/timezone.json'));target.parent.mkdir(parents=True,exist_ok=True)
