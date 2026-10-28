@@ -1,0 +1,167 @@
+{
+  "format": "Lossless gzip of redacted semantic JSON/log bytes,mtime zero",
+  "files": [
+    {
+      "source_label": "accepted-phase3x.json",
+      "archive": "accepted-phase3x.json.gz",
+      "raw_bytes": 451356,
+      "raw_sha256": "aaf0a0ae15342896348012016789453608ae4a0cba7236ec9fe855c38454399d",
+      "gzip_bytes": 53593,
+      "gzip_sha256": "36868068c6cafce96acfc93c2f381e1862d445b8167fdc8b15eb746f28f5b71b"
+    },
+    {
+      "source_label": "accepted-phase3y.json",
+      "archive": "accepted-phase3y.json.gz",
+      "raw_bytes": 451367,
+      "raw_sha256": "1ee9e24f2bcc9fa244aa2c739eb0d6e873778101a6f64fe3e632d8f66432b9e2",
+      "gzip_bytes": 53575,
+      "gzip_sha256": "4d0b279257bffeae3a6e79cf2bf487fb189a2c3543853e80c7b2855f4d4fa777"
+    },
+    {
+      "source_label": "accepted-phase3z.json",
+      "archive": "accepted-phase3z.json.gz",
+      "raw_bytes": 451360,
+      "raw_sha256": "e1a4c8e6ea5187ed1bac38a0c228a870a2aca395d75330470f37ce17aa1d59f2",
+      "gzip_bytes": 53570,
+      "gzip_sha256": "9e09ed794ad456a04fd0333ad77a1aa5bb3c6a6e9ec1d75a348db46fb67c44c4"
+    },
+    {
+      "source_label": "completion-commands.json",
+      "archive": "completion-commands.json.gz",
+      "raw_bytes": 14586,
+      "raw_sha256": "ffd783790608ffac3da4009c8926720033336115893d905b4948f1d0a6be6b71",
+      "gzip_bytes": 2246,
+      "gzip_sha256": "36d94ded0f10d3d65bf5acc19107786b00b896f269d47c0bdaa79b567cc68a49"
+    },
+    {
+      "source_label": "discovery-summary.json",
+      "archive": "discovery-summary.json.gz",
+      "raw_bytes": 6930,
+      "raw_sha256": "d45701aaa1eda02c610ac3fbb7acd2f60f214d562c731b82c02c667a4d43b470",
+      "gzip_bytes": 1618,
+      "gzip_sha256": "94472418b88b028170584177c7d3e18b081e71e12d392cd9d0552c5933248ac2"
+    },
+    {
+      "source_label": "discovery.json",
+      "archive": "discovery.json.gz",
+      "raw_bytes": 1851913,
+      "raw_sha256": "198dc216672404925ebf837fd7445fd1fd166992dd4a34eb4396ff8459d9ec4e",
+      "gzip_bytes": 149872,
+      "gzip_sha256": "d6cb151dde6f48b463b5bf8c9ed637e8e6b7815fee82c585157bfd02a3aef2ce"
+    },
+    {
+      "source_label": "frozen-experiments-summary.json",
+      "archive": "frozen-experiments-summary.json.gz",
+      "raw_bytes": 6743,
+      "raw_sha256": "00ea0b91560f7671244d80bd6d59764131296380335cf883b0bc3718e1cac617",
+      "gzip_bytes": 1591,
+      "gzip_sha256": "22c3c0e2ce1709f5185abe8087d810e6f5ee2b9f29c00904bbd59fa20be6ec18"
+    },
+    {
+      "source_label": "frozen-experiments.json",
+      "archive": "frozen-experiments.json.gz",
+      "raw_bytes": 1851768,
+      "raw_sha256": "782fd54be825faa81410f210158910b599258d3c1290c99b30fce8ca82878439",
+      "gzip_bytes": 149838,
+      "gzip_sha256": "d62c5c6ec43b84eb59606203159420fd62cbc23985b205ddde8bb515b21152ac"
+    },
+    {
+      "source_label": "frozen-full-summary.json",
+      "archive": "frozen-full-summary.json.gz",
+      "raw_bytes": 3832,
+      "raw_sha256": "e9df303c693cf8e42dd5bb85f9a1b8e16edd61cfaf2e39a7076f45f28ae784fb",
+      "gzip_bytes": 1445,
+      "gzip_sha256": "29e1ad2618c385a2b413ce8d5d26c8a96865b2241b20a69005b68b6df13e7f4a"
+    },
+    {
+      "source_label": "frozen-full.json",
+      "archive": "frozen-full.json.gz",
+      "raw_bytes": 2226261,
+      "raw_sha256": "4923c00059a76e3a1683f68653e994958a4e6c01592eaa036d6cdb0e209d451e",
+      "gzip_bytes": 226094,
+      "gzip_sha256": "201bbc2a2b8ff366737d9d9d691b45f44047c64ecc159a4c4e9544e6d24a4e92"
+    },
+    {
+      "source_label": "frozen-http-summary.json",
+      "archive": "frozen-http-summary.json.gz",
+      "raw_bytes": 6746,
+      "raw_sha256": "5e0634b4d173f4c7f11ab7d9b2b73f13012766e06b110fa951c483ef125b6b13",
+      "gzip_bytes": 2556,
+      "gzip_sha256": "28a731fb9706f007ba063af45012cff2d83fa269fb0c591c78c9c5c6793756f8"
+    },
+    {
+      "source_label": "frozen-http.json",
+      "archive": "frozen-http.json.gz",
+      "raw_bytes": 1781905,
+      "raw_sha256": "70a913dc21b9c2fdd03360f0c2d09c2c8052b7db833098333bf242d929b89358",
+      "gzip_bytes": 109157,
+      "gzip_sha256": "243869ac69da19ad29fd481571cbfccec47e1409b27bd25fce0a727dcadfc78c"
+    },
+    {
+      "source_label": "frozen-phase3z-summary.json",
+      "archive": "frozen-phase3z-summary.json.gz",
+      "raw_bytes": 5771,
+      "raw_sha256": "1aab68555661f408a174f75400e8069eb6ffbf2c94875a863760b441788b893c",
+      "gzip_bytes": 1570,
+      "gzip_sha256": "090d24580f08990d87172652b8019b696eee4f63b338e3af24cf19f2745ab71b"
+    },
+    {
+      "source_label": "frozen-phase3z.json",
+      "archive": "frozen-phase3z.json.gz",
+      "raw_bytes": 2170199,
+      "raw_sha256": "c6df965cd89dc0f41a7aa659886059bf1ecc4f58021eefaafe3c85be43c0b212",
+      "gzip_bytes": 145937,
+      "gzip_sha256": "c29c858a196a1a0e95d56213cb8d2013101e15f32642998c9945268529373676"
+    },
+    {
+      "source_label": "frozen-static.json",
+      "archive": "frozen-static.json.gz",
+      "raw_bytes": 11113,
+      "raw_sha256": "e5c548cebfe59674975bbc4130fc5154ec9580b1e44c616a23be678f0f0e9215",
+      "gzip_bytes": 951,
+      "gzip_sha256": "ebdb42518f675a429dbe862a832b691d20bd3f989e005c6ee65f361b3389496d"
+    },
+    {
+      "source_label": "full.json",
+      "archive": "full.json.gz",
+      "raw_bytes": 2226205,
+      "raw_sha256": "078885809e5b5704a8b892cfd6e568ec92ea09dcfd6d60b89a97ae6b12dacc96",
+      "gzip_bytes": 226071,
+      "gzip_sha256": "2e98d7b10f72a33134f13c12020c76a07250f728dc56d3779522403c1127e65a"
+    },
+    {
+      "source_label": "phase3aa-composer.log",
+      "archive": "phase3aa-composer.log.gz",
+      "raw_bytes": 347,
+      "raw_sha256": "e21ac3f9a22a0bf5c10955d84c9a56d6e58ef09e64e8ea0b25257d8ff11caa1f",
+      "gzip_bytes": 244,
+      "gzip_sha256": "a5f1c1482bb9f18082b522a19ac3020fe455a8d58c9d1958720e09e5c7df242a"
+    },
+    {
+      "source_label": "phase3aa-discovery.log",
+      "archive": "phase3aa-discovery.log.gz",
+      "raw_bytes": 312,
+      "raw_sha256": "09829702dc781159dcc8848ff6aa6fa1078b6df5fc8fc8ffb5be48ae86caf767",
+      "gzip_bytes": 106,
+      "gzip_sha256": "b046f690c971f76e9b669b45bc5d080654d44ccd096462cdca706fe15e8be815"
+    },
+    {
+      "source_label": "phase3aa-full.log",
+      "archive": "phase3aa-full.log.gz",
+      "raw_bytes": 0,
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_bytes": 20,
+      "gzip_sha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    {
+      "source_label": "phase3aa-completion.log",
+      "archive": "phase3aa-completion.log.gz",
+      "raw_bytes": 471,
+      "raw_sha256": "17d9763dc3d0c1044764ae51166fd706c149ead2807b131489b4d969b778aa95",
+      "gzip_bytes": 238,
+      "gzip_sha256": "1fb75c71ce68a81589ef5d9c0d5a802eb9734e6dd6b8e56e79a397570d85ba40"
+    }
+  ],
+  "secret_scan": "PASS for known fixture credentials and raw session cookie headers; original harness also redacts OTP/reset/CSRF/identity fields",
+  "checkpoint": "Discovery preserved independently of frozen acceptance run; prior checkpoint tree is published unchanged in history"
+}

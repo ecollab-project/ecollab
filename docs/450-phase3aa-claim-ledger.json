@@ -1,0 +1,92 @@
+{
+  "source": {
+    "base": "bc1f1bc3cff91ce61cf531853e7220f1cfca590a",
+    "base_tree": "a9cc16ca1bee8ad51f96fa1bfe2c0504be09a515",
+    "branch": "investigation/phase3aa-utc-decision-20261028",
+    "stacked_on": "investigation/phase3z-otp-clock-20261028",
+    "original_local_checkpoint": "2416717080d08f10cd40bf79bf1032402d34581d",
+    "published_checkpoint_equivalent": "e6ba0ab00e8ff6d9f28272be0d26b2a39a3b49ee",
+    "checkpoint_tree": "850837d4c7cc6b2ebfdbeb6cc0fdbd5fb4f87531",
+    "frozen_local_harness": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+    "frozen_published_equivalent": "a5bb3f5244e4c587e58ce1739f0992e894bc4367",
+    "frozen_tree": "32c1ea35444227547e635c83ddc5136691e955f8",
+    "final_report_decision_published": "fe5f505d868dc5bb234dfd5e73bf0101c10de4bb",
+    "final_report_decision_tree": "6dc472c9683178c325d99f2aa64216b64760bc4c",
+    "application_diff": "",
+    "source_file_hashes_verified": true,
+    "publication_head_tree": "Pinned in final PR body after publication; this JSON is a pre-CI snapshot",
+    "metadata_note": "Local and connector-created commit IDs differ due commit metadata; full trees and every blob match. Checkpoint content is available under published equivalent,not claimed uploaded under original SHA."
+  },
+  "claims": [
+    {
+      "claim": "source-integrity",
+      "status": "PASS",
+      "evidence_and_limits": "Exact accepted-base app/config/security/migrations/Composer source gate; all test/application raw hashes match publication"
+    },
+    {
+      "claim": "utc-trial",
+      "status": "PASS for test-only contract",
+      "evidence_and_limits": "180 UTC trial records including600/120 configuredTTL,PHP/DB verification-zone changes,strict DB boundaries,created/used UTC timestamps"
+    },
+    {
+      "claim": "original-clock-safety",
+      "status": "FAIL retained",
+      "evidence_and_limits": "Original180 paired records preserve -21000/29400 adverse600s intervals; no application repair"
+    },
+    {
+      "claim": "single-use-safety",
+      "status": "FAIL",
+      "evidence_and_limits": "10 frozen races:5original+5trial,each two successful reset-token issuances with independent PDO/session and overlapping calls; equal-start gate only"
+    },
+    {
+      "claim": "legacy-compatibility",
+      "status": "FAIL without transition",
+      "evidence_and_limits": "UTC reader accepts old local DATETIME atTTL+1; private deletion prevents reuse; rollback/old writer restore unsafe compatibility"
+    },
+    {
+      "claim": "contracts",
+      "status": "PASS for preserved behavior",
+      "evidence_and_limits": "User/action/hash errors,trimmed code,replay,count and offline delivery behavior compared in all5cohorts; unchanged AuthService native reset invoked"
+    },
+    {
+      "claim": "regression",
+      "status": "PASS",
+      "evidence_and_limits": "Current60/280 three orderings; accepted3X57/245,3Y60/280,3Z60/280 controls and current comparisons"
+    },
+    {
+      "claim": "original-baseline",
+      "status": "FAIL expected control",
+      "evidence_and_limits": "46/114 five inherited failures,exit1; no errors/skips"
+    },
+    {
+      "claim": "http",
+      "status": "PASS",
+      "evidence_and_limits": "192 retained3Y +169 retained3Z +20 original registration setup requests=381 direct;102 checked rejection-state records plus separate concurrency aggregate"
+    },
+    {
+      "claim": "browser-local",
+      "status": "NOT RUN",
+      "evidence_and_limits": "Chromium absent locally; required hosted browser belongs to original application3Y journey,not UTC trial"
+    },
+    {
+      "claim": "phpstan-delta",
+      "status": "PASS",
+      "evidence_and_limits": "15 baseline/current inherited;0 added; analyzer exits1,wrapper0; full-clean FAIL. Tests/trial excluded by existing phpstan paths,validated by syntax/native instead"
+    },
+    {
+      "claim": "hosted-final-head",
+      "status": "PENDING",
+      "evidence_and_limits": "Final PR body will report inspected exact-head runs/steps and downloaded/recomputed artifact; no pre-CI pass claim"
+    },
+    {
+      "claim": "application-correction",
+      "status": "BLOCKED",
+      "evidence_and_limits": "Not authorized,not implemented; test-only CLI trial is implemented,not deployed"
+    },
+    {
+      "claim": "release-capacity",
+      "status": "BLOCKED",
+      "evidence_and_limits": "No production/TLS/proxy parity,merge/deployment or student capacity approval"
+    }
+  ]
+}
