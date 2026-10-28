@@ -1,0 +1,61 @@
+name: Phase 3X full-schema authentication contracts
+on:
+  pull_request:
+    paths:
+      - 'tests/Integration/AuthServiceTest.php'
+      - 'tests/Support/LocalOtpTransport.php'
+      - 'tests/phase3x-*'
+      - 'tests/classroom-performance.py'
+      - '.github/workflows/phase3x-contracts.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  owned-auth-contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Install disposable MariaDB and PHP dependencies
+        run: |
+          mkdir -p "$RUNNER_TEMP/perf-apt/empty" "$RUNNER_TEMP/perf-apt/lists/partial"
+          printf '%s\n' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble-updates main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://security.ubuntu.com/ubuntu noble-security main universe' \
+            > "$RUNNER_TEMP/perf-apt/sources.list"
+          apt_options=(-o "Dir::Etc::sourcelist=$RUNNER_TEMP/perf-apt/sources.list"
+            -o "Dir::Etc::sourceparts=$RUNNER_TEMP/perf-apt/empty"
+            -o "Dir::State::lists=$RUNNER_TEMP/perf-apt/lists"
+            -o Acquire::Retries=0 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20)
+          sudo apt-get "${apt_options[@]}" update
+          sudo apt-get "${apt_options[@]}" install -y mariadb-server php8.3-fpm php8.3-cli php8.3-mysql php8.3-sqlite3 php8.3-curl php8.3-mbstring php8.3-xml
+      - name: Dependencies, syntax and unchanged application gate
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          git diff --exit-code 827470217e6a6a86a165b14f4b6650a10e2c2395 -- services API database assets security websocket
+          php8.3 -l tests/Integration/AuthServiceTest.php
+          php8.3 -l tests/Support/LocalOtpTransport.php
+          php8.3 -l tests/phase3x-suite.php
+      - name: Full migrated-schema exact-base and three current orderings
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          CLASSROOM_BASE: 827470217e6a6a86a165b14f4b6650a10e2c2395
+          CLASSROOM_PHASE3X: '1'
+          PHASE3X_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          CLASSROOM_EVIDENCE: phase3x-raw/full.json
+          TZ: UTC
+        run: python3 -B -u tests/classroom-performance.py
+      - name: Exact-base static analysis comparison
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          PEER_THREADS_BASE: 827470217e6a6a86a165b14f4b6650a10e2c2395
+          PEER_THREADS_STATIC_EVIDENCE: phase3x-raw/static.json
+        run: python3 -B -u tests/peer-threads-static.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase3x-owned-auth-contracts
+          path: phase3x-raw/

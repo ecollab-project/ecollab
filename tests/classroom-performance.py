@@ -160,6 +160,13 @@ def main():
     global DB_PID
     target=pathlib.Path(os.environ['CLASSROOM_EVIDENCE']);target.parent.mkdir(parents=True,exist_ok=True)
     evidence={'base':BASE,'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'tree':subprocess.check_output(['git','rev-parse','HEAD^{tree}'],cwd=ROOT,text=True).strip(),'scope':'Owned loopback FPM/MariaDB sampler, not authorized representative external two-tier staging','staging':'BLOCKED: no authorized external staging identified','load_limits':{'levels':[1,10],'outstanding':10,'scheduled_rps':8,'steady_seconds':8,'warmup':'one complete cycle, separately recorded','recovery_seconds':1,'request_timeout_seconds':8,'stop':'SQL/error, worker exit, pending-cap exhaustion or p99>=5000ms'},'runs':[]}
+    if os.environ.get('CLASSROOM_PHASE3X')=='1':
+        names=['tests/classroom-performance.py','tests/phase3x-suite.php','tests/phase3w-schema.php','tests/phase3w-phpunit-bootstrap.php','tests/Integration/AuthServiceTest.php','tests/Support/LocalOtpTransport.php','services/AuthService.php','security/forgot-password/OtpService.php','config.php']
+        difference=subprocess.check_output(['git','diff',BASE,'--','services','API','database','assets','security','websocket','config.php'],cwd=ROOT,text=True)
+        assert not difference,'Phase3X application source must remain unchanged'
+        evidence['scope']='Disposable full migrated-schema service integration; no HTTP/FPM workload, browser or external mail'
+        evidence['load_limits']={'status':'NOT RUN: authentication contract phase, not a load measurement'}
+        evidence['phase3x_source']={'intended_base':BASE,'intended_head':os.environ.get('PHASE3X_EXPECTED_HEAD','UNPUBLISHED'),'harness_commit':evidence['head'],'harness_tree':evidence['tree'],'harness_diff':subprocess.check_output(['git','diff','HEAD'],cwd=ROOT,text=True),'application_diff':difference,'sha256':{name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest() for name in names}}
     if any(os.environ.get(k)=='1' for k in ['CLASSROOM_PHASE3V','CLASSROOM_PHASE3V_PROFILE','CLASSROOM_PHASE3V_REGRESSION_ONLY']):
         names=['tests/classroom-performance.py','tests/classroom-bootstrap.php','tests/classroom-fixture.sql','tests/fixtures/application-performance.sql','tests/phase3v-compare.py','tests/phase3v-sample.py','tests/phase3v-profile.php','tests/phase3v-regression.php','database/migrations/067_dashboard_unread_covering.sql']
         evidence['phase3v_driver_source']={'application_ref':BASE,'driver_commit':evidence['head'],'driver_tree':evidence['tree'],'driver_diff':subprocess.check_output(['git','diff','HEAD'],cwd=ROOT,text=True),'sha256':{name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest() for name in names},'application_directory_diff':subprocess.check_output(['git','diff',BASE,'--','services','API','database','assets'],cwd=ROOT,text=True)}
@@ -182,7 +189,9 @@ def main():
         args=[env.get('MARIADB_INSTALL_DB_BIN','mariadb-install-db'),'--no-defaults','--datadir='+str(p/'data'),'--auth-root-authentication-method=normal','--skip-test-db']
         if env.get('MARIADB_BASEDIR'):args+=['--basedir='+env['MARIADB_BASEDIR']]
         log=open(p/'database.log','w');subprocess.run(args,env=env,stdout=log,stderr=log,check=True,timeout=60)
-        daemon=subprocess.Popen([env.get('MARIADBD_BIN','mariadbd'),'--no-defaults','--user='+pwd.getpwuid(os.geteuid()).pw_name,'--datadir='+str(p/'data'),'--bind-address=127.0.0.1','--port='+str(dbport),'--socket=','--pid-file='+str(p/'db.pid'),'--innodb-buffer-pool-size=134217728','--max-connections=32'],env=env,stdout=log,stderr=log)
+        daemon_args=[env.get('MARIADBD_BIN','mariadbd'),'--no-defaults','--user='+pwd.getpwuid(os.geteuid()).pw_name,'--datadir='+str(p/'data'),'--bind-address=127.0.0.1','--port='+str(dbport),'--socket=','--pid-file='+str(p/'db.pid'),'--innodb-buffer-pool-size=134217728','--max-connections=32']
+        if env.get('CLASSROOM_PHASE3X')=='1':daemon_args+=['--default-time-zone=+00:00']
+        daemon=subprocess.Popen(daemon_args,env=env,stdout=log,stderr=log)
         DB_PID=daemon.pid
         evidence['visible_resources']={'affinity_cpu_ids':sorted(os.sched_getaffinity(0)),'cgroup_cpu_max':read_limit('cpu.max'),'cgroup_memory_max':read_limit('memory.max')}
         fpm=None;server=None;app=ROOT;baseline_app=None
@@ -193,6 +202,16 @@ def main():
                 if r.returncode==0:break
                 time.sleep(.1)
             else:raise AssertionError('Database startup')
+            if env.get('CLASSROOM_PHASE3X')=='1':
+                import shutil
+                baseline_app=p/'suite-base'
+                subprocess.run(['git','worktree','add','--detach',str(baseline_app),BASE],cwd=ROOT,check=True,capture_output=True)
+                shutil.copytree(ROOT/'vendor',baseline_app/'vendor')
+                suite_env=env|{'CLASSROOM_DSN':f'mysql:host=127.0.0.1;port={dbport};dbname=classroom_perf_test','PHASE3X_BASE_SUITE':str(baseline_app)}
+                r=subprocess.run([PHP,'-d','date.timezone=UTC',str(ROOT/'tests/phase3x-suite.php')],env=suite_env,capture_output=True,text=True,timeout=180)
+                evidence['phase3x_suite']={'exit_code':r.returncode,'stdout':r.stdout,'stderr':r.stderr}
+                assert r.returncode==0,'Phase3X suite failed; inspect retained evidence'
+                return
             if env.get('CLASSROOM_PHASE3W_SCHEMA')=='1':
                 suite_env={}
                 if env.get('PHASE3W_FULL_PHPUNIT')=='1':
