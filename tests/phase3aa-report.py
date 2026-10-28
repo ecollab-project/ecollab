@@ -27,7 +27,10 @@ for c in x['cohorts']:
    assert r['simulated_database_clock']is True and r['php_clock_advanced']is False
    if r['point']=='ttl_plus_one':assert now-gen==ttl+1
    else:assert now-end=={'expiry_minus_one':-1,'expiry_exact':0,'expiry_plus_one':1}[r['point']]
-   if trial:assert end-gen==ttl and (not valid if r['point']=='ttl_plus_one'else True)
+   if trial:
+    assert end-gen==ttl and (not valid if r['point']=='ttl_plus_one'else True)
+    assert epoch(r['before']['created_at'],datetime.timezone.utc)==gen
+    if valid:assert epoch(r['after']['used_at'],datetime.timezone.utc)==now
    if sc['name']=='stable':stable.add(end-gen)
    if r['reset_service']is not None:
     a=r['reset_service'];assert a['success']is valid and a['reset_token_present']is valid and not a['authenticated']and not a['pending_login_present'];reset_checks+=1
