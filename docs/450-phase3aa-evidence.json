@@ -1,0 +1,1103 @@
+{
+  "status": "Local validation completed; ready for publication and final-head CI; independent acceptance pending",
+  "source": {
+    "base": "bc1f1bc3cff91ce61cf531853e7220f1cfca590a",
+    "base_tree": "a9cc16ca1bee8ad51f96fa1bfe2c0504be09a515",
+    "branch": "investigation/phase3aa-utc-decision-20261028",
+    "stacked_on": "investigation/phase3z-otp-clock-20261028",
+    "original_local_checkpoint": "2416717080d08f10cd40bf79bf1032402d34581d",
+    "published_checkpoint_equivalent": "e6ba0ab00e8ff6d9f28272be0d26b2a39a3b49ee",
+    "checkpoint_tree": "850837d4c7cc6b2ebfdbeb6cc0fdbd5fb4f87531",
+    "frozen_local_harness": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+    "frozen_published_equivalent": "a5bb3f5244e4c587e58ce1739f0992e894bc4367",
+    "frozen_tree": "32c1ea35444227547e635c83ddc5136691e955f8",
+    "final_report_decision_published": "fe5f505d868dc5bb234dfd5e73bf0101c10de4bb",
+    "final_report_decision_tree": "6dc472c9683178c325d99f2aa64216b64760bc4c",
+    "application_diff": "",
+    "source_file_hashes_verified": true,
+    "publication_head_tree": "Pinned in final PR body after publication; this JSON is a pre-CI snapshot",
+    "metadata_note": "Local and connector-created commit IDs differ due commit metadata; full trees and every blob match. Checkpoint content is available under published equivalent,not claimed uploaded under original SHA."
+  },
+  "authorization": {
+    "decision_preparation": true,
+    "isolated_trial": true,
+    "production_facing_correction": false,
+    "legacy_transition": false,
+    "atomic_fix": false,
+    "merge_deployment": false
+  },
+  "trial_recomputation": {
+    "scope": "PASS for test-only characterization; security safety failures preserved",
+    "base": "bc1f1bc3cff91ce61cf531853e7220f1cfca590a",
+    "head": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+    "tree": "32c1ea35444227547e635c83ddc5136691e955f8",
+    "intended_head": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+    "harness_diff": "",
+    "harness_status": "?? docs/450-phase3v-raw/.6-on-existing_067-control_a.json.gz.ZGqXP3",
+    "sha256": {
+      "tests/phase3aa-experiments.py": "4848f115650e9663662ca2662c38b0d97003a97141630f6acd7ba3f51ccb89d2",
+      "tests/phase3aa-clock.php": "f94d08c3f342a190f0d2f187cab1498c58d544d46e4c89da5d3abb5d8fde973a",
+      "tests/phase3aa-race.php": "5787d12adb80e22cd21e5f7c64843f1b87b2d0817bd6271cd128135e3a2c2bd3",
+      "tests/phase3aa-race-worker.php": "56cb10cebb26af9b688ac6e37c339f7d5dff3f2a3018af0c3731dfb689c415dc",
+      "tests/phase3aa-transition.php": "b4ab721a581ddfd8b605cf41114df6499607d81a37838546f0c6855368cc30ad",
+      "tests/phase3aa-contracts.php": "e9b6ef75ef2092048620fcc97194c35124e4e39984242a30260af02a51412d2b",
+      "tests/experiments/phase3aa/UtcOtpTrial.php": "2fbf6eac7aa9f45c10b3680526279a3791189f8416c506c9fddb3909a8d7d1a7",
+      "tests/phase3y-http.py": "7877807cd4d4af275dacef745c01d29a86684114ac3dcd163594558ba2aafa86",
+      "tests/phase3y-bootstrap.php": "c4d9aee79d608127d1438401aeb1aa4822b581543fabc60feec7c4af7145f538",
+      "tests/phase3y-control.php": "3d0330c519c703a7625cc4fcb19ff6bbdf6e2aab354601a290cc9c80defc6f07",
+      "services/AuthService.php": "76f417367de386a948f97cc42cb8e1c17ef0183ae649478e70d5ae5f1dacfb3e",
+      "security/forgot-password/OtpService.php": "ae0f3c96c5d8563b0c00fbef6a0ef5c13dba9163f995b3712f5fa26515532a3b",
+      "database/config/db.php": "49cfed296df473dae63a268c049ae292ecba62365c9a3759b78d76f4b16da376",
+      "config.php": "24055d802a88c98ee5f5334ae5e1d17990a302f976b45e12592563afe7ed6bc4"
+    },
+    "raw_sha256": "782fd54be825faa81410f210158910b599258d3c1290c99b30fce8ca82878439",
+    "clock_records": 360,
+    "trial_clock_records": 180,
+    "cohorts": [
+      {
+        "cohort": {
+          "php_zone": "UTC",
+          "database_zone": "+00:00"
+        },
+        "configured_ttl": 600,
+        "variant": "original",
+        "clock_records": 36,
+        "stable_effective_seconds": 600,
+        "strict_expiry_boundary": "PASS",
+        "reset_checks": 3
+      },
+      {
+        "cohort": {
+          "php_zone": "UTC",
+          "database_zone": "+00:00"
+        },
+        "configured_ttl": 600,
+        "variant": "utc_trial",
+        "clock_records": 36,
+        "stable_effective_seconds": 600,
+        "strict_expiry_boundary": "PASS",
+        "reset_checks": 3
+      },
+      {
+        "cohort": {
+          "php_zone": "UTC",
+          "database_zone": "+06:00"
+        },
+        "configured_ttl": 600,
+        "variant": "original",
+        "clock_records": 36,
+        "stable_effective_seconds": -21000,
+        "strict_expiry_boundary": "PASS",
+        "reset_checks": 3
+      },
+      {
+        "cohort": {
+          "php_zone": "UTC",
+          "database_zone": "+06:00"
+        },
+        "configured_ttl": 600,
+        "variant": "utc_trial",
+        "clock_records": 36,
+        "stable_effective_seconds": 600,
+        "strict_expiry_boundary": "PASS",
+        "reset_checks": 3
+      },
+      {
+        "cohort": {
+          "php_zone": "Asia/Manila",
+          "database_zone": "+08:00"
+        },
+        "configured_ttl": 600,
+        "variant": "original",
+        "clock_records": 36,
+        "stable_effective_seconds": 600,
+        "strict_expiry_boundary": "PASS",
+        "reset_checks": 3
+      },
+      {
+        "cohort": {
+          "php_zone": "Asia/Manila",
+          "database_zone": "+08:00"
+        },
+        "configured_ttl": 600,
+        "variant": "utc_trial",
+        "clock_records": 36,
+        "stable_effective_seconds": 600,
+        "strict_expiry_boundary": "PASS",
+        "reset_checks": 3
+      },
+      {
+        "cohort": {
+          "php_zone": "Asia/Manila",
+          "database_zone": "+00:00"
+        },
+        "configured_ttl": 600,
+        "variant": "original",
+        "clock_records": 36,
+        "stable_effective_seconds": 29400,
+        "strict_expiry_boundary": "PASS",
+        "reset_checks": 3
+      },
+      {
+        "cohort": {
+          "php_zone": "Asia/Manila",
+          "database_zone": "+00:00"
+        },
+        "configured_ttl": 600,
+        "variant": "utc_trial",
+        "clock_records": 36,
+        "stable_effective_seconds": 600,
+        "strict_expiry_boundary": "PASS",
+        "reset_checks": 3
+      },
+      {
+        "cohort": {
+          "php_zone": "UTC",
+          "database_zone": "+00:00"
+        },
+        "configured_ttl": 120,
+        "variant": "original",
+        "clock_records": 36,
+        "stable_effective_seconds": 120,
+        "strict_expiry_boundary": "PASS",
+        "reset_checks": 3
+      },
+      {
+        "cohort": {
+          "php_zone": "UTC",
+          "database_zone": "+00:00"
+        },
+        "configured_ttl": 120,
+        "variant": "utc_trial",
+        "clock_records": 36,
+        "stable_effective_seconds": 120,
+        "strict_expiry_boundary": "PASS",
+        "reset_checks": 3
+      }
+    ],
+    "race_rounds": [
+      {
+        "variant": "original",
+        "round": 0,
+        "overlap": true,
+        "successful_consumptions": 2,
+        "single_use_safety": "FAIL"
+      },
+      {
+        "variant": "original",
+        "round": 1,
+        "overlap": true,
+        "successful_consumptions": 2,
+        "single_use_safety": "FAIL"
+      },
+      {
+        "variant": "original",
+        "round": 2,
+        "overlap": true,
+        "successful_consumptions": 2,
+        "single_use_safety": "FAIL"
+      },
+      {
+        "variant": "original",
+        "round": 3,
+        "overlap": true,
+        "successful_consumptions": 2,
+        "single_use_safety": "FAIL"
+      },
+      {
+        "variant": "original",
+        "round": 4,
+        "overlap": true,
+        "successful_consumptions": 2,
+        "single_use_safety": "FAIL"
+      },
+      {
+        "variant": "utc_trial",
+        "round": 0,
+        "overlap": true,
+        "successful_consumptions": 2,
+        "single_use_safety": "FAIL"
+      },
+      {
+        "variant": "utc_trial",
+        "round": 1,
+        "overlap": true,
+        "successful_consumptions": 2,
+        "single_use_safety": "FAIL"
+      },
+      {
+        "variant": "utc_trial",
+        "round": 2,
+        "overlap": true,
+        "successful_consumptions": 2,
+        "single_use_safety": "FAIL"
+      },
+      {
+        "variant": "utc_trial",
+        "round": 3,
+        "overlap": true,
+        "successful_consumptions": 2,
+        "single_use_safety": "FAIL"
+      },
+      {
+        "variant": "utc_trial",
+        "round": 4,
+        "overlap": true,
+        "successful_consumptions": 2,
+        "single_use_safety": "FAIL"
+      }
+    ],
+    "double_consumption_rounds": 10,
+    "production_correction": "NOT AUTHORIZED / NOT IMPLEMENTED",
+    "trial_http_browser": "NOT RUN; native CLI injection only, unchanged application HTTP/browser tested separately"
+  },
+  "original_http_recomputation": {
+    "base": "928a3b8912ef60ab374270c1efd3a24c0433c8aa",
+    "harness_head": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+    "harness_tree": "32c1ea35444227547e635c83ddc5136691e955f8",
+    "intended_head": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+    "harness_diff": "",
+    "harness_status": "?? docs/450-phase3v-raw/.6-on-existing_067-control_a.json.gz.ZGqXP3",
+    "sha256": {
+      "tests/phase3y-http.py": "7877807cd4d4af275dacef745c01d29a86684114ac3dcd163594558ba2aafa86",
+      "tests/phase3y-report.py": "43ba35804f1314dc414acd06c575f72cb830fbb03b32a4e919aa202d95f65017",
+      "tests/phase3y-bootstrap.php": "c4d9aee79d608127d1438401aeb1aa4822b581543fabc60feec7c4af7145f538",
+      "tests/phase3y-control.php": "3d0330c519c703a7625cc4fcb19ff6bbdf6e2aab354601a290cc9c80defc6f07",
+      "tests/phase3y-browser.cjs": "767ecdacc6017ed75f05a70346449c1ef0b2ff9e3a4b04cd1d755869c81dd8cb",
+      "tests/Integration/OtpExpiryTest.php": "a8458dfcf0bd32454fce344e8a432900f1451ef377ff76aed9a39335b0c64963",
+      "tests/Support/LocalOtpTransport.php": "fab46901ae655ccf266601facad451ca188b5f3a7ff9a449fcf0019de7367a53",
+      "config.php": "24055d802a88c98ee5f5334ae5e1d17990a302f976b45e12592563afe7ed6bc4",
+      "API/auth/send-signup-email-otp.php": "768caaeb6b0fdeda373dfcf6c1a03a875c9b64a83ff2cba190a429466b14bbc5",
+      "API/auth/verify-signup-email-otp.php": "ea95a40adaabc120a4ec03986d8ff15f145a86d4c4d5fb2650613febff4b020e",
+      "API/auth/resend-signup-otp.php": "399afecdb7e7f187bbc62e091e2cad610bd5606b2eba75d4470d095204c70d0b",
+      "API/auth/verify-otp.php": "8c535cf71159aed2264fd5b37a12bc7e7b5fa02e8bf7dc4fc4276d8f01df4523",
+      "API/auth/logout.php": "c5af14becbbe39142756a1fbeb741f3640e438f3a81e38a3c8630095b88e5f76",
+      "API/auth/csrf-token.php": "922a6ae2eb96b926f6066a4753f7bd90f32a6fa2800b3645d377c278e24f84d4",
+      "API/auth/validate-session.php": "fccc2864daaca417e8903b8aff91a71e8eac81c32a8fbdf187b6a1df2c1e4df8",
+      "API/profile/settings.php": "fb2b39be3aaa6592656dbd7edd93f7df76c4297312cf9f1f33a8858878ba9abf",
+      "modules/auth/signup.php": "2ed455cf0a98135b67d700a6ea0d6539a8593b32bb0f3c866239c455ffeab57e",
+      "modules/auth/login.php": "73bcbcf5c1c3a6acb993f457496cc71d1432942cbb54850f93b1c0dd28b154a5",
+      "assets/js/auth/signup.js": "a47ec8c8c530d7abcaca56cd9df8c64f4fbfb11c8a04acd0d5b7fbafdc3bf841",
+      "assets/js/auth/signup-network-fix.js": "5baca549d3f71877ba56bc389da875b1c2af4a393854e2bb7c8401d2f302dbbd",
+      "assets/js/auth/login.js": "74fcd587ca3a38e324a0ac40e2e579287b59765bbb9f120073615d25027bd89f",
+      "tests/classroom-performance.py": "dfd2b5b147c36b71c414a9ec85aa1984fd0f2866b1e9591295888adaf77766a0",
+      "services/AuthService.php": "76f417367de386a948f97cc42cb8e1c17ef0183ae649478e70d5ae5f1dacfb3e",
+      "security/forgot-password/OtpService.php": "ae0f3c96c5d8563b0c00fbef6a0ef5c13dba9163f995b3712f5fa26515532a3b",
+      "API/auth/login.php": "186c44e1f821588a59247b5588415cf5789b10de7b2bec5b34d493bda0b473c1",
+      "API/auth/signup.php": "4a8a92955c55398ae3dd53aa97087b24389d35773df17411d0a80664acf5ed7a",
+      "security/csrf/csrf.php": "7a76c34190c9701e7b5f24638d4ffe740b45c2ca94a8d074a449717c1cde0eba",
+      "security/middleware/AuthMiddleware.php": "b99065634199ec192f2d6d0441494aea183caa7ec25a2c6ceb2d22cc603ac515",
+      "security/rate-limit/RateLimiter.php": "7d11ab3fc495ae2bed0be25cdf8b2c595317304c2f9556859c13f5139fda6946"
+    },
+    "raw_sha256": "70a913dc21b9c2fdd03360f0c2d09c2c8052b7db833098333bf242d929b89358",
+    "direct_http_requests": 192,
+    "cohorts": [
+      {
+        "cohort": {
+          "php_zone": "UTC",
+          "database_zone": "+00:00"
+        },
+        "status": "PASS for scoped HTTP controls",
+        "http_cases_pass": 21,
+        "requests": 137,
+        "http_status_counts": {
+          "200": 76,
+          "401": 16,
+          "405": 7,
+          "403": 14,
+          "422": 21,
+          "429": 3
+        },
+        "independently_checked_rejections": 64,
+        "fresh_persisted_otp_outcome": "PASS",
+        "persisted_remaining_seconds": 600,
+        "clock": {
+          "php_epoch": 1793174896,
+          "php_wall": "2026-10-28 08:08:16",
+          "php_zone": "UTC",
+          "database": {
+            "wall": "2026-10-28 08:08:16",
+            "utc": "2026-10-28 08:08:16",
+            "epoch": 1793174896,
+            "zone": "+00:00"
+          }
+        },
+        "browser": "NOT RUN",
+        "cleanup": {
+          "deleted_users": 7,
+          "remaining_synthetic_users": 0,
+          "orphan_otp": 0
+        },
+        "schema_sha256": "7cd34da76a90f1eed3cfd6f9c9b1fd512305555dec4fd9dbd61e2bfd1d5f0760"
+      },
+      {
+        "cohort": {
+          "php_zone": "UTC",
+          "database_zone": "+06:00"
+        },
+        "status": "PASS for scoped HTTP controls",
+        "http_cases_pass": 2,
+        "requests": 20,
+        "http_status_counts": {
+          "200": 17,
+          "401": 3
+        },
+        "independently_checked_rejections": 4,
+        "fresh_persisted_otp_outcome": "FAIL: reproduced timezone-dependent rejection",
+        "persisted_remaining_seconds": -21000,
+        "clock": {
+          "php_epoch": 1793174918,
+          "php_wall": "2026-10-28 08:08:38",
+          "php_zone": "UTC",
+          "database": {
+            "wall": "2026-10-28 14:08:38",
+            "utc": "2026-10-28 08:08:38",
+            "epoch": 1793174918,
+            "zone": "+06:00"
+          }
+        },
+        "browser": "NOT RUN",
+        "cleanup": {
+          "deleted_users": 2,
+          "remaining_synthetic_users": 0,
+          "orphan_otp": 0
+        },
+        "schema_sha256": "7cd34da76a90f1eed3cfd6f9c9b1fd512305555dec4fd9dbd61e2bfd1d5f0760"
+      },
+      {
+        "cohort": {
+          "php_zone": "Asia/Manila",
+          "database_zone": "+08:00"
+        },
+        "status": "PASS for scoped HTTP controls",
+        "http_cases_pass": 4,
+        "requests": 35,
+        "http_status_counts": {
+          "200": 32,
+          "401": 3
+        },
+        "independently_checked_rejections": 6,
+        "fresh_persisted_otp_outcome": "PASS",
+        "persisted_remaining_seconds": 600,
+        "clock": {
+          "php_epoch": 1793174925,
+          "php_wall": "2026-10-28 16:08:45",
+          "php_zone": "Asia/Manila",
+          "database": {
+            "wall": "2026-10-28 16:08:45",
+            "utc": "2026-10-28 08:08:45",
+            "epoch": 1793174925,
+            "zone": "+08:00"
+          }
+        },
+        "browser": "NOT RUN",
+        "cleanup": {
+          "deleted_users": 4,
+          "remaining_synthetic_users": 0,
+          "orphan_otp": 0
+        },
+        "schema_sha256": "7cd34da76a90f1eed3cfd6f9c9b1fd512305555dec4fd9dbd61e2bfd1d5f0760"
+      }
+    ],
+    "limitations": [
+      "Semantic redacted request/response records and original response hashes; no unredacted wire archive",
+      "Controlled loopback HTTP, not TLS/production parity or capacity",
+      "Misaligned fresh OTP deliberately remains FAIL; browser NOT RUN remains NOT RUN"
+    ]
+  },
+  "original_phase3z_recomputation": {
+    "status": "PASS for characterization, known adverse timezone behavior retained",
+    "base": "b09e66c3fcba5066c63da8bece245ae5f4068410",
+    "head": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+    "tree": "32c1ea35444227547e635c83ddc5136691e955f8",
+    "intended_head": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+    "sha256": {
+      "tests/phase3z-clock.php": "db64660bffad9e1d4648e79dcbab55d6bf03fef5ed08938e9a3123005b21de72",
+      "tests/phase3z-timezone.py": "f137e0863b298b8b0d094f821a75b89675f8b4b0db6bd1d20a5396497cda4bb2",
+      "tests/phase3y-http.py": "7877807cd4d4af275dacef745c01d29a86684114ac3dcd163594558ba2aafa86",
+      "tests/phase3y-control.php": "3d0330c519c703a7625cc4fcb19ff6bbdf6e2aab354601a290cc9c80defc6f07",
+      "tests/phase3y-bootstrap.php": "c4d9aee79d608127d1438401aeb1aa4822b581543fabc60feec7c4af7145f538",
+      "tests/classroom-performance.py": "dfd2b5b147c36b71c414a9ec85aa1984fd0f2866b1e9591295888adaf77766a0",
+      "services/AuthService.php": "76f417367de386a948f97cc42cb8e1c17ef0183ae649478e70d5ae5f1dacfb3e",
+      "security/forgot-password/OtpService.php": "ae0f3c96c5d8563b0c00fbef6a0ef5c13dba9163f995b3712f5fa26515532a3b",
+      "database/config/db.php": "49cfed296df473dae63a268c049ae292ecba62365c9a3759b78d76f4b16da376",
+      "config.php": "24055d802a88c98ee5f5334ae5e1d17990a302f976b45e12592563afe7ed6bc4"
+    },
+    "harness_diff": "",
+    "harness_status": "?? docs/450-phase3v-raw/.6-on-existing_067-control_a.json.gz.ZGqXP3",
+    "raw_sha256": "c6df965cd89dc0f41a7aa659886059bf1ecc4f58021eefaafe3c85be43c0b212",
+    "cohorts": [
+      {
+        "cohort": {
+          "php_zone": "UTC",
+          "database_zone": "+00:00"
+        },
+        "http_requests": 67,
+        "http_cases": 7,
+        "checked_rejections": 12,
+        "native_clock_records": 36,
+        "stable_effective_database_ttl_seconds": 600,
+        "fresh_optional_http_success": true,
+        "reset_service_controls": [
+          {
+            "scenario": "stable",
+            "success_at_simulated_601_seconds": false
+          },
+          {
+            "scenario": "php_zone_changes_after_generation",
+            "success_at_simulated_601_seconds": false
+          },
+          {
+            "scenario": "db_zone_changes_after_generation",
+            "success_at_simulated_601_seconds": false
+          }
+        ],
+        "debug_response_checks": 67,
+        "cleanup": {
+          "deleted_users": 8,
+          "remaining_synthetic_users": 0,
+          "orphan_otp": 0
+        },
+        "schema_sha256": "7cd34da76a90f1eed3cfd6f9c9b1fd512305555dec4fd9dbd61e2bfd1d5f0760"
+      },
+      {
+        "cohort": {
+          "php_zone": "UTC",
+          "database_zone": "+06:00"
+        },
+        "http_requests": 24,
+        "http_cases": 2,
+        "checked_rejections": 4,
+        "native_clock_records": 36,
+        "stable_effective_database_ttl_seconds": -21000,
+        "fresh_optional_http_success": false,
+        "reset_service_controls": [
+          {
+            "scenario": "stable",
+            "success_at_simulated_601_seconds": false
+          },
+          {
+            "scenario": "php_zone_changes_after_generation",
+            "success_at_simulated_601_seconds": false
+          },
+          {
+            "scenario": "db_zone_changes_after_generation",
+            "success_at_simulated_601_seconds": false
+          }
+        ],
+        "debug_response_checks": 24,
+        "cleanup": {
+          "deleted_users": 3,
+          "remaining_synthetic_users": 0,
+          "orphan_otp": 0
+        },
+        "schema_sha256": "7cd34da76a90f1eed3cfd6f9c9b1fd512305555dec4fd9dbd61e2bfd1d5f0760"
+      },
+      {
+        "cohort": {
+          "php_zone": "Asia/Manila",
+          "database_zone": "+08:00"
+        },
+        "http_requests": 39,
+        "http_cases": 4,
+        "checked_rejections": 6,
+        "native_clock_records": 36,
+        "stable_effective_database_ttl_seconds": 600,
+        "fresh_optional_http_success": true,
+        "reset_service_controls": [
+          {
+            "scenario": "stable",
+            "success_at_simulated_601_seconds": false
+          },
+          {
+            "scenario": "php_zone_changes_after_generation",
+            "success_at_simulated_601_seconds": false
+          },
+          {
+            "scenario": "db_zone_changes_after_generation",
+            "success_at_simulated_601_seconds": true
+          }
+        ],
+        "debug_response_checks": 39,
+        "cleanup": {
+          "deleted_users": 5,
+          "remaining_synthetic_users": 0,
+          "orphan_otp": 0
+        },
+        "schema_sha256": "7cd34da76a90f1eed3cfd6f9c9b1fd512305555dec4fd9dbd61e2bfd1d5f0760"
+      },
+      {
+        "cohort": {
+          "php_zone": "Asia/Manila",
+          "database_zone": "+00:00"
+        },
+        "http_requests": 39,
+        "http_cases": 4,
+        "checked_rejections": 6,
+        "native_clock_records": 36,
+        "stable_effective_database_ttl_seconds": 29400,
+        "fresh_optional_http_success": true,
+        "reset_service_controls": [
+          {
+            "scenario": "stable",
+            "success_at_simulated_601_seconds": true
+          },
+          {
+            "scenario": "php_zone_changes_after_generation",
+            "success_at_simulated_601_seconds": true
+          },
+          {
+            "scenario": "db_zone_changes_after_generation",
+            "success_at_simulated_601_seconds": false
+          }
+        ],
+        "debug_response_checks": 39,
+        "cleanup": {
+          "deleted_users": 5,
+          "remaining_synthetic_users": 0,
+          "orphan_otp": 0
+        },
+        "schema_sha256": "7cd34da76a90f1eed3cfd6f9c9b1fd512305555dec4fd9dbd61e2bfd1d5f0760"
+      }
+    ],
+    "limitations": [
+      "Database verification time advanced with SET SESSION timestamp; PHP time not advanced; no real 601-second waiting claim",
+      "OtpService row predicate differs from independently enforced login/signup intent deadlines",
+      "No production timezone, TLS, proxy, capacity or new marker TTL policy validation"
+    ]
+  },
+  "full_suite_recomputation": {
+    "status": "PASS",
+    "scope": "Full-schema service integration; no HTTP/browser or external mail",
+    "base": "827470217e6a6a86a165b14f4b6650a10e2c2395",
+    "source": {
+      "intended_base": "827470217e6a6a86a165b14f4b6650a10e2c2395",
+      "intended_head": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "harness_commit": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "harness_tree": "32c1ea35444227547e635c83ddc5136691e955f8",
+      "harness_diff": "",
+      "application_diff": "",
+      "sha256": {
+        "tests/classroom-performance.py": "dfd2b5b147c36b71c414a9ec85aa1984fd0f2866b1e9591295888adaf77766a0",
+        "tests/phase3x-suite.php": "4727bf013c8e97fccbc3fe20c0d3ec697589e7da1185a51be073d772eb0c63fd",
+        "tests/phase3w-schema.php": "f28d5ceb62421513d049cf822fc789ba6f1b18c86e16a130d76c1707961a242c",
+        "tests/phase3w-phpunit-bootstrap.php": "a4a002060bdd107f62fd0263e848226dc98385dbc503795d8e9af4052d92ce87",
+        "tests/Integration/AuthServiceTest.php": "83773f22a68f038ee52686addafe40859c0c5cd1402632a2cf397827097e6fff",
+        "tests/Support/LocalOtpTransport.php": "fab46901ae655ccf266601facad451ca188b5f3a7ff9a449fcf0019de7367a53",
+        "services/AuthService.php": "76f417367de386a948f97cc42cb8e1c17ef0183ae649478e70d5ae5f1dacfb3e",
+        "security/forgot-password/OtpService.php": "ae0f3c96c5d8563b0c00fbef6a0ef5c13dba9163f995b3712f5fa26515532a3b",
+        "config.php": "24055d802a88c98ee5f5334ae5e1d17990a302f976b45e12592563afe7ed6bc4"
+      }
+    },
+    "clock_alignment": {
+      "php_zone": "UTC",
+      "php_epoch": 1793174855,
+      "database": {
+        "db_now": "2026-10-28 08:07:35",
+        "db_utc": "2026-10-28 08:07:35",
+        "db_epoch": 1793174855,
+        "db_zone": "+00:00"
+      }
+    },
+    "runs": {
+      "baseline": {
+        "exit_code": 1,
+        "counts": {
+          "tests": 46,
+          "assertions": 114,
+          "errors": 0,
+          "failures": 5,
+          "skipped": 0
+        },
+        "failed_cases": [
+          "testLoginSucceedsWithCorrectCredentials",
+          "testRegisterCreatesUserAndReturnsSuccess",
+          "testRegisterFallsBackToDefaultsWhenStyleGoalUnrecognized",
+          "testRegisterRejectsDuplicateEmail",
+          "testRegisterSeedsPmUserStudyPrefs"
+        ],
+        "remaining_synthetic_auth_users": 0,
+        "orphan_otp_rows": 0,
+        "schema_identity": "7cd34da76a90f1eed3cfd6f9c9b1fd512305555dec4fd9dbd61e2bfd1d5f0760"
+      },
+      "current": {
+        "exit_code": 0,
+        "counts": {
+          "tests": 60,
+          "assertions": 280,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0
+        },
+        "failed_cases": [],
+        "remaining_synthetic_auth_users": 0,
+        "orphan_otp_rows": 0,
+        "schema_identity": "7cd34da76a90f1eed3cfd6f9c9b1fd512305555dec4fd9dbd61e2bfd1d5f0760"
+      },
+      "reverse": {
+        "exit_code": 0,
+        "counts": {
+          "tests": 60,
+          "assertions": 280,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0
+        },
+        "failed_cases": [],
+        "remaining_synthetic_auth_users": 0,
+        "orphan_otp_rows": 0,
+        "schema_identity": "7cd34da76a90f1eed3cfd6f9c9b1fd512305555dec4fd9dbd61e2bfd1d5f0760"
+      },
+      "random-31028": {
+        "exit_code": 0,
+        "counts": {
+          "tests": 60,
+          "assertions": 280,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0
+        },
+        "failed_cases": [],
+        "remaining_synthetic_auth_users": 0,
+        "orphan_otp_rows": 0,
+        "schema_identity": "7cd34da76a90f1eed3cfd6f9c9b1fd512305555dec4fd9dbd61e2bfd1d5f0760"
+      }
+    },
+    "raw_sha256": "4923c00059a76e3a1683f68653e994958a4e6c01592eaa036d6cdb0e209d451e",
+    "limitations": [
+      "Service integration only; HTTP/browser/external mail not executed",
+      "UTC-aligned owned fixture; production timezone parity unknown",
+      "Inherited base failures remain FAIL; static clean/capacity gates not established"
+    ]
+  },
+  "static": {
+    "baseline": {
+      "errors": 0,
+      "file_errors": 15
+    },
+    "current": {
+      "errors": 0,
+      "file_errors": 15
+    },
+    "additional": [],
+    "baseline_exit": 1,
+    "candidate_exit": 1
+  },
+  "commands": [
+    {
+      "label": "frozen-experiments",
+      "command": [
+        "python3",
+        "-B",
+        "-u",
+        "tests/phase3aa-experiments.py"
+      ],
+      "environment": {
+        "PHASE3AA_EXPECTED_HEAD": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+        "PHASE3AA_EVIDENCE": "/workspace/scratch/5c9d94f07e76/phase3aa-raw/frozen-experiments.json"
+      },
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "[({'php_zone': 'UTC', 'database_zone': '+00:00'}, 600, 36), ({'php_zone': 'UTC', 'database_zone': '+06:00'}, 600, 36), ({'php_zone': 'Asia/Manila', 'database_zone': '+08:00'}, 600, 36), ({'php_zone': 'Asia/Manila', 'database_zone': '+00:00'}, 600, 36), ({'php_zone': 'UTC', 'database_zone': '+00:00'}, 120, 36)]\n",
+      "stderr": "",
+      "started_epoch": 1793174738.3252032,
+      "ended_epoch": 1793174792.0486915
+    },
+    {
+      "label": "experiment-report",
+      "command": [
+        "python3",
+        "-B",
+        "tests/phase3aa-report.py",
+        "/workspace/scratch/5c9d94f07e76/phase3aa-raw/frozen-experiments.json",
+        "/workspace/scratch/5c9d94f07e76/phase3aa-raw/frozen-experiments-summary.json"
+      ],
+      "environment": {},
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "Recomputed 360 clock records; 10 double-consumption rounds (security FAIL)\n",
+      "stderr": "",
+      "started_epoch": 1793174792.0489383,
+      "ended_epoch": 1793174792.1035428
+    },
+    {
+      "label": "accepted-phase3x",
+      "command": [
+        "python3",
+        "-B",
+        "-u",
+        "tests/classroom-performance.py"
+      ],
+      "environment": {
+        "CLASSROOM_BASE": "928a3b8912ef60ab374270c1efd3a24c0433c8aa",
+        "CLASSROOM_PHASE3W_SCHEMA": "1",
+        "PHASE3W_FULL_PHPUNIT": "1",
+        "CLASSROOM_EVIDENCE": "/workspace/scratch/5c9d94f07e76/phase3aa-raw/accepted-phase3x.json",
+        "TZ": "UTC"
+      },
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "started_epoch": 1793174792.1037776,
+      "ended_epoch": 1793174810.7283506
+    },
+    {
+      "label": "accepted-phase3y",
+      "command": [
+        "python3",
+        "-B",
+        "-u",
+        "tests/classroom-performance.py"
+      ],
+      "environment": {
+        "CLASSROOM_BASE": "b09e66c3fcba5066c63da8bece245ae5f4068410",
+        "CLASSROOM_PHASE3W_SCHEMA": "1",
+        "PHASE3W_FULL_PHPUNIT": "1",
+        "CLASSROOM_EVIDENCE": "/workspace/scratch/5c9d94f07e76/phase3aa-raw/accepted-phase3y.json",
+        "TZ": "UTC"
+      },
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "started_epoch": 1793174810.7287495,
+      "ended_epoch": 1793174832.3881607
+    },
+    {
+      "label": "accepted-phase3z",
+      "command": [
+        "python3",
+        "-B",
+        "-u",
+        "tests/classroom-performance.py"
+      ],
+      "environment": {
+        "CLASSROOM_BASE": "bc1f1bc3cff91ce61cf531853e7220f1cfca590a",
+        "CLASSROOM_PHASE3W_SCHEMA": "1",
+        "PHASE3W_FULL_PHPUNIT": "1",
+        "CLASSROOM_EVIDENCE": "/workspace/scratch/5c9d94f07e76/phase3aa-raw/accepted-phase3z.json",
+        "TZ": "UTC"
+      },
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "started_epoch": 1793174832.3884873,
+      "ended_epoch": 1793174852.765465
+    },
+    {
+      "label": "full",
+      "command": [
+        "python3",
+        "-B",
+        "-u",
+        "tests/classroom-performance.py"
+      ],
+      "environment": {
+        "CLASSROOM_BASE": "827470217e6a6a86a165b14f4b6650a10e2c2395",
+        "CLASSROOM_PHASE3X": "1",
+        "PHASE3X_EXPECTED_HEAD": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+        "CLASSROOM_EVIDENCE": "/workspace/scratch/5c9d94f07e76/phase3aa-raw/frozen-full.json",
+        "TZ": "UTC"
+      },
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "started_epoch": 1793174852.7658198,
+      "ended_epoch": 1793174890.3626916
+    },
+    {
+      "label": "http",
+      "command": [
+        "python3",
+        "-B",
+        "-u",
+        "tests/phase3y-http.py"
+      ],
+      "environment": {
+        "PHASE3Y_EXPECTED_HEAD": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+        "PHASE3Y_EVIDENCE": "/workspace/scratch/5c9d94f07e76/phase3aa-raw/frozen-http.json",
+        "TZ": "UTC"
+      },
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "Owned HTTP cases: [({'php_zone': 'UTC', 'database_zone': '+00:00'}, 22, 137, 'PASS'), ({'php_zone': 'UTC', 'database_zone': '+06:00'}, 2, 20, 'PASS'), ({'php_zone': 'Asia/Manila', 'database_zone': '+08:00'}, 4, 35, 'PASS')]\n",
+      "stderr": "",
+      "started_epoch": 1793174890.3630345,
+      "ended_epoch": 1793174929.400477
+    },
+    {
+      "label": "phase3z-controls",
+      "command": [
+        "python3",
+        "-B",
+        "-u",
+        "tests/phase3z-timezone.py"
+      ],
+      "environment": {
+        "PHASE3Z_EXPECTED_HEAD": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+        "PHASE3Z_EVIDENCE": "/workspace/scratch/5c9d94f07e76/phase3aa-raw/frozen-phase3z.json",
+        "TZ": "UTC"
+      },
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "[({'php_zone': 'UTC', 'database_zone': '+00:00'}, 67, 36), ({'php_zone': 'UTC', 'database_zone': '+06:00'}, 24, 36), ({'php_zone': 'Asia/Manila', 'database_zone': '+08:00'}, 39, 36), ({'php_zone': 'Asia/Manila', 'database_zone': '+00:00'}, 39, 36)]\n",
+      "stderr": "",
+      "started_epoch": 1793174929.4009163,
+      "ended_epoch": 1793174983.3443134
+    },
+    {
+      "label": "static",
+      "command": [
+        "python3",
+        "-B",
+        "-u",
+        "tests/peer-threads-static.py"
+      ],
+      "environment": {
+        "PEER_THREADS_BASE": "bc1f1bc3cff91ce61cf531853e7220f1cfca590a",
+        "PEER_THREADS_STATIC_EVIDENCE": "/workspace/scratch/5c9d94f07e76/phase3aa-raw/frozen-static.json"
+      },
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "PHPStan baseline: {'errors': 0, 'file_errors': 15} candidate: {'errors': 0, 'file_errors': 15} additional: 0\n",
+      "stderr": "",
+      "started_epoch": 1793174983.3446562,
+      "ended_epoch": 1793175009.5668082
+    },
+    {
+      "label": "http-report",
+      "command": [
+        "python3",
+        "-B",
+        "tests/phase3y-report.py",
+        "/workspace/scratch/5c9d94f07e76/phase3aa-raw/frozen-http.json",
+        "/workspace/scratch/5c9d94f07e76/phase3aa-raw/frozen-http-summary.json"
+      ],
+      "environment": {},
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "Recomputed 192 direct HTTP requests [({'php_zone': 'UTC', 'database_zone': '+00:00'}, 'NOT RUN', 'PASS'), ({'php_zone': 'UTC', 'database_zone': '+06:00'}, 'NOT RUN', 'FAIL: reproduced timezone-dependent rejection'), ({'php_zone': 'Asia/Manila', 'database_zone': '+08:00'}, 'NOT RUN', 'PASS')]\n",
+      "stderr": "",
+      "started_epoch": 1793175009.5672684,
+      "ended_epoch": 1793175009.6111834
+    },
+    {
+      "label": "phase3z-report",
+      "command": [
+        "python3",
+        "-B",
+        "tests/phase3z-report.py",
+        "/workspace/scratch/5c9d94f07e76/phase3aa-raw/frozen-phase3z.json",
+        "/workspace/scratch/5c9d94f07e76/phase3aa-raw/frozen-phase3z-summary.json"
+      ],
+      "environment": {},
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "[({'php_zone': 'UTC', 'database_zone': '+00:00'}, 600, 67), ({'php_zone': 'UTC', 'database_zone': '+06:00'}, -21000, 24), ({'php_zone': 'Asia/Manila', 'database_zone': '+08:00'}, 600, 39), ({'php_zone': 'Asia/Manila', 'database_zone': '+00:00'}, 29400, 39)]\n",
+      "stderr": "",
+      "started_epoch": 1793175009.6118925,
+      "ended_epoch": 1793175009.668187
+    },
+    {
+      "label": "full-report",
+      "command": [
+        "python3",
+        "-B",
+        "tests/phase3x-report.py",
+        "/workspace/scratch/5c9d94f07e76/phase3aa-raw/frozen-full.json",
+        "/workspace/scratch/5c9d94f07e76/phase3aa-raw/frozen-full-summary.json"
+      ],
+      "environment": {},
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "Verified JUnit, schema, source and cleanup: [('baseline', 1, {'tests': 46, 'assertions': 114, 'errors': 0, 'failures': 5, 'skipped': 0}), ('current', 0, {'tests': 60, 'assertions': 280, 'errors': 0, 'failures': 0, 'skipped': 0}), ('reverse', 0, {'tests': 60, 'assertions': 280, 'errors': 0, 'failures': 0, 'skipped': 0}), ('random-31028', 0, {'tests': 60, 'assertions': 280, 'errors': 0, 'failures': 0, 'skipped': 0})]\n",
+      "stderr": "",
+      "started_epoch": 1793175009.6687024,
+      "ended_epoch": 1793175009.7274392
+    },
+    {
+      "label": "source-gate",
+      "command": [
+        "git",
+        "diff",
+        "--exit-code",
+        "bc1f1bc3cff91ce61cf531853e7220f1cfca590a",
+        "--",
+        "services",
+        "API",
+        "security",
+        "database",
+        "assets",
+        "modules",
+        "config.php",
+        "websocket",
+        "composer.json",
+        "composer.lock"
+      ],
+      "environment": {},
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "started_epoch": 1793175009.7279222,
+      "ended_epoch": 1793175009.7340403
+    },
+    {
+      "label": "diff-check",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "environment": {},
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "started_epoch": 1793175009.7351758,
+      "ended_epoch": 1793175009.741391
+    },
+    {
+      "label": "unit",
+      "command": [
+        "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+        "vendor/bin/phpunit",
+        "--testsuite",
+        "Unit"
+      ],
+      "environment": {},
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "PHPUnit 10.5.64 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.6\nConfiguration: /workspace/scratch/5c9d94f07e76/ecollab-phase3aa/phpunit.xml\n\n.F.F{\"success\":false,\"error\":\"Invalid security token. Please refresh the page and try again.\"}",
+      "stderr": "",
+      "started_epoch": 1793175009.741675,
+      "ended_epoch": 1793175009.8077736
+    },
+    {
+      "label": "client-ip",
+      "command": [
+        "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+        "tests/client-ip-regression.php"
+      ],
+      "environment": {},
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "PASS: direct peer, spoofed headers, trusted proxy chain, malformed input and IPv4/IPv6 CIDRs\n",
+      "stderr": "",
+      "started_epoch": 1793175009.808326,
+      "ended_epoch": 1793175009.830342
+    },
+    {
+      "label": "request-security",
+      "command": [
+        "node",
+        "tests/request-security-regression.cjs"
+      ],
+      "environment": {},
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "PASS: absent/empty/malformed/mismatched CSRF rejected, header/form tokens accepted, strict cookie-only sessions\n",
+      "stderr": "",
+      "started_epoch": 1793175009.8307972,
+      "ended_epoch": 1793175010.1803482
+    },
+    {
+      "label": "syntax-phase3aa-race.php",
+      "command": [
+        "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+        "-l",
+        "/workspace/scratch/5c9d94f07e76/ecollab-phase3aa/tests/phase3aa-race.php"
+      ],
+      "environment": {},
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "No syntax errors detected in /workspace/scratch/5c9d94f07e76/ecollab-phase3aa/tests/phase3aa-race.php\n",
+      "stderr": "",
+      "started_epoch": 1793175010.18089,
+      "ended_epoch": 1793175010.2004013
+    },
+    {
+      "label": "syntax-phase3aa-transition.php",
+      "command": [
+        "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+        "-l",
+        "/workspace/scratch/5c9d94f07e76/ecollab-phase3aa/tests/phase3aa-transition.php"
+      ],
+      "environment": {},
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "No syntax errors detected in /workspace/scratch/5c9d94f07e76/ecollab-phase3aa/tests/phase3aa-transition.php\n",
+      "stderr": "",
+      "started_epoch": 1793175010.200811,
+      "ended_epoch": 1793175010.2205884
+    },
+    {
+      "label": "syntax-phase3aa-contracts.php",
+      "command": [
+        "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+        "-l",
+        "/workspace/scratch/5c9d94f07e76/ecollab-phase3aa/tests/phase3aa-contracts.php"
+      ],
+      "environment": {},
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "No syntax errors detected in /workspace/scratch/5c9d94f07e76/ecollab-phase3aa/tests/phase3aa-contracts.php\n",
+      "stderr": "",
+      "started_epoch": 1793175010.2212996,
+      "ended_epoch": 1793175010.2394001
+    },
+    {
+      "label": "syntax-phase3aa-race-worker.php",
+      "command": [
+        "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+        "-l",
+        "/workspace/scratch/5c9d94f07e76/ecollab-phase3aa/tests/phase3aa-race-worker.php"
+      ],
+      "environment": {},
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "No syntax errors detected in /workspace/scratch/5c9d94f07e76/ecollab-phase3aa/tests/phase3aa-race-worker.php\n",
+      "stderr": "",
+      "started_epoch": 1793175010.2399585,
+      "ended_epoch": 1793175010.2581747
+    },
+    {
+      "label": "syntax-phase3aa-clock.php",
+      "command": [
+        "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+        "-l",
+        "/workspace/scratch/5c9d94f07e76/ecollab-phase3aa/tests/phase3aa-clock.php"
+      ],
+      "environment": {},
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "No syntax errors detected in /workspace/scratch/5c9d94f07e76/ecollab-phase3aa/tests/phase3aa-clock.php\n",
+      "stderr": "",
+      "started_epoch": 1793175010.25876,
+      "ended_epoch": 1793175010.2793407
+    },
+    {
+      "label": "syntax-UtcOtpTrial.php",
+      "command": [
+        "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+        "-l",
+        "/workspace/scratch/5c9d94f07e76/ecollab-phase3aa/tests/experiments/phase3aa/UtcOtpTrial.php"
+      ],
+      "environment": {},
+      "head_at_start": "1c5c4157e3b4f26043b46af97c78ab09fe33607c",
+      "exit_code": 0,
+      "stdout": "No syntax errors detected in /workspace/scratch/5c9d94f07e76/ecollab-phase3aa/tests/experiments/phase3aa/UtcOtpTrial.php\n",
+      "stderr": "",
+      "started_epoch": 1793175010.2799106,
+      "ended_epoch": 1793175010.2966871
+    }
+  ],
+  "raw_manifest_sha256": "43f0adefdc9a5bafb26e07d3e8e30f3eea1b5363f1efb342c6f475188c3953ed",
+  "hosted_ci": "PENDING in committed snapshot; final PR body contains completed final-head update",
+  "trial_http_browser": "NOT RUN; native trial only. Hosted Chromium required for unchanged application.",
+  "performance_capacity": "NOT RUN; no synthetic concurrency capacity certification",
+  "rollback": "Revert only Phase3AA tests/workflow/docs to exact base; no app/schema rollback. Future correction transition requires separate approval."
+}
