@@ -1,0 +1,92 @@
+name: Phase 3Y HTTP authentication and timezone validation
+on:
+  pull_request:
+    paths:
+      - 'tests/phase3y-*'
+      - 'tests/Integration/OtpExpiryTest.php'
+      - '.github/workflows/phase3y-auth.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  owned-http-auth:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Install disposable MariaDB and PHP dependencies
+        run: |
+          mkdir -p "$RUNNER_TEMP/perf-apt/empty" "$RUNNER_TEMP/perf-apt/lists/partial"
+          printf '%s\n' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble-updates main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://security.ubuntu.com/ubuntu noble-security main universe' \
+            > "$RUNNER_TEMP/perf-apt/sources.list"
+          apt_options=(-o "Dir::Etc::sourcelist=$RUNNER_TEMP/perf-apt/sources.list"
+            -o "Dir::Etc::sourceparts=$RUNNER_TEMP/perf-apt/empty"
+            -o "Dir::State::lists=$RUNNER_TEMP/perf-apt/lists"
+            -o Acquire::Retries=0 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20)
+          sudo apt-get "${apt_options[@]}" update
+          sudo apt-get "${apt_options[@]}" install -y mariadb-server php8.3-fpm php8.3-cli php8.3-mysql php8.3-sqlite3 php8.3-curl php8.3-mbstring php8.3-xml
+      - name: Dependencies and browser runtime
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          npm install --prefix "$RUNNER_TEMP/phase3y-browser" --no-save --no-package-lock playwright@1.62.1
+          node "$RUNNER_TEMP/phase3y-browser/node_modules/playwright/cli.js" install chromium
+          echo "NODE_PATH=$RUNNER_TEMP/phase3y-browser/node_modules" >> "$GITHUB_ENV"
+      - name: Source gate and existing security regressions
+        env:
+          PHP_BIN: /usr/bin/php8.3
+        run: |
+          git diff --exit-code 928a3b8912ef60ab374270c1efd3a24c0433c8aa -- services API database assets security websocket config.php
+          php8.3 -l tests/phase3y-bootstrap.php
+          php8.3 -l tests/phase3y-control.php
+          php8.3 -l tests/Integration/OtpExpiryTest.php
+          node --check tests/phase3y-browser.cjs
+          node --check assets/js/auth/signup.js
+          node --check assets/js/auth/signup-network-fix.js
+          node --check assets/js/auth/login.js
+          php8.3 tests/client-ip-regression.php
+          node tests/request-security-regression.cjs
+      - name: Full original failing control and current three orderings including native expiry
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          CLASSROOM_BASE: 827470217e6a6a86a165b14f4b6650a10e2c2395
+          CLASSROOM_PHASE3X: '1'
+          PHASE3X_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          CLASSROOM_EVIDENCE: phase3y-raw/full.json
+          TZ: UTC
+        run: python3 -B -u tests/classroom-performance.py
+      - name: Exact accepted Phase3X base comparison
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          CLASSROOM_BASE: 928a3b8912ef60ab374270c1efd3a24c0433c8aa
+          CLASSROOM_PHASE3W_SCHEMA: '1'
+          PHASE3W_FULL_PHPUNIT: '1'
+          CLASSROOM_EVIDENCE: phase3y-raw/accepted-base.json
+          TZ: UTC
+        run: python3 -B -u tests/classroom-performance.py
+      - name: Real HTTP, browser and explicit timezone/expiry matrix
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          PHP_FPM_BIN: /usr/sbin/php-fpm8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          PHASE3Y_REQUIRE_BROWSER: '1'
+          PHASE3Y_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          PHASE3Y_EVIDENCE: phase3y-raw/http.json
+          TZ: UTC
+        run: python3 -B -u tests/phase3y-http.py
+      - name: Exact-base static comparison
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          PEER_THREADS_BASE: 928a3b8912ef60ab374270c1efd3a24c0433c8aa
+          PEER_THREADS_STATIC_EVIDENCE: phase3y-raw/static.json
+        run: python3 -B -u tests/peer-threads-static.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase3y-owned-http-auth-evidence
+          path: phase3y-raw/
