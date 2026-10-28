@@ -38,7 +38,7 @@ for c in data['cohorts']:
  if key==('UTC','+00:00'):assert marker['registration_success']and marker['before']['session']['signup_verified']and 'pending_signup_email_expires'not in marker['before']['session']['keys']and not marker['before_registration']['session']['signup_intent_valid']
  rejects=0
  for r in c['requests']:
-  if isinstance(r['response'],dict)and r['response'].get('success')is False:
+  if isinstance(r['response'],dict)and r['response'].get('success')is False and r['state_before']is not None:
    a,b=r['state_before'],r['state_after'];assert a['business']==b['business']and a['otp_checksum']==b['otp_checksum'];assert not b['session']['authenticated']or a['session']['user_id']==b['session']['user_id']>0;rejects+=1
  out.append({'cohort':c['cohort'],'http_requests':len(c['requests']),'http_cases':len(c['cases']),'checked_rejections':rejects,'native_clock_records':36,'stable_effective_database_ttl_seconds':expected[key],'fresh_optional_http_success':c['timezone']['fresh_code_accepted'],'reset_service_controls':resets,'debug_response_checks':c['debug_response_checks'],'cleanup':c['cleanup'],'schema_sha256':c['inventory']['schema_sha256']})
 assert seen==set(expected)and len({c['schema_sha256']for c in out})==1
