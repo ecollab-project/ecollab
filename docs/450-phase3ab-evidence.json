@@ -1,0 +1,4465 @@
+{
+  "scope": "Decision preparation and immutable baseline inventory only",
+  "base": "5a03656b27904498917c16cbfa320187c6da8c84",
+  "integration": "c838359711a14e9b6eb3f345c4386d184a178b25",
+  "source": {
+    "frozen_local_head": "f1a4ba3df38408fb11a2624bc42d49deee896345",
+    "frozen_tree": "eba0fae78fb86cb540a6426793295f0146351076",
+    "application_overlay": "",
+    "publication": "Exact final head/tree and completed CI are pinned in PR body;this is a pre-CI snapshot"
+  },
+  "inventory": {
+    "scope": "Read-only pending-stack and baseline inventory; no merge or release approval",
+    "integration": "c838359711a14e9b6eb3f345c4386d184a178b25",
+    "accepted": "5a03656b27904498917c16cbfa320187c6da8c84",
+    "merge_base": "c838359711a14e9b6eb3f345c4386d184a178b25",
+    "harness_head": "f1a4ba3df38408fb11a2624bc42d49deee896345",
+    "harness_tree": "eba0fae78fb86cb540a6426793295f0146351076",
+    "application_overlay": "",
+    "integration_tree": "3a90742e5012c8ecaac810e54d2ea496ccc66649",
+    "accepted_tree": "f75c1e88aac10d49b4b2d02d34812ea9d088ebce",
+    "commits_ahead": 52,
+    "net_changed_paths": [
+      "A\t.github/workflows/application-performance.yml",
+      "M\t.github/workflows/chat-delivery.yml",
+      "A\t.github/workflows/chat-performance.yml",
+      "A\t.github/workflows/classroom-performance.yml",
+      "M\t.github/workflows/code-lab-piston.yml",
+      "A\t.github/workflows/coworkspace-migration.yml",
+      "A\t.github/workflows/dashboard-performance.yml",
+      "A\t.github/workflows/jarred-async.yml",
+      "A\t.github/workflows/peer-threads-performance.yml",
+      "A\t.github/workflows/phase3aa-otp-decision.yml",
+      "A\t.github/workflows/phase3s-performance.yml",
+      "A\t.github/workflows/phase3t-performance.yml",
+      "A\t.github/workflows/phase3u-performance.yml",
+      "A\t.github/workflows/phase3v-performance.yml",
+      "A\t.github/workflows/phase3w-performance.yml",
+      "A\t.github/workflows/phase3x-contracts.yml",
+      "A\t.github/workflows/phase3y-auth.yml",
+      "A\t.github/workflows/phase3z-auth-clock.yml",
+      "M\t.github/workflows/settings-runtime.yml",
+      "M\tAPI/admin/group-recommendations.php",
+      "M\tAPI/ai/message.php",
+      "M\tAPI/ai/session.php",
+      "M\tAPI/ai/sessions.php",
+      "M\tAPI/chat/ai-assist.php",
+      "M\tAPI/chat/get-matches.php",
+      "M\tAPI/chat/peer-match.php",
+      "M\tAPI/collaboration/workspaces.php",
+      "A\tAPI/dm/jarred-job.php",
+      "M\tAPI/dm/send-message.php",
+      "M\tAPI/facilitator/jarred.php",
+      "M\tAPI/threads/index.php",
+      "M\tassets/js/chat/dm-notifications.js",
+      "M\tassets/js/learning/workspace.js",
+      "M\tassets/js/student/dashboard.js",
+      "M\tdatabase/migrate.php",
+      "A\tdatabase/migrations/025_coworkspace_one_active_per_server_mariadb.sql",
+      "A\tdatabase/migrations/063_temporary_voice.sql",
+      "A\tdatabase/migrations/066_jarred_jobs.sql",
+      "A\tdatabase/migrations/067_dashboard_unread_covering.sql",
+      "A\tdeploy/ai-provider/README.md",
+      "A\tdeploy/ai-provider/shared-lock.env.example",
+      "A\tdeploy/code-lab/isolated/README.md",
+      "A\tdeploy/code-lab/isolated/application.env.example",
+      "A\tdeploy/code-lab/isolated/execution.env.example",
+      "A\tdeploy/code-lab/isolated/nginx.conf.example",
+      "M\tdeploy/code-lab/piston/bridge.py",
+      "A\tdeploy/code-lab/piston/compose.isolated.yml",
+      "A\tdeploy/phase2/ecollab-jarred-worker.service",
+      "A\tdocs/450-phase3aa-claim-ledger.json",
+      "A\tdocs/450-phase3aa-decision.md",
+      "A\tdocs/450-phase3aa-engineering-prompt.md",
+      "A\tdocs/450-phase3aa-evidence.json",
+      "A\tdocs/450-phase3aa-performance.md",
+      "A\tdocs/450-phase3aa-raw/accepted-phase3x.json.gz",
+      "A\tdocs/450-phase3aa-raw/accepted-phase3y.json.gz",
+      "A\tdocs/450-phase3aa-raw/accepted-phase3z.json.gz",
+      "A\tdocs/450-phase3aa-raw/completion-commands.json.gz",
+      "A\tdocs/450-phase3aa-raw/discovery-summary.json.gz",
+      "A\tdocs/450-phase3aa-raw/discovery.json.gz",
+      "A\tdocs/450-phase3aa-raw/frozen-experiments-summary.json.gz",
+      "A\tdocs/450-phase3aa-raw/frozen-experiments.json.gz",
+      "A\tdocs/450-phase3aa-raw/frozen-full-summary.json.gz",
+      "A\tdocs/450-phase3aa-raw/frozen-full.json.gz",
+      "A\tdocs/450-phase3aa-raw/frozen-http-summary.json.gz",
+      "A\tdocs/450-phase3aa-raw/frozen-http.json.gz",
+      "A\tdocs/450-phase3aa-raw/frozen-phase3z-summary.json.gz",
+      "A\tdocs/450-phase3aa-raw/frozen-phase3z.json.gz",
+      "A\tdocs/450-phase3aa-raw/frozen-static.json.gz",
+      "A\tdocs/450-phase3aa-raw/full.json.gz",
+      "A\tdocs/450-phase3aa-raw/manifest.json",
+      "A\tdocs/450-phase3aa-raw/phase3aa-completion.log.gz",
+      "A\tdocs/450-phase3aa-raw/phase3aa-composer.log.gz",
+      "A\tdocs/450-phase3aa-raw/phase3aa-discovery.log.gz",
+      "A\tdocs/450-phase3aa-raw/phase3aa-full.log.gz",
+      "A\tdocs/450-phase3ab-engineering-prompt.md",
+      "A\tdocs/450-phase3f-evidence.json",
+      "A\tdocs/450-phase3f-migration025.md",
+      "A\tdocs/450-phase3g-code-lab-isolation.md",
+      "A\tdocs/450-phase3g-evidence.json",
+      "A\tdocs/450-phase3i-evidence.json",
+      "A\tdocs/450-phase3i-jarred-governance.md",
+      "A\tdocs/450-phase3j-evidence.json",
+      "A\tdocs/450-phase3j-shared-provider.md",
+      "A\tdocs/450-phase3k-evidence.json",
+      "A\tdocs/450-phase3k-integration.md",
+      "A\tdocs/450-phase3l-async-privacy.md",
+      "A\tdocs/450-phase3l-evidence.json",
+      "A\tdocs/450-phase3m-performance-evidence.json",
+      "A\tdocs/450-phase3m-performance.md",
+      "A\tdocs/450-phase3n-dashboard.md",
+      "A\tdocs/450-phase3n-evidence.json",
+      "A\tdocs/450-phase3o-chat-workers.md",
+      "A\tdocs/450-phase3o-evidence.json",
+      "A\tdocs/450-phase3p-classroom.md",
+      "A\tdocs/450-phase3p-evidence.json",
+      "A\tdocs/450-phase3p-staging-plan.md",
+      "A\tdocs/450-phase3q-evidence.json",
+      "A\tdocs/450-phase3q-sql.md",
+      "A\tdocs/450-phase3r-evidence.json",
+      "A\tdocs/450-phase3r-evidence.json.gz",
+      "A\tdocs/450-phase3r-pr-stack.json",
+      "A\tdocs/450-phase3r-regressions.json",
+      "A\tdocs/450-phase3r-static.json",
+      "A\tdocs/450-phase3r-validation.md",
+      "A\tdocs/450-phase3s-evidence.json",
+      "A\tdocs/450-phase3s-performance.md",
+      "A\tdocs/450-phase3s-raw/0-baseline.json.gz",
+      "A\tdocs/450-phase3s-raw/0-baseline.log",
+      "A\tdocs/450-phase3s-raw/1-candidate.json.gz",
+      "A\tdocs/450-phase3s-raw/1-candidate.log",
+      "A\tdocs/450-phase3s-raw/2-candidate.json.gz",
+      "A\tdocs/450-phase3s-raw/2-candidate.log",
+      "A\tdocs/450-phase3s-raw/3-baseline.json.gz",
+      "A\tdocs/450-phase3s-raw/3-baseline.log",
+      "A\tdocs/450-phase3s-raw/comparison.json",
+      "A\tdocs/450-phase3s-raw/discovery-survey.json.gz",
+      "A\tdocs/450-phase3s-raw/initial-fixture-ordering.json",
+      "A\tdocs/450-phase3s-raw/phase3r-jarred-rerun.json",
+      "A\tdocs/450-phase3s-raw/regressions.json",
+      "A\tdocs/450-phase3s-raw/request-hash-comparison.json",
+      "A\tdocs/450-phase3s-raw/static.json",
+      "A\tdocs/450-phase3t-claim-ledger.json",
+      "A\tdocs/450-phase3t-engineering-prompt.md",
+      "A\tdocs/450-phase3t-evidence.json",
+      "A\tdocs/450-phase3t-performance.md",
+      "A\tdocs/450-phase3t-raw/cache-configuration-smoke.json.gz",
+      "A\tdocs/450-phase3t-raw/discovery.json.gz",
+      "A\tdocs/450-phase3t-raw/history-0-baseline.log",
+      "A\tdocs/450-phase3t-raw/history-0-off-baseline.json.gz",
+      "A\tdocs/450-phase3t-raw/history-1-candidate.log",
+      "A\tdocs/450-phase3t-raw/history-1-off-candidate.json.gz",
+      "A\tdocs/450-phase3t-raw/history-2-candidate.log",
+      "A\tdocs/450-phase3t-raw/history-2-off-candidate.json.gz",
+      "A\tdocs/450-phase3t-raw/history-3-baseline.log",
+      "A\tdocs/450-phase3t-raw/history-3-off-baseline.json.gz",
+      "A\tdocs/450-phase3t-raw/history-comparison.json",
+      "A\tdocs/450-phase3t-raw/main-0-baseline.log",
+      "A\tdocs/450-phase3t-raw/main-0-off-baseline.json.gz",
+      "A\tdocs/450-phase3t-raw/main-1-candidate.log",
+      "A\tdocs/450-phase3t-raw/main-1-off-candidate.json.gz",
+      "A\tdocs/450-phase3t-raw/main-2-candidate.log",
+      "A\tdocs/450-phase3t-raw/main-2-off-candidate.json.gz",
+      "A\tdocs/450-phase3t-raw/main-3-baseline.log",
+      "A\tdocs/450-phase3t-raw/main-3-off-baseline.json.gz",
+      "A\tdocs/450-phase3t-raw/main-4-baseline.log",
+      "A\tdocs/450-phase3t-raw/main-4-on-baseline.json.gz",
+      "A\tdocs/450-phase3t-raw/main-5-candidate.log",
+      "A\tdocs/450-phase3t-raw/main-5-on-candidate.json.gz",
+      "A\tdocs/450-phase3t-raw/main-6-candidate.log",
+      "A\tdocs/450-phase3t-raw/main-6-on-candidate.json.gz",
+      "A\tdocs/450-phase3t-raw/main-7-baseline.log",
+      "A\tdocs/450-phase3t-raw/main-7-on-baseline.json.gz",
+      "A\tdocs/450-phase3t-raw/main-comparison.json",
+      "A\tdocs/450-phase3t-raw/opcache-guard-failure.json.gz",
+      "A\tdocs/450-phase3t-raw/regressions.json",
+      "A\tdocs/450-phase3t-raw/static.json",
+      "A\tdocs/450-phase3u-claim-ledger.json",
+      "A\tdocs/450-phase3u-engineering-prompt.md",
+      "A\tdocs/450-phase3u-evidence.json",
+      "A\tdocs/450-phase3u-performance.md",
+      "A\tdocs/450-phase3u-raw/0-baseline.log",
+      "A\tdocs/450-phase3u-raw/0-off-baseline.json.gz",
+      "A\tdocs/450-phase3u-raw/1-candidate.log",
+      "A\tdocs/450-phase3u-raw/1-off-candidate.json.gz",
+      "A\tdocs/450-phase3u-raw/2-candidate.log",
+      "A\tdocs/450-phase3u-raw/2-off-candidate.json.gz",
+      "A\tdocs/450-phase3u-raw/3-baseline.log",
+      "A\tdocs/450-phase3u-raw/3-off-baseline.json.gz",
+      "A\tdocs/450-phase3u-raw/4-baseline.log",
+      "A\tdocs/450-phase3u-raw/4-on-baseline.json.gz",
+      "A\tdocs/450-phase3u-raw/5-candidate.log",
+      "A\tdocs/450-phase3u-raw/5-on-candidate.json.gz",
+      "A\tdocs/450-phase3u-raw/6-candidate.log",
+      "A\tdocs/450-phase3u-raw/6-on-candidate.json.gz",
+      "A\tdocs/450-phase3u-raw/7-baseline.log",
+      "A\tdocs/450-phase3u-raw/7-on-baseline.json.gz",
+      "A\tdocs/450-phase3u-raw/comparison.json",
+      "A\tdocs/450-phase3u-raw/diagnostic-http.json.gz",
+      "A\tdocs/450-phase3u-raw/diagnostic-native-corrected.json.gz",
+      "A\tdocs/450-phase3u-raw/diagnostic-native-diagnostic.json.gz",
+      "A\tdocs/450-phase3u-raw/diagnostic-native-final.json.gz",
+      "A\tdocs/450-phase3u-raw/diagnostic-native-oracle.json.gz",
+      "A\tdocs/450-phase3u-raw/diagnostic-native-pass.json.gz",
+      "A\tdocs/450-phase3u-raw/diagnostic-native-verified.json.gz",
+      "A\tdocs/450-phase3u-raw/diagnostic-native.json.gz",
+      "A\tdocs/450-phase3u-raw/diagnostic-plan-control-reproduced.json.gz",
+      "A\tdocs/450-phase3u-raw/diagnostic-plan-control.json.gz",
+      "A\tdocs/450-phase3u-raw/diagnostic-sql-distributions.json.gz",
+      "A\tdocs/450-phase3u-raw/diagnostic-sql.json.gz",
+      "A\tdocs/450-phase3u-raw/final-regressions.json",
+      "A\tdocs/450-phase3u-raw/final-static.json",
+      "A\tdocs/450-phase3u-raw/manifest.json",
+      "A\tdocs/450-phase3u-raw/phase3u-comparison.log",
+      "A\tdocs/450-phase3u-raw/phase3u-final-static.log",
+      "A\tdocs/450-phase3u-raw/phase3u-plan-control-reproduced.log",
+      "A\tdocs/450-phase3u-raw/phase3u-plan-control.log",
+      "A\tdocs/450-phase3u-raw/phase3u-static.log",
+      "A\tdocs/450-phase3u-raw/regressions.json",
+      "A\tdocs/450-phase3u-raw/static.json",
+      "A\tdocs/450-phase3u-raw/system.json",
+      "A\tdocs/450-phase3v-claim-ledger.json",
+      "A\tdocs/450-phase3v-engineering-prompt.md",
+      "A\tdocs/450-phase3v-evidence.json",
+      "A\tdocs/450-phase3v-performance.md",
+      "A\tdocs/450-phase3v-raw/0-control_a.log",
+      "A\tdocs/450-phase3v-raw/0-off-legacy-control_a.json.gz",
+      "A\tdocs/450-phase3v-raw/1-control_b.log",
+      "A\tdocs/450-phase3v-raw/1-off-existing_067-control_b.json.gz",
+      "A\tdocs/450-phase3v-raw/2-control_a.log",
+      "A\tdocs/450-phase3v-raw/2-off-existing_067-control_a.json.gz",
+      "A\tdocs/450-phase3v-raw/3-control_b.log",
+      "A\tdocs/450-phase3v-raw/3-off-legacy-control_b.json.gz",
+      "A\tdocs/450-phase3v-raw/4-control_a.log",
+      "A\tdocs/450-phase3v-raw/4-on-legacy-control_a.json.gz",
+      "A\tdocs/450-phase3v-raw/5-control_b.log",
+      "A\tdocs/450-phase3v-raw/5-on-existing_067-control_b.json.gz",
+      "A\tdocs/450-phase3v-raw/6-control_a.log",
+      "A\tdocs/450-phase3v-raw/6-on-existing_067-control_a.json.gz",
+      "A\tdocs/450-phase3v-raw/7-control_b.log",
+      "A\tdocs/450-phase3v-raw/7-on-legacy-control_b.json.gz",
+      "A\tdocs/450-phase3v-raw/checks/application-parity.log",
+      "A\tdocs/450-phase3v-raw/checks/final-regressions.json.gz",
+      "A\tdocs/450-phase3v-raw/checks/final-static.json.gz",
+      "A\tdocs/450-phase3v-raw/checks/final-static.log",
+      "A\tdocs/450-phase3v-raw/checks/final-validation.json.gz",
+      "A\tdocs/450-phase3v-raw/checks/profile-exact-isolated.log",
+      "A\tdocs/450-phase3v-raw/checks/profile-exact.json.gz",
+      "A\tdocs/450-phase3v-raw/checks/profile-exact.log",
+      "A\tdocs/450-phase3v-raw/checks/profile-summary-overlap.json.gz",
+      "A\tdocs/450-phase3v-raw/checks/regressions.json.gz",
+      "A\tdocs/450-phase3v-raw/comparison.json",
+      "A\tdocs/450-phase3v-raw/discovery/full-smoke.json.gz",
+      "A\tdocs/450-phase3v-raw/discovery/full-smoke.partial.json.gz",
+      "A\tdocs/450-phase3v-raw/discovery/indexed-smoke.json.gz",
+      "A\tdocs/450-phase3v-raw/discovery/indexed-smoke.partial.json.gz",
+      "A\tdocs/450-phase3v-raw/discovery/native-corrected.json.gz",
+      "A\tdocs/450-phase3v-raw/discovery/profile-corrected.json.gz",
+      "A\tdocs/450-phase3v-raw/discovery/profile-detailed.json.gz",
+      "A\tdocs/450-phase3v-raw/discovery/profile.json.gz",
+      "A\tdocs/450-phase3v-raw/discovery/smoke.json.gz",
+      "A\tdocs/450-phase3v-raw/discovery/smoke.partial.json.gz",
+      "A\tdocs/450-phase3v-raw/initial-failed/0-control_a.log",
+      "A\tdocs/450-phase3v-raw/initial-failed/0-off-legacy-control_a.json.gz",
+      "A\tdocs/450-phase3v-raw/initial-failed/1-control_b.log",
+      "A\tdocs/450-phase3v-raw/initial-failed/1-off-existing_067-control_b.json.gz",
+      "A\tdocs/450-phase3v-raw/initial-failed/2-control_a.log",
+      "A\tdocs/450-phase3v-raw/initial-failed/2-off-existing_067-control_a.json.gz",
+      "A\tdocs/450-phase3v-raw/initial-failed/3-control_b.log",
+      "A\tdocs/450-phase3v-raw/initial-failed/3-off-legacy-control_b.json.gz",
+      "A\tdocs/450-phase3v-raw/initial-failed/3-off-legacy-control_b.partial.json.gz",
+      "A\tdocs/450-phase3v-raw/initial-failed/comparison.json.gz",
+      "A\tdocs/450-phase3v-raw/manifest.json",
+      "A\tdocs/450-phase3v-raw/phase3v-comparison-corrected.log",
+      "A\tdocs/450-phase3v-raw/phase3v-comparison.log",
+      "A\tdocs/450-phase3v-raw/phase3v-finish-checks.log",
+      "A\tdocs/450-phase3v-raw/phase3v-full-smoke.log",
+      "A\tdocs/450-phase3v-raw/phase3v-indexed-smoke.log",
+      "A\tdocs/450-phase3v-raw/phase3v-native-corrected.log",
+      "A\tdocs/450-phase3v-raw/phase3v-package.log",
+      "A\tdocs/450-phase3v-raw/phase3v-profile-corrected.log",
+      "A\tdocs/450-phase3v-raw/phase3v-profile-detailed.log",
+      "A\tdocs/450-phase3v-raw/phase3v-profile.log",
+      "A\tdocs/450-phase3v-raw/phase3v-smoke.log",
+      "A\tdocs/450-phase3w-claim-ledger.json",
+      "A\tdocs/450-phase3w-engineering-prompt.md",
+      "A\tdocs/450-phase3w-evidence.json",
+      "A\tdocs/450-phase3w-performance.md",
+      "A\tdocs/450-phase3w-plan.md",
+      "A\tdocs/450-phase3w-raw/0-minimal-absent.json.gz",
+      "A\tdocs/450-phase3w-raw/0.log",
+      "A\tdocs/450-phase3w-raw/1-minimal-present.json.gz",
+      "A\tdocs/450-phase3w-raw/1.log",
+      "A\tdocs/450-phase3w-raw/2-minimal-present.json.gz",
+      "A\tdocs/450-phase3w-raw/2.log",
+      "A\tdocs/450-phase3w-raw/3-minimal-absent.json.gz",
+      "A\tdocs/450-phase3w-raw/3.log",
+      "A\tdocs/450-phase3w-raw/4-full-absent.json.gz",
+      "A\tdocs/450-phase3w-raw/4.log",
+      "A\tdocs/450-phase3w-raw/5-full-present.json.gz",
+      "A\tdocs/450-phase3w-raw/5.log",
+      "A\tdocs/450-phase3w-raw/6-full-present.json.gz",
+      "A\tdocs/450-phase3w-raw/6.log",
+      "A\tdocs/450-phase3w-raw/7-full-absent.json.gz",
+      "A\tdocs/450-phase3w-raw/7.log",
+      "A\tdocs/450-phase3w-raw/checks/application-parity.log",
+      "A\tdocs/450-phase3w-raw/checks/commands.json.gz",
+      "A\tdocs/450-phase3w-raw/checks/existing-native.json.gz",
+      "A\tdocs/450-phase3w-raw/checks/existing-native.log",
+      "A\tdocs/450-phase3w-raw/checks/focused-regressions.json.gz",
+      "A\tdocs/450-phase3w-raw/checks/schema-full-suite.json.gz",
+      "A\tdocs/450-phase3w-raw/checks/schema-full-suite.log",
+      "A\tdocs/450-phase3w-raw/checks/static.json.gz",
+      "A\tdocs/450-phase3w-raw/checks/static.log",
+      "A\tdocs/450-phase3w-raw/checks/telemetry-mariadb.json.gz",
+      "A\tdocs/450-phase3w-raw/checks/telemetry-mariadb.log",
+      "A\tdocs/450-phase3w-raw/comparison.json",
+      "A\tdocs/450-phase3w-raw/discovery/full-project-suite-corrected.json.gz",
+      "A\tdocs/450-phase3w-raw/discovery/full-project-suite-corrected.log",
+      "A\tdocs/450-phase3w-raw/discovery/full-project-suite.json.gz",
+      "A\tdocs/450-phase3w-raw/discovery/full-project-suite.log",
+      "A\tdocs/450-phase3w-raw/discovery/full-smoke.json.gz",
+      "A\tdocs/450-phase3w-raw/discovery/full-smoke.log",
+      "A\tdocs/450-phase3w-raw/discovery/full-suite-comparison.json.gz",
+      "A\tdocs/450-phase3w-raw/discovery/full-suite-comparison.log",
+      "A\tdocs/450-phase3w-raw/discovery/inherited-v-survey.json.gz",
+      "A\tdocs/450-phase3w-raw/discovery/inherited-v-survey.log",
+      "A\tdocs/450-phase3w-raw/discovery/inherited-v-survey.partial.json.gz",
+      "A\tdocs/450-phase3w-raw/discovery/minimal-corrected.json.gz",
+      "A\tdocs/450-phase3w-raw/discovery/minimal-corrected.log",
+      "A\tdocs/450-phase3w-raw/discovery/minimal-corrected.partial.json.gz",
+      "A\tdocs/450-phase3w-raw/discovery/minimal-default-corrected.json.gz",
+      "A\tdocs/450-phase3w-raw/discovery/minimal-default-corrected.log",
+      "A\tdocs/450-phase3w-raw/discovery/minimal-smoke.json.gz",
+      "A\tdocs/450-phase3w-raw/discovery/minimal-smoke.log",
+      "A\tdocs/450-phase3w-raw/discovery/minimal-smoke.partial.json.gz",
+      "A\tdocs/450-phase3w-raw/discovery/permission-smoke.json.gz",
+      "A\tdocs/450-phase3w-raw/discovery/permission-smoke.log",
+      "A\tdocs/450-phase3w-raw/discovery/schema-corrected.json.gz",
+      "A\tdocs/450-phase3w-raw/discovery/schema-corrected.log",
+      "A\tdocs/450-phase3w-raw/discovery/schema-profiled.json.gz",
+      "A\tdocs/450-phase3w-raw/discovery/schema-profiled.log",
+      "A\tdocs/450-phase3w-raw/discovery/schema-utf8.json.gz",
+      "A\tdocs/450-phase3w-raw/discovery/schema-utf8.log",
+      "A\tdocs/450-phase3w-raw/discovery/schema.json.gz",
+      "A\tdocs/450-phase3w-raw/discovery/schema.log",
+      "A\tdocs/450-phase3w-raw/discovery/telemetry-before-freeze.json.gz",
+      "A\tdocs/450-phase3w-raw/discovery/telemetry-green-latest.json.gz",
+      "A\tdocs/450-phase3w-raw/discovery/telemetry-green.json.gz",
+      "A\tdocs/450-phase3w-raw/discovery/telemetry-mariadb.json.gz",
+      "A\tdocs/450-phase3w-raw/discovery/telemetry-mariadb.log",
+      "A\tdocs/450-phase3w-raw/discovery/telemetry-red.json.gz",
+      "A\tdocs/450-phase3w-raw/manifest.json",
+      "A\tdocs/450-phase3w-raw/phase3w-comparison.log",
+      "A\tdocs/450-phase3w-raw/phase3w-finish-checks.log",
+      "A\tdocs/450-phase3w-raw/phase3w-postprocess.log",
+      "A\tdocs/450-phase3w-raw/phase3w-report.log",
+      "A\tdocs/450-phase3w-raw/portable-recompute.log",
+      "A\tdocs/450-phase3w-raw/recompute-additional.py",
+      "A\tdocs/450-phase3w-raw/system.json",
+      "A\tdocs/450-phase3x-claim-ledger.json",
+      "A\tdocs/450-phase3x-engineering-prompt.md",
+      "A\tdocs/450-phase3x-evidence.json",
+      "A\tdocs/450-phase3x-performance.md",
+      "A\tdocs/450-phase3x-plan.md",
+      "A\tdocs/450-phase3x-raw/before.json.gz",
+      "A\tdocs/450-phase3x-raw/before.log.gz",
+      "A\tdocs/450-phase3x-raw/clocks.json.gz",
+      "A\tdocs/450-phase3x-raw/clocks.log.gz",
+      "A\tdocs/450-phase3x-raw/compatibility.json.gz",
+      "A\tdocs/450-phase3x-raw/compatibility.log.gz",
+      "A\tdocs/450-phase3x-raw/diagnostic.json.gz",
+      "A\tdocs/450-phase3x-raw/diagnostic.log.gz",
+      "A\tdocs/450-phase3x-raw/final-commands.json.gz",
+      "A\tdocs/450-phase3x-raw/final-summary.json.gz",
+      "A\tdocs/450-phase3x-raw/final.json.gz",
+      "A\tdocs/450-phase3x-raw/final.log.gz",
+      "A\tdocs/450-phase3x-raw/frozen-static.json.gz",
+      "A\tdocs/450-phase3x-raw/frozen-static.log.gz",
+      "A\tdocs/450-phase3x-raw/frozen-summary.json.gz",
+      "A\tdocs/450-phase3x-raw/frozen.json.gz",
+      "A\tdocs/450-phase3x-raw/frozen.log.gz",
+      "A\tdocs/450-phase3x-raw/full-fixed.json.gz",
+      "A\tdocs/450-phase3x-raw/full-fixed.log.gz",
+      "A\tdocs/450-phase3x-raw/full.json.gz",
+      "A\tdocs/450-phase3x-raw/full.log.gz",
+      "A\tdocs/450-phase3x-raw/manifest.json",
+      "A\tdocs/450-phase3x-raw/repaired.json.gz",
+      "A\tdocs/450-phase3x-raw/repaired.log.gz",
+      "A\tdocs/450-phase3x-raw/static.json.gz",
+      "A\tdocs/450-phase3x-raw/static.log.gz",
+      "A\tdocs/450-phase3x-raw/telemetry.json.gz",
+      "A\tdocs/450-phase3x-raw/utc-summary.json.gz",
+      "A\tdocs/450-phase3x-raw/utc.json.gz",
+      "A\tdocs/450-phase3x-raw/utc.log.gz",
+      "A\tdocs/450-phase3y-claim-ledger.json",
+      "A\tdocs/450-phase3y-engineering-prompt.md",
+      "A\tdocs/450-phase3y-evidence.json",
+      "A\tdocs/450-phase3y-performance.md",
+      "A\tdocs/450-phase3y-plan.md",
+      "A\tdocs/450-phase3y-raw/browser-revision-checks.json.gz",
+      "A\tdocs/450-phase3y-raw/commands.json.gz",
+      "A\tdocs/450-phase3y-raw/discovery-accepted-base.json.gz",
+      "A\tdocs/450-phase3y-raw/discovery-accepted-base.log.gz",
+      "A\tdocs/450-phase3y-raw/discovery-matrix.json.gz",
+      "A\tdocs/450-phase3y-raw/discovery-matrix.log.gz",
+      "A\tdocs/450-phase3y-raw/discovery-native.json.gz",
+      "A\tdocs/450-phase3y-raw/discovery-native.log.gz",
+      "A\tdocs/450-phase3y-raw/final-accepted-base.json.gz",
+      "A\tdocs/450-phase3y-raw/final-accepted-base.log.gz",
+      "A\tdocs/450-phase3y-raw/final-full-summary.json.gz",
+      "A\tdocs/450-phase3y-raw/final-full.json.gz",
+      "A\tdocs/450-phase3y-raw/final-full.log.gz",
+      "A\tdocs/450-phase3y-raw/final-http.json.gz",
+      "A\tdocs/450-phase3y-raw/final-http.log.gz",
+      "A\tdocs/450-phase3y-raw/final-static.json.gz",
+      "A\tdocs/450-phase3y-raw/final-static.log.gz",
+      "A\tdocs/450-phase3y-raw/hosted-79fa2c3-accepted-base.json.gz",
+      "A\tdocs/450-phase3y-raw/hosted-79fa2c3-artifact.json.gz",
+      "A\tdocs/450-phase3y-raw/hosted-79fa2c3-full.json.gz",
+      "A\tdocs/450-phase3y-raw/hosted-79fa2c3-http.json.gz",
+      "A\tdocs/450-phase3y-raw/manifest.json",
+      "A\tdocs/450-phase3y-raw/pre-freeze-matrix.json.gz",
+      "A\tdocs/450-phase3y-raw/pre-freeze-matrix.log.gz",
+      "A\tdocs/450-phase3y-raw/recompute-negative.json.gz",
+      "A\tdocs/450-phase3y-raw/serial-http-discovery.json.gz",
+      "A\tdocs/450-phase3y-raw/serial-http-discovery.log.gz",
+      "A\tdocs/450-phase3y-raw/serial-http-summary.json.gz",
+      "A\tdocs/450-phase3y-raw/smoke-http-2.json.gz",
+      "A\tdocs/450-phase3y-raw/smoke-http-2.log.gz",
+      "A\tdocs/450-phase3y-raw/smoke-http-3.json.gz",
+      "A\tdocs/450-phase3y-raw/smoke-http-3.log.gz",
+      "A\tdocs/450-phase3y-raw/smoke-http-4.json.gz",
+      "A\tdocs/450-phase3y-raw/smoke-http-4.log.gz",
+      "A\tdocs/450-phase3y-raw/smoke-http-5.json.gz",
+      "A\tdocs/450-phase3y-raw/smoke-http-5.log.gz",
+      "A\tdocs/450-phase3y-raw/smoke-http-6.log.gz",
+      "A\tdocs/450-phase3y-raw/smoke-http-7.json.gz",
+      "A\tdocs/450-phase3y-raw/smoke-http-7.log.gz",
+      "A\tdocs/450-phase3y-raw/smoke-http.json.gz",
+      "A\tdocs/450-phase3y-raw/smoke-http.log.gz",
+      "A\tdocs/450-phase3y-raw/static.json.gz",
+      "A\tdocs/450-phase3y-raw/static.log.gz",
+      "A\tdocs/450-phase3y-raw/verified-http-summary.json.gz",
+      "A\tdocs/450-phase3y-raw/verified-http.json.gz",
+      "A\tdocs/450-phase3y-raw/verified-http.log.gz",
+      "A\tdocs/450-phase3z-claim-ledger.json",
+      "A\tdocs/450-phase3z-engineering-prompt.md",
+      "A\tdocs/450-phase3z-evidence.json",
+      "A\tdocs/450-phase3z-otp-contract.md",
+      "A\tdocs/450-phase3z-performance.md",
+      "A\tdocs/450-phase3z-plan.md",
+      "A\tdocs/450-phase3z-raw/accepted-phase3x.json.gz",
+      "A\tdocs/450-phase3z-raw/accepted-phase3y.json.gz",
+      "A\tdocs/450-phase3z-raw/discovery-timezone.json.gz",
+      "A\tdocs/450-phase3z-raw/discovery2-timezone.json.gz",
+      "A\tdocs/450-phase3z-raw/final-http-summary.json.gz",
+      "A\tdocs/450-phase3z-raw/final-http.json.gz",
+      "A\tdocs/450-phase3z-raw/final-timezone-summary.json.gz",
+      "A\tdocs/450-phase3z-raw/final-timezone.json.gz",
+      "A\tdocs/450-phase3z-raw/frozen-checks.json.gz",
+      "A\tdocs/450-phase3z-raw/frozen-full-summary.json.gz",
+      "A\tdocs/450-phase3z-raw/frozen-full.json.gz",
+      "A\tdocs/450-phase3z-raw/frozen-static.json.gz",
+      "A\tdocs/450-phase3z-raw/frozen-timezone-summary.json.gz",
+      "A\tdocs/450-phase3z-raw/frozen-timezone.json.gz",
+      "A\tdocs/450-phase3z-raw/local-commands.json.gz",
+      "A\tdocs/450-phase3z-raw/manifest.json",
+      "A\tdocs/450-phase3z-raw/phase3y-hosted-success-accepted-base.json.gz",
+      "A\tdocs/450-phase3z-raw/phase3y-hosted-success-full.json.gz",
+      "A\tdocs/450-phase3z-raw/phase3y-hosted-success-http.json.gz",
+      "A\tdocs/450-phase3z-raw/phase3y-hosted-success-static.json.gz",
+      "A\tdocs/450-phase3z-raw/phase3z-composer.log.gz",
+      "A\tdocs/450-phase3z-raw/phase3z-discovery.log.gz",
+      "A\tdocs/450-phase3z-raw/phase3z-discovery2.log.gz",
+      "A\tdocs/450-phase3z-raw/phase3z-frozen-timezone.log.gz",
+      "A\tdocs/450-phase3z-raw/phase3z-full.log.gz",
+      "A\tdocs/450-phase3z-raw/phase3z-local.log.gz",
+      "A\tdocs/450-phase3z-raw/phase3z-static.log.gz",
+      "A\tscripts/jarred-worker.php",
+      "A\tservices/AccessPolicy.php",
+      "M\tservices/AdminDashboardService.php",
+      "A\tservices/AdminGroupRecommendationService.php",
+      "A\tservices/ChannelAccessService.php",
+      "M\tservices/CodeLabRunner.php",
+      "M\tservices/CoworkspaceService.php",
+      "M\tservices/DocumentAccessService.php",
+      "M\tservices/FacilitatorDashboardService.php",
+      "M\tservices/GeminiService.php",
+      "M\tservices/JarredActionService.php",
+      "A\tservices/JarredErrorResponse.php",
+      "M\tservices/JarredGroupRecommendationService.php",
+      "A\tservices/JarredJobService.php",
+      "A\tservices/JarredReplyGenerator.php",
+      "M\tservices/JarredTools.php",
+      "M\tservices/LearningWorkspaceService.php",
+      "M\tservices/NotificationService.php",
+      "M\tservices/OllamaService.php",
+      "A\tservices/PeerMatchBatch.php",
+      "M\tservices/PeerMatchingService.php",
+      "M\tservices/RealtimeOutbox.php",
+      "M\tservices/StudentDashboardService.php",
+      "M\tservices/TemporaryVoiceService.php",
+      "A\tservices/ThreadAttachmentService.php",
+      "M\ttests/Integration/AuthServiceTest.php",
+      "A\ttests/Integration/OtpExpiryTest.php",
+      "A\ttests/Support/LocalOtpTransport.php",
+      "A\ttests/application-performance-browser.cjs",
+      "A\ttests/application-performance.php",
+      "A\ttests/application-performance.py",
+      "M\ttests/centrifugo-database-regression.php",
+      "A\ttests/chat-list-browser.cjs",
+      "A\ttests/chat-list-performance.cjs",
+      "A\ttests/chat-performance.py",
+      "A\ttests/chat-read-paths.php",
+      "A\ttests/chat-read-profile.php",
+      "A\ttests/chat-worker-profile.py",
+      "A\ttests/chat-worker-wrapper.php",
+      "A\ttests/classroom-bootstrap.php",
+      "A\ttests/classroom-browser.cjs",
+      "A\ttests/classroom-facilitator-profile.php",
+      "A\ttests/classroom-fixture.sql",
+      "A\ttests/classroom-index.py",
+      "A\ttests/classroom-performance.py",
+      "A\ttests/code-lab-isolated-live.py",
+      "A\ttests/code-lab-isolation-config.py",
+      "A\ttests/code-lab-mtls-integration.py",
+      "A\ttests/code-lab-mtls-queue.php",
+      "M\ttests/code-lab-piston-live.py",
+      "A\ttests/code-lab-private-backend-test.py",
+      "M\ttests/collabora-regression.php",
+      "A\ttests/coworkspace-migration-integration.py",
+      "A\ttests/coworkspace-migration-regression.php",
+      "A\ttests/dashboard-browser.cjs",
+      "A\ttests/dashboard-date-regression.cjs",
+      "A\ttests/dashboard-http-compare.py",
+      "A\ttests/dashboard-http-router.php",
+      "A\ttests/dashboard-performance.py",
+      "A\ttests/dashboard-profile.php",
+      "A\ttests/dashboard-query-profile.php",
+      "A\ttests/experiments/phase3aa/UtcOtpTrial.php",
+      "A\ttests/fixtures/application-performance.sql",
+      "A\ttests/fixtures/jarred-async.sql",
+      "A\ttests/jarred-async-browser.cjs",
+      "A\ttests/jarred-async-contract.php",
+      "A\ttests/jarred-async-integration.py",
+      "A\ttests/jarred-async-worker-fixture.php",
+      "A\ttests/jarred-governance-http.cjs",
+      "A\ttests/jarred-governance-lock.cjs",
+      "A\ttests/jarred-governance-provider.php",
+      "A\ttests/jarred-governance-retention.php",
+      "M\ttests/peer-ml-regression.php",
+      "A\ttests/peer-threads-bootstrap.php",
+      "A\ttests/peer-threads-performance.py",
+      "A\ttests/peer-threads-regression.php",
+      "A\ttests/peer-threads-static.py",
+      "A\ttests/phase1-access.php",
+      "A\ttests/phase1-temporary-voice.php",
+      "A\ttests/phase2-jarred-client.cjs",
+      "A\ttests/phase2-jarred-http.py",
+      "A\ttests/phase2-jarred.php",
+      "A\ttests/phase3aa-clock.php",
+      "A\ttests/phase3aa-contracts.php",
+      "A\ttests/phase3aa-experiments.py",
+      "A\ttests/phase3aa-race-worker.php",
+      "A\ttests/phase3aa-race.php",
+      "A\ttests/phase3aa-report.py",
+      "A\ttests/phase3aa-transition.php",
+      "A\ttests/phase3s-compare.py",
+      "A\ttests/phase3s-regression.php",
+      "A\ttests/phase3s-sample.py",
+      "A\ttests/phase3t-compare.py",
+      "A\ttests/phase3t-discovery.php",
+      "A\ttests/phase3t-history.py",
+      "A\ttests/phase3t-regression.php",
+      "A\ttests/phase3t-sample.py",
+      "A\ttests/phase3u-compare.py",
+      "A\ttests/phase3u-discovery.php",
+      "A\ttests/phase3u-plan-control.php",
+      "A\ttests/phase3u-regression.php",
+      "A\ttests/phase3u-report.py",
+      "A\ttests/phase3v-compare.py",
+      "A\ttests/phase3v-profile.php",
+      "A\ttests/phase3v-regression.php",
+      "A\ttests/phase3v-report.py",
+      "A\ttests/phase3v-sample.py",
+      "A\ttests/phase3w-compare.py",
+      "A\ttests/phase3w-full-fixture.php",
+      "A\ttests/phase3w-lock-holder.php",
+      "A\ttests/phase3w-migration-bootstrap.php",
+      "A\ttests/phase3w-native.php",
+      "A\ttests/phase3w-phpunit-bootstrap.php",
+      "A\ttests/phase3w-report.py",
+      "A\ttests/phase3w-sample.py",
+      "A\ttests/phase3w-schema.php",
+      "A\ttests/phase3w-telemetry-regression.php",
+      "A\ttests/phase3x-report.py",
+      "A\ttests/phase3x-suite.php",
+      "A\ttests/phase3y-bootstrap.php",
+      "A\ttests/phase3y-browser.cjs",
+      "A\ttests/phase3y-control.php",
+      "A\ttests/phase3y-http.py",
+      "A\ttests/phase3y-report.py",
+      "A\ttests/phase3z-clock.php",
+      "A\ttests/phase3z-report.py",
+      "A\ttests/phase3z-timezone.py",
+      "A\ttests/review-jarred-crashes.php",
+      "A\ttests/review-jarred-resource-access.php",
+      "A\ttests/shared-ai-provider.cjs",
+      "M\ttests/whiteboard-realtime-regression.php"
+    ],
+    "category_counts": {
+      ".github": 19,
+      "API": 12,
+      "assets": 3,
+      "database": 5,
+      "deploy": 9,
+      "docs": 410,
+      "scripts": 1,
+      "services": 24,
+      "tests": 106
+    },
+    "runtime_paths": [
+      {
+        "path": "API/admin/group-recommendations.php",
+        "integration_blob": "aa1bad750c02be8dfab917ad7bbcaaf48be7a082",
+        "accepted_blob": "443b3958930120047146edba11d93c916565e004"
+      },
+      {
+        "path": "API/ai/message.php",
+        "integration_blob": "844924533d938a494a66f8a10f47b40655e047db",
+        "accepted_blob": "d17c941560aa02ba45b1c498137307923767bdcd"
+      },
+      {
+        "path": "API/ai/session.php",
+        "integration_blob": "53512abacea40feab7d4373d325ee5423c7949fd",
+        "accepted_blob": "382bcd1f65d751ceba1a9df8002e3a6c37725ce5"
+      },
+      {
+        "path": "API/ai/sessions.php",
+        "integration_blob": "23a6d23e6ec8a714a2451396eb53087acf453415",
+        "accepted_blob": "7c1fa2ca6babcd4888ca498f92b211cbac3586b5"
+      },
+      {
+        "path": "API/chat/ai-assist.php",
+        "integration_blob": "f43e16c435e99580a37077a6b518a0ca00963fe9",
+        "accepted_blob": "411d235aa4d970ffef128a22f95e0c83c5d11a9c"
+      },
+      {
+        "path": "API/chat/get-matches.php",
+        "integration_blob": "76e2c94dfeadcf2be4a2fedc8a7f852453c9eac2",
+        "accepted_blob": "c87504f8f176816351c3735bafbb0f67793deaad"
+      },
+      {
+        "path": "API/chat/peer-match.php",
+        "integration_blob": "d1ae6fd0a095ee699b6ca1baa6e9dee0605b2496",
+        "accepted_blob": "cb97beac597b5767e2e9ba8419dab43673dade22"
+      },
+      {
+        "path": "API/collaboration/workspaces.php",
+        "integration_blob": "df87294da8c426edbeabda6de9acd07876b13dcf",
+        "accepted_blob": "7abe0a5de5de3c981cf8efcf2ba1cd08242248d3"
+      },
+      {
+        "path": "API/dm/jarred-job.php",
+        "integration_blob": null,
+        "accepted_blob": "79556910b14d260abf89f1e0b1bacf7f4522dded"
+      },
+      {
+        "path": "API/dm/send-message.php",
+        "integration_blob": "a9c1d564ac8e1b6133bb9e1f53b1064f4a3a93cd",
+        "accepted_blob": "cd8fd8828706da6c599d3604e6f86dede4d5334f"
+      },
+      {
+        "path": "API/facilitator/jarred.php",
+        "integration_blob": "97a3b99ecf1722fbea29757bdb2b3276c602a167",
+        "accepted_blob": "7d6f0f0e1ae04f37e755d2a050171b0d69288994"
+      },
+      {
+        "path": "API/threads/index.php",
+        "integration_blob": "4498d9c8f63f39971347be01023c3970a51ffa46",
+        "accepted_blob": "729a07ca70f047083f9126be9a1d0095892e5403"
+      },
+      {
+        "path": "assets/js/chat/dm-notifications.js",
+        "integration_blob": "f468db848eeb26353248bc80acbfea70aa1b18a0",
+        "accepted_blob": "bef611870d570e620880bd65d22f1542cfeb20d5"
+      },
+      {
+        "path": "assets/js/learning/workspace.js",
+        "integration_blob": "734fc2cfaf2bcc698c0cd64660811dadcd40e8e2",
+        "accepted_blob": "79a429af5579fbba2a4c87022a07a34394400639"
+      },
+      {
+        "path": "assets/js/student/dashboard.js",
+        "integration_blob": "3da91e42dcfcd0b5364e388e51af09b23fcbc960",
+        "accepted_blob": "c395fa756ca872c3a7ebec51d58d9492a89368c1"
+      },
+      {
+        "path": "database/migrate.php",
+        "integration_blob": "96950eb967efdb0d9cfec7af6b083445acda3916",
+        "accepted_blob": "ca2fa8eaf139e8c19de7a65357b123e5d64dfaf7"
+      },
+      {
+        "path": "database/migrations/025_coworkspace_one_active_per_server_mariadb.sql",
+        "integration_blob": null,
+        "accepted_blob": "fa196f0e6516ad6b2385c062fdc5ce157058dd47"
+      },
+      {
+        "path": "database/migrations/063_temporary_voice.sql",
+        "integration_blob": null,
+        "accepted_blob": "7562db6539e2b1345d729624775a60db3c1b6f62"
+      },
+      {
+        "path": "database/migrations/066_jarred_jobs.sql",
+        "integration_blob": null,
+        "accepted_blob": "5169658f326ce271673718d09738670e7df4202c"
+      },
+      {
+        "path": "database/migrations/067_dashboard_unread_covering.sql",
+        "integration_blob": null,
+        "accepted_blob": "d2e321e8cc1ce67229ef732023fe4241594c5997"
+      },
+      {
+        "path": "deploy/ai-provider/README.md",
+        "integration_blob": null,
+        "accepted_blob": "57449fb0f560e2954a5a25fdce667807bfd84314"
+      },
+      {
+        "path": "deploy/ai-provider/shared-lock.env.example",
+        "integration_blob": null,
+        "accepted_blob": "37227adc1200abdf46cb7524a2f0a723df3dd683"
+      },
+      {
+        "path": "deploy/code-lab/isolated/README.md",
+        "integration_blob": null,
+        "accepted_blob": "073354209bcd88ca983bef3e3800dd17e47fd6d3"
+      },
+      {
+        "path": "deploy/code-lab/isolated/application.env.example",
+        "integration_blob": null,
+        "accepted_blob": "b40ea8ad720a1bbab59c061a2efb316c7c1dec31"
+      },
+      {
+        "path": "deploy/code-lab/isolated/execution.env.example",
+        "integration_blob": null,
+        "accepted_blob": "122097b5c94ada62db87a3de84d2491fe4a8c720"
+      },
+      {
+        "path": "deploy/code-lab/isolated/nginx.conf.example",
+        "integration_blob": null,
+        "accepted_blob": "6a93e58f56508124d1f794356393da6af6fa7fdc"
+      },
+      {
+        "path": "deploy/code-lab/piston/bridge.py",
+        "integration_blob": "10615ab27957812f9e91afc326bd4799efd1ca2b",
+        "accepted_blob": "31c80343397322f0cfb4c021236db1287558d9c5"
+      },
+      {
+        "path": "deploy/code-lab/piston/compose.isolated.yml",
+        "integration_blob": null,
+        "accepted_blob": "8c0e0bcb00172ef2b4a7bcd562a1a9d3767609f5"
+      },
+      {
+        "path": "deploy/phase2/ecollab-jarred-worker.service",
+        "integration_blob": null,
+        "accepted_blob": "b80b9c69af81de46394cc4a826f665976fa598f5"
+      },
+      {
+        "path": "scripts/jarred-worker.php",
+        "integration_blob": null,
+        "accepted_blob": "5bd8980fc221d8f8b65e1847590384fc5b1c5511"
+      },
+      {
+        "path": "services/AccessPolicy.php",
+        "integration_blob": null,
+        "accepted_blob": "575bd7b26d379a190e34e91ab24ea2c2c8660a48"
+      },
+      {
+        "path": "services/AdminDashboardService.php",
+        "integration_blob": "c8672662a0e5c01731926f552756d163bfdf2d82",
+        "accepted_blob": "818df440cda1f9f45fa275cc11f0e0ea1b8906b5"
+      },
+      {
+        "path": "services/AdminGroupRecommendationService.php",
+        "integration_blob": null,
+        "accepted_blob": "24adae9e458c991ca93efaa37e9a7867b23dc20e"
+      },
+      {
+        "path": "services/ChannelAccessService.php",
+        "integration_blob": null,
+        "accepted_blob": "d6a1ebf6a64215e15cdaf69b802f90e043e0542f"
+      },
+      {
+        "path": "services/CodeLabRunner.php",
+        "integration_blob": "8463de868732c86fd50139abe704c41aae33917a",
+        "accepted_blob": "fd76ca74c11e37bcbd8e060e669f5b5bd1874e47"
+      },
+      {
+        "path": "services/CoworkspaceService.php",
+        "integration_blob": "3ce30269b9313c7a7ca2be4126158178e8375a6d",
+        "accepted_blob": "e41b412aa4ca027ccccfad05f916e7c06346fae6"
+      },
+      {
+        "path": "services/DocumentAccessService.php",
+        "integration_blob": "590a2e0e6c7b299dcae7c6f09c37e8049e246c62",
+        "accepted_blob": "1cfae03f87262ab7ee5395af28c4160b1ddb7862"
+      },
+      {
+        "path": "services/FacilitatorDashboardService.php",
+        "integration_blob": "32fae5b035a6c10eeeea3b9c2f742a2241135d29",
+        "accepted_blob": "6fac3450f69e471506bca8d9522cdd5a3f62351f"
+      },
+      {
+        "path": "services/GeminiService.php",
+        "integration_blob": "f1e97b7d0ccc899925e06806c6f8e2ea7df43f45",
+        "accepted_blob": "cc7b68ba1f29bcdf40543d6e4de32e4440f05112"
+      },
+      {
+        "path": "services/JarredActionService.php",
+        "integration_blob": "4e0e7c36a6b0285b777faaddd108b0456badcf2a",
+        "accepted_blob": "bcef4b842ccd6e71adcf214549d50efc0b4f2fbb"
+      },
+      {
+        "path": "services/JarredErrorResponse.php",
+        "integration_blob": null,
+        "accepted_blob": "bc9ee3547e8d920cf3c7ed5e41ab1f73cf1a96b5"
+      },
+      {
+        "path": "services/JarredGroupRecommendationService.php",
+        "integration_blob": "3c490aeb784f73eee6336c2cb82886dfc3807152",
+        "accepted_blob": "e37309afb89a87884071a3f20581b480ca085149"
+      },
+      {
+        "path": "services/JarredJobService.php",
+        "integration_blob": null,
+        "accepted_blob": "3b37386743ea57e2d989a631622c9665fbff36b0"
+      },
+      {
+        "path": "services/JarredReplyGenerator.php",
+        "integration_blob": null,
+        "accepted_blob": "9cc3a8ab17ded1ca84ecd38623c025217b2da828"
+      },
+      {
+        "path": "services/JarredTools.php",
+        "integration_blob": "709dc227d30d83f0d14bf3bbbbb46f6c2e9f6e15",
+        "accepted_blob": "0336498fb97cd812342e14f43cd683b1fa660f9d"
+      },
+      {
+        "path": "services/LearningWorkspaceService.php",
+        "integration_blob": "3118032b74deaa33995e59fe995d92a43decd4aa",
+        "accepted_blob": "f97d55e39627042a25b3733e61ed2dfbe8b1b364"
+      },
+      {
+        "path": "services/NotificationService.php",
+        "integration_blob": "d35fa903f719f43c133d80984402a521a0d39078",
+        "accepted_blob": "1735c8b8536e3a63c8d422e8a49fde5368fa2a03"
+      },
+      {
+        "path": "services/OllamaService.php",
+        "integration_blob": "6af84f29ca4132cb355774df5dc5b32b33f15f9c",
+        "accepted_blob": "e328b65203294d5b99454fce88554a23ac44f30b"
+      },
+      {
+        "path": "services/PeerMatchBatch.php",
+        "integration_blob": null,
+        "accepted_blob": "70332916b8fbc1190d14ebbbd79642f09dd95aca"
+      },
+      {
+        "path": "services/PeerMatchingService.php",
+        "integration_blob": "30028f0918742f24eac2c0f6e88024dd083cd4d3",
+        "accepted_blob": "805476f4a0c6e8df3f9ce90da966d41ad3271f3a"
+      },
+      {
+        "path": "services/RealtimeOutbox.php",
+        "integration_blob": "f36a9925413317cb219e72e4db594799b592d27b",
+        "accepted_blob": "93bbe098fc22dab437b83d007bb769090f80b48b"
+      },
+      {
+        "path": "services/StudentDashboardService.php",
+        "integration_blob": "cbc2fb40e5640d49b80979e6bad6378765966d62",
+        "accepted_blob": "0c8b78ea8a43115af15420cadfb9c5207837d920"
+      },
+      {
+        "path": "services/TemporaryVoiceService.php",
+        "integration_blob": "3ac0726a41dc731df24e19746061e1b85c527752",
+        "accepted_blob": "9d29736c0604f5472fd45a2e82105335e68ce9f4"
+      },
+      {
+        "path": "services/ThreadAttachmentService.php",
+        "integration_blob": null,
+        "accepted_blob": "cc80af6cef3c9979acbe1d6ed0391f0f08995cd6"
+      }
+    ],
+    "migration_paths": [
+      "database/migrations/025_coworkspace_one_active_per_server_mariadb.sql",
+      "database/migrations/063_temporary_voice.sql",
+      "database/migrations/066_jarred_jobs.sql",
+      "database/migrations/067_dashboard_unread_covering.sql"
+    ],
+    "configuration_dependencies": [
+      {
+        "path": "API/ai/message.php",
+        "variable_names_only": [
+          "GEMINI_API_KEY",
+          "GEMINI_MODEL",
+          "OLLAMA_MODEL",
+          "OLLAMA_URL"
+        ]
+      },
+      {
+        "path": "API/chat/ai-assist.php",
+        "variable_names_only": [
+          "GEMINI_API_KEY",
+          "GEMINI_MODEL"
+        ]
+      },
+      {
+        "path": "deploy/ai-provider/shared-lock.env.example",
+        "variable_names_only": [
+          "OLLAMA_INFERENCE_LOCK_FILE"
+        ]
+      },
+      {
+        "path": "deploy/code-lab/isolated/application.env.example",
+        "variable_names_only": [
+          "CODE_LAB_JUDGE0_TOKEN",
+          "CODE_LAB_JUDGE0_URL",
+          "CODE_LAB_RUNNER_TLS_CA",
+          "CODE_LAB_RUNNER_TLS_CERT",
+          "CODE_LAB_RUNNER_TLS_KEY",
+          "CODE_LAB_RUNNER_TRANSPORT"
+        ]
+      },
+      {
+        "path": "deploy/code-lab/isolated/execution.env.example",
+        "variable_names_only": [
+          "CODE_LAB_ADAPTER_IPV4",
+          "CODE_LAB_EXECUTION_SUBNET",
+          "CODE_LAB_RUNNER_STATE"
+        ]
+      },
+      {
+        "path": "scripts/jarred-worker.php",
+        "variable_names_only": [
+          "OLLAMA_INFERENCE_LOCK_FILE"
+        ]
+      },
+      {
+        "path": "services/CodeLabRunner.php",
+        "variable_names_only": [
+          "CODE_LAB_JUDGE0_TOKEN",
+          "CODE_LAB_JUDGE0_URL",
+          "CODE_LAB_LANGUAGE_IDS",
+          "CODE_LAB_RUNNER_TLS_",
+          "CODE_LAB_RUNNER_TRANSPORT"
+        ]
+      },
+      {
+        "path": "services/JarredReplyGenerator.php",
+        "variable_names_only": [
+          "OLLAMA_WORKER_TIMEOUT"
+        ]
+      },
+      {
+        "path": "services/OllamaService.php",
+        "variable_names_only": [
+          "OLLAMA_INFERENCE_LOCK_FILE",
+          "OLLAMA_MODEL",
+          "OLLAMA_NUM_THREADS",
+          "OLLAMA_URL"
+        ]
+      },
+      {
+        "path": "services/RealtimeOutbox.php",
+        "variable_names_only": [
+          "CENTRIFUGO_ENABLED"
+        ]
+      }
+    ],
+    "auth_baseline_identity": {
+      "services/AuthService.php": {
+        "integration_blob": "b145ba3e85036eb21748d85b235dd8e18c6cfc32",
+        "stack_blob": "b145ba3e85036eb21748d85b235dd8e18c6cfc32",
+        "identical": true
+      },
+      "security/forgot-password/OtpService.php": {
+        "integration_blob": "e4fd8e4a49c92033e952b872ad0bab66d5d3088c",
+        "stack_blob": "e4fd8e4a49c92033e952b872ad0bab66d5d3088c",
+        "identical": true
+      },
+      "config.php": {
+        "integration_blob": "ea1a819b3b45efce7e3ba013dab26830a0cbe62e",
+        "stack_blob": "ea1a819b3b45efce7e3ba013dab26830a0cbe62e",
+        "identical": true
+      }
+    },
+    "phase3u_through3aa_application_delta": "EMPTY versus exact Phase3T runtime paths",
+    "prs": [
+      {
+        "number": 66,
+        "title": "Phase 1: optimize backend queries and unify channel access",
+        "url": "https://github.com/ecollab-project/ecollab/pull/66",
+        "head": "8a2dcfd19db15c10d4711856835d68ef799660db",
+        "head_ref": "optimization/450-users-phase1",
+        "base": "c838359711a14e9b6eb3f345c4386d184a178b25",
+        "base_ref": "ecollab-collabs",
+        "draft": false,
+        "state": "open",
+        "head_is_ancestor_of_accepted": false,
+        "changed_paths": [
+          "A\t.github/workflows/phase1.yml",
+          "M\tAPI/chat/active-now.php",
+          "M\tAPI/chat/get-messages.php",
+          "M\tAPI/chat/livekit-counts.php",
+          "M\tAPI/chat/livekit-token.php",
+          "M\tAPI/chat/peer-match.php",
+          "M\tAPI/chat/search-messages.php",
+          "M\tAPI/chat/whiteboard-sync.php",
+          "A\tdatabase/migrations/063_temporary_voice.sql",
+          "A\tdocs/450-phase1.md",
+          "A\tscripts/temporary-voice-maintenance.php",
+          "A\tservices/ChannelAccessService.php",
+          "M\tservices/MessageService.php",
+          "M\tservices/PeerMatchingService.php",
+          "M\tservices/TemporaryVoiceService.php",
+          "A\ttests/phase1-access.php",
+          "A\ttests/phase1-mariadb.php",
+          "A\ttests/phase1-messages.php",
+          "A\ttests/phase1-peer-batch.php",
+          "A\ttests/phase1-session.py",
+          "A\ttests/phase1-temporary-voice.php",
+          "A\ttests/phase1-websocket.php",
+          "M\twebsocket/ChatServer.php"
+        ],
+        "runtime_changed_paths": [
+          "API/chat/active-now.php",
+          "API/chat/get-messages.php",
+          "API/chat/livekit-counts.php",
+          "API/chat/livekit-token.php",
+          "API/chat/peer-match.php",
+          "API/chat/search-messages.php",
+          "API/chat/whiteboard-sync.php",
+          "database/migrations/063_temporary_voice.sql",
+          "scripts/temporary-voice-maintenance.php",
+          "services/ChannelAccessService.php",
+          "services/MessageService.php",
+          "services/PeerMatchingService.php",
+          "services/TemporaryVoiceService.php",
+          "websocket/ChatServer.php"
+        ],
+        "runtime_exact_at_stack": [
+          "database/migrations/063_temporary_voice.sql"
+        ],
+        "runtime_different_at_stack": [
+          "API/chat/active-now.php",
+          "API/chat/get-messages.php",
+          "API/chat/livekit-counts.php",
+          "API/chat/livekit-token.php",
+          "API/chat/peer-match.php",
+          "API/chat/search-messages.php",
+          "API/chat/whiteboard-sync.php",
+          "services/ChannelAccessService.php",
+          "services/MessageService.php",
+          "services/PeerMatchingService.php",
+          "services/TemporaryVoiceService.php",
+          "websocket/ChatServer.php"
+        ],
+        "runtime_absent_at_stack": [
+          "scripts/temporary-voice-maintenance.php"
+        ],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 67,
+        "title": "Phase 2: shared LiveKit counts, async Jarred and bounded realtime work",
+        "url": "https://github.com/ecollab-project/ecollab/pull/67",
+        "head": "e1fe79f7b2cdadf4719e9ef5f1bd82ae14db4b98",
+        "head_ref": "optimization/450-users-phase2",
+        "base": "8a2dcfd19db15c10d4711856835d68ef799660db",
+        "base_ref": "optimization/450-users-phase1",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": false,
+        "changed_paths": [
+          "A\t.github/workflows/phase2.yml",
+          "M\tAPI/chat/livekit-counts.php",
+          "M\tAPI/chat/search-messages.php",
+          "M\tAPI/code-lab/index.php",
+          "A\tAPI/dm/jarred-job.php",
+          "M\tAPI/dm/send-message.php",
+          "M\tassets/js/chat/centrifugo-delivery.js",
+          "M\tassets/js/chat/chat-features.js",
+          "M\tassets/js/chat/dm-notifications.js",
+          "M\tassets/js/chat/livekit-voice.js",
+          "M\tassets/js/code-lab.js",
+          "A\tdatabase/migrations/064_livekit_count_snapshot.sql",
+          "A\tdatabase/migrations/065_code_lab_delivery.sql",
+          "A\tdatabase/migrations/066_jarred_jobs.sql",
+          "A\tdeploy/phase2/ecollab-jarred-worker.service",
+          "A\tdeploy/phase2/ecollab-livekit-counts.service",
+          "A\tdocs/450-phase2-execution-isolation.md",
+          "A\tdocs/450-phase2-media-experiment.md",
+          "A\tdocs/450-phase2.md",
+          "M\tmodules/chat/chat.php",
+          "M\tmodules/code-lab/index.php",
+          "A\tscripts/jarred-worker.php",
+          "A\tscripts/livekit-count-collector.php",
+          "A\tservices/ChatSearchService.php",
+          "M\tservices/CodeLabExecutionService.php",
+          "A\tservices/JarredJobService.php",
+          "A\tservices/JarredReplyGenerator.php",
+          "A\tservices/LiveKitCountSnapshot.php",
+          "M\tservices/RealtimeOutbox.php",
+          "M\tservices/TemporaryVoiceService.php",
+          "A\ttests/phase2-code-lab.php",
+          "A\ttests/phase2-jarred-client.cjs",
+          "A\ttests/phase2-jarred-http.py",
+          "A\ttests/phase2-jarred.php",
+          "A\ttests/phase2-livekit.php",
+          "A\ttests/phase2-mariadb.php",
+          "A\ttests/phase2-polling.cjs",
+          "A\ttests/phase2-search.php",
+          "A\ttests/phase2-voice-action.php",
+          "A\ttests/phase2-websocket.php",
+          "M\ttools/chat-delivery/index.js",
+          "M\twebsocket/ChatServer.php",
+          "M\twebsocket/bin/server.php"
+        ],
+        "runtime_changed_paths": [
+          "API/chat/livekit-counts.php",
+          "API/chat/search-messages.php",
+          "API/code-lab/index.php",
+          "API/dm/jarred-job.php",
+          "API/dm/send-message.php",
+          "assets/js/chat/centrifugo-delivery.js",
+          "assets/js/chat/chat-features.js",
+          "assets/js/chat/dm-notifications.js",
+          "assets/js/chat/livekit-voice.js",
+          "assets/js/code-lab.js",
+          "database/migrations/064_livekit_count_snapshot.sql",
+          "database/migrations/065_code_lab_delivery.sql",
+          "database/migrations/066_jarred_jobs.sql",
+          "deploy/phase2/ecollab-jarred-worker.service",
+          "deploy/phase2/ecollab-livekit-counts.service",
+          "modules/chat/chat.php",
+          "modules/code-lab/index.php",
+          "scripts/jarred-worker.php",
+          "scripts/livekit-count-collector.php",
+          "services/ChatSearchService.php",
+          "services/CodeLabExecutionService.php",
+          "services/JarredJobService.php",
+          "services/JarredReplyGenerator.php",
+          "services/LiveKitCountSnapshot.php",
+          "services/RealtimeOutbox.php",
+          "services/TemporaryVoiceService.php",
+          "websocket/ChatServer.php",
+          "websocket/bin/server.php"
+        ],
+        "runtime_exact_at_stack": [
+          "database/migrations/066_jarred_jobs.sql"
+        ],
+        "runtime_different_at_stack": [
+          "API/chat/livekit-counts.php",
+          "API/chat/search-messages.php",
+          "API/code-lab/index.php",
+          "API/dm/jarred-job.php",
+          "API/dm/send-message.php",
+          "assets/js/chat/centrifugo-delivery.js",
+          "assets/js/chat/chat-features.js",
+          "assets/js/chat/dm-notifications.js",
+          "assets/js/chat/livekit-voice.js",
+          "assets/js/code-lab.js",
+          "deploy/phase2/ecollab-jarred-worker.service",
+          "modules/chat/chat.php",
+          "modules/code-lab/index.php",
+          "scripts/jarred-worker.php",
+          "services/CodeLabExecutionService.php",
+          "services/JarredJobService.php",
+          "services/JarredReplyGenerator.php",
+          "services/RealtimeOutbox.php",
+          "services/TemporaryVoiceService.php",
+          "websocket/ChatServer.php",
+          "websocket/bin/server.php"
+        ],
+        "runtime_absent_at_stack": [
+          "database/migrations/064_livekit_count_snapshot.sql",
+          "database/migrations/065_code_lab_delivery.sql",
+          "deploy/phase2/ecollab-livekit-counts.service",
+          "scripts/livekit-count-collector.php",
+          "services/ChatSearchService.php",
+          "services/LiveKitCountSnapshot.php"
+        ],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 68,
+        "title": "Integration review: fix Jarred queue expiry and private resource access",
+        "url": "https://github.com/ecollab-project/ecollab/pull/68",
+        "head": "5e2fa5b57226ae07b6a02560d89ac436019b8b28",
+        "head_ref": "review/phase1-phase2-readiness-20261022",
+        "base": "e1fe79f7b2cdadf4719e9ef5f1bd82ae14db4b98",
+        "base_ref": "optimization/450-users-phase2",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": false,
+        "changed_paths": [
+          "M\t.github/workflows/phase2.yml",
+          "A\tdocs/450-integration-review-evidence.json",
+          "A\tdocs/450-integration-review.md",
+          "M\tservices/JarredActionService.php",
+          "M\tservices/JarredJobService.php",
+          "M\tservices/JarredTools.php",
+          "M\ttests/phase2-jarred.php",
+          "A\ttests/review-jarred-crashes.php",
+          "A\ttests/review-jarred-resource-access.php",
+          "A\ttests/review-realtime-crash.py"
+        ],
+        "runtime_changed_paths": [
+          "services/JarredActionService.php",
+          "services/JarredJobService.php",
+          "services/JarredTools.php"
+        ],
+        "runtime_exact_at_stack": [],
+        "runtime_different_at_stack": [
+          "services/JarredActionService.php",
+          "services/JarredJobService.php",
+          "services/JarredTools.php"
+        ],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 69,
+        "title": "Phase 3C: enforce authorization and reconcile revoked realtime access",
+        "url": "https://github.com/ecollab-project/ecollab/pull/69",
+        "head": "287d1192122ad8731f6bfe352729bebe85c2f5f9",
+        "head_ref": "security/r7-revocation-20261022",
+        "base": "5e2fa5b57226ae07b6a02560d89ac436019b8b28",
+        "base_ref": "review/phase1-phase2-readiness-20261022",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": false,
+        "changed_paths": [
+          "M\t.github/workflows/chat-uploads.yml",
+          "M\t.github/workflows/phase2.yml",
+          "M\tAPI/auth/realtime-token.php",
+          "M\tAPI/auth/ws-token.php",
+          "M\tAPI/collaboration/delete-document.php",
+          "M\tAPI/collaboration/document-manage.php",
+          "M\tAPI/collaboration/document-presence.php",
+          "M\tAPI/collaboration/documents.php",
+          "M\tAPI/collaboration/resource-access.php",
+          "M\tAPI/collaboration/server-coworkspaces.php",
+          "M\tAPI/collaboration/whiteboard.php",
+          "M\tAPI/collaboration/whiteboards.php",
+          "M\tAPI/collaboration/workspace-document.php",
+          "M\tAPI/collaboration/workspace-members.php",
+          "M\tdeploy/centrifugo/config.json",
+          "A\tdeploy/phase2/ecollab-revocation-worker.service",
+          "A\tdocs/450-phase3c-authorization.md",
+          "A\tdocs/450-phase3c-evidence.json",
+          "A\tscripts/realtime-revocation-worker.php",
+          "M\tsecurity/middleware/AuthMiddleware.php",
+          "A\tservices/AccessPolicy.php",
+          "M\tservices/CentrifugoService.php",
+          "M\tservices/ChannelAccessService.php",
+          "M\tservices/ChannelService.php",
+          "M\tservices/ChatUploadAccess.php",
+          "M\tservices/CoworkspaceService.php",
+          "M\tservices/DocumentAccessService.php",
+          "M\tservices/JarredActionService.php",
+          "M\tservices/JarredJobService.php",
+          "M\tservices/JarredReplyGenerator.php",
+          "M\tservices/JarredTools.php",
+          "M\tservices/RealtimeOutbox.php",
+          "A\tservices/RealtimeRevocationService.php",
+          "M\tservices/TemporaryVoiceService.php",
+          "M\ttests/centrifugo-broker-regression.cjs",
+          "M\ttests/centrifugo-database-regression.php",
+          "M\ttests/centrifugo-http-regression.cjs",
+          "M\ttests/chat-read-profiler-regression.php",
+          "M\ttests/chat-tus-http-regression.cjs",
+          "M\ttests/chat-upload-access-regression.php",
+          "M\ttests/collabora-regression.php",
+          "M\ttests/phase1-session.py",
+          "M\ttests/phase2-code-lab.php",
+          "M\ttests/phase2-jarred.php",
+          "M\ttests/phase2-voice-action.php",
+          "A\ttests/r7-authorization.php",
+          "A\ttests/r7-resource-http.py",
+          "A\ttests/r7-token-http.py",
+          "M\ttests/request-security-regression.cjs",
+          "M\ttests/review-jarred-crashes.php",
+          "M\ttests/review-jarred-resource-access.php",
+          "M\ttests/whiteboard-realtime-regression.php",
+          "M\twebsocket/ChatServer.php",
+          "M\twebsocket/handlers/DmHandler.php",
+          "M\twebsocket/handlers/WhiteboardHandler.php"
+        ],
+        "runtime_changed_paths": [
+          "API/auth/realtime-token.php",
+          "API/auth/ws-token.php",
+          "API/collaboration/delete-document.php",
+          "API/collaboration/document-manage.php",
+          "API/collaboration/document-presence.php",
+          "API/collaboration/documents.php",
+          "API/collaboration/resource-access.php",
+          "API/collaboration/server-coworkspaces.php",
+          "API/collaboration/whiteboard.php",
+          "API/collaboration/whiteboards.php",
+          "API/collaboration/workspace-document.php",
+          "API/collaboration/workspace-members.php",
+          "deploy/centrifugo/config.json",
+          "deploy/phase2/ecollab-revocation-worker.service",
+          "scripts/realtime-revocation-worker.php",
+          "security/middleware/AuthMiddleware.php",
+          "services/AccessPolicy.php",
+          "services/CentrifugoService.php",
+          "services/ChannelAccessService.php",
+          "services/ChannelService.php",
+          "services/ChatUploadAccess.php",
+          "services/CoworkspaceService.php",
+          "services/DocumentAccessService.php",
+          "services/JarredActionService.php",
+          "services/JarredJobService.php",
+          "services/JarredReplyGenerator.php",
+          "services/JarredTools.php",
+          "services/RealtimeOutbox.php",
+          "services/RealtimeRevocationService.php",
+          "services/TemporaryVoiceService.php",
+          "websocket/ChatServer.php",
+          "websocket/handlers/DmHandler.php",
+          "websocket/handlers/WhiteboardHandler.php"
+        ],
+        "runtime_exact_at_stack": [
+          "services/AccessPolicy.php",
+          "services/ChannelAccessService.php",
+          "services/CoworkspaceService.php",
+          "services/DocumentAccessService.php",
+          "services/JarredActionService.php",
+          "services/JarredJobService.php",
+          "services/JarredTools.php"
+        ],
+        "runtime_different_at_stack": [
+          "API/auth/realtime-token.php",
+          "API/auth/ws-token.php",
+          "API/collaboration/delete-document.php",
+          "API/collaboration/document-manage.php",
+          "API/collaboration/document-presence.php",
+          "API/collaboration/documents.php",
+          "API/collaboration/resource-access.php",
+          "API/collaboration/server-coworkspaces.php",
+          "API/collaboration/whiteboard.php",
+          "API/collaboration/whiteboards.php",
+          "API/collaboration/workspace-document.php",
+          "API/collaboration/workspace-members.php",
+          "deploy/centrifugo/config.json",
+          "security/middleware/AuthMiddleware.php",
+          "services/CentrifugoService.php",
+          "services/ChannelService.php",
+          "services/ChatUploadAccess.php",
+          "services/JarredReplyGenerator.php",
+          "services/RealtimeOutbox.php",
+          "services/TemporaryVoiceService.php",
+          "websocket/ChatServer.php",
+          "websocket/handlers/DmHandler.php",
+          "websocket/handlers/WhiteboardHandler.php"
+        ],
+        "runtime_absent_at_stack": [
+          "deploy/phase2/ecollab-revocation-worker.service",
+          "scripts/realtime-revocation-worker.php",
+          "services/RealtimeRevocationService.php"
+        ],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 70,
+        "title": "Phase 3C: gate LiveKit reconnects with current room authorization",
+        "url": "https://github.com/ecollab-project/ecollab/pull/70",
+        "head": "8679d81dd575f828f12f42cd4820808fe0066475",
+        "head_ref": "security/r7-livekit-admission-20261022",
+        "base": "287d1192122ad8731f6bfe352729bebe85c2f5f9",
+        "base_ref": "security/r7-revocation-20261022",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": false,
+        "changed_paths": [
+          "M\t.github/workflows/phase2.yml",
+          "A\tAPI/internal/livekit-admission.php",
+          "A\tdeploy/phase2/livekit-admission.conf.example",
+          "A\tdocs/450-phase3c-livekit-admission.md",
+          "A\tservices/LiveKitAdmissionService.php",
+          "A\ttests/fixtures/livekit-admission.sql",
+          "A\ttests/livekit-admission-ingress.py",
+          "A\ttests/livekit-admission.php"
+        ],
+        "runtime_changed_paths": [
+          "API/internal/livekit-admission.php",
+          "deploy/phase2/livekit-admission.conf.example",
+          "services/LiveKitAdmissionService.php"
+        ],
+        "runtime_exact_at_stack": [],
+        "runtime_different_at_stack": [],
+        "runtime_absent_at_stack": [
+          "API/internal/livekit-admission.php",
+          "deploy/phase2/livekit-admission.conf.example",
+          "services/LiveKitAdmissionService.php"
+        ],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 71,
+        "title": "Phase 3C: retire stale broker JWTs and reauthorize current sessions",
+        "url": "https://github.com/ecollab-project/ecollab/pull/71",
+        "head": "38900c09fbfd59599ed30905a8a5f9255b27dfe3",
+        "head_ref": "security/r7-broker-reauthorization-20261022",
+        "base": "8679d81dd575f828f12f42cd4820808fe0066475",
+        "base_ref": "security/r7-livekit-admission-20261022",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": false,
+        "changed_paths": [
+          "M\t.github/workflows/chat-delivery.yml",
+          "M\t.github/workflows/phase2.yml",
+          "M\tAPI/auth/realtime-token.php",
+          "A\tAPI/internal/centrifugo-proxy.php",
+          "M\tassets/js/chat/centrifugo-delivery.js",
+          "M\tdeploy/centrifugo/compose.yaml",
+          "M\tdeploy/centrifugo/config.json",
+          "A\tdeploy/centrifugo/nginx-proxy.conf.example",
+          "A\tdeploy/centrifugo/proxy-entrypoint.sh",
+          "A\tdocs/450-phase3c-centrifugo-evidence.json",
+          "A\tdocs/450-phase3c-centrifugo-reauthorization.md",
+          "M\tdocs/CHAT_DELIVERY.md",
+          "M\tmodules/chat/chat.php",
+          "M\tscripts/configure-centrifugo.php",
+          "M\tscripts/deploy-centrifugo.sh",
+          "A\tservices/CentrifugoProxyService.php",
+          "M\tservices/CentrifugoService.php",
+          "M\ttests/centrifugo-broker-regression.cjs",
+          "M\ttests/centrifugo-client-regression.cjs",
+          "A\ttests/centrifugo-config.py",
+          "A\ttests/centrifugo-proxy-regression.py",
+          "A\ttests/centrifugo-proxy.php",
+          "M\ttests/centrifugo-regression.php",
+          "M\ttests/load-test-mock.cjs",
+          "M\ttests/r7-token-http.py",
+          "M\ttools/chat-delivery/index.js",
+          "M\ttools/load-tests/chat-capacity.js"
+        ],
+        "runtime_changed_paths": [
+          "API/auth/realtime-token.php",
+          "API/internal/centrifugo-proxy.php",
+          "assets/js/chat/centrifugo-delivery.js",
+          "deploy/centrifugo/compose.yaml",
+          "deploy/centrifugo/config.json",
+          "deploy/centrifugo/nginx-proxy.conf.example",
+          "deploy/centrifugo/proxy-entrypoint.sh",
+          "modules/chat/chat.php",
+          "scripts/configure-centrifugo.php",
+          "scripts/deploy-centrifugo.sh",
+          "services/CentrifugoProxyService.php",
+          "services/CentrifugoService.php"
+        ],
+        "runtime_exact_at_stack": [],
+        "runtime_different_at_stack": [
+          "API/auth/realtime-token.php",
+          "assets/js/chat/centrifugo-delivery.js",
+          "deploy/centrifugo/compose.yaml",
+          "deploy/centrifugo/config.json",
+          "modules/chat/chat.php",
+          "scripts/configure-centrifugo.php",
+          "scripts/deploy-centrifugo.sh",
+          "services/CentrifugoService.php"
+        ],
+        "runtime_absent_at_stack": [
+          "API/internal/centrifugo-proxy.php",
+          "deploy/centrifugo/nginx-proxy.conf.example",
+          "deploy/centrifugo/proxy-entrypoint.sh",
+          "services/CentrifugoProxyService.php"
+        ],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 72,
+        "title": "Phase 3D: fix LiveKit revocation RPC and validate real media outages",
+        "url": "https://github.com/ecollab-project/ecollab/pull/72",
+        "head": "127fd08231861cd62be72dbc16d31a473794511f",
+        "head_ref": "security/r7-real-media-validation-20261022",
+        "base": "38900c09fbfd59599ed30905a8a5f9255b27dfe3",
+        "base_ref": "security/r7-broker-reauthorization-20261022",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": false,
+        "changed_paths": [
+          "A\t.github/workflows/realtime-revocation.yml",
+          "A\tdocs/450-phase3d-evidence.json",
+          "A\tdocs/450-phase3d-realtime-validation.md",
+          "M\tservices/LiveKitService.php",
+          "M\ttests/centrifugo-broker-regression.cjs",
+          "M\ttests/centrifugo-proxy-regression.py",
+          "A\ttests/centrifugo-revocation-integration.py",
+          "A\ttests/livekit-real-browser.cjs",
+          "A\ttests/livekit-real-integration.py",
+          "A\ttests/livekit-room-api.py"
+        ],
+        "runtime_changed_paths": [
+          "services/LiveKitService.php"
+        ],
+        "runtime_exact_at_stack": [],
+        "runtime_different_at_stack": [
+          "services/LiveKitService.php"
+        ],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 73,
+        "title": "Phase 3E: test broker fail-closed proposal and retain R7 release gates",
+        "url": "https://github.com/ecollab-project/ecollab/pull/73",
+        "head": "19a8845665dc72d8bf4d062f634b25410fad9961",
+        "head_ref": "security/r7-private-invalidation-20261022",
+        "base": "127fd08231861cd62be72dbc16d31a473794511f",
+        "base_ref": "security/r7-real-media-validation-20261022",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": false,
+        "changed_paths": [
+          "M\t.github/workflows/realtime-revocation.yml",
+          "A\tdocs/450-phase3e-evidence.json",
+          "A\tdocs/450-phase3e-security-decisions.md",
+          "M\ttests/centrifugo-broker-regression.cjs",
+          "A\ttests/centrifugo-fail-closed-proposal.py",
+          "M\ttests/centrifugo-proxy-regression.py",
+          "A\ttests/proposals/centrifugo-6.9.6-fail-closed.patch"
+        ],
+        "runtime_changed_paths": [],
+        "runtime_exact_at_stack": [],
+        "runtime_different_at_stack": [],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 74,
+        "title": "Phase 3F: repair MariaDB coworkspace uniqueness without rewriting migration history",
+        "url": "https://github.com/ecollab-project/ecollab/pull/74",
+        "head": "aa9b6b35ba86a50024987a60400b13488a9acbb5",
+        "head_ref": "fix/migration-025-mariadb-20261023",
+        "base": "c838359711a14e9b6eb3f345c4386d184a178b25",
+        "base_ref": "ecollab-collabs",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "A\t.github/workflows/coworkspace-migration.yml",
+          "M\tAPI/collaboration/workspaces.php",
+          "M\tdatabase/migrate.php",
+          "A\tdatabase/migrations/025_coworkspace_one_active_per_server_mariadb.sql",
+          "A\tdocs/450-phase3f-evidence.json",
+          "A\tdocs/450-phase3f-migration025.md",
+          "A\ttests/coworkspace-migration-integration.py",
+          "A\ttests/coworkspace-migration-regression.php"
+        ],
+        "runtime_changed_paths": [
+          "API/collaboration/workspaces.php",
+          "database/migrate.php",
+          "database/migrations/025_coworkspace_one_active_per_server_mariadb.sql"
+        ],
+        "runtime_exact_at_stack": [
+          "API/collaboration/workspaces.php",
+          "database/migrate.php",
+          "database/migrations/025_coworkspace_one_active_per_server_mariadb.sql"
+        ],
+        "runtime_different_at_stack": [],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 75,
+        "title": "Phase 3G: add mTLS Code Lab transport and separate-host staging gates",
+        "url": "https://github.com/ecollab-project/ecollab/pull/75",
+        "head": "2e7a3aafe91fb88673e16c0ad78c7c46212ec9b7",
+        "head_ref": "security/code-lab-remote-isolation-20261023",
+        "base": "c838359711a14e9b6eb3f345c4386d184a178b25",
+        "base_ref": "ecollab-collabs",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "M\t.github/workflows/code-lab-piston.yml",
+          "A\tdeploy/code-lab/isolated/README.md",
+          "A\tdeploy/code-lab/isolated/application.env.example",
+          "A\tdeploy/code-lab/isolated/execution.env.example",
+          "A\tdeploy/code-lab/isolated/nginx.conf.example",
+          "M\tdeploy/code-lab/piston/bridge.py",
+          "A\tdeploy/code-lab/piston/compose.isolated.yml",
+          "A\tdocs/450-phase3g-code-lab-isolation.md",
+          "A\tdocs/450-phase3g-evidence.json",
+          "M\tservices/CodeLabRunner.php",
+          "A\ttests/code-lab-isolated-live.py",
+          "A\ttests/code-lab-isolation-config.py",
+          "A\ttests/code-lab-mtls-integration.py",
+          "A\ttests/code-lab-mtls-queue.php",
+          "M\ttests/code-lab-piston-live.py",
+          "A\ttests/code-lab-private-backend-test.py"
+        ],
+        "runtime_changed_paths": [
+          "deploy/code-lab/isolated/README.md",
+          "deploy/code-lab/isolated/application.env.example",
+          "deploy/code-lab/isolated/execution.env.example",
+          "deploy/code-lab/isolated/nginx.conf.example",
+          "deploy/code-lab/piston/bridge.py",
+          "deploy/code-lab/piston/compose.isolated.yml",
+          "services/CodeLabRunner.php"
+        ],
+        "runtime_exact_at_stack": [
+          "deploy/code-lab/isolated/README.md",
+          "deploy/code-lab/isolated/application.env.example",
+          "deploy/code-lab/isolated/execution.env.example",
+          "deploy/code-lab/isolated/nginx.conf.example",
+          "deploy/code-lab/piston/bridge.py",
+          "deploy/code-lab/piston/compose.isolated.yml",
+          "services/CodeLabRunner.php"
+        ],
+        "runtime_different_at_stack": [],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 76,
+        "title": "Phase 3I: audit Jarred governance and fix opt-out and private error handling",
+        "url": "https://github.com/ecollab-project/ecollab/pull/76",
+        "head": "2e65196fca7448155c19519fda61fdda82c6c80d",
+        "head_ref": "security/jarred-governance-20261023",
+        "base": "c838359711a14e9b6eb3f345c4386d184a178b25",
+        "base_ref": "ecollab-collabs",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "M\t.github/workflows/settings-runtime.yml",
+          "M\tAPI/ai/message.php",
+          "M\tAPI/ai/session.php",
+          "M\tAPI/ai/sessions.php",
+          "M\tAPI/chat/ai-assist.php",
+          "M\tAPI/dm/send-message.php",
+          "M\tAPI/facilitator/jarred.php",
+          "A\tdocs/450-phase3i-evidence.json",
+          "A\tdocs/450-phase3i-jarred-governance.md",
+          "M\tservices/GeminiService.php",
+          "A\ttests/jarred-governance-http.cjs",
+          "A\ttests/jarred-governance-lock.cjs",
+          "A\ttests/jarred-governance-provider.php",
+          "A\ttests/jarred-governance-retention.php"
+        ],
+        "runtime_changed_paths": [
+          "API/ai/message.php",
+          "API/ai/session.php",
+          "API/ai/sessions.php",
+          "API/chat/ai-assist.php",
+          "API/dm/send-message.php",
+          "API/facilitator/jarred.php",
+          "services/GeminiService.php"
+        ],
+        "runtime_exact_at_stack": [
+          "API/ai/message.php",
+          "API/ai/session.php",
+          "API/ai/sessions.php",
+          "API/chat/ai-assist.php",
+          "API/facilitator/jarred.php",
+          "services/GeminiService.php"
+        ],
+        "runtime_different_at_stack": [
+          "API/dm/send-message.php"
+        ],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 77,
+        "title": "Phase 3J: share bounded Ollama execution and validate complete admin groups",
+        "url": "https://github.com/ecollab-project/ecollab/pull/77",
+        "head": "67a90c6cc94701521d4648ed29f8b21e5eea5683",
+        "head_ref": "security/shared-ai-provider-20261023",
+        "base": "2e65196fca7448155c19519fda61fdda82c6c80d",
+        "base_ref": "security/jarred-governance-20261023",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "M\t.github/workflows/settings-runtime.yml",
+          "M\tAPI/admin/group-recommendations.php",
+          "A\tdeploy/ai-provider/README.md",
+          "A\tdeploy/ai-provider/shared-lock.env.example",
+          "A\tdocs/450-phase3j-evidence.json",
+          "A\tdocs/450-phase3j-shared-provider.md",
+          "A\tservices/AdminGroupRecommendationService.php",
+          "M\tservices/OllamaService.php",
+          "A\ttests/shared-ai-provider.cjs"
+        ],
+        "runtime_changed_paths": [
+          "API/admin/group-recommendations.php",
+          "deploy/ai-provider/README.md",
+          "deploy/ai-provider/shared-lock.env.example",
+          "services/AdminGroupRecommendationService.php",
+          "services/OllamaService.php"
+        ],
+        "runtime_exact_at_stack": [
+          "API/admin/group-recommendations.php",
+          "deploy/ai-provider/README.md",
+          "deploy/ai-provider/shared-lock.env.example",
+          "services/AdminGroupRecommendationService.php"
+        ],
+        "runtime_different_at_stack": [
+          "services/OllamaService.php"
+        ],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 78,
+        "title": "[STAGING ONLY] Phase 3K compatibility rehearsal for PRs 74\u201377",
+        "url": "https://github.com/ecollab-project/ecollab/pull/78",
+        "head": "3b5983ba86ee1b0ba59b4cfa45d331b6f516a908",
+        "head_ref": "review/phase3k-integration-20261023",
+        "base": "c838359711a14e9b6eb3f345c4386d184a178b25",
+        "base_ref": "ecollab-collabs",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "M\t.github/workflows/chat-delivery.yml",
+          "M\t.github/workflows/code-lab-piston.yml",
+          "A\t.github/workflows/coworkspace-migration.yml",
+          "M\t.github/workflows/settings-runtime.yml",
+          "M\tAPI/admin/group-recommendations.php",
+          "M\tAPI/ai/message.php",
+          "M\tAPI/ai/session.php",
+          "M\tAPI/ai/sessions.php",
+          "M\tAPI/chat/ai-assist.php",
+          "M\tAPI/collaboration/workspaces.php",
+          "M\tAPI/dm/send-message.php",
+          "M\tAPI/facilitator/jarred.php",
+          "M\tdatabase/migrate.php",
+          "A\tdatabase/migrations/025_coworkspace_one_active_per_server_mariadb.sql",
+          "A\tdeploy/ai-provider/README.md",
+          "A\tdeploy/ai-provider/shared-lock.env.example",
+          "A\tdeploy/code-lab/isolated/README.md",
+          "A\tdeploy/code-lab/isolated/application.env.example",
+          "A\tdeploy/code-lab/isolated/execution.env.example",
+          "A\tdeploy/code-lab/isolated/nginx.conf.example",
+          "M\tdeploy/code-lab/piston/bridge.py",
+          "A\tdeploy/code-lab/piston/compose.isolated.yml",
+          "A\tdocs/450-phase3f-evidence.json",
+          "A\tdocs/450-phase3f-migration025.md",
+          "A\tdocs/450-phase3g-code-lab-isolation.md",
+          "A\tdocs/450-phase3g-evidence.json",
+          "A\tdocs/450-phase3i-evidence.json",
+          "A\tdocs/450-phase3i-jarred-governance.md",
+          "A\tdocs/450-phase3j-evidence.json",
+          "A\tdocs/450-phase3j-shared-provider.md",
+          "A\tdocs/450-phase3k-evidence.json",
+          "A\tdocs/450-phase3k-integration.md",
+          "A\tservices/AdminGroupRecommendationService.php",
+          "M\tservices/CodeLabRunner.php",
+          "M\tservices/GeminiService.php",
+          "M\tservices/OllamaService.php",
+          "A\ttests/code-lab-isolated-live.py",
+          "A\ttests/code-lab-isolation-config.py",
+          "A\ttests/code-lab-mtls-integration.py",
+          "A\ttests/code-lab-mtls-queue.php",
+          "M\ttests/code-lab-piston-live.py",
+          "A\ttests/code-lab-private-backend-test.py",
+          "A\ttests/coworkspace-migration-integration.py",
+          "A\ttests/coworkspace-migration-regression.php",
+          "A\ttests/jarred-governance-http.cjs",
+          "A\ttests/jarred-governance-lock.cjs",
+          "A\ttests/jarred-governance-provider.php",
+          "A\ttests/jarred-governance-retention.php",
+          "A\ttests/shared-ai-provider.cjs"
+        ],
+        "runtime_changed_paths": [
+          "API/admin/group-recommendations.php",
+          "API/ai/message.php",
+          "API/ai/session.php",
+          "API/ai/sessions.php",
+          "API/chat/ai-assist.php",
+          "API/collaboration/workspaces.php",
+          "API/dm/send-message.php",
+          "API/facilitator/jarred.php",
+          "database/migrate.php",
+          "database/migrations/025_coworkspace_one_active_per_server_mariadb.sql",
+          "deploy/ai-provider/README.md",
+          "deploy/ai-provider/shared-lock.env.example",
+          "deploy/code-lab/isolated/README.md",
+          "deploy/code-lab/isolated/application.env.example",
+          "deploy/code-lab/isolated/execution.env.example",
+          "deploy/code-lab/isolated/nginx.conf.example",
+          "deploy/code-lab/piston/bridge.py",
+          "deploy/code-lab/piston/compose.isolated.yml",
+          "services/AdminGroupRecommendationService.php",
+          "services/CodeLabRunner.php",
+          "services/GeminiService.php",
+          "services/OllamaService.php"
+        ],
+        "runtime_exact_at_stack": [
+          "API/admin/group-recommendations.php",
+          "API/ai/message.php",
+          "API/ai/session.php",
+          "API/ai/sessions.php",
+          "API/chat/ai-assist.php",
+          "API/collaboration/workspaces.php",
+          "API/facilitator/jarred.php",
+          "database/migrate.php",
+          "database/migrations/025_coworkspace_one_active_per_server_mariadb.sql",
+          "deploy/ai-provider/README.md",
+          "deploy/ai-provider/shared-lock.env.example",
+          "deploy/code-lab/isolated/README.md",
+          "deploy/code-lab/isolated/application.env.example",
+          "deploy/code-lab/isolated/execution.env.example",
+          "deploy/code-lab/isolated/nginx.conf.example",
+          "deploy/code-lab/piston/bridge.py",
+          "deploy/code-lab/piston/compose.isolated.yml",
+          "services/AdminGroupRecommendationService.php",
+          "services/CodeLabRunner.php",
+          "services/GeminiService.php"
+        ],
+        "runtime_different_at_stack": [
+          "API/dm/send-message.php",
+          "services/OllamaService.php"
+        ],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 79,
+        "title": "[STAGING ONLY] Reconcile async Jarred DM transactions and private errors (K1)",
+        "url": "https://github.com/ecollab-project/ecollab/pull/79",
+        "head": "9d5ded1af8ee55364fa87d9c9a05327ffb9193c9",
+        "head_ref": "review/phase3l-async-privacy-20261023",
+        "base": "3b5983ba86ee1b0ba59b4cfa45d331b6f516a908",
+        "base_ref": "review/phase3k-integration-20261023",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "A\t.github/workflows/jarred-async.yml",
+          "A\tAPI/dm/jarred-job.php",
+          "M\tAPI/dm/send-message.php",
+          "M\tassets/js/chat/dm-notifications.js",
+          "A\tdatabase/migrations/063_temporary_voice.sql",
+          "A\tdatabase/migrations/066_jarred_jobs.sql",
+          "A\tdeploy/phase2/ecollab-jarred-worker.service",
+          "A\tdocs/450-phase3l-async-privacy.md",
+          "A\tdocs/450-phase3l-evidence.json",
+          "A\tscripts/jarred-worker.php",
+          "A\tservices/AccessPolicy.php",
+          "A\tservices/ChannelAccessService.php",
+          "M\tservices/CoworkspaceService.php",
+          "M\tservices/DocumentAccessService.php",
+          "M\tservices/JarredActionService.php",
+          "A\tservices/JarredErrorResponse.php",
+          "A\tservices/JarredJobService.php",
+          "A\tservices/JarredReplyGenerator.php",
+          "M\tservices/JarredTools.php",
+          "M\tservices/NotificationService.php",
+          "M\tservices/OllamaService.php",
+          "M\tservices/RealtimeOutbox.php",
+          "M\tservices/TemporaryVoiceService.php",
+          "M\ttests/centrifugo-database-regression.php",
+          "M\ttests/collabora-regression.php",
+          "M\ttests/coworkspace-migration-regression.php",
+          "A\ttests/fixtures/jarred-async.sql",
+          "A\ttests/jarred-async-browser.cjs",
+          "A\ttests/jarred-async-contract.php",
+          "A\ttests/jarred-async-integration.py",
+          "A\ttests/jarred-async-worker-fixture.php",
+          "A\ttests/phase1-access.php",
+          "A\ttests/phase1-temporary-voice.php",
+          "A\ttests/phase2-jarred-client.cjs",
+          "A\ttests/phase2-jarred-http.py",
+          "A\ttests/phase2-jarred.php",
+          "A\ttests/review-jarred-crashes.php",
+          "A\ttests/review-jarred-resource-access.php",
+          "M\ttests/whiteboard-realtime-regression.php"
+        ],
+        "runtime_changed_paths": [
+          "API/dm/jarred-job.php",
+          "API/dm/send-message.php",
+          "assets/js/chat/dm-notifications.js",
+          "database/migrations/063_temporary_voice.sql",
+          "database/migrations/066_jarred_jobs.sql",
+          "deploy/phase2/ecollab-jarred-worker.service",
+          "scripts/jarred-worker.php",
+          "services/AccessPolicy.php",
+          "services/ChannelAccessService.php",
+          "services/CoworkspaceService.php",
+          "services/DocumentAccessService.php",
+          "services/JarredActionService.php",
+          "services/JarredErrorResponse.php",
+          "services/JarredJobService.php",
+          "services/JarredReplyGenerator.php",
+          "services/JarredTools.php",
+          "services/NotificationService.php",
+          "services/OllamaService.php",
+          "services/RealtimeOutbox.php",
+          "services/TemporaryVoiceService.php"
+        ],
+        "runtime_exact_at_stack": [
+          "API/dm/jarred-job.php",
+          "API/dm/send-message.php",
+          "database/migrations/063_temporary_voice.sql",
+          "database/migrations/066_jarred_jobs.sql",
+          "deploy/phase2/ecollab-jarred-worker.service",
+          "scripts/jarred-worker.php",
+          "services/AccessPolicy.php",
+          "services/ChannelAccessService.php",
+          "services/CoworkspaceService.php",
+          "services/DocumentAccessService.php",
+          "services/JarredActionService.php",
+          "services/JarredErrorResponse.php",
+          "services/JarredJobService.php",
+          "services/JarredReplyGenerator.php",
+          "services/JarredTools.php",
+          "services/NotificationService.php",
+          "services/OllamaService.php",
+          "services/RealtimeOutbox.php",
+          "services/TemporaryVoiceService.php"
+        ],
+        "runtime_different_at_stack": [
+          "assets/js/chat/dm-notifications.js"
+        ],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 80,
+        "title": "[STAGING ONLY] Reduce dashboard and peer-matching application overhead (Phase 3M)",
+        "url": "https://github.com/ecollab-project/ecollab/pull/80",
+        "head": "87e82284ced2cee4858b673cc5a8619151c019bb",
+        "head_ref": "optimization/phase3m-application-20261024",
+        "base": "9d5ded1af8ee55364fa87d9c9a05327ffb9193c9",
+        "base_ref": "review/phase3l-async-privacy-20261023",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "A\t.github/workflows/application-performance.yml",
+          "M\tAPI/chat/get-matches.php",
+          "M\tAPI/chat/peer-match.php",
+          "M\tassets/js/student/dashboard.js",
+          "A\tdocs/450-phase3m-performance-evidence.json",
+          "A\tdocs/450-phase3m-performance.md",
+          "M\tservices/AdminDashboardService.php",
+          "M\tservices/FacilitatorDashboardService.php",
+          "M\tservices/JarredGroupRecommendationService.php",
+          "M\tservices/PeerMatchingService.php",
+          "M\tservices/StudentDashboardService.php",
+          "A\ttests/application-performance-browser.cjs",
+          "A\ttests/application-performance.php",
+          "A\ttests/application-performance.py",
+          "A\ttests/fixtures/application-performance.sql"
+        ],
+        "runtime_changed_paths": [
+          "API/chat/get-matches.php",
+          "API/chat/peer-match.php",
+          "assets/js/student/dashboard.js",
+          "services/AdminDashboardService.php",
+          "services/FacilitatorDashboardService.php",
+          "services/JarredGroupRecommendationService.php",
+          "services/PeerMatchingService.php",
+          "services/StudentDashboardService.php"
+        ],
+        "runtime_exact_at_stack": [
+          "API/chat/get-matches.php",
+          "assets/js/student/dashboard.js",
+          "services/AdminDashboardService.php",
+          "services/JarredGroupRecommendationService.php",
+          "services/PeerMatchingService.php"
+        ],
+        "runtime_different_at_stack": [
+          "API/chat/peer-match.php",
+          "services/FacilitatorDashboardService.php",
+          "services/StudentDashboardService.php"
+        ],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 81,
+        "title": "[STAGING ONLY] Profile dashboard HTTP/browser work and optimize exact unread counts (Phase 3N)",
+        "url": "https://github.com/ecollab-project/ecollab/pull/81",
+        "head": "687bd3ad2d60bf5c5e0627d640e627d7fbcc1d9d",
+        "head_ref": "optimization/phase3n-dashboard-20261024",
+        "base": "87e82284ced2cee4858b673cc5a8619151c019bb",
+        "base_ref": "optimization/phase3m-application-20261024",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "A\t.github/workflows/dashboard-performance.yml",
+          "M\tassets/js/learning/workspace.js",
+          "A\tdatabase/migrations/067_dashboard_unread_covering.sql",
+          "A\tdocs/450-phase3n-dashboard.md",
+          "A\tdocs/450-phase3n-evidence.json",
+          "M\tservices/StudentDashboardService.php",
+          "A\ttests/dashboard-browser.cjs",
+          "A\ttests/dashboard-date-regression.cjs",
+          "A\ttests/dashboard-http-compare.py",
+          "A\ttests/dashboard-http-router.php",
+          "A\ttests/dashboard-performance.py",
+          "A\ttests/dashboard-profile.php",
+          "A\ttests/dashboard-query-profile.php"
+        ],
+        "runtime_changed_paths": [
+          "assets/js/learning/workspace.js",
+          "database/migrations/067_dashboard_unread_covering.sql",
+          "services/StudentDashboardService.php"
+        ],
+        "runtime_exact_at_stack": [
+          "assets/js/learning/workspace.js",
+          "database/migrations/067_dashboard_unread_covering.sql"
+        ],
+        "runtime_different_at_stack": [
+          "services/StudentDashboardService.php"
+        ],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 82,
+        "title": "[STAGING ONLY] Profile chat reads/workers and reduce exact recent-chat and sidebar work (Phase 3O)",
+        "url": "https://github.com/ecollab-project/ecollab/pull/82",
+        "head": "54228eb0f662bd8272dea2f32ab446ca6cc207c3",
+        "head_ref": "optimization/phase3o-chat-20261024",
+        "base": "687bd3ad2d60bf5c5e0627d640e627d7fbcc1d9d",
+        "base_ref": "optimization/phase3n-dashboard-20261024",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "A\t.github/workflows/chat-performance.yml",
+          "M\tassets/js/chat/dm-notifications.js",
+          "A\tdocs/450-phase3o-chat-workers.md",
+          "A\tdocs/450-phase3o-evidence.json",
+          "M\tservices/StudentDashboardService.php",
+          "A\ttests/chat-list-browser.cjs",
+          "A\ttests/chat-list-performance.cjs",
+          "A\ttests/chat-performance.py",
+          "A\ttests/chat-read-paths.php",
+          "A\ttests/chat-read-profile.php",
+          "A\ttests/chat-worker-profile.py",
+          "A\ttests/chat-worker-wrapper.php"
+        ],
+        "runtime_changed_paths": [
+          "assets/js/chat/dm-notifications.js",
+          "services/StudentDashboardService.php"
+        ],
+        "runtime_exact_at_stack": [
+          "assets/js/chat/dm-notifications.js",
+          "services/StudentDashboardService.php"
+        ],
+        "runtime_different_at_stack": [],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 83,
+        "title": "[STAGING REVIEW] Validate bounded FPM workloads and aggregate facilitator history (Phase 3P)",
+        "url": "https://github.com/ecollab-project/ecollab/pull/83",
+        "head": "051cae2ee1005ab063675e8054c2ff5b1801294b",
+        "head_ref": "validation/phase3p-20261024",
+        "base": "54228eb0f662bd8272dea2f32ab446ca6cc207c3",
+        "base_ref": "optimization/phase3o-chat-20261024",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "A\t.github/workflows/classroom-performance.yml",
+          "A\tdocs/450-phase3p-classroom.md",
+          "A\tdocs/450-phase3p-evidence.json",
+          "A\tdocs/450-phase3p-staging-plan.md",
+          "M\tservices/LearningWorkspaceService.php",
+          "M\ttests/chat-worker-profile.py",
+          "A\ttests/classroom-bootstrap.php",
+          "A\ttests/classroom-browser.cjs",
+          "A\ttests/classroom-facilitator-profile.php",
+          "A\ttests/classroom-fixture.sql",
+          "A\ttests/classroom-index.py",
+          "A\ttests/classroom-performance.py"
+        ],
+        "runtime_changed_paths": [
+          "services/LearningWorkspaceService.php"
+        ],
+        "runtime_exact_at_stack": [
+          "services/LearningWorkspaceService.php"
+        ],
+        "runtime_different_at_stack": [],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 84,
+        "title": "[STAGING REVIEW] Batch peer cache writes and thread attachment reads (Phase 3Q)",
+        "url": "https://github.com/ecollab-project/ecollab/pull/84",
+        "head": "d3748527d77ac471ace8613f2a2bfb2a6c45627c",
+        "head_ref": "optimization/phase3q-sql-20261024",
+        "base": "051cae2ee1005ab063675e8054c2ff5b1801294b",
+        "base_ref": "validation/phase3p-20261024",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "A\t.github/workflows/peer-threads-performance.yml",
+          "M\tAPI/chat/peer-match.php",
+          "M\tAPI/threads/index.php",
+          "A\tdocs/450-phase3q-evidence.json",
+          "A\tdocs/450-phase3q-sql.md",
+          "A\tservices/PeerMatchBatch.php",
+          "A\tservices/ThreadAttachmentService.php",
+          "A\ttests/peer-threads-bootstrap.php",
+          "A\ttests/peer-threads-performance.py",
+          "A\ttests/peer-threads-regression.php",
+          "A\ttests/peer-threads-static.py"
+        ],
+        "runtime_changed_paths": [
+          "API/chat/peer-match.php",
+          "API/threads/index.php",
+          "services/PeerMatchBatch.php",
+          "services/ThreadAttachmentService.php"
+        ],
+        "runtime_exact_at_stack": [
+          "API/threads/index.php",
+          "services/PeerMatchBatch.php",
+          "services/ThreadAttachmentService.php"
+        ],
+        "runtime_different_at_stack": [
+          "API/chat/peer-match.php"
+        ],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 85,
+        "title": "security(code-lab): stage Piston API on Node.js 24.22.1 with versioned runtime",
+        "url": "https://github.com/ecollab-project/ecollab/pull/85",
+        "head": "a26c21d4fabc87d8d63205b08f8fbc0a31e13211",
+        "head_ref": "security/piston-node24-20261023",
+        "base": "c838359711a14e9b6eb3f345c4386d184a178b25",
+        "base_ref": "ecollab-collabs",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": false,
+        "changed_paths": [
+          "A\t.github/workflows/code-lab-node24.yml",
+          "M\tdeploy/code-lab/piston/bridge.py",
+          "A\tdeploy/code-lab/piston/compose.node24.staging.yml",
+          "A\tdeploy/code-lab/piston/node24/Dockerfile",
+          "A\tdeploy/code-lab/piston/node24/install.sh",
+          "A\tdeploy/code-lab/piston/node24/profile.py",
+          "A\tdocs/code-lab-node24-staging.md",
+          "A\ttests/code-lab-node24-live.py",
+          "A\ttests/code-lab-node24-test.py",
+          "M\ttests/code-lab-piston-batch.cjs"
+        ],
+        "runtime_changed_paths": [
+          "deploy/code-lab/piston/bridge.py",
+          "deploy/code-lab/piston/compose.node24.staging.yml",
+          "deploy/code-lab/piston/node24/Dockerfile",
+          "deploy/code-lab/piston/node24/install.sh",
+          "deploy/code-lab/piston/node24/profile.py"
+        ],
+        "runtime_exact_at_stack": [],
+        "runtime_different_at_stack": [
+          "deploy/code-lab/piston/bridge.py"
+        ],
+        "runtime_absent_at_stack": [
+          "deploy/code-lab/piston/compose.node24.staging.yml",
+          "deploy/code-lab/piston/node24/Dockerfile",
+          "deploy/code-lab/piston/node24/install.sh",
+          "deploy/code-lab/piston/node24/profile.py"
+        ],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 86,
+        "title": "[DRAFT] Phase 3R: remove repeated peer matching CPU work",
+        "url": "https://github.com/ecollab-project/ecollab/pull/86",
+        "head": "d5cb54c6998e6e3b395d4358a23caca08c7c52d8",
+        "head_ref": "optimization/phase3r-peer-cpu-20261026",
+        "base": "d3748527d77ac471ace8613f2a2bfb2a6c45627c",
+        "base_ref": "optimization/phase3q-sql-20261024",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "M\tAPI/chat/peer-match.php"
+        ],
+        "runtime_changed_paths": [
+          "API/chat/peer-match.php"
+        ],
+        "runtime_exact_at_stack": [
+          "API/chat/peer-match.php"
+        ],
+        "runtime_different_at_stack": [],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 87,
+        "title": "[DRAFT] Validate Phase 3R peer CPU optimization against exact base",
+        "url": "https://github.com/ecollab-project/ecollab/pull/87",
+        "head": "2716766ab71f27d32d0d435d555f19801d7d0aa7",
+        "head_ref": "optimization/phase3r-validation-20261026",
+        "base": "d5cb54c6998e6e3b395d4358a23caca08c7c52d8",
+        "base_ref": "optimization/phase3r-peer-cpu-20261026",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "M\t.github/workflows/peer-threads-performance.yml",
+          "A\tdocs/450-phase3r-evidence.json",
+          "A\tdocs/450-phase3r-evidence.json.gz",
+          "A\tdocs/450-phase3r-pr-stack.json",
+          "A\tdocs/450-phase3r-regressions.json",
+          "A\tdocs/450-phase3r-static.json",
+          "A\tdocs/450-phase3r-validation.md",
+          "M\ttests/peer-ml-regression.php",
+          "M\ttests/peer-threads-performance.py",
+          "M\ttests/peer-threads-static.py"
+        ],
+        "runtime_changed_paths": [],
+        "runtime_exact_at_stack": [],
+        "runtime_different_at_stack": [],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 88,
+        "title": "[DRAFT] Phase 3S: profile native FPM reads and aggregate facilitator activity",
+        "url": "https://github.com/ecollab-project/ecollab/pull/88",
+        "head": "d161f3d23e8e0e66cfcc45483002a1ea7be42442",
+        "head_ref": "optimization/phase3s-http-20261026",
+        "base": "2716766ab71f27d32d0d435d555f19801d7d0aa7",
+        "base_ref": "optimization/phase3r-validation-20261026",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "A\t.github/workflows/phase3s-performance.yml",
+          "A\tdocs/450-phase3s-evidence.json",
+          "A\tdocs/450-phase3s-performance.md",
+          "A\tdocs/450-phase3s-raw/0-baseline.json.gz",
+          "A\tdocs/450-phase3s-raw/0-baseline.log",
+          "A\tdocs/450-phase3s-raw/1-candidate.json.gz",
+          "A\tdocs/450-phase3s-raw/1-candidate.log",
+          "A\tdocs/450-phase3s-raw/2-candidate.json.gz",
+          "A\tdocs/450-phase3s-raw/2-candidate.log",
+          "A\tdocs/450-phase3s-raw/3-baseline.json.gz",
+          "A\tdocs/450-phase3s-raw/3-baseline.log",
+          "A\tdocs/450-phase3s-raw/comparison.json",
+          "A\tdocs/450-phase3s-raw/discovery-survey.json.gz",
+          "A\tdocs/450-phase3s-raw/initial-fixture-ordering.json",
+          "A\tdocs/450-phase3s-raw/phase3r-jarred-rerun.json",
+          "A\tdocs/450-phase3s-raw/regressions.json",
+          "A\tdocs/450-phase3s-raw/request-hash-comparison.json",
+          "A\tdocs/450-phase3s-raw/static.json",
+          "A\tdocs/450-phase3t-engineering-prompt.md",
+          "M\tservices/FacilitatorDashboardService.php",
+          "M\ttests/classroom-bootstrap.php",
+          "M\ttests/classroom-performance.py",
+          "A\ttests/phase3s-compare.py",
+          "A\ttests/phase3s-regression.php",
+          "A\ttests/phase3s-sample.py"
+        ],
+        "runtime_changed_paths": [
+          "services/FacilitatorDashboardService.php"
+        ],
+        "runtime_exact_at_stack": [],
+        "runtime_different_at_stack": [
+          "services/FacilitatorDashboardService.php"
+        ],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 89,
+        "title": "[DRAFT] Phase 3T: count only the selected facilitator channel",
+        "url": "https://github.com/ecollab-project/ecollab/pull/89",
+        "head": "f77506a874c4650ec6c69637461c368876fa178d",
+        "head_ref": "optimization/phase3t-primary-channel-20261026",
+        "base": "d161f3d23e8e0e66cfcc45483002a1ea7be42442",
+        "base_ref": "optimization/phase3s-http-20261026",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "A\t.github/workflows/phase3t-performance.yml",
+          "A\tdocs/450-phase3t-claim-ledger.json",
+          "A\tdocs/450-phase3t-evidence.json",
+          "A\tdocs/450-phase3t-performance.md",
+          "A\tdocs/450-phase3t-raw/cache-configuration-smoke.json.gz",
+          "A\tdocs/450-phase3t-raw/discovery.json.gz",
+          "A\tdocs/450-phase3t-raw/history-0-baseline.log",
+          "A\tdocs/450-phase3t-raw/history-0-off-baseline.json.gz",
+          "A\tdocs/450-phase3t-raw/history-1-candidate.log",
+          "A\tdocs/450-phase3t-raw/history-1-off-candidate.json.gz",
+          "A\tdocs/450-phase3t-raw/history-2-candidate.log",
+          "A\tdocs/450-phase3t-raw/history-2-off-candidate.json.gz",
+          "A\tdocs/450-phase3t-raw/history-3-baseline.log",
+          "A\tdocs/450-phase3t-raw/history-3-off-baseline.json.gz",
+          "A\tdocs/450-phase3t-raw/history-comparison.json",
+          "A\tdocs/450-phase3t-raw/main-0-baseline.log",
+          "A\tdocs/450-phase3t-raw/main-0-off-baseline.json.gz",
+          "A\tdocs/450-phase3t-raw/main-1-candidate.log",
+          "A\tdocs/450-phase3t-raw/main-1-off-candidate.json.gz",
+          "A\tdocs/450-phase3t-raw/main-2-candidate.log",
+          "A\tdocs/450-phase3t-raw/main-2-off-candidate.json.gz",
+          "A\tdocs/450-phase3t-raw/main-3-baseline.log",
+          "A\tdocs/450-phase3t-raw/main-3-off-baseline.json.gz",
+          "A\tdocs/450-phase3t-raw/main-4-baseline.log",
+          "A\tdocs/450-phase3t-raw/main-4-on-baseline.json.gz",
+          "A\tdocs/450-phase3t-raw/main-5-candidate.log",
+          "A\tdocs/450-phase3t-raw/main-5-on-candidate.json.gz",
+          "A\tdocs/450-phase3t-raw/main-6-candidate.log",
+          "A\tdocs/450-phase3t-raw/main-6-on-candidate.json.gz",
+          "A\tdocs/450-phase3t-raw/main-7-baseline.log",
+          "A\tdocs/450-phase3t-raw/main-7-on-baseline.json.gz",
+          "A\tdocs/450-phase3t-raw/main-comparison.json",
+          "A\tdocs/450-phase3t-raw/opcache-guard-failure.json.gz",
+          "A\tdocs/450-phase3t-raw/regressions.json",
+          "A\tdocs/450-phase3t-raw/static.json",
+          "A\tdocs/450-phase3u-engineering-prompt.md",
+          "M\tservices/FacilitatorDashboardService.php",
+          "M\ttests/classroom-bootstrap.php",
+          "M\ttests/classroom-performance.py",
+          "A\ttests/phase3t-compare.py",
+          "A\ttests/phase3t-discovery.php",
+          "A\ttests/phase3t-history.py",
+          "A\ttests/phase3t-regression.php",
+          "A\ttests/phase3t-sample.py"
+        ],
+        "runtime_changed_paths": [
+          "services/FacilitatorDashboardService.php"
+        ],
+        "runtime_exact_at_stack": [
+          "services/FacilitatorDashboardService.php"
+        ],
+        "runtime_different_at_stack": [],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 90,
+        "title": "[DRAFT] Phase 3U: reject plan-dependent workspace join hint",
+        "url": "https://github.com/ecollab-project/ecollab/pull/90",
+        "head": "e6f864dcda680f8239da089b9b3bc97f0d0c0cde",
+        "head_ref": "optimization/phase3u-learning-workspace-20261026",
+        "base": "f77506a874c4650ec6c69637461c368876fa178d",
+        "base_ref": "optimization/phase3t-primary-channel-20261026",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "A\t.github/workflows/phase3u-performance.yml",
+          "A\tdocs/450-phase3u-claim-ledger.json",
+          "A\tdocs/450-phase3u-evidence.json",
+          "A\tdocs/450-phase3u-performance.md",
+          "A\tdocs/450-phase3u-raw/0-baseline.log",
+          "A\tdocs/450-phase3u-raw/0-off-baseline.json.gz",
+          "A\tdocs/450-phase3u-raw/1-candidate.log",
+          "A\tdocs/450-phase3u-raw/1-off-candidate.json.gz",
+          "A\tdocs/450-phase3u-raw/2-candidate.log",
+          "A\tdocs/450-phase3u-raw/2-off-candidate.json.gz",
+          "A\tdocs/450-phase3u-raw/3-baseline.log",
+          "A\tdocs/450-phase3u-raw/3-off-baseline.json.gz",
+          "A\tdocs/450-phase3u-raw/4-baseline.log",
+          "A\tdocs/450-phase3u-raw/4-on-baseline.json.gz",
+          "A\tdocs/450-phase3u-raw/5-candidate.log",
+          "A\tdocs/450-phase3u-raw/5-on-candidate.json.gz",
+          "A\tdocs/450-phase3u-raw/6-candidate.log",
+          "A\tdocs/450-phase3u-raw/6-on-candidate.json.gz",
+          "A\tdocs/450-phase3u-raw/7-baseline.log",
+          "A\tdocs/450-phase3u-raw/7-on-baseline.json.gz",
+          "A\tdocs/450-phase3u-raw/comparison.json",
+          "A\tdocs/450-phase3u-raw/diagnostic-http.json.gz",
+          "A\tdocs/450-phase3u-raw/diagnostic-native-corrected.json.gz",
+          "A\tdocs/450-phase3u-raw/diagnostic-native-diagnostic.json.gz",
+          "A\tdocs/450-phase3u-raw/diagnostic-native-final.json.gz",
+          "A\tdocs/450-phase3u-raw/diagnostic-native-oracle.json.gz",
+          "A\tdocs/450-phase3u-raw/diagnostic-native-pass.json.gz",
+          "A\tdocs/450-phase3u-raw/diagnostic-native-verified.json.gz",
+          "A\tdocs/450-phase3u-raw/diagnostic-native.json.gz",
+          "A\tdocs/450-phase3u-raw/diagnostic-plan-control-reproduced.json.gz",
+          "A\tdocs/450-phase3u-raw/diagnostic-plan-control.json.gz",
+          "A\tdocs/450-phase3u-raw/diagnostic-sql-distributions.json.gz",
+          "A\tdocs/450-phase3u-raw/diagnostic-sql.json.gz",
+          "A\tdocs/450-phase3u-raw/final-regressions.json",
+          "A\tdocs/450-phase3u-raw/final-static.json",
+          "A\tdocs/450-phase3u-raw/manifest.json",
+          "A\tdocs/450-phase3u-raw/phase3u-comparison.log",
+          "A\tdocs/450-phase3u-raw/phase3u-final-static.log",
+          "A\tdocs/450-phase3u-raw/phase3u-plan-control-reproduced.log",
+          "A\tdocs/450-phase3u-raw/phase3u-plan-control.log",
+          "A\tdocs/450-phase3u-raw/phase3u-static.log",
+          "A\tdocs/450-phase3u-raw/regressions.json",
+          "A\tdocs/450-phase3u-raw/static.json",
+          "A\tdocs/450-phase3u-raw/system.json",
+          "A\tdocs/450-phase3v-engineering-prompt.md",
+          "M\ttests/classroom-performance.py",
+          "A\ttests/phase3u-compare.py",
+          "A\ttests/phase3u-discovery.php",
+          "A\ttests/phase3u-plan-control.php",
+          "A\ttests/phase3u-regression.php",
+          "A\ttests/phase3u-report.py"
+        ],
+        "runtime_changed_paths": [],
+        "runtime_exact_at_stack": [],
+        "runtime_different_at_stack": [],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 91,
+        "title": "Phase 3V: statistics-aware dashboard profiling and rejected unread-count rewrite",
+        "url": "https://github.com/ecollab-project/ecollab/pull/91",
+        "head": "e818bbd84ae85d67aa71a38460fe154a5128a930",
+        "head_ref": "optimization/phase3v-statistics-dashboard-20261027",
+        "base": "e6f864dcda680f8239da089b9b3bc97f0d0c0cde",
+        "base_ref": "optimization/phase3u-learning-workspace-20261026",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "A\t.github/workflows/phase3v-performance.yml",
+          "A\tdocs/450-phase3v-claim-ledger.json",
+          "A\tdocs/450-phase3v-evidence.json",
+          "A\tdocs/450-phase3v-performance.md",
+          "A\tdocs/450-phase3v-raw/0-control_a.log",
+          "A\tdocs/450-phase3v-raw/0-off-legacy-control_a.json.gz",
+          "A\tdocs/450-phase3v-raw/1-control_b.log",
+          "A\tdocs/450-phase3v-raw/1-off-existing_067-control_b.json.gz",
+          "A\tdocs/450-phase3v-raw/2-control_a.log",
+          "A\tdocs/450-phase3v-raw/2-off-existing_067-control_a.json.gz",
+          "A\tdocs/450-phase3v-raw/3-control_b.log",
+          "A\tdocs/450-phase3v-raw/3-off-legacy-control_b.json.gz",
+          "A\tdocs/450-phase3v-raw/4-control_a.log",
+          "A\tdocs/450-phase3v-raw/4-on-legacy-control_a.json.gz",
+          "A\tdocs/450-phase3v-raw/5-control_b.log",
+          "A\tdocs/450-phase3v-raw/5-on-existing_067-control_b.json.gz",
+          "A\tdocs/450-phase3v-raw/6-control_a.log",
+          "A\tdocs/450-phase3v-raw/6-on-existing_067-control_a.json.gz",
+          "A\tdocs/450-phase3v-raw/7-control_b.log",
+          "A\tdocs/450-phase3v-raw/7-on-legacy-control_b.json.gz",
+          "A\tdocs/450-phase3v-raw/checks/application-parity.log",
+          "A\tdocs/450-phase3v-raw/checks/final-regressions.json.gz",
+          "A\tdocs/450-phase3v-raw/checks/final-static.json.gz",
+          "A\tdocs/450-phase3v-raw/checks/final-static.log",
+          "A\tdocs/450-phase3v-raw/checks/final-validation.json.gz",
+          "A\tdocs/450-phase3v-raw/checks/profile-exact-isolated.log",
+          "A\tdocs/450-phase3v-raw/checks/profile-exact.json.gz",
+          "A\tdocs/450-phase3v-raw/checks/profile-exact.log",
+          "A\tdocs/450-phase3v-raw/checks/profile-summary-overlap.json.gz",
+          "A\tdocs/450-phase3v-raw/checks/regressions.json.gz",
+          "A\tdocs/450-phase3v-raw/comparison.json",
+          "A\tdocs/450-phase3v-raw/discovery/full-smoke.json.gz",
+          "A\tdocs/450-phase3v-raw/discovery/full-smoke.partial.json.gz",
+          "A\tdocs/450-phase3v-raw/discovery/indexed-smoke.json.gz",
+          "A\tdocs/450-phase3v-raw/discovery/indexed-smoke.partial.json.gz",
+          "A\tdocs/450-phase3v-raw/discovery/native-corrected.json.gz",
+          "A\tdocs/450-phase3v-raw/discovery/profile-corrected.json.gz",
+          "A\tdocs/450-phase3v-raw/discovery/profile-detailed.json.gz",
+          "A\tdocs/450-phase3v-raw/discovery/profile.json.gz",
+          "A\tdocs/450-phase3v-raw/discovery/smoke.json.gz",
+          "A\tdocs/450-phase3v-raw/discovery/smoke.partial.json.gz",
+          "A\tdocs/450-phase3v-raw/initial-failed/0-control_a.log",
+          "A\tdocs/450-phase3v-raw/initial-failed/0-off-legacy-control_a.json.gz",
+          "A\tdocs/450-phase3v-raw/initial-failed/1-control_b.log",
+          "A\tdocs/450-phase3v-raw/initial-failed/1-off-existing_067-control_b.json.gz",
+          "A\tdocs/450-phase3v-raw/initial-failed/2-control_a.log",
+          "A\tdocs/450-phase3v-raw/initial-failed/2-off-existing_067-control_a.json.gz",
+          "A\tdocs/450-phase3v-raw/initial-failed/3-control_b.log",
+          "A\tdocs/450-phase3v-raw/initial-failed/3-off-legacy-control_b.json.gz",
+          "A\tdocs/450-phase3v-raw/initial-failed/3-off-legacy-control_b.partial.json.gz",
+          "A\tdocs/450-phase3v-raw/initial-failed/comparison.json.gz",
+          "A\tdocs/450-phase3v-raw/manifest.json",
+          "A\tdocs/450-phase3v-raw/phase3v-comparison-corrected.log",
+          "A\tdocs/450-phase3v-raw/phase3v-comparison.log",
+          "A\tdocs/450-phase3v-raw/phase3v-finish-checks.log",
+          "A\tdocs/450-phase3v-raw/phase3v-full-smoke.log",
+          "A\tdocs/450-phase3v-raw/phase3v-indexed-smoke.log",
+          "A\tdocs/450-phase3v-raw/phase3v-native-corrected.log",
+          "A\tdocs/450-phase3v-raw/phase3v-package.log",
+          "A\tdocs/450-phase3v-raw/phase3v-profile-corrected.log",
+          "A\tdocs/450-phase3v-raw/phase3v-profile-detailed.log",
+          "A\tdocs/450-phase3v-raw/phase3v-profile.log",
+          "A\tdocs/450-phase3v-raw/phase3v-smoke.log",
+          "A\tdocs/450-phase3w-engineering-prompt.md",
+          "M\ttests/classroom-performance.py",
+          "A\ttests/phase3v-compare.py",
+          "A\ttests/phase3v-profile.php",
+          "A\ttests/phase3v-regression.php",
+          "A\ttests/phase3v-report.py",
+          "A\ttests/phase3v-sample.py"
+        ],
+        "runtime_changed_paths": [],
+        "runtime_exact_at_stack": [],
+        "runtime_different_at_stack": [],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 92,
+        "title": "Phase 3W: typed SQL telemetry, migrated schema and write-aware controls",
+        "url": "https://github.com/ecollab-project/ecollab/pull/92",
+        "head": "827470217e6a6a86a165b14f4b6650a10e2c2395",
+        "head_ref": "optimization/phase3w-telemetry-schema-20261027",
+        "base": "e818bbd84ae85d67aa71a38460fe154a5128a930",
+        "base_ref": "optimization/phase3v-statistics-dashboard-20261027",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "A\t.github/workflows/phase3w-performance.yml",
+          "A\tdocs/450-phase3w-claim-ledger.json",
+          "A\tdocs/450-phase3w-evidence.json",
+          "A\tdocs/450-phase3w-performance.md",
+          "A\tdocs/450-phase3w-plan.md",
+          "A\tdocs/450-phase3w-raw/0-minimal-absent.json.gz",
+          "A\tdocs/450-phase3w-raw/0.log",
+          "A\tdocs/450-phase3w-raw/1-minimal-present.json.gz",
+          "A\tdocs/450-phase3w-raw/1.log",
+          "A\tdocs/450-phase3w-raw/2-minimal-present.json.gz",
+          "A\tdocs/450-phase3w-raw/2.log",
+          "A\tdocs/450-phase3w-raw/3-minimal-absent.json.gz",
+          "A\tdocs/450-phase3w-raw/3.log",
+          "A\tdocs/450-phase3w-raw/4-full-absent.json.gz",
+          "A\tdocs/450-phase3w-raw/4.log",
+          "A\tdocs/450-phase3w-raw/5-full-present.json.gz",
+          "A\tdocs/450-phase3w-raw/5.log",
+          "A\tdocs/450-phase3w-raw/6-full-present.json.gz",
+          "A\tdocs/450-phase3w-raw/6.log",
+          "A\tdocs/450-phase3w-raw/7-full-absent.json.gz",
+          "A\tdocs/450-phase3w-raw/7.log",
+          "A\tdocs/450-phase3w-raw/checks/application-parity.log",
+          "A\tdocs/450-phase3w-raw/checks/commands.json.gz",
+          "A\tdocs/450-phase3w-raw/checks/existing-native.json.gz",
+          "A\tdocs/450-phase3w-raw/checks/existing-native.log",
+          "A\tdocs/450-phase3w-raw/checks/focused-regressions.json.gz",
+          "A\tdocs/450-phase3w-raw/checks/schema-full-suite.json.gz",
+          "A\tdocs/450-phase3w-raw/checks/schema-full-suite.log",
+          "A\tdocs/450-phase3w-raw/checks/static.json.gz",
+          "A\tdocs/450-phase3w-raw/checks/static.log",
+          "A\tdocs/450-phase3w-raw/checks/telemetry-mariadb.json.gz",
+          "A\tdocs/450-phase3w-raw/checks/telemetry-mariadb.log",
+          "A\tdocs/450-phase3w-raw/comparison.json",
+          "A\tdocs/450-phase3w-raw/discovery/full-project-suite-corrected.json.gz",
+          "A\tdocs/450-phase3w-raw/discovery/full-project-suite-corrected.log",
+          "A\tdocs/450-phase3w-raw/discovery/full-project-suite.json.gz",
+          "A\tdocs/450-phase3w-raw/discovery/full-project-suite.log",
+          "A\tdocs/450-phase3w-raw/discovery/full-smoke.json.gz",
+          "A\tdocs/450-phase3w-raw/discovery/full-smoke.log",
+          "A\tdocs/450-phase3w-raw/discovery/full-suite-comparison.json.gz",
+          "A\tdocs/450-phase3w-raw/discovery/full-suite-comparison.log",
+          "A\tdocs/450-phase3w-raw/discovery/inherited-v-survey.json.gz",
+          "A\tdocs/450-phase3w-raw/discovery/inherited-v-survey.log",
+          "A\tdocs/450-phase3w-raw/discovery/inherited-v-survey.partial.json.gz",
+          "A\tdocs/450-phase3w-raw/discovery/minimal-corrected.json.gz",
+          "A\tdocs/450-phase3w-raw/discovery/minimal-corrected.log",
+          "A\tdocs/450-phase3w-raw/discovery/minimal-corrected.partial.json.gz",
+          "A\tdocs/450-phase3w-raw/discovery/minimal-default-corrected.json.gz",
+          "A\tdocs/450-phase3w-raw/discovery/minimal-default-corrected.log",
+          "A\tdocs/450-phase3w-raw/discovery/minimal-smoke.json.gz",
+          "A\tdocs/450-phase3w-raw/discovery/minimal-smoke.log",
+          "A\tdocs/450-phase3w-raw/discovery/minimal-smoke.partial.json.gz",
+          "A\tdocs/450-phase3w-raw/discovery/permission-smoke.json.gz",
+          "A\tdocs/450-phase3w-raw/discovery/permission-smoke.log",
+          "A\tdocs/450-phase3w-raw/discovery/schema-corrected.json.gz",
+          "A\tdocs/450-phase3w-raw/discovery/schema-corrected.log",
+          "A\tdocs/450-phase3w-raw/discovery/schema-profiled.json.gz",
+          "A\tdocs/450-phase3w-raw/discovery/schema-profiled.log",
+          "A\tdocs/450-phase3w-raw/discovery/schema-utf8.json.gz",
+          "A\tdocs/450-phase3w-raw/discovery/schema-utf8.log",
+          "A\tdocs/450-phase3w-raw/discovery/schema.json.gz",
+          "A\tdocs/450-phase3w-raw/discovery/schema.log",
+          "A\tdocs/450-phase3w-raw/discovery/telemetry-before-freeze.json.gz",
+          "A\tdocs/450-phase3w-raw/discovery/telemetry-green-latest.json.gz",
+          "A\tdocs/450-phase3w-raw/discovery/telemetry-green.json.gz",
+          "A\tdocs/450-phase3w-raw/discovery/telemetry-mariadb.json.gz",
+          "A\tdocs/450-phase3w-raw/discovery/telemetry-mariadb.log",
+          "A\tdocs/450-phase3w-raw/discovery/telemetry-red.json.gz",
+          "A\tdocs/450-phase3w-raw/manifest.json",
+          "A\tdocs/450-phase3w-raw/phase3w-comparison.log",
+          "A\tdocs/450-phase3w-raw/phase3w-finish-checks.log",
+          "A\tdocs/450-phase3w-raw/phase3w-postprocess.log",
+          "A\tdocs/450-phase3w-raw/phase3w-report.log",
+          "A\tdocs/450-phase3w-raw/portable-recompute.log",
+          "A\tdocs/450-phase3w-raw/recompute-additional.py",
+          "A\tdocs/450-phase3w-raw/system.json",
+          "A\tdocs/450-phase3x-engineering-prompt.md",
+          "M\ttests/classroom-bootstrap.php",
+          "M\ttests/classroom-performance.py",
+          "M\ttests/dashboard-profile.php",
+          "A\ttests/phase3w-compare.py",
+          "A\ttests/phase3w-full-fixture.php",
+          "A\ttests/phase3w-lock-holder.php",
+          "A\ttests/phase3w-migration-bootstrap.php",
+          "A\ttests/phase3w-native.php",
+          "A\ttests/phase3w-phpunit-bootstrap.php",
+          "A\ttests/phase3w-report.py",
+          "A\ttests/phase3w-sample.py",
+          "A\ttests/phase3w-schema.php",
+          "A\ttests/phase3w-telemetry-regression.php"
+        ],
+        "runtime_changed_paths": [],
+        "runtime_exact_at_stack": [],
+        "runtime_different_at_stack": [],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 93,
+        "title": "Phase 3X: verified signup and full-schema authentication test contracts",
+        "url": "https://github.com/ecollab-project/ecollab/pull/93",
+        "head": "928a3b8912ef60ab374270c1efd3a24c0433c8aa",
+        "head_ref": "validation/phase3x-auth-contracts-20261028",
+        "base": "827470217e6a6a86a165b14f4b6650a10e2c2395",
+        "base_ref": "optimization/phase3w-telemetry-schema-20261027",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "A\t.github/workflows/phase3x-contracts.yml",
+          "A\tdocs/450-phase3x-claim-ledger.json",
+          "A\tdocs/450-phase3x-evidence.json",
+          "A\tdocs/450-phase3x-performance.md",
+          "A\tdocs/450-phase3x-plan.md",
+          "A\tdocs/450-phase3x-raw/before.json.gz",
+          "A\tdocs/450-phase3x-raw/before.log.gz",
+          "A\tdocs/450-phase3x-raw/clocks.json.gz",
+          "A\tdocs/450-phase3x-raw/clocks.log.gz",
+          "A\tdocs/450-phase3x-raw/compatibility.json.gz",
+          "A\tdocs/450-phase3x-raw/compatibility.log.gz",
+          "A\tdocs/450-phase3x-raw/diagnostic.json.gz",
+          "A\tdocs/450-phase3x-raw/diagnostic.log.gz",
+          "A\tdocs/450-phase3x-raw/final-commands.json.gz",
+          "A\tdocs/450-phase3x-raw/final-summary.json.gz",
+          "A\tdocs/450-phase3x-raw/final.json.gz",
+          "A\tdocs/450-phase3x-raw/final.log.gz",
+          "A\tdocs/450-phase3x-raw/frozen-static.json.gz",
+          "A\tdocs/450-phase3x-raw/frozen-static.log.gz",
+          "A\tdocs/450-phase3x-raw/frozen-summary.json.gz",
+          "A\tdocs/450-phase3x-raw/frozen.json.gz",
+          "A\tdocs/450-phase3x-raw/frozen.log.gz",
+          "A\tdocs/450-phase3x-raw/full-fixed.json.gz",
+          "A\tdocs/450-phase3x-raw/full-fixed.log.gz",
+          "A\tdocs/450-phase3x-raw/full.json.gz",
+          "A\tdocs/450-phase3x-raw/full.log.gz",
+          "A\tdocs/450-phase3x-raw/manifest.json",
+          "A\tdocs/450-phase3x-raw/repaired.json.gz",
+          "A\tdocs/450-phase3x-raw/repaired.log.gz",
+          "A\tdocs/450-phase3x-raw/static.json.gz",
+          "A\tdocs/450-phase3x-raw/static.log.gz",
+          "A\tdocs/450-phase3x-raw/telemetry.json.gz",
+          "A\tdocs/450-phase3x-raw/utc-summary.json.gz",
+          "A\tdocs/450-phase3x-raw/utc.json.gz",
+          "A\tdocs/450-phase3x-raw/utc.log.gz",
+          "A\tdocs/450-phase3y-engineering-prompt.md",
+          "M\ttests/Integration/AuthServiceTest.php",
+          "A\ttests/Support/LocalOtpTransport.php",
+          "M\ttests/classroom-performance.py",
+          "M\ttests/phase3w-schema.php",
+          "A\ttests/phase3x-report.py",
+          "A\ttests/phase3x-suite.php"
+        ],
+        "runtime_changed_paths": [],
+        "runtime_exact_at_stack": [],
+        "runtime_different_at_stack": [],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 94,
+        "title": "Phase 3Y: real HTTP authentication and isolated OTP timezone evidence",
+        "url": "https://github.com/ecollab-project/ecollab/pull/94",
+        "head": "b09e66c3fcba5066c63da8bece245ae5f4068410",
+        "head_ref": "validation/phase3y-http-auth-20261028",
+        "base": "928a3b8912ef60ab374270c1efd3a24c0433c8aa",
+        "base_ref": "validation/phase3x-auth-contracts-20261028",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "A\t.github/workflows/phase3y-auth.yml",
+          "A\tdocs/450-phase3y-claim-ledger.json",
+          "A\tdocs/450-phase3y-evidence.json",
+          "A\tdocs/450-phase3y-performance.md",
+          "A\tdocs/450-phase3y-plan.md",
+          "A\tdocs/450-phase3y-raw/browser-revision-checks.json.gz",
+          "A\tdocs/450-phase3y-raw/commands.json.gz",
+          "A\tdocs/450-phase3y-raw/discovery-accepted-base.json.gz",
+          "A\tdocs/450-phase3y-raw/discovery-accepted-base.log.gz",
+          "A\tdocs/450-phase3y-raw/discovery-matrix.json.gz",
+          "A\tdocs/450-phase3y-raw/discovery-matrix.log.gz",
+          "A\tdocs/450-phase3y-raw/discovery-native.json.gz",
+          "A\tdocs/450-phase3y-raw/discovery-native.log.gz",
+          "A\tdocs/450-phase3y-raw/final-accepted-base.json.gz",
+          "A\tdocs/450-phase3y-raw/final-accepted-base.log.gz",
+          "A\tdocs/450-phase3y-raw/final-full-summary.json.gz",
+          "A\tdocs/450-phase3y-raw/final-full.json.gz",
+          "A\tdocs/450-phase3y-raw/final-full.log.gz",
+          "A\tdocs/450-phase3y-raw/final-http.json.gz",
+          "A\tdocs/450-phase3y-raw/final-http.log.gz",
+          "A\tdocs/450-phase3y-raw/final-static.json.gz",
+          "A\tdocs/450-phase3y-raw/final-static.log.gz",
+          "A\tdocs/450-phase3y-raw/hosted-79fa2c3-accepted-base.json.gz",
+          "A\tdocs/450-phase3y-raw/hosted-79fa2c3-artifact.json.gz",
+          "A\tdocs/450-phase3y-raw/hosted-79fa2c3-full.json.gz",
+          "A\tdocs/450-phase3y-raw/hosted-79fa2c3-http.json.gz",
+          "A\tdocs/450-phase3y-raw/manifest.json",
+          "A\tdocs/450-phase3y-raw/pre-freeze-matrix.json.gz",
+          "A\tdocs/450-phase3y-raw/pre-freeze-matrix.log.gz",
+          "A\tdocs/450-phase3y-raw/recompute-negative.json.gz",
+          "A\tdocs/450-phase3y-raw/serial-http-discovery.json.gz",
+          "A\tdocs/450-phase3y-raw/serial-http-discovery.log.gz",
+          "A\tdocs/450-phase3y-raw/serial-http-summary.json.gz",
+          "A\tdocs/450-phase3y-raw/smoke-http-2.json.gz",
+          "A\tdocs/450-phase3y-raw/smoke-http-2.log.gz",
+          "A\tdocs/450-phase3y-raw/smoke-http-3.json.gz",
+          "A\tdocs/450-phase3y-raw/smoke-http-3.log.gz",
+          "A\tdocs/450-phase3y-raw/smoke-http-4.json.gz",
+          "A\tdocs/450-phase3y-raw/smoke-http-4.log.gz",
+          "A\tdocs/450-phase3y-raw/smoke-http-5.json.gz",
+          "A\tdocs/450-phase3y-raw/smoke-http-5.log.gz",
+          "A\tdocs/450-phase3y-raw/smoke-http-6.log.gz",
+          "A\tdocs/450-phase3y-raw/smoke-http-7.json.gz",
+          "A\tdocs/450-phase3y-raw/smoke-http-7.log.gz",
+          "A\tdocs/450-phase3y-raw/smoke-http.json.gz",
+          "A\tdocs/450-phase3y-raw/smoke-http.log.gz",
+          "A\tdocs/450-phase3y-raw/static.json.gz",
+          "A\tdocs/450-phase3y-raw/static.log.gz",
+          "A\tdocs/450-phase3y-raw/verified-http-summary.json.gz",
+          "A\tdocs/450-phase3y-raw/verified-http.json.gz",
+          "A\tdocs/450-phase3y-raw/verified-http.log.gz",
+          "A\tdocs/450-phase3z-engineering-prompt.md",
+          "A\ttests/Integration/OtpExpiryTest.php",
+          "A\ttests/phase3y-bootstrap.php",
+          "A\ttests/phase3y-browser.cjs",
+          "A\ttests/phase3y-control.php",
+          "A\ttests/phase3y-http.py",
+          "A\ttests/phase3y-report.py"
+        ],
+        "runtime_changed_paths": [],
+        "runtime_exact_at_stack": [],
+        "runtime_different_at_stack": [],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 95,
+        "title": "Phase 3Z: OTP timezone evidence and bounded correction proposal",
+        "url": "https://github.com/ecollab-project/ecollab/pull/95",
+        "head": "bc1f1bc3cff91ce61cf531853e7220f1cfca590a",
+        "head_ref": "investigation/phase3z-otp-clock-20261028",
+        "base": "b09e66c3fcba5066c63da8bece245ae5f4068410",
+        "base_ref": "validation/phase3y-http-auth-20261028",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "A\t.github/workflows/phase3z-auth-clock.yml",
+          "A\tdocs/450-phase3aa-engineering-prompt.md",
+          "A\tdocs/450-phase3z-claim-ledger.json",
+          "A\tdocs/450-phase3z-evidence.json",
+          "A\tdocs/450-phase3z-otp-contract.md",
+          "A\tdocs/450-phase3z-performance.md",
+          "A\tdocs/450-phase3z-plan.md",
+          "A\tdocs/450-phase3z-raw/accepted-phase3x.json.gz",
+          "A\tdocs/450-phase3z-raw/accepted-phase3y.json.gz",
+          "A\tdocs/450-phase3z-raw/discovery-timezone.json.gz",
+          "A\tdocs/450-phase3z-raw/discovery2-timezone.json.gz",
+          "A\tdocs/450-phase3z-raw/final-http-summary.json.gz",
+          "A\tdocs/450-phase3z-raw/final-http.json.gz",
+          "A\tdocs/450-phase3z-raw/final-timezone-summary.json.gz",
+          "A\tdocs/450-phase3z-raw/final-timezone.json.gz",
+          "A\tdocs/450-phase3z-raw/frozen-checks.json.gz",
+          "A\tdocs/450-phase3z-raw/frozen-full-summary.json.gz",
+          "A\tdocs/450-phase3z-raw/frozen-full.json.gz",
+          "A\tdocs/450-phase3z-raw/frozen-static.json.gz",
+          "A\tdocs/450-phase3z-raw/frozen-timezone-summary.json.gz",
+          "A\tdocs/450-phase3z-raw/frozen-timezone.json.gz",
+          "A\tdocs/450-phase3z-raw/local-commands.json.gz",
+          "A\tdocs/450-phase3z-raw/manifest.json",
+          "A\tdocs/450-phase3z-raw/phase3y-hosted-success-accepted-base.json.gz",
+          "A\tdocs/450-phase3z-raw/phase3y-hosted-success-full.json.gz",
+          "A\tdocs/450-phase3z-raw/phase3y-hosted-success-http.json.gz",
+          "A\tdocs/450-phase3z-raw/phase3y-hosted-success-static.json.gz",
+          "A\tdocs/450-phase3z-raw/phase3z-composer.log.gz",
+          "A\tdocs/450-phase3z-raw/phase3z-discovery.log.gz",
+          "A\tdocs/450-phase3z-raw/phase3z-discovery2.log.gz",
+          "A\tdocs/450-phase3z-raw/phase3z-frozen-timezone.log.gz",
+          "A\tdocs/450-phase3z-raw/phase3z-full.log.gz",
+          "A\tdocs/450-phase3z-raw/phase3z-local.log.gz",
+          "A\tdocs/450-phase3z-raw/phase3z-static.log.gz",
+          "A\ttests/phase3z-clock.php",
+          "A\ttests/phase3z-report.py",
+          "A\ttests/phase3z-timezone.py"
+        ],
+        "runtime_changed_paths": [],
+        "runtime_exact_at_stack": [],
+        "runtime_different_at_stack": [],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      },
+      {
+        "number": 96,
+        "title": "Phase 3AA: frozen OTP UTC trial, consumption race and transition decision",
+        "url": "https://github.com/ecollab-project/ecollab/pull/96",
+        "head": "5a03656b27904498917c16cbfa320187c6da8c84",
+        "head_ref": "investigation/phase3aa-utc-decision-20261028",
+        "base": "bc1f1bc3cff91ce61cf531853e7220f1cfca590a",
+        "base_ref": "investigation/phase3z-otp-clock-20261028",
+        "draft": true,
+        "state": "open",
+        "head_is_ancestor_of_accepted": true,
+        "changed_paths": [
+          "A\t.github/workflows/phase3aa-otp-decision.yml",
+          "A\tdocs/450-phase3aa-claim-ledger.json",
+          "A\tdocs/450-phase3aa-decision.md",
+          "A\tdocs/450-phase3aa-evidence.json",
+          "A\tdocs/450-phase3aa-performance.md",
+          "A\tdocs/450-phase3aa-raw/accepted-phase3x.json.gz",
+          "A\tdocs/450-phase3aa-raw/accepted-phase3y.json.gz",
+          "A\tdocs/450-phase3aa-raw/accepted-phase3z.json.gz",
+          "A\tdocs/450-phase3aa-raw/completion-commands.json.gz",
+          "A\tdocs/450-phase3aa-raw/discovery-summary.json.gz",
+          "A\tdocs/450-phase3aa-raw/discovery.json.gz",
+          "A\tdocs/450-phase3aa-raw/frozen-experiments-summary.json.gz",
+          "A\tdocs/450-phase3aa-raw/frozen-experiments.json.gz",
+          "A\tdocs/450-phase3aa-raw/frozen-full-summary.json.gz",
+          "A\tdocs/450-phase3aa-raw/frozen-full.json.gz",
+          "A\tdocs/450-phase3aa-raw/frozen-http-summary.json.gz",
+          "A\tdocs/450-phase3aa-raw/frozen-http.json.gz",
+          "A\tdocs/450-phase3aa-raw/frozen-phase3z-summary.json.gz",
+          "A\tdocs/450-phase3aa-raw/frozen-phase3z.json.gz",
+          "A\tdocs/450-phase3aa-raw/frozen-static.json.gz",
+          "A\tdocs/450-phase3aa-raw/full.json.gz",
+          "A\tdocs/450-phase3aa-raw/manifest.json",
+          "A\tdocs/450-phase3aa-raw/phase3aa-completion.log.gz",
+          "A\tdocs/450-phase3aa-raw/phase3aa-composer.log.gz",
+          "A\tdocs/450-phase3aa-raw/phase3aa-discovery.log.gz",
+          "A\tdocs/450-phase3aa-raw/phase3aa-full.log.gz",
+          "A\tdocs/450-phase3ab-engineering-prompt.md",
+          "A\ttests/experiments/phase3aa/UtcOtpTrial.php",
+          "A\ttests/phase3aa-clock.php",
+          "A\ttests/phase3aa-contracts.php",
+          "A\ttests/phase3aa-experiments.py",
+          "A\ttests/phase3aa-race-worker.php",
+          "A\ttests/phase3aa-race.php",
+          "A\ttests/phase3aa-report.py",
+          "A\ttests/phase3aa-transition.php"
+        ],
+        "runtime_changed_paths": [],
+        "runtime_exact_at_stack": [],
+        "runtime_different_at_stack": [],
+        "runtime_absent_at_stack": [],
+        "acceptance": "Source comparison only;independent acceptance and integration approval not inferred"
+      }
+    ],
+    "limitations": [
+      "Git ancestry does not prove equivalence for metadata-republished or rehearsed branches",
+      "Matching blobs do not prove integration,security or production acceptance",
+      "No merge rehearsal,production migration/config inspection or defense build certification",
+      "No real secrets/config files read;only tracked source and variable names"
+    ],
+    "commands": [
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "051cae2ee1005ab063675e8054c2ff5b1801294b"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "127fd08231861cd62be72dbc16d31a473794511f"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "19a8845665dc72d8bf4d062f634b25410fad9961"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "2716766ab71f27d32d0d435d555f19801d7d0aa7"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "287d1192122ad8731f6bfe352729bebe85c2f5f9"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "2e65196fca7448155c19519fda61fdda82c6c80d"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "2e7a3aafe91fb88673e16c0ad78c7c46212ec9b7"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "38900c09fbfd59599ed30905a8a5f9255b27dfe3"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "3b5983ba86ee1b0ba59b4cfa45d331b6f516a908"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "54228eb0f662bd8272dea2f32ab446ca6cc207c3"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "5e2fa5b57226ae07b6a02560d89ac436019b8b28"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "67a90c6cc94701521d4648ed29f8b21e5eea5683"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "687bd3ad2d60bf5c5e0627d640e627d7fbcc1d9d"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "827470217e6a6a86a165b14f4b6650a10e2c2395"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "8679d81dd575f828f12f42cd4820808fe0066475"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "87e82284ced2cee4858b673cc5a8619151c019bb"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "8a2dcfd19db15c10d4711856835d68ef799660db"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "928a3b8912ef60ab374270c1efd3a24c0433c8aa"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "9d5ded1af8ee55364fa87d9c9a05327ffb9193c9"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "a26c21d4fabc87d8d63205b08f8fbc0a31e13211"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "aa9b6b35ba86a50024987a60400b13488a9acbb5"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "b09e66c3fcba5066c63da8bece245ae5f4068410"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "bc1f1bc3cff91ce61cf531853e7220f1cfca590a"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "c838359711a14e9b6eb3f345c4386d184a178b25"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "d161f3d23e8e0e66cfcc45483002a1ea7be42442"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "d3748527d77ac471ace8613f2a2bfb2a6c45627c"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "d5cb54c6998e6e3b395d4358a23caca08c7c52d8"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "e1fe79f7b2cdadf4719e9ef5f1bd82ae14db4b98"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "e6f864dcda680f8239da089b9b3bc97f0d0c0cde"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "e818bbd84ae85d67aa71a38460fe154a5128a930"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "ls-tree",
+          "-r",
+          "f77506a874c4650ec6c69637461c368876fa178d"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "c838359711a14e9b6eb3f345c4386d184a178b25",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "8a2dcfd19db15c10d4711856835d68ef799660db",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 1,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "c838359711a14e9b6eb3f345c4386d184a178b25",
+          "8a2dcfd19db15c10d4711856835d68ef799660db"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "e1fe79f7b2cdadf4719e9ef5f1bd82ae14db4b98",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 1,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "8a2dcfd19db15c10d4711856835d68ef799660db",
+          "e1fe79f7b2cdadf4719e9ef5f1bd82ae14db4b98"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "5e2fa5b57226ae07b6a02560d89ac436019b8b28",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 1,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "e1fe79f7b2cdadf4719e9ef5f1bd82ae14db4b98",
+          "5e2fa5b57226ae07b6a02560d89ac436019b8b28"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "287d1192122ad8731f6bfe352729bebe85c2f5f9",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 1,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "5e2fa5b57226ae07b6a02560d89ac436019b8b28",
+          "287d1192122ad8731f6bfe352729bebe85c2f5f9"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "8679d81dd575f828f12f42cd4820808fe0066475",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 1,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "287d1192122ad8731f6bfe352729bebe85c2f5f9",
+          "8679d81dd575f828f12f42cd4820808fe0066475"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "38900c09fbfd59599ed30905a8a5f9255b27dfe3",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 1,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "8679d81dd575f828f12f42cd4820808fe0066475",
+          "38900c09fbfd59599ed30905a8a5f9255b27dfe3"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "127fd08231861cd62be72dbc16d31a473794511f",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 1,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "38900c09fbfd59599ed30905a8a5f9255b27dfe3",
+          "127fd08231861cd62be72dbc16d31a473794511f"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "19a8845665dc72d8bf4d062f634b25410fad9961",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 1,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "127fd08231861cd62be72dbc16d31a473794511f",
+          "19a8845665dc72d8bf4d062f634b25410fad9961"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "aa9b6b35ba86a50024987a60400b13488a9acbb5",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "c838359711a14e9b6eb3f345c4386d184a178b25",
+          "aa9b6b35ba86a50024987a60400b13488a9acbb5"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "2e7a3aafe91fb88673e16c0ad78c7c46212ec9b7",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "c838359711a14e9b6eb3f345c4386d184a178b25",
+          "2e7a3aafe91fb88673e16c0ad78c7c46212ec9b7"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "2e65196fca7448155c19519fda61fdda82c6c80d",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "c838359711a14e9b6eb3f345c4386d184a178b25",
+          "2e65196fca7448155c19519fda61fdda82c6c80d"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "67a90c6cc94701521d4648ed29f8b21e5eea5683",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "2e65196fca7448155c19519fda61fdda82c6c80d",
+          "67a90c6cc94701521d4648ed29f8b21e5eea5683"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "3b5983ba86ee1b0ba59b4cfa45d331b6f516a908",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "c838359711a14e9b6eb3f345c4386d184a178b25",
+          "3b5983ba86ee1b0ba59b4cfa45d331b6f516a908"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "9d5ded1af8ee55364fa87d9c9a05327ffb9193c9",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "3b5983ba86ee1b0ba59b4cfa45d331b6f516a908",
+          "9d5ded1af8ee55364fa87d9c9a05327ffb9193c9"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "87e82284ced2cee4858b673cc5a8619151c019bb",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "9d5ded1af8ee55364fa87d9c9a05327ffb9193c9",
+          "87e82284ced2cee4858b673cc5a8619151c019bb"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "687bd3ad2d60bf5c5e0627d640e627d7fbcc1d9d",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "87e82284ced2cee4858b673cc5a8619151c019bb",
+          "687bd3ad2d60bf5c5e0627d640e627d7fbcc1d9d"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "54228eb0f662bd8272dea2f32ab446ca6cc207c3",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "687bd3ad2d60bf5c5e0627d640e627d7fbcc1d9d",
+          "54228eb0f662bd8272dea2f32ab446ca6cc207c3"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "051cae2ee1005ab063675e8054c2ff5b1801294b",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "54228eb0f662bd8272dea2f32ab446ca6cc207c3",
+          "051cae2ee1005ab063675e8054c2ff5b1801294b"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "d3748527d77ac471ace8613f2a2bfb2a6c45627c",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "051cae2ee1005ab063675e8054c2ff5b1801294b",
+          "d3748527d77ac471ace8613f2a2bfb2a6c45627c"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "a26c21d4fabc87d8d63205b08f8fbc0a31e13211",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 1,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "c838359711a14e9b6eb3f345c4386d184a178b25",
+          "a26c21d4fabc87d8d63205b08f8fbc0a31e13211"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "d5cb54c6998e6e3b395d4358a23caca08c7c52d8",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "d3748527d77ac471ace8613f2a2bfb2a6c45627c",
+          "d5cb54c6998e6e3b395d4358a23caca08c7c52d8"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "2716766ab71f27d32d0d435d555f19801d7d0aa7",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "d5cb54c6998e6e3b395d4358a23caca08c7c52d8",
+          "2716766ab71f27d32d0d435d555f19801d7d0aa7"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "d161f3d23e8e0e66cfcc45483002a1ea7be42442",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "2716766ab71f27d32d0d435d555f19801d7d0aa7",
+          "d161f3d23e8e0e66cfcc45483002a1ea7be42442"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "f77506a874c4650ec6c69637461c368876fa178d",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "d161f3d23e8e0e66cfcc45483002a1ea7be42442",
+          "f77506a874c4650ec6c69637461c368876fa178d"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "e6f864dcda680f8239da089b9b3bc97f0d0c0cde",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "f77506a874c4650ec6c69637461c368876fa178d",
+          "e6f864dcda680f8239da089b9b3bc97f0d0c0cde"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "e818bbd84ae85d67aa71a38460fe154a5128a930",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "e6f864dcda680f8239da089b9b3bc97f0d0c0cde",
+          "e818bbd84ae85d67aa71a38460fe154a5128a930"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "827470217e6a6a86a165b14f4b6650a10e2c2395",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "e818bbd84ae85d67aa71a38460fe154a5128a930",
+          "827470217e6a6a86a165b14f4b6650a10e2c2395"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "928a3b8912ef60ab374270c1efd3a24c0433c8aa",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "827470217e6a6a86a165b14f4b6650a10e2c2395",
+          "928a3b8912ef60ab374270c1efd3a24c0433c8aa"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "b09e66c3fcba5066c63da8bece245ae5f4068410",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "928a3b8912ef60ab374270c1efd3a24c0433c8aa",
+          "b09e66c3fcba5066c63da8bece245ae5f4068410"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "bc1f1bc3cff91ce61cf531853e7220f1cfca590a",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "b09e66c3fcba5066c63da8bece245ae5f4068410",
+          "bc1f1bc3cff91ce61cf531853e7220f1cfca590a"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "--is-ancestor",
+          "5a03656b27904498917c16cbfa320187c6da8c84",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--name-status",
+          "bc1f1bc3cff91ce61cf531853e7220f1cfca590a",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--exit-code",
+          "f77506a874c4650ec6c69637461c368876fa178d",
+          "5a03656b27904498917c16cbfa320187c6da8c84",
+          "--",
+          "services",
+          "API",
+          "security",
+          "database",
+          "assets",
+          "modules",
+          "websocket",
+          "config.php",
+          "composer.json",
+          "composer.lock"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:API/admin/group-recommendations.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:API/ai/message.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:API/ai/session.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:API/ai/sessions.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:API/chat/ai-assist.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:API/chat/get-matches.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:API/chat/peer-match.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:API/collaboration/workspaces.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:API/dm/jarred-job.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:API/dm/send-message.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:API/facilitator/jarred.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:API/threads/index.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:database/migrate.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:deploy/ai-provider/shared-lock.env.example"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:deploy/code-lab/isolated/application.env.example"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:deploy/code-lab/isolated/execution.env.example"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:deploy/code-lab/piston/bridge.py"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:deploy/phase2/ecollab-jarred-worker.service"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:scripts/jarred-worker.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/AccessPolicy.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/AdminDashboardService.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/AdminGroupRecommendationService.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/ChannelAccessService.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/CodeLabRunner.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/CoworkspaceService.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/DocumentAccessService.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/FacilitatorDashboardService.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/GeminiService.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/JarredActionService.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/JarredErrorResponse.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/JarredGroupRecommendationService.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/JarredJobService.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/JarredReplyGenerator.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/JarredTools.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/LearningWorkspaceService.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/NotificationService.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/OllamaService.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/PeerMatchBatch.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/PeerMatchingService.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/RealtimeOutbox.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/StudentDashboardService.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/TemporaryVoiceService.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "show",
+          "5a03656b27904498917c16cbfa320187c6da8c84:services/ThreadAttachmentService.php"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "rev-parse",
+          "HEAD"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "rev-parse",
+          "HEAD^{tree}"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "5a03656b27904498917c16cbfa320187c6da8c84",
+          "--",
+          "services",
+          "API",
+          "security",
+          "database",
+          "assets",
+          "modules",
+          "websocket",
+          "config.php",
+          "composer.json",
+          "composer.lock",
+          "deploy",
+          "scripts"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "merge-base",
+          "c838359711a14e9b6eb3f345c4386d184a178b25",
+          "5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "rev-parse",
+          "c838359711a14e9b6eb3f345c4386d184a178b25^{tree}"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "rev-parse",
+          "5a03656b27904498917c16cbfa320187c6da8c84^{tree}"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "rev-list",
+          "--count",
+          "c838359711a14e9b6eb3f345c4386d184a178b25..5a03656b27904498917c16cbfa320187c6da8c84"
+        ],
+        "exit_code": 0,
+        "stderr": ""
+      }
+    ]
+  },
+  "checks": {
+    "head": "f1a4ba3df38408fb11a2624bc42d49deee896345",
+    "commands": [
+      {
+        "command": [
+          "git",
+          "diff",
+          "--exit-code",
+          "5a03656b27904498917c16cbfa320187c6da8c84",
+          "--",
+          "services",
+          "API",
+          "security",
+          "database",
+          "assets",
+          "modules",
+          "websocket",
+          "config.php",
+          "composer.json",
+          "composer.lock",
+          "deploy",
+          "scripts"
+        ],
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--check"
+        ],
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+          "vendor/bin/phpunit",
+          "--testsuite",
+          "Unit"
+        ],
+        "exit_code": 0,
+        "stdout": "PHPUnit 10.5.64 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.6\nConfiguration: /workspace/scratch/5c9d94f07e76/ecollab-phase3ab/phpunit.xml\n\n.F.F{\"success\":false,\"error\":\"Invalid security token. Please refresh the page and try again.\"}",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+          "tests/client-ip-regression.php"
+        ],
+        "exit_code": 0,
+        "stdout": "PASS: direct peer, spoofed headers, trusted proxy chain, malformed input and IPv4/IPv6 CIDRs\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "node",
+          "tests/request-security-regression.cjs"
+        ],
+        "exit_code": 0,
+        "stdout": "PASS: absent/empty/malformed/mismatched CSRF rejected, header/form tokens accepted, strict cookie-only sessions\n",
+        "stderr": ""
+      }
+    ],
+    "python_syntax": "PASS"
+  },
+  "hosted_ci": "PENDING in snapshot;new workflow requires full inherited regression,Chromium,static andraw artifact",
+  "authorization": {
+    "tests_docs_ci": true,
+    "application_security_fix": false,
+    "legacy_transition": false,
+    "atomic_fix": false,
+    "merge_deploy": false
+  },
+  "verdict": {
+    "source_inventory": "PASS",
+    "integration_defense_certification": "BLOCKED",
+    "security_safety": "FAIL conditions inherited andpreserved",
+    "independent_phase3ab_acceptance": "PENDING"
+  },
+  "raw_manifest_sha256": "5c92c79ec17e1ce9af14d4c022f45e7fdda637b1e013f32f0ba45873d042d734"
+}

@@ -1,0 +1,53 @@
+{
+  "format": "lossless gzip,mtime zero;public source metadata,no live secrets",
+  "files": [
+    {
+      "source": "baseline-discovery.json",
+      "archive": "baseline-discovery.json.gz",
+      "raw_sha256": "0d31ea8b75a71b526b69750f919b78efee6b158efbf6769b8bb2a277a9505693",
+      "gzip_sha256": "ab0a667269281faedd9c4a5ba35804ff9af58007131120e15ce3966c88f2e59e",
+      "raw_bytes": 161122,
+      "gzip_bytes": 18703
+    },
+    {
+      "source": "baseline-frozen.json",
+      "archive": "baseline-frozen.json.gz",
+      "raw_sha256": "28f2f017112fa5f8600825cff96ff900e5898c6250f8d7442613650d85bc565c",
+      "gzip_sha256": "5afe98082198bdda1c074a129a0f9438da26f63ae53eed0ff3d7270f7c6f37ef",
+      "raw_bytes": 161122,
+      "gzip_bytes": 18757
+    },
+    {
+      "source": "baseline-local.json",
+      "archive": "baseline-local.json.gz",
+      "raw_sha256": "0d31ea8b75a71b526b69750f919b78efee6b158efbf6769b8bb2a277a9505693",
+      "gzip_sha256": "ab0a667269281faedd9c4a5ba35804ff9af58007131120e15ce3966c88f2e59e",
+      "raw_bytes": 161122,
+      "gzip_bytes": 18703
+    },
+    {
+      "source": "checks.json",
+      "archive": "checks.json.gz",
+      "raw_sha256": "72feb5c26529bf4963877caa22df9ccf42a76121886f4cde6544b51691a7d281",
+      "gzip_sha256": "ef3210866819a3a162d9c6fbabac3d8b86199243f76757c0198a166b99c60c6b",
+      "raw_bytes": 1792,
+      "gzip_bytes": 696
+    },
+    {
+      "source": "composer.log",
+      "archive": "composer.log.gz",
+      "raw_sha256": "1b98d230a234f4c197ad2f13e9dd3557e1c329da2ba3a707bc43e39fa6f4c0a8",
+      "gzip_sha256": "e69cf2bf2177bdc7680bf3baf5c62a7b9d28cf864283d3411c283348c7b83035",
+      "raw_bytes": 507,
+      "gzip_bytes": 330
+    },
+    {
+      "source": "pr-snapshot.json",
+      "archive": "pr-snapshot.json.gz",
+      "raw_sha256": "91b1c292c71226d3f6fc877c4c6017e100eb15cb8cc45edf103dc3d80aca8d2c",
+      "gzip_sha256": "bebbdfa0064b8f43bce5fc79eba74230402b7d0a903f414ada308d076659518e",
+      "raw_bytes": 11914,
+      "gzip_bytes": 3008
+    }
+  ]
+}
