@@ -104,6 +104,22 @@
       "gzip_sha256": "3b3db01b3f91c060e9ca1563e2635d1f06b3c5cf8710268fa67a7e4414e8658c",
       "bytes": 1685453,
       "gzip_bytes": 93576
+    },
+    {
+      "path": "docs/450-phase3ac-raw/hosted-native-failed.json.gz",
+      "source": "phase3ac-native-failed/security.json",
+      "sha256": "4a46aef5799c05007ff05ccd43722733c3ee3b6a8b37b0b0970529e130ec245a",
+      "gzip_sha256": "86dacbf83bde59b05bf9186cbae3ccbb767be96b3469f4b0e1435a5e0764cc14",
+      "bytes": 2097072,
+      "gzip_bytes": 144069
+    },
+    {
+      "path": "docs/450-phase3ac-raw/adverse-final.json.gz",
+      "source": "ecollab-phase3ac/phase3ac-raw/adverse-final.json",
+      "sha256": "c6c1c6977f7d748f78c58a63b55d638425ceed0de38649f93efa77bfaf277ad8",
+      "gzip_sha256": "978122e6e6c7daa39449101f79954fcc0057ec0d618cbbae8b064820c528bf6f",
+      "bytes": 1197,
+      "gzip_bytes": 275
     }
   ]
 }
