@@ -1,0 +1,70 @@
+{
+  "phase": "3AD",
+  "readiness": "BLOCKED",
+  "accepted_base": "0db2d57a85f33710d5bf46b9c7162e8aa39885f6",
+  "integration_reference": "c838359711a14e9b6eb3f345c4386d184a178b25",
+  "branch": "integration/phase3ad-defense-candidate-20261028",
+  "composition_before_branch": "450-phase3ad-composition.json",
+  "application_delta": "NONE against accepted Phase3AC",
+  "otp_blob": "7013114a3a7bc0d183c01fc92e0687f06202d3a7",
+  "commits_ahead": 62,
+  "net_paths": 643,
+  "runtime_paths": 55,
+  "migration_additions": [
+    "database/migrations/025_coworkspace_one_active_per_server_mariadb.sql",
+    "database/migrations/063_temporary_voice.sql",
+    "database/migrations/066_jarred_jobs.sql",
+    "database/migrations/067_dashboard_unread_covering.sql"
+  ],
+  "excluded_parallel_prs": [
+    85,
+    73,
+    72,
+    71,
+    70,
+    69,
+    68,
+    67,
+    66
+  ],
+  "local_http": {
+    "status": "FAIL",
+    "requests": 52,
+    "selected": "PASS:roles,dashboards,workspace,channelmessage/history,facilitatorannouncement,thread/attachmentmetadata,notifications,access/CSRF",
+    "matching": {
+      "status": "FAIL",
+      "http_status": 500,
+      "response": {
+        "ok": false,
+        "error": "Peer matching service unavailable."
+      }
+    },
+    "browser": {
+      "status": "NOT RUN locally;required hosted"
+    }
+  },
+  "migration_native_local": "PASS with owned PHPRC;initial wrapper child failure retained",
+  "known_failures": [
+    "missing users.is_system causes actual matching500",
+    "omitted content_type message500 retained"
+  ],
+  "hosted": "PENDING exact final-head CI and artifact verification",
+  "defense_nomination": "Final published source in PR;owned fresh PHP8.3/FPM4/MariaDB10.11 with phase3ad fixture,real auth;candidate only,not defense-ready",
+  "unsupported": [
+    "DM/system-user dependent flows",
+    "liveAI/sharedworker",
+    "CodeLab/mTLS",
+    "broker/media",
+    "Collabora",
+    "actual attachment download",
+    "productionOTPtransition/archive",
+    "50-100studentscapacity"
+  ],
+  "production_actions": "NONE;NOT AUTHORIZED",
+  "raw_manifest": "450-phase3ad-raw/manifest.json",
+  "app_file_sha256": {
+    "security/forgot-password/OtpService.php": "b284c5f174805db35ff913be62194d93a0da7f0813d4267579fbca557ccb014d",
+    "services/MessageService.php": "2112e2d1fdf23dd11f412ce0e0d89462b5df904cefe799837a8ddf2aab3e8534",
+    "API/chat/peer-match.php": "8663a8cfa8510488d1354ebb6fb2a8b4fb5334860d374e38f42e7c78c7de1f59"
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "encoding": "lossless gzip,mtime0",
+  "records": [
+    {
+      "path": "docs/450-phase3ad-raw/http-initial-stale-csrf.json.gz",
+      "source": "http-initial-stale-csrf.json",
+      "sha256": "e7a52b82dcafae1555765d77d4a249c518f70a3044083dd3a49c73240469c9b8",
+      "gzip_sha256": "5ca0ba779be68bb9709727062ca2905607f05a27d009a6692149306ee9478476",
+      "bytes": 247794,
+      "gzip_bytes": 10784
+    },
+    {
+      "path": "docs/450-phase3ad-raw/http-matching-failed.json.gz",
+      "source": "http-matching-failed.json",
+      "sha256": "8e889649060aa0e26306da25ae86eb946997381694a1e4da37126aac555c6082",
+      "gzip_sha256": "2270100e3ebe8982f4506471c3eeff3398dc6bea516d1926faa575ef521534a1",
+      "bytes": 308300,
+      "gzip_bytes": 13048
+    },
+    {
+      "path": "docs/450-phase3ad-raw/http-omitted-content-type.json.gz",
+      "source": "http-omitted-content-type.json",
+      "sha256": "92e43d2521a156c59d897c0a9266ea2ed5d57ea9414e033fa3df26fe225aaa94",
+      "gzip_sha256": "8514086e9ca55bf7357541e6bd547239b73d359b8fcb03c051d99a0821c20e64",
+      "bytes": 270215,
+      "gzip_bytes": 11426
+    },
+    {
+      "path": "docs/450-phase3ad-raw/http-thread-status-expectation.json.gz",
+      "source": "http-thread-status-expectation.json",
+      "sha256": "2575c1f6f4662306810f651534108d66bd33793b8bb6fe643b5b69127583ea0d",
+      "gzip_sha256": "6868cfaa30031d5d65ab04857d226a9bc700604b354f9c08cac1f251a57bd051",
+      "bytes": 290649,
+      "gzip_bytes": 12396
+    },
+    {
+      "path": "docs/450-phase3ad-raw/integration-http.json.gz",
+      "source": "integration-http.json",
+      "sha256": "1a111548a8461b82c1f41b2442e60cf7df337fb104f254c71e1e30f148c99080",
+      "gzip_sha256": "2a92d814218470306bf5bebf3322da55acd00d1fa0a9f877d8ae82afe797a57a",
+      "bytes": 463751,
+      "gzip_bytes": 33444
+    },
+    {
+      "path": "docs/450-phase3ad-raw/inventory.json.gz",
+      "source": "inventory.json",
+      "sha256": "1b5bd9f64df53a8447a4d5901df1ca65c4dfd713c272c0bb9a7cfd8c5fe3db1e",
+      "gzip_sha256": "89852b3cc57d60fa3dbcc75e57fdf87c0b53dd9c8c0a3569483fd74752b57d6b",
+      "bytes": 78858,
+      "gzip_bytes": 11767
+    },
+    {
+      "path": "docs/450-phase3ad-raw/migration-compatibility-local.log.gz",
+      "source": "migration-compatibility-local.log",
+      "sha256": "162c58ddeac254a5f5d510980e27d2c29df535a7db7ccea417de4c690c35e64e",
+      "gzip_sha256": "2f5bec8eab82b9d8d40b5734dd12154f1987644e7a5438c278de555871a273ea",
+      "bytes": 2676,
+      "gzip_bytes": 1001
+    },
+    {
+      "path": "docs/450-phase3ad-raw/migrations-local-initial.log.gz",
+      "source": "migrations-local-initial.log",
+      "sha256": "4909c98b3d671dba19d8e0780eb01627e9610a479979367a282584aca746062b",
+      "gzip_sha256": "8568a27a1be1d295446b37d610507fd3c7355578739f779f1b8bcf92fa4558cc",
+      "bytes": 1507,
+      "gzip_bytes": 596
+    }
+  ]
+}
