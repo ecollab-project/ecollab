@@ -1,0 +1,45 @@
+{
+  "base": "5a03656b27904498917c16cbfa320187c6da8c84",
+  "claims": [
+    {
+      "claim": "baseline-comparison",
+      "status": "PASS",
+      "evidence_limit": "589changed paths,54runtime/deployment,4migration additions;31PRsnapshot pinned"
+    },
+    {
+      "claim": "baseline-otp-safety",
+      "status": "FAIL",
+      "evidence_limit": "AuthService/OtpService/config identical atintegration/stack;rollbackbranch doesnotresolveconfirmedOTPdefects"
+    },
+    {
+      "claim": "rejected-experiments",
+      "status": "PASS",
+      "evidence_limit": "Application gate matches exactPhase3T;3U/V trials notretained"
+    },
+    {
+      "claim": "branch-composition",
+      "status": "BLOCKED",
+      "evidence_limit": "PR66\u201373/85 notancestors;74\u201384/86\u201396 ancestry doesnotapprovemerge"
+    },
+    {
+      "claim": "security-corrections",
+      "status": "NOT AUTHORIZED",
+      "evidence_limit": "A/A2/B/C separately specified;noapp/schema/data correction"
+    },
+    {
+      "claim": "defense-artifact",
+      "status": "NOT RUN",
+      "evidence_limit": "Actualbuild/environment/featurelist notnominatedorrehearsed"
+    },
+    {
+      "claim": "hosted-final-head",
+      "status": "PENDING",
+      "evidence_limit": "See finalPRbody fornewheadjobs/artifact/recomputation"
+    },
+    {
+      "claim": "production-capacity",
+      "status": "BLOCKED",
+      "evidence_limit": "No productionparity,deployment,securityrelease or50\u2013100-studentcapacity claim"
+    }
+  ]
+}
