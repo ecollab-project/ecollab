@@ -1,0 +1,14 @@
+{
+  "phase":"3AD",
+  "integration":"c838359711a14e9b6eb3f345c4386d184a178b25",
+  "accepted_source":"0db2d57a85f33710d5bf46b9c7162e8aa39885f6",
+  "composition":"Use the existing linear descendant accepted stack unchanged as the application tree; add integration evidence/tests only. No PR merge into ecollab-collabs.",
+  "order":["PR74-77 retained via rehearsal78","PR79-84 existing descendants","PR86-89 retained optimizations","PR90-97 retained negative experiments/test evidence/decision packages","PR98 accepted OTP correction must win"],
+  "excluded_separate_heads":[66,67,68,69,70,71,72,73,85],
+  "excluded_reason":"No independent approval to combine these parallel runtime/security/staging heads is supplied. Inventory them path-by-path; do not cherry-pick or claim combined acceptance.",
+  "conflicts":"No merge resolution is needed: integration reference is an ancestor of accepted source. Preserve accepted blobs, especially OtpService, without substitutions.",
+  "schema":"Review 025 replacement,063,066,067; run existing real migration runner only in newly owned loopback MariaDB; actual target ledger unknown.",
+  "rollback":"Discard draft/test-only changes to accepted source; no schema rollback in a production target. Never resurrect OTP rows; no production rollback execution.",
+  "environment":"Owned PHP8.3/FPM/MariaDB10.11, synthetic accounts with real auth, loopback mail sink; external integration and production gates remain blocked.",
+  "decision":"Draft isolated composition and validation authorized, not integration merge or release certification."
+}
