@@ -16,7 +16,11 @@ class OtpService {
 
     public function __construct() {
         $this->db = Database::getInstance();
-        $this->ensureTable();
+        // CREATE TABLE (even IF NOT EXISTS) implicitly commits in MariaDB.
+        // Never run that DDL inside a caller-owned transaction context.
+        if (!$this->db->inTransaction() && (bool)$this->db->query('SELECT @@session.autocommit')->fetchColumn()) {
+            $this->ensureTable();
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -34,7 +38,7 @@ class OtpService {
     public function generate(int $userId, string $action = 'reset_password'): string {
         $this->db->prepare("
             UPDATE otp_codes
-               SET used_at = NOW()
+               SET used_at = UTC_TIMESTAMP()
              WHERE user_id = :uid
                AND action  = :action
                AND used_at IS NULL
@@ -42,16 +46,15 @@ class OtpService {
 
         $otp       = str_pad((string)random_int(0, (int)(10 ** OTP_LENGTH) - 1), OTP_LENGTH, '0', STR_PAD_LEFT);
         $otpHash   = password_hash($otp, PASSWORD_BCRYPT, ['cost' => 10]);
-        $expiresAt = date('Y-m-d H:i:s', time() + OTP_EXPIRY);
 
         $this->db->prepare("
             INSERT INTO otp_codes (user_id, action, code_hash, expires_at, created_at)
-            VALUES (:uid, :action, :hash, :exp, NOW())
+            VALUES (:uid, :action, :hash, DATE_ADD(UTC_TIMESTAMP(), INTERVAL :ttl SECOND), UTC_TIMESTAMP())
         ")->execute([
             ':uid'    => $userId,
             ':action' => $action,
             ':hash'   => $otpHash,
-            ':exp'    => $expiresAt,
+            ':ttl'    => OTP_EXPIRY,
         ]);
 
         return $otp;
@@ -68,12 +71,18 @@ class OtpService {
      * @return array ['success' => bool, 'error'? => string]
      */
     public function verify(int $userId, string $submittedOtp, string $action = 'reset_password'): array {
+        // Never commit or participate in a caller-owned transaction. A success
+        // must survive any later caller rollback before a reset token can escape.
+        if ($this->db->inTransaction() || !(bool)$this->db->query('SELECT @@session.autocommit')->fetchColumn()) {
+            return ['success' => false, 'error' => 'Code expired or not found. Please request a new one.'];
+        }
+
         $stmt = $this->db->prepare("
             SELECT id, code_hash
               FROM otp_codes
              WHERE user_id   = :uid
                AND action    = :action
-               AND expires_at > NOW()
+               AND expires_at > UTC_TIMESTAMP()
                AND used_at  IS NULL
              ORDER BY created_at DESC
              LIMIT 1
@@ -95,8 +104,33 @@ class OtpService {
             ];
         }
 
-        $this->db->prepare("UPDATE otp_codes SET used_at = NOW() WHERE id = :id")
-            ->execute([':id' => $row['id']]);
+        // Hash verification holds no database lock. Recheck every eligibility
+        // predicate after bcrypt, then commit before reporting successful use.
+        $this->db->beginTransaction();
+        try {
+            // Acquire the row before starting the expiry-check statement: SQL
+            // clocks are fixed at statement start, including time spent waiting.
+            $lock = $this->db->prepare('SELECT id FROM otp_codes WHERE id = :id FOR UPDATE');
+            $lock->execute([':id' => $row['id']]);
+            $lock->fetch();
+            $consume = $this->db->prepare("
+                UPDATE otp_codes SET used_at = UTC_TIMESTAMP()
+                 WHERE id = :id AND user_id = :uid AND action = :action
+                   AND used_at IS NULL AND expires_at > UTC_TIMESTAMP()
+            ");
+            $consume->execute([':id' => $row['id'], ':uid' => $userId, ':action' => $action]);
+            if ($consume->rowCount() !== 1) {
+                $this->db->rollBack();
+                return ['success' => false, 'error' => 'Code expired or not found. Please request a new one.'];
+            }
+            $this->db->commit();
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            // No retry, unconsume or success after an ambiguous database error.
+            throw $e;
+        }
 
         return ['success' => true];
     }
@@ -208,8 +242,8 @@ class OtpService {
     public function purgeExpired(): int {
         $stmt = $this->db->prepare("
             DELETE FROM otp_codes
-             WHERE expires_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)
-                OR used_at   < DATE_SUB(NOW(), INTERVAL 24 HOUR)
+             WHERE expires_at < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 24 HOUR)
+                OR used_at   < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 24 HOUR)
         ");
         $stmt->execute();
         return $stmt->rowCount();
@@ -220,7 +254,7 @@ class OtpService {
             SELECT COUNT(*) FROM otp_codes
              WHERE user_id   = :uid
                AND action    = :action
-               AND expires_at > NOW()
+               AND expires_at > UTC_TIMESTAMP()
                AND used_at  IS NULL
         ");
         $stmt->execute([':uid' => $userId, ':action' => $action]);

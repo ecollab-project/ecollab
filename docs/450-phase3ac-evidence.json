@@ -1,0 +1,100 @@
+{
+  "phase": "3AC",
+  "status": "LOCAL PASS for bounded candidate; hosted and independent security acceptance pending",
+  "authorized": "A,A2,B,C isolated implementation/validation per explicit owner instruction,2026-10-28",
+  "branch": "security/phase3ac-otp-remediation-20261028",
+  "base": "e4999821b16f8d8085a8cde6c5b08de2fc824ae5",
+  "base_tree": "ccccf62ff55f5c28f935259c13c920c3565c4f1e",
+  "implementation": "4db429d85a4e1d8a984c8617668481bb25977630",
+  "implementation_local": "35cb955b8db29e64437224c3659d7857f9d2aacf",
+  "implementation_tree": "232cb53cc27d7752e671d72a327943ddaddc4a6b",
+  "final_publication": "See final PR description;report is pre-CI snapshot",
+  "changed_implementation_files": [
+    ".github/workflows/phase3ac-security.yml",
+    "security/forgot-password/OtpService.php",
+    "tests/phase3ac-adverse-worker.php",
+    "tests/phase3ac-adverse.php",
+    "tests/phase3ac-browser.cjs",
+    "tests/phase3ac-clock.php",
+    "tests/phase3ac-contracts.php",
+    "tests/phase3ac-control.php",
+    "tests/phase3ac-http.py",
+    "tests/phase3ac-inventory.py",
+    "tests/phase3ac-race-worker.php",
+    "tests/phase3ac-race.php",
+    "tests/phase3ac-report.py",
+    "tests/phase3ac-security.py",
+    "tests/phase3ac-suite.py",
+    "tests/phase3ac-transition.php"
+  ],
+  "app_changed_only": "security/forgot-password/OtpService.php",
+  "app_sha256": "b284c5f174805db35ff913be62194d93a0da7f0813d4267579fbca557ccb014d",
+  "candidate_clock_records": 180,
+  "candidate_races": {
+    "two_session_rounds": 5,
+    "four_session_rounds": 3,
+    "winner_each": 1
+  },
+  "original_races": {
+    "rounds": 10,
+    "winner_each": 2,
+    "single_use": "FAIL preserved"
+  },
+  "full_suite": {
+    "current": [
+      60,
+      280
+    ],
+    "orderings": [
+      "default",
+      "reverse",
+      "random31028"
+    ],
+    "exit": 0,
+    "original": [
+      46,
+      114,
+      5
+    ],
+    "original_exit": 1
+  },
+  "static": {
+    "baseline_diagnostics": 15,
+    "candidate_diagnostics": 15,
+    "added": 0,
+    "analyzers_exit": 1,
+    "comparison_exit": 0
+  },
+  "host": {
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "logical_cpus": 9,
+    "vps_equivalence": false
+  },
+  "hosted_browser": "NOT RUN locally;required hosted actual candidate signup/login plus persisted OTP reset singlewinner/replay",
+  "legacy": "Owned rehearsal only;unused invalidated,used history byte-identical;productiontransition NOTRUN",
+  "source_provenance": "Initial underlying HEAD plus explicit working diff/source hashes retained;immutable hosted final-head identities required",
+  "failed_controls": [
+    "original5failures",
+    "originaltimezoneanddoubleconsume",
+    "initialmisalignedsuitecomparison",
+    "initialadverseflagassertion",
+    "unbootstrappedUnitcommandnotcompleted"
+  ],
+  "limitations": [
+    "No production/manualwriter/trigger/eventinventory",
+    "No productioncleanup until legacy history is safely retained under reviewed archive/retention plan",
+    "Native realdeadlock and post-COMMIT ambiguous disconnect not empirically reproduced;40001 is injected",
+    "No production TLS/proxy/session/storage/durability inspection",
+    "No defense build nominated",
+    "No merge/deploy/live mail/Hostinger/capacity authorization"
+  ],
+  "raw_manifest": "450-phase3ac-raw/manifest.json",
+  "initial_implementation": "ec0675a66e9ad701215db8d214209ef833143fb1",
+  "constructor_review": {
+    "original_probe": "FAIL:existing constructor implicitly committed caller transaction",
+    "candidate": "PASS locally:DDL skipped in caller transaction/autocommit0;constructing OtpService orAuthService doesnot commit,verification rejects",
+    "raw": "450-phase3ac-raw/constructor-original-probe.json.gz",
+    "hosted": "Required final-head rerun"
+  }
+}
