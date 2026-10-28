@@ -1,0 +1,109 @@
+{
+  "source": {
+    "base": "b09e66c3fcba5066c63da8bece245ae5f4068410",
+    "base_tree": "032d070ef79a57d6b9498332dea9f690d79fb6af",
+    "branch": "investigation/phase3z-otp-clock-20261028",
+    "stacked_on": "validation/phase3y-http-auth-20261028",
+    "native_full_static_harness": "5b144551241d119b8508a2c5c4f75dfce8fcf452",
+    "native_full_static_tree": "9038485b451841e03311d860f30a3ea66c3fc656",
+    "extended_matrix_harness": "d252d22c90bbb5938a331142219bb36eac9052f5",
+    "extended_matrix_tree": "07fcac17e71a2720d904d1cdd907d35e6b6aa866",
+    "final_report_harness": "1539c2b9df60dec4c9b2a0e2635af0e3c4bd7dcc",
+    "final_report_tree": "34a77c2b1e600b98714f408ff64cb8f732cd595b",
+    "publication_head_tree": "Final tested publication identity is pinned in PR body after creation; this file is a pre-CI snapshot.",
+    "source_hashes_match_publication": true,
+    "application_diff": ""
+  },
+  "claims": [
+    {
+      "id": "unchanged-application",
+      "status": "PASS",
+      "evidence": "git exact-base source gate and all source SHA256 comparisons",
+      "limitation": "No service/API/security/config/schema/assets/modules/WebSocket change"
+    },
+    {
+      "id": "reverse-mismatch-extension",
+      "status": "FAIL",
+      "evidence": "final-timezone.json native stable Manila/UTC records",
+      "limitation": "DB comparison TTL29400s; reset token issued at simulated DB601s. PHP not advanced; not a real10-minute wait"
+    },
+    {
+      "id": "forward-mismatch-premature-rejection",
+      "status": "FAIL",
+      "evidence": "final-timezone.json + original HTTP",
+      "limitation": "UTC/DB+06 fresh optional OTP rejected; DB effective TTL-21000s"
+    },
+    {
+      "id": "clock-boundaries",
+      "status": "PASS",
+      "evidence": "144 native clock records independently recomputed",
+      "limitation": "Three actions; stable,PHP-zone-change,DB-zone-change; strict expiry -1/0/+1 and generation+601. PHP intent exact-boundary timing is source-reviewed, not independently frozen PHP-clock execution"
+    },
+    {
+      "id": "regeneration-cleanup",
+      "status": "PASS",
+      "evidence": "native regeneration and24 purge boundary records",
+      "limitation": "Regeneration test explicitly overrides owned expiry to isolate invalidation; not a concurrency/transaction proof"
+    },
+    {
+      "id": "verified-marker-contract",
+      "status": "PASS for characterization",
+      "evidence": "UTC HTTP marker control",
+      "limitation": "Pending timer removed after verify; reintroduced expired timer ignored by register. No new TTL, elapsed-age or production policy claim"
+    },
+    {
+      "id": "reset-http-debug",
+      "status": "PASS",
+      "evidence": "UTC HTTP reset and recursive debug-null assertions",
+      "limitation": "Token replay/old-password rejected, new-password login. Debug check covers169 additional direct responses"
+    },
+    {
+      "id": "same-session-otp-concurrency",
+      "status": "PASS",
+      "evidence": "UTC native FPM two overlapping requests aggregate",
+      "limitation": "Exactly one success, bound user only, no new account. Cross-session consumption atomicity NOT RUN"
+    },
+    {
+      "id": "current-native-suite",
+      "status": "PASS",
+      "evidence": "frozen-full.json",
+      "limitation": "60tests280assertions in default/reverse/random;0 skips/errors/failures"
+    },
+    {
+      "id": "accepted-controls",
+      "status": "PASS",
+      "evidence": "accepted-phase3x.json and accepted-phase3y.json",
+      "limitation": "57/245 and60/280 respectively; current60/280 in both comparisons"
+    },
+    {
+      "id": "original-control",
+      "status": "FAIL (expected retained)",
+      "evidence": "frozen-full.json",
+      "limitation": "46tests114assertions,5 original failures,exit1"
+    },
+    {
+      "id": "static-delta",
+      "status": "PASS",
+      "evidence": "frozen-static.json",
+      "limitation": "15/15 inherited,0 added; both analyzers exit1. Full-clean FAIL"
+    },
+    {
+      "id": "local-browser",
+      "status": "NOT RUN",
+      "evidence": "final-http.json",
+      "limitation": "Chromium unavailable locally; actual hosted browser is required in workflow"
+    },
+    {
+      "id": "hosted-final-head",
+      "status": "PENDING",
+      "evidence": "Final PR body will record completed jobs,artifact digest and independent recomputation",
+      "limitation": "Do not read this pre-CI snapshot as a completed CI claim"
+    },
+    {
+      "id": "production-capacity-release",
+      "status": "BLOCKED",
+      "evidence": "scope restrictions",
+      "limitation": "No production clock/TLS/proxy parity,merge,deployment or representative sustained student capacity"
+    }
+  ]
+}
