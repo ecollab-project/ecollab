@@ -1,0 +1,49 @@
+[
+  {
+    "claim": "Complete current suite default/reverse/random",
+    "status": "PASS",
+    "evidence": "final.json.gz: raw JUnit, stdout/stderr, child exits; final-summary.json.gz recomputes all counts"
+  },
+  {
+    "claim": "Exact base full suite",
+    "status": "FAIL",
+    "evidence": "46 tests,114 assertions,five reproduced inherited failures; not relabeled PASS"
+  },
+  {
+    "claim": "Five inherited failures repaired by verified setup",
+    "status": "PASS",
+    "evidence": "57 tests,245 assertions,zero errors/failures/skips in three fresh schemas"
+  },
+  {
+    "claim": "Full PHPStan clean",
+    "status": "FAIL",
+    "evidence": "15 existing findings at each side; no additional findings comparison PASS"
+  },
+  {
+    "claim": "Authentication application behavior unchanged",
+    "status": "PASS",
+    "evidence": "Empty application diff; exact source hashes in final.json.gz"
+  },
+  {
+    "claim": "Clock-unconfigured optional OTP",
+    "status": "FAIL",
+    "evidence": "clocks.json.gz, all three orderings fail with six-hour wall-clock rendering mismatch"
+  },
+  {
+    "claim": "UTC-aligned owned test environment",
+    "status": "PASS",
+    "evidence": "final.json.gz clock_alignment, explicit daemon and PHP timezone, matched epochs"
+  },
+  {
+    "claim": "HTTP/browser/real mail",
+    "status": "NOT RUN"
+  },
+  {
+    "claim": "Representative capacity and production parity",
+    "status": "BLOCKED"
+  },
+  {
+    "claim": "Exact final publication CI",
+    "status": "PENDING pre-CI snapshot; consult final PR-body verification"
+  }
+]
