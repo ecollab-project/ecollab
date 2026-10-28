@@ -1,0 +1,876 @@
+{
+  "phase": "3Y",
+  "status": "PASS for executed local HTTP/native scope; browser NOT RUN locally; independent acceptance pending",
+  "application_change": "NONE",
+  "branch": "validation/phase3y-http-auth-20261028",
+  "base": "928a3b8912ef60ab374270c1efd3a24c0433c8aa",
+  "base_tree": "ad2fb0ab5a0aeec8317ed8ea525241619c8686b1",
+  "http_harness": "6eacc8cb931bb9f67463d96c2321d0fa84ac7f2d",
+  "http_tree": "3ad0cd7a118e16a1fed61181561d19f942a6b843",
+  "local_full_suite_harness": "0094d38e2fdba18585837e1f228b2d0daa030e05",
+  "local_full_suite_tree": "9534891d22a47e09f6f924ce5ccdb207c2e71c4c",
+  "source_delta": "Only HTTP startup diagnostic capture and evidence reporter changed after0094; native/test-suite dependencies unchanged (recorded exact diff exit0). Hosted final-head runs revalidate combined publication.",
+  "publication_identity": "Final publication head/tree in draft PR body,avoiding self-referential report hash",
+  "http": {
+    "base": "928a3b8912ef60ab374270c1efd3a24c0433c8aa",
+    "harness_head": "6eacc8cb931bb9f67463d96c2321d0fa84ac7f2d",
+    "harness_tree": "3ad0cd7a118e16a1fed61181561d19f942a6b843",
+    "intended_head": "6eacc8cb931bb9f67463d96c2321d0fa84ac7f2d",
+    "harness_diff": "",
+    "harness_status": "",
+    "sha256": {
+      "tests/phase3y-http.py": "7877807cd4d4af275dacef745c01d29a86684114ac3dcd163594558ba2aafa86",
+      "tests/phase3y-report.py": "43ba35804f1314dc414acd06c575f72cb830fbb03b32a4e919aa202d95f65017",
+      "tests/phase3y-bootstrap.php": "c4d9aee79d608127d1438401aeb1aa4822b581543fabc60feec7c4af7145f538",
+      "tests/phase3y-control.php": "3d0330c519c703a7625cc4fcb19ff6bbdf6e2aab354601a290cc9c80defc6f07",
+      "tests/phase3y-browser.cjs": "d3e5b32d2ab7299b09a069bfdd4b508c9cab93a284030e588d3e2c956a796172",
+      "tests/Integration/OtpExpiryTest.php": "a8458dfcf0bd32454fce344e8a432900f1451ef377ff76aed9a39335b0c64963",
+      "tests/Support/LocalOtpTransport.php": "fab46901ae655ccf266601facad451ca188b5f3a7ff9a449fcf0019de7367a53",
+      "config.php": "24055d802a88c98ee5f5334ae5e1d17990a302f976b45e12592563afe7ed6bc4",
+      "API/auth/send-signup-email-otp.php": "768caaeb6b0fdeda373dfcf6c1a03a875c9b64a83ff2cba190a429466b14bbc5",
+      "API/auth/verify-signup-email-otp.php": "ea95a40adaabc120a4ec03986d8ff15f145a86d4c4d5fb2650613febff4b020e",
+      "API/auth/resend-signup-otp.php": "399afecdb7e7f187bbc62e091e2cad610bd5606b2eba75d4470d095204c70d0b",
+      "API/auth/verify-otp.php": "8c535cf71159aed2264fd5b37a12bc7e7b5fa02e8bf7dc4fc4276d8f01df4523",
+      "API/auth/logout.php": "c5af14becbbe39142756a1fbeb741f3640e438f3a81e38a3c8630095b88e5f76",
+      "API/auth/csrf-token.php": "922a6ae2eb96b926f6066a4753f7bd90f32a6fa2800b3645d377c278e24f84d4",
+      "API/auth/validate-session.php": "fccc2864daaca417e8903b8aff91a71e8eac81c32a8fbdf187b6a1df2c1e4df8",
+      "API/profile/settings.php": "fb2b39be3aaa6592656dbd7edd93f7df76c4297312cf9f1f33a8858878ba9abf",
+      "modules/auth/signup.php": "2ed455cf0a98135b67d700a6ea0d6539a8593b32bb0f3c866239c455ffeab57e",
+      "modules/auth/login.php": "73bcbcf5c1c3a6acb993f457496cc71d1432942cbb54850f93b1c0dd28b154a5",
+      "assets/js/auth/signup.js": "a47ec8c8c530d7abcaca56cd9df8c64f4fbfb11c8a04acd0d5b7fbafdc3bf841",
+      "assets/js/auth/signup-network-fix.js": "5baca549d3f71877ba56bc389da875b1c2af4a393854e2bb7c8401d2f302dbbd",
+      "assets/js/auth/login.js": "74fcd587ca3a38e324a0ac40e2e579287b59765bbb9f120073615d25027bd89f",
+      "tests/classroom-performance.py": "dfd2b5b147c36b71c414a9ec85aa1984fd0f2866b1e9591295888adaf77766a0",
+      "services/AuthService.php": "76f417367de386a948f97cc42cb8e1c17ef0183ae649478e70d5ae5f1dacfb3e",
+      "security/forgot-password/OtpService.php": "ae0f3c96c5d8563b0c00fbef6a0ef5c13dba9163f995b3712f5fa26515532a3b",
+      "API/auth/login.php": "186c44e1f821588a59247b5588415cf5789b10de7b2bec5b34d493bda0b473c1",
+      "API/auth/signup.php": "4a8a92955c55398ae3dd53aa97087b24389d35773df17411d0a80664acf5ed7a",
+      "security/csrf/csrf.php": "7a76c34190c9701e7b5f24638d4ffe740b45c2ca94a8d074a449717c1cde0eba",
+      "security/middleware/AuthMiddleware.php": "b99065634199ec192f2d6d0441494aea183caa7ec25a2c6ceb2d22cc603ac515",
+      "security/rate-limit/RateLimiter.php": "7d11ab3fc495ae2bed0be25cdf8b2c595317304c2f9556859c13f5139fda6946"
+    },
+    "raw_sha256": "f7905a65ff41382402ce00e316344900c8bf2e1ae7cc64586435cd92c18d32f1",
+    "direct_http_requests": 192,
+    "cohorts": [
+      {
+        "cohort": {
+          "php_zone": "UTC",
+          "database_zone": "+00:00"
+        },
+        "status": "PASS for scoped HTTP controls",
+        "http_cases_pass": 21,
+        "requests": 137,
+        "http_status_counts": {
+          "200": 76,
+          "401": 16,
+          "405": 7,
+          "403": 14,
+          "422": 21,
+          "429": 3
+        },
+        "independently_checked_rejections": 64,
+        "fresh_persisted_otp_outcome": "PASS",
+        "persisted_remaining_seconds": 600,
+        "clock": {
+          "php_epoch": 1793165602,
+          "php_wall": "2026-10-28 05:33:22",
+          "php_zone": "UTC",
+          "database": {
+            "wall": "2026-10-28 05:33:22",
+            "utc": "2026-10-28 05:33:22",
+            "epoch": 1793165602,
+            "zone": "+00:00"
+          }
+        },
+        "browser": "NOT RUN",
+        "cleanup": {
+          "deleted_users": 7,
+          "remaining_synthetic_users": 0,
+          "orphan_otp": 0
+        },
+        "schema_sha256": "7cd34da76a90f1eed3cfd6f9c9b1fd512305555dec4fd9dbd61e2bfd1d5f0760"
+      },
+      {
+        "cohort": {
+          "php_zone": "UTC",
+          "database_zone": "+06:00"
+        },
+        "status": "PASS for scoped HTTP controls",
+        "http_cases_pass": 2,
+        "requests": 20,
+        "http_status_counts": {
+          "200": 17,
+          "401": 3
+        },
+        "independently_checked_rejections": 4,
+        "fresh_persisted_otp_outcome": "FAIL: reproduced timezone-dependent rejection",
+        "persisted_remaining_seconds": -21001,
+        "clock": {
+          "php_epoch": 1793165657,
+          "php_wall": "2026-10-28 05:34:17",
+          "php_zone": "UTC",
+          "database": {
+            "wall": "2026-10-28 11:34:17",
+            "utc": "2026-10-28 05:34:17",
+            "epoch": 1793165657,
+            "zone": "+06:00"
+          }
+        },
+        "browser": "NOT RUN",
+        "cleanup": {
+          "deleted_users": 2,
+          "remaining_synthetic_users": 0,
+          "orphan_otp": 0
+        },
+        "schema_sha256": "7cd34da76a90f1eed3cfd6f9c9b1fd512305555dec4fd9dbd61e2bfd1d5f0760"
+      },
+      {
+        "cohort": {
+          "php_zone": "Asia/Manila",
+          "database_zone": "+08:00"
+        },
+        "status": "PASS for scoped HTTP controls",
+        "http_cases_pass": 4,
+        "requests": 35,
+        "http_status_counts": {
+          "200": 32,
+          "401": 3
+        },
+        "independently_checked_rejections": 6,
+        "fresh_persisted_otp_outcome": "PASS",
+        "persisted_remaining_seconds": 600,
+        "clock": {
+          "php_epoch": 1793165672,
+          "php_wall": "2026-10-28 13:34:32",
+          "php_zone": "Asia/Manila",
+          "database": {
+            "wall": "2026-10-28 13:34:32",
+            "utc": "2026-10-28 05:34:32",
+            "epoch": 1793165672,
+            "zone": "+08:00"
+          }
+        },
+        "browser": "NOT RUN",
+        "cleanup": {
+          "deleted_users": 4,
+          "remaining_synthetic_users": 0,
+          "orphan_otp": 0
+        },
+        "schema_sha256": "7cd34da76a90f1eed3cfd6f9c9b1fd512305555dec4fd9dbd61e2bfd1d5f0760"
+      }
+    ],
+    "limitations": [
+      "Semantic redacted request/response records and original response hashes; no unredacted wire archive",
+      "Controlled loopback HTTP, not TLS/production parity or capacity",
+      "Misaligned fresh OTP deliberately remains FAIL; browser NOT RUN remains NOT RUN"
+    ]
+  },
+  "full_suite": {
+    "status": "PASS",
+    "scope": "Full-schema service integration; no HTTP/browser or external mail",
+    "base": "827470217e6a6a86a165b14f4b6650a10e2c2395",
+    "source": {
+      "intended_base": "827470217e6a6a86a165b14f4b6650a10e2c2395",
+      "intended_head": "0094d38e2fdba18585837e1f228b2d0daa030e05",
+      "harness_commit": "0094d38e2fdba18585837e1f228b2d0daa030e05",
+      "harness_tree": "9534891d22a47e09f6f924ce5ccdb207c2e71c4c",
+      "harness_diff": "",
+      "application_diff": "",
+      "sha256": {
+        "tests/classroom-performance.py": "dfd2b5b147c36b71c414a9ec85aa1984fd0f2866b1e9591295888adaf77766a0",
+        "tests/phase3x-suite.php": "4727bf013c8e97fccbc3fe20c0d3ec697589e7da1185a51be073d772eb0c63fd",
+        "tests/phase3w-schema.php": "f28d5ceb62421513d049cf822fc789ba6f1b18c86e16a130d76c1707961a242c",
+        "tests/phase3w-phpunit-bootstrap.php": "a4a002060bdd107f62fd0263e848226dc98385dbc503795d8e9af4052d92ce87",
+        "tests/Integration/AuthServiceTest.php": "83773f22a68f038ee52686addafe40859c0c5cd1402632a2cf397827097e6fff",
+        "tests/Support/LocalOtpTransport.php": "fab46901ae655ccf266601facad451ca188b5f3a7ff9a449fcf0019de7367a53",
+        "services/AuthService.php": "76f417367de386a948f97cc42cb8e1c17ef0183ae649478e70d5ae5f1dacfb3e",
+        "security/forgot-password/OtpService.php": "ae0f3c96c5d8563b0c00fbef6a0ef5c13dba9163f995b3712f5fa26515532a3b",
+        "config.php": "24055d802a88c98ee5f5334ae5e1d17990a302f976b45e12592563afe7ed6bc4"
+      }
+    },
+    "clock_alignment": {
+      "php_zone": "UTC",
+      "php_epoch": 1793165250,
+      "database": {
+        "db_now": "2026-10-28 05:27:30",
+        "db_utc": "2026-10-28 05:27:30",
+        "db_epoch": 1793165250,
+        "db_zone": "+00:00"
+      }
+    },
+    "runs": {
+      "baseline": {
+        "exit_code": 1,
+        "counts": {
+          "tests": 46,
+          "assertions": 114,
+          "errors": 0,
+          "failures": 5,
+          "skipped": 0
+        },
+        "failed_cases": [
+          "testLoginSucceedsWithCorrectCredentials",
+          "testRegisterCreatesUserAndReturnsSuccess",
+          "testRegisterFallsBackToDefaultsWhenStyleGoalUnrecognized",
+          "testRegisterRejectsDuplicateEmail",
+          "testRegisterSeedsPmUserStudyPrefs"
+        ],
+        "remaining_synthetic_auth_users": 0,
+        "orphan_otp_rows": 0,
+        "schema_identity": "7cd34da76a90f1eed3cfd6f9c9b1fd512305555dec4fd9dbd61e2bfd1d5f0760"
+      },
+      "current": {
+        "exit_code": 0,
+        "counts": {
+          "tests": 60,
+          "assertions": 280,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0
+        },
+        "failed_cases": [],
+        "remaining_synthetic_auth_users": 0,
+        "orphan_otp_rows": 0,
+        "schema_identity": "7cd34da76a90f1eed3cfd6f9c9b1fd512305555dec4fd9dbd61e2bfd1d5f0760"
+      },
+      "reverse": {
+        "exit_code": 0,
+        "counts": {
+          "tests": 60,
+          "assertions": 280,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0
+        },
+        "failed_cases": [],
+        "remaining_synthetic_auth_users": 0,
+        "orphan_otp_rows": 0,
+        "schema_identity": "7cd34da76a90f1eed3cfd6f9c9b1fd512305555dec4fd9dbd61e2bfd1d5f0760"
+      },
+      "random-31028": {
+        "exit_code": 0,
+        "counts": {
+          "tests": 60,
+          "assertions": 280,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0
+        },
+        "failed_cases": [],
+        "remaining_synthetic_auth_users": 0,
+        "orphan_otp_rows": 0,
+        "schema_identity": "7cd34da76a90f1eed3cfd6f9c9b1fd512305555dec4fd9dbd61e2bfd1d5f0760"
+      }
+    },
+    "raw_sha256": "cc4fa1151f600faa937c5c7a28b1112af0b99a445f25fdbfa4559edcf4651488",
+    "limitations": [
+      "Service integration only; HTTP/browser/external mail not executed",
+      "UTC-aligned owned fixture; production timezone parity unknown",
+      "Inherited base failures remain FAIL; static clean/capacity gates not established"
+    ]
+  },
+  "accepted_base": {
+    "baseline": {
+      "exit_code": 0,
+      "completed_tests": 57,
+      "failed_cases": [],
+      "status": "PASS",
+      "stdout": "PHPUnit 10.5.64 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.6\nConfiguration: /tmp/ecollab-classroom-25ya5_z6/suite-base/phpunit.xml\n\n.........................................................         57 / 57 (100%)\n\nTime: 00:15.144, Memory: 12.00 MB\n\nOK (57 tests, 245 assertions)\n"
+    },
+    "current": {
+      "exit_code": 0,
+      "completed_tests": 60,
+      "failed_cases": [],
+      "status": "PASS",
+      "stdout": "PHPUnit 10.5.64 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.6\nConfiguration: /workspace/scratch/5c9d94f07e76/ecollab-phase3y/phpunit.xml\n\n............................................................      60 / 60 (100%)\n\nTime: 00:14.757, Memory: 12.00 MB\n\nOK (60 tests, 280 assertions)\n"
+    },
+    "comparison": {
+      "exit_code": null,
+      "completed_tests": null,
+      "failed_cases": null,
+      "status": "PASS",
+      "stdout": null
+    }
+  },
+  "static": {
+    "baseline": {
+      "errors": 0,
+      "file_errors": 15
+    },
+    "current": {
+      "errors": 0,
+      "file_errors": 15
+    },
+    "baseline_exit": 1,
+    "current_exit": 1,
+    "additional": []
+  },
+  "commands": {
+    "head": "6eacc8cb931bb9f67463d96c2321d0fa84ac7f2d",
+    "runs": [
+      {
+        "command": [
+          "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+          "-l",
+          "tests/phase3y-bootstrap.php"
+        ],
+        "exit_code": 0,
+        "stdout": "No syntax errors detected in tests/phase3y-bootstrap.php\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+          "-l",
+          "tests/phase3y-control.php"
+        ],
+        "exit_code": 0,
+        "stdout": "No syntax errors detected in tests/phase3y-control.php\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+          "-l",
+          "tests/Integration/OtpExpiryTest.php"
+        ],
+        "exit_code": 0,
+        "stdout": "No syntax errors detected in tests/Integration/OtpExpiryTest.php\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "tests/phase3y-browser.cjs"
+        ],
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "assets/js/auth/signup.js"
+        ],
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "assets/js/auth/signup-network-fix.js"
+        ],
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "assets/js/auth/login.js"
+        ],
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+          "tests/client-ip-regression.php"
+        ],
+        "exit_code": 0,
+        "stdout": "PASS: direct peer, spoofed headers, trusted proxy chain, malformed input and IPv4/IPv6 CIDRs\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "node",
+          "tests/request-security-regression.cjs"
+        ],
+        "exit_code": 0,
+        "stdout": "PASS: absent/empty/malformed/mismatched CSRF rejected, header/form tokens accepted, strict cookie-only sessions\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/workspace/scratch/5c9d94f07e76/runtime/bin/php8.3",
+          "-d",
+          "session.save_path=/tmp",
+          "-d",
+          "output_buffering=4096",
+          "vendor/bin/phpunit",
+          "--testsuite",
+          "Unit"
+        ],
+        "exit_code": 0,
+        "stdout": "PHPUnit 10.5.64 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.6\nConfiguration: /workspace/scratch/5c9d94f07e76/ecollab-phase3y/phpunit.xml\n\n.........................                                         25 / 25 (100%)\n\nTime: 00:00.021, Memory: 10.00 MB\n\nOK (25 tests, 56 assertions)\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--exit-code",
+          "928a3b8912ef60ab374270c1efd3a24c0433c8aa",
+          "--",
+          "services",
+          "API",
+          "security",
+          "database",
+          "assets",
+          "websocket",
+          "config.php"
+        ],
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--exit-code",
+          "0094d38e2fdba18585837e1f228b2d0daa030e05",
+          "HEAD",
+          "--",
+          "tests/Integration",
+          "tests/Support",
+          "tests/phase3x-suite.php",
+          "tests/phase3w-schema.php",
+          "tests/classroom-performance.py"
+        ],
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--check"
+        ],
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    ]
+  },
+  "raw_manifest": [
+    {
+      "file": "browser-revision-checks.json.gz",
+      "raw_bytes": 1182,
+      "gzip_bytes": 486,
+      "raw_sha256": "de85167e371d23a3bcdcd62c68ebf70fedec646d0a970ff8a898bd74688abaae",
+      "gzip_sha256": "fb8d2e59f4c5a669e6fab0770117447fe2e3948fe513671398ba6e10c34ae298"
+    },
+    {
+      "file": "commands.json.gz",
+      "raw_bytes": 3738,
+      "gzip_bytes": 916,
+      "raw_sha256": "65ae9dd4531ae1b153d1e91f75054892b481890331a3ad009fad7675486e4842",
+      "gzip_sha256": "94205da75cc7b2e514307176df696af5ca00c646595bf03aadcabba4455ebf4d"
+    },
+    {
+      "file": "discovery-accepted-base.json.gz",
+      "raw_bytes": 451419,
+      "gzip_bytes": 53733,
+      "raw_sha256": "ea7bd42a3dc45ee1bbfb90760c29b020774b797c77dbc9c97f18caa049ff34db",
+      "gzip_sha256": "85379fcf1d4daf0c7976c727635c047d842e83697270d726192e7b1b598ffe91"
+    },
+    {
+      "file": "discovery-accepted-base.log.gz",
+      "raw_bytes": 0,
+      "gzip_bytes": 20,
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    {
+      "file": "discovery-matrix.json.gz",
+      "raw_bytes": 1546550,
+      "gzip_bytes": 102420,
+      "raw_sha256": "5e1fcf7937e0efef7b9c4c70be89c99a71f11e50607c12af24de922101ea0d97",
+      "gzip_sha256": "4aa2a9aa76155edae97af126dfb91b7425ad512affca074069f0f643008f74e8"
+    },
+    {
+      "file": "discovery-matrix.log.gz",
+      "raw_bytes": 224,
+      "gzip_bytes": 133,
+      "raw_sha256": "3dd223568bcac32cc7bfab945170280e9028d65ed195ffd2c78dbe23700ed95e",
+      "gzip_sha256": "92840ef04ab08e3de0e712b8c1227226b9d7aeafa713dd45df3948eba558e56d"
+    },
+    {
+      "file": "discovery-native.json.gz",
+      "raw_bytes": 2226075,
+      "gzip_bytes": 226264,
+      "raw_sha256": "1c2d42b203b46863f3b5f1b57085d4d40af828c82aad667ce8275985a89ac395",
+      "gzip_sha256": "924f9604dce4a3c617c419e6f0cc4df7f2fe94dd0b441a6d5de6cd2f3bd6e950"
+    },
+    {
+      "file": "discovery-native.log.gz",
+      "raw_bytes": 0,
+      "gzip_bytes": 20,
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    {
+      "file": "final-accepted-base.json.gz",
+      "raw_bytes": 451420,
+      "gzip_bytes": 53756,
+      "raw_sha256": "732648301fdd253368e2161b89757a4e2ee17e2e3151da5f94dc8f5551177a8b",
+      "gzip_sha256": "5160c37b11454726d4b8889551bfb4f7791efe0bd20bacd5e990326911f90ef3"
+    },
+    {
+      "file": "final-accepted-base.log.gz",
+      "raw_bytes": 0,
+      "gzip_bytes": 20,
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    {
+      "file": "final-full-summary.json.gz",
+      "raw_bytes": 3832,
+      "gzip_bytes": 1448,
+      "raw_sha256": "c86869cb022ec9d7e8b2cd07e678c7c45bea2f956e912d08f8f5e4b5d94aa9a3",
+      "gzip_sha256": "66c6d8796fd61f074f25931c10b0ff16a4ce46ed6f1db9891545239c793417a0"
+    },
+    {
+      "file": "final-full.json.gz",
+      "raw_bytes": 2226170,
+      "gzip_bytes": 226589,
+      "raw_sha256": "cc4fa1151f600faa937c5c7a28b1112af0b99a445f25fdbfa4559edcf4651488",
+      "gzip_sha256": "e8e8be34a0eeead4435c8ff3e692c38292e1dfdd9e2cae474261e891e7f3b58f"
+    },
+    {
+      "file": "final-full.log.gz",
+      "raw_bytes": 0,
+      "gzip_bytes": 20,
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    {
+      "file": "final-http.json.gz",
+      "raw_bytes": 711219,
+      "gzip_bytes": 63827,
+      "raw_sha256": "8bbbbaba00c3bf8aebd36332c74dc5974d6a7f067ec7782300f3d03efd0dfdf2",
+      "gzip_sha256": "f2dbdf473677e3263f6587504ca2b46dec7d663426e88b330b52bac21a92ed96"
+    },
+    {
+      "file": "final-http.log.gz",
+      "raw_bytes": 654,
+      "gzip_bytes": 301,
+      "raw_sha256": "1b038998b3bb6c8c760029b3c9e9361c111438c4e851368c38a5f4fc46a15208",
+      "gzip_sha256": "2e4fb2d943b489b7a1d9867b2d32d7f9c32162e17ba166b94c63ccac8709f910"
+    },
+    {
+      "file": "final-static.json.gz",
+      "raw_bytes": 11107,
+      "gzip_bytes": 950,
+      "raw_sha256": "7b4d5503e322fc8dfdec7c4b771c41a67f843978dc8f1eaf9832b9deddbd8903",
+      "gzip_sha256": "ca01e78ffe42caa9cb1ffb65d1284eb7ed27d0b43ca194be1cfa29de19da0837"
+    },
+    {
+      "file": "final-static.log.gz",
+      "raw_bytes": 109,
+      "gzip_bytes": 87,
+      "raw_sha256": "4f4587f3721d7a0819b4c6715d1f512a9141d304ac23d808f3ff3565b3079b28",
+      "gzip_sha256": "9ebf5059995bbe1e47ace4953b56869eb08063ad21cfc6e34cecb297c5d463ab"
+    },
+    {
+      "file": "hosted-79fa2c3-accepted-base.json.gz",
+      "raw_bytes": 450898,
+      "gzip_bytes": 53501,
+      "raw_sha256": "85aa35b9dac50fa4eb75187acfcacf89a01ff0582f9cc010edc4778654078759",
+      "gzip_sha256": "7753615d1da6e3344c83d507f5cc4069786117fd611f79b4a90f09f8886cebdd"
+    },
+    {
+      "file": "hosted-79fa2c3-artifact.json.gz",
+      "raw_bytes": 852,
+      "gzip_bytes": 564,
+      "raw_sha256": "11c53d0e0a7b02062a289b26b4e4c585add82e8cb72ad020e9cb343c80af0da9",
+      "gzip_sha256": "f7fd263ef74758efcad8e4cc60cd24351df8befba8310ba7feeac305aa8e1cc3"
+    },
+    {
+      "file": "hosted-79fa2c3-full.json.gz",
+      "raw_bytes": 2221797,
+      "gzip_bytes": 225902,
+      "raw_sha256": "d758440c141a0624743422b0c0d5f969464114afecfa96fa7024750340d0fea0",
+      "gzip_sha256": "441fb81c72bc0f4efbda6f96812497a23702ae572ccc59259030bdae5716b217"
+    },
+    {
+      "file": "hosted-79fa2c3-http.json.gz",
+      "raw_bytes": 1760896,
+      "gzip_bytes": 108816,
+      "raw_sha256": "478deef0b3aefde271c0e037e906f6986ddf99dc32a9475302267ee4042433c4",
+      "gzip_sha256": "6a3e7bc27fa949cc36d1d1c58573c575414683b1e20e0cd6d460951a1a21ff89"
+    },
+    {
+      "file": "pre-freeze-matrix.json.gz",
+      "raw_bytes": 1576555,
+      "gzip_bytes": 103322,
+      "raw_sha256": "dd7774a6bf187e9ad962e904a46631edc9c4389bb138b43c7aa249ebb1fa840d",
+      "gzip_sha256": "be5439c31066ac6c1b402217bac14a27dccb1a49c23efce15416b1275c226188"
+    },
+    {
+      "file": "pre-freeze-matrix.log.gz",
+      "raw_bytes": 224,
+      "gzip_bytes": 133,
+      "raw_sha256": "9f149d568f4bbcbede43f80c7115285f44d4d6051fb5895e5da34d3df6fa951d",
+      "gzip_sha256": "2cdc847d30eaa65c35ac0ec57ffc41cb58609abe005d8fcfb7abebf65479e638"
+    },
+    {
+      "file": "recompute-negative.json.gz",
+      "raw_bytes": 708,
+      "gzip_bytes": 401,
+      "raw_sha256": "06009f073767076b9bf1823f33599d0f0d5d0e2c921044242f550b2b51062b6b",
+      "gzip_sha256": "de707ca04501d33bf04a5f4a63b6ea96e94647f99faae69faec446467603d103"
+    },
+    {
+      "file": "serial-http-discovery.json.gz",
+      "raw_bytes": 1785760,
+      "gzip_bytes": 111502,
+      "raw_sha256": "07a157998d4a76ae26d65f5411d93cd9d2481a1c60d5da204471c5723207cd88",
+      "gzip_sha256": "9e61ddf345586db7309491e26a1c5e31929a39ced67a28db1c71dfd30d5f10f2"
+    },
+    {
+      "file": "serial-http-discovery.log.gz",
+      "raw_bytes": 224,
+      "gzip_bytes": 133,
+      "raw_sha256": "9f149d568f4bbcbede43f80c7115285f44d4d6051fb5895e5da34d3df6fa951d",
+      "gzip_sha256": "2cdc847d30eaa65c35ac0ec57ffc41cb58609abe005d8fcfb7abebf65479e638"
+    },
+    {
+      "file": "serial-http-summary.json.gz",
+      "raw_bytes": 10398,
+      "gzip_bytes": 3909,
+      "raw_sha256": "f32631037a5ec8addfd6a96adcaf954aed1416dd77e43c0323ebbc8dcb483350",
+      "gzip_sha256": "d599c4096270fb0525b51dcf784fae9676b2e1993336d80f89b495071177d57c"
+    },
+    {
+      "file": "smoke-http-2.json.gz",
+      "raw_bytes": 1697,
+      "gzip_bytes": 960,
+      "raw_sha256": "5f06ad9a587cd4d6e2277e9d4b169119b5e2073204713db668d4245a02727d1b",
+      "gzip_sha256": "bf3af186e3719d953e6fa2caa55b5588dc81c3ef17b473b4dcfb358e7a991b0f"
+    },
+    {
+      "file": "smoke-http-2.log.gz",
+      "raw_bytes": 654,
+      "gzip_bytes": 301,
+      "raw_sha256": "c802c65d4c4f98210dbba28448feecc091507249d97eefe79cc66d38d4eafd52",
+      "gzip_sha256": "944530cb125cfe359661c5cbbeb0d932fb4b3586889671375e0c52a5279dfbd2"
+    },
+    {
+      "file": "smoke-http-3.json.gz",
+      "raw_bytes": 18755,
+      "gzip_bytes": 1718,
+      "raw_sha256": "cc21a93dca457f287d645edd78db0ca30a47d9111895f495f828586e8d0bd942",
+      "gzip_sha256": "cb4e6d974da8b2153c58a88eb9f279572b96145559737c41c383abe4a4a822b3"
+    },
+    {
+      "file": "smoke-http-3.log.gz",
+      "raw_bytes": 654,
+      "gzip_bytes": 300,
+      "raw_sha256": "f0ecb254d75ef892e6b3bd810dda4caaa1ed18e41c6d63ea402f36187960ef47",
+      "gzip_sha256": "a41f087245717f7c7e650475eaf54bd056b010c3d7c36e5e91751b9afcc64a88"
+    },
+    {
+      "file": "smoke-http-4.json.gz",
+      "raw_bytes": 18755,
+      "gzip_bytes": 1719,
+      "raw_sha256": "2afc7556b252c2f4696d7e30650776a5fb20c2e3b14586ed0435e3c05f861435",
+      "gzip_sha256": "77b0ad33cf5067e1d3b39193f7c045ff49e7551914f912708cecd7610befdaac"
+    },
+    {
+      "file": "smoke-http-4.log.gz",
+      "raw_bytes": 654,
+      "gzip_bytes": 300,
+      "raw_sha256": "01ee54bc42d1b3e196e9165fbca7022464c2656b2d170b4840e7d0045fd0f27b",
+      "gzip_sha256": "1f2050a3716c6582ce7bb9a04b0606c445dc22b66cb881d793ee4da0b03108a9"
+    },
+    {
+      "file": "smoke-http-5.json.gz",
+      "raw_bytes": 858182,
+      "gzip_bytes": 39842,
+      "raw_sha256": "8546e6d4cfa1c0e30eb8acc15b1c4c6b64d9c34ffa3a587dd73bf322e83b177d",
+      "gzip_sha256": "102c691b756d0ff1544c012a7d481a309f2566dd21862fb32044f607b9434895"
+    },
+    {
+      "file": "smoke-http-5.log.gz",
+      "raw_bytes": 654,
+      "gzip_bytes": 300,
+      "raw_sha256": "01ee54bc42d1b3e196e9165fbca7022464c2656b2d170b4840e7d0045fd0f27b",
+      "gzip_sha256": "1f2050a3716c6582ce7bb9a04b0606c445dc22b66cb881d793ee4da0b03108a9"
+    },
+    {
+      "file": "smoke-http-6.log.gz",
+      "raw_bytes": 159,
+      "gzip_bytes": 153,
+      "raw_sha256": "073f73be6534e2010ca7748d492ba6bd82f4b6f522cdf0e777e3ca878ffed78a",
+      "gzip_sha256": "6774a871120972b0d73edb46539ada79515bc9a2635e0bb39bdbb3c4e926254d"
+    },
+    {
+      "file": "smoke-http-7.json.gz",
+      "raw_bytes": 869808,
+      "gzip_bytes": 41029,
+      "raw_sha256": "feefbaa4aaf08740224b86b91547c4966f1f4c07812fd0e2aeee1cb2bc33ff2e",
+      "gzip_sha256": "35d5bdc6c43d8f0f229ca6619c56b03500c98e9c7c0f41c59738cef7a3986e28"
+    },
+    {
+      "file": "smoke-http-7.log.gz",
+      "raw_bytes": 86,
+      "gzip_bytes": 97,
+      "raw_sha256": "f150a05323ec95f739fab8eb994cdde47258e645ddc99f4c31370d16f861acc1",
+      "gzip_sha256": "8ccd7c9a526ecd2971a7e61d573a962d42608a7ad8bbb7d180b63fb547eddeb3"
+    },
+    {
+      "file": "smoke-http.json.gz",
+      "raw_bytes": 1697,
+      "gzip_bytes": 959,
+      "raw_sha256": "c2610a76b663676644711917d05752ca9120a81b31f7f76268425cc93aa4425c",
+      "gzip_sha256": "4535ebd184bb017075b18a25fb7d08d2421081abbca45676b8c7b1b8ec76b266"
+    },
+    {
+      "file": "smoke-http.log.gz",
+      "raw_bytes": 654,
+      "gzip_bytes": 301,
+      "raw_sha256": "c802c65d4c4f98210dbba28448feecc091507249d97eefe79cc66d38d4eafd52",
+      "gzip_sha256": "944530cb125cfe359661c5cbbeb0d932fb4b3586889671375e0c52a5279dfbd2"
+    },
+    {
+      "file": "static.json.gz",
+      "raw_bytes": 11107,
+      "gzip_bytes": 951,
+      "raw_sha256": "54cea51f83086c473b1a886906bf2d02de35cb558433b75032f57263d2e9d87f",
+      "gzip_sha256": "8b38e29de446b5df69b8ac9dd7f02c663cd8d758016ff13704a40734e1433446"
+    },
+    {
+      "file": "static.log.gz",
+      "raw_bytes": 109,
+      "gzip_bytes": 87,
+      "raw_sha256": "4f4587f3721d7a0819b4c6715d1f512a9141d304ac23d808f3ff3565b3079b28",
+      "gzip_sha256": "9ebf5059995bbe1e47ace4953b56869eb08063ad21cfc6e34cecb297c5d463ab"
+    },
+    {
+      "file": "verified-http-summary.json.gz",
+      "raw_bytes": 6679,
+      "gzip_bytes": 2507,
+      "raw_sha256": "541d9b6752773745f2e7fb3341f5fb621512d3cbd47c6de0d897296fea3f6b40",
+      "gzip_sha256": "dbd5fde09ec1e398c50cbce9743c5e61a24ffb6fe023cb3f23ae9583695de09d"
+    },
+    {
+      "file": "verified-http.json.gz",
+      "raw_bytes": 1781878,
+      "gzip_bytes": 110100,
+      "raw_sha256": "f7905a65ff41382402ce00e316344900c8bf2e1ae7cc64586435cd92c18d32f1",
+      "gzip_sha256": "02b625aab8eff75e9f7a8b74fd2329d53eb06bf8032a576bb14df87cba9a7c77"
+    },
+    {
+      "file": "verified-http.log.gz",
+      "raw_bytes": 224,
+      "gzip_bytes": 133,
+      "raw_sha256": "9f149d568f4bbcbede43f80c7115285f44d4d6051fb5895e5da34d3df6fa951d",
+      "gzip_sha256": "2cdc847d30eaa65c35ac0ec57ffc41cb58609abe005d8fcfb7abebf65479e638"
+    }
+  ],
+  "claim_ledger": [
+    {
+      "claim": "Application/services/API/security/configuration/migrations unchanged",
+      "status": "PASS",
+      "check": "Empty exact-base diff, recorded source/file hashes and tree identities"
+    },
+    {
+      "claim": "Aligned direct HTTP validation",
+      "status": "PASS",
+      "check": "192 total controlled direct requests across three cohorts;21 UTC HTTP cases,4 Manila cases,2 mismatched-cohort cases;74 independently checked rejection records and bounded concurrency aggregate"
+    },
+    {
+      "claim": "Fresh persisted OTP under PHP UTC / DB+06",
+      "status": "FAIL",
+      "check": "Reproduced fresh-code rejection; DB predicate remaining approximately -21000s while session intent valid and epochs agree"
+    },
+    {
+      "claim": "Independent DB-code vs session-intent expiry",
+      "status": "PASS",
+      "check": "HTTP aligned cohorts and three native tests; opposite state remains valid in each expiry case; native consumed-row reuse fails"
+    },
+    {
+      "claim": "Local browser",
+      "status": "NOT RUN",
+      "check": "Playwright1.62.1 module exists, Chromium executable unavailable. Hosted CI requires browser execution."
+    },
+    {
+      "claim": "Original46-test control",
+      "status": "FAIL (inherited)",
+      "check": "Five original registration/login fixture failures; raw JUnit retained"
+    },
+    {
+      "claim": "Accepted Phase3X suite",
+      "status": "PASS",
+      "check": "Exact928a3b8 base57 tests/245 assertions,child exit0"
+    },
+    {
+      "claim": "Current full default/reverse/random suites",
+      "status": "PASS",
+      "check": "60 tests/280 assertions each,child exits0,no errors/skips/failures"
+    },
+    {
+      "claim": "Full PHPStan clean",
+      "status": "FAIL",
+      "check": "15 inherited findings; zero added comparison PASS"
+    },
+    {
+      "claim": "Initial frozen UTC installer attempt",
+      "status": "FAIL (infrastructure)",
+      "check": "Failed before HTTP requests; truncated initial exception retained; cause not established; serial frozen rerun succeeds"
+    },
+    {
+      "claim": "Exact-head hosted browser/CI/artifact",
+      "status": "PENDING",
+      "check": "Pre-CI snapshot; final PR body records verified exact-head outcome"
+    },
+    {
+      "claim": "Production parity,security release and sustained student capacity",
+      "status": "BLOCKED",
+      "check": "No production authorization or representative capacity evidence"
+    },
+    {
+      "claim": "First hosted browser attempt79fa2c3",
+      "status": "FAIL",
+      "check": "Actual Chromium ran,but full journey failed; original coarse-stage error unavailable; static SKIPPED; artifact ZIP hash verified and retained"
+    }
+  ],
+  "first_hosted_attempt": {
+    "head": "79fa2c3c38ef8f011239a4edd628e65cdd599248",
+    "tree": "3e0a980f3398d8f069898994c163a52d34f1d781",
+    "run": 40639806122,
+    "job": 122655051568,
+    "artifact": 12794239744,
+    "zip_bytes": 397708,
+    "zip_sha256": "e1e7b273b23708dfe82f3424d7a887ad1de7905f12bbaa912de9439030507a7c",
+    "target_result": "FAIL:browser journey",
+    "static_step": "SKIPPED",
+    "browser_stage": "correct_signup_otp (coarse label also covered later form steps)",
+    "diagnostic_limit": "Original browser error was not retained; no application defect is established by this stage alone.",
+    "files": {
+      "http.json": "478deef0b3aefde271c0e037e906f6986ddf99dc32a9475302267ee4042433c4",
+      "accepted-base.json": "85aa35b9dac50fa4eb75187acfcacf89a01ff0582f9cc010edc4778654078759",
+      "full.json": "d758440c141a0624743422b0c0d5f969464114afecfa96fa7024750340d0fea0"
+    }
+  },
+  "browser_revision": "Visible associated checkbox click instead of hidden native input; finer redacted diagnostics; no application source change.",
+  "ci": "PENDING revised publication head; first hosted79fa2c3 target FAIL/browser,static SKIPPED retained; PR body supplies verified new-head update",
+  "limits": [
+    "Loopback HTTP gateway,not production web server/TLS/proxy parity",
+    "Synthetic student journeys only; no real external mail/OAuth/SSO/capacity certification",
+    "27 direct HTTP cases; local browser NOT RUN remains NOT RUN",
+    "Business checksums cover nine relevant tables plus OTP checksum; not all160 table rows or full wire protocol",
+    "Expiry storage case explicitly backdates owned session storage and runs real PHP GC; no general logged_in_at idle-timeout policy certified",
+    "Already-verified signup marker age is unchanged and not approved",
+    "Phase3W acceptance,queue freshness,natural locks,instrumentation/physical-empty baselines and production/security release remain separate"
+  ]
+}

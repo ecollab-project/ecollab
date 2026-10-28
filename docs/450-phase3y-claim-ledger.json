@@ -1,0 +1,67 @@
+[
+  {
+    "claim": "Application/services/API/security/configuration/migrations unchanged",
+    "status": "PASS",
+    "check": "Empty exact-base diff, recorded source/file hashes and tree identities"
+  },
+  {
+    "claim": "Aligned direct HTTP validation",
+    "status": "PASS",
+    "check": "192 total controlled direct requests across three cohorts;21 UTC HTTP cases,4 Manila cases,2 mismatched-cohort cases;74 independently checked rejection records and bounded concurrency aggregate"
+  },
+  {
+    "claim": "Fresh persisted OTP under PHP UTC / DB+06",
+    "status": "FAIL",
+    "check": "Reproduced fresh-code rejection; DB predicate remaining approximately -21000s while session intent valid and epochs agree"
+  },
+  {
+    "claim": "Independent DB-code vs session-intent expiry",
+    "status": "PASS",
+    "check": "HTTP aligned cohorts and three native tests; opposite state remains valid in each expiry case; native consumed-row reuse fails"
+  },
+  {
+    "claim": "Local browser",
+    "status": "NOT RUN",
+    "check": "Playwright1.62.1 module exists, Chromium executable unavailable. Hosted CI requires browser execution."
+  },
+  {
+    "claim": "Original46-test control",
+    "status": "FAIL (inherited)",
+    "check": "Five original registration/login fixture failures; raw JUnit retained"
+  },
+  {
+    "claim": "Accepted Phase3X suite",
+    "status": "PASS",
+    "check": "Exact928a3b8 base57 tests/245 assertions,child exit0"
+  },
+  {
+    "claim": "Current full default/reverse/random suites",
+    "status": "PASS",
+    "check": "60 tests/280 assertions each,child exits0,no errors/skips/failures"
+  },
+  {
+    "claim": "Full PHPStan clean",
+    "status": "FAIL",
+    "check": "15 inherited findings; zero added comparison PASS"
+  },
+  {
+    "claim": "Initial frozen UTC installer attempt",
+    "status": "FAIL (infrastructure)",
+    "check": "Failed before HTTP requests; truncated initial exception retained; cause not established; serial frozen rerun succeeds"
+  },
+  {
+    "claim": "Exact-head hosted browser/CI/artifact",
+    "status": "PENDING",
+    "check": "Pre-CI snapshot; final PR body records verified exact-head outcome"
+  },
+  {
+    "claim": "Production parity,security release and sustained student capacity",
+    "status": "BLOCKED",
+    "check": "No production authorization or representative capacity evidence"
+  },
+  {
+    "claim": "First hosted browser attempt79fa2c3",
+    "status": "FAIL",
+    "check": "Actual Chromium ran,but full journey failed; original coarse-stage error unavailable; static SKIPPED; artifact ZIP hash verified and retained"
+  }
+]
