@@ -243,7 +243,7 @@ def main():
      owner.browser['command']=cmd;owner.browser['exit_code']=r.returncode
      owner.cases.append({'name':'browser_journey','status':owner.browser['status']if r.returncode==0 else'FAIL','coverage':owner.browser['status']})
     owner.cleanup=owner.control('cleanup');evidence['cohorts'].append(owner.result())
-   except Exception as e:evidence['cohorts'].append({'cohort':name,'status':'FAIL','error':str(e)[:150],'cases':owner.cases,'controls':owner.controls,'requests':owner.records})
+   except Exception as e:evidence['cohorts'].append({'cohort':name,'status':'FAIL','error':owner.scrub_text(str(e)),'exception_class':type(e).__name__,'runtime_logs':{p.name:owner.scrub_text(p.read_text())for p in [owner.p/'database.log',owner.p/'php-errors.log',owner.p/'fpm.log',owner.p/'fpm-stdio.log']if p.exists()},'cases':owner.cases,'controls':owner.controls,'requests':owner.records})
    finally:owner.stop();target.write_text(json.dumps(evidence,indent=2)+'\n')
  check(all(c['status']=='PASS'for c in evidence['cohorts']),'HTTP/control failures retained in evidence')
  print('Owned HTTP cases:',[(c['cohort'],len(c['cases']),len(c['requests']),c['status'])for c in evidence['cohorts']])

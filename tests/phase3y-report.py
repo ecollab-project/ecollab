@@ -3,9 +3,10 @@ import collections,datetime,hashlib,json,pathlib,re,sys
 src=pathlib.Path(sys.argv[1]);data=json.loads(src.read_text());assert data['base']=='928a3b8912ef60ab374270c1efd3a24c0433c8aa' and not data['application_diff']
 expected={('UTC','+00:00'):True,('UTC','+06:00'):False,('Asia/Manila','+08:00'):True};rows=[];seen=set()
 for c in data['cohorts']:
+ assert c['status']=='PASS' and isinstance(c['cohort'],dict),'Incomplete/failed HTTP cohort; inspect raw failure diagnostics'
  key=(c['cohort']['php_zone'],c['cohort']['database_zone']);assert key in expected and key not in seen;seen.add(key)
  assert c['status']=='PASS';assert all(x['status']in ['PASS','NOT RUN']for x in c['cases']);assert all(x['status']!='NOT RUN'or x['name']=='browser_journey'for x in c['cases'])
- assert all(x['exit_code']==0 for x in c['controls']);assert c['migration']['exit_code']==0;assert len(c['inventory']['ledger'])==68 and all(x['success']for x in c['inventory']['ledger']);assert len(c['inventory']['schema'])==160
+ assert all(x['exit_code']==0 for x in c['controls']);assert c['migration']['exit_code']==0;assert len(c['inventory']['ledger'])==68 and all(x['success']in [1,'1']for x in c['inventory']['ledger']);assert len(c['inventory']['schema'])==160
  assert c['cleanup']['remaining_synthetic_users']==c['cleanup']['orphan_otp']==0
  assert c['fpm_runtime'] and all(x['sapi']=='fpm-fcgi' and x['php'].startswith('8.3.') and x['app_debug']is False and x['app_env']=='testing' and x['delivery_is_owned_loopback']is True and x['php_zone']==key[0]for x in c['fpm_runtime'])
  q=c['timezone'];assert q['fresh_code_accepted']is expected[key];assert q['policy_changed']is False
@@ -15,7 +16,7 @@ for c in data['cohorts']:
  for r in c['requests']:
   assert re.fullmatch('[a-f0-9]{64}',r['response_sha256']);counts[str(r['status'])]+=1
   for k in ['session_before','session_after']:
-   assert r[k]is None or re.fullmatch('session-\d+',r[k])
+   assert r[k]is None or re.fullmatch(r'session-\d+',r[k])
   for obj in [r['request'],r['response']]:
    def private(v,k=''):
     if isinstance(v,dict):
