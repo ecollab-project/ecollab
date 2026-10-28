@@ -1,0 +1,157 @@
+name: Phase 3AC actual OTP security correction
+on:
+  pull_request:
+    paths:
+      - 'tests/phase3ac-*'
+      - 'security/forgot-password/OtpService.php'
+      - 'docs/450-phase3ac*'
+      - '.github/workflows/phase3ac-security.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  owned-http-auth:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Install disposable MariaDB and PHP dependencies
+        run: |
+          mkdir -p "$RUNNER_TEMP/perf-apt/empty" "$RUNNER_TEMP/perf-apt/lists/partial"
+          printf '%s\n' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble-updates main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://security.ubuntu.com/ubuntu noble-security main universe' \
+            > "$RUNNER_TEMP/perf-apt/sources.list"
+          apt_options=(-o "Dir::Etc::sourcelist=$RUNNER_TEMP/perf-apt/sources.list"
+            -o "Dir::Etc::sourceparts=$RUNNER_TEMP/perf-apt/empty"
+            -o "Dir::State::lists=$RUNNER_TEMP/perf-apt/lists"
+            -o Acquire::Retries=0 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20)
+          sudo apt-get "${apt_options[@]}" update
+          sudo apt-get "${apt_options[@]}" install -y mariadb-server php8.3-fpm php8.3-cli php8.3-mysql php8.3-sqlite3 php8.3-curl php8.3-mbstring php8.3-xml
+      - name: Dependencies and browser runtime
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          npm install --prefix "$RUNNER_TEMP/phase3y-browser" --no-save --no-package-lock playwright@1.62.1
+          node "$RUNNER_TEMP/phase3y-browser/node_modules/playwright/cli.js" install chromium
+          echo "NODE_PATH=$RUNNER_TEMP/phase3y-browser/node_modules" >> "$GITHUB_ENV"
+      - name: Source gate and existing security regressions
+        env:
+          PHP_BIN: /usr/bin/php8.3
+        run: |
+          git diff --exit-code e4999821b16f8d8085a8cde6c5b08de2fc824ae5 -- services API database assets websocket config.php modules composer.json composer.lock
+          test "$(git diff --name-only e4999821b16f8d8085a8cde6c5b08de2fc824ae5 -- security)" = "security/forgot-password/OtpService.php"
+          for file in tests/phase3ac-*.php security/forgot-password/OtpService.php; do php8.3 -l "$file"; done
+          node --check tests/phase3ac-browser.cjs
+          for file in tests/phase3aa-*.php tests/experiments/phase3aa/*.php; do php8.3 -l "$file"; done
+          php8.3 -l tests/phase3z-clock.php
+          php8.3 -l tests/phase3y-bootstrap.php
+          php8.3 -l tests/phase3y-control.php
+          php8.3 -l tests/Integration/OtpExpiryTest.php
+          node --check tests/phase3y-browser.cjs
+          node --check assets/js/auth/signup.js
+          node --check assets/js/auth/signup-network-fix.js
+          node --check assets/js/auth/login.js
+          mkdir -p phase3ac-raw
+          python3 -B tests/phase3ac-inventory.py phase3ac-raw/writers.json
+          php8.3 tests/client-ip-regression.php
+          node tests/request-security-regression.cjs
+      - name: Full original failing control and current three orderings including native expiry
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          CLASSROOM_BASE: 827470217e6a6a86a165b14f4b6650a10e2c2395
+          CLASSROOM_PHASE3X: '1'
+          PHASE3X_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          CLASSROOM_EVIDENCE: phase3ac-raw/full.json
+          TZ: UTC
+        run: python3 -B -u tests/phase3ac-suite.py
+      - name: Exact accepted Phase3X base comparison
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          CLASSROOM_BASE: 928a3b8912ef60ab374270c1efd3a24c0433c8aa
+          CLASSROOM_PHASE3W_SCHEMA: '1'
+          PHASE3W_FULL_PHPUNIT: '1'
+          CLASSROOM_EVIDENCE: phase3ac-raw/accepted-base.json
+          TZ: UTC
+        run: python3 -B -u tests/phase3ac-suite.py
+      - name: Exact accepted Phase3AB base comparison
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          CLASSROOM_BASE: e4999821b16f8d8085a8cde6c5b08de2fc824ae5
+          CLASSROOM_PHASE3W_SCHEMA: '1'
+          PHASE3W_FULL_PHPUNIT: '1'
+          CLASSROOM_EVIDENCE: phase3ac-raw/accepted-phase3ab.json
+          TZ: UTC
+        run: python3 -B -u tests/phase3ac-suite.py
+      - name: Actual corrected HTTP, hosted Chromium and persisted OTP browser reset
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          PHP_FPM_BIN: /usr/sbin/php-fpm8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          PHASE3Y_REQUIRE_BROWSER: '1'
+          PHASE3Y_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          PHASE3AC_HTTP_EVIDENCE: phase3ac-raw/http.json
+          TZ: UTC
+        run: python3 -B -u tests/phase3ac-http.py
+      - name: Actual corrected native clocks, sessions, failures and legacy rehearsal
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          PHP_FPM_BIN: /usr/sbin/php-fpm8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          PHASE3AC_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          PHASE3AC_EVIDENCE: phase3ac-raw/security.json
+          TZ: UTC
+        run: python3 -B -u tests/phase3ac-security.py
+      - name: Exact accepted Phase3Y comparison
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          CLASSROOM_BASE: b09e66c3fcba5066c63da8bece245ae5f4068410
+          CLASSROOM_PHASE3W_SCHEMA: '1'
+          PHASE3W_FULL_PHPUNIT: '1'
+          CLASSROOM_EVIDENCE: phase3ac-raw/accepted-phase3y.json
+          TZ: UTC
+        run: python3 -B -u tests/phase3ac-suite.py
+      - name: Exact accepted Phase3Z comparison
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          CLASSROOM_BASE: bc1f1bc3cff91ce61cf531853e7220f1cfca590a
+          CLASSROOM_PHASE3W_SCHEMA: '1'
+          PHASE3W_FULL_PHPUNIT: '1'
+          CLASSROOM_EVIDENCE: phase3ac-raw/accepted-phase3z.json
+          TZ: UTC
+        run: python3 -B -u tests/phase3ac-suite.py
+      - name: Frozen original clock, transition and double-consumption controls
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          PHP_FPM_BIN: /usr/sbin/php-fpm8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          PHASE3AA_EXPECTED_HEAD: e4999821b16f8d8085a8cde6c5b08de2fc824ae5
+          PHASE3AA_EVIDENCE: ${{ github.workspace }}/phase3ac-raw/original-experiments.json
+          TZ: UTC
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/phase3ac-original" e4999821b16f8d8085a8cde6c5b08de2fc824ae5
+          cp -a vendor "$RUNNER_TEMP/phase3ac-original/vendor"
+          cd "$RUNNER_TEMP/phase3ac-original"
+          composer dump-autoload --no-interaction
+          python3 -B -u tests/phase3aa-experiments.py
+          python3 -B tests/phase3aa-report.py "$PHASE3AA_EVIDENCE" "${{ github.workspace }}/phase3ac-raw/original-summary.json"
+      - name: Exact-base static comparison
+        if: always()
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          PEER_THREADS_BASE: e4999821b16f8d8085a8cde6c5b08de2fc824ae5
+          PEER_THREADS_STATIC_EVIDENCE: phase3ac-raw/static.json
+        run: python3 -B -u tests/peer-threads-static.py
+      - name: Recompute actual security acceptance from raw records
+        run: python3 -B tests/phase3ac-report.py phase3ac-raw
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase3ac-security-evidence
+          path: phase3ac-raw/
