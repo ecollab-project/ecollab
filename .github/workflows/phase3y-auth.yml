@@ -80,6 +80,7 @@ jobs:
           TZ: UTC
         run: python3 -B -u tests/phase3y-http.py
       - name: Exact-base static comparison
+        if: always()
         env:
           PHP_BIN: /usr/bin/php8.3
           PEER_THREADS_BASE: 928a3b8912ef60ab374270c1efd3a24c0433c8aa

@@ -1,5 +1,12 @@
 [
   {
+    "file": "browser-revision-checks.json.gz",
+    "raw_bytes": 1182,
+    "gzip_bytes": 486,
+    "raw_sha256": "de85167e371d23a3bcdcd62c68ebf70fedec646d0a970ff8a898bd74688abaae",
+    "gzip_sha256": "fb8d2e59f4c5a669e6fab0770117447fe2e3948fe513671398ba6e10c34ae298"
+  },
+  {
     "file": "commands.json.gz",
     "raw_bytes": 3738,
     "gzip_bytes": 916,
@@ -110,6 +117,34 @@
     "gzip_bytes": 87,
     "raw_sha256": "4f4587f3721d7a0819b4c6715d1f512a9141d304ac23d808f3ff3565b3079b28",
     "gzip_sha256": "9ebf5059995bbe1e47ace4953b56869eb08063ad21cfc6e34cecb297c5d463ab"
+  },
+  {
+    "file": "hosted-79fa2c3-accepted-base.json.gz",
+    "raw_bytes": 450898,
+    "gzip_bytes": 53501,
+    "raw_sha256": "85aa35b9dac50fa4eb75187acfcacf89a01ff0582f9cc010edc4778654078759",
+    "gzip_sha256": "7753615d1da6e3344c83d507f5cc4069786117fd611f79b4a90f09f8886cebdd"
+  },
+  {
+    "file": "hosted-79fa2c3-artifact.json.gz",
+    "raw_bytes": 852,
+    "gzip_bytes": 564,
+    "raw_sha256": "11c53d0e0a7b02062a289b26b4e4c585add82e8cb72ad020e9cb343c80af0da9",
+    "gzip_sha256": "f7fd263ef74758efcad8e4cc60cd24351df8befba8310ba7feeac305aa8e1cc3"
+  },
+  {
+    "file": "hosted-79fa2c3-full.json.gz",
+    "raw_bytes": 2221797,
+    "gzip_bytes": 225902,
+    "raw_sha256": "d758440c141a0624743422b0c0d5f969464114afecfa96fa7024750340d0fea0",
+    "gzip_sha256": "441fb81c72bc0f4efbda6f96812497a23702ae572ccc59259030bdae5716b217"
+  },
+  {
+    "file": "hosted-79fa2c3-http.json.gz",
+    "raw_bytes": 1760896,
+    "gzip_bytes": 108816,
+    "raw_sha256": "478deef0b3aefde271c0e037e906f6986ddf99dc32a9475302267ee4042433c4",
+    "gzip_sha256": "6a3e7bc27fa949cc36d1d1c58573c575414683b1e20e0cd6d460951a1a21ff89"
   },
   {
     "file": "pre-freeze-matrix.json.gz",

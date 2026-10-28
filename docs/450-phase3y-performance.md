@@ -75,3 +75,11 @@ Runtime inventory records actual PHP8.3-FPM/SAPI, MariaDB10.11,cohort timezone,c
 ## Rollback and remaining gates
 
 Keep draft/unmerged. If separately integrated later,revert only this phase's tests/workflow/docs to accepted928a3b8. No application/schema rollback or production operation is required. Full PHPStan clean remains FAIL. Hosted browser/CI exact-head evidence is pending in this snapshot. Production timezone/parity,release/security approval,Phase3W independent acceptance,old natural-lock attribution,queue freshness/saturation,physical-empty and instrumentation/resource gaps,and representative sustained capacity remain separate gates. No merge,deployment,Hostinger/live DB access or new OTP/security policy is authorized.
+
+## First hosted browser attempt retained
+
+At publication79fa2c3c38ef8f011239a4edd628e65cdd599248,run40639806122 failed the browser/HTTP matrix step; six other returned workflows passed. Browser Chromium151.0.7922.34 actually ran,displayed a wrong-code error,and received successful correct-code verification,but did not complete the journey. The coarse failure_stage covered subsequent form steps and the original browser exception was not retained,so this alone establishes no application defect. Static analysis was SKIPPED after the failure and is not called passing for that run. Native/current and accepted-base suite steps passed.
+
+Downloaded artifact12794239744 is397708 bytes; ZIP SHA256 e1e7b273b23708dfe82f3424d7a887ad1de7905f12bbaa912de9439030507a7c was independently verified. The three original JSON files and metadata/digests are preserved as hosted-79fa2c3-* raw archives.
+
+Source inspection identifies an invalid harness interaction:the native terms checkbox is display:none under auth.css,so the browser must click its visible associated custom control. The revised test performs that real click and checks isChecked; it does not set state with JavaScript or bypass application validation. It adds finer stages and redacted error/DOM diagnostics. This is a test correction requiring a fresh hosted result,not an application fix or proof yet that this was the only cause. The static comparison now runs independently after a matrix failure. New-head browser acceptance remains PENDING in this snapshot; consult the final PR-body update.

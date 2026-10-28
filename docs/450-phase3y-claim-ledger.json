@@ -58,5 +58,10 @@
     "claim": "Production parity,security release and sustained student capacity",
     "status": "BLOCKED",
     "check": "No production authorization or representative capacity evidence"
+  },
+  {
+    "claim": "First hosted browser attempt79fa2c3",
+    "status": "FAIL",
+    "check": "Actual Chromium ran,but full journey failed; original coarse-stage error unavailable; static SKIPPED; artifact ZIP hash verified and retained"
   }
 ]
