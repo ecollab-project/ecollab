@@ -9,8 +9,9 @@ function demand(bool $ok):void{if(!$ok)throw new RuntimeException('Candidate sec
 $code=$otp->generate($uid);$before=$db->query('CHECKSUM TABLE otp_codes')->fetch(PDO::FETCH_NUM)[1];
 foreach([[$uid+1000000,$code,'reset_password'],[$uid,$code,'2fa'],[$uid,'not-a-code','reset_password']]as[$u,$c,$a])demand(!$otp->verify($u,$c,$a)['success']);
 demand($before===$db->query('CHECKSUM TABLE otp_codes')->fetch(PDO::FETCH_NUM)[1]);$records['wrong_binding_hash_preserve_rows']=true;
+$db->beginTransaction();$constructed=new OtpService();demand($db->inTransaction());demand(!$constructed->verify($uid,$code)['success']);$authConstructed=new AuthService();demand($db->inTransaction());demand(!$authConstructed->verifyOtp($uid,$code)['success']);demand($db->inTransaction());$db->rollBack();$records['construction_inside_caller_transaction_does_not_commit']=true;
 $db->beginTransaction();demand(!$otp->verify($uid,$code)['success']);demand($db->inTransaction());$db->rollBack();$records['caller_transaction_rejected_without_commit']=true;
-$db->exec('SET autocommit=0');demand(!$otp->verify($uid,$code)['success']);$db->exec('SET autocommit=1');$records['disabled_autocommit_rejected']=true;
+$db->exec('SET autocommit=0');$constructed=new OtpService();demand(!(bool)$db->query('SELECT @@session.autocommit')->fetchColumn());demand(!$constructed->verify($uid,$code)['success']);demand(!$otp->verify($uid,$code)['success']);$db->exec('SET autocommit=1');$records['disabled_autocommit_rejected']=true;
 demand($otp->verify($uid,' '.$code.' ')['success']);demand(!$db->inTransaction());$db->beginTransaction();$db->rollBack();demand(!$otp->verify($uid,$code)['success']);$records['durable_success_replay_rejected_after_later_rollback']=true;
 // Fail after consumption in the caller; never make the original code usable again.
 $code=$otp->generate($uid);demand($otp->verify($uid,$code)['success']);try{throw new RuntimeException('simulated post-consume failure');}catch(RuntimeException $e){}demand(!$otp->verify($uid,$code)['success']);$records['post_consume_failure_does_not_resurrect']=true;

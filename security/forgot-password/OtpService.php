@@ -16,7 +16,11 @@ class OtpService {
 
     public function __construct() {
         $this->db = Database::getInstance();
-        $this->ensureTable();
+        // CREATE TABLE (even IF NOT EXISTS) implicitly commits in MariaDB.
+        // Never run that DDL inside a caller-owned transaction context.
+        if (!$this->db->inTransaction() && (bool)$this->db->query('SELECT @@session.autocommit')->fetchColumn()) {
+            $this->ensureTable();
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════
