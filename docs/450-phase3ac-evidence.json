@@ -5,9 +5,9 @@
   "branch": "security/phase3ac-otp-remediation-20261028",
   "base": "e4999821b16f8d8085a8cde6c5b08de2fc824ae5",
   "base_tree": "ccccf62ff55f5c28f935259c13c920c3565c4f1e",
-  "implementation": "ec0675a66e9ad701215db8d214209ef833143fb1",
-  "implementation_local": "4570d2577eb5d8331555b0a16593774f02c02f1d",
-  "implementation_tree": "6e5df310f020bd1035e403be018093402853f2a8",
+  "implementation": "4db429d85a4e1d8a984c8617668481bb25977630",
+  "implementation_local": "35cb955b8db29e64437224c3659d7857f9d2aacf",
+  "implementation_tree": "232cb53cc27d7752e671d72a327943ddaddc4a6b",
   "final_publication": "See final PR description;report is pre-CI snapshot",
   "changed_implementation_files": [
     ".github/workflows/phase3ac-security.yml",
@@ -28,7 +28,7 @@
     "tests/phase3ac-transition.php"
   ],
   "app_changed_only": "security/forgot-password/OtpService.php",
-  "app_sha256": "6c31eaa75345bc976636b32e561f69e536bb2ccf7d4a767682faedab198494a0",
+  "app_sha256": "b284c5f174805db35ff913be62194d93a0da7f0813d4267579fbca557ccb014d",
   "candidate_clock_records": 180,
   "candidate_races": {
     "two_session_rounds": 5,
@@ -89,5 +89,12 @@
     "No defense build nominated",
     "No merge/deploy/live mail/Hostinger/capacity authorization"
   ],
-  "raw_manifest": "450-phase3ac-raw/manifest.json"
+  "raw_manifest": "450-phase3ac-raw/manifest.json",
+  "initial_implementation": "ec0675a66e9ad701215db8d214209ef833143fb1",
+  "constructor_review": {
+    "original_probe": "FAIL:existing constructor implicitly committed caller transaction",
+    "candidate": "PASS locally:DDL skipped in caller transaction/autocommit0;constructing OtpService orAuthService doesnot commit,verification rejects",
+    "raw": "450-phase3ac-raw/constructor-original-probe.json.gz",
+    "hosted": "Required final-head rerun"
+  }
 }
