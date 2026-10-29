@@ -197,6 +197,9 @@ class MessageService
             }
         }
 
+        if (isset($data['content']) && !is_string($data['content'])) {
+            throw new InvalidArgumentException('Message content must be text', 400);
+        }
         $content = trim($data['content'] ?? '');
         if ($content === '' && empty($data['attachment_path'])) {
             throw new InvalidArgumentException('Message content is required', 400);
@@ -212,14 +215,25 @@ class MessageService
 
         // For polls, content = the question
         if ($contentType === 'poll') {
+            if (isset($data['poll_question']) && !is_string($data['poll_question'])) {
+                throw new InvalidArgumentException('Poll question must be text', 400);
+            }
+            $requestedOptions = $data['poll_options'] ?? [];
+            if (!is_array($requestedOptions) || array_filter($requestedOptions, fn($o) => !is_string($o))) {
+                throw new InvalidArgumentException('Poll options must be an array of text values', 400);
+            }
             $pollQuestion = trim($data['poll_question'] ?? $content);
-            $pollOptions  = array_values(array_filter(array_map('trim', $data['poll_options'] ?? []), fn($o) => $o !== ''));
+            $pollOptions  = array_values(array_filter(array_map('trim', $requestedOptions), fn($o) => $o !== ''));
             if ($pollQuestion === '') throw new InvalidArgumentException('Poll question is required', 400);
             if (count($pollOptions) < 2) throw new InvalidArgumentException('At least 2 poll options required', 400);
             if (count($pollOptions) > 6) throw new InvalidArgumentException('Maximum 6 poll options allowed', 400);
             $content = $pollQuestion;
         }
 
+        // Poll, options and message must commit together even when the broker is off.
+        $ownsPollTransaction = $contentType === 'poll' && !$this->db->inTransaction();
+        if ($ownsPollTransaction) $this->db->beginTransaction();
+        try {
         $messageId = RealtimeOutbox::record($this->db, 'channel', $channelId, function () use ($channelId, $senderId, $content, $contentType, $parentId, $data, $pollQuestion, $pollOptions) {
             $stmt = $this->db->prepare("
                 INSERT INTO messages (channel_id, sender_id, content, content_type, parent_id, created_at, updated_at)
@@ -262,6 +276,11 @@ class MessageService
 
             return $messageId;
         });
+        if ($ownsPollTransaction) $this->db->commit();
+        } catch (Throwable $e) {
+            if ($ownsPollTransaction && $this->db->inTransaction()) $this->db->rollBack();
+            throw $e;
+        }
 
         return $this->getMessageById($messageId);
     }
