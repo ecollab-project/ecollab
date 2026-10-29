@@ -19,6 +19,8 @@ jobs:
     timeout-minutes: 50
     env:
       PHASE3AD_REPAIR: '1'
+      PHASE3AD_IDENTITY: '1'
+      PHASE3AD_OWNED_FRESH_IDENTITY: '1'
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
@@ -138,7 +140,7 @@ jobs:
         if: always()
         env:
           PHP_BIN: /usr/bin/php8.3
-          PEER_THREADS_BASE: cb94769a6af87a356a069a2c949b5bd7b5c73e6e
+          PEER_THREADS_BASE: 82b1192a8cb4bc943b57e42cbc3c0f4204389586
           PEER_THREADS_STATIC_EVIDENCE: phase3ad-raw/static.json
         run: python3 -B tests/phase3ad-command.py exact-base-static-comparison bash -e -c 'python3 -B -u tests/peer-threads-static.py'
       - name: Recompute actual security acceptance from raw records
@@ -156,6 +158,13 @@ jobs:
           MARIADBD_BIN: /usr/sbin/mariadbd
           PHASE3AD_MESSAGE_EVIDENCE: phase3ad-raw/message-compatibility.json
         run: python3 -B tests/phase3ad-command.py actual-code-poll-message-compatibility bash -e -c 'python3 -B tests/phase3ad-message-compatibility.py'
+      - name: Authoritative identity migration provisioning authentication DM and Jarred
+        if: always()
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          PHP_FPM_BIN: /usr/sbin/php-fpm8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+        run: python3 -B tests/phase3ad-command.py authoritative-identity-contract python3 -B tests/phase3ad-identity.py
       - name: Actual composed student facilitator collaboration HTTP and Chromium
         if: always()
         env:
