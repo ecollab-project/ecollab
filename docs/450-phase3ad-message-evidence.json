@@ -1,0 +1,73 @@
+{
+  "readiness": "BLOCKED",
+  "base": "77d791d72ad5e07089dead0e886d1b5ef6811149",
+  "accepted_otp_blob": "7013114a3a7bc0d183c01fc92e0687f06202d3a7",
+  "source_sha256": "23bcf4624892051277583030ac4c096cacac88bf0e8554db8c55bf9daad56f61",
+  "baseline_source_sha256": "2112e2d1fdf23dd11f412ce0e0d89462b5df904cefe799837a8ddf2aab3e8534",
+  "source_overlay": "diff --git a/services/MessageService.php b/services/MessageService.php\nindex 61eb352..75557aa 100644\n--- a/services/MessageService.php\n+++ b/services/MessageService.php\n@@ -202,8 +202,9 @@ class MessageService\n             throw new InvalidArgumentException('Message content is required', 400);\n         }\n \n-        $contentType = in_array($data['content_type'] ?? 'text', ['text', 'image', 'file', 'code', 'poll'], true)\n-            ? $data['content_type'] : 'text';\n+        $requestedContentType = $data['content_type'] ?? 'text';\n+        $contentType = in_array($requestedContentType, ['text', 'image', 'file', 'code', 'poll'], true)\n+            ? $requestedContentType : 'text';\n         $parentId    = isset($data['parent_id']) ? (int)$data['parent_id'] : null;\n \n         $pollQuestion = null;",
+  "baseline_overlay": "",
+  "test_sha256": "5d4a3aeecb693eb8e957e0d83733f97f30cafe0050bd56dc9a4c5b8dd56dd05b",
+  "defense_database": "User selected fresh synthetic fixture, October29 Asia/Manila",
+  "checks": {
+    "base_http_requests": 39,
+    "candidate_http_requests": 41,
+    "cases_each": 14,
+    "full_suite_each": [
+      "60 tests / 280 assertions / 0 failures: default",
+      "60 tests / 280 assertions / 0 failures: reverse",
+      "60 tests / 280 assertions / 0 failures: random31028"
+    ],
+    "phpstan": {
+      "base": 15,
+      "candidate": 15,
+      "added": 0,
+      "analyzer_exit_codes": [
+        1,
+        1
+      ],
+      "comparison_exit": 0
+    },
+    "omitted_and_null": "base HTTP500, candidate HTTP201 and persisted text",
+    "code_and_poll": "FAIL HTTP500 on BOTH; canonical enum lacks values",
+    "csrf_membership_private_announcement_empty": "preserved status and business checksum"
+  },
+  "hosted_ci": "NOT RUN at document checkpoint; inspect final PR head separately",
+  "raw_manifest": [
+    {
+      "path": "docs/450-phase3ad-message-raw/message-default-base-full.json.gz",
+      "sha256": "74374717e5775752c71388b1b6d3e0c98b1d0293dddfc46c2d27459779b97395",
+      "raw_sha256": "8f7806c6dfb91c85b02f3076002fedd0d4e60218eaf4cb67fc2487258183ea84",
+      "raw_bytes": 2251114,
+      "bytes": 184104
+    },
+    {
+      "path": "docs/450-phase3ad-message-raw/message-default-candidate-full.json.gz",
+      "sha256": "262950f0716589da3760826bb185822b22ae5bd665382e99aa6264c107a82dae",
+      "raw_sha256": "0826c3ef9ca13185b8007a959cdc0f4dc9d44c78a1ad79e6cb7cc1b5b76bffb8",
+      "raw_bytes": 2275360,
+      "bytes": 184645
+    },
+    {
+      "path": "docs/450-phase3ad-message-raw/message-default-initial-enum-failure.json.gz",
+      "sha256": "1965b08c43e11b086b79845ccc86c045392c4622f5454b7eb92c5c407ded7869",
+      "raw_sha256": "dcadeddc6735ac1b9eb1b76c6fd1f4bd66f7e0d0d60f874bba7b537dbfc5ab75",
+      "raw_bytes": 187812,
+      "bytes": 9423
+    },
+    {
+      "path": "docs/450-phase3ad-message-raw/message-phpstan-base.json.gz",
+      "sha256": "2a114913123e83ec0085e8b26988117c40d5617475a949ca903016daef36aa2b",
+      "raw_sha256": "402da31424324d56671e621baa253ba8fef8a06919114da50941205255dea883",
+      "raw_bytes": 3763,
+      "bytes": 756
+    },
+    {
+      "path": "docs/450-phase3ad-message-raw/message-phpstan-candidate.json.gz",
+      "sha256": "824596e55d9718297160481a832f27fc2771b3528cc7b61c74111a8cecff3685",
+      "raw_sha256": "f32f9284bd24f362f1c89cb2274d3aeb200053ffdb033c46e17c83d344a234b8",
+      "raw_bytes": 3739,
+      "bytes": 755
+    }
+  ],
+  "rollback": "Revert only MessageService.php delta and this follow-up harness/CI/docs to exact base; keep accepted OTP correction. No database changes were made."
+}

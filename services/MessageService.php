@@ -202,8 +202,9 @@ class MessageService
             throw new InvalidArgumentException('Message content is required', 400);
         }
 
-        $contentType = in_array($data['content_type'] ?? 'text', ['text', 'image', 'file', 'code', 'poll'], true)
-            ? $data['content_type'] : 'text';
+        $requestedContentType = $data['content_type'] ?? 'text';
+        $contentType = in_array($requestedContentType, ['text', 'image', 'file', 'code', 'poll'], true)
+            ? $requestedContentType : 'text';
         $parentId    = isset($data['parent_id']) ? (int)$data['parent_id'] : null;
 
         $pollQuestion = null;
