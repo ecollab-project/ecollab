@@ -7,7 +7,7 @@ final class LoadTestFixture
     private function columns(string $table):array{return $this->columnCache[$table]??=$this->loadColumns($table);}
     private function loadColumns(string $table):array{return array_column($this->db->query('SHOW COLUMNS FROM `'.$table.'`')->fetchAll(PDO::FETCH_ASSOC),'Field');}
     private function insert(string $table,array $values):int{
-        $available=$this->columns($table);$values=array_intersect_key($values,array_flip($available));
+        $available=$this->columns($table);if($table==='users'&&!in_array('is_system',$available,true))throw new RuntimeException('Authoritative identity migration required');$values=array_intersect_key($values,array_flip($available));
         $names=array_keys($values);$sql='INSERT INTO `'.$table.'` (`'.implode('`,`',$names).'`) VALUES ('.implode(',',array_fill(0,count($names),'?')).')';
         $this->db->prepare($sql)->execute(array_values($values));return (int)$this->db->lastInsertId();
     }
@@ -20,7 +20,7 @@ final class LoadTestFixture
         try{
             for($i=1;$i<=$count;$i++){
                 $username='k6_'.substr($id,-8).'_'.$i;$email=$username.'@example.invalid';
-                $uid=$this->insert('users',['username'=>$username,'email'=>$email,'full_name'=>'Load Test Student '.$i,'password_hash'=>$hash,'role'=>'student','status'=>'offline','email_verified'=>1,'is_online'=>0]);
+                $uid=$this->insert('users',['username'=>$username,'email'=>$email,'full_name'=>'Load Test Student '.$i,'password_hash'=>$hash,'role'=>'student','status'=>'offline','email_verified'=>1,'is_online'=>0,'is_system'=>0]);
                 $users[]=['id'=>$uid,'email'=>$email,'password'=>$password];
             }
             $owner=$users[0]['id'];

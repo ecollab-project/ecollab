@@ -11,7 +11,8 @@
     "security/middleware/AuthMiddleware.php",
     "database/migrations/069_system_identity.sql",
     "scripts/provision-system-account.php",
-    "API/auth/resend-signup-otp.php"
+    "API/auth/resend-signup-otp.php",
+    "services/LoadTestFixture.php"
   ],
   "preserve": [
     "security/forgot-password/OtpService.php",
@@ -29,7 +30,8 @@
     "security/middleware/AuthMiddleware.php": "b99065634199ec192f2d6d0441494aea183caa7ec25a2c6ceb2d22cc603ac515",
     "database/migrations/069_system_identity.sql": null,
     "scripts/provision-system-account.php": null,
-    "API/auth/resend-signup-otp.php": "399afecdb7e7f187bbc62e091e2cad610bd5606b2eba75d4470d095204c70d0b"
+    "API/auth/resend-signup-otp.php": "399afecdb7e7f187bbc62e091e2cad610bd5606b2eba75d4470d095204c70d0b",
+    "services/LoadTestFixture.php": "f43c8abb050558c3df420d99f47ddbf83587e1201b2dcc5776740478f03f8fe6"
   },
   "test_infrastructure": [
     "tests/phase3ad-*",
@@ -41,12 +43,14 @@
     "tests/request-security-regression.cjs",
     "tests/learning-workspace-ui-regression.cjs",
     "tests/responsive-render-fixture.php",
-    "tests/phase3ad-human-session.php"
+    "tests/phase3ad-human-session.php",
+    "tests/load-test-fixture-regression.php"
   ],
   "docs": [
     "docs/450-phase3ad-identity-*"
   ],
   "writer_inventory": "Four runtime INSERT writers inspected; no runtime username UPDATE found. OAuth provider/email upsert, password,OTP,reset,remember,session inspected. No claim concerning external production writers.",
   "preimplementation_amendment": "Before editing: direct resend-signup endpoint owns an additional OTP writer; guard it without touching accepted OtpService. Session refresh/onboarding use common startSession guard.",
-  "test_repair_reason": "First hosted head01736: copied upload fixture lacks new helper/PDO identity row; message workflow missing identity guard selector; frozen telemetry guard requires explicitly approved identity scope. Production runtime hashes stay frozen.; request-security fake session requires an owned SQLite human row under the authoritative session guard.; PHP presentation fixtures require explicit owned human identity rows; UI stubs remain presentation-only and do not replace real hosted auth/browser evidence."
+  "test_repair_reason": "First hosted head01736: copied upload fixture lacks new helper/PDO identity row; message workflow missing identity guard selector; frozen telemetry guard requires explicitly approved identity scope. Production runtime hashes stay frozen.; request-security fake session requires an owned SQLite human row under the authoritative session guard.; PHP presentation fixtures require explicit owned human identity rows; UI stubs remain presentation-only and do not replace real hosted auth/browser evidence.",
+  "preimplementation_amendment_2": "Before editing LoadTestFixture: expanded dynamic-SQL inspection identified the CLI synthetic account writer through insert(table,values). It must explicitly persist0 and refuse a missing identity column, under the owner-approved human-writer scope. Four interactive writers plus this fifth synthetic writer; no external production writer claim."
 }

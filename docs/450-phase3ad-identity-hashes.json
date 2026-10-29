@@ -7,5 +7,6 @@
   "security/middleware/AuthMiddleware.php": "3fa11ca134375fcb9d6291aa2b2535a004ed69c50215b3bb382c35968587eb40",
   "database/migrations/069_system_identity.sql": "ecd88b9bec0a1c7c3bf2852605cd12c962e6d75eba61c30fb03b308da13bd08d",
   "scripts/provision-system-account.php": "e91bb682a2a941f6da23e4ad4a639b0cfc88bdc06c2583c1ba9b9037874b8a44",
-  "API/auth/resend-signup-otp.php": "a060d6a3fda09cb91aefe7073c4a5aa10177f6f1abe1ce7fef0a2afe3fbdb0d3"
+  "API/auth/resend-signup-otp.php": "a060d6a3fda09cb91aefe7073c4a5aa10177f6f1abe1ce7fef0a2afe3fbdb0d3",
+  "services/LoadTestFixture.php": "1b66d35d45ca5d8f9a1055850ec51461bdf6812ccc8f7def48eb5b14c77bac14"
 }

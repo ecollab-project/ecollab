@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/phase3y-bootstrap.php';
+set_exception_handler(function(Throwable $e):void{fwrite(STDERR,get_class($e).': '.$e->getMessage());exit(1);});
 require_once dirname(__DIR__).'/services/AdminWorkspaceService.php';
 $in=json_decode(stream_get_contents(STDIN),true,512,JSON_THROW_ON_ERROR);
 $action=$in['action'];$checks=[];
@@ -31,8 +32,14 @@ if($action==='contracts'){
     $s=$db->query("SELECT is_system FROM users WHERE username='owned_admin_created'");verifyIdentity((int)$s->fetchColumn()===0,'admin workspace ignores attempted system promotion');
     $denied=false;try{$admin->mutate('create_user',['username'=>'ECOLLAB_AI','email'=>'reserved@example.test','full_name'=>'Reserved','password'=>'owned-valid-pass-42','role'=>'student'],['id'=>1,'role'=>'admin']);}catch(InvalidArgumentException $e){$denied=true;}verifyIdentity($denied,'admin workspace reserved identity denied');
     $invalid=false;try{$db->prepare('UPDATE users SET is_system=2 WHERE id=?')->execute([$human]);}catch(PDOException $e){$invalid=true;}verifyIdentity($invalid,'database flag domain enforced');
+    require_once dirname(__DIR__).'/services/LoadTestFixture.php';
+    $directory=getenv('PHASE3Y_PRIVATE').'/identity-load-fixture';$fixtureTool=new LoadTestFixture($db);
+    $manifestPath=$fixtureTool->create(2,'http://127.0.0.1','ws://127.0.0.1',$directory);$manifest=json_decode(file_get_contents($manifestPath),true,512,JSON_THROW_ON_ERROR);
+    foreach($manifest['users']as$synthetic)verifyIdentity(SystemIdentity::humanId($db,(int)$synthetic['id']),'synthetic CLI fixture writer persists human0');
+    $cleanupFinding=null;try{$fixtureTool->cleanup($manifest);}catch(PDOException $e){if(!str_contains($e->getMessage(),"ws_tokens"))throw $e;$cleanupFinding=['status'=>'BLOCKED','reason'=>'Inherited load-fixture cleanup expects ws_tokens absent from canonical migrations; not a defense feature or capacity acceptance'];}
+    unlink($manifestPath);unlink($directory.'/LATEST');rmdir($directory);
     $rows=$db->query('SELECT id,is_system FROM users ORDER BY id')->fetchAll();
-    echo json_encode(['status'=>'PASS','checks'=>$checks,'identities'=>$rows],JSON_THROW_ON_ERROR);
+    echo json_encode(['status'=>'PASS','checks'=>$checks,'identities'=>$rows,'synthetic_fixture_cleanup'=>$cleanupFinding],JSON_THROW_ON_ERROR);
 }elseif($action==='scalar'){
     $sql=$in['sql'];echo json_encode(['value'=>$db->query($sql)->fetchColumn()],JSON_THROW_ON_ERROR);
 }else throw new RuntimeException('Unknown owned action');
