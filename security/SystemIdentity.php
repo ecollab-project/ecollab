@@ -12,7 +12,7 @@ final class SystemIdentity
 
     public static function humanId(PDO $db, int $id): bool
     {
-        $stmt = $db->prepare('SELECT is_system FROM users WHERE id=? AND deleted_at IS NULL');
+        $stmt = $db->prepare('SELECT is_system FROM users WHERE id=?');
         $stmt->execute([$id]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         return $user !== false && self::human($user);

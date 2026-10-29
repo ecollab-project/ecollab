@@ -16,6 +16,8 @@ All four supported runtime human INSERT writers explicitly persist0. Reserved-na
 
 Matching, DM and Jarred authorization queries are preserved. Tests exercise actual matching200, provisioned Jarred discovery, human DM roundtrip, outsider/CSRF denial, CodeLab and disabled-preference denial, and authorized Jarred202 queue admission. No external inference worker is started; a queued job is not a completed AI answer.
 
+A later broad Jarred regression caught an unintended HTTP-contract change: the identity-only session gate also excluded soft-deleted human rows, returning401 before the established403 authorization check. The flag lookup now checks authoritative identity only; existing account-deletion/status authorization remains with the original consumers. This preserves the existing human contract while still refusing machine sessions. The helper hash was refrozen and final validation rerun.
+
 ## Evidence and acceptance
 
 At this publication checkpoint native message smoke passed27checks/61HTTP. Identity's expanded prefreeze run passed32HTTP plus direct DB/service assertions. Frozen reruns, three PHPUnit orderings, original/accepted controls, native180clock/8race observations, exact-base PHPStan, hosted Chromium and final-head CI are required and are not certified by this checkpoint document. Final outcomes and failures belong in the PR handoff and downloadable raw artifact.
