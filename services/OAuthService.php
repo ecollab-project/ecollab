@@ -18,6 +18,8 @@ declare(strict_types=1);
  *   $result = $svc->handleCallback('google', $_GET['code'], $_GET['state']);
  *   // $result['user'] = ['id','email','full_name','avatar_url','email_verified']
  */
+require_once __DIR__ . '/../security/SystemIdentity.php';
+
 class OAuthService
 {
     // ── Google ────────────────────────────────────────────────────────────────
@@ -253,7 +255,7 @@ class OAuthService
     {
         // 1. Look up by provider + provider ID
         $stmt = $this->db->prepare("
-            SELECT id, username, email, full_name, role,
+            SELECT id, username, email, full_name, role, is_system,
                    avatar_color_gradient, plan_id
             FROM users
             WHERE sso_provider = :prov AND sso_uid = :oid
@@ -264,12 +266,16 @@ class OAuthService
         $user = $stmt->fetch();
 
         if ($user) {
+            if (!SystemIdentity::human($user) || SystemIdentity::reserved($this->db, (string)$user['username'])) {
+                throw new RuntimeException('This account cannot authenticate.', 403);
+            }
             // Refresh avatar URL and last seen
             $this->db->prepare("
                 UPDATE users
                 SET status = 'active', is_online = 1, last_seen_at = NOW()
                 WHERE id = :id
             ")->execute([':id' => $user['id']]);
+            unset($user['is_system']);
             return $user;
         }
 
@@ -281,7 +287,7 @@ class OAuthService
         }
 
         $stmt = $this->db->prepare("
-            SELECT id, username, email, full_name, role,
+            SELECT id, username, email, full_name, role, is_system,
                    avatar_color_gradient, plan_id
             FROM users
             WHERE email = :email AND deleted_at IS NULL
@@ -291,6 +297,9 @@ class OAuthService
         $user = $stmt->fetch();
 
         if ($user) {
+            if (!SystemIdentity::human($user) || SystemIdentity::reserved($this->db, (string)$user['username'])) {
+                throw new RuntimeException('This account cannot authenticate.', 403);
+            }
             // Attach OAuth identity to existing account
             $this->db->prepare("
                 UPDATE users
@@ -306,6 +315,7 @@ class OAuthService
                 ':oid'  => $p['provider_id'],
                 ':id'   => $user['id'],
             ]);
+            unset($user['is_system']);
             return $user;
         }
 
@@ -323,7 +333,7 @@ class OAuthService
         $i        = 1;
         while (true) {
             $check->execute([':u' => $username]);
-            if (!$check->fetchColumn()) break;
+            if (!$check->fetchColumn() && !SystemIdentity::reserved($this->db, $username)) break;
             $username = $base . $i++;
         }
 
@@ -344,11 +354,11 @@ class OAuthService
             INSERT INTO users
                 (institution_id, username, email, password_hash,
                  full_name, avatar_color_gradient, sso_provider, sso_uid, avatar_url,
-                 email_verified, role, status, created_at, updated_at)
+                 email_verified, role, status, is_system, created_at, updated_at)
             VALUES
                 (:inst, :uname, :email, NULL,
                  :name, :grad, :prov, :oid, :av,
-                 :ev, 'student', 'active', NOW(), NOW())
+                 :ev, 'student', 'active', 0, NOW(), NOW())
         ");
         $ins->execute([
             ':inst'  => $instId,
@@ -384,6 +394,7 @@ class OAuthService
 
     private function writeSession(array $user): void
     {
+        SystemIdentity::assertHuman($this->db, (int)$user['id']);
         if (session_status() === PHP_SESSION_NONE) session_start();
         session_regenerate_id(true);
         $_SESSION['user_id']               = (int)$user['id'];

@@ -20,6 +20,9 @@ if (!defined('SESSION_LIFETIME')) {
  *   $_SESSION['logged_in_at']        int     Unix timestamp
  *   $_SESSION['csrf_token']          string  used by chat CSRF checks
  */
+require_once dirname(__DIR__) . '/SystemIdentity.php';
+require_once dirname(__DIR__, 2) . '/database/config/db.php';
+
 class AuthMiddleware
 {
 
@@ -133,6 +136,10 @@ class AuthMiddleware
                 'samesite' => SESSION_SAMESITE,
             ]);
             session_start();
+        }
+        if (!empty($_SESSION['user_id']) && !SystemIdentity::humanId(Database::getInstance(), (int)$_SESSION['user_id'])) {
+            $_SESSION = [];
+            session_regenerate_id(true);
         }
     }
 

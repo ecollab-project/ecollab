@@ -1,4 +1,5 @@
 """Explicit Phase3AD repair scope. Historical guards remain active otherwise."""
+import os
 import hashlib
 import json
 import pathlib
@@ -13,6 +14,8 @@ ALLOWED = {'services/MessageService.php', 'API/chat/send-message.php', 'API/chat
 EXPECTED_HASHES = {'services/MessageService.php': 'ccde7647a26f0596e60b0e7ecd98e17decc86089390ae153c82fb1ba08fbfe91', 'API/chat/send-message.php': '6c8e5f6c35e27eab15cac34a4a8bd8cd79a35cfe59025752a6bac30b87a45172', 'API/chat/vote-poll.php': '46a3b3ccca9c5f6efa0dda753a9ce6fdaed054a6330372867825b0d1ec931481', 'database/migrations/068_message_code_poll_types.sql': '90b417fd89d9d510bd34e732809349256c5aa26a0e5d3081693d553460c1c37a'}
 
 def validate():
+    if os.environ.get('PHASE3AD_IDENTITY')=='1':
+        return __import__('runpy').run_path(str(ROOT/'tests/phase3ad-identity-scope.py'))['validate']()
     def git(*args):
         return subprocess.check_output(['git', *args], cwd=ROOT, text=True).strip()
     assert git('merge-base', BASE, 'HEAD') == BASE, 'Accepted PR100 must be an ancestor'

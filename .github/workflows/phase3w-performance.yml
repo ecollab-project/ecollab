@@ -13,6 +13,10 @@ permissions:
 jobs:
   owned-fpm-comparison:
     runs-on: ubuntu-24.04
+    env:
+      PHASE3AD_REPAIR: '1'
+      PHASE3AD_IDENTITY: '1'
+      PHASE3AD_OWNED_FRESH_IDENTITY: '1'
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
@@ -35,7 +39,7 @@ jobs:
         run: |
           set -e
           composer install --no-interaction --prefer-dist --no-progress
-          git diff --exit-code e818bbd84ae85d67aa71a38460fe154a5128a930 -- services API database assets
+          python3 -B tests/phase3ad-scope.py
           php8.3 -l services/StudentDashboardService.php
           php8.3 -l tests/classroom-bootstrap.php
           php8.3 -l tests/phase3w-telemetry-regression.php
@@ -63,7 +67,7 @@ jobs:
           CLASSROOM_FIXED_CLOCK: '1792800000'
           CLASSROOM_EVIDENCE: phase3w-raw/schema.json
           TZ: UTC
-        run: python3 -B -u tests/classroom-performance.py
+        run: python3 -B -u tests/phase3ad-repair-suite.py
       - name: Native MariaDB telemetry binding and error contracts
         env:
           PHP_BIN: /usr/bin/php8.3
@@ -71,7 +75,7 @@ jobs:
           CLASSROOM_BASE: e818bbd84ae85d67aa71a38460fe154a5128a930
           CLASSROOM_PHASE3W_TELEMETRY: '1'
           CLASSROOM_EVIDENCE: phase3w-raw/telemetry.json
-        run: python3 -B -u tests/classroom-performance.py
+        run: python3 -B -u tests/phase3ad-repair-suite.py
       - name: Existing native Student Dashboard regressions
         env:
           PHP_BIN: /usr/bin/php8.3
@@ -80,7 +84,7 @@ jobs:
           CLASSROOM_PHASE3V_REGRESSION_ONLY: '1'
           CLASSROOM_EVIDENCE: phase3w-raw/existing-native.json
           TZ: UTC
-        run: python3 -B -u tests/classroom-performance.py
+        run: python3 -B -u tests/phase3ad-repair-suite.py
       - name: Eight identical-source minimal/full schema read-write controls
         env:
           PHP_BIN: /usr/bin/php8.3

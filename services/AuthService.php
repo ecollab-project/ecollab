@@ -8,6 +8,7 @@ require_once ROOT_PATH . '/security/AuditLogger.php';
 require_once ROOT_PATH . '/security/AccountLockout.php';
 require_once ROOT_PATH . '/security/FieldEncryption.php';
 require_once ROOT_PATH . '/security/SchemaVersion.php';
+require_once ROOT_PATH . '/security/SystemIdentity.php';
 
 /**
  * AuthService — All authentication and account management business logic.
@@ -55,7 +56,7 @@ class AuthService {
         $cols = SchemaVersion::selectColumns('users',
             required: [
                 'u.id', 'u.username', 'u.email', 'u.full_name', 'u.password_hash',
-                'u.role', 'u.status', 'u.email_verified', 'u.avatar_color_gradient',
+                'u.role', 'u.is_system', 'u.status', 'u.email_verified', 'u.avatar_color_gradient',
             ],
             optional: [
                 'plan_id' => 'u.plan_id',
@@ -82,6 +83,10 @@ class AuthService {
             return ['success' => false, 'error' => $msg];
         }
 
+        if (!SystemIdentity::human($user)) {
+            return ['success' => false, 'error' => 'This account cannot authenticate.'];
+        }
+
         if (in_array($user['status'], ['banned', 'suspended', 'deactivated'], true)) {
             AuditLogger::log(AuditLogger::LOGIN_FAILURE,
                 ['user_id' => $user['id'], 'reason' => 'account_' . $user['status']],
@@ -103,6 +108,8 @@ class AuthService {
                 : 'Incorrect password. ' . ($result['message'] ?? 'Please try again.');
             return ['success' => false, 'error' => $msg];
         }
+
+        unset($user['is_system']);
 
         // ── Password accepted ──────────────────────────────────────────────
         $lockout->recordSuccess($identifier);
@@ -338,8 +345,8 @@ class AuthService {
             // Insert user
             $ins = $this->db->prepare("
                 INSERT INTO users (institution_id, username, email, password_hash,
-                                   full_name, avatar_color_gradient, role, status, email_verified, created_at, updated_at)
-                VALUES (:inst, :uname, :email, :hash, :name, :grad, 'student', 'active', 1, NOW(), NOW())
+                                   full_name, avatar_color_gradient, role, status, email_verified, is_system, created_at, updated_at)
+                VALUES (:inst, :uname, :email, :hash, :name, :grad, 'student', 'active', 1, 0, NOW(), NOW())
             ");
             $ins->execute([
                 ':inst'  => $instId,
@@ -516,12 +523,12 @@ class AuthService {
             return ['success' => false, 'error' => 'Invalid email address.'];
         }
 
-        $stmt = $this->db->prepare("SELECT id, full_name FROM users WHERE email = :e AND deleted_at IS NULL LIMIT 1");
+        $stmt = $this->db->prepare("SELECT id, full_name, is_system FROM users WHERE email = :e AND deleted_at IS NULL LIMIT 1");
         $stmt->execute([':e' => $email]);
         $user = $stmt->fetch();
 
         // Always return success to prevent email enumeration
-        if (!$user) {
+        if (!$user || !SystemIdentity::human($user)) {
             return ['success' => true, 'message' => 'If that email exists, a code has been sent.'];
         }
 
@@ -603,6 +610,10 @@ class AuthService {
             }
         }
 
+        if (!SystemIdentity::humanId($this->db, $userId)) {
+            return ['success' => false, 'error' => 'This account cannot authenticate.'];
+        }
+
         // Delegate verification to OtpService.
         $result = $this->otpService->verify($userId, $otp, $action);
         if (!$result['success']) {
@@ -613,7 +624,7 @@ class AuthService {
             $cols = SchemaVersion::selectColumns('users',
                 required: [
                     'u.id', 'u.username', 'u.email', 'u.full_name',
-                    'u.role', 'u.status', 'u.avatar_color_gradient',
+                    'u.role', 'u.is_system', 'u.status', 'u.avatar_color_gradient',
                 ],
                 optional: [
                     'plan_id' => 'u.plan_id',
@@ -630,10 +641,11 @@ class AuthService {
             $stmt->execute([':id' => $userId]);
             $user = $stmt->fetch();
 
-            if (!$user || in_array($user['status'], ['banned', 'suspended', 'deactivated'], true)) {
+            if (!$user || !SystemIdentity::human($user) || in_array($user['status'], ['banned', 'suspended', 'deactivated'], true)) {
                 return ['success' => false, 'error' => 'This account is no longer available.'];
             }
 
+            unset($user['is_system']);
             $remember = !empty($_SESSION['pending_login_remember']);
 
             $this->db->prepare("UPDATE users SET status='active', is_online=1, last_seen_at=NOW() WHERE id=:id")
@@ -669,7 +681,7 @@ class AuthService {
             $cols = SchemaVersion::selectColumns('users',
                 required: [
                     'u.id', 'u.username', 'u.email', 'u.full_name',
-                    'u.role', 'u.status', 'u.email_verified', 'u.avatar_color_gradient',
+                    'u.role', 'u.is_system', 'u.status', 'u.email_verified', 'u.avatar_color_gradient',
                 ],
                 optional: [
                     'plan_id' => 'u.plan_id',
@@ -686,7 +698,7 @@ class AuthService {
             $stmt->execute([':id' => $userId]);
             $user = $stmt->fetch();
 
-            if (!$user || in_array($user['status'], ['banned', 'suspended', 'deactivated'], true)) {
+            if (!$user || !SystemIdentity::human($user) || in_array($user['status'], ['banned', 'suspended', 'deactivated'], true)) {
                 return ['success' => false, 'error' => 'This account is no longer available.'];
             }
 
@@ -700,6 +712,7 @@ class AuthService {
                  WHERE id = :id
             ")->execute([':id' => $userId]);
 
+            unset($user['is_system']);
             $this->completeAuthenticatedLogin($user, false);
 
             unset(
@@ -745,6 +758,10 @@ class AuthService {
         }
 
         $userId = (int)$_SESSION['pwd_reset_user_id'];
+        if (!SystemIdentity::humanId($this->db, $userId)) {
+            unset($_SESSION['pwd_reset_token'], $_SESSION['pwd_reset_user_id'], $_SESSION['pwd_reset_expires']);
+            return ['success' => false, 'error' => 'Reset session expired. Please start again.'];
+        }
         $hash   = password_hash($newPassword, PASSWORD_BCRYPT, ['cost' => BCRYPT_COST]);
 
         $this->db->prepare("UPDATE users SET password_hash=:h, updated_at=NOW() WHERE id=:id")
@@ -762,7 +779,7 @@ class AuthService {
 
     public function validateSession(): array {
         if (session_status() === PHP_SESSION_NONE) session_start();
-        if (empty($_SESSION['user_id'])) {
+        if (empty($_SESSION['user_id']) || !SystemIdentity::humanId($this->db, (int)$_SESSION['user_id'])) {
             return ['success' => false, 'authenticated' => false];
         }
         return [
@@ -784,13 +801,13 @@ class AuthService {
         if ($token === '') return false;
 
         $stmt = $this->db->prepare("
-            SELECT id, username, email, full_name, role, status, avatar_color_gradient
+            SELECT id, username, email, full_name, role, status, is_system, avatar_color_gradient
             FROM users WHERE remember_token = :t AND deleted_at IS NULL LIMIT 1
         ");
         $stmt->execute([':t' => hash('sha256', $token)]);
         $user = $stmt->fetch();
 
-        if (!$user || in_array($user['status'], ['banned', 'suspended', 'deactivated'], true)) {
+        if (!$user || !SystemIdentity::human($user) || in_array($user['status'], ['banned', 'suspended', 'deactivated'], true)) {
             return false;
         }
 
@@ -828,6 +845,7 @@ class AuthService {
     // ═══════════════════════════════════════════════════════════════
 
     private function writeSession(array $user): void {
+        SystemIdentity::assertHuman($this->db, (int)$user['id']);
         if (session_status() === PHP_SESSION_NONE) session_start();
         session_regenerate_id(true);
         $_SESSION['user_id']          = (int)$user['id'];
@@ -866,6 +884,7 @@ class AuthService {
     }
 
     private function setRememberToken(int $userId): void {
+        SystemIdentity::assertHuman($this->db, $userId);
         $token     = bin2hex(random_bytes(32));
         $tokenHash = hash('sha256', $token);
         $this->db->prepare("UPDATE users SET remember_token=:t WHERE id=:id")
@@ -886,7 +905,7 @@ class AuthService {
         $i = 1;
         while (true) {
             $check->execute([':u' => $username]);
-            if (!$check->fetchColumn()) break;
+            if (!$check->fetchColumn() && !SystemIdentity::reserved($this->db, $username)) break;
             $username = $base . $i++;
         }
         return $username;

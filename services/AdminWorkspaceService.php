@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once dirname(__DIR__).'/database/config/db.php';
+require_once dirname(__DIR__).'/security/SystemIdentity.php';
 require_once dirname(__DIR__).'/services/RealtimeOutbox.php';
 
 /** Admin workspace data. Optional sources remain unavailable rather than becoming fabricated zeros. */
@@ -127,7 +128,8 @@ final class AdminWorkspaceService
             if($action==='create_user') {
                 $username=trim((string)($body['username']??''));$email=strtolower(trim((string)($body['email']??'')));$name=trim((string)($body['full_name']??''));$password=(string)($body['password']??'');$role=$body['role']??'student';
                 if(!preg_match('/^[a-zA-Z0-9_.-]{3,50}$/D',$username)||!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($email)>120||$name===''||strlen($name)>120||strlen($password)<12||strlen($password)>72||!in_array($role,['student','facilitator','admin'],true))throw new InvalidArgumentException('Provide a valid username, email, full name, role and password of 12–72 characters.');
-                $this->rows("INSERT INTO users(username,email,full_name,password_hash,role,status) VALUES(?,?,?,?,?,'offline')",[$username,$email,$name,password_hash($password,PASSWORD_BCRYPT,['cost'=>defined('BCRYPT_COST')?BCRYPT_COST:12]),$role]);
+                if (SystemIdentity::reserved($this->db, $username)) throw new InvalidArgumentException('That username is reserved.');
+                $this->rows("INSERT INTO users(username,email,full_name,password_hash,role,status,is_system) VALUES(?,?,?,?,?,'offline',0)",[$username,$email,$name,password_hash($password,PASSWORD_BCRYPT,['cost'=>defined('BCRYPT_COST')?BCRYPT_COST:12]),$role]);
                 $id=(int)$this->db->lastInsertId();$this->rows('INSERT INTO user_profiles(user_id) VALUES(?)',[$id]);
                 $this->log((int)$actor['id'],'admin.user.created',$id,'Created user '.$username);
             } elseif(in_array($action,['role','ban','unban'],true)) {

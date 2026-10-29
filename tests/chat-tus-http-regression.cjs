@@ -10,7 +10,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 (async()=>{
   const socket=net.createServer();await new Promise(r=>socket.listen(0,'127.0.0.1',r));
   const port=socket.address().port;await new Promise(r=>socket.close(r));const base='http://127.0.0.1:'+port;
-  for(const name of ['API/chat/resumable-upload.php','services/ChatTusStorage.php','services/ChatUploadAccess.php','security/middleware/AuthMiddleware.php'])write(name,fs.readFileSync(path.join(root,name)));
+  for(const name of ['API/chat/resumable-upload.php','services/ChatTusStorage.php','services/ChatUploadAccess.php','security/middleware/AuthMiddleware.php','security/SystemIdentity.php'])write(name,fs.readFileSync(path.join(root,name)));
   write('config.php',`<?php
     ini_set('session.save_path',${JSON.stringify(temporary)});
     define('ROOT_PATH',__DIR__);define('BASE_URL',${JSON.stringify(base)});define('UPLOAD_DIR',__DIR__.'/uploads/');
@@ -19,15 +19,18 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   `);
   write('database/config/db.php',String.raw`<?php
     class Database {
-      static function getInstance(){return new self;}
-      function prepare($sql){return new FixtureStatement($sql);}
+      static function getInstance(){return new FixturePDO;}
     }
-    class FixtureStatement {
+    class FixturePDO extends PDO {
+      function __construct(){}
+      function prepare(string $sql,array $options=[]):PDOStatement|false{return new FixtureStatement($sql);}
+    }
+    class FixtureStatement extends PDOStatement {
       private $sql;private $args;
       function __construct($sql){$this->sql=$sql;}
-      function execute($args){$this->args=$args;}
-      function fetchColumn(){if(str_contains($this->sql,'FROM users'))return 'student';if(str_contains($this->sql,'moderation_actions'))return false;return 1;}
-      function fetch($mode){return ($this->args[':id']??0)===20?['type'=>'text','is_private'=>0,'created_by'=>5,'server_id'=>5,'server_role'=>'member','has_access'=>1]:false;}
+      function execute(?array $args=null):bool{$this->args=$args;return true;}
+      function fetchColumn(int $column=0):mixed{if(str_contains($this->sql,'FROM users'))return 'student';if(str_contains($this->sql,'moderation_actions'))return false;return 1;}
+      function fetch(int $mode=PDO::FETCH_DEFAULT,int $orientation=PDO::FETCH_ORI_NEXT,int $offset=0):mixed{if(str_contains($this->sql,'SELECT is_system FROM users'))return ['is_system'=>0];return ($this->args[':id']??0)===20?['type'=>'text','is_private'=>0,'created_by'=>5,'server_id'=>5,'server_role'=>'member','has_access'=>1]:false;}
     }
   `);
   write('login.php',"<?php require 'config.php';require 'security/middleware/AuthMiddleware.php';AuthMiddleware::startSession();$_SESSION['user_id']=18;$_SESSION['csrf_token']='test-token';echo 'ok';");

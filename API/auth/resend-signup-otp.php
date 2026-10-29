@@ -44,7 +44,7 @@ if ($pendingUserId <= 0 || $pendingExpires < time()) {
 try {
     $db = Database::getInstance();
     $stmt = $db->prepare("
-        SELECT id, email, full_name, email_verified, status
+        SELECT id, email, full_name, email_verified, status, is_system
         FROM users
         WHERE id = :id AND deleted_at IS NULL
         LIMIT 1
@@ -52,7 +52,7 @@ try {
     $stmt->execute([':id' => $pendingUserId]);
     $user = $stmt->fetch();
 
-    if (!$user || (int)$user['email_verified'] === 1) {
+    if (!$user || !SystemIdentity::human($user) || (int)$user['email_verified'] === 1) {
         unset($_SESSION['pending_signup_user_id'], $_SESSION['pending_signup_expires']);
         echo json_encode(['success' => false, 'error' => 'Email verification is no longer required.']);
         exit;

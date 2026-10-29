@@ -1,6 +1,6 @@
 mkdir -p phase3ad-raw
 python3 -B tests/phase3ad-scope.py phase3ad-raw/scope.json
-for file in tests/phase3ac-*.php tests/phase3ad-*.php services/MessageService.php API/chat/send-message.php API/chat/vote-poll.php security/forgot-password/OtpService.php; do php8.3 -l "$file"; done
+for file in tests/phase3ac-*.php tests/phase3ad-*.php security/SystemIdentity.php scripts/provision-system-account.php services/AuthService.php services/OAuthService.php services/AdminWorkspaceService.php security/middleware/AuthMiddleware.php API/admin/dashboard-data.php API/auth/resend-signup-otp.php services/MessageService.php API/chat/send-message.php API/chat/vote-poll.php security/forgot-password/OtpService.php; do php8.3 -l "$file"; done
 node --check tests/phase3ac-browser.cjs
 for file in tests/phase3aa-*.php tests/experiments/phase3aa/*.php; do php8.3 -l "$file"; done
 php8.3 -l tests/phase3z-clock.php

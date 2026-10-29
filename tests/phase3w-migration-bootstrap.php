@@ -6,3 +6,6 @@ $_ENV['DB_NAME']='classroom_perf_test';putenv('DB_NAME=classroom_perf_test');
 require_once __DIR__.'/../database/config/db.php';
 $db=new PDO($dsn,'root','',[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC,PDO::ATTR_EMULATE_PREPARES=>false]);
 (new ReflectionProperty(Database::class,'instance'))->setValue(null,$db);
+if (getenv('PHASE3AD_OWNED_FRESH_IDENTITY') === '1') {
+    $db->exec('SET @phase3ad_owned_fresh_identity=1');
+}
