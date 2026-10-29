@@ -1,9 +1,15 @@
-name: Phase 3AD message default regression
+name: Phase 3AD code and poll compatibility
 on:
   pull_request:
     paths:
       - 'services/MessageService.php'
-      - 'tests/phase3ad-message-default.py'
+      - 'API/chat/send-message.php'
+      - 'API/chat/vote-poll.php'
+      - 'tests/phase3ad-message-control.php'
+      - 'tests/phase3ad-enum-migration.php'
+      - 'tests/phase3ad-scope.py'
+      - 'database/migrations/068_message_code_poll_types.sql'
+      - 'tests/phase3ad-message-compatibility.py'
       - '.github/workflows/phase3ad-message-default.yml'
   workflow_dispatch:
 permissions:
@@ -31,17 +37,11 @@ jobs:
           sudo apt-get "${apt_options[@]}" install -y mariadb-server php8.3-fpm php8.3-cli php8.3-mysql php8.3-sqlite3 php8.3-curl php8.3-mbstring php8.3-xml
       - name: Exact source boundary and dependencies
         run: |
-          python3 - <<'PYCODE'
-          import subprocess
-          base='77d791d72ad5e07089dead0e886d1b5ef6811149'
-          paths=subprocess.check_output(['git','diff','--name-only',base,'--','services','API','security','database','assets','modules','websocket','scripts','deploy','config.php','composer.json','composer.lock'],text=True).splitlines()
-          assert paths==['services/MessageService.php'],paths
-          assert subprocess.check_output(['git','rev-parse','HEAD:security/forgot-password/OtpService.php'],text=True).strip()=='7013114a3a7bc0d183c01fc92e0687f06202d3a7'
-          PYCODE
+          python3 -B tests/phase3ad-scope.py
           php8.3 -l services/MessageService.php
           composer install --no-interaction --prefer-dist --no-progress
-          git worktree add --detach "$RUNNER_TEMP/message-base" 77d791d72ad5e07089dead0e886d1b5ef6811149
-          cp tests/phase3ad-message-default.py "$RUNNER_TEMP/message-base/tests/"
+          git worktree add --detach "$RUNNER_TEMP/message-base" cb94769a6af87a356a069a2c949b5bd7b5c73e6e
+          cp tests/phase3ad-message-compatibility.py "$RUNNER_TEMP/message-base/tests/"
           cd "$RUNNER_TEMP/message-base"
           composer install --no-interaction --prefer-dist --no-progress
       - name: Exact base real HTTP and three full suite orderings
@@ -51,7 +51,7 @@ jobs:
           MARIADBD_BIN: /usr/sbin/mariadbd
           PHASE3AD_MESSAGE_CONTROL: '1'
           PHASE3AD_MESSAGE_EVIDENCE: ${{ github.workspace }}/phase3ad-message-raw/base.json
-        run: python3 -B "$RUNNER_TEMP/message-base/tests/phase3ad-message-default.py"
+        run: python3 -B "$RUNNER_TEMP/message-base/tests/phase3ad-message-compatibility.py"
       - name: Candidate real HTTP and three full suite orderings
         if: ${{ !cancelled() }}
         env:
@@ -59,7 +59,7 @@ jobs:
           PHP_FPM_BIN: /usr/sbin/php-fpm8.3
           MARIADBD_BIN: /usr/sbin/mariadbd
           PHASE3AD_MESSAGE_EVIDENCE: phase3ad-message-raw/candidate.json
-        run: python3 -B tests/phase3ad-message-default.py
+        run: python3 -B tests/phase3ad-message-compatibility.py
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:

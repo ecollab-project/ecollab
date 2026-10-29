@@ -4,6 +4,10 @@ on:
     paths:
       - 'tests/phase3ad-*'
       - 'security/forgot-password/OtpService.php'
+      - 'services/MessageService.php'
+      - 'API/chat/send-message.php'
+      - 'API/chat/vote-poll.php'
+      - 'database/migrations/068_message_code_poll_types.sql'
       - 'docs/450-phase3ad*'
       - '.github/workflows/phase3ad-integration.yml'
   workflow_dispatch:
@@ -12,7 +16,9 @@ permissions:
 jobs:
   owned-http-auth:
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 50
+    env:
+      PHASE3AD_REPAIR: '1'
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
@@ -39,28 +45,7 @@ jobs:
       - name: Source gate and existing security regressions
         env:
           PHP_BIN: /usr/bin/php8.3
-        run: |
-          git diff --exit-code 0db2d57a85f33710d5bf46b9c7162e8aa39885f6 -- services API database assets security websocket config.php modules scripts deploy composer.json composer.lock
-          git diff --exit-code e4999821b16f8d8085a8cde6c5b08de2fc824ae5 -- services API database assets websocket config.php modules composer.json composer.lock
-          test "$(git diff --name-only e4999821b16f8d8085a8cde6c5b08de2fc824ae5 -- security)" = "security/forgot-password/OtpService.php"
-          for file in tests/phase3ac-*.php security/forgot-password/OtpService.php; do php8.3 -l "$file"; done
-          node --check tests/phase3ac-browser.cjs
-          for file in tests/phase3aa-*.php tests/experiments/phase3aa/*.php; do php8.3 -l "$file"; done
-          php8.3 -l tests/phase3z-clock.php
-          php8.3 -l tests/phase3y-bootstrap.php
-          php8.3 -l tests/phase3y-control.php
-          php8.3 -l tests/Integration/OtpExpiryTest.php
-          node --check tests/phase3y-browser.cjs
-          node --check assets/js/auth/signup.js
-          node --check assets/js/auth/signup-network-fix.js
-          node --check assets/js/auth/login.js
-          mkdir -p phase3ad-raw
-          python3 -B tests/phase3ad-inventory.py phase3ad-raw/inventory.json
-          node --check tests/phase3ad-browser.cjs
-          php8.3 -l tests/phase3ad-fixture.php
-          python3 -B tests/phase3ac-inventory.py phase3ad-raw/writers.json
-          php8.3 tests/client-ip-regression.php
-          node tests/request-security-regression.cjs
+        run: python3 -B tests/phase3ad-command.py source-gate-and-existing-security-regressions bash -e tests/phase3ad-step-source-gate-and-existing-security-regressions.sh
       - name: Full original failing control and current three orderings including native expiry
         env:
           PHP_BIN: /usr/bin/php8.3
@@ -70,7 +55,7 @@ jobs:
           PHASE3X_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
           CLASSROOM_EVIDENCE: phase3ad-raw/full.json
           TZ: UTC
-        run: python3 -B -u tests/phase3ac-suite.py
+        run: python3 -B tests/phase3ad-command.py full-original-failing-control-and-current-three-orderings-including-native-expiry bash -e -c 'python3 -B -u tests/phase3ad-repair-suite.py'
       - name: Exact accepted Phase3X base comparison
         env:
           PHP_BIN: /usr/bin/php8.3
@@ -80,7 +65,7 @@ jobs:
           PHASE3W_FULL_PHPUNIT: '1'
           CLASSROOM_EVIDENCE: phase3ad-raw/accepted-base.json
           TZ: UTC
-        run: python3 -B -u tests/phase3ac-suite.py
+        run: python3 -B tests/phase3ad-command.py exact-accepted-phase3x-base-comparison bash -e -c 'python3 -B -u tests/phase3ad-repair-suite.py'
       - name: Exact accepted Phase3AB base comparison
         env:
           PHP_BIN: /usr/bin/php8.3
@@ -90,7 +75,7 @@ jobs:
           PHASE3W_FULL_PHPUNIT: '1'
           CLASSROOM_EVIDENCE: phase3ad-raw/accepted-phase3ab.json
           TZ: UTC
-        run: python3 -B -u tests/phase3ac-suite.py
+        run: python3 -B tests/phase3ad-command.py exact-accepted-phase3ab-base-comparison bash -e -c 'python3 -B -u tests/phase3ad-repair-suite.py'
       - name: Exact accepted Phase3AC source comparison
         env:
           PHP_BIN: /usr/bin/php8.3
@@ -100,7 +85,7 @@ jobs:
           PHASE3W_FULL_PHPUNIT: '1'
           CLASSROOM_EVIDENCE: phase3ad-raw/accepted-phase3ac.json
           TZ: UTC
-        run: python3 -B -u tests/classroom-performance.py
+        run: python3 -B tests/phase3ad-command.py exact-accepted-phase3ac-source-comparison bash -e -c 'python3 -B -u tests/phase3ad-repair-suite.py'
       - name: Actual corrected HTTP, hosted Chromium and persisted OTP browser reset
         env:
           PHP_BIN: /usr/bin/php8.3
@@ -110,7 +95,7 @@ jobs:
           PHASE3Y_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
           PHASE3AC_HTTP_EVIDENCE: phase3ad-raw/http.json
           TZ: UTC
-        run: python3 -B -u tests/phase3ac-http.py
+        run: python3 -B tests/phase3ad-command.py actual-corrected-http-hosted-chromium-and-persisted-otp-browser-reset bash -e -c 'python3 -B -u tests/phase3ad-repair-http.py'
       - name: Actual corrected native clocks, sessions, failures and legacy rehearsal
         env:
           PHP_BIN: /usr/bin/php8.3
@@ -119,7 +104,7 @@ jobs:
           PHASE3AC_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
           PHASE3AC_EVIDENCE: phase3ad-raw/security.json
           TZ: UTC
-        run: python3 -B -u tests/phase3ac-security.py
+        run: python3 -B tests/phase3ad-command.py actual-corrected-native-clocks-sessions-failures-and-legacy-rehearsal bash -e -c 'python3 -B -u tests/phase3ac-security.py'
       - name: Exact accepted Phase3Y comparison
         env:
           PHP_BIN: /usr/bin/php8.3
@@ -129,7 +114,7 @@ jobs:
           PHASE3W_FULL_PHPUNIT: '1'
           CLASSROOM_EVIDENCE: phase3ad-raw/accepted-phase3y.json
           TZ: UTC
-        run: python3 -B -u tests/phase3ac-suite.py
+        run: python3 -B tests/phase3ad-command.py exact-accepted-phase3y-comparison bash -e -c 'python3 -B -u tests/phase3ad-repair-suite.py'
       - name: Exact accepted Phase3Z comparison
         env:
           PHP_BIN: /usr/bin/php8.3
@@ -139,7 +124,7 @@ jobs:
           PHASE3W_FULL_PHPUNIT: '1'
           CLASSROOM_EVIDENCE: phase3ad-raw/accepted-phase3z.json
           TZ: UTC
-        run: python3 -B -u tests/phase3ac-suite.py
+        run: python3 -B tests/phase3ad-command.py exact-accepted-phase3z-comparison bash -e -c 'python3 -B -u tests/phase3ad-repair-suite.py'
       - name: Frozen original clock, transition and double-consumption controls
         env:
           PHP_BIN: /usr/bin/php8.3
@@ -148,27 +133,29 @@ jobs:
           PHASE3AA_EXPECTED_HEAD: e4999821b16f8d8085a8cde6c5b08de2fc824ae5
           PHASE3AA_EVIDENCE: ${{ github.workspace }}/phase3ad-raw/original-experiments.json
           TZ: UTC
-        run: |
-          git worktree add --detach "$RUNNER_TEMP/phase3ac-original" e4999821b16f8d8085a8cde6c5b08de2fc824ae5
-          cp -a vendor "$RUNNER_TEMP/phase3ac-original/vendor"
-          cd "$RUNNER_TEMP/phase3ac-original"
-          composer dump-autoload --no-interaction
-          python3 -B -u tests/phase3aa-experiments.py
-          python3 -B tests/phase3aa-report.py "$PHASE3AA_EVIDENCE" "${{ github.workspace }}/phase3ad-raw/original-summary.json"
+        run: python3 -B tests/phase3ad-command.py frozen-original-clock-transition-and-double-consumption-controls bash -e tests/phase3ad-step-frozen-original-clock-transition-and-double-consumption-controls.sh
       - name: Exact-base static comparison
         if: always()
         env:
           PHP_BIN: /usr/bin/php8.3
-          PEER_THREADS_BASE: e4999821b16f8d8085a8cde6c5b08de2fc824ae5
+          PEER_THREADS_BASE: cb94769a6af87a356a069a2c949b5bd7b5c73e6e
           PEER_THREADS_STATIC_EVIDENCE: phase3ad-raw/static.json
-        run: python3 -B -u tests/peer-threads-static.py
+        run: python3 -B tests/phase3ad-command.py exact-base-static-comparison bash -e -c 'python3 -B -u tests/peer-threads-static.py'
       - name: Recompute actual security acceptance from raw records
-        run: python3 -B tests/phase3ac-report.py phase3ad-raw
+        run: python3 -B tests/phase3ad-command.py recompute-actual-security-acceptance-from-raw-records bash -e -c 'python3 -B tests/phase3ac-report.py phase3ad-raw'
       - name: Four-migration compatibility and recovery rehearsal
         env:
           PHP_BIN: /usr/bin/php8.3
           MARIADBD_BIN: /usr/sbin/mariadbd
-        run: python3 -B -u tests/coworkspace-migration-integration.py > phase3ad-raw/migration-compatibility.log 2>&1
+        run: python3 -B tests/phase3ad-command.py four-migration-compatibility-and-recovery-rehearsal bash -e -c 'python3 -B -u tests/coworkspace-migration-integration.py > phase3ad-raw/migration-compatibility.log 2>&1'
+      - name: Actual code poll message compatibility
+        if: always()
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          PHP_FPM_BIN: /usr/sbin/php-fpm8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          PHASE3AD_MESSAGE_EVIDENCE: phase3ad-raw/message-compatibility.json
+        run: python3 -B tests/phase3ad-command.py actual-code-poll-message-compatibility bash -e -c 'python3 -B tests/phase3ad-message-compatibility.py'
       - name: Actual composed student facilitator collaboration HTTP and Chromium
         if: always()
         env:
@@ -179,7 +166,7 @@ jobs:
           PHASE3AD_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
           PHASE3AD_HTTP_EVIDENCE: phase3ad-raw/integration-http.json
           TZ: UTC
-        run: python3 -B -u tests/phase3ad-http.py
+        run: python3 -B tests/phase3ad-command.py actual-composed-student-facilitator-collaboration-http-and-chromium bash -e -c 'python3 -B -u tests/phase3ad-http.py'
       - name: Recompute integration readiness and preserve blockers
         if: always()
         run: python3 -B tests/phase3ad-report.py phase3ad-raw

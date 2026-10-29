@@ -44,6 +44,9 @@ session_write_close();
 
 try {
     $body = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+    if (!is_array($body)) {
+        throw new InvalidArgumentException('Invalid message payload', 400);
+    }
 
     $channelId = filter_var($body['channel_id'] ?? 0, FILTER_VALIDATE_INT);
     if (!$channelId) {
@@ -129,7 +132,8 @@ try {
 } catch (RuntimeException $e) {
     $code = ($e->getCode() >= 400 && $e->getCode() < 600) ? $e->getCode() : 500;
     http_response_code($code);
-    echo json_encode(['error' => $e->getMessage()]);
+    if ($code >= 500) error_log('[Ecollab] send-message database/runtime failure: ' . $e->getMessage());
+    echo json_encode(['error' => $code >= 500 ? 'Unable to send message' : $e->getMessage()]);
 } catch (Throwable $e) {
     error_log('[Ecollab] send-message Throwable: ' . $e->getMessage()
         . ' in ' . $e->getFile() . ':' . $e->getLine());

@@ -1,0 +1,17 @@
+[
+  "source-gate-and-existing-security-regressions",
+  "full-original-failing-control-and-current-three-orderings-including-native-expiry",
+  "exact-accepted-phase3x-base-comparison",
+  "exact-accepted-phase3ab-base-comparison",
+  "exact-accepted-phase3ac-source-comparison",
+  "actual-corrected-http-hosted-chromium-and-persisted-otp-browser-reset",
+  "actual-corrected-native-clocks-sessions-failures-and-legacy-rehearsal",
+  "exact-accepted-phase3y-comparison",
+  "exact-accepted-phase3z-comparison",
+  "frozen-original-clock-transition-and-double-consumption-controls",
+  "exact-base-static-comparison",
+  "recompute-actual-security-acceptance-from-raw-records",
+  "four-migration-compatibility-and-recovery-rehearsal",
+  "actual-code-poll-message-compatibility",
+  "actual-composed-student-facilitator-collaboration-http-and-chromium"
+]

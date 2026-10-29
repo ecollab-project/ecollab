@@ -36,9 +36,14 @@ try {
          JOIN channels c ON c.id = m.channel_id
          JOIN server_members sm ON sm.server_id = c.server_id AND sm.user_id = :uid
          WHERE p.id = :pid AND m.is_deleted = 0
+           AND (c.is_private = 0 OR sm.server_role IN (\'owner\',\'admin\')
+                OR c.created_by = :creator
+                OR EXISTS(SELECT 1 FROM channel_members cm
+                          WHERE cm.channel_id = c.id AND cm.user_id = :channel_member))
          LIMIT 1'
     );
-    $access->execute([':uid' => $user['id'], ':pid' => $pollId]);
+    $access->execute([':uid' => $user['id'], ':pid' => $pollId,
+        ':creator' => $user['id'], ':channel_member' => $user['id']]);
     if (!$access->fetchColumn()) {
         http_response_code(403);
         echo json_encode(['error' => 'You do not have access to this poll']);
