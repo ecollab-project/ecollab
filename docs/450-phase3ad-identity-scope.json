@@ -34,11 +34,15 @@
   "test_infrastructure": [
     "tests/phase3ad-*",
     "tests/phase3w-migration-bootstrap.php",
-    ".github/workflows/phase3ad-*"
+    ".github/workflows/phase3ad-*",
+    "tests/chat-tus-http-regression.cjs",
+    ".github/workflows/phase3w-performance.yml",
+    "tests/phase3w-compare.py"
   ],
   "docs": [
     "docs/450-phase3ad-identity-*"
   ],
   "writer_inventory": "Four runtime INSERT writers inspected; no runtime username UPDATE found. OAuth provider/email upsert, password,OTP,reset,remember,session inspected. No claim concerning external production writers.",
-  "preimplementation_amendment": "Before editing: direct resend-signup endpoint owns an additional OTP writer; guard it without touching accepted OtpService. Session refresh/onboarding use common startSession guard."
+  "preimplementation_amendment": "Before editing: direct resend-signup endpoint owns an additional OTP writer; guard it without touching accepted OtpService. Session refresh/onboarding use common startSession guard.",
+  "test_repair_reason": "First hosted head01736: copied upload fixture lacks new helper/PDO identity row; message workflow missing identity guard selector; frozen telemetry guard requires explicitly approved identity scope. Production runtime hashes stay frozen."
 }

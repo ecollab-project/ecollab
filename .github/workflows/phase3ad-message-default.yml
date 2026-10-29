@@ -20,6 +20,7 @@ jobs:
     timeout-minutes: 25
     env:
       PHASE3AD_OWNED_FRESH_IDENTITY: '1'
+      PHASE3AD_IDENTITY: '1'
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}

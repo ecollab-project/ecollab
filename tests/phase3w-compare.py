@@ -6,7 +6,7 @@ def main():
  tree=lambda ref:subprocess.check_output(['git','rev-parse',ref+'^{tree}'],cwd=ROOT,text=True).strip()
  assert tree(expected)==tree(head);report={'base':BASE,'application_ref':BASE,'application_change':'NONE','harness_commit':head,'harness_tree':tree(head),'intended_harness_head':expected,'opcache':'on in every pool','runs':[],'response_comparisons':[]};previous={};native_previous={}
  for i,(schema,index)in enumerate((s,index)for s in ['minimal','full']for index in ['absent','present','present','absent']):
-  path=folder/(str(i)+'-'+schema+'-'+index+'.json');cmd=[sys.executable,'-B','-u',str(ROOT/'tests/classroom-performance.py')];env=os.environ|{'TZ':'UTC','CLASSROOM_BASE':BASE,'CLASSROOM_APP_REF':BASE,'CLASSROOM_INTENDED_HEAD':BASE,'CLASSROOM_PHASE3W':'1','CLASSROOM_PROFILE':'0','CLASSROOM_FIXED_CLOCK':'1792800000','CLASSROOM_OPCACHE':'on','PHASE3W_SCHEMA':schema,'PHASE3W_INDEX':index,'PHASE3W_SECONDS':'30','CLASSROOM_EVIDENCE':str(path)}
+  path=folder/(str(i)+'-'+schema+'-'+index+'.json');cmd=[sys.executable,'-B','-u',str(ROOT/('tests/phase3ad-repair-suite.py' if os.environ.get('PHASE3AD_IDENTITY')=='1' else 'tests/classroom-performance.py'))];env=os.environ|{'TZ':'UTC','CLASSROOM_BASE':BASE,'CLASSROOM_APP_REF':BASE,'CLASSROOM_INTENDED_HEAD':BASE,'CLASSROOM_PHASE3W':'1','CLASSROOM_PROFILE':'0','CLASSROOM_FIXED_CLOCK':'1792800000','CLASSROOM_OPCACHE':'on','PHASE3W_SCHEMA':schema,'PHASE3W_INDEX':index,'PHASE3W_SECONDS':'30','CLASSROOM_EVIDENCE':str(path)}
   with (folder/(str(i)+'.log')).open('w')as log:r=subprocess.run(cmd,cwd=ROOT,env=env,stdout=log,stderr=log,timeout=420)
   info={'schema':schema,'index':index,'exit_code':r.returncode,'file':path.name,'command':cmd};report['runs'].append(info)
   if path.exists():
