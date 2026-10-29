@@ -14,7 +14,7 @@ class ResponsiveStatement extends PDOStatement {
         if(preg_match('/FROM\s+channels\b/i',$this->sql))return [['id'=>11,'server_id'=>1,'name'=>'general','slug'=>'general','type'=>'text','description'=>'Learning together','position'=>0,'is_private'=>0,'is_locked'=>0,'member_count'=>16,'unread_count'=>0,'is_new'=>0],['id'=>12,'server_id'=>1,'name'=>'general-voice','slug'=>'general-voice','type'=>'voice','description'=>'','position'=>1,'is_private'=>0,'is_locked'=>0,'member_count'=>16,'unread_count'=>0,'is_new'=>0]];
         return [];
     }
-    public function fetch(int $mode=PDO::FETCH_DEFAULT,int $cursorOrientation=PDO::FETCH_ORI_NEXT,int $cursorOffset=0):mixed{if(str_contains($this->sql,'s.owner_id,u.role'))return ['id'=>1,'name'=>'Programming learning community','owner_id'=>1,'role'=>$_SESSION['role']??'student'];return false;}
+    public function fetch(int $mode=PDO::FETCH_DEFAULT,int $cursorOrientation=PDO::FETCH_ORI_NEXT,int $cursorOffset=0):mixed{if(str_contains($this->sql,'SELECT is_system FROM users'))return ['is_system'=>0];if(str_contains($this->sql,'s.owner_id,u.role'))return ['id'=>1,'name'=>'Programming learning community','owner_id'=>1,'role'=>$_SESSION['role']??'student'];return false;}
 }
 class ResponsivePDO extends PDO {
     public function __construct(){}
