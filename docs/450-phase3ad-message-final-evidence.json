@@ -1,0 +1,1144 @@
+{
+  "candidate_head": "cb94769a6af87a356a069a2c949b5bd7b5c73e6e",
+  "candidate_tree": "99129e1ef061498042f450fea104c301860a5e49",
+  "base": "77d791d72ad5e07089dead0e886d1b5ef6811149",
+  "readiness": "BLOCKED",
+  "supplemental_native_security": {
+    "status": "PASS",
+    "clock_records": 180,
+    "race_rounds": 8,
+    "single_winners": 8,
+    "cohorts": 5,
+    "http_requests": 297,
+    "local_not_hosted": true,
+    "source_overlay": ""
+  },
+  "hosted": {
+    "returned_runs": 8,
+    "success": 7,
+    "failure": 1,
+    "steps": {
+      "success": 106,
+      "failure": 4,
+      "skipped": 11
+    },
+    "synthetic_merge": "1a9847a072ead326a1f9c4bf301f8859b80fd86b",
+    "tree": "99129e1ef061498042f450fea104c301860a5e49",
+    "artifacts": [
+      {
+        "id": 12882308716,
+        "run": 40840753895,
+        "sha256": "99de6ae86ede5e41a6f546baa1fb8c978f9c66dfd0c56bb984824ad34a0819ac",
+        "downloaded_and_recomputed": true,
+        "base_requests": 39,
+        "candidate_requests": 41,
+        "full_suites_each": 3
+      },
+      {
+        "id": 12882562914,
+        "run": 40840754012,
+        "sha256": "6488b5a2489d7085512f73183a3f9389a4351d8be0e30cf98a51884c0284eee6",
+        "downloaded_and_recomputed": true,
+        "requests": 52,
+        "integration": "FAIL matching500",
+        "chromium_cases": 4,
+        "chromium": "PASS"
+      }
+    ],
+    "jobs": [
+      {
+        "run": 40840753842,
+        "name": "Chat timeline and profiles",
+        "conclusion": "success",
+        "jobs": [
+          {
+            "id": 123336262793,
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-10-29T08:14:48Z",
+                "completed_at": "2026-10-29T08:14:49Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-10-29T08:14:49Z",
+                "completed_at": "2026-10-29T08:15:16Z"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-10-29T08:15:16Z",
+                "completed_at": "2026-10-29T08:15:16Z"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-10-29T08:15:16Z",
+                "completed_at": "2026-10-29T08:15:19Z"
+              },
+              {
+                "name": "Run npm install --no-save --ignore-scripts jsdom@30.1.2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-10-29T08:15:19Z",
+                "completed_at": "2026-10-29T08:15:21Z"
+              },
+              {
+                "name": "Run node tests/chat-timeline-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-10-29T08:15:21Z",
+                "completed_at": "2026-10-29T08:15:22Z"
+              },
+              {
+                "name": "Run node tests/chat-profile-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-10-29T08:15:22Z",
+                "completed_at": "2026-10-29T08:15:23Z"
+              },
+              {
+                "name": "Run node tests/chat-members-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8,
+                "started_at": "2026-10-29T08:15:23Z",
+                "completed_at": "2026-10-29T08:15:23Z"
+              },
+              {
+                "name": "Run php tests/chat-read-regression.php",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9,
+                "started_at": "2026-10-29T08:15:23Z",
+                "completed_at": "2026-10-29T08:15:23Z"
+              },
+              {
+                "name": "Run for file in API/chat/get-messages.php API/dm/open-conversation.php API/dm/group-message.php API/dm/groups.php API/profile/get-profile.php services/ChatReadService.php modules/chat/chat.php; do php -l \"$file\" || exit 1; done",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10,
+                "started_at": "2026-10-29T08:15:23Z",
+                "completed_at": "2026-10-29T08:15:24Z"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19,
+                "started_at": "2026-10-29T08:15:24Z",
+                "completed_at": "2026-10-29T08:15:24Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 20,
+                "started_at": "2026-10-29T08:15:24Z",
+                "completed_at": "2026-10-29T08:15:24Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 21,
+                "started_at": "2026-10-29T08:15:24Z",
+                "completed_at": "2026-10-29T08:15:24Z"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 40840753918,
+        "name": "Notification regression",
+        "conclusion": "success",
+        "jobs": [
+          {
+            "id": 123336262846,
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-10-29T08:14:47Z",
+                "completed_at": "2026-10-29T08:14:49Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-10-29T08:14:49Z",
+                "completed_at": "2026-10-29T08:15:15Z"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-10-29T08:15:15Z",
+                "completed_at": "2026-10-29T08:15:20Z"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-10-29T08:15:20Z",
+                "completed_at": "2026-10-29T08:15:22Z"
+              },
+              {
+                "name": "Run npm install --no-save --ignore-scripts jsdom@30.1.2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-10-29T08:15:22Z",
+                "completed_at": "2026-10-29T08:15:26Z"
+              },
+              {
+                "name": "Run node tests/notification-routing-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-10-29T08:15:26Z",
+                "completed_at": "2026-10-29T08:15:26Z"
+              },
+              {
+                "name": "Run node tests/livekit-calls-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-10-29T08:15:26Z",
+                "completed_at": "2026-10-29T08:15:27Z"
+              },
+              {
+                "name": "Run php tests/notification-service-regression.php",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8,
+                "started_at": "2026-10-29T08:15:27Z",
+                "completed_at": "2026-10-29T08:15:27Z"
+              },
+              {
+                "name": "Run for file in API/notifications/get.php API/notifications/mark-read.php API/dm/send-message.php API/dm/group-message.php API/threads/index.php API/server/members.php API/chat/channel-members.php services/NotificationService.php websocket/handlers/DmHandler.php modules/chat/chat.php; do php -l \"$file\" || exit 1; done",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9,
+                "started_at": "2026-10-29T08:15:27Z",
+                "completed_at": "2026-10-29T08:15:27Z"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17,
+                "started_at": "2026-10-29T08:15:27Z",
+                "completed_at": "2026-10-29T08:15:27Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18,
+                "started_at": "2026-10-29T08:15:27Z",
+                "completed_at": "2026-10-29T08:15:27Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19,
+                "started_at": "2026-10-29T08:15:27Z",
+                "completed_at": "2026-10-29T08:15:27Z"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 40840753877,
+        "name": "Chat resumable uploads",
+        "conclusion": "success",
+        "jobs": [
+          {
+            "id": 123336262931,
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-10-29T08:14:48Z",
+                "completed_at": "2026-10-29T08:14:49Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-10-29T08:14:49Z",
+                "completed_at": "2026-10-29T08:15:15Z"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-10-29T08:15:15Z",
+                "completed_at": "2026-10-29T08:15:17Z"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-10-29T08:15:17Z",
+                "completed_at": "2026-10-29T08:15:18Z"
+              },
+              {
+                "name": "Run php -l API/chat/resumable-upload.php",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-10-29T08:15:18Z",
+                "completed_at": "2026-10-29T08:15:18Z"
+              },
+              {
+                "name": "Run npm ci --prefix tools/chat-uploads",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-10-29T08:15:18Z",
+                "completed_at": "2026-10-29T08:15:21Z"
+              },
+              {
+                "name": "Run npm run --prefix tools/chat-uploads build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-10-29T08:15:21Z",
+                "completed_at": "2026-10-29T08:15:21Z"
+              },
+              {
+                "name": "Run git diff --exit-code -- assets/js/chat/resumable-uploads.js assets/js/chat/resumable-uploads.js.LEGAL.txt assets/js/chat/resumable-uploads.NOTICES.txt",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8,
+                "started_at": "2026-10-29T08:15:21Z",
+                "completed_at": "2026-10-29T08:15:21Z"
+              },
+              {
+                "name": "Run NODE_PATH=\"$PWD/tools/chat-uploads/node_modules\" node tests/chat-uploads-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9,
+                "started_at": "2026-10-29T08:15:21Z",
+                "completed_at": "2026-10-29T08:15:22Z"
+              },
+              {
+                "name": "Run NODE_PATH=\"$PWD/tools/chat-uploads/node_modules\" node tests/chat-tus-http-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10,
+                "started_at": "2026-10-29T08:15:22Z",
+                "completed_at": "2026-10-29T08:15:32Z"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19,
+                "started_at": "2026-10-29T08:15:32Z",
+                "completed_at": "2026-10-29T08:15:32Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 20,
+                "started_at": "2026-10-29T08:15:32Z",
+                "completed_at": "2026-10-29T08:15:33Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 21,
+                "started_at": "2026-10-29T08:15:33Z",
+                "completed_at": "2026-10-29T08:15:33Z"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 40840754016,
+        "name": "Settings and Jarred runtime",
+        "conclusion": "success",
+        "jobs": [
+          {
+            "id": 123336263039,
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-10-29T08:14:47Z",
+                "completed_at": "2026-10-29T08:14:48Z"
+              },
+              {
+                "name": "Initialize containers",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-10-29T08:14:48Z",
+                "completed_at": "2026-10-29T08:14:59Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-10-29T08:14:59Z",
+                "completed_at": "2026-10-29T08:15:27Z"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-10-29T08:15:27Z",
+                "completed_at": "2026-10-29T08:15:27Z"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-10-29T08:15:27Z",
+                "completed_at": "2026-10-29T08:15:30Z"
+              },
+              {
+                "name": "Run npm install --no-save --ignore-scripts jsdom@30.1.2 playwright@1.58.2 yjs@13.6.27 y-protocols@1.0.6",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-10-29T08:15:30Z",
+                "completed_at": "2026-10-29T08:15:34Z"
+              },
+              {
+                "name": "Run npm ci --prefix tools/chat-composer --ignore-scripts --no-audit --no-fund",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-10-29T08:15:34Z",
+                "completed_at": "2026-10-29T08:15:36Z"
+              },
+              {
+                "name": "Run npx playwright install --with-deps chromium",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8,
+                "started_at": "2026-10-29T08:15:36Z",
+                "completed_at": "2026-10-29T08:15:55Z"
+              },
+              {
+                "name": "Run php tests/client-ip-regression.php",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9,
+                "started_at": "2026-10-29T08:15:55Z",
+                "completed_at": "2026-10-29T08:15:55Z"
+              },
+              {
+                "name": "Run node tests/request-security-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10,
+                "started_at": "2026-10-29T08:15:55Z",
+                "completed_at": "2026-10-29T08:15:55Z"
+              },
+              {
+                "name": "Run php tests/rate-limit-concurrency.php",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11,
+                "started_at": "2026-10-29T08:15:55Z",
+                "completed_at": "2026-10-29T08:15:56Z"
+              },
+              {
+                "name": "Run php tests/settings-runtime-regression.php",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12,
+                "started_at": "2026-10-29T08:15:56Z",
+                "completed_at": "2026-10-29T08:15:56Z"
+              },
+              {
+                "name": "Run php tests/settings-migration-regression.php",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13,
+                "started_at": "2026-10-29T08:15:56Z",
+                "completed_at": "2026-10-29T08:15:56Z"
+              },
+              {
+                "name": "Run php tests/jarred-governance-retention.php",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 14,
+                "started_at": "2026-10-29T08:15:56Z",
+                "completed_at": "2026-10-29T08:15:56Z"
+              },
+              {
+                "name": "Run php tests/jarred-governance-provider.php",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 15,
+                "started_at": "2026-10-29T08:15:56Z",
+                "completed_at": "2026-10-29T08:15:56Z"
+              },
+              {
+                "name": "Run node tests/jarred-governance-http.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16,
+                "started_at": "2026-10-29T08:15:56Z",
+                "completed_at": "2026-10-29T08:15:56Z"
+              },
+              {
+                "name": "Run node tests/jarred-governance-lock.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17,
+                "started_at": "2026-10-29T08:15:56Z",
+                "completed_at": "2026-10-29T08:15:56Z"
+              },
+              {
+                "name": "Run node tests/shared-ai-provider.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18,
+                "started_at": "2026-10-29T08:15:56Z",
+                "completed_at": "2026-10-29T08:15:58Z"
+              },
+              {
+                "name": "Shared inference across separate Linux temporary mount views",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19,
+                "started_at": "2026-10-29T08:15:58Z",
+                "completed_at": "2026-10-29T08:16:01Z"
+              },
+              {
+                "name": "Run node tests/jarred-provider-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 20,
+                "started_at": "2026-10-29T08:16:01Z",
+                "completed_at": "2026-10-29T08:16:01Z"
+              },
+              {
+                "name": "Run node tests/jarred-session-race.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 21,
+                "started_at": "2026-10-29T08:16:01Z",
+                "completed_at": "2026-10-29T08:16:02Z"
+              },
+              {
+                "name": "Run node tests/realtime-settings-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 22,
+                "started_at": "2026-10-29T08:16:02Z",
+                "completed_at": "2026-10-29T08:16:03Z"
+              },
+              {
+                "name": "Run node tests/settings-runtime-browser.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 23,
+                "started_at": "2026-10-29T08:16:03Z",
+                "completed_at": "2026-10-29T08:16:13Z"
+              },
+              {
+                "name": "Run node tests/chat-composer-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 24,
+                "started_at": "2026-10-29T08:16:13Z",
+                "completed_at": "2026-10-29T08:16:14Z"
+              },
+              {
+                "name": "Run node tests/yjs-channel-presence-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 25,
+                "started_at": "2026-10-29T08:16:14Z",
+                "completed_at": "2026-10-29T08:16:15Z"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 48,
+                "started_at": "2026-10-29T08:16:15Z",
+                "completed_at": "2026-10-29T08:16:15Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 49,
+                "started_at": "2026-10-29T08:16:15Z",
+                "completed_at": "2026-10-29T08:16:15Z"
+              },
+              {
+                "name": "Stop containers",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 50,
+                "started_at": "2026-10-29T08:16:15Z",
+                "completed_at": "2026-10-29T08:16:16Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 51,
+                "started_at": "2026-10-29T08:16:16Z",
+                "completed_at": "2026-10-29T08:16:16Z"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 40840753895,
+        "name": "Phase 3AD message default regression",
+        "conclusion": "success",
+        "jobs": [
+          {
+            "id": 123336262577,
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-10-29T08:14:48Z",
+                "completed_at": "2026-10-29T08:14:49Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-10-29T08:14:49Z",
+                "completed_at": "2026-10-29T08:15:16Z"
+              },
+              {
+                "name": "Install disposable MariaDB and PHP dependencies",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-10-29T08:15:16Z",
+                "completed_at": "2026-10-29T08:15:40Z"
+              },
+              {
+                "name": "Exact source boundary and dependencies",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-10-29T08:15:40Z",
+                "completed_at": "2026-10-29T08:15:46Z"
+              },
+              {
+                "name": "Exact base real HTTP and three full suite orderings",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-10-29T08:15:46Z",
+                "completed_at": "2026-10-29T08:16:26Z"
+              },
+              {
+                "name": "Candidate real HTTP and three full suite orderings",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-10-29T08:16:26Z",
+                "completed_at": "2026-10-29T08:17:03Z"
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-10-29T08:17:03Z",
+                "completed_at": "2026-10-29T08:17:05Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 14,
+                "started_at": "2026-10-29T08:17:05Z",
+                "completed_at": "2026-10-29T08:17:05Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 15,
+                "started_at": "2026-10-29T08:17:05Z",
+                "completed_at": "2026-10-29T08:17:06Z"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 40840753844,
+        "name": "Jarred async privacy integration",
+        "conclusion": "success",
+        "jobs": [
+          {
+            "id": 123336262378,
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-10-29T08:14:48Z",
+                "completed_at": "2026-10-29T08:14:49Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-10-29T08:14:49Z",
+                "completed_at": "2026-10-29T08:15:16Z"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-10-29T08:15:16Z",
+                "completed_at": "2026-10-29T08:15:17Z"
+              },
+              {
+                "name": "Install disposable MariaDB and PHP dependencies",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-10-29T08:15:17Z",
+                "completed_at": "2026-10-29T08:15:36Z"
+              },
+              {
+                "name": "Install isolated JS and browser fixtures",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-10-29T08:15:36Z",
+                "completed_at": "2026-10-29T08:16:10Z"
+              },
+              {
+                "name": "Syntax, queue crash, permission and privacy regressions",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-10-29T08:16:10Z",
+                "completed_at": "2026-10-29T08:16:23Z"
+              },
+              {
+                "name": "Actual MariaDB, TCP faults, HTTP client and CLI worker recovery",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-10-29T08:16:23Z",
+                "completed_at": "2026-10-29T08:16:59Z"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13,
+                "started_at": "2026-10-29T08:16:59Z",
+                "completed_at": "2026-10-29T08:16:59Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 14,
+                "started_at": "2026-10-29T08:16:59Z",
+                "completed_at": "2026-10-29T08:16:59Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 15,
+                "started_at": "2026-10-29T08:16:59Z",
+                "completed_at": "2026-10-29T08:16:59Z"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 40840754012,
+        "name": "Phase 3AD integration readiness",
+        "conclusion": "failure",
+        "jobs": [
+          {
+            "id": 123336263522,
+            "conclusion": "failure",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-10-29T08:14:48Z",
+                "completed_at": "2026-10-29T08:14:48Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-10-29T08:14:49Z",
+                "completed_at": "2026-10-29T08:15:16Z"
+              },
+              {
+                "name": "Install disposable MariaDB and PHP dependencies",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-10-29T08:15:16Z",
+                "completed_at": "2026-10-29T08:15:35Z"
+              },
+              {
+                "name": "Dependencies and browser runtime",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-10-29T08:15:35Z",
+                "completed_at": "2026-10-29T08:15:48Z"
+              },
+              {
+                "name": "Source gate and existing security regressions",
+                "status": "completed",
+                "conclusion": "failure",
+                "number": 5,
+                "started_at": "2026-10-29T08:15:48Z",
+                "completed_at": "2026-10-29T08:15:48Z"
+              },
+              {
+                "name": "Full original failing control and current three orderings including native expiry",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 6,
+                "started_at": "2026-10-29T08:15:48Z",
+                "completed_at": "2026-10-29T08:15:48Z"
+              },
+              {
+                "name": "Exact accepted Phase3X base comparison",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 7,
+                "started_at": "2026-10-29T08:15:48Z",
+                "completed_at": "2026-10-29T08:15:48Z"
+              },
+              {
+                "name": "Exact accepted Phase3AB base comparison",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 8,
+                "started_at": "2026-10-29T08:15:48Z",
+                "completed_at": "2026-10-29T08:15:48Z"
+              },
+              {
+                "name": "Exact accepted Phase3AC source comparison",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 9,
+                "started_at": "2026-10-29T08:15:48Z",
+                "completed_at": "2026-10-29T08:15:48Z"
+              },
+              {
+                "name": "Actual corrected HTTP, hosted Chromium and persisted OTP browser reset",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 10,
+                "started_at": "2026-10-29T08:15:48Z",
+                "completed_at": "2026-10-29T08:15:48Z"
+              },
+              {
+                "name": "Actual corrected native clocks, sessions, failures and legacy rehearsal",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 11,
+                "started_at": "2026-10-29T08:15:48Z",
+                "completed_at": "2026-10-29T08:15:48Z"
+              },
+              {
+                "name": "Exact accepted Phase3Y comparison",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 12,
+                "started_at": "2026-10-29T08:15:48Z",
+                "completed_at": "2026-10-29T08:15:48Z"
+              },
+              {
+                "name": "Exact accepted Phase3Z comparison",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 13,
+                "started_at": "2026-10-29T08:15:48Z",
+                "completed_at": "2026-10-29T08:15:48Z"
+              },
+              {
+                "name": "Frozen original clock, transition and double-consumption controls",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 14,
+                "started_at": "2026-10-29T08:15:48Z",
+                "completed_at": "2026-10-29T08:15:48Z"
+              },
+              {
+                "name": "Exact-base static comparison",
+                "status": "completed",
+                "conclusion": "failure",
+                "number": 15,
+                "started_at": "2026-10-29T08:15:48Z",
+                "completed_at": "2026-10-29T08:16:26Z"
+              },
+              {
+                "name": "Recompute actual security acceptance from raw records",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 16,
+                "started_at": "2026-10-29T08:16:26Z",
+                "completed_at": "2026-10-29T08:16:26Z"
+              },
+              {
+                "name": "Four-migration compatibility and recovery rehearsal",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 17,
+                "started_at": "2026-10-29T08:16:26Z",
+                "completed_at": "2026-10-29T08:16:26Z"
+              },
+              {
+                "name": "Actual composed student facilitator collaboration HTTP and Chromium",
+                "status": "completed",
+                "conclusion": "failure",
+                "number": 18,
+                "started_at": "2026-10-29T08:16:26Z",
+                "completed_at": "2026-10-29T08:16:50Z"
+              },
+              {
+                "name": "Recompute integration readiness and preserve blockers",
+                "status": "completed",
+                "conclusion": "failure",
+                "number": 19,
+                "started_at": "2026-10-29T08:16:50Z",
+                "completed_at": "2026-10-29T08:16:50Z"
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 20,
+                "started_at": "2026-10-29T08:16:50Z",
+                "completed_at": "2026-10-29T08:16:51Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 40,
+                "started_at": "2026-10-29T08:16:51Z",
+                "completed_at": "2026-10-29T08:16:51Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 41,
+                "started_at": "2026-10-29T08:16:51Z",
+                "completed_at": "2026-10-29T08:16:51Z"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 40840697164,
+        "name": "Chat resumable uploads",
+        "conclusion": "success",
+        "jobs": [
+          {
+            "id": 123336076455,
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-10-29T08:14:19Z",
+                "completed_at": "2026-10-29T08:14:20Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-10-29T08:14:20Z",
+                "completed_at": "2026-10-29T08:14:47Z"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-10-29T08:14:47Z",
+                "completed_at": "2026-10-29T08:14:50Z"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-10-29T08:14:50Z",
+                "completed_at": "2026-10-29T08:14:50Z"
+              },
+              {
+                "name": "Run php -l API/chat/resumable-upload.php",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-10-29T08:14:50Z",
+                "completed_at": "2026-10-29T08:14:51Z"
+              },
+              {
+                "name": "Run npm ci --prefix tools/chat-uploads",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-10-29T08:14:51Z",
+                "completed_at": "2026-10-29T08:14:54Z"
+              },
+              {
+                "name": "Run npm run --prefix tools/chat-uploads build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-10-29T08:14:54Z",
+                "completed_at": "2026-10-29T08:14:54Z"
+              },
+              {
+                "name": "Run git diff --exit-code -- assets/js/chat/resumable-uploads.js assets/js/chat/resumable-uploads.js.LEGAL.txt assets/js/chat/resumable-uploads.NOTICES.txt",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8,
+                "started_at": "2026-10-29T08:14:54Z",
+                "completed_at": "2026-10-29T08:14:55Z"
+              },
+              {
+                "name": "Run NODE_PATH=\"$PWD/tools/chat-uploads/node_modules\" node tests/chat-uploads-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9,
+                "started_at": "2026-10-29T08:14:55Z",
+                "completed_at": "2026-10-29T08:14:55Z"
+              },
+              {
+                "name": "Run NODE_PATH=\"$PWD/tools/chat-uploads/node_modules\" node tests/chat-tus-http-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10,
+                "started_at": "2026-10-29T08:14:55Z",
+                "completed_at": "2026-10-29T08:15:06Z"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19,
+                "started_at": "2026-10-29T08:15:06Z",
+                "completed_at": "2026-10-29T08:15:06Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 20,
+                "started_at": "2026-10-29T08:15:06Z",
+                "completed_at": "2026-10-29T08:15:06Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 21,
+                "started_at": "2026-10-29T08:15:06Z",
+                "completed_at": "2026-10-29T08:15:06Z"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "failure_classification": [
+    "Frozen prior-phase source gate rejects MessageService delta",
+    "Frozen static path does not produce static.json; consumer FileNotFoundError",
+    "Actual52-request integration matches prior missing is_system failure; browser4PASS",
+    "Readiness reporter lacks inventory.json because prior gate skipped generation; NOT a passing recomputation"
+  ],
+  "raw_manifest": [
+    {
+      "path": "docs/450-phase3ad-message-raw/message-head-security.json.gz",
+      "sha256": "96d987f7239ad469012687b4333975e04d4487c9c0d045da92730b430af54377",
+      "raw_sha256": "b0805324bd58e104d815ac24d1788d69f78f8cc13897d5c6bf1e4d719fd38b22",
+      "bytes": 194346
+    },
+    {
+      "path": "docs/450-phase3ad-message-raw/message-head-integration-http.json.gz",
+      "sha256": "793b59f93582435924fe3eaa1ab04384f14bc55a6b9d8d5a940adc44fc2d2423",
+      "raw_sha256": "7e3e9b4a023200535f7419b8528220ed5ccf835fa905c10b260a4e1afef228a2",
+      "bytes": 34199
+    }
+  ],
+  "notes": "This evidence commit preserves raw records for the separately published candidate; it does not move or replace the tested PR100 head. No production operations."
+}
