@@ -1,0 +1,16 @@
+{
+  "source": "Owner-supplied independent PR102 audit attachment",
+  "sha256": "2fabb26d606efd382a8d36b96ebe9f8318266b21ba347018d4153bc860c30126",
+  "accepted_head": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+  "accepted_tree": "7f6686f3d382f8764e84851411f2f92af840077c",
+  "verdict": "SCOPED PASS for fresh synthetic integration",
+  "authorized_next": "Phase3AE planning and isolated rehearsal",
+  "not_authorized": [
+    "merge into ecollab-collabs",
+    "production migration/data/config",
+    "deployment",
+    "Hostinger",
+    "live email",
+    "capacity certification"
+  ]
+}
