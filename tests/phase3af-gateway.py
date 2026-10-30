@@ -138,7 +138,7 @@ class Owned:
    def do_OPTIONS(self):self.forward()
    def forward(self):
     route=urllib.parse.urlparse(self.path).path;file=(ROOT/route.lstrip('/')).resolve()
-    if not file.is_relative_to(ROOT)or not file.is_file()or not(route.startswith('/API/')or route.startswith('/assets/')or route.startswith('/uploads/')or route in ['/modules/auth/signup.php','/modules/auth/login.php','/modules/onboarding/server-discovery.php','/modules/chat/chat.php','/modules/student/dashboard.php','/modules/facilitator/dashboard.php']):self.send_error(404);return
+    if not file.is_relative_to(ROOT)or not file.is_file()or not(route.startswith('/API/')or route.startswith('/assets/')or route.startswith('/uploads/')or route in ['/modules/auth/signup.php','/modules/auth/login.php','/modules/onboarding/server-discovery.php','/modules/chat/chat.php','/modules/student/dashboard.php','/modules/facilitator/dashboard.php','/modules/collaboration/server-coworkspaces.php']):self.send_error(404);return
     if route.startswith('/uploads/')and file.suffix.lower()in ['.php','.phtml','.phar','.js','.html','.htm','.svg','.xml','.sh','.py']:
      self.send_error(403);return
     if not file.suffix=='.php':
