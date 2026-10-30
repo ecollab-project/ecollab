@@ -1,0 +1,35 @@
+[
+  {
+    "command": [
+      "python",
+      "-B",
+      "tests/phase3ac-report.py",
+      "downloaded-raw-copy"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"candidate\": {\n    \"clock_records\": 180,\n    \"race_rounds\": 8,\n    \"two_session_rounds\": 5,\n    \"four_session_rounds\": 3,\n    \"single_use\": \"PASS\",\n    \"timezone\": \"PASS\"\n  },\n  \"original\": {\n    \"race_rounds\": 10,\n    \"single_use\": \"FAIL (preserved)\",\n    \"clock_records\": 360\n  },\n  \"full_suite\": {\n    \"baseline\": {\n      \"exit_code\": 1,\n      \"counts\": {\n        \"tests\": 46,\n        \"assertions\": 114,\n        \"errors\": 0,\n        \"failures\": 5,\n        \"skipped\": 0\n      }\n    },\n    \"current\": {\n      \"exit_code\": 0,\n      \"counts\": {\n        \"tests\": 60,\n        \"assertions\": 280,\n        \"errors\": 0,\n        \"failures\": 0,\n        \"skipped\": 0\n      }\n    },\n    \"reverse\": {\n      \"exit_code\": 0,\n      \"counts\": {\n        \"tests\": 60,\n        \"assertions\": 280,\n        \"errors\": 0,\n        \"failures\": 0,\n        \"skipped\": 0\n      }\n    },\n    \"random-31028\": {\n      \"exit_code\": 0,\n      \"counts\": {\n        \"tests\": 60,\n        \"assertions\": 280,\n        \"errors\": 0,\n        \"failures\": 0,\n        \"skipped\": 0\n      }\n    }\n  },\n  \"accepted-base.json\": {\n    \"baseline\": {\n      \"exit_code\": 0,\n      \"tests\": 57\n    },\n    \"current\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    }\n  },\n  \"accepted-phase3y.json\": {\n    \"baseline\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    },\n    \"current\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    }\n  },\n  \"accepted-phase3z.json\": {\n    \"baseline\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    },\n    \"current\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    }\n  },\n  \"accepted-phase3ab.json\": {\n    \"baseline\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    },\n    \"current\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    }\n  },\n  \"phpstan\": {\n    \"added\": 0,\n    \"baseline\": {\n      \"errors\": 0,\n      \"file_errors\": 15\n    },\n    \"candidate\": {\n      \"errors\": 0,\n      \"file_errors\": 15\n    }\n  },\n  \"http\": {\n    \"direct_requests\": 207,\n    \"browser\": \"PASS\",\n    \"browser_version\": \"151.0.7922.34\"\n  },\n  \"raw_sha256\": {\n    \"accepted-base.json\": \"9d480561c42e5336fd420e6346a200c662e46312db25fafd88500f965ee36cc6\",\n    \"accepted-phase3ab.json\": \"44edad5323766e580b249f129dd64824f9867ff23486497a5cde6c8a92ce1ed6\",\n    \"accepted-phase3ac.json\": \"938a82606603d83b20d3b1358f1aec143c8ecaaeadc2f1817a7be6cb0f1c973f\",\n    \"accepted-phase3y.json\": \"0ba57cfa8616b72784335edf05693095575a6e5fec42152de6554e68756de952\",\n    \"accepted-phase3z.json\": \"256bd661a2caa9a64f22164618982c597990f99e3bfe524767e418fa4043bf35\",\n    \"full.json\": \"b39f2c22e5e7a83156c2a518dc204b5d20e5b3da9a76df9ee13ee844d2a6cfc0\",\n    \"http.json\": \"f4f2133ce66ebfada106f15a42f2e15c1c67ac52401dac18ce21d7f4d07cd9d0\",\n    \"identity.json\": \"0e349e4538acbf5fe0ad763178768467daaca032c8667724b30cf5143ab4a8d8\",\n    \"integration-http.json\": \"45211cd39b14c8742b1045875005cc328d16758f7db1a0e83ebb5eb4bd9f670f\",\n    \"integration-summary.json\": \"665f3acfbf37e0173132ad64957edc674d27b65f7a1340084eabebf9381d17ee\",\n    \"inventory.json\": \"5bab608c457571f52732426eef0168bb5f5eb87722f40e869f2420daeb2721fd\",\n    \"message-compatibility.json\": \"63759118f2ca75ea84c42f3c7f7ea5eec7e36c50784c0132cf932d47de458ad9\",\n    \"original-experiments.json\": \"726e13e89dbce06778b23ee3f30ef19316b198b07cdd122253e54de717558ea3\",\n    \"original-summary.json\": \"f63c69e7d3e485e43e85e0326baa290fd5c20bc51070c06e503853bb5f5a4aaf\",\n    \"phase3af-installed.json\": \"fe42f33f91ebeb44782e518536680a99a67577ecbc601133f8605a46a463a55d\",\n    \"phase3af-source.json\": \"39b1e239865bdb5f0016412692d18e36b705ca199182c51eab999ddb1a041274\",\n    \"phase3af-summary.json\": \"94423d8c79e0ca6ba8decc198ecc18d4a332199f4b97ce794eb25d936fe85d9e\",\n    \"recomputed-summary.json\": \"19e0a146d9a74ca18cd6675d99d4fa5c7eb3d94f113cff6b7c5f31373071fcc7\",\n    \"scope.json\": \"b019b7f9b6688b4063594ebe8685bd0cf4a15685985dc694240e4fe2fad36416\",\n    \"security.json\": \"8832613f794734ba71d9f9851545d48929418963c43a4f55ea5af6d61b0b8971\",\n    \"static.json\": \"f1b2b4453b567be50cdd5ef417e39022bba900521f15027d07def83e6291043b\",\n    \"writers.json\": \"4079619ce8823c1ab6c18d28bb1be352db513b88da09ab8d79274d3d90f28bc2\"\n  }\n}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "python",
+      "-B",
+      "tests/phase3ad-report.py",
+      "downloaded-raw-copy"
+    ],
+    "exit_code": 0,
+    "stdout": "PASS []\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "python",
+      "-B",
+      "tests/phase3af-report.py",
+      "downloaded-raw-copy"
+    ],
+    "exit_code": 1,
+    "stdout": "BLOCKED ['Installed candidate validation: FAIL ', 'channel native code UI: Actual Code Snippet action opens Collabs documents/whiteboards;no channel code editor is exposed by this action', 'Actual expanded browser journeys failed or NOT RUN']\n",
+    "stderr": ""
+  }
+]

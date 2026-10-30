@@ -1,0 +1,131 @@
+[
+  {
+    "path": "docs/450-phase3af-raw/phase3af-installed.json.gz",
+    "sha256": "0de17ecfe86c8b1d848c883a78f340b7d16264cec2ad33ce326a46ffe90f83c3",
+    "raw_sha256": "1146390caf284ca8480ab6c2ac80633a755378167bba527763affbe301ef6659",
+    "raw_bytes": 167441,
+    "head": "f319fe16ca30b3157a0ca567fa879bec89c75f19",
+    "tree": "a714e8d2ce0d7f548dcb5ad8e3c83a80c243429f",
+    "status": "FAIL",
+    "error": "source/vendor/uploads restored bytes",
+    "backup_restore": "NOT COMPLETE",
+    "upload_download": "PASS",
+    "browser": "NOT RUN",
+    "overlays": [
+      {
+        "path": "tests/phase3af-gateway.py",
+        "sha256": "66fe49088f9263d7ea1f5b64ca098f506c4dfdf8878e2d10f1f6d81cb256de56",
+        "scope": "test harness only,prepublication local run"
+      },
+      {
+        "path": "tests/phase3af-control.php",
+        "sha256": "848c3a856814315a5faa26080df15cc80438d73f21b7450a4880c9fc630598ad",
+        "scope": "test harness only,prepublication local run"
+      },
+      {
+        "path": "tests/phase3af-browser.cjs",
+        "sha256": "a682bd713c039945c9db472d14017fb6831b5220230f78d8087f09f07795e28e",
+        "scope": "test harness only,prepublication local run"
+      },
+      {
+        "path": "tests/phase3af-installed.py",
+        "sha256": "f4597102cba1cf3f6b152e51134cdf52795b2b09e3fcd7b50269d6818bad4517",
+        "scope": "test harness only,prepublication local run"
+      }
+    ]
+  },
+  {
+    "path": "docs/450-phase3af-raw/phase3af-native-second.json.gz",
+    "sha256": "87d4cdedab9f629d49a472e24f1beb38669016a3008204a41f01199ee8d07d61",
+    "raw_sha256": "318754d1a976589ab3f4d0282f2d75d8f1eb5a2810f46664914a882cba275368",
+    "raw_bytes": 167434,
+    "head": "f319fe16ca30b3157a0ca567fa879bec89c75f19",
+    "tree": "a714e8d2ce0d7f548dcb5ad8e3c83a80c243429f",
+    "status": "FAIL",
+    "error": "[Errno 39] Directory not empty: '/workspace/scratch/5c9d94f07e76/phase3af-native-second/installed'",
+    "backup_restore": "NOT COMPLETE",
+    "upload_download": "PASS",
+    "browser": "NOT RUN",
+    "overlays": [
+      {
+        "path": "tests/phase3af-gateway.py",
+        "sha256": "66fe49088f9263d7ea1f5b64ca098f506c4dfdf8878e2d10f1f6d81cb256de56",
+        "scope": "test harness only,prepublication local run"
+      },
+      {
+        "path": "tests/phase3af-control.php",
+        "sha256": "848c3a856814315a5faa26080df15cc80438d73f21b7450a4880c9fc630598ad",
+        "scope": "test harness only,prepublication local run"
+      },
+      {
+        "path": "tests/phase3af-browser.cjs",
+        "sha256": "a682bd713c039945c9db472d14017fb6831b5220230f78d8087f09f07795e28e",
+        "scope": "test harness only,prepublication local run"
+      },
+      {
+        "path": "tests/phase3af-installed.py",
+        "sha256": "9f8b80728ccd1c67da76d275ca43097ebb6b8a149c87087ae3d5e8606c7241b7",
+        "scope": "test harness only,prepublication local run"
+      }
+    ]
+  },
+  {
+    "path": "docs/450-phase3af-raw/phase3af-native-third.json.gz",
+    "sha256": "2cdf6cbac243bf3aa4321849e1fb1ec9ddb7afadf6fe22381061dfba8a16603f",
+    "raw_sha256": "56151053b62bbd725a4983da423c988eb32912156f78bb1fb5b8ad5f611888cf",
+    "raw_bytes": 356620,
+    "head": "f319fe16ca30b3157a0ca567fa879bec89c75f19",
+    "tree": "a714e8d2ce0d7f548dcb5ad8e3c83a80c243429f",
+    "status": "FAIL",
+    "error": null,
+    "backup_restore": "PASS",
+    "upload_download": "PASS",
+    "browser": "NOT RUN",
+    "overlays": [
+      {
+        "path": "tests/phase3af-source.py",
+        "sha256": "5d88aebe98b7c559024dea76eefa15488a690eb82b322ba43d601086d4b405fd",
+        "scope": "test harness only,prepublication local run"
+      },
+      {
+        "path": "tests/phase3af-gateway.py",
+        "sha256": "66fe49088f9263d7ea1f5b64ca098f506c4dfdf8878e2d10f1f6d81cb256de56",
+        "scope": "test harness only,prepublication local run"
+      },
+      {
+        "path": "tests/phase3af-report.py",
+        "sha256": "9fd13f572957b10f408e559abae89a5333fa891e5bf103f176e4b397d4b563ab",
+        "scope": "test harness only,prepublication local run"
+      },
+      {
+        "path": "tests/phase3af-control.php",
+        "sha256": "848c3a856814315a5faa26080df15cc80438d73f21b7450a4880c9fc630598ad",
+        "scope": "test harness only,prepublication local run"
+      },
+      {
+        "path": "tests/phase3af-browser.cjs",
+        "sha256": "a682bd713c039945c9db472d14017fb6831b5220230f78d8087f09f07795e28e",
+        "scope": "test harness only,prepublication local run"
+      },
+      {
+        "path": "tests/phase3af-installed.py",
+        "sha256": "8090222b29ab14221a41d4eb20bca32ed9713cfc1c1cbdad283a128ede8eebea",
+        "scope": "test harness only,prepublication local run"
+      }
+    ]
+  },
+  {
+    "path": "docs/450-phase3af-raw/phase3af-native-published.json.gz",
+    "sha256": "ddb839122d29a85d461d893d412bed5114eb0155d98750245efca8008619cb41",
+    "raw_sha256": "4b94b5c4912b55b8945a5bd587df5dc06665d49542280d258a4ced957fea7b46",
+    "raw_bytes": 355834,
+    "head": "e1af7796b0bf95f3e7a806ed84eec8fd3b489037",
+    "tree": "ba5e63d8096172f7e0e6491f0adb0a397db570b3",
+    "status": "FAIL",
+    "error": null,
+    "backup_restore": "PASS",
+    "upload_download": "PASS",
+    "browser": "NOT RUN",
+    "overlays": []
+  }
+]

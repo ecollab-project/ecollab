@@ -1,0 +1,1937 @@
+{
+  "phase": "3AF",
+  "decision": "BLOCKED for full defense certification",
+  "pr": "https://github.com/ecollab-project/ecollab/pull/104",
+  "branch": "validation/phase3af-defense-candidate-20261030",
+  "base": "f319fe16ca30b3157a0ca567fa879bec89c75f19",
+  "head": "28132097544b555f71fc6b6023fd3dc2ef0f6616",
+  "tree": "60f777763f64b1b895f28590450d19d165d7e2bc",
+  "accepted_application": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+  "integration_reference": "c838359711a14e9b6eb3f345c4386d184a178b25",
+  "runtime_change": "NONE",
+  "installation": {
+    "status": "PASS",
+    "source_archive_sha256": "6c383b1577aa470791d7606a55e919eb5dc03dd55281d6228bcf25361d8b0408",
+    "source_archive_bytes": 267683840,
+    "composer_lock_sha256": "847da305da0a7b940a15ceca0083c40edbf62e893f6e7500e49024d618e2701b",
+    "vendor_manifest_sha256": "89128f60fd374d091b8d397baa5bfd3605430c9e55891bd4de8629d0b6bc017d",
+    "application_overlay": "NONE"
+  },
+  "runtime_file_hashes_sha256": "5f3dc7d1122eff48685d3c54e2512a84d3a3ec143f75bd6dff230e86838ac0c8",
+  "changed_paths": [
+    ".github/workflows/phase3af-verification.yml",
+    "docs/450-phase3af-verification.md",
+    "tests/phase3af-browser.cjs",
+    "tests/phase3af-control.php",
+    "tests/phase3af-gateway.py",
+    "tests/phase3af-installed.py",
+    "tests/phase3af-report.py",
+    "tests/phase3af-source.py"
+  ],
+  "source": {
+    "status": "PASS",
+    "accepted_phase3ae": "f319fe16ca30b3157a0ca567fa879bec89c75f19",
+    "accepted_application": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+    "head": "28132097544b555f71fc6b6023fd3dc2ef0f6616",
+    "tree": "60f777763f64b1b895f28590450d19d165d7e2bc",
+    "runtime_change": "NONE",
+    "working_diff": "",
+    "allowed_changes": [
+      ".github/workflows/phase3af-verification.yml",
+      "docs/450-phase3af-verification.md",
+      "tests/phase3af-browser.cjs",
+      "tests/phase3af-control.php",
+      "tests/phase3af-gateway.py",
+      "tests/phase3af-installed.py",
+      "tests/phase3af-report.py",
+      "tests/phase3af-source.py"
+    ],
+    "otp_blob": "7013114a3a7bc0d183c01fc92e0687f06202d3a7",
+    "harness_sha256": {
+      "tests/phase3af-source.py": "5d88aebe98b7c559024dea76eefa15488a690eb82b322ba43d601086d4b405fd",
+      "tests/phase3af-browser.cjs": "6e61f730a6f6e5d7914f1df3a11759e8a91e13d8afa141c067c4c6231a4b657d",
+      "tests/phase3af-gateway.py": "c406e8d9d63fe7584697611e15727056d98ecdc086cd56f5149b2872418cb2e6",
+      "tests/phase3af-report.py": "9fd13f572957b10f408e559abae89a5333fa891e5bf103f176e4b397d4b563ab",
+      "tests/phase3af-installed.py": "52a9882f0bd9d9a315e6fac1584eb106a72aa5f533bf13c182ca8322b73c626e",
+      "tests/phase3af-control.php": "848c3a856814315a5faa26080df15cc80438d73f21b7450a4880c9fc630598ad"
+    }
+  },
+  "security": {
+    "candidate": {
+      "clock_records": 180,
+      "race_rounds": 8,
+      "two_session_rounds": 5,
+      "four_session_rounds": 3,
+      "single_use": "PASS",
+      "timezone": "PASS"
+    },
+    "original": {
+      "race_rounds": 10,
+      "single_use": "FAIL (preserved)",
+      "clock_records": 360
+    },
+    "full_suite": {
+      "baseline": {
+        "exit_code": 1,
+        "counts": {
+          "tests": 46,
+          "assertions": 114,
+          "errors": 0,
+          "failures": 5,
+          "skipped": 0
+        }
+      },
+      "current": {
+        "exit_code": 0,
+        "counts": {
+          "tests": 60,
+          "assertions": 280,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0
+        }
+      },
+      "reverse": {
+        "exit_code": 0,
+        "counts": {
+          "tests": 60,
+          "assertions": 280,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0
+        }
+      },
+      "random-31028": {
+        "exit_code": 0,
+        "counts": {
+          "tests": 60,
+          "assertions": 280,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0
+        }
+      }
+    },
+    "accepted-base.json": {
+      "baseline": {
+        "exit_code": 0,
+        "tests": 57
+      },
+      "current": {
+        "exit_code": 0,
+        "tests": 60
+      }
+    },
+    "accepted-phase3y.json": {
+      "baseline": {
+        "exit_code": 0,
+        "tests": 60
+      },
+      "current": {
+        "exit_code": 0,
+        "tests": 60
+      }
+    },
+    "accepted-phase3z.json": {
+      "baseline": {
+        "exit_code": 0,
+        "tests": 60
+      },
+      "current": {
+        "exit_code": 0,
+        "tests": 60
+      }
+    },
+    "accepted-phase3ab.json": {
+      "baseline": {
+        "exit_code": 0,
+        "tests": 60
+      },
+      "current": {
+        "exit_code": 0,
+        "tests": 60
+      }
+    },
+    "phpstan": {
+      "added": 0,
+      "baseline": {
+        "errors": 0,
+        "file_errors": 15
+      },
+      "candidate": {
+        "errors": 0,
+        "file_errors": 15
+      }
+    },
+    "http": {
+      "direct_requests": 207,
+      "browser": "PASS",
+      "browser_version": "151.0.7922.34"
+    },
+    "raw_sha256": {
+      "accepted-base.json": "9d480561c42e5336fd420e6346a200c662e46312db25fafd88500f965ee36cc6",
+      "accepted-phase3ab.json": "44edad5323766e580b249f129dd64824f9867ff23486497a5cde6c8a92ce1ed6",
+      "accepted-phase3ac.json": "938a82606603d83b20d3b1358f1aec143c8ecaaeadc2f1817a7be6cb0f1c973f",
+      "accepted-phase3y.json": "0ba57cfa8616b72784335edf05693095575a6e5fec42152de6554e68756de952",
+      "accepted-phase3z.json": "256bd661a2caa9a64f22164618982c597990f99e3bfe524767e418fa4043bf35",
+      "full.json": "b39f2c22e5e7a83156c2a518dc204b5d20e5b3da9a76df9ee13ee844d2a6cfc0",
+      "http.json": "f4f2133ce66ebfada106f15a42f2e15c1c67ac52401dac18ce21d7f4d07cd9d0",
+      "inventory.json": "5bab608c457571f52732426eef0168bb5f5eb87722f40e869f2420daeb2721fd",
+      "original-experiments.json": "726e13e89dbce06778b23ee3f30ef19316b198b07cdd122253e54de717558ea3",
+      "original-summary.json": "f63c69e7d3e485e43e85e0326baa290fd5c20bc51070c06e503853bb5f5a4aaf",
+      "phase3af-installed.json": "fe42f33f91ebeb44782e518536680a99a67577ecbc601133f8605a46a463a55d",
+      "phase3af-source.json": "39b1e239865bdb5f0016412692d18e36b705ca199182c51eab999ddb1a041274",
+      "scope.json": "b019b7f9b6688b4063594ebe8685bd0cf4a15685985dc694240e4fe2fad36416",
+      "security.json": "8832613f794734ba71d9f9851545d48929418963c43a4f55ea5af6d61b0b8971",
+      "static.json": "f1b2b4453b567be50cdd5ef417e39022bba900521f15027d07def83e6291043b",
+      "writers.json": "4079619ce8823c1ab6c18d28bb1be352db513b88da09ab8d79274d3d90f28bc2"
+    }
+  },
+  "core_readiness": "PASS",
+  "browser": {
+    "status": "FAIL",
+    "version": "151.0.7922.34",
+    "passed": 10,
+    "total": 11,
+    "cases": [
+      {
+        "name": "facilitator classroom creation and navigation",
+        "status": "PASS",
+        "detail": {
+          "server_id": 8
+        },
+        "network_records": 10
+      },
+      {
+        "name": "channel text UI persistence",
+        "status": "PASS",
+        "detail": {
+          "message_id": 10
+        },
+        "network_records": 23
+      },
+      {
+        "name": "channel native code UI",
+        "status": "FAIL",
+        "error": "Actual Code Snippet action opens Collabs documents/whiteboards;no channel code editor is exposed by this action",
+        "network_records": 15,
+        "url": "http://127.0.0.1:39201/modules/collaboration/server-coworkspaces.php?server_id=7&channel_id=17"
+      },
+      {
+        "name": "public channel poll UI and vote",
+        "status": "PASS",
+        "detail": {
+          "poll_id": 1
+        },
+        "network_records": 15
+      },
+      {
+        "name": "private channel poll UI and outsider denial",
+        "status": "PASS",
+        "detail": {
+          "poll_id": 2,
+          "outsider_status": 403,
+          "negative_control": "real browser fetch;not a positive UI journey"
+        },
+        "network_records": 16
+      },
+      {
+        "name": "peer matching actual UI",
+        "status": "PASS",
+        "detail": {
+          "cards": 5
+        },
+        "network_records": 13
+      },
+      {
+        "name": "human DM actual UI",
+        "status": "PASS",
+        "detail": {
+          "message_id": 1
+        },
+        "network_records": 15
+      },
+      {
+        "name": "threads actual create and read UI",
+        "status": "PASS",
+        "detail": {
+          "thread_id": 2
+        },
+        "network_records": 13
+      },
+      {
+        "name": "notifications actual UI",
+        "status": "PASS",
+        "detail": {
+          "actual_navigation": true
+        },
+        "network_records": 3
+      },
+      {
+        "name": "owned upload send and download composed UI",
+        "status": "PASS",
+        "detail": {
+          "upload_status": 200,
+          "send_status": 201,
+          "download_status": 200,
+          "bytes": 32,
+          "sha256": "08cf3384abefe26a658a963352fdaafcd629a005f15a0056e36678916cd035ff",
+          "anonymous_status": 200,
+          "confidentiality": "static URL confidentiality not certified;loopback gateway follows tracked public-static upload behavior"
+        },
+        "network_records": 13
+      },
+      {
+        "name": "CSRF and private history browser controls",
+        "status": "PASS",
+        "detail": {
+          "csrf_status": 403,
+          "private_history_status": 403
+        },
+        "network_records": 12
+      }
+    ],
+    "page_errors": [],
+    "upload": {
+      "path": "uploads/20261030_123741_e5b1dbadbb8d.txt",
+      "sha256": "08cf3384abefe26a658a963352fdaafcd629a005f15a0056e36678916cd035ff",
+      "bytes": 32,
+      "anonymous_status": 200
+    }
+  },
+  "composed_upload_download": {
+    "status": "PASS",
+    "upload_status": 200,
+    "download_status": 200,
+    "bytes": 41,
+    "sha256": "fb2932b51117a6fc9cb39037f0eae629d90e8830bf4486ec14939dc74f3403bf",
+    "scope": "actual FPM upload and installed static download;not private-URL confidentiality certification"
+  },
+  "backup_restore": {
+    "status": "PASS",
+    "bundle_sha256": "0f18949410cb3d277b1fbf25fc659dfbbdaeb9fc39df5191dacd2392a5e45f4b",
+    "bundle_bytes": 221946449,
+    "database_dump_sha256": "d9378ebbbc3b48134447b7563b029795fb3a18f3a3c54fd67ae6a81e8fd438f8",
+    "source_vendor_upload_files": 4949,
+    "file_manifest_sha256": "e1de6346d1a46538db34bb9baa1d27ca6acf8fd0c7bc8565fcd40f828bb97ff5",
+    "configuration_sha256": "bb36017e8f4988f6c015e3fbd4e47677202512105b8ecf42a02e1fb7df4ec384",
+    "cold_database_recreation": true,
+    "services_quiesced_before_file_snapshot": true,
+    "old_sessions_restored": false,
+    "original_checkpoint_preserved": true,
+    "configuration_rebase": [
+      "PHASE3Y_PRIVATE and FPM filesystem paths rebound to new owned directory;semantic settings/ports unchanged"
+    ],
+    "fresh_authentication": "PASS",
+    "restore_command": {
+      "command": [
+        "mariadb",
+        "--no-defaults",
+        "--protocol=TCP",
+        "--host=127.0.0.1",
+        "--port=37123",
+        "--user=root"
+      ],
+      "exit_code": 0,
+      "dump_sha256": "d9378ebbbc3b48134447b7563b029795fb3a18f3a3c54fd67ae6a81e8fd438f8",
+      "stderr": ""
+    },
+    "private_backup_published": false,
+    "scope": "complete owned installed snapshot+config+seed/database+uploads;not a production rollback procedure"
+  },
+  "database_fingerprints_equal": true,
+  "database_tables": 162,
+  "persistent_environment": {
+    "status": "PASS across stop,cold disk restore,restart and fresh login",
+    "state_retained": true,
+    "services": "stopped after bounded verification;owned disk state retained",
+    "durability_boundary": "runner/workspace lifetime only;no stable external/public defense host provisioned",
+    "configuration_publication": "hashes only;private fixture config/backup not uploaded"
+  },
+  "commands": [
+    {
+      "step": "phase3af-installed-candidate",
+      "command": [
+        "python3",
+        "-B",
+        "tests/phase3af-installed.py"
+      ],
+      "exit_code": 1,
+      "started_epoch": 1793363828.8299966,
+      "finished_epoch": 1793363887.086968
+    },
+    {
+      "step": "source-gate-and-existing-security-regressions",
+      "command": [
+        "bash",
+        "-e",
+        "tests/phase3ad-step-source-gate-and-existing-security-regressions.sh"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793363887.1263876,
+      "finished_epoch": 1793363893.3579576
+    },
+    {
+      "step": "full-original-failing-control-and-current-three-orderings-including-native-expiry",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-repair-suite.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793363893.394872,
+      "finished_epoch": 1793363937.36936
+    },
+    {
+      "step": "exact-accepted-phase3x-base-comparison",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-repair-suite.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793363937.404723,
+      "finished_epoch": 1793363958.8595352
+    },
+    {
+      "step": "exact-accepted-phase3ab-base-comparison",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-repair-suite.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793363958.8955903,
+      "finished_epoch": 1793363980.2516844
+    },
+    {
+      "step": "exact-accepted-phase3ac-source-comparison",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-repair-suite.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793363980.2897725,
+      "finished_epoch": 1793364003.1629238
+    },
+    {
+      "step": "actual-corrected-http-hosted-chromium-and-persisted-otp-browser-reset",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-repair-http.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793364003.2006195,
+      "finished_epoch": 1793364060.1836557
+    },
+    {
+      "step": "actual-corrected-native-clocks-sessions-failures-and-legacy-rehearsal",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ac-security.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793364060.218532,
+      "finished_epoch": 1793364166.7876782
+    },
+    {
+      "step": "exact-accepted-phase3y-comparison",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-repair-suite.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793364166.8223777,
+      "finished_epoch": 1793364186.0402002
+    },
+    {
+      "step": "exact-accepted-phase3z-comparison",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-repair-suite.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793364186.0762873,
+      "finished_epoch": 1793364205.7065282
+    },
+    {
+      "step": "frozen-original-clock-transition-and-double-consumption-controls",
+      "command": [
+        "bash",
+        "-e",
+        "tests/phase3ad-step-frozen-original-clock-transition-and-double-consumption-controls.sh"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793364205.7419353,
+      "finished_epoch": 1793364265.385326
+    },
+    {
+      "step": "exact-base-static-comparison",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/peer-threads-static.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793364265.4229708,
+      "finished_epoch": 1793364294.4243486
+    },
+    {
+      "step": "recompute-actual-security-acceptance-from-raw-records",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B tests/phase3ac-report.py phase3ad-raw"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793364294.4596095,
+      "finished_epoch": 1793364294.5575747
+    },
+    {
+      "step": "four-migration-compatibility-and-recovery-rehearsal",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/coworkspace-migration-integration.py > phase3ad-raw/migration-compatibility.log 2>&1"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793364294.5930316,
+      "finished_epoch": 1793364300.5896504
+    },
+    {
+      "step": "actual-code-poll-message-compatibility",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B tests/phase3ad-message-compatibility.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793364300.625669,
+      "finished_epoch": 1793364339.7947829
+    },
+    {
+      "step": "authoritative-identity-contract",
+      "command": [
+        "python3",
+        "-B",
+        "tests/phase3ad-identity.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793364339.8298495,
+      "finished_epoch": 1793364349.3544729
+    },
+    {
+      "step": "actual-composed-student-facilitator-collaboration-http-and-chromium",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-http.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793364349.392005,
+      "finished_epoch": 1793364371.4301648
+    }
+  ],
+  "ci": {
+    "head": "28132097544b555f71fc6b6023fd3dc2ef0f6616",
+    "run_id": 41056595552,
+    "artifact": {
+      "id": 12977256873,
+      "name": "phase3af-defense-evidence",
+      "size_in_bytes": 6104257,
+      "digest": "73e2efab5cd8b2922677d4e99f050b3208d226ba2e06c0b1636fb15006a85bbb"
+    },
+    "workflow_counts": {
+      "success": 6,
+      "failure": 1,
+      "incomplete": 0
+    },
+    "jobs": [
+      {
+        "run": {
+          "id": 41056595549,
+          "name": "Chat resumable uploads",
+          "head_sha": "28132097544b555f71fc6b6023fd3dc2ef0f6616",
+          "head_branch": "validation/phase3af-defense-candidate-20261030",
+          "event": "pull_request",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41056595549",
+          "run_attempt": 1,
+          "created_at": "2026-10-30T12:36:19Z",
+          "updated_at": "2026-10-30T12:36:51Z"
+        },
+        "jobs": [
+          {
+            "id": 124065564414,
+            "run_id": 41056595549,
+            "workflow_name": "Chat resumable uploads",
+            "head_branch": "validation/phase3af-defense-candidate-20261030",
+            "run_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/41056595549",
+            "run_attempt": 1,
+            "node_id": "CR_kwDOT5JBf88AAAAc4uJG_g",
+            "head_sha": "28132097544b555f71fc6b6023fd3dc2ef0f6616",
+            "url": "https://api.github.com/repos/ecollab-project/ecollab/actions/jobs/124065564414",
+            "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41056595549/job/124065564414",
+            "status": "completed",
+            "conclusion": "success",
+            "created_at": "2026-10-30T12:36:20Z",
+            "started_at": "2026-10-30T12:36:22Z",
+            "completed_at": "2026-10-30T12:36:50Z",
+            "name": "uploads",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-10-30T12:36:22Z",
+                "completed_at": "2026-10-30T12:36:23Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-10-30T12:36:23Z",
+                "completed_at": "2026-10-30T12:36:29Z"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-10-30T12:36:29Z",
+                "completed_at": "2026-10-30T12:36:31Z"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-10-30T12:36:31Z",
+                "completed_at": "2026-10-30T12:36:34Z"
+              },
+              {
+                "name": "Run php -l API/chat/resumable-upload.php",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-10-30T12:36:34Z",
+                "completed_at": "2026-10-30T12:36:35Z"
+              },
+              {
+                "name": "Run npm ci --prefix tools/chat-uploads",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-10-30T12:36:35Z",
+                "completed_at": "2026-10-30T12:36:38Z"
+              },
+              {
+                "name": "Run npm run --prefix tools/chat-uploads build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-10-30T12:36:38Z",
+                "completed_at": "2026-10-30T12:36:38Z"
+              },
+              {
+                "name": "Run git diff --exit-code -- assets/js/chat/resumable-uploads.js assets/js/chat/resumable-uploads.js.LEGAL.txt assets/js/chat/resumable-uploads.NOTICES.txt",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8,
+                "started_at": "2026-10-30T12:36:38Z",
+                "completed_at": "2026-10-30T12:36:38Z"
+              },
+              {
+                "name": "Run NODE_PATH=\"$PWD/tools/chat-uploads/node_modules\" node tests/chat-uploads-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9,
+                "started_at": "2026-10-30T12:36:38Z",
+                "completed_at": "2026-10-30T12:36:38Z"
+              },
+              {
+                "name": "Run NODE_PATH=\"$PWD/tools/chat-uploads/node_modules\" node tests/chat-tus-http-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10,
+                "started_at": "2026-10-30T12:36:38Z",
+                "completed_at": "2026-10-30T12:36:49Z"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19,
+                "started_at": "2026-10-30T12:36:49Z",
+                "completed_at": "2026-10-30T12:36:49Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 20,
+                "started_at": "2026-10-30T12:36:49Z",
+                "completed_at": "2026-10-30T12:36:49Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 21,
+                "started_at": "2026-10-30T12:36:49Z",
+                "completed_at": "2026-10-30T12:36:49Z"
+              }
+            ],
+            "check_run_url": "https://api.github.com/repos/ecollab-project/ecollab/check-runs/124065564414",
+            "labels": [
+              "ubuntu-latest"
+            ],
+            "runner_id": 1000003078,
+            "runner_name": "GitHub Actions 1000003078",
+            "runner_group_id": 0,
+            "runner_group_name": "GitHub Actions"
+          }
+        ]
+      },
+      {
+        "run": {
+          "id": 41056595566,
+          "name": "Jarred async privacy integration",
+          "head_sha": "28132097544b555f71fc6b6023fd3dc2ef0f6616",
+          "head_branch": "validation/phase3af-defense-candidate-20261030",
+          "event": "pull_request",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41056595566",
+          "run_attempt": 1,
+          "created_at": "2026-10-30T12:36:19Z",
+          "updated_at": "2026-10-30T12:38:03Z"
+        },
+        "jobs": [
+          {
+            "id": 124065564517,
+            "run_id": 41056595566,
+            "workflow_name": "Jarred async privacy integration",
+            "head_branch": "validation/phase3af-defense-candidate-20261030",
+            "run_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/41056595566",
+            "run_attempt": 1,
+            "node_id": "CR_kwDOT5JBf88AAAAc4uJHZQ",
+            "head_sha": "28132097544b555f71fc6b6023fd3dc2ef0f6616",
+            "url": "https://api.github.com/repos/ecollab-project/ecollab/actions/jobs/124065564517",
+            "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41056595566/job/124065564517",
+            "status": "completed",
+            "conclusion": "success",
+            "created_at": "2026-10-30T12:36:20Z",
+            "started_at": "2026-10-30T12:36:21Z",
+            "completed_at": "2026-10-30T12:38:02Z",
+            "name": "isolated-mariadb-http",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-10-30T12:36:22Z",
+                "completed_at": "2026-10-30T12:36:23Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-10-30T12:36:23Z",
+                "completed_at": "2026-10-30T12:36:28Z"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-10-30T12:36:28Z",
+                "completed_at": "2026-10-30T12:36:28Z"
+              },
+              {
+                "name": "Install disposable MariaDB and PHP dependencies",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-10-30T12:36:28Z",
+                "completed_at": "2026-10-30T12:36:48Z"
+              },
+              {
+                "name": "Install isolated JS and browser fixtures",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-10-30T12:36:48Z",
+                "completed_at": "2026-10-30T12:37:04Z"
+              },
+              {
+                "name": "Syntax, queue crash, permission and privacy regressions",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-10-30T12:37:04Z",
+                "completed_at": "2026-10-30T12:37:16Z"
+              },
+              {
+                "name": "Actual MariaDB, TCP faults, HTTP client and CLI worker recovery",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-10-30T12:37:16Z",
+                "completed_at": "2026-10-30T12:38:00Z"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13,
+                "started_at": "2026-10-30T12:38:00Z",
+                "completed_at": "2026-10-30T12:38:00Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 14,
+                "started_at": "2026-10-30T12:38:00Z",
+                "completed_at": "2026-10-30T12:38:00Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 15,
+                "started_at": "2026-10-30T12:38:00Z",
+                "completed_at": "2026-10-30T12:38:01Z"
+              }
+            ],
+            "check_run_url": "https://api.github.com/repos/ecollab-project/ecollab/check-runs/124065564517",
+            "labels": [
+              "ubuntu-24.04"
+            ],
+            "runner_id": 1000003077,
+            "runner_name": "GitHub Actions 1000003077",
+            "runner_group_id": 0,
+            "runner_group_name": "GitHub Actions"
+          }
+        ]
+      },
+      {
+        "run": {
+          "id": 41056595542,
+          "name": "Notification regression",
+          "head_sha": "28132097544b555f71fc6b6023fd3dc2ef0f6616",
+          "head_branch": "validation/phase3af-defense-candidate-20261030",
+          "event": "pull_request",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41056595542",
+          "run_attempt": 1,
+          "created_at": "2026-10-30T12:36:19Z",
+          "updated_at": "2026-10-30T12:36:40Z"
+        },
+        "jobs": [
+          {
+            "id": 124065564070,
+            "run_id": 41056595542,
+            "workflow_name": "Notification regression",
+            "head_branch": "validation/phase3af-defense-candidate-20261030",
+            "run_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/41056595542",
+            "run_attempt": 1,
+            "node_id": "CR_kwDOT5JBf88AAAAc4uJFpg",
+            "head_sha": "28132097544b555f71fc6b6023fd3dc2ef0f6616",
+            "url": "https://api.github.com/repos/ecollab-project/ecollab/actions/jobs/124065564070",
+            "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41056595542/job/124065564070",
+            "status": "completed",
+            "conclusion": "success",
+            "created_at": "2026-10-30T12:36:20Z",
+            "started_at": "2026-10-30T12:36:21Z",
+            "completed_at": "2026-10-30T12:36:39Z",
+            "name": "check",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-10-30T12:36:22Z",
+                "completed_at": "2026-10-30T12:36:23Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-10-30T12:36:23Z",
+                "completed_at": "2026-10-30T12:36:28Z"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-10-30T12:36:28Z",
+                "completed_at": "2026-10-30T12:36:29Z"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-10-30T12:36:29Z",
+                "completed_at": "2026-10-30T12:36:32Z"
+              },
+              {
+                "name": "Run npm install --no-save --ignore-scripts jsdom@30.1.2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-10-30T12:36:32Z",
+                "completed_at": "2026-10-30T12:36:35Z"
+              },
+              {
+                "name": "Run node tests/notification-routing-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-10-30T12:36:35Z",
+                "completed_at": "2026-10-30T12:36:36Z"
+              },
+              {
+                "name": "Run node tests/livekit-calls-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-10-30T12:36:36Z",
+                "completed_at": "2026-10-30T12:36:37Z"
+              },
+              {
+                "name": "Run php tests/notification-service-regression.php",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8,
+                "started_at": "2026-10-30T12:36:37Z",
+                "completed_at": "2026-10-30T12:36:37Z"
+              },
+              {
+                "name": "Run for file in API/notifications/get.php API/notifications/mark-read.php API/dm/send-message.php API/dm/group-message.php API/threads/index.php API/server/members.php API/chat/channel-members.php services/NotificationService.php websocket/handlers/DmHandler.php modules/chat/chat.php; do php -l \"$file\" || exit 1; done",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9,
+                "started_at": "2026-10-30T12:36:37Z",
+                "completed_at": "2026-10-30T12:36:37Z"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17,
+                "started_at": "2026-10-30T12:36:37Z",
+                "completed_at": "2026-10-30T12:36:37Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18,
+                "started_at": "2026-10-30T12:36:37Z",
+                "completed_at": "2026-10-30T12:36:38Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19,
+                "started_at": "2026-10-30T12:36:38Z",
+                "completed_at": "2026-10-30T12:36:38Z"
+              }
+            ],
+            "check_run_url": "https://api.github.com/repos/ecollab-project/ecollab/check-runs/124065564070",
+            "labels": [
+              "ubuntu-latest"
+            ],
+            "runner_id": 1000003074,
+            "runner_name": "GitHub Actions 1000003074",
+            "runner_group_id": 0,
+            "runner_group_name": "GitHub Actions"
+          }
+        ]
+      },
+      {
+        "run": {
+          "id": 41056595543,
+          "name": "Chat timeline and profiles",
+          "head_sha": "28132097544b555f71fc6b6023fd3dc2ef0f6616",
+          "head_branch": "validation/phase3af-defense-candidate-20261030",
+          "event": "pull_request",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41056595543",
+          "run_attempt": 1,
+          "created_at": "2026-10-30T12:36:19Z",
+          "updated_at": "2026-10-30T12:36:39Z"
+        },
+        "jobs": [
+          {
+            "id": 124065563891,
+            "run_id": 41056595543,
+            "workflow_name": "Chat timeline and profiles",
+            "head_branch": "validation/phase3af-defense-candidate-20261030",
+            "run_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/41056595543",
+            "run_attempt": 1,
+            "node_id": "CR_kwDOT5JBf88AAAAc4uJE8w",
+            "head_sha": "28132097544b555f71fc6b6023fd3dc2ef0f6616",
+            "url": "https://api.github.com/repos/ecollab-project/ecollab/actions/jobs/124065563891",
+            "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41056595543/job/124065563891",
+            "status": "completed",
+            "conclusion": "success",
+            "created_at": "2026-10-30T12:36:20Z",
+            "started_at": "2026-10-30T12:36:21Z",
+            "completed_at": "2026-10-30T12:36:39Z",
+            "name": "check",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-10-30T12:36:22Z",
+                "completed_at": "2026-10-30T12:36:23Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-10-30T12:36:23Z",
+                "completed_at": "2026-10-30T12:36:28Z"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-10-30T12:36:28Z",
+                "completed_at": "2026-10-30T12:36:28Z"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-10-30T12:36:28Z",
+                "completed_at": "2026-10-30T12:36:31Z"
+              },
+              {
+                "name": "Run npm install --no-save --ignore-scripts jsdom@30.1.2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-10-30T12:36:31Z",
+                "completed_at": "2026-10-30T12:36:34Z"
+              },
+              {
+                "name": "Run node tests/chat-timeline-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-10-30T12:36:34Z",
+                "completed_at": "2026-10-30T12:36:34Z"
+              },
+              {
+                "name": "Run node tests/chat-profile-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-10-30T12:36:34Z",
+                "completed_at": "2026-10-30T12:36:35Z"
+              },
+              {
+                "name": "Run node tests/chat-members-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8,
+                "started_at": "2026-10-30T12:36:35Z",
+                "completed_at": "2026-10-30T12:36:36Z"
+              },
+              {
+                "name": "Run php tests/chat-read-regression.php",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9,
+                "started_at": "2026-10-30T12:36:36Z",
+                "completed_at": "2026-10-30T12:36:36Z"
+              },
+              {
+                "name": "Run for file in API/chat/get-messages.php API/dm/open-conversation.php API/dm/group-message.php API/dm/groups.php API/profile/get-profile.php services/ChatReadService.php modules/chat/chat.php; do php -l \"$file\" || exit 1; done",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10,
+                "started_at": "2026-10-30T12:36:36Z",
+                "completed_at": "2026-10-30T12:36:37Z"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19,
+                "started_at": "2026-10-30T12:36:37Z",
+                "completed_at": "2026-10-30T12:36:37Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 20,
+                "started_at": "2026-10-30T12:36:37Z",
+                "completed_at": "2026-10-30T12:36:37Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 21,
+                "started_at": "2026-10-30T12:36:37Z",
+                "completed_at": "2026-10-30T12:36:37Z"
+              }
+            ],
+            "check_run_url": "https://api.github.com/repos/ecollab-project/ecollab/check-runs/124065563891",
+            "labels": [
+              "ubuntu-latest"
+            ],
+            "runner_id": 1000003073,
+            "runner_name": "GitHub Actions 1000003073",
+            "runner_group_id": 0,
+            "runner_group_name": "GitHub Actions"
+          }
+        ]
+      },
+      {
+        "run": {
+          "id": 41056595624,
+          "name": "Settings and Jarred runtime",
+          "head_sha": "28132097544b555f71fc6b6023fd3dc2ef0f6616",
+          "head_branch": "validation/phase3af-defense-candidate-20261030",
+          "event": "pull_request",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41056595624",
+          "run_attempt": 1,
+          "created_at": "2026-10-30T12:36:19Z",
+          "updated_at": "2026-10-30T12:37:22Z"
+        },
+        "jobs": [
+          {
+            "id": 124065564192,
+            "run_id": 41056595624,
+            "workflow_name": "Settings and Jarred runtime",
+            "head_branch": "validation/phase3af-defense-candidate-20261030",
+            "run_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/41056595624",
+            "run_attempt": 1,
+            "node_id": "CR_kwDOT5JBf88AAAAc4uJGIA",
+            "head_sha": "28132097544b555f71fc6b6023fd3dc2ef0f6616",
+            "url": "https://api.github.com/repos/ecollab-project/ecollab/actions/jobs/124065564192",
+            "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41056595624/job/124065564192",
+            "status": "completed",
+            "conclusion": "success",
+            "created_at": "2026-10-30T12:36:20Z",
+            "started_at": "2026-10-30T12:36:21Z",
+            "completed_at": "2026-10-30T12:37:21Z",
+            "name": "runtime",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-10-30T12:36:22Z",
+                "completed_at": "2026-10-30T12:36:23Z"
+              },
+              {
+                "name": "Initialize containers",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-10-30T12:36:23Z",
+                "completed_at": "2026-10-30T12:36:35Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-10-30T12:36:35Z",
+                "completed_at": "2026-10-30T12:36:39Z"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-10-30T12:36:39Z",
+                "completed_at": "2026-10-30T12:36:39Z"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-10-30T12:36:39Z",
+                "completed_at": "2026-10-30T12:36:42Z"
+              },
+              {
+                "name": "Run npm install --no-save --ignore-scripts jsdom@30.1.2 playwright@1.58.2 yjs@13.6.27 y-protocols@1.0.6",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-10-30T12:36:42Z",
+                "completed_at": "2026-10-30T12:36:45Z"
+              },
+              {
+                "name": "Run npm ci --prefix tools/chat-composer --ignore-scripts --no-audit --no-fund",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-10-30T12:36:45Z",
+                "completed_at": "2026-10-30T12:36:46Z"
+              },
+              {
+                "name": "Run npx playwright install --with-deps chromium",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8,
+                "started_at": "2026-10-30T12:36:46Z",
+                "completed_at": "2026-10-30T12:36:59Z"
+              },
+              {
+                "name": "Run php tests/client-ip-regression.php",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9,
+                "started_at": "2026-10-30T12:36:59Z",
+                "completed_at": "2026-10-30T12:36:59Z"
+              },
+              {
+                "name": "Run node tests/request-security-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10,
+                "started_at": "2026-10-30T12:36:59Z",
+                "completed_at": "2026-10-30T12:37:00Z"
+              },
+              {
+                "name": "Run php tests/rate-limit-concurrency.php",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11,
+                "started_at": "2026-10-30T12:37:00Z",
+                "completed_at": "2026-10-30T12:37:00Z"
+              },
+              {
+                "name": "Run php tests/settings-runtime-regression.php",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12,
+                "started_at": "2026-10-30T12:37:00Z",
+                "completed_at": "2026-10-30T12:37:00Z"
+              },
+              {
+                "name": "Run php tests/settings-migration-regression.php",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13,
+                "started_at": "2026-10-30T12:37:00Z",
+                "completed_at": "2026-10-30T12:37:00Z"
+              },
+              {
+                "name": "Run php tests/jarred-governance-retention.php",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 14,
+                "started_at": "2026-10-30T12:37:00Z",
+                "completed_at": "2026-10-30T12:37:00Z"
+              },
+              {
+                "name": "Run php tests/jarred-governance-provider.php",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 15,
+                "started_at": "2026-10-30T12:37:00Z",
+                "completed_at": "2026-10-30T12:37:00Z"
+              },
+              {
+                "name": "Run node tests/jarred-governance-http.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16,
+                "started_at": "2026-10-30T12:37:00Z",
+                "completed_at": "2026-10-30T12:37:01Z"
+              },
+              {
+                "name": "Run node tests/jarred-governance-lock.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17,
+                "started_at": "2026-10-30T12:37:01Z",
+                "completed_at": "2026-10-30T12:37:01Z"
+              },
+              {
+                "name": "Run node tests/shared-ai-provider.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18,
+                "started_at": "2026-10-30T12:37:01Z",
+                "completed_at": "2026-10-30T12:37:02Z"
+              },
+              {
+                "name": "Shared inference across separate Linux temporary mount views",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19,
+                "started_at": "2026-10-30T12:37:02Z",
+                "completed_at": "2026-10-30T12:37:04Z"
+              },
+              {
+                "name": "Run node tests/jarred-provider-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 20,
+                "started_at": "2026-10-30T12:37:04Z",
+                "completed_at": "2026-10-30T12:37:04Z"
+              },
+              {
+                "name": "Run node tests/jarred-session-race.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 21,
+                "started_at": "2026-10-30T12:37:04Z",
+                "completed_at": "2026-10-30T12:37:05Z"
+              },
+              {
+                "name": "Run node tests/realtime-settings-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 22,
+                "started_at": "2026-10-30T12:37:05Z",
+                "completed_at": "2026-10-30T12:37:06Z"
+              },
+              {
+                "name": "Run node tests/settings-runtime-browser.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 23,
+                "started_at": "2026-10-30T12:37:06Z",
+                "completed_at": "2026-10-30T12:37:15Z"
+              },
+              {
+                "name": "Run node tests/chat-composer-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 24,
+                "started_at": "2026-10-30T12:37:15Z",
+                "completed_at": "2026-10-30T12:37:16Z"
+              },
+              {
+                "name": "Run node tests/yjs-channel-presence-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 25,
+                "started_at": "2026-10-30T12:37:16Z",
+                "completed_at": "2026-10-30T12:37:16Z"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 48,
+                "started_at": "2026-10-30T12:37:16Z",
+                "completed_at": "2026-10-30T12:37:16Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 49,
+                "started_at": "2026-10-30T12:37:16Z",
+                "completed_at": "2026-10-30T12:37:17Z"
+              },
+              {
+                "name": "Stop containers",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 50,
+                "started_at": "2026-10-30T12:37:17Z",
+                "completed_at": "2026-10-30T12:37:19Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 51,
+                "started_at": "2026-10-30T12:37:19Z",
+                "completed_at": "2026-10-30T12:37:19Z"
+              }
+            ],
+            "check_run_url": "https://api.github.com/repos/ecollab-project/ecollab/check-runs/124065564192",
+            "labels": [
+              "ubuntu-latest"
+            ],
+            "runner_id": 1000003075,
+            "runner_name": "GitHub Actions 1000003075",
+            "runner_group_id": 0,
+            "runner_group_name": "GitHub Actions"
+          }
+        ]
+      },
+      {
+        "run": {
+          "id": 41056595552,
+          "name": "Phase 3AF installed defense verification",
+          "head_sha": "28132097544b555f71fc6b6023fd3dc2ef0f6616",
+          "head_branch": "validation/phase3af-defense-candidate-20261030",
+          "event": "pull_request",
+          "status": "completed",
+          "conclusion": "failure",
+          "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41056595552",
+          "run_attempt": 1,
+          "created_at": "2026-10-30T12:36:19Z",
+          "updated_at": "2026-10-30T12:46:16Z"
+        },
+        "jobs": [
+          {
+            "id": 124065564210,
+            "run_id": 41056595552,
+            "workflow_name": "Phase 3AF installed defense verification",
+            "head_branch": "validation/phase3af-defense-candidate-20261030",
+            "run_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/41056595552",
+            "run_attempt": 1,
+            "node_id": "CR_kwDOT5JBf88AAAAc4uJGMg",
+            "head_sha": "28132097544b555f71fc6b6023fd3dc2ef0f6616",
+            "url": "https://api.github.com/repos/ecollab-project/ecollab/actions/jobs/124065564210",
+            "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41056595552/job/124065564210",
+            "status": "completed",
+            "conclusion": "failure",
+            "created_at": "2026-10-30T12:36:20Z",
+            "started_at": "2026-10-30T12:36:21Z",
+            "completed_at": "2026-10-30T12:46:16Z",
+            "name": "owned-http-auth",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-10-30T12:36:22Z",
+                "completed_at": "2026-10-30T12:36:23Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-10-30T12:36:23Z",
+                "completed_at": "2026-10-30T12:36:29Z"
+              },
+              {
+                "name": "Install disposable MariaDB and PHP dependencies",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-10-30T12:36:29Z",
+                "completed_at": "2026-10-30T12:36:53Z"
+              },
+              {
+                "name": "Dependencies and browser runtime",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-10-30T12:36:53Z",
+                "completed_at": "2026-10-30T12:37:07Z"
+              },
+              {
+                "name": "Phase3AF immutable accepted runtime",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-10-30T12:37:07Z",
+                "completed_at": "2026-10-30T12:37:08Z"
+              },
+              {
+                "name": "Installed candidate browser upload and cold backup restore",
+                "status": "completed",
+                "conclusion": "failure",
+                "number": 6,
+                "started_at": "2026-10-30T12:37:08Z",
+                "completed_at": "2026-10-30T12:38:07Z"
+              },
+              {
+                "name": "Source gate and existing security regressions",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-10-30T12:38:07Z",
+                "completed_at": "2026-10-30T12:38:13Z"
+              },
+              {
+                "name": "Full original failing control and current three orderings including native expiry",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8,
+                "started_at": "2026-10-30T12:38:13Z",
+                "completed_at": "2026-10-30T12:38:57Z"
+              },
+              {
+                "name": "Exact accepted Phase3X base comparison",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9,
+                "started_at": "2026-10-30T12:38:57Z",
+                "completed_at": "2026-10-30T12:39:18Z"
+              },
+              {
+                "name": "Exact accepted Phase3AB base comparison",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10,
+                "started_at": "2026-10-30T12:39:18Z",
+                "completed_at": "2026-10-30T12:39:40Z"
+              },
+              {
+                "name": "Exact accepted Phase3AC source comparison",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11,
+                "started_at": "2026-10-30T12:39:40Z",
+                "completed_at": "2026-10-30T12:40:03Z"
+              },
+              {
+                "name": "Actual corrected HTTP, hosted Chromium and persisted OTP browser reset",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12,
+                "started_at": "2026-10-30T12:40:03Z",
+                "completed_at": "2026-10-30T12:41:00Z"
+              },
+              {
+                "name": "Actual corrected native clocks, sessions, failures and legacy rehearsal",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13,
+                "started_at": "2026-10-30T12:41:00Z",
+                "completed_at": "2026-10-30T12:42:46Z"
+              },
+              {
+                "name": "Exact accepted Phase3Y comparison",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 14,
+                "started_at": "2026-10-30T12:42:46Z",
+                "completed_at": "2026-10-30T12:43:06Z"
+              },
+              {
+                "name": "Exact accepted Phase3Z comparison",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 15,
+                "started_at": "2026-10-30T12:43:06Z",
+                "completed_at": "2026-10-30T12:43:25Z"
+              },
+              {
+                "name": "Frozen original clock, transition and double-consumption controls",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16,
+                "started_at": "2026-10-30T12:43:25Z",
+                "completed_at": "2026-10-30T12:44:25Z"
+              },
+              {
+                "name": "Exact-base static comparison",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17,
+                "started_at": "2026-10-30T12:44:25Z",
+                "completed_at": "2026-10-30T12:44:54Z"
+              },
+              {
+                "name": "Recompute actual security acceptance from raw records",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18,
+                "started_at": "2026-10-30T12:44:54Z",
+                "completed_at": "2026-10-30T12:44:54Z"
+              },
+              {
+                "name": "Four-migration compatibility and recovery rehearsal",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19,
+                "started_at": "2026-10-30T12:44:54Z",
+                "completed_at": "2026-10-30T12:45:00Z"
+              },
+              {
+                "name": "Actual code poll message compatibility",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 20,
+                "started_at": "2026-10-30T12:45:00Z",
+                "completed_at": "2026-10-30T12:45:39Z"
+              },
+              {
+                "name": "Authoritative identity migration provisioning authentication DM and Jarred",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 21,
+                "started_at": "2026-10-30T12:45:39Z",
+                "completed_at": "2026-10-30T12:45:49Z"
+              },
+              {
+                "name": "Actual composed student facilitator collaboration HTTP and Chromium",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 22,
+                "started_at": "2026-10-30T12:45:49Z",
+                "completed_at": "2026-10-30T12:46:11Z"
+              },
+              {
+                "name": "Recompute integration readiness and preserve blockers",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 23,
+                "started_at": "2026-10-30T12:46:11Z",
+                "completed_at": "2026-10-30T12:46:11Z"
+              },
+              {
+                "name": "Stop certification on essential candidate failure",
+                "status": "completed",
+                "conclusion": "failure",
+                "number": 24,
+                "started_at": "2026-10-30T12:46:11Z",
+                "completed_at": "2026-10-30T12:46:11Z"
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 25,
+                "started_at": "2026-10-30T12:46:11Z",
+                "completed_at": "2026-10-30T12:46:13Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 50,
+                "started_at": "2026-10-30T12:46:13Z",
+                "completed_at": "2026-10-30T12:46:13Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 51,
+                "started_at": "2026-10-30T12:46:13Z",
+                "completed_at": "2026-10-30T12:46:14Z"
+              }
+            ],
+            "check_run_url": "https://api.github.com/repos/ecollab-project/ecollab/check-runs/124065564210",
+            "labels": [
+              "ubuntu-24.04"
+            ],
+            "runner_id": 1000003076,
+            "runner_name": "GitHub Actions 1000003076",
+            "runner_group_id": 0,
+            "runner_group_name": "GitHub Actions"
+          }
+        ]
+      },
+      {
+        "run": {
+          "id": 41056588857,
+          "name": "Chat resumable uploads",
+          "head_sha": "28132097544b555f71fc6b6023fd3dc2ef0f6616",
+          "head_branch": "validation/phase3af-defense-candidate-20261030",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41056588857",
+          "run_attempt": 1,
+          "created_at": "2026-10-30T12:36:16Z",
+          "updated_at": "2026-10-30T12:36:50Z"
+        },
+        "jobs": [
+          {
+            "id": 124065541364,
+            "run_id": 41056588857,
+            "workflow_name": "Chat resumable uploads",
+            "head_branch": "validation/phase3af-defense-candidate-20261030",
+            "run_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/runs/41056588857",
+            "run_attempt": 1,
+            "node_id": "CR_kwDOT5JBf88AAAAc4uHs9A",
+            "head_sha": "28132097544b555f71fc6b6023fd3dc2ef0f6616",
+            "url": "https://api.github.com/repos/ecollab-project/ecollab/actions/jobs/124065541364",
+            "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41056588857/job/124065541364",
+            "status": "completed",
+            "conclusion": "success",
+            "created_at": "2026-10-30T12:36:16Z",
+            "started_at": "2026-10-30T12:36:19Z",
+            "completed_at": "2026-10-30T12:36:50Z",
+            "name": "uploads",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-10-30T12:36:19Z",
+                "completed_at": "2026-10-30T12:36:20Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-10-30T12:36:20Z",
+                "completed_at": "2026-10-30T12:36:27Z"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-10-30T12:36:27Z",
+                "completed_at": "2026-10-30T12:36:30Z"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-10-30T12:36:30Z",
+                "completed_at": "2026-10-30T12:36:30Z"
+              },
+              {
+                "name": "Run php -l API/chat/resumable-upload.php",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-10-30T12:36:30Z",
+                "completed_at": "2026-10-30T12:36:31Z"
+              },
+              {
+                "name": "Run npm ci --prefix tools/chat-uploads",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-10-30T12:36:31Z",
+                "completed_at": "2026-10-30T12:36:35Z"
+              },
+              {
+                "name": "Run npm run --prefix tools/chat-uploads build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-10-30T12:36:35Z",
+                "completed_at": "2026-10-30T12:36:35Z"
+              },
+              {
+                "name": "Run git diff --exit-code -- assets/js/chat/resumable-uploads.js assets/js/chat/resumable-uploads.js.LEGAL.txt assets/js/chat/resumable-uploads.NOTICES.txt",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8,
+                "started_at": "2026-10-30T12:36:35Z",
+                "completed_at": "2026-10-30T12:36:36Z"
+              },
+              {
+                "name": "Run NODE_PATH=\"$PWD/tools/chat-uploads/node_modules\" node tests/chat-uploads-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9,
+                "started_at": "2026-10-30T12:36:36Z",
+                "completed_at": "2026-10-30T12:36:36Z"
+              },
+              {
+                "name": "Run NODE_PATH=\"$PWD/tools/chat-uploads/node_modules\" node tests/chat-tus-http-regression.cjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10,
+                "started_at": "2026-10-30T12:36:36Z",
+                "completed_at": "2026-10-30T12:36:47Z"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19,
+                "started_at": "2026-10-30T12:36:47Z",
+                "completed_at": "2026-10-30T12:36:47Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 20,
+                "started_at": "2026-10-30T12:36:47Z",
+                "completed_at": "2026-10-30T12:36:47Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 21,
+                "started_at": "2026-10-30T12:36:47Z",
+                "completed_at": "2026-10-30T12:36:47Z"
+              }
+            ],
+            "check_run_url": "https://api.github.com/repos/ecollab-project/ecollab/check-runs/124065541364",
+            "labels": [
+              "ubuntu-latest"
+            ],
+            "runner_id": 1000003072,
+            "runner_name": "GitHub Actions 1000003072",
+            "runner_group_id": 0,
+            "runner_group_name": "GitHub Actions"
+          }
+        ]
+      }
+    ],
+    "extracted_manifest": "docs/450-phase3af-raw/hosted-manifest.json",
+    "extracted_file_sha256": {
+      "scope.json": "b019b7f9b6688b4063594ebe8685bd0cf4a15685985dc694240e4fe2fad36416",
+      "accepted-base.json": "9d480561c42e5336fd420e6346a200c662e46312db25fafd88500f965ee36cc6",
+      "phase3af-installed.json": "fe42f33f91ebeb44782e518536680a99a67577ecbc601133f8605a46a463a55d",
+      "phase3af-summary.json": "94423d8c79e0ca6ba8decc198ecc18d4a332199f4b97ce794eb25d936fe85d9e",
+      "security.json": "8832613f794734ba71d9f9851545d48929418963c43a4f55ea5af6d61b0b8971",
+      "required-commands.jsonl": "67b86c442057ef1b592743f1949487776bee4c62703fe0bd5f612cd3f7e3f349",
+      "original-summary.json": "f63c69e7d3e485e43e85e0326baa290fd5c20bc51070c06e503853bb5f5a4aaf",
+      "accepted-phase3y.json": "0ba57cfa8616b72784335edf05693095575a6e5fec42152de6554e68756de952",
+      "accepted-phase3ab.json": "44edad5323766e580b249f129dd64824f9867ff23486497a5cde6c8a92ce1ed6",
+      "static.json": "f1b2b4453b567be50cdd5ef417e39022bba900521f15027d07def83e6291043b",
+      "original-experiments.json": "726e13e89dbce06778b23ee3f30ef19316b198b07cdd122253e54de717558ea3",
+      "writers.json": "4079619ce8823c1ab6c18d28bb1be352db513b88da09ab8d79274d3d90f28bc2",
+      "accepted-phase3z.json": "256bd661a2caa9a64f22164618982c597990f99e3bfe524767e418fa4043bf35",
+      "accepted-phase3ac.json": "938a82606603d83b20d3b1358f1aec143c8ecaaeadc2f1817a7be6cb0f1c973f",
+      "phase3af-source.json": "39b1e239865bdb5f0016412692d18e36b705ca199182c51eab999ddb1a041274",
+      "message-compatibility.json": "63759118f2ca75ea84c42f3c7f7ea5eec7e36c50784c0132cf932d47de458ad9",
+      "integration-summary.json": "665f3acfbf37e0173132ad64957edc674d27b65f7a1340084eabebf9381d17ee",
+      "integration-http.json": "45211cd39b14c8742b1045875005cc328d16758f7db1a0e83ebb5eb4bd9f670f",
+      "full.json": "b39f2c22e5e7a83156c2a518dc204b5d20e5b3da9a76df9ee13ee844d2a6cfc0",
+      "http.json": "f4f2133ce66ebfada106f15a42f2e15c1c67ac52401dac18ce21d7f4d07cd9d0",
+      "recomputed-summary.json": "19e0a146d9a74ca18cd6675d99d4fa5c7eb3d94f113cff6b7c5f31373071fcc7",
+      "inventory.json": "5bab608c457571f52732426eef0168bb5f5eb87722f40e869f2420daeb2721fd",
+      "migration-compatibility.log": "162c58ddeac254a5f5d510980e27d2c29df535a7db7ccea417de4c690c35e64e",
+      "identity.json": "0e349e4538acbf5fe0ad763178768467daaca032c8667724b30cf5143ab4a8d8",
+      "phase3af-browser/browser.json": "59a13ccfb738c9921623c2a0971bf82a249b42e5cd90fdfb0690edfbbe40bb26",
+      "phase3af-browser/human-DM-actual-UI.png": "f0609860ace8bdbe733bc4b7e1a95946cdba2046d5665f7bfdfd2d0205d2ee2c",
+      "phase3af-browser/peer-matching-actual-UI.png": "cb8756b5721df7ab29be0c213eab2cf545e6d69d6fbdea23e8e221679cea4628",
+      "phase3af-browser/private-channel-poll-UI-and-outsider-denial.png": "728a05c339fae0605b9e697316e9156a0528ebe7e8ef723ee34a260317ac738e",
+      "phase3af-browser/CSRF-and-private-history-browser-controls.png": "822180ae3d0e8db9490af26344bb8ec017f3981c92a742fea1cb8447cec5994b",
+      "phase3af-browser/notifications-actual-UI.png": "e630fb9742dc9450a64567e68e5945f762dd3692eadd5c2e1806ea387b1c200a",
+      "phase3af-browser/channel-text-UI-persistence.png": "f22b488c29209c1b848146dfdabeee7b401ea7a3aef81178b6fe5f13a796d92f",
+      "phase3af-browser/threads-actual-create-and-read-UI.png": "c4b476d5ed3c2fbcf328802959e8fc2f814844fc4b391044335f910526425544",
+      "phase3af-browser/facilitator-classroom-creation-and-navigation.png": "5e048b949386d4b4a2b360ecd44da8dabe6a3a583835082b4168b8af14459909",
+      "phase3af-browser/channel-native-code-UI.png": "09fa0d0f3dcf82caed0e06952e780ddc16ad68a1ef138ece6261f950d41f2d11",
+      "phase3af-browser/owned-upload-send-and-download-composed-UI.png": "2f2163fc2f573d31e507e09de2148ea91899338d10512c65c007bc08f72afb04",
+      "phase3af-browser/public-channel-poll-UI-and-vote.png": "61cd494d8f9b8bcf9e5d06b0d90d56fc2fe4eb4bdb30bb240ba93d05bb7b33a6",
+      "phase3af-browser/video/page@f320969abeedbee03cd809ad6930ce78.webm": "2890fd4b53a2068c8f14539240a055d20289116f540d84383a4178aef1248c82",
+      "phase3af-browser/video/page@7d0ea5aec05df49a3042cc9c8864d128.webm": "d322d7050dbef7d4f3cf6a78b971347e81d38819d2fab492d6d7e89e96a45b2f",
+      "phase3af-browser/video/page@8bdd68cceb55fab38cab2c6299349523.webm": "a788fce3a7f11e6afd9dbedb439b933d0b2d5d8e4c4644c9bb637290d6c1d728"
+    },
+    "zip_entries_checked": 39,
+    "unsafe_entries": 0,
+    "step_counts": {
+      "success": 115,
+      "failure": 2,
+      "skipped": 0,
+      "cancelled": 0
+    }
+  },
+  "recompute": [
+    {
+      "command": [
+        "python",
+        "-B",
+        "tests/phase3ac-report.py",
+        "downloaded-raw-copy"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"candidate\": {\n    \"clock_records\": 180,\n    \"race_rounds\": 8,\n    \"two_session_rounds\": 5,\n    \"four_session_rounds\": 3,\n    \"single_use\": \"PASS\",\n    \"timezone\": \"PASS\"\n  },\n  \"original\": {\n    \"race_rounds\": 10,\n    \"single_use\": \"FAIL (preserved)\",\n    \"clock_records\": 360\n  },\n  \"full_suite\": {\n    \"baseline\": {\n      \"exit_code\": 1,\n      \"counts\": {\n        \"tests\": 46,\n        \"assertions\": 114,\n        \"errors\": 0,\n        \"failures\": 5,\n        \"skipped\": 0\n      }\n    },\n    \"current\": {\n      \"exit_code\": 0,\n      \"counts\": {\n        \"tests\": 60,\n        \"assertions\": 280,\n        \"errors\": 0,\n        \"failures\": 0,\n        \"skipped\": 0\n      }\n    },\n    \"reverse\": {\n      \"exit_code\": 0,\n      \"counts\": {\n        \"tests\": 60,\n        \"assertions\": 280,\n        \"errors\": 0,\n        \"failures\": 0,\n        \"skipped\": 0\n      }\n    },\n    \"random-31028\": {\n      \"exit_code\": 0,\n      \"counts\": {\n        \"tests\": 60,\n        \"assertions\": 280,\n        \"errors\": 0,\n        \"failures\": 0,\n        \"skipped\": 0\n      }\n    }\n  },\n  \"accepted-base.json\": {\n    \"baseline\": {\n      \"exit_code\": 0,\n      \"tests\": 57\n    },\n    \"current\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    }\n  },\n  \"accepted-phase3y.json\": {\n    \"baseline\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    },\n    \"current\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    }\n  },\n  \"accepted-phase3z.json\": {\n    \"baseline\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    },\n    \"current\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    }\n  },\n  \"accepted-phase3ab.json\": {\n    \"baseline\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    },\n    \"current\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    }\n  },\n  \"phpstan\": {\n    \"added\": 0,\n    \"baseline\": {\n      \"errors\": 0,\n      \"file_errors\": 15\n    },\n    \"candidate\": {\n      \"errors\": 0,\n      \"file_errors\": 15\n    }\n  },\n  \"http\": {\n    \"direct_requests\": 207,\n    \"browser\": \"PASS\",\n    \"browser_version\": \"151.0.7922.34\"\n  },\n  \"raw_sha256\": {\n    \"accepted-base.json\": \"9d480561c42e5336fd420e6346a200c662e46312db25fafd88500f965ee36cc6\",\n    \"accepted-phase3ab.json\": \"44edad5323766e580b249f129dd64824f9867ff23486497a5cde6c8a92ce1ed6\",\n    \"accepted-phase3ac.json\": \"938a82606603d83b20d3b1358f1aec143c8ecaaeadc2f1817a7be6cb0f1c973f\",\n    \"accepted-phase3y.json\": \"0ba57cfa8616b72784335edf05693095575a6e5fec42152de6554e68756de952\",\n    \"accepted-phase3z.json\": \"256bd661a2caa9a64f22164618982c597990f99e3bfe524767e418fa4043bf35\",\n    \"full.json\": \"b39f2c22e5e7a83156c2a518dc204b5d20e5b3da9a76df9ee13ee844d2a6cfc0\",\n    \"http.json\": \"f4f2133ce66ebfada106f15a42f2e15c1c67ac52401dac18ce21d7f4d07cd9d0\",\n    \"identity.json\": \"0e349e4538acbf5fe0ad763178768467daaca032c8667724b30cf5143ab4a8d8\",\n    \"integration-http.json\": \"45211cd39b14c8742b1045875005cc328d16758f7db1a0e83ebb5eb4bd9f670f\",\n    \"integration-summary.json\": \"665f3acfbf37e0173132ad64957edc674d27b65f7a1340084eabebf9381d17ee\",\n    \"inventory.json\": \"5bab608c457571f52732426eef0168bb5f5eb87722f40e869f2420daeb2721fd\",\n    \"message-compatibility.json\": \"63759118f2ca75ea84c42f3c7f7ea5eec7e36c50784c0132cf932d47de458ad9\",\n    \"original-experiments.json\": \"726e13e89dbce06778b23ee3f30ef19316b198b07cdd122253e54de717558ea3\",\n    \"original-summary.json\": \"f63c69e7d3e485e43e85e0326baa290fd5c20bc51070c06e503853bb5f5a4aaf\",\n    \"phase3af-installed.json\": \"fe42f33f91ebeb44782e518536680a99a67577ecbc601133f8605a46a463a55d\",\n    \"phase3af-source.json\": \"39b1e239865bdb5f0016412692d18e36b705ca199182c51eab999ddb1a041274\",\n    \"phase3af-summary.json\": \"94423d8c79e0ca6ba8decc198ecc18d4a332199f4b97ce794eb25d936fe85d9e\",\n    \"recomputed-summary.json\": \"19e0a146d9a74ca18cd6675d99d4fa5c7eb3d94f113cff6b7c5f31373071fcc7\",\n    \"scope.json\": \"b019b7f9b6688b4063594ebe8685bd0cf4a15685985dc694240e4fe2fad36416\",\n    \"security.json\": \"8832613f794734ba71d9f9851545d48929418963c43a4f55ea5af6d61b0b8971\",\n    \"static.json\": \"f1b2b4453b567be50cdd5ef417e39022bba900521f15027d07def83e6291043b\",\n    \"writers.json\": \"4079619ce8823c1ab6c18d28bb1be352db513b88da09ab8d79274d3d90f28bc2\"\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python",
+        "-B",
+        "tests/phase3ad-report.py",
+        "downloaded-raw-copy"
+      ],
+      "exit_code": 0,
+      "stdout": "PASS []\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python",
+        "-B",
+        "tests/phase3af-report.py",
+        "downloaded-raw-copy"
+      ],
+      "exit_code": 1,
+      "stdout": "BLOCKED ['Installed candidate validation: FAIL ', 'channel native code UI: Actual Code Snippet action opens Collabs documents/whiteboards;no channel code editor is exposed by this action', 'Actual expanded browser journeys failed or NOT RUN']\n",
+      "stderr": ""
+    }
+  ],
+  "limitations": [
+    "Native channel Code Snippet action navigates to Collabs documents/whiteboards rather than a channel code editor;essential code journey unaccepted",
+    "Persistent disk restore is bounded to workspace/runner lifetime;no stable external defense host certified",
+    "Static uploaded-file URL confidentiality is not certified;recorded anonymous fetch result must not be presented as a private-attachment authorization pass",
+    "Inherited ws_tokens capacity cleanup and excluded external inference/worker/broker/CodeLab/mTLS/media integrations remain excluded",
+    "Existing-database069,production OTP cutover/history retention,TLS/proxy/storage durability remain separate blocked gates",
+    "No merge/deployment/Hostinger/live-mail/production database operation or50\u2013100-student capacity certification"
+  ],
+  "rollback": "Discard only the isolated verification branch/environment;accepted application and ecollab-collabs remain unchanged. Private synthetic backup restores to fresh independent owned directories;no production rollback executed.",
+  "raw_installed_gzip_sha256": "17e68e8ba115f30ac6e1c9429dcade24603302d8e1010e9bd59e8ab3a21bc311",
+  "raw_installed_json_sha256": "fe42f33f91ebeb44782e518536680a99a67577ecbc601133f8605a46a463a55d",
+  "superseded_attempts": [
+    {
+      "head": "f0e663a66a4211a07649c91f55eae75c61e87600",
+      "artifact": 12976755515,
+      "zip_sha256": "46677e0738df3da872b8615df6e489bb49e17450a378758e5d97e45768475fe6",
+      "result": "browser ledger lost after unhandled harness timeout;backup restore PASS;not acceptance evidence"
+    },
+    {
+      "head": "b83add4927f49ba0bf803dd5e6ae7086f23e09b0",
+      "artifact": 12976506864,
+      "zip_sha256": "56c2a52504860b85c2d368271a01f4fe9542a28ef56ccf26fad529563f4a58d1",
+      "result": "browser ledger lost after unhandled harness timeout;backup restore PASS;not acceptance evidence"
+    },
+    {
+      "head": "657d57ac27efa05bc70fb0077c676a47911299b0",
+      "artifact": 12976263604,
+      "zip_sha256": "dcf5aab144443758cd7163795bbef8f84b693ff47502499a70535e27858880b6",
+      "result": "9/11 UI cases PASS;code routed beyond gateway allowlist;upload composer hidden by restored Threads view;core and backup PASS"
+    }
+  ]
+}
