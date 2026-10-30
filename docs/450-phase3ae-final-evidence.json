@@ -1,0 +1,2885 @@
+{
+  "engineering_verdict": "PASS for Phase3AE planning/isolated rehearsal;independent acceptance pending",
+  "merge_execution": "NOT AUTHORIZED",
+  "production_release": "BLOCKED",
+  "defense_environment_certification": "PENDING",
+  "pr": "https://github.com/ecollab-project/ecollab/pull/103",
+  "branch": "integration/phase3ae-defense-rehearsal-20261030",
+  "accepted_base": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+  "head": "f319fe16ca30b3157a0ca567fa879bec89c75f19",
+  "tree": "a714e8d2ce0d7f548dcb5ad8e3c83a80c243429f",
+  "hosted_checkout": "e5460803ab5181fe65fecdbea991006991bb1169",
+  "hosted_tree": "a714e8d2ce0d7f548dcb5ad8e3c83a80c243429f",
+  "integration_reference": "c838359711a14e9b6eb3f345c4386d184a178b25",
+  "runtime_change": "NONE relative to accepted PR102",
+  "changed_paths": [
+    ".github/workflows/phase3ae-rehearsal.yml",
+    "docs/450-phase3ae-audit-boundary.json",
+    "docs/450-phase3ae-merge-plan.md",
+    "docs/450-phase3ae-pr-snapshot.json",
+    "tests/phase3ae-inventory.py",
+    "tests/phase3ae-report.py"
+  ],
+  "ci": {
+    "runs": [
+      {
+        "id": 41045400615,
+        "name": "Notification regression",
+        "event": "pull_request",
+        "head_sha": "f319fe16ca30b3157a0ca567fa879bec89c75f19",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/ecollab-project/ecollab/actions/runs/41045400615"
+      },
+      {
+        "id": 41045399797,
+        "name": "Chat resumable uploads",
+        "event": "pull_request",
+        "head_sha": "f319fe16ca30b3157a0ca567fa879bec89c75f19",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/ecollab-project/ecollab/actions/runs/41045399797"
+      },
+      {
+        "id": 41045399777,
+        "name": "Chat timeline and profiles",
+        "event": "pull_request",
+        "head_sha": "f319fe16ca30b3157a0ca567fa879bec89c75f19",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/ecollab-project/ecollab/actions/runs/41045399777"
+      },
+      {
+        "id": 41045399993,
+        "name": "Jarred async privacy integration",
+        "event": "pull_request",
+        "head_sha": "f319fe16ca30b3157a0ca567fa879bec89c75f19",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/ecollab-project/ecollab/actions/runs/41045399993"
+      },
+      {
+        "id": 41045399853,
+        "name": "Settings and Jarred runtime",
+        "event": "pull_request",
+        "head_sha": "f319fe16ca30b3157a0ca567fa879bec89c75f19",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/ecollab-project/ecollab/actions/runs/41045399853"
+      },
+      {
+        "id": 41045400002,
+        "name": "Phase 3AE isolated defense rehearsal",
+        "event": "pull_request",
+        "head_sha": "f319fe16ca30b3157a0ca567fa879bec89c75f19",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/ecollab-project/ecollab/actions/runs/41045400002"
+      },
+      {
+        "id": 41045359629,
+        "name": "Chat resumable uploads",
+        "event": "push",
+        "head_sha": "f319fe16ca30b3157a0ca567fa879bec89c75f19",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/ecollab-project/ecollab/actions/runs/41045359629"
+      }
+    ],
+    "jobs": [
+      {
+        "run": 41045400615,
+        "jobs": [
+          {
+            "id": 124028140589,
+            "name": "check",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm install --no-save --ignore-scripts jsdom@30.1.2",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/notification-routing-regression.cjs",
+                "number": 6,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/livekit-calls-regression.cjs",
+                "number": 7,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php tests/notification-service-regression.php",
+                "number": 8,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run for file in API/notifications/get.php API/notifications/mark-read.php API/dm/send-message.php API/dm/group-message.php API/threads/index.php API/server/members.php API/chat/channel-members.php services/NotificationService.php websocket/handlers/DmHandler.php modules/chat/chat.php; do php -l \"$file\" || exit 1; done",
+                "number": 9,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "number": 17,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 18,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 19,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 41045399797,
+        "jobs": [
+          {
+            "id": 124028137546,
+            "name": "uploads",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php -l API/chat/resumable-upload.php",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm ci --prefix tools/chat-uploads",
+                "number": 6,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm run --prefix tools/chat-uploads build",
+                "number": 7,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run git diff --exit-code -- assets/js/chat/resumable-uploads.js assets/js/chat/resumable-uploads.js.LEGAL.txt assets/js/chat/resumable-uploads.NOTICES.txt",
+                "number": 8,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run NODE_PATH=\"$PWD/tools/chat-uploads/node_modules\" node tests/chat-uploads-regression.cjs",
+                "number": 9,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run NODE_PATH=\"$PWD/tools/chat-uploads/node_modules\" node tests/chat-tus-http-regression.cjs",
+                "number": 10,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "number": 19,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 20,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 21,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 41045399777,
+        "jobs": [
+          {
+            "id": 124028137379,
+            "name": "check",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm install --no-save --ignore-scripts jsdom@30.1.2",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/chat-timeline-regression.cjs",
+                "number": 6,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/chat-profile-regression.cjs",
+                "number": 7,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/chat-members-regression.cjs",
+                "number": 8,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php tests/chat-read-regression.php",
+                "number": 9,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run for file in API/chat/get-messages.php API/dm/open-conversation.php API/dm/group-message.php API/dm/groups.php API/profile/get-profile.php services/ChatReadService.php modules/chat/chat.php; do php -l \"$file\" || exit 1; done",
+                "number": 10,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "number": 19,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 20,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 21,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 41045399993,
+        "jobs": [
+          {
+            "id": 124028138821,
+            "name": "isolated-mariadb-http",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Install disposable MariaDB and PHP dependencies",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Install isolated JS and browser fixtures",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Syntax, queue crash, permission and privacy regressions",
+                "number": 6,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Actual MariaDB, TCP faults, HTTP client and CLI worker recovery",
+                "number": 7,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "number": 13,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 14,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 15,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 41045399853,
+        "jobs": [
+          {
+            "id": 124028138056,
+            "name": "runtime",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Initialize containers",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm install --no-save --ignore-scripts jsdom@30.1.2 playwright@1.58.2 yjs@13.6.27 y-protocols@1.0.6",
+                "number": 6,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm ci --prefix tools/chat-composer --ignore-scripts --no-audit --no-fund",
+                "number": 7,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npx playwright install --with-deps chromium",
+                "number": 8,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php tests/client-ip-regression.php",
+                "number": 9,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/request-security-regression.cjs",
+                "number": 10,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php tests/rate-limit-concurrency.php",
+                "number": 11,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php tests/settings-runtime-regression.php",
+                "number": 12,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php tests/settings-migration-regression.php",
+                "number": 13,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php tests/jarred-governance-retention.php",
+                "number": 14,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php tests/jarred-governance-provider.php",
+                "number": 15,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/jarred-governance-http.cjs",
+                "number": 16,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/jarred-governance-lock.cjs",
+                "number": 17,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/shared-ai-provider.cjs",
+                "number": 18,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Shared inference across separate Linux temporary mount views",
+                "number": 19,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/jarred-provider-regression.cjs",
+                "number": 20,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/jarred-session-race.cjs",
+                "number": 21,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/realtime-settings-regression.cjs",
+                "number": 22,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/settings-runtime-browser.cjs",
+                "number": 23,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/chat-composer-regression.cjs",
+                "number": 24,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/yjs-channel-presence-regression.cjs",
+                "number": 25,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "number": 48,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 49,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Stop containers",
+                "number": 50,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 51,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 41045400002,
+        "jobs": [
+          {
+            "id": 124028138476,
+            "name": "owned-http-auth",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Install disposable MariaDB and PHP dependencies",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Dependencies and browser runtime",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Phase 3AE cumulative source and merge simulation",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Source gate and existing security regressions",
+                "number": 6,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Full original failing control and current three orderings including native expiry",
+                "number": 7,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Exact accepted Phase3X base comparison",
+                "number": 8,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Exact accepted Phase3AB base comparison",
+                "number": 9,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Exact accepted Phase3AC source comparison",
+                "number": 10,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Actual corrected HTTP, hosted Chromium and persisted OTP browser reset",
+                "number": 11,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Actual corrected native clocks, sessions, failures and legacy rehearsal",
+                "number": 12,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Exact accepted Phase3Y comparison",
+                "number": 13,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Exact accepted Phase3Z comparison",
+                "number": 14,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Frozen original clock, transition and double-consumption controls",
+                "number": 15,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Exact-base static comparison",
+                "number": 16,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Recompute actual security acceptance from raw records",
+                "number": 17,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Four-migration compatibility and recovery rehearsal",
+                "number": 18,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Actual code poll message compatibility",
+                "number": 19,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Authoritative identity migration provisioning authentication DM and Jarred",
+                "number": 20,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Actual composed student facilitator collaboration HTTP and Chromium",
+                "number": 21,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Recompute integration readiness and preserve blockers",
+                "number": 22,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Phase 3AE rehearsal decision and retained release blockers",
+                "number": 23,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "number": 24,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 48,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 49,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 41045359629,
+        "jobs": [
+          {
+            "id": 124028006650,
+            "name": "uploads",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php -l API/chat/resumable-upload.php",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm ci --prefix tools/chat-uploads",
+                "number": 6,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm run --prefix tools/chat-uploads build",
+                "number": 7,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run git diff --exit-code -- assets/js/chat/resumable-uploads.js assets/js/chat/resumable-uploads.js.LEGAL.txt assets/js/chat/resumable-uploads.NOTICES.txt",
+                "number": 8,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run NODE_PATH=\"$PWD/tools/chat-uploads/node_modules\" node tests/chat-uploads-regression.cjs",
+                "number": 9,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run NODE_PATH=\"$PWD/tools/chat-uploads/node_modules\" node tests/chat-tus-http-regression.cjs",
+                "number": 10,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "number": 19,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 20,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 21,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 12971359746,
+        "name": "phase3ae-rehearsal-evidence",
+        "size_in_bytes": 1407824,
+        "url": "https://api.github.com/repos/ecollab-project/ecollab/actions/artifacts/12971359746",
+        "archive_download_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/artifacts/12971359746/zip",
+        "expired": false,
+        "created_at": "2026-10-30T11:13:08Z",
+        "expires_at": "2027-01-28T11:04:28Z",
+        "updated_at": "2026-10-30T11:13:08Z",
+        "digest": "sha256:ac6aa25aeaa18ac5dd76426ea72272a82b6a3b666fe2ed9b9f9c1cfe59d08a4e",
+        "workflow_run": {
+          "id": 41045400002,
+          "repository_id": 1334985087,
+          "head_repository_id": 1334985087,
+          "head_branch": "integration/phase3ae-defense-rehearsal-20261030",
+          "head_sha": "f319fe16ca30b3157a0ca567fa879bec89c75f19"
+        }
+      }
+    ]
+  },
+  "recompute_commands": [
+    {
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "tests/phase3ac-report.py",
+        "/workspace/scratch/5c9d94f07e76/phase3ae-rehearsal"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"candidate\": {\n    \"clock_records\": 180,\n    \"race_rounds\": 8,\n    \"two_session_rounds\": 5,\n    \"four_session_rounds\": 3,\n    \"single_use\": \"PASS\",\n    \"timezone\": \"PASS\"\n  },\n  \"original\": {\n    \"race_rounds\": 10,\n    \"single_use\": \"FAIL (preserved)\",\n    \"clock_records\": 360\n  },\n  \"full_suite\": {\n    \"baseline\": {\n      \"exit_code\": 1,\n      \"counts\": {\n        \"tests\": 46,\n        \"assertions\": 114,\n        \"errors\": 0,\n        \"failures\": 5,\n        \"skipped\": 0\n      }\n    },\n    \"current\": {\n      \"exit_code\": 0,\n      \"counts\": {\n        \"tests\": 60,\n        \"assertions\": 280,\n        \"errors\": 0,\n        \"failures\": 0,\n        \"skipped\": 0\n      }\n    },\n    \"reverse\": {\n      \"exit_code\": 0,\n      \"counts\": {\n        \"tests\": 60,\n        \"assertions\": 280,\n        \"errors\": 0,\n        \"failures\": 0,\n        \"skipped\": 0\n      }\n    },\n    \"random-31028\": {\n      \"exit_code\": 0,\n      \"counts\": {\n        \"tests\": 60,\n        \"assertions\": 280,\n        \"errors\": 0,\n        \"failures\": 0,\n        \"skipped\": 0\n      }\n    }\n  },\n  \"accepted-base.json\": {\n    \"baseline\": {\n      \"exit_code\": 0,\n      \"tests\": 57\n    },\n    \"current\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    }\n  },\n  \"accepted-phase3y.json\": {\n    \"baseline\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    },\n    \"current\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    }\n  },\n  \"accepted-phase3z.json\": {\n    \"baseline\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    },\n    \"current\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    }\n  },\n  \"accepted-phase3ab.json\": {\n    \"baseline\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    },\n    \"current\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    }\n  },\n  \"phpstan\": {\n    \"added\": 0,\n    \"baseline\": {\n      \"errors\": 0,\n      \"file_errors\": 15\n    },\n    \"candidate\": {\n      \"errors\": 0,\n      \"file_errors\": 15\n    }\n  },\n  \"http\": {\n    \"direct_requests\": 207,\n    \"browser\": \"PASS\",\n    \"browser_version\": \"151.0.7922.34\"\n  },\n  \"raw_sha256\": {\n    \"accepted-base.json\": \"037d34e18ab4b010c66cd8c7cd379ebaebea95e56267535bf0a96893b7e4f67a\",\n    \"accepted-phase3ab.json\": \"f5c49b3b8cfce8d05b919eda54c672af10b354ed369f1b05e39325471f79ec79\",\n    \"accepted-phase3ac.json\": \"e124886267da26c7ec520b5842585f7d26702e8fbefb8356fafc62ae95665295\",\n    \"accepted-phase3y.json\": \"17012027a5523ce06833efc9ef81b0ba35e6cb8e1a10421f25ac870d17569f1b\",\n    \"accepted-phase3z.json\": \"8dba3bc25a131e4bd45927d3b8e93f234c86fe9d86c6e45c87039d93b44c1be0\",\n    \"full.json\": \"1861b6b2b914b9977f879625bd30c08c243697983fbe9b4730bed3dd49c98ade\",\n    \"http.json\": \"30120757cdb387ffc3ecd3b3140edb935369e8af37d0461bbd55fe717b777ce9\",\n    \"identity.json\": \"4ff4483be0b4890122fc5e6c6d1cee7d8aa08334aa4c5edef1425d0a72c619d3\",\n    \"integration-http.json\": \"ae617b57b22c49af58b4b39c4e62f5e64b79a877738baec23729599b0e49f810\",\n    \"integration-summary.json\": \"f9b7126410b18f490e8636b841036b8ae007b485a191c599dbb38ae253af653a\",\n    \"inventory.json\": \"7e8ee58df272a4ffe5f11c11755f4dbba3a04afe3fce3a813081d9cbe3e95375\",\n    \"message-compatibility.json\": \"e49f734b548cdb4426977f16372a9575346d1ce7b40c13d8ac2b46951ca5820c\",\n    \"original-experiments.json\": \"53d683445b6bea9c8f8d3caeee09f125f2c2e66bd539b932d5b6cec682c898de\",\n    \"original-summary.json\": \"ddfcf4cbc6a789a77df4fd0412385ae1005a31638d2150471a8afa3a88003715\",\n    \"phase3ae-source.json\": \"9b31b340709b1a8bb8287ccaaa2f255294ace83a2a4aa2369f59ca5a509c4fb4\",\n    \"phase3ae-summary.json\": \"0d99d755522300fe356f575ae600f30449c2b0fafad1e38401f7b2dc3bfeed07\",\n    \"recomputed-summary.json\": \"baf5e9132db9a3d65a652dc7be292760cb05d7e2dbedde6b3800fd8f49d84645\",\n    \"scope.json\": \"45b0e43e48aaf252e9a1ca3ee79aa1aef0695399719330b1b50081db20d6190a\",\n    \"security.json\": \"2a57cee965d00f70c1cef163f10a0d31cf192ea48e8c2fd23bd07c7b386cef6e\",\n    \"static.json\": \"72bc20d2c61240669725d09b02a46b43f5442de119728abfb9c61f692cc1640a\",\n    \"writers.json\": \"52938c55f32935d7a6e5d2c7acf2a313f3a3700abf807674e7c1776646df3323\"\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "tests/phase3aa-report.py",
+        "/workspace/scratch/5c9d94f07e76/phase3ae-rehearsal/original-experiments.json",
+        "/workspace/scratch/5c9d94f07e76/phase3ae-original-recomputed.json"
+      ],
+      "exit_code": 0,
+      "stdout": "Recomputed 360 clock records; 10 double-consumption rounds (security FAIL)\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "tests/phase3ad-report.py",
+        "/workspace/scratch/5c9d94f07e76/phase3ae-rehearsal"
+      ],
+      "exit_code": 0,
+      "stdout": "PASS []\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "tests/phase3ae-report.py",
+        "/workspace/scratch/5c9d94f07e76/phase3ae-rehearsal"
+      ],
+      "exit_code": 0,
+      "stdout": "PASS [{'status': 'BLOCKED', 'reason': 'Inherited load-fixture cleanup expects ws_tokens absent from canonical migrations; not a defense feature or capacity acceptance'}, 'Existing/production069 identity classification and coordinated OTP transition not approved', 'External services/full composed upload-download/50-100-user capacity not certified']\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "merge-tree",
+        "--write-tree",
+        "c838359711a14e9b6eb3f345c4386d184a178b25",
+        "c65d2f994b10dfa7890f6509a2342e58a064571e"
+      ],
+      "exit_code": 0,
+      "tree": "7f6686f3d382f8764e84851411f2f92af840077c",
+      "target_ref_mutated": false
+    },
+    {
+      "command": [
+        "git",
+        "merge-tree",
+        "--write-tree",
+        "c838359711a14e9b6eb3f345c4386d184a178b25",
+        "f319fe16ca30b3157a0ca567fa879bec89c75f19"
+      ],
+      "exit_code": 0,
+      "tree": "a714e8d2ce0d7f548dcb5ad8e3c83a80c243429f",
+      "target_ref_mutated": false
+    }
+  ],
+  "assertions": {
+    "status": "PASS",
+    "cumulative_commits_accepted": 70,
+    "commits_rehearsal": 71,
+    "cumulative_paths_accepted": 725,
+    "runtime_deployment_paths": 69,
+    "migration_additions": 6,
+    "reviewed_PR_snapshots": 37,
+    "all_required_commands": "16/16 exit0 plus Phase3AE source/decision gates PASS",
+    "workflows": "7/7 PASS",
+    "jobs": "7/7 PASS",
+    "steps": "116PASS,0FAIL,0SKIPPED",
+    "auth_requests": 207,
+    "integration_requests": 52,
+    "identity_requests": 32,
+    "identity_contracts": 22,
+    "migration_cases": "9:7expected refusals,2success",
+    "message_requests_checks": [
+      61,
+      27
+    ],
+    "current_PHPUnit": "60/280 three orderings;0failures/errors/skips",
+    "OTP": "180clock observations;8single-winner rounds",
+    "original_controls": "360clock records;10double-consumption rounds;46test baseline5inherited failures",
+    "actual_Chromium": "6auth checkpoints;4student/facilitator desktop/mobile cases",
+    "PHPStan": "15/15 inherited;0additional"
+  },
+  "cumulative_review": {
+    "runtime": [
+      {
+        "path": "API/admin/dashboard-data.php",
+        "integration_blob": "19f827e950d7bea88a9a558c3912f578f7b37ebe",
+        "accepted_blob": "261e21b3d9a58cb391f8e3f3189a72a624ac122b",
+        "sha256": "fd1d96a885ed4503c8437bf88973b137922bb27216fc05af49e8ae8f0d15003e",
+        "review_class": "accepted OTP/identity and explicit human writers;production transition blocked"
+      },
+      {
+        "path": "API/admin/group-recommendations.php",
+        "integration_blob": "aa1bad750c02be8dfab917ad7bbcaaf48be7a082",
+        "accepted_blob": "443b3958930120047146edba11d93c916565e004",
+        "sha256": "81c0b434556ac46eae8ea273f292a44f200db73bb4f9d4da982c2bae4caec3ce",
+        "review_class": "AI/worker/shared-lock/authorization dependency;live service incomplete"
+      },
+      {
+        "path": "API/ai/message.php",
+        "integration_blob": "844924533d938a494a66f8a10f47b40655e047db",
+        "accepted_blob": "d17c941560aa02ba45b1c498137307923767bdcd",
+        "sha256": "5114b4c47e1ee474df79b341ef0a9f67512f04128b434f798b9dd3f3e5e730ed",
+        "review_class": "AI/worker/shared-lock/authorization dependency;live service incomplete"
+      },
+      {
+        "path": "API/ai/session.php",
+        "integration_blob": "53512abacea40feab7d4373d325ee5423c7949fd",
+        "accepted_blob": "382bcd1f65d751ceba1a9df8002e3a6c37725ce5",
+        "sha256": "a9fa70e64e8ec132409d71dfc98395e34ebac1d10491c87ff2c6da6e0118d730",
+        "review_class": "AI/worker/shared-lock/authorization dependency;live service incomplete"
+      },
+      {
+        "path": "API/ai/sessions.php",
+        "integration_blob": "23a6d23e6ec8a714a2451396eb53087acf453415",
+        "accepted_blob": "7c1fa2ca6babcd4888ca498f92b211cbac3586b5",
+        "sha256": "a04bc096f03afdc5297f65536ccf4b997c3bdd34d08400cf20e12d27827697a6",
+        "review_class": "AI/worker/shared-lock/authorization dependency;live service incomplete"
+      },
+      {
+        "path": "API/auth/resend-signup-otp.php",
+        "integration_blob": "e493b6c39feb4b6998a1f146e8ea47a326128d42",
+        "accepted_blob": "90cbd390b04eb7611d3dd10286122d78a2a88671",
+        "sha256": "a060d6a3fda09cb91aefe7073c4a5aa10177f6f1abe1ce7fef0a2afe3fbdb0d3",
+        "review_class": "accepted OTP/identity and explicit human writers;production transition blocked"
+      },
+      {
+        "path": "API/chat/ai-assist.php",
+        "integration_blob": "f43e16c435e99580a37077a6b518a0ca00963fe9",
+        "accepted_blob": "411d235aa4d970ffef128a22f95e0c83c5d11a9c",
+        "sha256": "4ef516d197c4d3fcce76bfc7e055a51ac9ae726a542dbbf661c20e930c815a72",
+        "review_class": "AI/worker/shared-lock/authorization dependency;live service incomplete"
+      },
+      {
+        "path": "API/chat/get-matches.php",
+        "integration_blob": "76e2c94dfeadcf2be4a2fedc8a7f852453c9eac2",
+        "accepted_blob": "c87504f8f176816351c3735bafbb0f67793deaad",
+        "sha256": "915b85888f34d68276ea1b9f0de1faf356e2af08996a64a95d494eaeb57c0dd4",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "API/chat/peer-match.php",
+        "integration_blob": "d1ae6fd0a095ee699b6ca1baa6e9dee0605b2496",
+        "accepted_blob": "cb97beac597b5767e2e9ba8419dab43673dade22",
+        "sha256": "8663a8cfa8510488d1354ebb6fb2a8b4fb5334860d374e38f42e7c78c7de1f59",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "API/chat/send-message.php",
+        "integration_blob": "d85b06bd67fa1b6b2185b83fa83da0c7cd7aa545",
+        "accepted_blob": "afd1dc16f1661fe96e9483921ca2856827ab41b4",
+        "sha256": "6c8e5f6c35e27eab15cac34a4a8bd8cd79a35cfe59025752a6bac30b87a45172",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "API/chat/vote-poll.php",
+        "integration_blob": "35ead381650581ea53fc292b45ede2ff57094c07",
+        "accepted_blob": "ca556d3ad1c1b463cdc7e9695450d9e916efa566",
+        "sha256": "46a3b3ccca9c5f6efa0dda753a9ce6fdaed054a6330372867825b0d1ec931481",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "API/collaboration/workspaces.php",
+        "integration_blob": "df87294da8c426edbeabda6de9acd07876b13dcf",
+        "accepted_blob": "7abe0a5de5de3c981cf8efcf2ba1cd08242248d3",
+        "sha256": "9b85b988bb7c9093314867c53a2549a496c24ed0e2d4ea76223f67da68c4719b",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "API/dm/jarred-job.php",
+        "integration_blob": null,
+        "accepted_blob": "79556910b14d260abf89f1e0b1bacf7f4522dded",
+        "sha256": "c6eaf0c58e903005ef7a762ff4f94e1d4901c61a7ae6cc6d934de608318e9ee0",
+        "review_class": "AI/worker/shared-lock/authorization dependency;live service incomplete"
+      },
+      {
+        "path": "API/dm/send-message.php",
+        "integration_blob": "a9c1d564ac8e1b6133bb9e1f53b1064f4a3a93cd",
+        "accepted_blob": "cd8fd8828706da6c599d3604e6f86dede4d5334f",
+        "sha256": "886e65d12fe4acb5020c2bc467edc4f148fc5412db9ba59c2fef546c546f3a65",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "API/facilitator/jarred.php",
+        "integration_blob": "97a3b99ecf1722fbea29757bdb2b3276c602a167",
+        "accepted_blob": "7d6f0f0e1ae04f37e755d2a050171b0d69288994",
+        "sha256": "4763cc868b9b359dd8b1d18778f17bc037320c225ca7500b3afa23d95fb658d8",
+        "review_class": "AI/worker/shared-lock/authorization dependency;live service incomplete"
+      },
+      {
+        "path": "API/threads/index.php",
+        "integration_blob": "4498d9c8f63f39971347be01023c3970a51ffa46",
+        "accepted_blob": "729a07ca70f047083f9126be9a1d0095892e5403",
+        "sha256": "45533ee113ea37a33c2b1d189f7650de8e9fbf5ce746c22c0f55477b6972b962",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "assets/js/chat/dm-notifications.js",
+        "integration_blob": "f468db848eeb26353248bc80acbfea70aa1b18a0",
+        "accepted_blob": "bef611870d570e620880bd65d22f1542cfeb20d5",
+        "sha256": "1da40714cfb610cba571f2050b7f0cdfba7e9b28f8b0f179dda34e0ece566c35",
+        "review_class": "AI/worker/shared-lock/authorization dependency;live service incomplete"
+      },
+      {
+        "path": "assets/js/learning/workspace.js",
+        "integration_blob": "734fc2cfaf2bcc698c0cd64660811dadcd40e8e2",
+        "accepted_blob": "79a429af5579fbba2a4c87022a07a34394400639",
+        "sha256": "05f0dd80c3728d4bc6db676da90d4c50c2b0338a9a03f4ae932937737a359b9d",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "assets/js/student/dashboard.js",
+        "integration_blob": "3da91e42dcfcd0b5364e388e51af09b23fcbc960",
+        "accepted_blob": "c395fa756ca872c3a7ebec51d58d9492a89368c1",
+        "sha256": "342c2be7b784357a892b016ba2e32f38ab3c060bb6ba0a8600a05e0324645860",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "database/migrate.php",
+        "integration_blob": "96950eb967efdb0d9cfec7af6b083445acda3916",
+        "accepted_blob": "ca2fa8eaf139e8c19de7a65357b123e5d64dfaf7",
+        "sha256": "0bbc29fa6f4ec58623d610bdeea8d0514f1f45dbd91dc71cf57e30344d659919",
+        "review_class": "migration/ledger compatibility;fresh-only069 gate"
+      },
+      {
+        "path": "database/migrations/025_coworkspace_one_active_per_server_mariadb.sql",
+        "integration_blob": null,
+        "accepted_blob": "fa196f0e6516ad6b2385c062fdc5ce157058dd47",
+        "sha256": "6eb7650f3b0913c899595040615153196ba16c5386094ad522e2f3c1f88da087",
+        "review_class": "migration/ledger compatibility;fresh-only069 gate"
+      },
+      {
+        "path": "database/migrations/063_temporary_voice.sql",
+        "integration_blob": null,
+        "accepted_blob": "7562db6539e2b1345d729624775a60db3c1b6f62",
+        "sha256": "27f447a9d7926c0b70eaf39494c691231d915f3fd788708d7f2e7847a0b570da",
+        "review_class": "migration/ledger compatibility;fresh-only069 gate"
+      },
+      {
+        "path": "database/migrations/066_jarred_jobs.sql",
+        "integration_blob": null,
+        "accepted_blob": "5169658f326ce271673718d09738670e7df4202c",
+        "sha256": "6ad9d0427e35dfdac516101720cdec0e85828de870554c1a731c3a0fc602d89c",
+        "review_class": "migration/ledger compatibility;fresh-only069 gate"
+      },
+      {
+        "path": "database/migrations/067_dashboard_unread_covering.sql",
+        "integration_blob": null,
+        "accepted_blob": "d2e321e8cc1ce67229ef732023fe4241594c5997",
+        "sha256": "0a85d995260d5dd0d449f9870c97ae134998bd05388cc1b8dfc05e077909e3b0",
+        "review_class": "migration/ledger compatibility;fresh-only069 gate"
+      },
+      {
+        "path": "database/migrations/068_message_code_poll_types.sql",
+        "integration_blob": null,
+        "accepted_blob": "2dbb388b77599b32c1747c56f20a5068d4d811ad",
+        "sha256": "90b417fd89d9d510bd34e732809349256c5aa26a0e5d3081693d553460c1c37a",
+        "review_class": "migration/ledger compatibility;fresh-only069 gate"
+      },
+      {
+        "path": "database/migrations/069_system_identity.sql",
+        "integration_blob": null,
+        "accepted_blob": "6f1194dfabb4bda3707391c1658415ed04590c9c",
+        "sha256": "ecd88b9bec0a1c7c3bf2852605cd12c962e6d75eba61c30fb03b308da13bd08d",
+        "review_class": "migration/ledger compatibility;fresh-only069 gate"
+      },
+      {
+        "path": "deploy/ai-provider/README.md",
+        "integration_blob": null,
+        "accepted_blob": "57449fb0f560e2954a5a25fdce667807bfd84314",
+        "sha256": "88ebb250aa030ba0f44abdc59d4b43d88b192681b381ea02a2945ebf0e85888d",
+        "review_class": "external/staging dependency;not activated"
+      },
+      {
+        "path": "deploy/ai-provider/shared-lock.env.example",
+        "integration_blob": null,
+        "accepted_blob": "37227adc1200abdf46cb7524a2f0a723df3dd683",
+        "sha256": "1f08addb0796eef71313459d46a84f6aa6b37a267e9c31244e0569f2e5ebeecc",
+        "review_class": "external/staging dependency;not activated"
+      },
+      {
+        "path": "deploy/code-lab/isolated/README.md",
+        "integration_blob": null,
+        "accepted_blob": "073354209bcd88ca983bef3e3800dd17e47fd6d3",
+        "sha256": "dfa14d6fd3f4f21701b42a7f7ee52c7db2039a98a91902eb0ecdba60fc585af2",
+        "review_class": "external/staging dependency;not activated"
+      },
+      {
+        "path": "deploy/code-lab/isolated/application.env.example",
+        "integration_blob": null,
+        "accepted_blob": "b40ea8ad720a1bbab59c061a2efb316c7c1dec31",
+        "sha256": "690423766973dbcfcd7a15564d477131d740511057ca03455c6a6c249da39dd5",
+        "review_class": "external/staging dependency;not activated"
+      },
+      {
+        "path": "deploy/code-lab/isolated/execution.env.example",
+        "integration_blob": null,
+        "accepted_blob": "122097b5c94ada62db87a3de84d2491fe4a8c720",
+        "sha256": "0b159c90d9509c4f5b62c1e6e1a497efd35517af474b858d9c9b971cc69bd4cc",
+        "review_class": "external/staging dependency;not activated"
+      },
+      {
+        "path": "deploy/code-lab/isolated/nginx.conf.example",
+        "integration_blob": null,
+        "accepted_blob": "6a93e58f56508124d1f794356393da6af6fa7fdc",
+        "sha256": "35d377f5c1947aa204d87a63d8514e3634c259587f6d7a1d6005f0e746ed4f09",
+        "review_class": "external/staging dependency;not activated"
+      },
+      {
+        "path": "deploy/code-lab/piston/bridge.py",
+        "integration_blob": "10615ab27957812f9e91afc326bd4799efd1ca2b",
+        "accepted_blob": "31c80343397322f0cfb4c021236db1287558d9c5",
+        "sha256": "cc80700e9c4864dd91fbcec1d529300b87eeb95977ab88afc87e1c7dd2075a8c",
+        "review_class": "external/staging dependency;not activated"
+      },
+      {
+        "path": "deploy/code-lab/piston/compose.isolated.yml",
+        "integration_blob": null,
+        "accepted_blob": "8c0e0bcb00172ef2b4a7bcd562a1a9d3767609f5",
+        "sha256": "dc6c0313db08876ef25e2a36086b1b84a02b83b112e2dd6f41341ddfc4b86f7c",
+        "review_class": "external/staging dependency;not activated"
+      },
+      {
+        "path": "deploy/phase2/ecollab-jarred-worker.service",
+        "integration_blob": null,
+        "accepted_blob": "b80b9c69af81de46394cc4a826f665976fa598f5",
+        "sha256": "b530ea2d334bccf3d0df024b52fb177b3665104fd647762fbc0a9fbc69ec774e",
+        "review_class": "external/staging dependency;not activated"
+      },
+      {
+        "path": "scripts/jarred-worker.php",
+        "integration_blob": null,
+        "accepted_blob": "5bd8980fc221d8f8b65e1847590384fc5b1c5511",
+        "sha256": "f630ebb87cfd97c68554a8b866ddde26629748885f4d1527dd94a8120ac902de",
+        "review_class": "AI/worker/shared-lock/authorization dependency;live service incomplete"
+      },
+      {
+        "path": "scripts/provision-system-account.php",
+        "integration_blob": null,
+        "accepted_blob": "67ad7425790b6c64d4d8c38020ce56fbe5f58f18",
+        "sha256": "e91bb682a2a941f6da23e4ad4a639b0cfc88bdc06c2583c1ba9b9037874b8a44",
+        "review_class": "accepted OTP/identity and explicit human writers;production transition blocked"
+      },
+      {
+        "path": "security/SystemIdentity.php",
+        "integration_blob": null,
+        "accepted_blob": "b74525be9f41d9f8e9218e00480652591bff65f9",
+        "sha256": "5a31b61b86bb08d7c91eb48266448f8f6749ad45dd1007733e41ca2e26851e87",
+        "review_class": "accepted OTP/identity and explicit human writers;production transition blocked"
+      },
+      {
+        "path": "security/forgot-password/OtpService.php",
+        "integration_blob": "e4fd8e4a49c92033e952b872ad0bab66d5d3088c",
+        "accepted_blob": "7013114a3a7bc0d183c01fc92e0687f06202d3a7",
+        "sha256": "b284c5f174805db35ff913be62194d93a0da7f0813d4267579fbca557ccb014d",
+        "review_class": "accepted OTP/identity and explicit human writers;production transition blocked"
+      },
+      {
+        "path": "security/middleware/AuthMiddleware.php",
+        "integration_blob": "5cf632b898aa255abb7c502e8ee09f74fb11be4d",
+        "accepted_blob": "88e825d38e965d19bc85b10c70a3002b329e0d4e",
+        "sha256": "3fa11ca134375fcb9d6291aa2b2535a004ed69c50215b3bb382c35968587eb40",
+        "review_class": "accepted OTP/identity and explicit human writers;production transition blocked"
+      },
+      {
+        "path": "services/AccessPolicy.php",
+        "integration_blob": null,
+        "accepted_blob": "575bd7b26d379a190e34e91ab24ea2c2c8660a48",
+        "sha256": "c8a931d9755a610471b123ed5313e22d6166e5a7928530c66b7539ff31f777e0",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "services/AdminDashboardService.php",
+        "integration_blob": "c8672662a0e5c01731926f552756d163bfdf2d82",
+        "accepted_blob": "818df440cda1f9f45fa275cc11f0e0ea1b8906b5",
+        "sha256": "1083c3341c090cf52280be82c7e5a1e6e577604367650af7cad343a1cfce64a0",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "services/AdminGroupRecommendationService.php",
+        "integration_blob": null,
+        "accepted_blob": "24adae9e458c991ca93efaa37e9a7867b23dc20e",
+        "sha256": "e18b66a6d7867230b7c3bed86834529af1d94447248b4f3f0f9892f3c2b1fcd8",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "services/AdminWorkspaceService.php",
+        "integration_blob": "9accb44d7e2d9e19e550efd89d5e110a65817f20",
+        "accepted_blob": "6fc68d7942b33163fd2b09f63d9ac44340c1968d",
+        "sha256": "4e5ef4fb8c7d27873677e390306fa4d5a202a7446e3c7dbcf91b8cd44c2194ea",
+        "review_class": "accepted OTP/identity and explicit human writers;production transition blocked"
+      },
+      {
+        "path": "services/AuthService.php",
+        "integration_blob": "b145ba3e85036eb21748d85b235dd8e18c6cfc32",
+        "accepted_blob": "cb841d373739d18ff73c999a1567de12378ccce3",
+        "sha256": "0b98a8e88211e542d53ff80f924c9bbf2440440c6e48a4b09d790e707494f919",
+        "review_class": "accepted OTP/identity and explicit human writers;production transition blocked"
+      },
+      {
+        "path": "services/ChannelAccessService.php",
+        "integration_blob": null,
+        "accepted_blob": "d6a1ebf6a64215e15cdaf69b802f90e043e0542f",
+        "sha256": "b7f22ae9c02ab9781bd1d40ee33ccb4d9834899f141defbc314893ab7984d6b4",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "services/CodeLabRunner.php",
+        "integration_blob": "8463de868732c86fd50139abe704c41aae33917a",
+        "accepted_blob": "fd76ca74c11e37bcbd8e060e669f5b5bd1874e47",
+        "sha256": "84ff363f91dcca5f8a9b2ee5cb75c235e84df52d7a891ad56248bce91bb210da",
+        "review_class": "CodeLabmTLS/staging;external execution excluded"
+      },
+      {
+        "path": "services/CoworkspaceService.php",
+        "integration_blob": "3ce30269b9313c7a7ca2be4126158178e8375a6d",
+        "accepted_blob": "e41b412aa4ca027ccccfad05f916e7c06346fae6",
+        "sha256": "7a67f75069d68005001be5c7408e09fff7fe5a92970b93b92b555934716efc0a",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "services/DocumentAccessService.php",
+        "integration_blob": "590a2e0e6c7b299dcae7c6f09c37e8049e246c62",
+        "accepted_blob": "1cfae03f87262ab7ee5395af28c4160b1ddb7862",
+        "sha256": "d479ab833f27bfa841574a0c5d339185356184c8af49313051c8927c07a75571",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "services/FacilitatorDashboardService.php",
+        "integration_blob": "32fae5b035a6c10eeeea3b9c2f742a2241135d29",
+        "accepted_blob": "6fac3450f69e471506bca8d9522cdd5a3f62351f",
+        "sha256": "b19a8163a2934b91abdd655cc316b8a8d31290bca94e75d719afc61caf30e627",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "services/GeminiService.php",
+        "integration_blob": "f1e97b7d0ccc899925e06806c6f8e2ea7df43f45",
+        "accepted_blob": "cc7b68ba1f29bcdf40543d6e4de32e4440f05112",
+        "sha256": "a74044ecdf9d75750b559bedfe2562a8906bba8e64ad2cc649a4ed75d9d583c7",
+        "review_class": "AI/worker/shared-lock/authorization dependency;live service incomplete"
+      },
+      {
+        "path": "services/JarredActionService.php",
+        "integration_blob": "4e0e7c36a6b0285b777faaddd108b0456badcf2a",
+        "accepted_blob": "bcef4b842ccd6e71adcf214549d50efc0b4f2fbb",
+        "sha256": "91b6485f10db7d980729705560c34c9e558ef742b0b9c21f02619aff270f6f2c",
+        "review_class": "AI/worker/shared-lock/authorization dependency;live service incomplete"
+      },
+      {
+        "path": "services/JarredErrorResponse.php",
+        "integration_blob": null,
+        "accepted_blob": "bc9ee3547e8d920cf3c7ed5e41ab1f73cf1a96b5",
+        "sha256": "74375057ba847a3dfe180f5f7526e7b22c8f1bbf29683f6832f32a82cc4f454f",
+        "review_class": "AI/worker/shared-lock/authorization dependency;live service incomplete"
+      },
+      {
+        "path": "services/JarredGroupRecommendationService.php",
+        "integration_blob": "3c490aeb784f73eee6336c2cb82886dfc3807152",
+        "accepted_blob": "e37309afb89a87884071a3f20581b480ca085149",
+        "sha256": "26a4e46fd862446843daf6f2938de2983d5a146cef519df395b5e7f3adf6684e",
+        "review_class": "AI/worker/shared-lock/authorization dependency;live service incomplete"
+      },
+      {
+        "path": "services/JarredJobService.php",
+        "integration_blob": null,
+        "accepted_blob": "3b37386743ea57e2d989a631622c9665fbff36b0",
+        "sha256": "ac3a854049e9ebf3f12431cf7d0b87adc1a1ac67fae3bb69bebce2a3e0362897",
+        "review_class": "AI/worker/shared-lock/authorization dependency;live service incomplete"
+      },
+      {
+        "path": "services/JarredReplyGenerator.php",
+        "integration_blob": null,
+        "accepted_blob": "9cc3a8ab17ded1ca84ecd38623c025217b2da828",
+        "sha256": "b72b86c7ddd9aaf699ad2b9831d3765b25a01e637e7188a1790a9bed9550ed50",
+        "review_class": "AI/worker/shared-lock/authorization dependency;live service incomplete"
+      },
+      {
+        "path": "services/JarredTools.php",
+        "integration_blob": "709dc227d30d83f0d14bf3bbbbb46f6c2e9f6e15",
+        "accepted_blob": "0336498fb97cd812342e14f43cd683b1fa660f9d",
+        "sha256": "23b899290099344f477f519f20d117a004e1369d15a3bc0a3e9419075cbefeae",
+        "review_class": "AI/worker/shared-lock/authorization dependency;live service incomplete"
+      },
+      {
+        "path": "services/LearningWorkspaceService.php",
+        "integration_blob": "3118032b74deaa33995e59fe995d92a43decd4aa",
+        "accepted_blob": "f97d55e39627042a25b3733e61ed2dfbe8b1b364",
+        "sha256": "ab5eb71291d10c92d1590673132c5139f079e3da887d1477261039e40406eda7",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "services/LoadTestFixture.php",
+        "integration_blob": "6347b85c9819a74c8146c8633bb14302c16938d4",
+        "accepted_blob": "7ec1a4668fb84420b522c6fab1e9438dec5dd0b4",
+        "sha256": "1b66d35d45ca5d8f9a1055850ec51461bdf6812ccc8f7def48eb5b14c77bac14",
+        "review_class": "accepted OTP/identity and explicit human writers;production transition blocked"
+      },
+      {
+        "path": "services/MessageService.php",
+        "integration_blob": "61eb352ef1566be94aa5e0bffc317fdf1c9e0ada",
+        "accepted_blob": "13da47d6731ac1621ac65247fe3e7fee6c373cf8",
+        "sha256": "ccde7647a26f0596e60b0e7ecd98e17decc86089390ae153c82fb1ba08fbfe91",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "services/NotificationService.php",
+        "integration_blob": "d35fa903f719f43c133d80984402a521a0d39078",
+        "accepted_blob": "1735c8b8536e3a63c8d422e8a49fde5368fa2a03",
+        "sha256": "78bf27fdb5e8dcc84c3bab208c7bd3b9d0aedcbbe69ef769b4f8df873331233b",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "services/OAuthService.php",
+        "integration_blob": "a0f5ac25345114ca554046c1be95ee775307c9fb",
+        "accepted_blob": "d5b4904761492204cf9ac4541a60bd599fe35481",
+        "sha256": "ce35378273717555ff2f537e80f029bdcdab48d8d7803346b4320cfeda07c0ed",
+        "review_class": "accepted OTP/identity and explicit human writers;production transition blocked"
+      },
+      {
+        "path": "services/OllamaService.php",
+        "integration_blob": "6af84f29ca4132cb355774df5dc5b32b33f15f9c",
+        "accepted_blob": "e328b65203294d5b99454fce88554a23ac44f30b",
+        "sha256": "410c343c76d1e9c49ad165e3d7896134891786f8ab4e8d17bb23df6323541225",
+        "review_class": "AI/worker/shared-lock/authorization dependency;live service incomplete"
+      },
+      {
+        "path": "services/PeerMatchBatch.php",
+        "integration_blob": null,
+        "accepted_blob": "70332916b8fbc1190d14ebbbd79642f09dd95aca",
+        "sha256": "0b3e624c996e7673d822fa9d4feb7ac4f8264f2c37e1ef7bfb0773278923b729",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "services/PeerMatchingService.php",
+        "integration_blob": "30028f0918742f24eac2c0f6e88024dd083cd4d3",
+        "accepted_blob": "805476f4a0c6e8df3f9ce90da966d41ad3271f3a",
+        "sha256": "54b13816dc034db3863562e13f945e8eddfc2ade466534ab756ae323a0378b71",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "services/RealtimeOutbox.php",
+        "integration_blob": "f36a9925413317cb219e72e4db594799b592d27b",
+        "accepted_blob": "93bbe098fc22dab437b83d007bb769090f80b48b",
+        "sha256": "97af68917965cad0683268e3f2b76267a9b3cd638293f59bdfec9d9304a9b7d6",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "services/StudentDashboardService.php",
+        "integration_blob": "cbc2fb40e5640d49b80979e6bad6378765966d62",
+        "accepted_blob": "0c8b78ea8a43115af15420cadfb9c5207837d920",
+        "sha256": "c35eb3fbb1bacf4352866ec2f40b5288ffac5ce9acb5d0e1fc1390fc9f49053e",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      },
+      {
+        "path": "services/TemporaryVoiceService.php",
+        "integration_blob": "3ac0726a41dc731df24e19746061e1b85c527752",
+        "accepted_blob": "9d29736c0604f5472fd45a2e82105335e68ce9f4",
+        "sha256": "1683c95becc0d7f6246293dab0949960b0a83ba085fd412b1cb1b57f36255d2b",
+        "review_class": "AI/worker/shared-lock/authorization dependency;live service incomplete"
+      },
+      {
+        "path": "services/ThreadAttachmentService.php",
+        "integration_blob": null,
+        "accepted_blob": "cc80af6cef3c9979acbe1d6ed0391f0f08995cd6",
+        "sha256": "53dcc17b528bcbb8d363d54ffd0319a66751fe4ef6f7ade4ccbd130173590acc",
+        "review_class": "dashboard/chat/matching/thread/read and API integration;bounded accepted scope"
+      }
+    ],
+    "migration_additions": [
+      "database/migrations/025_coworkspace_one_active_per_server_mariadb.sql",
+      "database/migrations/063_temporary_voice.sql",
+      "database/migrations/066_jarred_jobs.sql",
+      "database/migrations/067_dashboard_unread_covering.sql",
+      "database/migrations/068_message_code_poll_types.sql",
+      "database/migrations/069_system_identity.sql"
+    ],
+    "PR_dispositions": [
+      {
+        "number": 66,
+        "title": "Phase 1: optimize backend queries and unify channel access",
+        "head": "8a2dcfd19db15c10d4711856835d68ef799660db",
+        "base": "c838359711a14e9b6eb3f345c4386d184a178b25",
+        "head_branch": "optimization/450-users-phase1",
+        "base_branch": "ecollab-collabs",
+        "draft": false,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/66",
+        "ancestor_of_accepted": false,
+        "disposition": "EXCLUDED parallel head;no merge/combined release approval",
+        "runtime_paths": [
+          "API/chat/active-now.php",
+          "API/chat/get-messages.php",
+          "API/chat/livekit-counts.php",
+          "API/chat/livekit-token.php",
+          "API/chat/peer-match.php",
+          "API/chat/search-messages.php",
+          "API/chat/whiteboard-sync.php",
+          "database/migrations/063_temporary_voice.sql",
+          "scripts/temporary-voice-maintenance.php",
+          "services/ChannelAccessService.php",
+          "services/MessageService.php",
+          "services/PeerMatchingService.php",
+          "services/TemporaryVoiceService.php",
+          "websocket/ChatServer.php"
+        ],
+        "same_final_blob": [
+          "database/migrations/063_temporary_voice.sql"
+        ],
+        "changed_later": [
+          "API/chat/active-now.php",
+          "API/chat/get-messages.php",
+          "API/chat/livekit-counts.php",
+          "API/chat/livekit-token.php",
+          "API/chat/peer-match.php",
+          "API/chat/search-messages.php",
+          "API/chat/whiteboard-sync.php",
+          "services/ChannelAccessService.php",
+          "services/MessageService.php",
+          "services/PeerMatchingService.php",
+          "services/TemporaryVoiceService.php",
+          "websocket/ChatServer.php"
+        ],
+        "absent_final": [
+          "scripts/temporary-voice-maintenance.php"
+        ]
+      },
+      {
+        "number": 67,
+        "title": "Phase 2: shared LiveKit counts, async Jarred and bounded realtime work",
+        "head": "e1fe79f7b2cdadf4719e9ef5f1bd82ae14db4b98",
+        "base": "8a2dcfd19db15c10d4711856835d68ef799660db",
+        "head_branch": "optimization/450-users-phase2",
+        "base_branch": "optimization/450-users-phase1",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/67",
+        "ancestor_of_accepted": false,
+        "disposition": "EXCLUDED parallel head;no merge/combined release approval",
+        "runtime_paths": [
+          "API/chat/livekit-counts.php",
+          "API/chat/search-messages.php",
+          "API/code-lab/index.php",
+          "API/dm/jarred-job.php",
+          "API/dm/send-message.php",
+          "assets/js/chat/centrifugo-delivery.js",
+          "assets/js/chat/chat-features.js",
+          "assets/js/chat/dm-notifications.js",
+          "assets/js/chat/livekit-voice.js",
+          "assets/js/code-lab.js",
+          "database/migrations/064_livekit_count_snapshot.sql",
+          "database/migrations/065_code_lab_delivery.sql",
+          "database/migrations/066_jarred_jobs.sql",
+          "deploy/phase2/ecollab-jarred-worker.service",
+          "deploy/phase2/ecollab-livekit-counts.service",
+          "modules/chat/chat.php",
+          "modules/code-lab/index.php",
+          "scripts/jarred-worker.php",
+          "scripts/livekit-count-collector.php",
+          "services/ChatSearchService.php",
+          "services/CodeLabExecutionService.php",
+          "services/JarredJobService.php",
+          "services/JarredReplyGenerator.php",
+          "services/LiveKitCountSnapshot.php",
+          "services/RealtimeOutbox.php",
+          "services/TemporaryVoiceService.php",
+          "websocket/ChatServer.php",
+          "websocket/bin/server.php"
+        ],
+        "same_final_blob": [
+          "database/migrations/066_jarred_jobs.sql"
+        ],
+        "changed_later": [
+          "API/chat/livekit-counts.php",
+          "API/chat/search-messages.php",
+          "API/code-lab/index.php",
+          "API/dm/jarred-job.php",
+          "API/dm/send-message.php",
+          "assets/js/chat/centrifugo-delivery.js",
+          "assets/js/chat/chat-features.js",
+          "assets/js/chat/dm-notifications.js",
+          "assets/js/chat/livekit-voice.js",
+          "assets/js/code-lab.js",
+          "deploy/phase2/ecollab-jarred-worker.service",
+          "modules/chat/chat.php",
+          "modules/code-lab/index.php",
+          "scripts/jarred-worker.php",
+          "services/CodeLabExecutionService.php",
+          "services/JarredJobService.php",
+          "services/JarredReplyGenerator.php",
+          "services/RealtimeOutbox.php",
+          "services/TemporaryVoiceService.php",
+          "websocket/ChatServer.php",
+          "websocket/bin/server.php"
+        ],
+        "absent_final": [
+          "database/migrations/064_livekit_count_snapshot.sql",
+          "database/migrations/065_code_lab_delivery.sql",
+          "deploy/phase2/ecollab-livekit-counts.service",
+          "scripts/livekit-count-collector.php",
+          "services/ChatSearchService.php",
+          "services/LiveKitCountSnapshot.php"
+        ]
+      },
+      {
+        "number": 68,
+        "title": "Integration review: fix Jarred queue expiry and private resource access",
+        "head": "5e2fa5b57226ae07b6a02560d89ac436019b8b28",
+        "base": "e1fe79f7b2cdadf4719e9ef5f1bd82ae14db4b98",
+        "head_branch": "review/phase1-phase2-readiness-20261022",
+        "base_branch": "optimization/450-users-phase2",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/68",
+        "ancestor_of_accepted": false,
+        "disposition": "EXCLUDED parallel head;no merge/combined release approval",
+        "runtime_paths": [
+          "services/JarredActionService.php",
+          "services/JarredJobService.php",
+          "services/JarredTools.php"
+        ],
+        "same_final_blob": [],
+        "changed_later": [
+          "services/JarredActionService.php",
+          "services/JarredJobService.php",
+          "services/JarredTools.php"
+        ],
+        "absent_final": []
+      },
+      {
+        "number": 69,
+        "title": "Phase 3C: enforce authorization and reconcile revoked realtime access",
+        "head": "287d1192122ad8731f6bfe352729bebe85c2f5f9",
+        "base": "5e2fa5b57226ae07b6a02560d89ac436019b8b28",
+        "head_branch": "security/r7-revocation-20261022",
+        "base_branch": "review/phase1-phase2-readiness-20261022",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/69",
+        "ancestor_of_accepted": false,
+        "disposition": "EXCLUDED parallel head;no merge/combined release approval",
+        "runtime_paths": [
+          "API/auth/realtime-token.php",
+          "API/auth/ws-token.php",
+          "API/collaboration/delete-document.php",
+          "API/collaboration/document-manage.php",
+          "API/collaboration/document-presence.php",
+          "API/collaboration/documents.php",
+          "API/collaboration/resource-access.php",
+          "API/collaboration/server-coworkspaces.php",
+          "API/collaboration/whiteboard.php",
+          "API/collaboration/whiteboards.php",
+          "API/collaboration/workspace-document.php",
+          "API/collaboration/workspace-members.php",
+          "deploy/centrifugo/config.json",
+          "deploy/phase2/ecollab-revocation-worker.service",
+          "scripts/realtime-revocation-worker.php",
+          "security/middleware/AuthMiddleware.php",
+          "services/AccessPolicy.php",
+          "services/CentrifugoService.php",
+          "services/ChannelAccessService.php",
+          "services/ChannelService.php",
+          "services/ChatUploadAccess.php",
+          "services/CoworkspaceService.php",
+          "services/DocumentAccessService.php",
+          "services/JarredActionService.php",
+          "services/JarredJobService.php",
+          "services/JarredReplyGenerator.php",
+          "services/JarredTools.php",
+          "services/RealtimeOutbox.php",
+          "services/RealtimeRevocationService.php",
+          "services/TemporaryVoiceService.php",
+          "websocket/ChatServer.php",
+          "websocket/handlers/DmHandler.php",
+          "websocket/handlers/WhiteboardHandler.php"
+        ],
+        "same_final_blob": [
+          "services/AccessPolicy.php",
+          "services/ChannelAccessService.php",
+          "services/CoworkspaceService.php",
+          "services/DocumentAccessService.php",
+          "services/JarredActionService.php",
+          "services/JarredJobService.php",
+          "services/JarredTools.php"
+        ],
+        "changed_later": [
+          "API/auth/realtime-token.php",
+          "API/auth/ws-token.php",
+          "API/collaboration/delete-document.php",
+          "API/collaboration/document-manage.php",
+          "API/collaboration/document-presence.php",
+          "API/collaboration/documents.php",
+          "API/collaboration/resource-access.php",
+          "API/collaboration/server-coworkspaces.php",
+          "API/collaboration/whiteboard.php",
+          "API/collaboration/whiteboards.php",
+          "API/collaboration/workspace-document.php",
+          "API/collaboration/workspace-members.php",
+          "deploy/centrifugo/config.json",
+          "security/middleware/AuthMiddleware.php",
+          "services/CentrifugoService.php",
+          "services/ChannelService.php",
+          "services/ChatUploadAccess.php",
+          "services/JarredReplyGenerator.php",
+          "services/RealtimeOutbox.php",
+          "services/TemporaryVoiceService.php",
+          "websocket/ChatServer.php",
+          "websocket/handlers/DmHandler.php",
+          "websocket/handlers/WhiteboardHandler.php"
+        ],
+        "absent_final": [
+          "deploy/phase2/ecollab-revocation-worker.service",
+          "scripts/realtime-revocation-worker.php",
+          "services/RealtimeRevocationService.php"
+        ]
+      },
+      {
+        "number": 70,
+        "title": "Phase 3C: gate LiveKit reconnects with current room authorization",
+        "head": "8679d81dd575f828f12f42cd4820808fe0066475",
+        "base": "287d1192122ad8731f6bfe352729bebe85c2f5f9",
+        "head_branch": "security/r7-livekit-admission-20261022",
+        "base_branch": "security/r7-revocation-20261022",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/70",
+        "ancestor_of_accepted": false,
+        "disposition": "EXCLUDED parallel head;no merge/combined release approval",
+        "runtime_paths": [
+          "API/internal/livekit-admission.php",
+          "deploy/phase2/livekit-admission.conf.example",
+          "services/LiveKitAdmissionService.php"
+        ],
+        "same_final_blob": [],
+        "changed_later": [],
+        "absent_final": [
+          "API/internal/livekit-admission.php",
+          "deploy/phase2/livekit-admission.conf.example",
+          "services/LiveKitAdmissionService.php"
+        ]
+      },
+      {
+        "number": 71,
+        "title": "Phase 3C: retire stale broker JWTs and reauthorize current sessions",
+        "head": "38900c09fbfd59599ed30905a8a5f9255b27dfe3",
+        "base": "8679d81dd575f828f12f42cd4820808fe0066475",
+        "head_branch": "security/r7-broker-reauthorization-20261022",
+        "base_branch": "security/r7-livekit-admission-20261022",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/71",
+        "ancestor_of_accepted": false,
+        "disposition": "EXCLUDED parallel head;no merge/combined release approval",
+        "runtime_paths": [
+          "API/auth/realtime-token.php",
+          "API/internal/centrifugo-proxy.php",
+          "assets/js/chat/centrifugo-delivery.js",
+          "deploy/centrifugo/compose.yaml",
+          "deploy/centrifugo/config.json",
+          "deploy/centrifugo/nginx-proxy.conf.example",
+          "deploy/centrifugo/proxy-entrypoint.sh",
+          "modules/chat/chat.php",
+          "scripts/configure-centrifugo.php",
+          "scripts/deploy-centrifugo.sh",
+          "services/CentrifugoProxyService.php",
+          "services/CentrifugoService.php"
+        ],
+        "same_final_blob": [],
+        "changed_later": [
+          "API/auth/realtime-token.php",
+          "assets/js/chat/centrifugo-delivery.js",
+          "deploy/centrifugo/compose.yaml",
+          "deploy/centrifugo/config.json",
+          "modules/chat/chat.php",
+          "scripts/configure-centrifugo.php",
+          "scripts/deploy-centrifugo.sh",
+          "services/CentrifugoService.php"
+        ],
+        "absent_final": [
+          "API/internal/centrifugo-proxy.php",
+          "deploy/centrifugo/nginx-proxy.conf.example",
+          "deploy/centrifugo/proxy-entrypoint.sh",
+          "services/CentrifugoProxyService.php"
+        ]
+      },
+      {
+        "number": 72,
+        "title": "Phase 3D: fix LiveKit revocation RPC and validate real media outages",
+        "head": "127fd08231861cd62be72dbc16d31a473794511f",
+        "base": "38900c09fbfd59599ed30905a8a5f9255b27dfe3",
+        "head_branch": "security/r7-real-media-validation-20261022",
+        "base_branch": "security/r7-broker-reauthorization-20261022",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/72",
+        "ancestor_of_accepted": false,
+        "disposition": "EXCLUDED parallel head;no merge/combined release approval",
+        "runtime_paths": [
+          "services/LiveKitService.php"
+        ],
+        "same_final_blob": [],
+        "changed_later": [
+          "services/LiveKitService.php"
+        ],
+        "absent_final": []
+      },
+      {
+        "number": 73,
+        "title": "Phase 3E: test broker fail-closed proposal and retain R7 release gates",
+        "head": "19a8845665dc72d8bf4d062f634b25410fad9961",
+        "base": "127fd08231861cd62be72dbc16d31a473794511f",
+        "head_branch": "security/r7-private-invalidation-20261022",
+        "base_branch": "security/r7-real-media-validation-20261022",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/73",
+        "ancestor_of_accepted": false,
+        "disposition": "EXCLUDED parallel head;no merge/combined release approval",
+        "runtime_paths": [],
+        "same_final_blob": [],
+        "changed_later": [],
+        "absent_final": []
+      },
+      {
+        "number": 74,
+        "title": "Phase 3F: repair MariaDB coworkspace uniqueness without rewriting migration history",
+        "head": "aa9b6b35ba86a50024987a60400b13488a9acbb5",
+        "base": "c838359711a14e9b6eb3f345c4386d184a178b25",
+        "head_branch": "fix/migration-025-mariadb-20261023",
+        "base_branch": "ecollab-collabs",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/74",
+        "ancestor_of_accepted": true,
+        "disposition": "Inherited source tested by scoped3AD;staging/external/production approval not inferred",
+        "runtime_paths": [
+          "API/collaboration/workspaces.php",
+          "database/migrate.php",
+          "database/migrations/025_coworkspace_one_active_per_server_mariadb.sql"
+        ],
+        "same_final_blob": [
+          "API/collaboration/workspaces.php",
+          "database/migrate.php",
+          "database/migrations/025_coworkspace_one_active_per_server_mariadb.sql"
+        ],
+        "changed_later": [],
+        "absent_final": []
+      },
+      {
+        "number": 75,
+        "title": "Phase 3G: add mTLS Code Lab transport and separate-host staging gates",
+        "head": "2e7a3aafe91fb88673e16c0ad78c7c46212ec9b7",
+        "base": "c838359711a14e9b6eb3f345c4386d184a178b25",
+        "head_branch": "security/code-lab-remote-isolation-20261023",
+        "base_branch": "ecollab-collabs",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/75",
+        "ancestor_of_accepted": true,
+        "disposition": "Inherited source tested by scoped3AD;staging/external/production approval not inferred",
+        "runtime_paths": [
+          "deploy/code-lab/isolated/README.md",
+          "deploy/code-lab/isolated/application.env.example",
+          "deploy/code-lab/isolated/execution.env.example",
+          "deploy/code-lab/isolated/nginx.conf.example",
+          "deploy/code-lab/piston/bridge.py",
+          "deploy/code-lab/piston/compose.isolated.yml",
+          "services/CodeLabRunner.php"
+        ],
+        "same_final_blob": [
+          "deploy/code-lab/isolated/README.md",
+          "deploy/code-lab/isolated/application.env.example",
+          "deploy/code-lab/isolated/execution.env.example",
+          "deploy/code-lab/isolated/nginx.conf.example",
+          "deploy/code-lab/piston/bridge.py",
+          "deploy/code-lab/piston/compose.isolated.yml",
+          "services/CodeLabRunner.php"
+        ],
+        "changed_later": [],
+        "absent_final": []
+      },
+      {
+        "number": 76,
+        "title": "Phase 3I: audit Jarred governance and fix opt-out and private error handling",
+        "head": "2e65196fca7448155c19519fda61fdda82c6c80d",
+        "base": "c838359711a14e9b6eb3f345c4386d184a178b25",
+        "head_branch": "security/jarred-governance-20261023",
+        "base_branch": "ecollab-collabs",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/76",
+        "ancestor_of_accepted": true,
+        "disposition": "Inherited source tested by scoped3AD;staging/external/production approval not inferred",
+        "runtime_paths": [
+          "API/ai/message.php",
+          "API/ai/session.php",
+          "API/ai/sessions.php",
+          "API/chat/ai-assist.php",
+          "API/dm/send-message.php",
+          "API/facilitator/jarred.php",
+          "services/GeminiService.php"
+        ],
+        "same_final_blob": [
+          "API/ai/message.php",
+          "API/ai/session.php",
+          "API/ai/sessions.php",
+          "API/chat/ai-assist.php",
+          "API/facilitator/jarred.php",
+          "services/GeminiService.php"
+        ],
+        "changed_later": [
+          "API/dm/send-message.php"
+        ],
+        "absent_final": []
+      },
+      {
+        "number": 77,
+        "title": "Phase 3J: share bounded Ollama execution and validate complete admin groups",
+        "head": "67a90c6cc94701521d4648ed29f8b21e5eea5683",
+        "base": "2e65196fca7448155c19519fda61fdda82c6c80d",
+        "head_branch": "security/shared-ai-provider-20261023",
+        "base_branch": "security/jarred-governance-20261023",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/77",
+        "ancestor_of_accepted": true,
+        "disposition": "Inherited source tested by scoped3AD;staging/external/production approval not inferred",
+        "runtime_paths": [
+          "API/admin/group-recommendations.php",
+          "deploy/ai-provider/README.md",
+          "deploy/ai-provider/shared-lock.env.example",
+          "services/AdminGroupRecommendationService.php",
+          "services/OllamaService.php"
+        ],
+        "same_final_blob": [
+          "API/admin/group-recommendations.php",
+          "deploy/ai-provider/README.md",
+          "deploy/ai-provider/shared-lock.env.example",
+          "services/AdminGroupRecommendationService.php"
+        ],
+        "changed_later": [
+          "services/OllamaService.php"
+        ],
+        "absent_final": []
+      },
+      {
+        "number": 78,
+        "title": "[STAGING ONLY] Phase 3K compatibility rehearsal for PRs 74\u201377",
+        "head": "3b5983ba86ee1b0ba59b4cfa45d331b6f516a908",
+        "base": "c838359711a14e9b6eb3f345c4386d184a178b25",
+        "head_branch": "review/phase3k-integration-20261023",
+        "base_branch": "ecollab-collabs",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/78",
+        "ancestor_of_accepted": true,
+        "disposition": "Inherited source tested by scoped3AD;staging/external/production approval not inferred",
+        "runtime_paths": [
+          "API/admin/group-recommendations.php",
+          "API/ai/message.php",
+          "API/ai/session.php",
+          "API/ai/sessions.php",
+          "API/chat/ai-assist.php",
+          "API/collaboration/workspaces.php",
+          "API/dm/send-message.php",
+          "API/facilitator/jarred.php",
+          "database/migrate.php",
+          "database/migrations/025_coworkspace_one_active_per_server_mariadb.sql",
+          "deploy/ai-provider/README.md",
+          "deploy/ai-provider/shared-lock.env.example",
+          "deploy/code-lab/isolated/README.md",
+          "deploy/code-lab/isolated/application.env.example",
+          "deploy/code-lab/isolated/execution.env.example",
+          "deploy/code-lab/isolated/nginx.conf.example",
+          "deploy/code-lab/piston/bridge.py",
+          "deploy/code-lab/piston/compose.isolated.yml",
+          "services/AdminGroupRecommendationService.php",
+          "services/CodeLabRunner.php",
+          "services/GeminiService.php",
+          "services/OllamaService.php"
+        ],
+        "same_final_blob": [
+          "API/admin/group-recommendations.php",
+          "API/ai/message.php",
+          "API/ai/session.php",
+          "API/ai/sessions.php",
+          "API/chat/ai-assist.php",
+          "API/collaboration/workspaces.php",
+          "API/facilitator/jarred.php",
+          "database/migrate.php",
+          "database/migrations/025_coworkspace_one_active_per_server_mariadb.sql",
+          "deploy/ai-provider/README.md",
+          "deploy/ai-provider/shared-lock.env.example",
+          "deploy/code-lab/isolated/README.md",
+          "deploy/code-lab/isolated/application.env.example",
+          "deploy/code-lab/isolated/execution.env.example",
+          "deploy/code-lab/isolated/nginx.conf.example",
+          "deploy/code-lab/piston/bridge.py",
+          "deploy/code-lab/piston/compose.isolated.yml",
+          "services/AdminGroupRecommendationService.php",
+          "services/CodeLabRunner.php",
+          "services/GeminiService.php"
+        ],
+        "changed_later": [
+          "API/dm/send-message.php",
+          "services/OllamaService.php"
+        ],
+        "absent_final": []
+      },
+      {
+        "number": 79,
+        "title": "[STAGING ONLY] Reconcile async Jarred DM transactions and private errors (K1)",
+        "head": "9d5ded1af8ee55364fa87d9c9a05327ffb9193c9",
+        "base": "3b5983ba86ee1b0ba59b4cfa45d331b6f516a908",
+        "head_branch": "review/phase3l-async-privacy-20261023",
+        "base_branch": "review/phase3k-integration-20261023",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/79",
+        "ancestor_of_accepted": true,
+        "disposition": "Inherited source tested by scoped3AD;staging/external/production approval not inferred",
+        "runtime_paths": [
+          "API/dm/jarred-job.php",
+          "API/dm/send-message.php",
+          "assets/js/chat/dm-notifications.js",
+          "database/migrations/063_temporary_voice.sql",
+          "database/migrations/066_jarred_jobs.sql",
+          "deploy/phase2/ecollab-jarred-worker.service",
+          "scripts/jarred-worker.php",
+          "services/AccessPolicy.php",
+          "services/ChannelAccessService.php",
+          "services/CoworkspaceService.php",
+          "services/DocumentAccessService.php",
+          "services/JarredActionService.php",
+          "services/JarredErrorResponse.php",
+          "services/JarredJobService.php",
+          "services/JarredReplyGenerator.php",
+          "services/JarredTools.php",
+          "services/NotificationService.php",
+          "services/OllamaService.php",
+          "services/RealtimeOutbox.php",
+          "services/TemporaryVoiceService.php"
+        ],
+        "same_final_blob": [
+          "API/dm/jarred-job.php",
+          "API/dm/send-message.php",
+          "database/migrations/063_temporary_voice.sql",
+          "database/migrations/066_jarred_jobs.sql",
+          "deploy/phase2/ecollab-jarred-worker.service",
+          "scripts/jarred-worker.php",
+          "services/AccessPolicy.php",
+          "services/ChannelAccessService.php",
+          "services/CoworkspaceService.php",
+          "services/DocumentAccessService.php",
+          "services/JarredActionService.php",
+          "services/JarredErrorResponse.php",
+          "services/JarredJobService.php",
+          "services/JarredReplyGenerator.php",
+          "services/JarredTools.php",
+          "services/NotificationService.php",
+          "services/OllamaService.php",
+          "services/RealtimeOutbox.php",
+          "services/TemporaryVoiceService.php"
+        ],
+        "changed_later": [
+          "assets/js/chat/dm-notifications.js"
+        ],
+        "absent_final": []
+      },
+      {
+        "number": 80,
+        "title": "[STAGING ONLY] Reduce dashboard and peer-matching application overhead (Phase 3M)",
+        "head": "87e82284ced2cee4858b673cc5a8619151c019bb",
+        "base": "9d5ded1af8ee55364fa87d9c9a05327ffb9193c9",
+        "head_branch": "optimization/phase3m-application-20261024",
+        "base_branch": "review/phase3l-async-privacy-20261023",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/80",
+        "ancestor_of_accepted": true,
+        "disposition": "Inherited source tested by scoped3AD;staging/external/production approval not inferred",
+        "runtime_paths": [
+          "API/chat/get-matches.php",
+          "API/chat/peer-match.php",
+          "assets/js/student/dashboard.js",
+          "services/AdminDashboardService.php",
+          "services/FacilitatorDashboardService.php",
+          "services/JarredGroupRecommendationService.php",
+          "services/PeerMatchingService.php",
+          "services/StudentDashboardService.php"
+        ],
+        "same_final_blob": [
+          "API/chat/get-matches.php",
+          "assets/js/student/dashboard.js",
+          "services/AdminDashboardService.php",
+          "services/JarredGroupRecommendationService.php",
+          "services/PeerMatchingService.php"
+        ],
+        "changed_later": [
+          "API/chat/peer-match.php",
+          "services/FacilitatorDashboardService.php",
+          "services/StudentDashboardService.php"
+        ],
+        "absent_final": []
+      },
+      {
+        "number": 81,
+        "title": "[STAGING ONLY] Profile dashboard HTTP/browser work and optimize exact unread counts (Phase 3N)",
+        "head": "687bd3ad2d60bf5c5e0627d640e627d7fbcc1d9d",
+        "base": "87e82284ced2cee4858b673cc5a8619151c019bb",
+        "head_branch": "optimization/phase3n-dashboard-20261024",
+        "base_branch": "optimization/phase3m-application-20261024",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/81",
+        "ancestor_of_accepted": true,
+        "disposition": "Inherited source tested by scoped3AD;staging/external/production approval not inferred",
+        "runtime_paths": [
+          "assets/js/learning/workspace.js",
+          "database/migrations/067_dashboard_unread_covering.sql",
+          "services/StudentDashboardService.php"
+        ],
+        "same_final_blob": [
+          "assets/js/learning/workspace.js",
+          "database/migrations/067_dashboard_unread_covering.sql"
+        ],
+        "changed_later": [
+          "services/StudentDashboardService.php"
+        ],
+        "absent_final": []
+      },
+      {
+        "number": 82,
+        "title": "[STAGING ONLY] Profile chat reads/workers and reduce exact recent-chat and sidebar work (Phase 3O)",
+        "head": "54228eb0f662bd8272dea2f32ab446ca6cc207c3",
+        "base": "687bd3ad2d60bf5c5e0627d640e627d7fbcc1d9d",
+        "head_branch": "optimization/phase3o-chat-20261024",
+        "base_branch": "optimization/phase3n-dashboard-20261024",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/82",
+        "ancestor_of_accepted": true,
+        "disposition": "Inherited source tested by scoped3AD;staging/external/production approval not inferred",
+        "runtime_paths": [
+          "assets/js/chat/dm-notifications.js",
+          "services/StudentDashboardService.php"
+        ],
+        "same_final_blob": [
+          "assets/js/chat/dm-notifications.js",
+          "services/StudentDashboardService.php"
+        ],
+        "changed_later": [],
+        "absent_final": []
+      },
+      {
+        "number": 83,
+        "title": "[STAGING REVIEW] Validate bounded FPM workloads and aggregate facilitator history (Phase 3P)",
+        "head": "051cae2ee1005ab063675e8054c2ff5b1801294b",
+        "base": "54228eb0f662bd8272dea2f32ab446ca6cc207c3",
+        "head_branch": "validation/phase3p-20261024",
+        "base_branch": "optimization/phase3o-chat-20261024",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/83",
+        "ancestor_of_accepted": true,
+        "disposition": "Inherited source tested by scoped3AD;staging/external/production approval not inferred",
+        "runtime_paths": [
+          "services/LearningWorkspaceService.php"
+        ],
+        "same_final_blob": [
+          "services/LearningWorkspaceService.php"
+        ],
+        "changed_later": [],
+        "absent_final": []
+      },
+      {
+        "number": 84,
+        "title": "[STAGING REVIEW] Batch peer cache writes and thread attachment reads (Phase 3Q)",
+        "head": "d3748527d77ac471ace8613f2a2bfb2a6c45627c",
+        "base": "051cae2ee1005ab063675e8054c2ff5b1801294b",
+        "head_branch": "optimization/phase3q-sql-20261024",
+        "base_branch": "validation/phase3p-20261024",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/84",
+        "ancestor_of_accepted": true,
+        "disposition": "Inherited source tested by scoped3AD;staging/external/production approval not inferred",
+        "runtime_paths": [
+          "API/chat/peer-match.php",
+          "API/threads/index.php",
+          "services/PeerMatchBatch.php",
+          "services/ThreadAttachmentService.php"
+        ],
+        "same_final_blob": [
+          "API/threads/index.php",
+          "services/PeerMatchBatch.php",
+          "services/ThreadAttachmentService.php"
+        ],
+        "changed_later": [
+          "API/chat/peer-match.php"
+        ],
+        "absent_final": []
+      },
+      {
+        "number": 85,
+        "title": "security(code-lab): stage Piston API on Node.js 24.22.1 with versioned runtime",
+        "head": "a26c21d4fabc87d8d63205b08f8fbc0a31e13211",
+        "base": "c838359711a14e9b6eb3f345c4386d184a178b25",
+        "head_branch": "security/piston-node24-20261023",
+        "base_branch": "ecollab-collabs",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/85",
+        "ancestor_of_accepted": false,
+        "disposition": "EXCLUDED parallel head;no merge/combined release approval",
+        "runtime_paths": [
+          "deploy/code-lab/piston/bridge.py",
+          "deploy/code-lab/piston/compose.node24.staging.yml",
+          "deploy/code-lab/piston/node24/Dockerfile",
+          "deploy/code-lab/piston/node24/install.sh",
+          "deploy/code-lab/piston/node24/profile.py"
+        ],
+        "same_final_blob": [],
+        "changed_later": [
+          "deploy/code-lab/piston/bridge.py"
+        ],
+        "absent_final": [
+          "deploy/code-lab/piston/compose.node24.staging.yml",
+          "deploy/code-lab/piston/node24/Dockerfile",
+          "deploy/code-lab/piston/node24/install.sh",
+          "deploy/code-lab/piston/node24/profile.py"
+        ]
+      },
+      {
+        "number": 86,
+        "title": "[DRAFT] Phase 3R: remove repeated peer matching CPU work",
+        "head": "d5cb54c6998e6e3b395d4358a23caca08c7c52d8",
+        "base": "d3748527d77ac471ace8613f2a2bfb2a6c45627c",
+        "head_branch": "optimization/phase3r-peer-cpu-20261026",
+        "base_branch": "optimization/phase3q-sql-20261024",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/86",
+        "ancestor_of_accepted": true,
+        "disposition": "Retained scoped optimization;capacity and production release not certified",
+        "runtime_paths": [
+          "API/chat/peer-match.php"
+        ],
+        "same_final_blob": [
+          "API/chat/peer-match.php"
+        ],
+        "changed_later": [],
+        "absent_final": []
+      },
+      {
+        "number": 87,
+        "title": "[DRAFT] Validate Phase 3R peer CPU optimization against exact base",
+        "head": "2716766ab71f27d32d0d435d555f19801d7d0aa7",
+        "base": "d5cb54c6998e6e3b395d4358a23caca08c7c52d8",
+        "head_branch": "optimization/phase3r-validation-20261026",
+        "base_branch": "optimization/phase3r-peer-cpu-20261026",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/87",
+        "ancestor_of_accepted": true,
+        "disposition": "Retained scoped optimization;capacity and production release not certified",
+        "runtime_paths": [],
+        "same_final_blob": [],
+        "changed_later": [],
+        "absent_final": []
+      },
+      {
+        "number": 88,
+        "title": "[DRAFT] Phase 3S: profile native FPM reads and aggregate facilitator activity",
+        "head": "d161f3d23e8e0e66cfcc45483002a1ea7be42442",
+        "base": "2716766ab71f27d32d0d435d555f19801d7d0aa7",
+        "head_branch": "optimization/phase3s-http-20261026",
+        "base_branch": "optimization/phase3r-validation-20261026",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/88",
+        "ancestor_of_accepted": true,
+        "disposition": "Retained scoped optimization;capacity and production release not certified",
+        "runtime_paths": [
+          "services/FacilitatorDashboardService.php"
+        ],
+        "same_final_blob": [],
+        "changed_later": [
+          "services/FacilitatorDashboardService.php"
+        ],
+        "absent_final": []
+      },
+      {
+        "number": 89,
+        "title": "[DRAFT] Phase 3T: count only the selected facilitator channel",
+        "head": "f77506a874c4650ec6c69637461c368876fa178d",
+        "base": "d161f3d23e8e0e66cfcc45483002a1ea7be42442",
+        "head_branch": "optimization/phase3t-primary-channel-20261026",
+        "base_branch": "optimization/phase3s-http-20261026",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/89",
+        "ancestor_of_accepted": true,
+        "disposition": "Retained scoped optimization;capacity and production release not certified",
+        "runtime_paths": [
+          "services/FacilitatorDashboardService.php"
+        ],
+        "same_final_blob": [
+          "services/FacilitatorDashboardService.php"
+        ],
+        "changed_later": [],
+        "absent_final": []
+      },
+      {
+        "number": 90,
+        "title": "[DRAFT] Phase 3U: reject plan-dependent workspace join hint",
+        "head": "e6f864dcda680f8239da089b9b3bc97f0d0c0cde",
+        "base": "f77506a874c4650ec6c69637461c368876fa178d",
+        "head_branch": "optimization/phase3u-learning-workspace-20261026",
+        "base_branch": "optimization/phase3t-primary-channel-20261026",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/90",
+        "ancestor_of_accepted": true,
+        "disposition": "Retain final reverted/no-net-application-change investigation;reject trial optimization",
+        "runtime_paths": [],
+        "same_final_blob": [],
+        "changed_later": [],
+        "absent_final": []
+      },
+      {
+        "number": 91,
+        "title": "Phase 3V: statistics-aware dashboard profiling and rejected unread-count rewrite",
+        "head": "e818bbd84ae85d67aa71a38460fe154a5128a930",
+        "base": "e6f864dcda680f8239da089b9b3bc97f0d0c0cde",
+        "head_branch": "optimization/phase3v-statistics-dashboard-20261027",
+        "base_branch": "optimization/phase3u-learning-workspace-20261026",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/91",
+        "ancestor_of_accepted": true,
+        "disposition": "Retain final reverted/no-net-application-change investigation;reject trial optimization",
+        "runtime_paths": [],
+        "same_final_blob": [],
+        "changed_later": [],
+        "absent_final": []
+      },
+      {
+        "number": 92,
+        "title": "Phase 3W: typed SQL telemetry, migrated schema and write-aware controls",
+        "head": "827470217e6a6a86a165b14f4b6650a10e2c2395",
+        "base": "e818bbd84ae85d67aa71a38460fe154a5128a930",
+        "head_branch": "optimization/phase3w-telemetry-schema-20261027",
+        "base_branch": "optimization/phase3v-statistics-dashboard-20261027",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/92",
+        "ancestor_of_accepted": true,
+        "disposition": "Retain validation/decision/evidence ancestor;no independent runtime release approval inferred",
+        "runtime_paths": [],
+        "same_final_blob": [],
+        "changed_later": [],
+        "absent_final": []
+      },
+      {
+        "number": 93,
+        "title": "Phase 3X: verified signup and full-schema authentication test contracts",
+        "head": "928a3b8912ef60ab374270c1efd3a24c0433c8aa",
+        "base": "827470217e6a6a86a165b14f4b6650a10e2c2395",
+        "head_branch": "validation/phase3x-auth-contracts-20261028",
+        "base_branch": "optimization/phase3w-telemetry-schema-20261027",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/93",
+        "ancestor_of_accepted": true,
+        "disposition": "Retain validation/decision/evidence ancestor;no independent runtime release approval inferred",
+        "runtime_paths": [],
+        "same_final_blob": [],
+        "changed_later": [],
+        "absent_final": []
+      },
+      {
+        "number": 94,
+        "title": "Phase 3Y: real HTTP authentication and isolated OTP timezone evidence",
+        "head": "b09e66c3fcba5066c63da8bece245ae5f4068410",
+        "base": "928a3b8912ef60ab374270c1efd3a24c0433c8aa",
+        "head_branch": "validation/phase3y-http-auth-20261028",
+        "base_branch": "validation/phase3x-auth-contracts-20261028",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/94",
+        "ancestor_of_accepted": true,
+        "disposition": "Retain validation/decision/evidence ancestor;no independent runtime release approval inferred",
+        "runtime_paths": [],
+        "same_final_blob": [],
+        "changed_later": [],
+        "absent_final": []
+      },
+      {
+        "number": 95,
+        "title": "Phase 3Z: OTP timezone evidence and bounded correction proposal",
+        "head": "bc1f1bc3cff91ce61cf531853e7220f1cfca590a",
+        "base": "b09e66c3fcba5066c63da8bece245ae5f4068410",
+        "head_branch": "investigation/phase3z-otp-clock-20261028",
+        "base_branch": "validation/phase3y-http-auth-20261028",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/95",
+        "ancestor_of_accepted": true,
+        "disposition": "Retain validation/decision/evidence ancestor;no independent runtime release approval inferred",
+        "runtime_paths": [],
+        "same_final_blob": [],
+        "changed_later": [],
+        "absent_final": []
+      },
+      {
+        "number": 96,
+        "title": "Phase 3AA: frozen OTP UTC trial, consumption race and transition decision",
+        "head": "5a03656b27904498917c16cbfa320187c6da8c84",
+        "base": "bc1f1bc3cff91ce61cf531853e7220f1cfca590a",
+        "head_branch": "investigation/phase3aa-utc-decision-20261028",
+        "base_branch": "investigation/phase3z-otp-clock-20261028",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/96",
+        "ancestor_of_accepted": true,
+        "disposition": "Retain validation/decision/evidence ancestor;no independent runtime release approval inferred",
+        "runtime_paths": [],
+        "same_final_blob": [],
+        "changed_later": [],
+        "absent_final": []
+      },
+      {
+        "number": 97,
+        "title": "Phase 3AB: security approval matrix and defense baseline gate",
+        "head": "e4999821b16f8d8085a8cde6c5b08de2fc824ae5",
+        "base": "5a03656b27904498917c16cbfa320187c6da8c84",
+        "head_branch": "review/phase3ab-defense-gate-20261028",
+        "base_branch": "investigation/phase3aa-utc-decision-20261028",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/97",
+        "ancestor_of_accepted": true,
+        "disposition": "Retain validation/decision/evidence ancestor;no independent runtime release approval inferred",
+        "runtime_paths": [],
+        "same_final_blob": [],
+        "changed_later": [],
+        "absent_final": []
+      },
+      {
+        "number": 98,
+        "title": "Phase 3AC: UTC OTP clocks and durable single-use consumption",
+        "head": "0db2d57a85f33710d5bf46b9c7162e8aa39885f6",
+        "base": "e4999821b16f8d8085a8cde6c5b08de2fc824ae5",
+        "head_branch": "security/phase3ac-otp-remediation-20261028",
+        "base_branch": "review/phase3ab-defense-gate-20261028",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/98",
+        "ancestor_of_accepted": true,
+        "disposition": "Retain independently accepted OTP/message/identity correction;bounded isolated scope",
+        "runtime_paths": [
+          "security/forgot-password/OtpService.php"
+        ],
+        "same_final_blob": [
+          "security/forgot-password/OtpService.php"
+        ],
+        "changed_later": [],
+        "absent_final": []
+      },
+      {
+        "number": 99,
+        "title": "Phase 3AD: integration rehearsal \u2014 BLOCKED on migrated system-user schema",
+        "head": "77d791d72ad5e07089dead0e886d1b5ef6811149",
+        "base": "0db2d57a85f33710d5bf46b9c7162e8aa39885f6",
+        "head_branch": "integration/phase3ad-defense-candidate-20261028",
+        "base_branch": "security/phase3ac-otp-remediation-20261028",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/99",
+        "ancestor_of_accepted": true,
+        "disposition": "Retain validation/decision/evidence ancestor;no independent runtime release approval inferred",
+        "runtime_paths": [],
+        "same_final_blob": [],
+        "changed_later": [],
+        "absent_final": []
+      },
+      {
+        "number": 100,
+        "title": "Phase 3AD: fix optional message content type; retain integration blockers",
+        "head": "cb94769a6af87a356a069a2c949b5bd7b5c73e6e",
+        "base": "77d791d72ad5e07089dead0e886d1b5ef6811149",
+        "head_branch": "integration/phase3ad-message-default-20261029",
+        "base_branch": "integration/phase3ad-defense-candidate-20261028",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/100",
+        "ancestor_of_accepted": true,
+        "disposition": "Retain independently accepted OTP/message/identity correction;bounded isolated scope",
+        "runtime_paths": [
+          "services/MessageService.php"
+        ],
+        "same_final_blob": [],
+        "changed_later": [
+          "services/MessageService.php"
+        ],
+        "absent_final": []
+      },
+      {
+        "number": 101,
+        "title": "Phase 3AD: repair code/poll schema and integration gates; identity approval pending",
+        "head": "82b1192a8cb4bc943b57e42cbc3c0f4204389586",
+        "base": "cb94769a6af87a356a069a2c949b5bd7b5c73e6e",
+        "head_branch": "integration/phase3ad-schema-repair-20261029",
+        "base_branch": "integration/phase3ad-message-default-20261029",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/101",
+        "ancestor_of_accepted": true,
+        "disposition": "Retain independently accepted OTP/message/identity correction;bounded isolated scope",
+        "runtime_paths": [
+          "API/chat/send-message.php",
+          "API/chat/vote-poll.php",
+          "database/migrations/068_message_code_poll_types.sql",
+          "services/MessageService.php"
+        ],
+        "same_final_blob": [
+          "API/chat/send-message.php",
+          "API/chat/vote-poll.php",
+          "database/migrations/068_message_code_poll_types.sql",
+          "services/MessageService.php"
+        ],
+        "changed_later": [],
+        "absent_final": []
+      },
+      {
+        "number": 102,
+        "title": "Phase 3AD: authoritative system identity on isolated defense fixture",
+        "head": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+        "base": "82b1192a8cb4bc943b57e42cbc3c0f4204389586",
+        "head_branch": "integration/phase3ad-identity-20261029",
+        "base_branch": "integration/phase3ad-schema-repair-20261029",
+        "draft": true,
+        "state": "open",
+        "merged": false,
+        "url": "https://github.com/ecollab-project/ecollab/pull/102",
+        "ancestor_of_accepted": true,
+        "disposition": "Retain independently accepted OTP/message/identity correction;bounded isolated scope",
+        "runtime_paths": [
+          "API/admin/dashboard-data.php",
+          "API/auth/resend-signup-otp.php",
+          "database/migrations/069_system_identity.sql",
+          "scripts/provision-system-account.php",
+          "security/SystemIdentity.php",
+          "security/middleware/AuthMiddleware.php",
+          "services/AdminWorkspaceService.php",
+          "services/AuthService.php",
+          "services/LoadTestFixture.php",
+          "services/OAuthService.php"
+        ],
+        "same_final_blob": [
+          "API/admin/dashboard-data.php",
+          "API/auth/resend-signup-otp.php",
+          "database/migrations/069_system_identity.sql",
+          "scripts/provision-system-account.php",
+          "security/SystemIdentity.php",
+          "security/middleware/AuthMiddleware.php",
+          "services/AdminWorkspaceService.php",
+          "services/AuthService.php",
+          "services/LoadTestFixture.php",
+          "services/OAuthService.php"
+        ],
+        "changed_later": [],
+        "absent_final": []
+      }
+    ],
+    "excluded_parallel_prs": [
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      85
+    ],
+    "conflicts": [],
+    "cumulative_runtime_diff_sha256": "e7e751c2a265814459b9f024b3e5567d772dc89624a410f28a11881f3beb6426",
+    "diff_reproduction_note": "Initial byte comparison differed only in Git-generated7vs8-character index labels;normalized comparisonPASS,all69fullblob IDs and SHA256 values independently verified"
+  },
+  "security_and_regression_recompute": {
+    "candidate": {
+      "clock_records": 180,
+      "race_rounds": 8,
+      "two_session_rounds": 5,
+      "four_session_rounds": 3,
+      "single_use": "PASS",
+      "timezone": "PASS"
+    },
+    "original": {
+      "race_rounds": 10,
+      "single_use": "FAIL (preserved)",
+      "clock_records": 360
+    },
+    "full_suite": {
+      "baseline": {
+        "exit_code": 1,
+        "counts": {
+          "tests": 46,
+          "assertions": 114,
+          "errors": 0,
+          "failures": 5,
+          "skipped": 0
+        }
+      },
+      "current": {
+        "exit_code": 0,
+        "counts": {
+          "tests": 60,
+          "assertions": 280,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0
+        }
+      },
+      "reverse": {
+        "exit_code": 0,
+        "counts": {
+          "tests": 60,
+          "assertions": 280,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0
+        }
+      },
+      "random-31028": {
+        "exit_code": 0,
+        "counts": {
+          "tests": 60,
+          "assertions": 280,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0
+        }
+      }
+    },
+    "accepted-base.json": {
+      "baseline": {
+        "exit_code": 0,
+        "tests": 57
+      },
+      "current": {
+        "exit_code": 0,
+        "tests": 60
+      }
+    },
+    "accepted-phase3y.json": {
+      "baseline": {
+        "exit_code": 0,
+        "tests": 60
+      },
+      "current": {
+        "exit_code": 0,
+        "tests": 60
+      }
+    },
+    "accepted-phase3z.json": {
+      "baseline": {
+        "exit_code": 0,
+        "tests": 60
+      },
+      "current": {
+        "exit_code": 0,
+        "tests": 60
+      }
+    },
+    "accepted-phase3ab.json": {
+      "baseline": {
+        "exit_code": 0,
+        "tests": 60
+      },
+      "current": {
+        "exit_code": 0,
+        "tests": 60
+      }
+    },
+    "phpstan": {
+      "added": 0,
+      "baseline": {
+        "errors": 0,
+        "file_errors": 15
+      },
+      "candidate": {
+        "errors": 0,
+        "file_errors": 15
+      }
+    },
+    "http": {
+      "direct_requests": 207,
+      "browser": "PASS",
+      "browser_version": "151.0.7922.34"
+    },
+    "raw_sha256": {
+      "accepted-base.json": "037d34e18ab4b010c66cd8c7cd379ebaebea95e56267535bf0a96893b7e4f67a",
+      "accepted-phase3ab.json": "f5c49b3b8cfce8d05b919eda54c672af10b354ed369f1b05e39325471f79ec79",
+      "accepted-phase3ac.json": "e124886267da26c7ec520b5842585f7d26702e8fbefb8356fafc62ae95665295",
+      "accepted-phase3y.json": "17012027a5523ce06833efc9ef81b0ba35e6cb8e1a10421f25ac870d17569f1b",
+      "accepted-phase3z.json": "8dba3bc25a131e4bd45927d3b8e93f234c86fe9d86c6e45c87039d93b44c1be0",
+      "full.json": "1861b6b2b914b9977f879625bd30c08c243697983fbe9b4730bed3dd49c98ade",
+      "http.json": "30120757cdb387ffc3ecd3b3140edb935369e8af37d0461bbd55fe717b777ce9",
+      "identity.json": "4ff4483be0b4890122fc5e6c6d1cee7d8aa08334aa4c5edef1425d0a72c619d3",
+      "integration-http.json": "ae617b57b22c49af58b4b39c4e62f5e64b79a877738baec23729599b0e49f810",
+      "integration-summary.json": "f9b7126410b18f490e8636b841036b8ae007b485a191c599dbb38ae253af653a",
+      "inventory.json": "7e8ee58df272a4ffe5f11c11755f4dbba3a04afe3fce3a813081d9cbe3e95375",
+      "message-compatibility.json": "e49f734b548cdb4426977f16372a9575346d1ce7b40c13d8ac2b46951ca5820c",
+      "original-experiments.json": "53d683445b6bea9c8f8d3caeee09f125f2c2e66bd539b932d5b6cec682c898de",
+      "original-summary.json": "ddfcf4cbc6a789a77df4fd0412385ae1005a31638d2150471a8afa3a88003715",
+      "phase3ae-source.json": "9b31b340709b1a8bb8287ccaaa2f255294ace83a2a4aa2369f59ca5a509c4fb4",
+      "phase3ae-summary.json": "0d99d755522300fe356f575ae600f30449c2b0fafad1e38401f7b2dc3bfeed07",
+      "recomputed-summary.json": "baf5e9132db9a3d65a652dc7be292760cb05d7e2dbedde6b3800fd8f49d84645",
+      "scope.json": "45b0e43e48aaf252e9a1ca3ee79aa1aef0695399719330b1b50081db20d6190a",
+      "security.json": "2a57cee965d00f70c1cef163f10a0d31cf192ea48e8c2fd23bd07c7b386cef6e",
+      "static.json": "72bc20d2c61240669725d09b02a46b43f5442de119728abfb9c61f692cc1640a",
+      "writers.json": "52938c55f32935d7a6e5d2c7acf2a313f3a3700abf807674e7c1776646df3323"
+    }
+  },
+  "original_artifact_hashes": {
+    "scope.json": "45b0e43e48aaf252e9a1ca3ee79aa1aef0695399719330b1b50081db20d6190a",
+    "accepted-base.json": "037d34e18ab4b010c66cd8c7cd379ebaebea95e56267535bf0a96893b7e4f67a",
+    "security.json": "2a57cee965d00f70c1cef163f10a0d31cf192ea48e8c2fd23bd07c7b386cef6e",
+    "required-commands.jsonl": "bed9da9816832b3e8a8cbae5503514a557f8da7ed6af8e0de71d386cf909e1ba",
+    "original-summary.json": "ddfcf4cbc6a789a77df4fd0412385ae1005a31638d2150471a8afa3a88003715",
+    "phase3ae-cumulative-runtime.diff.gz": "6d6c4c05321c56da4d154c6e660df8af34d06da560a0605a8377efd5ce4fa495",
+    "phase3ae-summary.json": "9b9afb46571659867aa319ceac32b0c19eaac9e28d08bb99010ffc8b51959689",
+    "accepted-phase3y.json": "17012027a5523ce06833efc9ef81b0ba35e6cb8e1a10421f25ac870d17569f1b",
+    "accepted-phase3ab.json": "f5c49b3b8cfce8d05b919eda54c672af10b354ed369f1b05e39325471f79ec79",
+    "phase3ae-source.json": "9b31b340709b1a8bb8287ccaaa2f255294ace83a2a4aa2369f59ca5a509c4fb4",
+    "static.json": "72bc20d2c61240669725d09b02a46b43f5442de119728abfb9c61f692cc1640a",
+    "original-experiments.json": "53d683445b6bea9c8f8d3caeee09f125f2c2e66bd539b932d5b6cec682c898de",
+    "writers.json": "52938c55f32935d7a6e5d2c7acf2a313f3a3700abf807674e7c1776646df3323",
+    "accepted-phase3z.json": "8dba3bc25a131e4bd45927d3b8e93f234c86fe9d86c6e45c87039d93b44c1be0",
+    "accepted-phase3ac.json": "e124886267da26c7ec520b5842585f7d26702e8fbefb8356fafc62ae95665295",
+    "message-compatibility.json": "e49f734b548cdb4426977f16372a9575346d1ce7b40c13d8ac2b46951ca5820c",
+    "integration-summary.json": "c2b1bb51d76867c2fa08807f05b30b32e4778c5a61235668b4382baa2cacb56d",
+    "integration-http.json": "ae617b57b22c49af58b4b39c4e62f5e64b79a877738baec23729599b0e49f810",
+    "full.json": "1861b6b2b914b9977f879625bd30c08c243697983fbe9b4730bed3dd49c98ade",
+    "http.json": "30120757cdb387ffc3ecd3b3140edb935369e8af37d0461bbd55fe717b777ce9",
+    "recomputed-summary.json": "3ac67f95113894f0b0cbee7915c5db5ab3d70ed77c757992bed1366b9a96292c",
+    "inventory.json": "7e8ee58df272a4ffe5f11c11755f4dbba3a04afe3fce3a813081d9cbe3e95375",
+    "migration-compatibility.log": "162c58ddeac254a5f5d510980e27d2c29df535a7db7ccea417de4c690c35e64e",
+    "identity.json": "4ff4483be0b4890122fc5e6c6d1cee7d8aa08334aa4c5edef1425d0a72c619d3"
+  },
+  "source_archive": {
+    "source": "f319fe16ca30b3157a0ca567fa879bec89c75f19",
+    "command": [
+      "git",
+      "archive",
+      "--format=tar",
+      "f319fe16ca30b3157a0ca567fa879bec89c75f19"
+    ],
+    "sha256": "07f7bfc1c1d8fc4877fab77dd5901f7ca465e3eb10b23edc8a0f0af6dc580d2e",
+    "bytes": 267601920,
+    "meaning": "Tracked source only;not installed/deployed build;dependencies and synthetic DB recreated by locked rehearsal workflow"
+  },
+  "defense_nomination": {
+    "head": "f319fe16ca30b3157a0ca567fa879bec89c75f19",
+    "fixture_sha256": {
+      "database/migrations/002_core_schema.sql": "9fc0f0f2e9d0161fed090ece3516eaccfba7318364ddacbb5e14c690fa5d728e",
+      "database/migrations/068_message_code_poll_types.sql": "90b417fd89d9d510bd34e732809349256c5aa26a0e5d3081693d553460c1c37a",
+      "database/migrations/069_system_identity.sql": "ecd88b9bec0a1c7c3bf2852605cd12c962e6d75eba61c30fb03b308da13bd08d",
+      "tests/phase3ad-fixture.php": "bedc814f8c6da3fce2301851f305cab285941c45378ff131843c892781f67e17",
+      "tests/phase3y-control.php": "3d0330c519c703a7625cc4fcb19ff6bbdf6e2aab354601a290cc9c80defc6f07",
+      "tests/phase3w-migration-bootstrap.php": "7007d966641f7435c9c0ad654a0e5f9a0b796a546c5a5439b87c98a4020eeced",
+      "scripts/provision-system-account.php": "e91bb682a2a941f6da23e4ad4a639b0cfc88bdc06c2583c1ba9b9037874b8a44",
+      "composer.lock": "847da305da0a7b940a15ceca0083c40edbf62e893f6e7500e49024d618e2701b",
+      ".github/workflows/phase3ae-rehearsal.yml": "63057b778826212fdb06c40860866f8b7413eb7d1432354de974edebb62524a6"
+    },
+    "environment": {
+      "scope": "Disposable loopback only;database/server destroyed after runs",
+      "PHP": "8.3/PHP-FPM",
+      "MariaDB": "10.11",
+      "APP_ENV": "testing",
+      "APP_DEBUG": false,
+      "delivery": "owned loopback provider;no live mail",
+      "TLS": "NOT RUN:loopback HTTP;production TLS/proxy gate separate",
+      "SESSION_SECURE": false,
+      "SESSION_SAMESITE": "Lax",
+      "OTP_EXPIRY": "600;configured120 cohort also required",
+      "PEER_ML_ENABLED": false,
+      "CENTRIFUGO_ENABLED": false,
+      "browser_external_hosts": "blocked",
+      "accounts": "canonical ten synthetic seed humans;registered synthetic actors;one explicit CLI machine;no production identities"
+    },
+    "backup_demo": {
+      "status": "PLAN / evidence walkthrough only",
+      "source_archive": "git archive exact head;digest in phase3ae-source-archive.json",
+      "live_recording": "NOT RUN;no prerecorded behavior presented as live",
+      "restore_drill": "fresh fixture recreation tested;an installed persistent defense environment/backup restore remains Phase3AF gate"
+    }
+  },
+  "workflow_boundary": {
+    "tracked_workflow_deployment_indicator_hits": [],
+    "limitation": "Source-pattern inventory only;external webhooks,GitHub environment settings,branch protection and deployment service configuration NOT VERIFIED;no execution authorized"
+  },
+  "source_refusal_controls": {
+    "status": "PASS",
+    "head": "f319fe16ca30b3157a0ca567fa879bec89c75f19",
+    "cases": [
+      {
+        "case": "runtime byte change rejected",
+        "exit_code": 1,
+        "stderr": "Traceback (most recent call last):\n  File \"/tmp/phase3ae-guard-ukbo2l9o/worktree/tests/phase3ae-inventory.py\", line 48, in <module>\n    if __name__=='__main__':main()\n                            ^^^^^^\n  File \"/tmp/phase3ae-guard-ukbo2l9o/worktree/tests/phase3ae-inventory.py\", line 19, in main\n    diff=git('diff','--name-only',A).splitlines();assert all(p.startswith(('tests/phase3ae-','docs/450-phase3ae','.github/workflows/phase3ae-'))for p in diff),diff\n                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: ['.github/workflows/phase3ae-rehearsal.yml', 'docs/450-phase3ae-audit-boundary.json', 'docs/450-phase3ae-merge-plan.md', 'docs/450-phase3ae-pr-snapshot.json', 'services/AuthService.php', 'tests/phase3ae-inventory.py', 'tests/phase3ae-report.py']\n"
+      },
+      {
+        "case": "new runtime path rejected",
+        "exit_code": 1,
+        "stderr": "Traceback (most recent call last):\n  File \"/tmp/phase3ae-guard-ukbo2l9o/worktree/tests/phase3ae-inventory.py\", line 48, in <module>\n    if __name__=='__main__':main()\n                            ^^^^^^\n  File \"/tmp/phase3ae-guard-ukbo2l9o/worktree/tests/phase3ae-inventory.py\", line 19, in main\n    diff=git('diff','--name-only',A).splitlines();assert all(p.startswith(('tests/phase3ae-','docs/450-phase3ae','.github/workflows/phase3ae-'))for p in diff),diff\n                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: ['.github/workflows/phase3ae-rehearsal.yml', 'API/phase3ae-forbidden.php', 'docs/450-phase3ae-audit-boundary.json', 'docs/450-phase3ae-merge-plan.md', 'docs/450-phase3ae-pr-snapshot.json', 'tests/phase3ae-inventory.py', 'tests/phase3ae-report.py']\n"
+      }
+    ]
+  },
+  "remaining_gates": [
+    {
+      "status": "BLOCKED",
+      "reason": "Inherited load-fixture cleanup expects ws_tokens absent from canonical migrations; not a defense feature or capacity acceptance"
+    },
+    "Existing/production069 identity classification and coordinated OTP transition not approved",
+    "External services/full composed upload-download/50-100-user capacity not certified",
+    "External webhooks,branch protection and merge policy NOT VERIFIED;review before owner-authorized merge",
+    "Backup recording/installed persistent defense environment and complete UI/upload-download journey remain Phase3AF gates"
+  ],
+  "rollback": "Discard test/docs/workflow branch or restore accepted PR102;recreate only owned DB. No populated real schema/data/OTP rollback authorized.",
+  "source_and_db_merge_note": "Fresh-only069 cannot upgrade an existing database. A conflict-free Git result does not grant source merge,production transition or deployment approval.",
+  "next_phase_prompt": "# Conditional Phase 3AF \u2014 frozen defense candidate verification\n\nProceed only after independent Phase3AE acceptance. Start from the exact independently accepted Phase3AE head,with runtime byte-identical to PR102c65d2f994b10dfa7890f6509a2342e58a064571e. Recheck ecollab-collabs and all source identities. Use eCollab IT Orchestrator:QA leads,Integration/Security/Database support.\n\nCreate only a dedicated draft test/evidence candidate. Do not merge into ecollab-collabs. Do not fix unrelated features,explore performance or change production configuration/schema. Preserve accepted OTP,code/poll,private-channel andidentity safeguards.\n\n1. Reproduce the accepted tracked-source archive and locked dependencies;record exact source/tree/artifact/fixture/config hashes.\n2. Prepare an isolated persistent synthetic defense environment distinct from production. Fresh-only069 and CLI machine provisioning remain mandatory. No unknown existing-account classification. If no supported environment is available,mark BLOCKED instead of substituting production.\n3. Close demonstrated journey gaps through the actual browser and composed FPM/DB:classroom creation/navigation,channel text/code/polls,vote/privacy,matches,DMs,threads/notifications;attempt complete owned upload/download. Preserve denied CSRF/outsider/role/private cases. No auth/API stubs for acceptance.\n4. Rerun60/280 in three orderings,current/accepted/original OTP controls,independent-session single-use,identity22/migration9,message persistence/rollback and exact-basePHPStan. Run final-head hostedChromium/CI;download and recompute artifacts.\n5. Rehearse safe fixture recreation and backup/restore within the owned environment. Produce a clearly labelled fallback evidence walkthrough or recording of actual verified synthetic flows. Do not present mock/provider or prerecorded behavior as live external integration.\n6. Freeze the precise November1 candidate,demonstration checklist,known exclusions and rollback. Explicitly retain missingws_tokens cleanup,external services/full capacity andproduction OTP/history/TLS/proxy/durability gates unless independently verified within authorized scope.\n7. Return PASS/FAIL/BLOCKED/NOT RUN per gate and an Independent Audit Handoff. Phase3AG defense validation follows only the separate audit;November2 code freeze andNovember3 defense remain the schedule.\n\nNo actual merge,deployment,Hostinger,production database/data/config operation,live mail or50\u2013100-student certification is authorized. Any production transition or runtime correction requires its own explicit bounded approval.\n"
+}
