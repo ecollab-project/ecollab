@@ -1,0 +1,2240 @@
+{
+  "engineering_verdict": "PASS for tested isolated integration; independent acceptance pending",
+  "candidate": {
+    "pr": "https://github.com/ecollab-project/ecollab/pull/102",
+    "branch": "integration/phase3ad-identity-20261029",
+    "base": "82b1192a8cb4bc943b57e42cbc3c0f4204389586",
+    "head": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+    "tree": "7f6686f3d382f8764e84851411f2f92af840077c",
+    "hosted_checkout": "63046eeb95faaa5305bad48862e41fd9020bdd2c",
+    "hosted_tree": "7f6686f3d382f8764e84851411f2f92af840077c",
+    "source_overlay": "NONE"
+  },
+  "changed_paths": [
+    ".github/workflows/phase3ad-integration.yml",
+    ".github/workflows/phase3ad-message-default.yml",
+    ".github/workflows/phase3w-performance.yml",
+    "API/admin/dashboard-data.php",
+    "API/auth/resend-signup-otp.php",
+    "database/migrations/069_system_identity.sql",
+    "docs/450-phase3ad-identity-hashes.json",
+    "docs/450-phase3ad-identity-scope.json",
+    "docs/450-phase3ad-identity-validation.md",
+    "scripts/provision-system-account.php",
+    "security/SystemIdentity.php",
+    "security/middleware/AuthMiddleware.php",
+    "services/AdminWorkspaceService.php",
+    "services/AuthService.php",
+    "services/LoadTestFixture.php",
+    "services/OAuthService.php",
+    "tests/chat-tus-http-regression.cjs",
+    "tests/learning-workspace-ui-regression.cjs",
+    "tests/load-test-fixture-regression.php",
+    "tests/phase3ad-human-session.php",
+    "tests/phase3ad-identity-control.php",
+    "tests/phase3ad-identity-migration.php",
+    "tests/phase3ad-identity-scope.py",
+    "tests/phase3ad-identity.py",
+    "tests/phase3ad-repair-suite.py",
+    "tests/phase3ad-report.py",
+    "tests/phase3ad-required-steps.json",
+    "tests/phase3ad-scope.py",
+    "tests/phase3ad-step-source-gate-and-existing-security-regressions.sh",
+    "tests/phase3w-compare.py",
+    "tests/phase3w-migration-bootstrap.php",
+    "tests/request-security-regression.cjs",
+    "tests/responsive-render-fixture.php"
+  ],
+  "runtime_hashes": {
+    "security/SystemIdentity.php": "5a31b61b86bb08d7c91eb48266448f8f6749ad45dd1007733e41ca2e26851e87",
+    "services/AuthService.php": "0b98a8e88211e542d53ff80f924c9bbf2440440c6e48a4b09d790e707494f919",
+    "services/OAuthService.php": "ce35378273717555ff2f537e80f029bdcdab48d8d7803346b4320cfeda07c0ed",
+    "services/AdminWorkspaceService.php": "4e5ef4fb8c7d27873677e390306fa4d5a202a7446e3c7dbcf91b8cd44c2194ea",
+    "API/admin/dashboard-data.php": "fd1d96a885ed4503c8437bf88973b137922bb27216fc05af49e8ae8f0d15003e",
+    "security/middleware/AuthMiddleware.php": "3fa11ca134375fcb9d6291aa2b2535a004ed69c50215b3bb382c35968587eb40",
+    "database/migrations/069_system_identity.sql": "ecd88b9bec0a1c7c3bf2852605cd12c962e6d75eba61c30fb03b308da13bd08d",
+    "scripts/provision-system-account.php": "e91bb682a2a941f6da23e4ad4a639b0cfc88bdc06c2583c1ba9b9037874b8a44",
+    "API/auth/resend-signup-otp.php": "a060d6a3fda09cb91aefe7073c4a5aa10177f6f1abe1ce7fef0a2afe3fbdb0d3",
+    "services/LoadTestFixture.php": "1b66d35d45ca5d8f9a1055850ec51461bdf6812ccc8f7def48eb5b14c77bac14"
+  },
+  "preserved_source": [
+    "security/forgot-password/OtpService.php",
+    "services/MessageService.php",
+    "API/chat/send-message.php",
+    "API/chat/vote-poll.php",
+    "database/migrations/068_message_code_poll_types.sql"
+  ],
+  "hosted_metadata": {
+    "pr": {
+      "url": "https://github.com/ecollab-project/ecollab/pull/102",
+      "head": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+      "base": "82b1192a8cb4bc943b57e42cbc3c0f4204389586",
+      "state": "open",
+      "draft": true,
+      "merged": false
+    },
+    "runs": [
+      {
+        "id": 40863189714,
+        "name": "Notification regression",
+        "event": "pull_request",
+        "head_sha": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/ecollab-project/ecollab/actions/runs/40863189714"
+      },
+      {
+        "id": 40863189358,
+        "name": "Chat timeline and profiles",
+        "event": "pull_request",
+        "head_sha": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/ecollab-project/ecollab/actions/runs/40863189358"
+      },
+      {
+        "id": 40863189453,
+        "name": "UI behavior regression",
+        "event": "pull_request",
+        "head_sha": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/ecollab-project/ecollab/actions/runs/40863189453"
+      },
+      {
+        "id": 40863189516,
+        "name": "Chat resumable uploads",
+        "event": "pull_request",
+        "head_sha": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/ecollab-project/ecollab/actions/runs/40863189516"
+      },
+      {
+        "id": 40863189678,
+        "name": "Learning upgrades",
+        "event": "pull_request",
+        "head_sha": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/ecollab-project/ecollab/actions/runs/40863189678"
+      },
+      {
+        "id": 40863189745,
+        "name": "Settings and Jarred runtime",
+        "event": "pull_request",
+        "head_sha": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/ecollab-project/ecollab/actions/runs/40863189745"
+      },
+      {
+        "id": 40863189344,
+        "name": "Jarred async privacy integration",
+        "event": "pull_request",
+        "head_sha": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/ecollab-project/ecollab/actions/runs/40863189344"
+      },
+      {
+        "id": 40863189484,
+        "name": "Load test kit",
+        "event": "pull_request",
+        "head_sha": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/ecollab-project/ecollab/actions/runs/40863189484"
+      },
+      {
+        "id": 40863189742,
+        "name": "Phase 3AD code and poll compatibility",
+        "event": "pull_request",
+        "head_sha": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/ecollab-project/ecollab/actions/runs/40863189742"
+      },
+      {
+        "id": 40863189499,
+        "name": "Responsive page layouts",
+        "event": "pull_request",
+        "head_sha": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/ecollab-project/ecollab/actions/runs/40863189499"
+      },
+      {
+        "id": 40863189377,
+        "name": "Feature capacity runners",
+        "event": "pull_request",
+        "head_sha": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/ecollab-project/ecollab/actions/runs/40863189377"
+      },
+      {
+        "id": 40863189551,
+        "name": "Phase 3AD integration readiness",
+        "event": "pull_request",
+        "head_sha": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/ecollab-project/ecollab/actions/runs/40863189551"
+      },
+      {
+        "id": 40863189456,
+        "name": "Phase 3W telemetry schema and write-aware profiling",
+        "event": "pull_request",
+        "head_sha": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/ecollab-project/ecollab/actions/runs/40863189456"
+      },
+      {
+        "id": 40863180571,
+        "name": "Chat resumable uploads",
+        "event": "push",
+        "head_sha": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/ecollab-project/ecollab/actions/runs/40863180571"
+      }
+    ],
+    "jobs": [
+      {
+        "run": 40863189714,
+        "jobs": [
+          {
+            "id": 123411306246,
+            "name": "check",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm install --no-save --ignore-scripts jsdom@30.1.2",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/notification-routing-regression.cjs",
+                "number": 6,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/livekit-calls-regression.cjs",
+                "number": 7,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php tests/notification-service-regression.php",
+                "number": 8,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run for file in API/notifications/get.php API/notifications/mark-read.php API/dm/send-message.php API/dm/group-message.php API/threads/index.php API/server/members.php API/chat/channel-members.php services/NotificationService.php websocket/handlers/DmHandler.php modules/chat/chat.php; do php -l \"$file\" || exit 1; done",
+                "number": 9,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "number": 17,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 18,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 19,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 40863189358,
+        "jobs": [
+          {
+            "id": 123411304983,
+            "name": "check",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm install --no-save --ignore-scripts jsdom@30.1.2",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/chat-timeline-regression.cjs",
+                "number": 6,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/chat-profile-regression.cjs",
+                "number": 7,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/chat-members-regression.cjs",
+                "number": 8,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php tests/chat-read-regression.php",
+                "number": 9,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run for file in API/chat/get-messages.php API/dm/open-conversation.php API/dm/group-message.php API/dm/groups.php API/profile/get-profile.php services/ChatReadService.php modules/chat/chat.php; do php -l \"$file\" || exit 1; done",
+                "number": 10,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "number": 19,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 20,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 21,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 40863189453,
+        "jobs": [
+          {
+            "id": 123411305576,
+            "name": "regression",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "PHP syntax",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Install DOM test dependency",
+                "number": 6,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Navigation, settings and calls",
+                "number": 7,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "number": 13,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 14,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 15,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 40863189516,
+        "jobs": [
+          {
+            "id": 123411306132,
+            "name": "uploads",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php -l API/chat/resumable-upload.php",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm ci --prefix tools/chat-uploads",
+                "number": 6,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm run --prefix tools/chat-uploads build",
+                "number": 7,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run git diff --exit-code -- assets/js/chat/resumable-uploads.js assets/js/chat/resumable-uploads.js.LEGAL.txt assets/js/chat/resumable-uploads.NOTICES.txt",
+                "number": 8,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run NODE_PATH=\"$PWD/tools/chat-uploads/node_modules\" node tests/chat-uploads-regression.cjs",
+                "number": 9,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run NODE_PATH=\"$PWD/tools/chat-uploads/node_modules\" node tests/chat-tus-http-regression.cjs",
+                "number": 10,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "number": 19,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 20,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 21,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 40863189678,
+        "jobs": [
+          {
+            "id": 123411306187,
+            "name": "actual-jplag",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Build private parser",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Parse C, C++, Python and Java with real JPlag",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Clean parser",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 10,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 11,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "id": 123411306801,
+            "name": "regression",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run composer install --working-dir=tools/web-push --no-dev --no-interaction --no-plugins",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm ci --prefix tools/code-lab-editor",
+                "number": 6,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "number": 11,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 12,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 13,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 40863189745,
+        "jobs": [
+          {
+            "id": 123411306660,
+            "name": "runtime",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Initialize containers",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm install --no-save --ignore-scripts jsdom@30.1.2 playwright@1.58.2 yjs@13.6.27 y-protocols@1.0.6",
+                "number": 6,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm ci --prefix tools/chat-composer --ignore-scripts --no-audit --no-fund",
+                "number": 7,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npx playwright install --with-deps chromium",
+                "number": 8,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php tests/client-ip-regression.php",
+                "number": 9,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/request-security-regression.cjs",
+                "number": 10,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php tests/rate-limit-concurrency.php",
+                "number": 11,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php tests/settings-runtime-regression.php",
+                "number": 12,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php tests/settings-migration-regression.php",
+                "number": 13,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php tests/jarred-governance-retention.php",
+                "number": 14,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php tests/jarred-governance-provider.php",
+                "number": 15,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/jarred-governance-http.cjs",
+                "number": 16,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/jarred-governance-lock.cjs",
+                "number": 17,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/shared-ai-provider.cjs",
+                "number": 18,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Shared inference across separate Linux temporary mount views",
+                "number": 19,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/jarred-provider-regression.cjs",
+                "number": 20,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/jarred-session-race.cjs",
+                "number": 21,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/realtime-settings-regression.cjs",
+                "number": 22,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/settings-runtime-browser.cjs",
+                "number": 23,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/chat-composer-regression.cjs",
+                "number": 24,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/yjs-channel-presence-regression.cjs",
+                "number": 25,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "number": 48,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 49,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Stop containers",
+                "number": 50,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 51,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 40863189344,
+        "jobs": [
+          {
+            "id": 123411305438,
+            "name": "isolated-mariadb-http",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Install disposable MariaDB and PHP dependencies",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Install isolated JS and browser fixtures",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Syntax, queue crash, permission and privacy regressions",
+                "number": 6,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Actual MariaDB, TCP faults, HTTP client and CLI worker recovery",
+                "number": 7,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "number": 13,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 14,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 15,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 40863189484,
+        "jobs": [
+          {
+            "id": 123411305825,
+            "name": "kit",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Initialize containers",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm ci --ignore-scripts --prefix tools/load-tests",
+                "number": 6,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/load-test-plan-regression.cjs && node tests/load-test-ratchet-contract.cjs && node tests/load-test-diagnostics.cjs",
+                "number": 7,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run curl -fsSL https://github.com/grafana/k6/releases/download/v2.3.0/k6-v2.3.0-linux-amd64.tar.gz -o /tmp/k6.tar.gz",
+                "number": 8,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/load-test-mock.cjs",
+                "number": 9,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/load-test-mock.cjs",
+                "number": 10,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/load-test-mock.cjs",
+                "number": 11,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/load-test-mock.cjs",
+                "number": 12,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php tests/load-test-fixture-regression.php",
+                "number": 13,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php -l scripts/load-test-fixture.php && python3 -m py_compile scripts/package-load-tests.py",
+                "number": 14,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "number": 26,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 27,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Stop containers",
+                "number": 28,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 29,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 40863189742,
+        "jobs": [
+          {
+            "id": 123411306498,
+            "name": "owned-message-contract",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Install disposable MariaDB and PHP dependencies",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Exact source boundary and dependencies",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Exact base real HTTP and three full suite orderings",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Candidate real HTTP and three full suite orderings",
+                "number": 6,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "number": 7,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 14,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 15,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 40863189499,
+        "jobs": [
+          {
+            "id": 123411306327,
+            "name": "devices",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm install --no-save --ignore-scripts playwright@1.58.2 jsdom@30.1.2",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npx playwright install --with-deps chromium",
+                "number": 6,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/device-layout-regression.cjs",
+                "number": 7,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/responsive-browser-regression.cjs",
+                "number": 8,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "number": 9,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "number": 17,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 18,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 19,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 40863189377,
+        "jobs": [
+          {
+            "id": 123411305579,
+            "name": "runners",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Initialize containers",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm ci --ignore-scripts --prefix tools/feature-capacity",
+                "number": 6,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npx --prefix tools/feature-capacity playwright install --with-deps chromium",
+                "number": 7,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Validate PowerShell wrapper syntax",
+                "number": 8,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node tests/feature-capacity-stats.cjs && node tests/feature-capacity-regression.mjs && python3 tests/feature-capacity-programs.py",
+                "number": 9,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php -l services/FeatureCapacityFixture.php && php -l scripts/prepare-feature-capacity.php && php -l scripts/observe-feature-capacity.php && php tests/feature-capacity-fixture.php",
+                "number": 10,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run curl -fsSL https://github.com/grafana/k6/releases/download/v2.3.0/k6-v2.3.0-linux-amd64.tar.gz -o /tmp/k6.tar.gz",
+                "number": 11,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run capacity_test_ip=$(hostname -I | awk '{print $1}')",
+                "number": 12,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run docker logs capacity-livekit 2>&1 | grep -E 'WARN|ERROR|failed' | cut -c1-500 | tail -20 || true",
+                "number": 13,
+                "status": "completed",
+                "conclusion": "skipped"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "number": 24,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 25,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Stop containers",
+                "number": 26,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 27,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 40863189551,
+        "jobs": [
+          {
+            "id": 123411306095,
+            "name": "owned-http-auth",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Install disposable MariaDB and PHP dependencies",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Dependencies and browser runtime",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Source gate and existing security regressions",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Full original failing control and current three orderings including native expiry",
+                "number": 6,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Exact accepted Phase3X base comparison",
+                "number": 7,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Exact accepted Phase3AB base comparison",
+                "number": 8,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Exact accepted Phase3AC source comparison",
+                "number": 9,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Actual corrected HTTP, hosted Chromium and persisted OTP browser reset",
+                "number": 10,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Actual corrected native clocks, sessions, failures and legacy rehearsal",
+                "number": 11,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Exact accepted Phase3Y comparison",
+                "number": 12,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Exact accepted Phase3Z comparison",
+                "number": 13,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Frozen original clock, transition and double-consumption controls",
+                "number": 14,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Exact-base static comparison",
+                "number": 15,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Recompute actual security acceptance from raw records",
+                "number": 16,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Four-migration compatibility and recovery rehearsal",
+                "number": 17,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Actual code poll message compatibility",
+                "number": 18,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Authoritative identity migration provisioning authentication DM and Jarred",
+                "number": 19,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Actual composed student facilitator collaboration HTTP and Chromium",
+                "number": 20,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Recompute integration readiness and preserve blockers",
+                "number": 21,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "number": 22,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 44,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 45,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 40863189456,
+        "jobs": [
+          {
+            "id": 123411305948,
+            "name": "owned-fpm-comparison",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Install disposable MariaDB and PHP dependencies",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Unit and focused existing regressions",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "JavaScript workspace and dashboard regressions",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Schema inventory and full-suite exact-base comparison (retain failures)",
+                "number": 6,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Native MariaDB telemetry binding and error contracts",
+                "number": 7,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Existing native Student Dashboard regressions",
+                "number": 8,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Eight identical-source minimal/full schema read-write controls",
+                "number": 9,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Full static comparison against exact Phase 3V base",
+                "number": 10,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Keep lossless raw archives without duplicate expanded JSON",
+                "number": 11,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "number": 12,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 24,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 25,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 40863180571,
+        "jobs": [
+          {
+            "id": 123411274191,
+            "name": "uploads",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "number": 1,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "number": 2,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run shivammathur/setup-php@v2",
+                "number": 3,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "number": 4,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run php -l API/chat/resumable-upload.php",
+                "number": 5,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm ci --prefix tools/chat-uploads",
+                "number": 6,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm run --prefix tools/chat-uploads build",
+                "number": 7,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run git diff --exit-code -- assets/js/chat/resumable-uploads.js assets/js/chat/resumable-uploads.js.LEGAL.txt assets/js/chat/resumable-uploads.NOTICES.txt",
+                "number": 8,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run NODE_PATH=\"$PWD/tools/chat-uploads/node_modules\" node tests/chat-uploads-regression.cjs",
+                "number": 9,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run NODE_PATH=\"$PWD/tools/chat-uploads/node_modules\" node tests/chat-tus-http-regression.cjs",
+                "number": 10,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "number": 19,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "number": 20,
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "number": 21,
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 12893226135,
+        "name": "phase3ad-integration-evidence",
+        "size_in_bytes": 1324001,
+        "url": "https://api.github.com/repos/ecollab-project/ecollab/actions/artifacts/12893226135",
+        "archive_download_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/artifacts/12893226135/zip",
+        "expired": false,
+        "created_at": "2026-10-29T11:18:34Z",
+        "expires_at": "2027-01-27T11:09:29Z",
+        "updated_at": "2026-10-29T11:18:34Z",
+        "digest": "sha256:937c83adddbfb35aa964d87e606d55122de8d12e84f760dc5d57fe07dc9f3c22",
+        "workflow_run": {
+          "id": 40863189551,
+          "repository_id": 1334985087,
+          "head_repository_id": 1334985087,
+          "head_branch": "integration/phase3ad-identity-20261029",
+          "head_sha": "c65d2f994b10dfa7890f6509a2342e58a064571e"
+        }
+      },
+      {
+        "id": 12892402766,
+        "name": "phase3ad-message-default-evidence",
+        "size_in_bytes": 383173,
+        "url": "https://api.github.com/repos/ecollab-project/ecollab/actions/artifacts/12892402766",
+        "archive_download_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/artifacts/12892402766/zip",
+        "expired": false,
+        "created_at": "2026-10-29T11:11:38Z",
+        "expires_at": "2027-01-27T11:09:29Z",
+        "updated_at": "2026-10-29T11:11:38Z",
+        "digest": "sha256:76aad234c4226dc3f983b77c882343932b41b79c929b8849aff972630e823dd8",
+        "workflow_run": {
+          "id": 40863189742,
+          "repository_id": 1334985087,
+          "head_repository_id": 1334985087,
+          "head_branch": "integration/phase3ad-identity-20261029",
+          "head_sha": "c65d2f994b10dfa7890f6509a2342e58a064571e"
+        }
+      }
+    ],
+    "hosted_merge": {
+      "sha": "63046eeb95faaa5305bad48862e41fd9020bdd2c",
+      "tree": "7f6686f3d382f8764e84851411f2f92af840077c",
+      "parents": [
+        "82b1192a8cb4bc943b57e42cbc3c0f4204389586",
+        "c65d2f994b10dfa7890f6509a2342e58a064571e"
+      ]
+    }
+  },
+  "required_commands": [
+    {
+      "step": "source-gate-and-existing-security-regressions",
+      "command": [
+        "bash",
+        "-e",
+        "tests/phase3ad-step-source-gate-and-existing-security-regressions.sh"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793272216.069717,
+      "finished_epoch": 1793272219.1946619
+    },
+    {
+      "step": "full-original-failing-control-and-current-three-orderings-including-native-expiry",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-repair-suite.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793272219.2424963,
+      "finished_epoch": 1793272255.461378
+    },
+    {
+      "step": "exact-accepted-phase3x-base-comparison",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-repair-suite.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793272255.5053632,
+      "finished_epoch": 1793272274.3955727
+    },
+    {
+      "step": "exact-accepted-phase3ab-base-comparison",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-repair-suite.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793272274.4406419,
+      "finished_epoch": 1793272295.4096856
+    },
+    {
+      "step": "exact-accepted-phase3ac-source-comparison",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-repair-suite.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793272295.4546168,
+      "finished_epoch": 1793272316.3111181
+    },
+    {
+      "step": "actual-corrected-http-hosted-chromium-and-persisted-otp-browser-reset",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-repair-http.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793272316.354832,
+      "finished_epoch": 1793272375.8958783
+    },
+    {
+      "step": "actual-corrected-native-clocks-sessions-failures-and-legacy-rehearsal",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ac-security.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793272375.9386194,
+      "finished_epoch": 1793272489.2189178
+    },
+    {
+      "step": "exact-accepted-phase3y-comparison",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-repair-suite.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793272489.277847,
+      "finished_epoch": 1793272509.93183
+    },
+    {
+      "step": "exact-accepted-phase3z-comparison",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-repair-suite.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793272509.9744656,
+      "finished_epoch": 1793272530.6115556
+    },
+    {
+      "step": "frozen-original-clock-transition-and-double-consumption-controls",
+      "command": [
+        "bash",
+        "-e",
+        "tests/phase3ad-step-frozen-original-clock-transition-and-double-consumption-controls.sh"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793272530.656866,
+      "finished_epoch": 1793272589.0122104
+    },
+    {
+      "step": "exact-base-static-comparison",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/peer-threads-static.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793272589.0553854,
+      "finished_epoch": 1793272629.963589
+    },
+    {
+      "step": "recompute-actual-security-acceptance-from-raw-records",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B tests/phase3ac-report.py phase3ad-raw"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793272630.0067601,
+      "finished_epoch": 1793272630.1242218
+    },
+    {
+      "step": "four-migration-compatibility-and-recovery-rehearsal",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/coworkspace-migration-integration.py > phase3ad-raw/migration-compatibility.log 2>&1"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793272630.174683,
+      "finished_epoch": 1793272635.3565047
+    },
+    {
+      "step": "actual-code-poll-message-compatibility",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B tests/phase3ad-message-compatibility.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793272635.4028075,
+      "finished_epoch": 1793272678.1908565
+    },
+    {
+      "step": "authoritative-identity-contract",
+      "command": [
+        "python3",
+        "-B",
+        "tests/phase3ad-identity.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793272678.2331111,
+      "finished_epoch": 1793272688.5810232
+    },
+    {
+      "step": "actual-composed-student-facilitator-collaboration-http-and-chromium",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-http.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793272688.6243265,
+      "finished_epoch": 1793272712.3029752
+    }
+  ],
+  "recompute_commands": [
+    {
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "tests/phase3ac-report.py",
+        "/workspace/scratch/5c9d94f07e76/phase3ad-identity-integration"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"candidate\": {\n    \"clock_records\": 180,\n    \"race_rounds\": 8,\n    \"two_session_rounds\": 5,\n    \"four_session_rounds\": 3,\n    \"single_use\": \"PASS\",\n    \"timezone\": \"PASS\"\n  },\n  \"original\": {\n    \"race_rounds\": 10,\n    \"single_use\": \"FAIL (preserved)\",\n    \"clock_records\": 360\n  },\n  \"full_suite\": {\n    \"baseline\": {\n      \"exit_code\": 1,\n      \"counts\": {\n        \"tests\": 46,\n        \"assertions\": 114,\n        \"errors\": 0,\n        \"failures\": 5,\n        \"skipped\": 0\n      }\n    },\n    \"current\": {\n      \"exit_code\": 0,\n      \"counts\": {\n        \"tests\": 60,\n        \"assertions\": 280,\n        \"errors\": 0,\n        \"failures\": 0,\n        \"skipped\": 0\n      }\n    },\n    \"reverse\": {\n      \"exit_code\": 0,\n      \"counts\": {\n        \"tests\": 60,\n        \"assertions\": 280,\n        \"errors\": 0,\n        \"failures\": 0,\n        \"skipped\": 0\n      }\n    },\n    \"random-31028\": {\n      \"exit_code\": 0,\n      \"counts\": {\n        \"tests\": 60,\n        \"assertions\": 280,\n        \"errors\": 0,\n        \"failures\": 0,\n        \"skipped\": 0\n      }\n    }\n  },\n  \"accepted-base.json\": {\n    \"baseline\": {\n      \"exit_code\": 0,\n      \"tests\": 57\n    },\n    \"current\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    }\n  },\n  \"accepted-phase3y.json\": {\n    \"baseline\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    },\n    \"current\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    }\n  },\n  \"accepted-phase3z.json\": {\n    \"baseline\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    },\n    \"current\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    }\n  },\n  \"accepted-phase3ab.json\": {\n    \"baseline\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    },\n    \"current\": {\n      \"exit_code\": 0,\n      \"tests\": 60\n    }\n  },\n  \"phpstan\": {\n    \"added\": 0,\n    \"baseline\": {\n      \"errors\": 0,\n      \"file_errors\": 15\n    },\n    \"candidate\": {\n      \"errors\": 0,\n      \"file_errors\": 15\n    }\n  },\n  \"http\": {\n    \"direct_requests\": 207,\n    \"browser\": \"PASS\",\n    \"browser_version\": \"151.0.7922.34\"\n  },\n  \"raw_sha256\": {\n    \"accepted-base.json\": \"04af50445ee9c2fc36a331bf77a31b3d19eef6b55c184b16c9266e894936c7e2\",\n    \"accepted-phase3ab.json\": \"ab6f6938b16044adb1414d9b8b2ee61cce6fe9872fce948d62f2e67545b55092\",\n    \"accepted-phase3ac.json\": \"a46b078b27f3010fb0b82f2cec5238c992e0af3ad4c7b0cddc65d52807ac3568\",\n    \"accepted-phase3y.json\": \"1c4f7c5cd80b979af9a507d9cbe9211642c0c9f53a8a863d280565ae709c2781\",\n    \"accepted-phase3z.json\": \"e81ffec0e4fc6f59c5bb6141a7fefe00f3e0e1ee926882e54317a508a31c7f02\",\n    \"full.json\": \"3157c9799ad967bf6441238893849f04c712848db60cf44b029f9d8d39bb2bc1\",\n    \"http.json\": \"a7e744d3a0e1c565517817f7f4cd80c10a5e404f462de1ce9b7b6ccdd91d484c\",\n    \"identity.json\": \"327e70f091127a4662c98184d44fc15763ad360d1791f1e9fb724ae15b1203b2\",\n    \"integration-http.json\": \"3c4866fa0cc0e0d1a43f33e9808bd888d88253294c6acf77f95a08d05989f6c0\",\n    \"integration-summary.json\": \"25fce91af43e7e3f40aebcf5b236d7d0b5926db30002bdede9d0c7a4b03b9361\",\n    \"inventory.json\": \"2947953535113284cdf75be4bb5f027a83144f7068569d3e3f519163c56ee1ba\",\n    \"message-compatibility.json\": \"c12341927172d16b9910de2da546380ca8e0e7a24cffaaeb0122eb25dab11481\",\n    \"original-experiments.json\": \"589307a9e3758a27950aee5b490e7732b6d121e39247b92db5f4cb87e4ed99a7\",\n    \"original-summary.json\": \"434df2c7af3a2163d9a441fe6542aae5f43325574dacc7a885151eae08aabe01\",\n    \"recomputed-summary.json\": \"02d3dba28253d26d9eb55e1cfd8445127057049598b995b897a6645e93c58c97\",\n    \"scope.json\": \"ec63fc2b47ebd20b451a9de947f5c26fbcae0c31f352d3b6b591a5e2e55497d9\",\n    \"security.json\": \"bb35a5a45b56fcb94f004b0d299649ec4c2e7c430ee7045edf4fceb8f2c0e958\",\n    \"static.json\": \"5eb3b2850087ba609e0309146b4a4ac484d5daadf51273631ee7df08d43138ba\",\n    \"writers.json\": \"b8f23fbd2490144f8616364d5d6beed5806cd347de724b2d48eaa35964a9d5ce\"\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "tests/phase3aa-report.py",
+        "/workspace/scratch/5c9d94f07e76/phase3ad-identity-integration/original-experiments.json",
+        "/workspace/scratch/5c9d94f07e76/phase3ad-identity-original-recomputed.json"
+      ],
+      "exit_code": 0,
+      "stdout": "Recomputed 360 clock records; 10 double-consumption rounds (security FAIL)\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-B",
+        "tests/phase3ad-report.py",
+        "/workspace/scratch/5c9d94f07e76/phase3ad-identity-integration"
+      ],
+      "exit_code": 0,
+      "stdout": "PASS []\n",
+      "stderr": ""
+    }
+  ],
+  "manual_assertions": {
+    "status": "PASS",
+    "identity_http_requests": 32,
+    "identity_contracts": 22,
+    "migration_cases": 9,
+    "composed_integration_requests": 52,
+    "auth_requests": 207,
+    "role_browser_cases": 4,
+    "auth_browser_checkpoints": 6,
+    "base_message_http_checks": [
+      41,
+      14
+    ],
+    "candidate_message_http_checks": [
+      61,
+      27
+    ],
+    "base_candidate_phpunit_orders": 3,
+    "each_suite": "60 tests/280 assertions;0 errors/failures/skips",
+    "accepted_phase3ac_comparison": "PASS60/60",
+    "runtime_files": 10,
+    "required_command_exits": "16/16 zero",
+    "workflow_results": "14/14 PASS",
+    "jobs": "15/15 PASS",
+    "steps": "209 PASS;1 optional failure-diagnostic SKIPPED;0 FAIL"
+  },
+  "security_recomputed": {
+    "candidate": {
+      "clock_records": 180,
+      "race_rounds": 8,
+      "two_session_rounds": 5,
+      "four_session_rounds": 3,
+      "single_use": "PASS",
+      "timezone": "PASS"
+    },
+    "original": {
+      "race_rounds": 10,
+      "single_use": "FAIL (preserved)",
+      "clock_records": 360
+    },
+    "full_suite": {
+      "baseline": {
+        "exit_code": 1,
+        "counts": {
+          "tests": 46,
+          "assertions": 114,
+          "errors": 0,
+          "failures": 5,
+          "skipped": 0
+        }
+      },
+      "current": {
+        "exit_code": 0,
+        "counts": {
+          "tests": 60,
+          "assertions": 280,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0
+        }
+      },
+      "reverse": {
+        "exit_code": 0,
+        "counts": {
+          "tests": 60,
+          "assertions": 280,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0
+        }
+      },
+      "random-31028": {
+        "exit_code": 0,
+        "counts": {
+          "tests": 60,
+          "assertions": 280,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0
+        }
+      }
+    },
+    "accepted-base.json": {
+      "baseline": {
+        "exit_code": 0,
+        "tests": 57
+      },
+      "current": {
+        "exit_code": 0,
+        "tests": 60
+      }
+    },
+    "accepted-phase3y.json": {
+      "baseline": {
+        "exit_code": 0,
+        "tests": 60
+      },
+      "current": {
+        "exit_code": 0,
+        "tests": 60
+      }
+    },
+    "accepted-phase3z.json": {
+      "baseline": {
+        "exit_code": 0,
+        "tests": 60
+      },
+      "current": {
+        "exit_code": 0,
+        "tests": 60
+      }
+    },
+    "accepted-phase3ab.json": {
+      "baseline": {
+        "exit_code": 0,
+        "tests": 60
+      },
+      "current": {
+        "exit_code": 0,
+        "tests": 60
+      }
+    },
+    "phpstan": {
+      "added": 0,
+      "baseline": {
+        "errors": 0,
+        "file_errors": 15
+      },
+      "candidate": {
+        "errors": 0,
+        "file_errors": 15
+      }
+    },
+    "http": {
+      "direct_requests": 207,
+      "browser": "PASS",
+      "browser_version": "151.0.7922.34"
+    },
+    "raw_sha256": {
+      "accepted-base.json": "04af50445ee9c2fc36a331bf77a31b3d19eef6b55c184b16c9266e894936c7e2",
+      "accepted-phase3ab.json": "ab6f6938b16044adb1414d9b8b2ee61cce6fe9872fce948d62f2e67545b55092",
+      "accepted-phase3ac.json": "a46b078b27f3010fb0b82f2cec5238c992e0af3ad4c7b0cddc65d52807ac3568",
+      "accepted-phase3y.json": "1c4f7c5cd80b979af9a507d9cbe9211642c0c9f53a8a863d280565ae709c2781",
+      "accepted-phase3z.json": "e81ffec0e4fc6f59c5bb6141a7fefe00f3e0e1ee926882e54317a508a31c7f02",
+      "full.json": "3157c9799ad967bf6441238893849f04c712848db60cf44b029f9d8d39bb2bc1",
+      "http.json": "a7e744d3a0e1c565517817f7f4cd80c10a5e404f462de1ce9b7b6ccdd91d484c",
+      "identity.json": "327e70f091127a4662c98184d44fc15763ad360d1791f1e9fb724ae15b1203b2",
+      "integration-http.json": "3c4866fa0cc0e0d1a43f33e9808bd888d88253294c6acf77f95a08d05989f6c0",
+      "integration-summary.json": "25fce91af43e7e3f40aebcf5b236d7d0b5926db30002bdede9d0c7a4b03b9361",
+      "inventory.json": "2947953535113284cdf75be4bb5f027a83144f7068569d3e3f519163c56ee1ba",
+      "message-compatibility.json": "c12341927172d16b9910de2da546380ca8e0e7a24cffaaeb0122eb25dab11481",
+      "original-experiments.json": "589307a9e3758a27950aee5b490e7732b6d121e39247b92db5f4cb87e4ed99a7",
+      "original-summary.json": "434df2c7af3a2163d9a441fe6542aae5f43325574dacc7a885151eae08aabe01",
+      "recomputed-summary.json": "02d3dba28253d26d9eb55e1cfd8445127057049598b995b897a6645e93c58c97",
+      "scope.json": "ec63fc2b47ebd20b451a9de947f5c26fbcae0c31f352d3b6b591a5e2e55497d9",
+      "security.json": "bb35a5a45b56fcb94f004b0d299649ec4c2e7c430ee7045edf4fceb8f2c0e958",
+      "static.json": "5eb3b2850087ba609e0309146b4a4ac484d5daadf51273631ee7df08d43138ba",
+      "writers.json": "b8f23fbd2490144f8616364d5d6beed5806cd347de724b2d48eaa35964a9d5ce"
+    }
+  },
+  "identity_claims": [
+    "Jarred discovery resolves provisioned machine",
+    "matching HTTP200; machine excluded",
+    "human DM roundtrip; outsider/CSRF denial; Jarred CodeLab/preferences denied; authorized queue202; no inference worker executed",
+    "four human writers persist0; HTTP promotion cannot set1; reserved admin request422"
+  ],
+  "migration_cases": [
+    {
+      "label": "no explicit acknowledgement",
+      "exit_code": 1,
+      "unchanged_rows_and_ddl": true
+    },
+    {
+      "label": "unknown additional account",
+      "exit_code": 1,
+      "unchanged_rows_and_ddl": true
+    },
+    {
+      "label": "changed known seed identity",
+      "exit_code": 1,
+      "unchanged_rows_and_ddl": true
+    },
+    {
+      "label": "incompatible column TINYINT(1) NOT NULL DEFAULT 1",
+      "exit_code": 1,
+      "unchanged_rows_and_ddl": true
+    },
+    {
+      "label": "incompatible column TINYINT(1) NULL DEFAULT 0",
+      "exit_code": 1,
+      "unchanged_rows_and_ddl": true
+    },
+    {
+      "label": "incompatible column VARCHAR(2) NOT NULL DEFAULT '0'",
+      "exit_code": 1,
+      "unchanged_rows_and_ddl": true
+    },
+    {
+      "label": "canonical fresh migration",
+      "exit_code": 0,
+      "unchanged_rows_and_ddl": false
+    },
+    {
+      "label": "verified pristine rerun",
+      "exit_code": 0,
+      "unchanged_rows_and_ddl": true
+    },
+    {
+      "label": "conflicting seed flag",
+      "exit_code": 1,
+      "unchanged_rows_and_ddl": true
+    }
+  ],
+  "identity_contract_checks": [
+    "provisioned machine has no human credentials",
+    "authoritative flag distinction",
+    "missing invalid flag fail closed",
+    "database collation reserved ecollab_ai",
+    "database collation reserved ECOLLAB_AI",
+    "database collation reserved ecollab_ai",
+    "nonreserved suffix",
+    "machine password login denied",
+    "machine reset request indistinguishable without OTP",
+    "machine OTP cannot issue reset token",
+    "machine forged reset session denied",
+    "machine existing session denied",
+    "machine valid password denied",
+    "machine valid remember token denied",
+    "machine SSO provider or email linking denied owned-machine-provider",
+    "machine SSO provider or email linking denied new-provider-id",
+    "OAuth writer human flag",
+    "admin workspace ignores attempted system promotion",
+    "admin workspace reserved identity denied",
+    "database flag domain enforced",
+    "synthetic CLI fixture writer persists human0",
+    "synthetic CLI fixture writer persists human0"
+  ],
+  "known_limitations": [
+    {
+      "status": "BLOCKED",
+      "reason": "Inherited load-fixture cleanup expects ws_tokens absent from canonical migrations; not a defense feature or capacity acceptance"
+    },
+    {
+      "status": "NOT CERTIFIED",
+      "scope": "live external inference completion,broker/media/Collabora/CodeLab production integrations,full upload/download on composed FPM+DB,50-100-student capacity"
+    },
+    {
+      "status": "BLOCKED",
+      "scope": "production OTP external writers/triggers/jobs inventory,legacy-history retention and coordinated cutover,production TLS/proxy/clock/durability,merge/deployment approval"
+    },
+    {
+      "status": "EVIDENCE LIMITATION",
+      "scope": "Earlier scratch diagnostic archives unavailable after session restoration. The earlier ledger-failure full JSON had been overwritten; its traceback was recorded, and a duplicate mislabeled JSON was not relied on. Original failing OTP controls and all final required records are preserved in hosted artifact; failed historical CI remains linked."
+    }
+  ],
+  "earlier_failed_heads": [
+    "01736d8e777201192ab4a00b116db311d48fee03",
+    "a2d5e35803b35bb5fa40221d46da9f5500fa2665",
+    "303006468d4472ffa670e137324a7de37f16f6ee"
+  ],
+  "rollback": "Restore exact PR101 base source and recreate owned synthetic DB. Never drop/reclassify populated real identities, narrow populated enums or revive OTP records. No production execution authorized.",
+  "defense_nomination": {
+    "source": "c65d2f994b10dfa7890f6509a2342e58a064571e",
+    "environment": "fresh owned loopback PHP8.3/PHP-FPM/MariaDB10.11;local nonproduction mail;Chromium151.0.7922.34;synthetic seed+registered student/facilitator actors and CLI-created Jarred",
+    "included": [
+      "signup/password login/logout/password reset",
+      "student/facilitator dashboard and workspace",
+      "classroom announcements",
+      "human peer matching/system exclusion",
+      "channel code/poll and private-poll restrictions",
+      "human DM and Jarred queue/authorization boundaries",
+      "threads and attachment metadata",
+      "notifications"
+    ],
+    "excluded": [
+      "capacity-fixture cleanup",
+      "live Jarred inference response",
+      "broker/media/Collabora/external CodeLab service completion",
+      "production resources and real users"
+    ]
+  },
+  "original_artifact_file_hashes": {
+    "accepted-phase3ac.json": "a46b078b27f3010fb0b82f2cec5238c992e0af3ad4c7b0cddc65d52807ac3568",
+    "writers.json": "b8f23fbd2490144f8616364d5d6beed5806cd347de724b2d48eaa35964a9d5ce",
+    "integration-summary.json": "732c581229c231f58459fc1ec9e1d04ef5a71c28bc8cf08deda2a38660fe5337",
+    "accepted-phase3ab.json": "ab6f6938b16044adb1414d9b8b2ee61cce6fe9872fce948d62f2e67545b55092",
+    "accepted-base.json": "04af50445ee9c2fc36a331bf77a31b3d19eef6b55c184b16c9266e894936c7e2",
+    "http.json": "a7e744d3a0e1c565517817f7f4cd80c10a5e404f462de1ce9b7b6ccdd91d484c",
+    "full.json": "3157c9799ad967bf6441238893849f04c712848db60cf44b029f9d8d39bb2bc1",
+    "original-summary.json": "434df2c7af3a2163d9a441fe6542aae5f43325574dacc7a885151eae08aabe01",
+    "original-experiments.json": "589307a9e3758a27950aee5b490e7732b6d121e39247b92db5f4cb87e4ed99a7",
+    "inventory.json": "2947953535113284cdf75be4bb5f027a83144f7068569d3e3f519163c56ee1ba",
+    "message-compatibility.json": "c12341927172d16b9910de2da546380ca8e0e7a24cffaaeb0122eb25dab11481",
+    "recomputed-summary.json": "3709d611833f7f7b971759fdff0a9a1d3c3dc532bffe251dfc0a972c927d3b00",
+    "security.json": "bb35a5a45b56fcb94f004b0d299649ec4c2e7c430ee7045edf4fceb8f2c0e958",
+    "integration-http.json": "3c4866fa0cc0e0d1a43f33e9808bd888d88253294c6acf77f95a08d05989f6c0",
+    "scope.json": "ec63fc2b47ebd20b451a9de947f5c26fbcae0c31f352d3b6b591a5e2e55497d9",
+    "accepted-phase3z.json": "e81ffec0e4fc6f59c5bb6141a7fefe00f3e0e1ee926882e54317a508a31c7f02",
+    "required-commands.jsonl": "53f290820f04128c3b31930c00955c81bd936029e79a139bf20005521a6ebfc3",
+    "identity.json": "327e70f091127a4662c98184d44fc15763ad360d1791f1e9fb724ae15b1203b2",
+    "accepted-phase3y.json": "1c4f7c5cd80b979af9a507d9cbe9211642c0c9f53a8a863d280565ae709c2781",
+    "static.json": "5eb3b2850087ba609e0309146b4a4ac484d5daadf51273631ee7df08d43138ba",
+    "migration-compatibility.log": "162c58ddeac254a5f5d510980e27d2c29df535a7db7ccea417de4c690c35e64e"
+  },
+  "message_artifact_file_hashes": {
+    "base.json": "e57231967a4754d6d3357b7c56fbba9b3f3d700bc6bb8ec0db8a50259385008f",
+    "candidate.json": "cd051b4c2bd7c5e4b99233fb529a7ee78bba24a8fcf35d55a233ccf4e906542a"
+  }
+}
