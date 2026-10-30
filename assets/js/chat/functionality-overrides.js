@@ -54,13 +54,51 @@ window.ECOLLAB_ESC = esc;
     }
   }
 
+  function openNativeCodeSnippet() {
+    const channel = Number(window.ECOLLAB?.currentChannelId);
+    if (!channel) { toast('Select a channel first.', 'error'); return; }
+    let dialog = document.getElementById('channelCodeDialog');
+    if (!dialog) {
+      dialog = document.createElement('dialog');
+      dialog.id = 'channelCodeDialog';
+      dialog.setAttribute('aria-labelledby', 'channelCodeTitle');
+      dialog.style.cssText = 'width:min(720px,90vw);background:var(--bg-secondary,#151922);color:var(--text-primary,#fff);border:1px solid var(--border,#555);border-radius:12px;padding:24px';
+      dialog.innerHTML = '<form><h2 id="channelCodeTitle">Code Snippet</h2><label for="channelCodeSource">Code</label><textarea id="channelCodeSource" required maxlength="4000" rows="14" spellcheck="false" style="display:block;width:100%;box-sizing:border-box;font-family:monospace"></textarea><p role="alert" id="channelCodeError"></p><button type="button" id="channelCodeCancel">Cancel</button> <button type="submit">Post Code</button></form>';
+      document.body.appendChild(dialog);
+      dialog.querySelector('#channelCodeCancel').onclick = () => dialog.close();
+      dialog.querySelector('form').onsubmit = async event => {
+        event.preventDefault();
+        const input = dialog.querySelector('textarea');
+        const error = dialog.querySelector('[role="alert"]');
+        const submit = dialog.querySelector('[type="submit"]');
+        error.textContent = '';
+        if (!input.value.trim() || input.value.length > 4000) { error.textContent = 'Enter 1–4000 characters of code.'; return; }
+        if (submit.disabled) return;
+        submit.disabled = true;
+        try {
+          const data = await window.apiFetch(base() + '/API/chat/send-message.php', {
+            method: 'POST', body: JSON.stringify({channel_id: Number(dialog.dataset.channel), content_type: 'code', content: input.value})
+          });
+          if (!data.success || !data.message) throw new Error(data.error || 'Code could not be posted.');
+          if (Number(window.ECOLLAB?.currentChannelId) === Number(dialog.dataset.channel)) window.appendMessageToUI?.(data.message);
+          input.value = ''; dialog.close();
+        } catch (e) { error.textContent = e.message || 'Code could not be posted. Retry.'; }
+        finally { submit.disabled = false; }
+      };
+    }
+    // Capture the destination at open;changing channels must not silently retarget a draft.
+    dialog.dataset.channel = String(channel);
+    dialog.querySelector('[role="alert"]').textContent = '';
+    dialog.showModal(); dialog.querySelector('textarea').focus();
+  }
+
   window.openExtrasAction = function (action) {
     if (typeof window.closeExtrasMenu === 'function') window.closeExtrasMenu();
     const routes = {
       poll: () => window.openModal?.('pollModal'),
       event: () => window.openCollabHub?.('calendar'),
       quiz: () => window.openCollabHub?.('quiz'),
-      code: () => window.openCollabHub?.('code'),
+      code: openNativeCodeSnippet,
       resource: () => window.openCollabHub?.('resources'),
       link: () => {
         const url = window.prompt('Paste the URL to share:');

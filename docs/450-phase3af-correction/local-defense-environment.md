@@ -1,0 +1,15 @@
+# Persistent isolated local defense environment proposal
+
+Status:PROPOSED;no external environment provisioned. No final defense candidate nominated.
+
+Use a dedicated local Linux directory on persistent disk,not a disposable CI runner. PHP8.3 FPM and MariaDB10.11 bind loopback only. Keep four synthetic human accounts and a CLI-provisioned machine account;capture mail locally and disable external inference/worker integrations. Preserve fresh-only069 fixture acknowledgment,accepted OTP code and system-account denial. Never point this setup at an existing student database.
+
+Source installation:record the final audited correction commit/tree,archive that exact commit into an immutable installation directory,install Composer dependencies from composer.lock,and record source/archive/lock/vendor manifests. Do not use an uncommitted overlay as the nominated implementation. Keep runtime configuration outside the served root,mode0600. Put attachment storage outside the served root,with service-account permissions;retain public avatars separately. The final private-storage setting and route map must follow the implemented attachment contract,not a guessed setting name.
+
+Keep database data,uploaded bytes,configuration and the installed release on persistent local disk. Record exact PHP/MariaDB versions,FPM pool configuration,listen addresses,configuration hashes and local service identity. No live keys/mail/production hostname. Restart the same local services and verify fresh login,history,attachment authorization,code persistence and identity rules. Workspace/runner disk retention is not sufficient evidence for this machine.
+
+Backup procedure:finish active synthetic requests,quiesce FPM/writers,make an actual MariaDB logical dump including schema/data/triggers/routines,then archive the immutable source/vendor release,explicit synthetic configuration,fixture provenance and complete private/public upload stores. Capture file hashes and all-table schema/data fingerprints. Store backups privately with restrictive modes;publish only redacted records and hashes.
+
+Restore procedure:verify archive hash and member paths;restore to independent empty owned directories and a fresh owned MariaDB data directory. Rebind only filesystem/listen settings documented in the configuration comparison. Preserve the original installation and backup. Restore schema/data and file bytes,then compare every manifest and table fingerprint. Start services,authenticate afresh and verify history,code and authorized attachment bytes. Old sessions must not be resurrected. Repeat anonymous/outsider/revoked/deleted-message negative controls after restore.
+
+Required acceptance evidence:exact source/tree and installed manifests;service stop/restart records;disk retention across local machine reboot;configuration inventory with secrets redacted;database/file equality;browser/HTTP positive and negative controls;backup/restore command exits;fallback walkthrough and frozen feature checklist. This proposal does not establish that these tests have run. No merge,deployment,Hostinger,production migration or capacity certification.

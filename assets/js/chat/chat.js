@@ -630,7 +630,7 @@ function buildMessageElement(msg) {
         <span class="msg-timestamp">${time}</span>
       </div>
       ${replyHtml}
-      ${msg.content_type === 'poll' && msg.poll ? buildPollWidget(msg) : `<div class="msg-text">${_renderMsgContent(msg.content || '')}${edited}</div>`}
+      ${msg.content_type === 'poll' && msg.poll ? buildPollWidget(msg) : `<div class="msg-text">${msg.content_type === 'code' ? '<pre class="channel-code"><code>' + escHtml(msg.content || '') + '</code></pre>' : _renderMsgContent(msg.content || '')}${edited}</div>`}
       ${attachHtml}
       ${reactionsHtml}
     </div>
