@@ -42,12 +42,25 @@ jobs:
           node "$RUNNER_TEMP/phase3y-browser/node_modules/playwright/cli.js" install chromium
           echo "NODE_PATH=$RUNNER_TEMP/phase3y-browser/node_modules" >> "$GITHUB_ENV"
       - name: Phase3AF immutable accepted runtime
+        if: always()
         run: python3 -B tests/phase3af-source.py phase3ad-raw/phase3af-source.json
+      - name: Installed candidate browser upload and cold backup restore
+        if: always()
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          PHP_FPM_BIN: /usr/sbin/php-fpm8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          PHASE3AF_REQUIRE_BROWSER: '1'
+          PHASE3AF_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          PHASE3AF_STATE_DIR: ${{ runner.temp }}/phase3af-owned-installed
+        run: python3 -B tests/phase3ad-command.py phase3af-installed-candidate python3 -B tests/phase3af-installed.py
       - name: Source gate and existing security regressions
+        if: always()
         env:
           PHP_BIN: /usr/bin/php8.3
         run: python3 -B tests/phase3ad-command.py source-gate-and-existing-security-regressions bash -e tests/phase3ad-step-source-gate-and-existing-security-regressions.sh
       - name: Full original failing control and current three orderings including native expiry
+        if: always()
         env:
           PHP_BIN: /usr/bin/php8.3
           MARIADBD_BIN: /usr/sbin/mariadbd
@@ -58,6 +71,7 @@ jobs:
           TZ: UTC
         run: python3 -B tests/phase3ad-command.py full-original-failing-control-and-current-three-orderings-including-native-expiry bash -e -c 'python3 -B -u tests/phase3ad-repair-suite.py'
       - name: Exact accepted Phase3X base comparison
+        if: always()
         env:
           PHP_BIN: /usr/bin/php8.3
           MARIADBD_BIN: /usr/sbin/mariadbd
@@ -68,6 +82,7 @@ jobs:
           TZ: UTC
         run: python3 -B tests/phase3ad-command.py exact-accepted-phase3x-base-comparison bash -e -c 'python3 -B -u tests/phase3ad-repair-suite.py'
       - name: Exact accepted Phase3AB base comparison
+        if: always()
         env:
           PHP_BIN: /usr/bin/php8.3
           MARIADBD_BIN: /usr/sbin/mariadbd
@@ -78,6 +93,7 @@ jobs:
           TZ: UTC
         run: python3 -B tests/phase3ad-command.py exact-accepted-phase3ab-base-comparison bash -e -c 'python3 -B -u tests/phase3ad-repair-suite.py'
       - name: Exact accepted Phase3AC source comparison
+        if: always()
         env:
           PHP_BIN: /usr/bin/php8.3
           MARIADBD_BIN: /usr/sbin/mariadbd
@@ -88,6 +104,7 @@ jobs:
           TZ: UTC
         run: python3 -B tests/phase3ad-command.py exact-accepted-phase3ac-source-comparison bash -e -c 'python3 -B -u tests/phase3ad-repair-suite.py'
       - name: Actual corrected HTTP, hosted Chromium and persisted OTP browser reset
+        if: always()
         env:
           PHP_BIN: /usr/bin/php8.3
           PHP_FPM_BIN: /usr/sbin/php-fpm8.3
@@ -98,6 +115,7 @@ jobs:
           TZ: UTC
         run: python3 -B tests/phase3ad-command.py actual-corrected-http-hosted-chromium-and-persisted-otp-browser-reset bash -e -c 'python3 -B -u tests/phase3ad-repair-http.py'
       - name: Actual corrected native clocks, sessions, failures and legacy rehearsal
+        if: always()
         env:
           PHP_BIN: /usr/bin/php8.3
           PHP_FPM_BIN: /usr/sbin/php-fpm8.3
@@ -107,6 +125,7 @@ jobs:
           TZ: UTC
         run: python3 -B tests/phase3ad-command.py actual-corrected-native-clocks-sessions-failures-and-legacy-rehearsal bash -e -c 'python3 -B -u tests/phase3ac-security.py'
       - name: Exact accepted Phase3Y comparison
+        if: always()
         env:
           PHP_BIN: /usr/bin/php8.3
           MARIADBD_BIN: /usr/sbin/mariadbd
@@ -117,6 +136,7 @@ jobs:
           TZ: UTC
         run: python3 -B tests/phase3ad-command.py exact-accepted-phase3y-comparison bash -e -c 'python3 -B -u tests/phase3ad-repair-suite.py'
       - name: Exact accepted Phase3Z comparison
+        if: always()
         env:
           PHP_BIN: /usr/bin/php8.3
           MARIADBD_BIN: /usr/sbin/mariadbd
@@ -127,6 +147,7 @@ jobs:
           TZ: UTC
         run: python3 -B tests/phase3ad-command.py exact-accepted-phase3z-comparison bash -e -c 'python3 -B -u tests/phase3ad-repair-suite.py'
       - name: Frozen original clock, transition and double-consumption controls
+        if: always()
         env:
           PHP_BIN: /usr/bin/php8.3
           PHP_FPM_BIN: /usr/sbin/php-fpm8.3
@@ -143,8 +164,10 @@ jobs:
           PEER_THREADS_STATIC_EVIDENCE: phase3ad-raw/static.json
         run: python3 -B tests/phase3ad-command.py exact-base-static-comparison bash -e -c 'python3 -B -u tests/peer-threads-static.py'
       - name: Recompute actual security acceptance from raw records
+        if: always()
         run: python3 -B tests/phase3ad-command.py recompute-actual-security-acceptance-from-raw-records bash -e -c 'python3 -B tests/phase3ac-report.py phase3ad-raw'
       - name: Four-migration compatibility and recovery rehearsal
+        if: always()
         env:
           PHP_BIN: /usr/bin/php8.3
           MARIADBD_BIN: /usr/sbin/mariadbd
@@ -178,16 +201,6 @@ jobs:
       - name: Recompute integration readiness and preserve blockers
         if: always()
         run: python3 -B tests/phase3ad-report.py phase3ad-raw
-      - name: Installed candidate browser upload and cold backup restore
-        if: always()
-        env:
-          PHP_BIN: /usr/bin/php8.3
-          PHP_FPM_BIN: /usr/sbin/php-fpm8.3
-          MARIADBD_BIN: /usr/sbin/mariadbd
-          PHASE3AF_REQUIRE_BROWSER: '1'
-          PHASE3AF_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
-          PHASE3AF_STATE_DIR: ${{ runner.temp }}/phase3af-owned-installed
-        run: python3 -B tests/phase3ad-command.py phase3af-installed-candidate python3 -B tests/phase3af-installed.py
       - name: Stop certification on essential candidate failure
         if: always()
         run: python3 -B tests/phase3af-report.py phase3ad-raw
