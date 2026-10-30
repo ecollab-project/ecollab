@@ -15,6 +15,7 @@ def main():
  out={'status':'FAIL','defense_certification':'BLOCKED','accepted_application':A,'head':h.git('rev-parse','HEAD'),'tree':h.git('rev-parse','HEAD^{tree}'),'intended_head':os.environ.get('PHASE3AF_EXPECTED_HEAD','UNPUBLISHED'),'working_diff':h.git('diff','HEAD'),'scope':'owned installed source+dependencies,FPM,MariaDB,uploads,on-disk state,cold backup/restore;not public deployment','cases':[],'commands':[]}
  o=None
  try:
+  if os.environ.get('PHASE3AF_EXPECTED_HEAD'):h.check(out['head']==out['intended_head'],'installed source must equal intended candidate commit')
   archive=state/'source.tar';cmd=['git','archive','--format=tar','--output='+str(archive),'HEAD'];r=subprocess.run(cmd,cwd=R,capture_output=True,text=True);out['commands'].append({'command':cmd,'exit_code':r.returncode});h.check(r.returncode==0,'source archive')
   with tarfile.open(archive)as t:
    for m in t.getmembers():h.check((app/m.name).resolve().is_relative_to(app),'unsafe source archive path');h.check(not m.issym()and not m.islnk(),'unexpected archive link')
@@ -23,6 +24,7 @@ def main():
   for p in (R/'tests').glob('phase3af-*'):
    if p.is_file()and not(app/'tests'/p.name).exists():shutil.copy2(p,app/'tests'/p.name);overlays.append({'path':'tests/'+p.name,'sha256':sha(p),'scope':'test harness only,prepublication local run'})
   out['test_harness_overlays']=overlays
+  if os.environ.get('PHASE3AF_REQUIRE_BROWSER')=='1':h.check(not overlays,'hosted final candidate must have no file substitutions')
   shutil.copytree(R/'vendor',app/'vendor')
   cmd=[os.environ.get('PHP_BIN','php8.3'),os.environ.get('COMPOSER_BIN','composer'),'dump-autoload','--no-interaction'];r=subprocess.run(cmd,cwd=app,capture_output=True,text=True,timeout=120);out['commands'].append({'command':cmd,'exit_code':r.returncode});h.check(r.returncode==0,'installed dependency autoload')
   names=h.git('ls-tree','-r','--name-only',A).splitlines();runtime_hashes={p:sha(app/p)for p in names if runtime(p)}

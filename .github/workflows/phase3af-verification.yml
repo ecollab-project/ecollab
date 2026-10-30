@@ -18,7 +18,9 @@ jobs:
       PHASE3AD_OWNED_FRESH_IDENTITY: '1'
     steps:
       - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Install disposable MariaDB and PHP dependencies
         run: |
           mkdir -p "$RUNNER_TEMP/perf-apt/empty" "$RUNNER_TEMP/perf-apt/lists/partial"
