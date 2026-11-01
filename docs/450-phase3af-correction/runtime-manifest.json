@@ -2,7 +2,7 @@
   "base": "28132097544b555f71fc6b6023fd3dc2ef0f6616",
   "scope": "Owner authorized isolated A/B/C/D Phase3AF corrections",
   "hashes": {
-    "API/attachments/download.php": "60f355f6e710a447cbb1efdd59ddc2983dd1f07313159e51490c24caacb6bd61",
+    "API/attachments/download.php": "158351afbad000d25a683167c3c1c71105128822d863dc002096fe27ade64d66",
     "API/chat/edit-message.php": "a44fe441bae0f51b698648f4d294b709b9344ea2ccbf84c79c15d2ee37ac9cb4",
     "API/chat/resumable-upload.php": "d071186845263c7645a4061a38c346544036966764e183c45036b10dc79a66e7",
     "API/chat/upload-file.php": "e1b5fc10ae16ede434ff558e9907b9776e68305b78de3d858aa7790fdf50e092",

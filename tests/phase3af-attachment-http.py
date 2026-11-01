@@ -16,7 +16,7 @@ def main():
    if c and c.token:hd['X-CSRF-Token']=c.token
    port=nginxport if nginxport and path.startswith('/uploads/')else o.port
    if port==nginxport:hd['Host']='127.0.0.1:'+str(o.port) # one public origin, two owned listeners
-   conn=http.client.HTTPConnection('127.0.0.1',port,timeout=30);conn.request(method,path,data,hd);r=conn.getresponse();got=(r.status,r.read(),dict(r.getheaders()));conn.close();out['attachment_requests'].append({'method':method,'path':path,'actor':c.uid if c else 0,'listener':'nginx'if port==nginxport else'gateway','status':got[0],'bytes':len(got[1]),'sha256':hashlib.sha256(got[1]).hexdigest(),'cache_control':got[2].get('Cache-Control'),'content_type':got[2].get('Content-Type')});return got
+   conn=http.client.HTTPConnection('127.0.0.1',port,timeout=30);conn.request(method,path,data,hd);r=conn.getresponse();got=(r.status,r.read(),dict(r.getheaders()));conn.close();out['attachment_requests'].append({'method':method,'path':path,'actor':c.uid if c else 0,'listener':'nginx'if port==nginxport else'gateway','status':got[0],'bytes':len(got[1]),'sha256':hashlib.sha256(got[1]).hexdigest(),'cache_control':got[2].get('Cache-Control'),'content_type':got[2].get('Content-Type'),'content_disposition':got[2].get('Content-Disposition')});return got
   def upload(c,route,fields,content=b'Owned attachment sentinel\n',field='file',name='owned.txt'):
    b='af-'+uuid.uuid4().hex;body=b''
    for k,v in fields.items():body+=('--'+b+'\r\nContent-Disposition: form-data; name="'+k+'"\r\n\r\n'+str(v)+'\r\n').encode()
@@ -46,7 +46,7 @@ def main():
    st,readme=upload(a,'/API/chat/upload-file.php',{'target':cid},name='README');check('extensionless text upload',st==200 and not readme['file_path'].endswith('.'))
    st,up=upload(a,'/API/chat/upload-file.php',{'target':cid});check('legacy upload endpoint writes private bytes',st==200 and not(R/up['file_path']).exists());path='/'+up['file_path']
    check('orphan denied',request(a,path)[0]==404);check('cross uploader denied',send(b,cid,up)['status']==403);check('wrong destination denied',send(a,private,up)['status']==403)
-   sent=send(a,cid,up);check('uploader binds attachment',sent['status']==201);mid=sent['json']['message']['id'];check('member byte equality',request(b,path)[:2]==(200,b'Owned attachment sentinel\n'));check('anonymous denied',request(None,path)[0]in[401,403]);check('outsider denied',request(x,path)[0]==404)
+   sent=send(a,cid,up);check('uploader binds attachment',sent['status']==201);mid=sent['json']['message']['id'];download=request(b,path);check('member byte equality',download[:2]==(200,b'Owned attachment sentinel\n'));disposition=download[2].get('Content-Disposition','');check('download preserves original client filename','filename='not in disposition or 'filename=\"owned.txt\"'in disposition);check('anonymous denied',request(None,path)[0]in[401,403]);check('outsider denied',request(x,path)[0]==404)
    check('direct API does not bypass authorization',request(x,'/API/attachments/download.php?path='+up['file_path'])[0]==404)
    sql('DELETE FROM server_members WHERE server_id='+str(fixture['server'])+' AND user_id='+str(b.uid));check('revoked membership denied',request(b,path)[0]==404)
    sql('UPDATE messages SET is_deleted=1 WHERE id='+str(mid));check('deleted message denied',request(a,path)[0]==404)
