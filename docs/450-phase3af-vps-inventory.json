@@ -1,0 +1,225 @@
+{
+  "phase": "3AF",
+  "status": "BLOCKED",
+  "host_alias": "VPS-A",
+  "source": "Authenticated Hostinger VPS API",
+  "authorization": "read-only metadata inventory; stop on existing workloads or uncertain isolation",
+  "server_inspection_stopped": true,
+  "stop_reason": "Five running Docker projects / seven containers confirm an existing shared workload host; production status and isolation remain unknown.",
+  "provider_metadata": {
+    "state": "running",
+    "plan": "KVM 2",
+    "cpus": 2,
+    "memory_allocation_raw": 8192,
+    "disk_allocation_raw": 102400,
+    "allocation_units": "Not declared in the returned API schema or response; raw values retained without converting units.",
+    "os_template": "Ubuntu 24.04 LTS",
+    "actual_guest_os_verified": false,
+    "provider_firewall_group_attached": false
+  },
+  "metrics": {
+    "requested_window": {
+      "from": "2026-11-01T10:54:31.542Z",
+      "to": "2026-11-01T11:09:31.542Z"
+    },
+    "cpu_usage": null,
+    "ram_usage": null,
+    "disk_space": null,
+    "uptime": null,
+    "status": "NOT RETURNED — all four approved metric fields were null; no utilization/free-space/host-uptime claims"
+  },
+  "projects": [
+    {
+      "name": "centrifugo",
+      "state": "running",
+      "status": "running(1)",
+      "compose_path_redacted": "/home/<owner>/ecollab-inspect/deploy/centrifugo/compose.yaml",
+      "containers": [
+        {
+          "name": "ecollab-centrifugo",
+          "image": "centrifugo/centrifugo:v6.9.6",
+          "state": "running",
+          "status": "Up 10 days",
+          "health": "not reported",
+          "ports": [
+            {
+              "type": "published",
+              "protocol": "tcp",
+              "host_ip": "127.0.0.1",
+              "host_port": 8001,
+              "container_port": 8000,
+              "host_port_start": null,
+              "host_port_end": null,
+              "container_port_start": null,
+              "container_port_end": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "collabora",
+      "state": "running",
+      "status": "running(1)",
+      "compose_path_redacted": "/home/<owner>/ecollab-inspect/deploy/collabora/compose.yaml",
+      "containers": [
+        {
+          "name": "collabora-collabora-1",
+          "image": "collabora/code@sha256:4e983196eb9878f339cc506c38c21f1cc3473bca3d6de883c5de08f9c0cc3a6c",
+          "state": "running",
+          "status": "Up 10 days (healthy)",
+          "health": "healthy",
+          "ports": [
+            {
+              "type": "published",
+              "protocol": "tcp",
+              "host_ip": "127.0.0.1",
+              "host_port": 9980,
+              "container_port": 9980,
+              "host_port_start": null,
+              "host_port_end": null,
+              "container_port_start": null,
+              "container_port_end": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ecollab-code-lab",
+      "state": "running",
+      "status": "running(2)",
+      "compose_path_redacted": "/home/<owner>/ecollab-inspect/deploy/code-lab/piston/compose.yml",
+      "containers": [
+        {
+          "name": "ecollab-code-lab-adapter-1",
+          "image": "python:3.12-slim-bookworm",
+          "state": "running",
+          "status": "Up 10 days",
+          "health": "not reported",
+          "ports": [
+            {
+              "type": "published",
+              "protocol": "tcp",
+              "host_ip": "127.0.0.1",
+              "host_port": 2358,
+              "container_port": 2358,
+              "host_port_start": null,
+              "host_port_end": null,
+              "container_port_start": null,
+              "container_port_end": null
+            }
+          ]
+        },
+        {
+          "name": "ecollab-code-lab-piston-1",
+          "image": "ghcr.io/engineer-man/piston@sha256:2f66b7456189c4d713aa986d98eccd0b6ee16d26c7ec5f21b30e942756fd127a",
+          "state": "running",
+          "status": "Up 10 days",
+          "health": "not reported",
+          "ports": [
+            {
+              "type": "exposed",
+              "protocol": "tcp",
+              "host_ip": null,
+              "host_port": null,
+              "container_port": 2000,
+              "host_port_start": null,
+              "host_port_end": null,
+              "container_port_start": null,
+              "container_port_end": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ecollab-similarity",
+      "state": "running",
+      "status": "running(1)",
+      "compose_path_redacted": "/home/<owner>/ecollab-inspect/deploy/code-lab/similarity/compose.yml",
+      "containers": [
+        {
+          "name": "ecollab-similarity-comparison-1",
+          "image": "ecollab-similarity-comparison",
+          "state": "running",
+          "status": "Up 10 days",
+          "health": "not reported",
+          "ports": [
+            {
+              "type": "published",
+              "protocol": "tcp",
+              "host_ip": "127.0.0.1",
+              "host_port": 2359,
+              "container_port": 2359,
+              "host_port_start": null,
+              "host_port_end": null,
+              "container_port_start": null,
+              "container_port_end": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "livekit",
+      "state": "running",
+      "status": "running(2)",
+      "compose_path_redacted": "/opt/livekit/docker-compose.yml",
+      "containers": [
+        {
+          "name": "ecollab-livekit",
+          "image": "livekit/livekit-server:latest",
+          "state": "running",
+          "status": "Up 10 days",
+          "health": "not reported",
+          "ports": []
+        },
+        {
+          "name": "ecollab-livekit-redis",
+          "image": "redis:7-alpine",
+          "state": "running",
+          "status": "Up 10 days",
+          "health": "not reported",
+          "ports": []
+        }
+      ]
+    }
+  ],
+  "not_verified": [
+    "actual guest OS/kernel",
+    "host PHP-FPM/nginx/MariaDB binary versions and service states",
+    "free disk capacity",
+    "boot ID hash and host uptime",
+    "complete host listening socket list",
+    "service/path ownership and permissions",
+    "presence/absence of real student data",
+    "production classification",
+    "availability of proposed paths/user/service names/ports"
+  ],
+  "prohibited_actions_performed": [],
+  "redaction": "Provider IDs, subscription ID, public IPs, hostname, container IDs, owner username and command fields omitted; no credentials/env/private data requested.",
+  "operations": [
+    {
+      "operation": "vps_virtual-machines_list",
+      "read_only": true,
+      "outcome": "PASS — one server returned"
+    },
+    {
+      "operation": "vps_virtual-machines_metrics",
+      "read_only": true,
+      "outcome": "API response received; selected fields null; metrics unavailable"
+    },
+    {
+      "operation": "vps_docker_list",
+      "read_only": true,
+      "outcome": "PASS — existing workloads observed; stop condition triggered"
+    }
+  ],
+  "candidate": {
+    "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+    "tree": "a8502d5da68184d3aa2504231e8083ad88df156f",
+    "pr": "https://github.com/ecollab-project/ecollab/pull/105"
+  },
+  "phase3ag": "BLOCKED"
+}
