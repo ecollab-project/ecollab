@@ -475,7 +475,10 @@ function handleMessageEdited(msg) {
   if (!el) return;
   el.querySelectorAll('.edited-tag').forEach(t => t.remove());
   el.closest('[data-msg-id]').dataset.rawContent = msg.content;
-  if (window.EcollabComposer) el.innerHTML = window.EcollabComposer.render(msg.content);
+  if ((msg.content_type || el.closest('[data-msg-id]').dataset.contentType) === 'code') {
+    el.innerHTML = '<pre class="channel-code"><code></code></pre>';
+    el.querySelector('code').textContent = msg.content;
+  } else if (window.EcollabComposer) el.innerHTML = window.EcollabComposer.render(msg.content);
   else if (el.firstChild) el.firstChild.textContent = msg.content;
   const tag = document.createElement('span');
   tag.className = 'edited-tag';

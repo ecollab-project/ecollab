@@ -305,8 +305,8 @@ class MessageService
         if ((int)$msg['sender_id'] !== $userId && !in_array($userRole, ['admin', 'moderator', 'super_admin'], true)) {
             throw new RuntimeException('Forbidden', 403);
         }
-        $content = trim($newContent);
-        if ($content === '') {
+        $content = ($msg['content_type'] ?? '') === 'code' ? $newContent : trim($newContent);
+        if (trim($content) === '') {
             throw new InvalidArgumentException('Content cannot be empty', 400);
         }
         $upd = $this->db->prepare("UPDATE messages SET content=:c, is_edited=1, updated_at=NOW() WHERE id=:id");

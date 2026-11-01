@@ -24,6 +24,8 @@ def main():
    st,raw,_=request(c,route,'POST',body,{'Content-Type':'multipart/form-data; boundary='+b});return st,json.loads(raw)
   def send(c,cid,up):return c.req('/API/chat/send-message.php','POST',{'channel_id':cid,'content_type':'file','content':'Owned attachment','attachment_path':up['file_path'],'attachment_name':'forged.txt','attachment_size':999,'attachment_mime':'text/html'})
   try:
+   out['intended_head']=os.environ.get('PHASE3AF_EXPECTED_HEAD','UNPUBLISHED')
+   if out['intended_head']!='UNPUBLISHED':check('exact intended head',out['head']==out['intended_head'])
    o.start()
    if shutil.which('nginx'):
     sock=socket.socket();sock.bind(('127.0.0.1',0));nginxport=sock.getsockname()[1];sock.close()
@@ -38,6 +40,10 @@ def main():
    elif os.environ.get('PHASE3AF_REQUIRE_NGINX')=='1':raise RuntimeError('Required nginx unavailable')
    actors=[o.registered()for _ in range(4)];a,b,f,x=[v[0]for v in actors];fixture=php('phase3ad-fixture.php',{'users':[v.uid for v in[a,b,f,x]]});cid=fixture['channels']['general'];private=fixture['channels']['private']
    code="  const text = '<img src=x onerror=alert(1)>';\n    console.log(text);\n";r=a.req('/API/chat/send-message.php','POST',{'channel_id':cid,'content_type':'code','content':code});check('code whitespace preserved',r['status']==201 and r['json']['message']['content']==code)
+   codeid=r['json']['message']['id'];edited="    const updated = '<b>literal</b>';\n"
+   er=a.req('/API/chat/edit-message.php','POST',{'message_id':codeid,'content':edited});check('code edit preserves whitespace',er['status']==200 and er['json']['message']['content']==edited)
+   denied=x.req('/API/chat/edit-message.php','POST',{'message_id':codeid,'content':'denied'});check('code edit outsider denied',denied['status']==403)
+   st,readme=upload(a,'/API/chat/upload-file.php',{'target':cid},name='README');check('extensionless text upload',st==200 and not readme['file_path'].endswith('.'))
    st,up=upload(a,'/API/chat/upload-file.php',{'target':cid});check('legacy upload endpoint writes private bytes',st==200 and not(R/up['file_path']).exists());path='/'+up['file_path']
    check('orphan denied',request(a,path)[0]==404);check('cross uploader denied',send(b,cid,up)['status']==403);check('wrong destination denied',send(a,private,up)['status']==403)
    sent=send(a,cid,up);check('uploader binds attachment',sent['status']==201);mid=sent['json']['message']['id'];check('member byte equality',request(b,path)[:2]==(200,b'Owned attachment sentinel\n'));check('anonymous denied',request(None,path)[0]in[401,403]);check('outsider denied',request(x,path)[0]==404)
@@ -50,7 +56,18 @@ def main():
    png=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=');st,im=upload(a,'/API/threads/upload-image.php',{'scope':'channel','channel_id':private},png,'image','owned.png');check('thread image upload',st==200);t=a.req('/API/threads/index.php','POST',{'action':'create','title':'Owned protected image','body':'Owned','scope':'channel','channel_id':private,'server_id':fixture['server'],'attachments':[im]});check('thread create',t['status']==201);check('thread image bytes',request(a,im['path'])[:2]==(200,png));check('thread outsider denied',request(x,im['path'])[0]==404)
    sql("INSERT INTO server_members(server_id,user_id,server_role) VALUES("+str(fixture['server'])+','+str(b.uid)+",'moderator')");check('server moderator denied private thread image',request(b,im['path'])[0]==404)
    sql('UPDATE threads SET is_deleted=1 WHERE id='+str(t['json']['thread_id']));check('deleted thread image denied',request(a,im['path'])[0]==404)
+   sql("UPDATE dm_messages SET is_deleted=1 WHERE attachment_path='"+dm['file_path']+"'");check('deleted DM attachment denied',request(b,'/'+dm['file_path'])[0]==404)
+   group=a.req('/API/dm/groups.php?action=create','POST',{'member_ids':[b.uid,f.uid],'name':'Owned protected group'});check('group create',group['status']==200);gid=group['json']['group_id']
+   st,gu=upload(a,'/API/dm/upload-file.php',{'kind':'group','target':gid});check('group private upload',st==200)
+   gs=a.req('/API/dm/group-message.php','POST',{'group_id':gid,'body':'Owned group attachment','attachment_path':gu['file_path']});check('group attachment bind',gs['status']==200)
+   check('group participant reads',request(b,'/'+gu['file_path'])[0]==200);check('group outsider denied',request(x,'/'+gu['file_path'])[0]==404)
+   sql('DELETE FROM dm_group_members WHERE group_id='+str(gid)+' AND user_id='+str(b.uid));check('revoked group member denied',request(b,'/'+gu['file_path'])[0]==404)
+   replythread=a.req('/API/threads/index.php','POST',{'action':'create','title':'Owned reply images','body':'Owned','scope':'channel','channel_id':private,'server_id':fixture['server']});rid=replythread['json']['thread_id']
+   st,ri=upload(a,'/API/threads/upload-image.php',{'thread_id':rid},png,'image','reply.png');check('reply image upload bound to thread',st==200)
+   reply=a.req('/API/threads/index.php','POST',{'action':'reply','thread_id':rid,'body':'Owned reply','attachments':[ri]});check('reply image bind',reply['status']==201)
+   check('reply image reads',request(a,ri['path'])[:2]==(200,png));sql('UPDATE thread_replies SET is_deleted=1 WHERE thread_id='+str(rid));check('deleted reply image denied',request(a,ri['path'])[0]==404)
    legacy='uploads/phase3af_'+uuid.uuid4().hex+'.txt';lf=R/legacy;lf.write_bytes(b'Owned legacy bytes');owned_files.append(lf);mid=a.req('/API/chat/send-message.php','POST',{'channel_id':cid,'content':'Owned legacy reference'})['json']['message']['id'];sql("INSERT INTO message_attachments(message_id,file_name,file_path,file_size,mime_type) VALUES("+str(mid)+",'legacy.txt','"+legacy+"',18,'text/plain')");check('legacy authorized byte equality',request(a,'/'+legacy)[:2]==(200,b'Owned legacy bytes'));check('legacy anonymous denied',request(None,'/'+legacy)[0]in[401,403]);check('legacy outsider denied',request(x,'/'+legacy)[0]==404)
+   check('legacy anonymous HEAD denied',request(None,'/'+legacy,'HEAD')[0]in[401,403]);check('legacy double slash denied',request(None,'/'+legacy.replace('uploads/','uploads//'))[0]in[401,403]);check('legacy encoded name denied',request(None,'/uploads/%70'+legacy.split('/')[-1][1:])[0]in[401,403])
    avatar=R/'uploads/avatars'/('phase3af_'+uuid.uuid4().hex+'.png');avatar.parent.mkdir(exist_ok=True);avatar.write_bytes(png);owned_files.append(avatar);check('public avatar preserved',request(None,'/'+str(avatar.relative_to(R)))[:2]==(200,png));out['status']='PASS'
   except Exception as e:out['error']=o.scrub_text(str(e));raise
   finally:
@@ -59,6 +76,6 @@ def main():
    if nginx:nginx.terminate();nginx.wait(timeout=10)
    for f in owned_files:f.unlink(missing_ok=True)
    out['requests']=o.records;out['migration']=getattr(o,'migration',{});out['controls']=o.controls
-   out['source_hashes']={str(p.relative_to(R)):hashlib.sha256(p.read_bytes()).hexdigest()for p in list((R/'services').glob('Attachment*.php'))+[R/'API/attachments/download.php',R/'services/MessageService.php']};o.stop();target.write_text(json.dumps(out,indent=2)+'\n')
+   out['source_hashes']={p:hashlib.sha256((R/p).read_bytes()).hexdigest()for p in json.loads((R/'docs/450-phase3af-correction/runtime-manifest.json').read_text())['hashes']};out['test_harness_sha256']=hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest();o.stop();target.write_text(json.dumps(out,indent=2)+'\n')
  print('PASS',len(out['cases']),'native attachment/code checks')
 if __name__=='__main__':main()

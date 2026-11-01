@@ -52,6 +52,10 @@ def main():
   conn=http.client.HTTPConnection('127.0.0.1',o.port,timeout=20);conn.request('POST','/API/chat/upload-file.php',body,{'Content-Type':'multipart/form-data; boundary='+boundary,'Cookie':c.cookie,'X-CSRF-Token':c.token});res=conn.getresponse();raw=res.read();status=res.status;conn.close();up=json.loads(raw)
   h.check(status==200 and up.get('success'),'native FPM multipart upload');sent=c.req('/API/chat/send-message.php','POST',{'channel_id':fixture['channels']['general'],'content':'Owned restored attachment','attachment_path':up['file_path']});h.check(sent['status']==201,'bind upload before download');conn=http.client.HTTPConnection('127.0.0.1',o.port,timeout=20);conn.request('GET','/'+up['file_path'],headers={'Cookie':c.cookie});res=conn.getresponse();got=res.read();ds=res.status;conn.close();h.check(ds==200 and got==content,'complete owned byte download')
   out['composed_upload_download']={'status':'PASS','upload_status':status,'download_status':ds,'bytes':len(content),'sha256':hashlib.sha256(got).hexdigest(),'scope':'actual FPM upload, message binding and authenticated download'}
+  # Drain HTTP writers and stop PHP before the database/file snapshots.
+  o.gateway.shutdown();o.gateway.server_close();o.gateway=None
+  o.fpm.terminate();o.fpm.wait(timeout=20);o.fpm=None
+  out['backup_quiescence']={'http_accepting':False,'fpm_running':False,'database_running_for_logical_dump':True}
   before=php('phase3af-control.php',{'action':'fingerprint'})
   # Configuration is limited to the explicit owned fixture values;never dump inherited process env.
   keys=['APP_ENV','APP_DEBUG','APP_URL','APP_KEY','CLASSROOM_DSN','PHASE3Y_PRIVATE','BREVO_API_URL','BREVO_API_KEY','BREVO_SENDER_EMAIL','SESSION_SECURE','SESSION_LIFETIME','SESSION_SAMESITE','OTP_EXPIRY','OTP_LENGTH','PEER_ML_ENABLED','CENTRIFUGO_ENABLED','PHASE3AD_OWNED_FRESH_IDENTITY','CHAT_RESUMABLE_UPLOADS','CHAT_ATTACHMENT_STORAGE']

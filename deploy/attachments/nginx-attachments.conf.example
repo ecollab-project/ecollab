@@ -1,6 +1,6 @@
 # Include BEFORE generic/static regex locations inside the isolated server block.
 # No ^~ /uploads/ static location may bypass this authorization route.
-location ~ ^/uploads/([^/]+|threads/[^/]+)$ {
+location ~ ^/uploads/([^/]+|threads/.+)$ {
     set $attachment_path uploads/$1;
     include fastcgi_params;
     fastcgi_param SCRIPT_FILENAME $document_root/API/attachments/download.php;

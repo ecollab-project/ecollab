@@ -15,6 +15,10 @@ function _renderMsgContent(text) {
   });
 }
 
+function _renderMessageBody(text, type) {
+  return type === 'code' ? '<pre class="channel-code"><code>' + escHtml(text) + '</code></pre>' : _renderMsgContent(text);
+}
+
 function escHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;')
@@ -540,6 +544,7 @@ function renderMessages(messages, prepend = false, preserveLive = false) {
 function buildMessageElement(msg) {
   const div = document.createElement('div');
   div.dataset.rawContent = msg.content || '';
+  div.dataset.contentType = msg.content_type || 'text';
   div.className = 'message-group' + (msg.is_pinned ? ' pinned-msg-highlight' : '');
   div.dataset.msgId = msg.id;
   div.dataset.senderId = msg.sender_id;
@@ -630,7 +635,7 @@ function buildMessageElement(msg) {
         <span class="msg-timestamp">${time}</span>
       </div>
       ${replyHtml}
-      ${msg.content_type === 'poll' && msg.poll ? buildPollWidget(msg) : `<div class="msg-text">${msg.content_type === 'code' ? '<pre class="channel-code"><code>' + escHtml(msg.content || '') + '</code></pre>' : _renderMsgContent(msg.content || '')}${edited}</div>`}
+      ${msg.content_type === 'poll' && msg.poll ? buildPollWidget(msg) : `<div class="msg-text">${_renderMessageBody(msg.content || '', msg.content_type)}${edited}</div>`}
       ${attachHtml}
       ${reactionsHtml}
     </div>
@@ -1116,22 +1121,32 @@ function startEditMsg(msgGroup, originalText, msgId) {
   const textEl = msgGroup.querySelector('.msg-text');
   if (!textEl) return;
   originalText = msgGroup.dataset.rawContent ?? originalText;
+  const isCode = msgGroup.dataset.contentType === 'code';
+  let codeEditor = null;
   textEl.textContent = originalText;
-  textEl.contentEditable = 'true';
+  textEl.contentEditable = isCode ? 'false' : 'true';
   textEl.style.outline = '1px solid var(--accent-purple)';
   textEl.style.borderRadius = '4px';
   textEl.style.padding = '2px 4px';
-  textEl.focus();
-  const range = document.createRange();
-  range.selectNodeContents(textEl);
-  range.collapse(false);
-  window.getSelection()?.removeAllRanges();
-  window.getSelection()?.addRange(range);
+  if (isCode) {
+    codeEditor = document.createElement('textarea');
+    codeEditor.className = 'channel-code-edit';
+    codeEditor.value = originalText;
+    codeEditor.rows = Math.min(14, Math.max(4, originalText.split('\n').length));
+    codeEditor.style.cssText = 'width:100%;box-sizing:border-box;font-family:monospace;background:var(--bg-secondary);color:var(--text-primary);';
+    textEl.replaceChildren(codeEditor);codeEditor.focus();
+    codeEditor.setSelectionRange(originalText.length, originalText.length);
+  } else {
+    textEl.focus();
+    const range = document.createRange();range.selectNodeContents(textEl);range.collapse(false);
+    window.getSelection()?.removeAllRanges();window.getSelection()?.addRange(range);
+  }
 
   const hint = document.createElement('div');
   hint.id = '_editHint';
   hint.style.cssText = 'font-size:11px;color:var(--text-muted);margin-top:4px;';
   hint.innerHTML = '<span role="button" tabindex="0" style="color:var(--accent-green);cursor:pointer;">✓ Save</span>  <span role="button" tabindex="0" style="cursor:pointer;">✕ Cancel</span>  <span style="color:var(--text-muted);">· or Enter / Esc</span>';
+  if (isCode) hint.lastElementChild.textContent = '· or Ctrl+Enter / Esc';
   const saveControl = hint.querySelector('span');
   const cancelControl = hint.querySelector('span:nth-child(2)');
   saveControl.onclick = () => saveEditMsg(saveControl, msgId);
@@ -1139,8 +1154,8 @@ function startEditMsg(msgGroup, originalText, msgId) {
   for (const control of [saveControl, cancelControl]) control.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); control.click(); } };
   textEl.parentNode.insertBefore(hint, textEl.nextSibling);
 
-  textEl.onkeydown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveEditMsg(hint.querySelector('span'), msgId); }
+  (codeEditor || textEl).onkeydown = (e) => {
+    if (e.key === 'Enter' && (isCode ? e.ctrlKey || e.metaKey : !e.shiftKey)) { e.preventDefault(); saveEditMsg(hint.querySelector('span'), msgId); }
     if (e.key === 'Escape') cancelEditMsg(hint.querySelector('span:nth-child(2)'), originalText);
   };
 }
@@ -1152,7 +1167,8 @@ async function saveEditMsg(el, msgId) {
   const textEl = msgContent.querySelector('.msg-text');
   if (!textEl) return;
 
-  const newContent = textEl.textContent?.trim();
+  const type = textEl.closest('[data-msg-id]')?.dataset.contentType;
+  const newContent = type === 'code' ? textEl.querySelector('textarea')?.value ?? textEl.textContent : textEl.textContent?.trim();
   textEl.contentEditable = 'false';
   textEl.style.outline = '';
   textEl.style.padding = '';
@@ -1173,7 +1189,7 @@ async function saveEditMsg(el, msgId) {
     });
     const savedContent = updated?.message?.content ?? newContent;
     textEl.closest('[data-msg-id]').dataset.rawContent = savedContent;
-    textEl.innerHTML = _renderMsgContent(savedContent);
+    textEl.innerHTML = _renderMessageBody(savedContent, type);
     const editedTag = document.createElement('span');
     editedTag.className = 'edited-tag';
     editedTag.textContent = '(edited)';
@@ -1197,7 +1213,7 @@ function cancelEditMsg(el, original) {
     textEl.contentEditable = 'false';
     textEl.style.outline = '';
     textEl.style.padding = '';
-    textEl.innerHTML = _renderMsgContent(original);
+    textEl.innerHTML = _renderMessageBody(original, textEl.closest('[data-msg-id]')?.dataset.contentType);
   }
   hint.remove();
 }

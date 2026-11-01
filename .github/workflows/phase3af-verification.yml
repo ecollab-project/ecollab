@@ -14,6 +14,7 @@ jobs:
     timeout-minutes: 50
     env:
       PHASE3AF_CORRECTION: '1'
+      PHASE3AF_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
       PHASE3AD_REPAIR: '1'
       PHASE3AD_IDENTITY: '1'
       PHASE3AD_OWNED_FRESH_IDENTITY: '1'
@@ -53,6 +54,7 @@ jobs:
         run: |
           node tests/phase3af-code-editor.cjs
           node tests/phase3af-code-rendering.cjs
+          node tests/phase3af-code-edit.cjs
           node tests/phase3af-attachment-preview.cjs
           php8.3 tests/phase3af-attachment-access.php
           php8.3 tests/phase3af-attachment-store.php

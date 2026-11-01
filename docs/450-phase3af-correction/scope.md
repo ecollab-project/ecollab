@@ -29,3 +29,11 @@ Fresh local controls: editor DOM, literal rendering, 17 SQLite authorization cas
 A fresh reviewer identified a private-thread moderator mismatch and a tuple-key environment typo in the backup harness. Both were corrected. That reviewer stopped at a usage limit, so the review was incomplete and does not provide independent acceptance.
 
 Rollback for the isolated candidate: stop the owned services, restore the complete source/configuration/database/legacy uploads/private attachment receipt+byte backup into an empty local installation, rebind only owned filesystem paths, and verify fresh login plus authenticated download. Never roll back only application files while leaving a mismatched storage layout. No production rollback or transition is authorized.
+
+## Final review corrections under validation
+
+The bounded native-code journey also includes the existing edit API and realtime consumer: API/chat/edit-message.php and assets/js/chat/socket-core.js. Code edit/cancel/save/realtime rendering preserves literal code and code-only whitespace; normal text trimming remains. The manifest now pins 21 runtime paths. Extensionless text upload names are supported. New orphan image previews use local object URLs and release them on removal.
+
+Fresh expanded native local coverage passes 51 cases, including group attachments, revoked group membership, deleted DM/reply files, code editing and extensionless text. Hosted Nginx previously passed the pre-expansion candidate a9d097b7b2c0800cbf56a0078192a47a90086c72; final-head validation is still required. A hosted origin-control artifact at 2f0caa8fc236783a97b0cdb464e1caa328bbf3f3 failed private-thread image delivery because the two fixture listeners used different local origins. ZIP SHA256:55d1071f053816a7d30df140f901d04296e3d18f7d718a7cfa14340c66c480b6. Its raw record is preserved as nginx-origin-before.json.gz. The corrected test holds one public Host while using separate owned listeners.
+
+The backup harness now drains HTTP and stops FPM before database/file snapshots. Private receipts and bytes are included and independently hash-checked after restore. Existing Apache routing execution remains unverified; the nominated isolated candidate uses Nginx and must pass its actual scoped-rule gate. No production server routing is changed or certified.

@@ -1,4 +1,5 @@
 """Owned native FPM authentication journeys. No application overlays or external mail."""
+import posixpath
 import concurrent.futures,hashlib,http.client,http.cookies,http.server,importlib.util,json,mimetypes,os,pathlib,re,shutil,socket,subprocess,tempfile,threading,time,urllib.parse
 ROOT=pathlib.Path(__file__).resolve().parents[1];BASE='e4999821b16f8d8085a8cde6c5b08de2fc824ae5'
 spec=importlib.util.spec_from_file_location('owned_fcgi',ROOT/'tests/classroom-performance.py');native=importlib.util.module_from_spec(spec);spec.loader.exec_module(native)
@@ -137,8 +138,8 @@ class Owned:
    def do_DELETE(self):self.forward()
    def do_OPTIONS(self):self.forward()
    def forward(self):
-    route=urllib.parse.urlparse(self.path).path;query=urllib.parse.urlparse(self.path).query
-    if re.fullmatch(r'/uploads/(?:[^/]+|threads/[^/]+)',route):
+    route='/'+posixpath.normpath(urllib.parse.unquote(urllib.parse.urlparse(self.path).path)).lstrip('/');query=urllib.parse.urlparse(self.path).query
+    if re.fullmatch(r'/uploads/(?:[^/]+|threads/.+)',route):
      query=urllib.parse.urlencode({'path':route.lstrip('/')});route='/API/attachments/download.php'
     file=(ROOT/route.lstrip('/')).resolve()
     if not file.is_relative_to(ROOT)or not file.is_file()or not(route.startswith('/API/')or route.startswith('/assets/')or route.startswith('/uploads/')or route in ['/modules/auth/signup.php','/modules/auth/login.php','/modules/onboarding/server-discovery.php','/modules/chat/chat.php','/modules/student/dashboard.php','/modules/facilitator/dashboard.php','/modules/collaboration/server-coworkspaces.php']):self.send_error(404);return
