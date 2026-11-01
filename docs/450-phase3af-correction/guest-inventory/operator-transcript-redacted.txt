@@ -1,0 +1,225 @@
+
+
+<owner>@<host>:~/ecollab-piston-node24$ # Operating system and kernel
+cat /etc/os-release
+uname -r
+
+# Hardware and disk capacity
+nproc
+free -h
+df -hT /
+
+# Runtime versions
+php -v
+nginx -v
+mariadb --version
+
+# Existing service states
+systemctl is-active nginx php8.3-fpm mariadb docker
+
+# Listening ports and owning processes
+sudo ss -lntup
+
+# Firewall status (inspection only)
+sudo ufw status verbose
+sudo nft list tables
+
+doneecho "$p | NOT PRESENT"A' "$p"r/lib/ecollab-phase3af /etc/ecollab-phase3af /
+PRETTY_NAME="Ubuntu 24.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+VERSION="24.04.5 LTS (Noble Numbat)"
+VERSION_CODENAME=noble
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=noble
+LOGO=ubuntu-logo
+6.8.0-147-generic
+2
+               total        used        free      shared  buff/cache   available
+Mem:           7.8Gi       2.1Gi       1.8Gi       7.0Mi       4.1Gi       5.6Gi
+Swap:          2.0Gi        15Mi       2.0Gi
+Filesystem     Type  Size  Used Avail Use% Mounted on
+/dev/sda1      ext4   96G   28G   69G  29% /
+PHP 8.3.6 (cli) (built: Oct 19 2026 15:16:58) (NTS)
+Copyright (c) The PHP Group
+Zend Engine v4.3.6, Copyright (c) Zend Technologies
+    with Zend OPcache v8.3.6, Copyright (c), by Zend Technologies
+nginx version: nginx/1.24.0 (Ubuntu)
+mariadb  Ver 15.1 Distrib 10.11.14-MariaDB, for debian-linux-gnu (x86_64) using  EditLine wrapper
+active
+active
+active
+active
+[sudo prompt omitted; no password value present in supplied transcript]
+Netid State   Recv-Q  Send-Q            Local Address:Port    Peer Address:Port Process                                                                         
+udp   UNCONN  0       0                    172.16.0.1:7882         0.0.0.0:*     users:(("livekit-server",pid=590035,fd=14))                                    
+udp   UNCONN  0       0                    172.16.2.1:7882         0.0.0.0:*     users:(("livekit-server",pid=590035,fd=13))                                    
+udp   UNCONN  0       0                    172.16.1.1:7882         0.0.0.0:*     users:(("livekit-server",pid=590035,fd=12))                                    
+udp   UNCONN  0       0                    172.16.3.1:7882         0.0.0.0:*     users:(("livekit-server",pid=590035,fd=11))                                    
+udp   UNCONN  0       0                    172.16.4.1:7882         0.0.0.0:*     users:(("livekit-server",pid=590035,fd=10))                                    
+udp   UNCONN  0       0                 <public-ipv4>:7882         0.0.0.0:*     users:(("livekit-server",pid=590035,fd=8))                                     
+udp   UNCONN  0       0                    127.0.0.54:53           0.0.0.0:*     users:(("systemd-resolve",pid=505921,fd=16))                                   
+udp   UNCONN  0       0                 127.0.0.53%lo:53           0.0.0.0:*     users:(("systemd-resolve",pid=505921,fd=14))                                   
+udp   UNCONN  0       0                     127.0.0.1:1721         0.0.0.0:*     users:(("monarx-agent",pid=723,fd=10))                                         
+udp   UNCONN  0       0                             *:3478               *:*     users:(("livekit-server",pid=590035,fd=16))                                    
+udp   UNCONN  0       0        [<public-ipv6>]:7882            [::]:*     users:(("livekit-server",pid=590035,fd=9))                                     
+tcp   LISTEN  0       4096                  127.0.0.1:11434        0.0.0.0:*     users:(("ollama",pid=724,fd=4))                                                
+tcp   LISTEN  0       80                    127.0.0.1:3306         0.0.0.0:*     users:(("mariadbd",pid=670126,fd=29))                                          
+tcp   LISTEN  0       4096                  127.0.0.1:8001         0.0.0.0:*     users:(("docker-proxy",pid=590254,fd=8))                                       
+tcp   LISTEN  0       5                     127.0.0.1:8091         0.0.0.0:*     users:(("python",pid=670007,fd=3))                                             
+tcp   LISTEN  0       4096                  127.0.0.1:8081         0.0.0.0:*     users:(("docker-proxy",pid=590226,fd=8))                                       
+tcp   LISTEN  0       511                   127.0.0.1:8080         0.0.0.0:*     users:(("php",pid=1024358,fd=5))                                               
+tcp   LISTEN  0       4096                  127.0.0.1:65529        0.0.0.0:*     users:(("monarx-agent",pid=723,fd=8))                                          
+tcp   LISTEN  0       511                   127.0.0.1:6379         0.0.0.0:*     users:(("redis-server",pid=589914,fd=6))                                       
+tcp   LISTEN  0       4096                  127.0.0.1:2359         0.0.0.0:*     users:(("docker-proxy",pid=590160,fd=8))                                       
+tcp   LISTEN  0       4096                  127.0.0.1:2358         0.0.0.0:*     users:(("docker-proxy",pid=590203,fd=8))                                       
+tcp   LISTEN  0       511                     0.0.0.0:443          0.0.0.0:*     users:(("nginx",pid=1024137,fd=7),("nginx",pid=1024136,fd=7),("nginx",pid=1024133,fd=7))
+tcp   LISTEN  0       4096                    0.0.0.0:22           0.0.0.0:*     users:(("sshd",pid=670022,fd=3),("systemd",pid=1,fd=257))                      
+tcp   LISTEN  0       4096              127.0.0.53%lo:53           0.0.0.0:*     users:(("systemd-resolve",pid=505921,fd=15))                                   
+tcp   LISTEN  0       511                     0.0.0.0:80           0.0.0.0:*     users:(("nginx",pid=1024137,fd=8),("nginx",pid=1024136,fd=8),("nginx",pid=1024133,fd=8))
+tcp   LISTEN  0       4096                 127.0.0.54:53           0.0.0.0:*     users:(("systemd-resolve",pid=505921,fd=17))                                   
+tcp   LISTEN  0       4096                  127.0.0.1:9980         0.0.0.0:*     users:(("docker-proxy",pid=590296,fd=8))                                       
+tcp   LISTEN  0       4096                  127.0.0.1:12345        0.0.0.0:*     users:(("alloy",pid=760011,fd=9))                                              
+tcp   LISTEN  0       511                   127.0.0.1:9183         0.0.0.0:*     users:(("nginx",pid=1024137,fd=5),("nginx",pid=1024136,fd=5),("nginx",pid=1024133,fd=5))
+tcp   LISTEN  0       511                        [::]:443             [::]:*     users:(("nginx",pid=1024137,fd=6),("nginx",pid=1024136,fd=6),("nginx",pid=1024133,fd=6))
+tcp   LISTEN  0       4096                       [::]:22              [::]:*     users:(("sshd",pid=670022,fd=4),("systemd",pid=1,fd=259))                      
+tcp   LISTEN  0       511                        [::]:80              [::]:*     users:(("nginx",pid=1024137,fd=9),("nginx",pid=1024136,fd=9),("nginx",pid=1024133,fd=9))
+tcp   LISTEN  0       4096                          *:7880               *:*     users:(("livekit-server",pid=590035,fd=17))                                    
+tcp   LISTEN  0       4096                          *:7881               *:*     users:(("livekit-server",pid=590035,fd=15))                                    
+Status: active
+Logging: on (low)
+Default: deny (incoming), allow (outgoing), deny (routed)
+New profiles: skip
+
+To                         Action      From
+--                         ------      ----
+22/tcp (OpenSSH)           ALLOW IN    Anywhere                  
+80/tcp                     ALLOW IN    Anywhere                  
+443/tcp                    ALLOW IN    Anywhere                  
+7881/tcp                   ALLOW IN    Anywhere                   # LiveKit WebRTC TCP
+7882/udp                   ALLOW IN    Anywhere                   # LiveKit WebRTC UDP
+3478/udp                   ALLOW IN    Anywhere                   # LiveKit TURN UDP
+22/tcp (OpenSSH (v6))      ALLOW IN    Anywhere (v6)             
+80/tcp (v6)                ALLOW IN    Anywhere (v6)             
+443/tcp (v6)               ALLOW IN    Anywhere (v6)             
+7881/tcp (v6)              ALLOW IN    Anywhere (v6)              # LiveKit WebRTC TCP
+7882/udp (v6)              ALLOW IN    Anywhere (v6)              # LiveKit WebRTC UDP
+3478/udp (v6)              ALLOW IN    Anywhere (v6)              # LiveKit TURN UDP
+
+table ip filter
+table ip6 filter
+table ip nat
+table ip6 nat
+table ip raw
+30ef3e2a44277693b3c2871ac87845e2d31f27c854c8aaf3aa8fef05ca616003  /proc/sys/kernel/random/boot_id
+up 2 weeks, 1 day, 13 hours, 27 minutes
+NAMES                             STATUS                 PORTS
+ecollab-code-lab-adapter-1        Up 10 days             127.0.0.1:2358->2358/tcp
+ecollab-code-lab-piston-1         Up 10 days             2000/tcp
+ecollab-similarity-comparison-1   Up 10 days             127.0.0.1:2359->2359/tcp
+ecollab-centrifugo                Up 10 days             127.0.0.1:8001->8000/tcp
+collabora-collabora-1             Up 10 days (healthy)   127.0.0.1:9980->9980/tcp
+ecollab-livekit                   Up 10 days             
+ecollab-livekit-redis             Up 10 days             
+onlyoffice-documentserver         Up 10 days             443/tcp, 127.0.0.1:8081->80/tcp
+/srv/ecollab-phase3af | NOT PRESENT
+/var/lib/ecollab-phase3af | NOT PRESENT
+/etc/ecollab-phase3af | NOT PRESENT
+/run/ecollab-phase3af | NOT PRESENT              uname -sr
+nprocabadmin@<host>:~/ecollab-piston-node24$ uname -sr
+free -m
+df -h / /srv /var/lib /run
+uptime -psrv /var/lib /run
+sha256sum /proc/sys/kernel/random/boot_id
+sha256sum /proc/sys/kernel/random/boot_id
+systemctl show nginx.service php8.3-fpm.service mariadb.service docker.service \ 
+  --property=Id,LoadState,ActiveState,SubState,User,Group --no-pagerer.service \ 
+  --property=Id,LoadState,ActiveState,SubState,User,Group --no-pager
+ss -H -lntu
+ss -H -lntu
+stat -c '%U:%G %a %F %n' \
+  /srv/ecollab-phase3af /etc/ecollab-phase3af \
+  /var/lib/ecollab-phase3af /run/ecollab-phase3af
+Linux 6.8.0-147-generice3af /run/ecollab-phase3af
+2
+               total        used        free      shared  buff/cache   available
+Mem:            7940        2202        1802           6        4240        5738
+Swap:           2047          15        2032
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1        96G   28G   69G  29% /
+/dev/sda1        96G   28G   69G  29% /
+/dev/sda1        96G   28G   69G  29% /
+tmpfs           795M  1.6M  793M   1% /run
+up 2 weeks, 1 day, 13 hours, 34 minutes
+30ef3e2a44277693b3c2871ac87845e2d31f27c854c8aaf3aa8fef05ca616003  /proc/sys/kernel/random/boot_id
+User=
+Group=
+Id=nginx.service
+LoadState=loaded
+ActiveState=active
+SubState=running
+
+User=
+Group=
+Id=php8.3-fpm.service
+LoadState=loaded
+ActiveState=active
+SubState=running
+
+User=mysql
+Group=mysql
+Id=mariadb.service
+LoadState=loaded
+ActiveState=active
+SubState=running
+
+User=
+Group=
+Id=docker.service
+LoadState=loaded
+ActiveState=active
+SubState=running
+udp   UNCONN   0        0                      172.16.0.1:7882      0.0.0.0:*   
+udp   UNCONN   0        0                      172.16.2.1:7882      0.0.0.0:*   
+udp   UNCONN   0        0                      172.16.1.1:7882      0.0.0.0:*   
+udp   UNCONN   0        0                      172.16.3.1:7882      0.0.0.0:*   
+udp   UNCONN   0        0                      172.16.4.1:7882      0.0.0.0:*   
+udp   UNCONN   0        0                   <public-ipv4>:7882      0.0.0.0:*   
+udp   UNCONN   0        0                      127.0.0.54:53        0.0.0.0:*   
+udp   UNCONN   0        0                   127.0.0.53%lo:53        0.0.0.0:*   
+udp   UNCONN   0        0                       127.0.0.1:1721      0.0.0.0:*   
+udp   UNCONN   0        0                               *:3478            *:*   
+udp   UNCONN   0        0          [<public-ipv6>]:7882         [::]:*   
+tcp   LISTEN   0        4096                    127.0.0.1:11434     0.0.0.0:*   
+tcp   LISTEN   0        80                      127.0.0.1:3306      0.0.0.0:*   
+tcp   LISTEN   0        4096                    127.0.0.1:8001      0.0.0.0:*   
+tcp   LISTEN   0        5                       127.0.0.1:8091      0.0.0.0:*   
+tcp   LISTEN   0        4096                    127.0.0.1:8081      0.0.0.0:*   
+tcp   LISTEN   0        511                     127.0.0.1:8080      0.0.0.0:*   
+tcp   LISTEN   0        4096                    127.0.0.1:65529     0.0.0.0:*   
+tcp   LISTEN   0        511                     127.0.0.1:6379      0.0.0.0:*   
+tcp   LISTEN   0        4096                    127.0.0.1:2359      0.0.0.0:*   
+tcp   LISTEN   0        4096                    127.0.0.1:2358      0.0.0.0:*   
+tcp   LISTEN   0        511                       0.0.0.0:443       0.0.0.0:*   
+tcp   LISTEN   0        4096                      0.0.0.0:22        0.0.0.0:*   
+tcp   LISTEN   0        4096                127.0.0.53%lo:53        0.0.0.0:*   
+tcp   LISTEN   0        511                       0.0.0.0:80        0.0.0.0:*   
+tcp   LISTEN   0        4096                   127.0.0.54:53        0.0.0.0:*   
+tcp   LISTEN   0        4096                    127.0.0.1:9980      0.0.0.0:*   
+tcp   LISTEN   0        4096                    127.0.0.1:12345     0.0.0.0:*   
+tcp   LISTEN   0        511                     127.0.0.1:9183      0.0.0.0:*   
+tcp   LISTEN   0        511                          [::]:443          [::]:*   
+tcp   LISTEN   0        4096                         [::]:22           [::]:*   
+tcp   LISTEN   0        511                          [::]:80           [::]:*   
+tcp   LISTEN   0        4096                            *:7880            *:*   
+tcp   LISTEN   0        4096                            *:7881            *:*   
+stat: cannot statx '/srv/ecollab-phase3af': No such file or directory
+stat: cannot statx '/etc/ecollab-phase3af': No such file or directory
+stat: cannot statx '/var/lib/ecollab-phase3af': No such file or directory
+stat: cannot statx '/run/ecollab-phase3af': No such file or directory
+<owner>@<host>:~/ecollab-piston-node24$ 

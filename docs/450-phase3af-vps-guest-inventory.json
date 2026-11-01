@@ -1,0 +1,174 @@
+{
+  "phase": "3AF",
+  "host_alias": "VPS-A",
+  "status": "BLOCKED \u2014 final defense environment not accepted",
+  "evidence_type": "User-supplied terminal transcript; not commands executed by the assistant",
+  "input_filename": "Pasted text(20261101-112438).txt",
+  "input_original_sha256": "4e89abfaa1075204f3e1e9a162166617ad2dd8ffde7316bba827c4c6766d7dbe",
+  "redacted_transcript": "docs/450-phase3af-correction/guest-inventory/operator-transcript-redacted.txt",
+  "redacted_transcript_sha256": "5fca2e25ebfc7c8d5e875c8e1dff3d4e84337341002bd13d36bd8540282dce7f",
+  "provenance_qualifications": [
+    "No trustworthy wall-clock collection timestamp in transcript",
+    "Per-command exit codes absent",
+    "Duplicated/garbled command echoes; findings taken from clear output sections",
+    "No reboot, installation or restore result in this transcript"
+  ],
+  "guest": {
+    "os_release": "Ubuntu 24.04.5 LTS (Noble Numbat)",
+    "kernel": "6.8.0-147-generic",
+    "available_processors": 2,
+    "memory_MiB": {
+      "total": 7940,
+      "used": 2202,
+      "free": 1802,
+      "available": 5738,
+      "swap_total": 2047,
+      "swap_used": 15
+    },
+    "root_df_hT": {
+      "filesystem": "/dev/sda1",
+      "type": "ext4",
+      "size": "96G",
+      "used": "28G",
+      "available": "69G",
+      "use": "29%"
+    },
+    "run_df_h": {
+      "type": "tmpfs",
+      "size": "795M",
+      "used": "1.6M",
+      "available": "793M"
+    },
+    "runtime_reports": {
+      "php_cli": "8.3.6",
+      "php_fpm_exact_binary_version": "NOT VERIFIED",
+      "nginx_binary": "1.24.0 (Ubuntu)",
+      "mariadb_client": "10.11.14-MariaDB",
+      "mariadb_server_binary_version": "NOT VERIFIED"
+    },
+    "uptime_latest": "2 weeks,1 day,13 hours,34 minutes",
+    "boot_id_sha256": "30ef3e2a44277693b3c2871ac87845e2d31f27c854c8aaf3aa8fef05ca616003",
+    "reboot_verified": false
+  },
+  "services": {
+    "nginx": {
+      "load": "loaded",
+      "active": "active",
+      "substate": "running",
+      "unit_user": "",
+      "unit_group": ""
+    },
+    "php8.3-fpm": {
+      "load": "loaded",
+      "active": "active",
+      "substate": "running",
+      "unit_user": "",
+      "unit_group": ""
+    },
+    "mariadb": {
+      "load": "loaded",
+      "active": "active",
+      "substate": "running",
+      "unit_user": "mysql",
+      "unit_group": "mysql"
+    },
+    "docker": {
+      "load": "loaded",
+      "active": "active",
+      "substate": "running",
+      "unit_user": "",
+      "unit_group": ""
+    }
+  },
+  "ownership_qualification": "Blank systemd User/Group properties do not identify FPM workers, nginx workers or pool ownership. These remain unverified.",
+  "containers_reported": [
+    "ecollab-code-lab-adapter-1        Up 10 days             127.0.0.1:2358->2358/tcp",
+    "ecollab-code-lab-piston-1         Up 10 days             2000/tcp",
+    "ecollab-similarity-comparison-1   Up 10 days             127.0.0.1:2359->2359/tcp",
+    "ecollab-centrifugo                Up 10 days             127.0.0.1:8001->8000/tcp",
+    "collabora-collabora-1             Up 10 days (healthy)   127.0.0.1:9980->9980/tcp",
+    "ecollab-livekit                   Up 10 days",
+    "ecollab-livekit-redis             Up 10 days",
+    "onlyoffice-documentserver         Up 10 days             443/tcp, 127.0.0.1:8081->80/tcp"
+  ],
+  "container_count": 8,
+  "api_comparison": "Prior Compose-project API returned5 projects/7 containers; operator docker listing adds OnlyOffice on loopback8081. Endpoint scope/timing differs; cause of omission not established.",
+  "reported_socket_ports_any_binding": [
+    22,
+    53,
+    80,
+    443,
+    1721,
+    2358,
+    2359,
+    3306,
+    3478,
+    6379,
+    7880,
+    7881,
+    7882,
+    8001,
+    8080,
+    8081,
+    8091,
+    9183,
+    9980,
+    11434,
+    12345,
+    65529
+  ],
+  "proposed_tcp_ports": {
+    "18083": "Not present in supplied TCP/UDP socket snapshots; no reservation or bind test",
+    "13383": "Not present in supplied TCP/UDP socket snapshots; no reservation or bind test"
+  },
+  "proposed_paths": {
+    "/srv/ecollab-phase3af": "stat reported ENOENT /not present",
+    "/etc/ecollab-phase3af": "stat reported ENOENT /not present",
+    "/var/lib/ecollab-phase3af": "stat reported ENOENT /not present",
+    "/run/ecollab-phase3af": "stat reported ENOENT /not present"
+  },
+  "firewall": {
+    "source": "operator UFW/nft listing",
+    "ufw": "active",
+    "incoming_default": "deny",
+    "outgoing_default": "allow",
+    "routed_default": "deny",
+    "allow_rules": [
+      "22/tcp",
+      "80/tcp",
+      "443/tcp",
+      "7881/tcp",
+      "7882/udp",
+      "3478/udp"
+    ],
+    "ipv6_allow_rules_present": true,
+    "nft_tables": [
+      "ip filter",
+      "ip6 filter",
+      "ip nat",
+      "ip6 nat",
+      "ip raw"
+    ],
+    "effective_external_reachability": "NOT VERIFIED \u2014 socket and firewall listings alone do not establish end-to-end exposure"
+  },
+  "remaining_gates": [
+    "Dedicated account and proposed systemd unit-name collisions",
+    "Parent path ownership/permissions and symlink/mount boundaries",
+    "Actual nginx/FPM process and worker identities",
+    "Exact FPM and server binary versions",
+    "Real-student-data/production classification without inspecting private data",
+    "Isolated service/datadir/socket/resource configuration and owner approval",
+    "Exact accepted source installed; runtime/config/vendor hashes",
+    "Actual installed routing/browser/security/OTP/identity demonstration",
+    "Approved restart with changed boot ID and retention verification",
+    "Independent full backup/restore and fresh-session authorization"
+  ],
+  "candidate": {
+    "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+    "tree": "a8502d5da68184d3aa2504231e8083ad88df156f"
+  },
+  "assistant_host_commands_executed": false,
+  "application_changes": false,
+  "phase3ag": "BLOCKED",
+  "redacted_transcript_normalization": "CRLF/CR normalized to LF; public addresses/hostname/owner/sudo prompt redacted; original upload unmodified"
+}
