@@ -1,3 +1,7 @@
+# Scoped authenticated chat/DM and thread-file routing; avatars remain separate.
+RewriteEngine On
+RewriteRule ^([^/]+|threads/[^/]+)$ ../API/attachments/download.php?path=uploads/$1 [END]
+
 # ============================================================
 # Ecollab Uploads .htaccess — Prevent code execution in uploads
 # ============================================================
