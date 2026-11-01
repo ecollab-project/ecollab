@@ -53,6 +53,8 @@ def main():
    avatar=R/'uploads/avatars'/('phase3af_'+uuid.uuid4().hex+'.png');avatar.parent.mkdir(exist_ok=True);avatar.write_bytes(png);owned_files.append(avatar);check('public avatar preserved',request(None,'/'+str(avatar.relative_to(R)))[:2]==(200,png));out['status']='PASS'
   except Exception as e:out['error']=o.scrub_text(str(e));raise
   finally:
+   log=pathlib.Path(tmp)/'nginx.log'
+   if log.exists():out['nginx_log']=o.scrub_text(log.read_text())
    if nginx:nginx.terminate();nginx.wait(timeout=10)
    for f in owned_files:f.unlink(missing_ok=True)
    out['requests']=o.records;out['migration']=getattr(o,'migration',{});out['controls']=o.controls

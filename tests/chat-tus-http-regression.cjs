@@ -10,7 +10,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 (async()=>{
   const socket=net.createServer();await new Promise(r=>socket.listen(0,'127.0.0.1',r));
   const port=socket.address().port;await new Promise(r=>socket.close(r));const base='http://127.0.0.1:'+port;
-  for(const name of ['API/chat/resumable-upload.php','services/ChatTusStorage.php','services/ChatUploadAccess.php','security/middleware/AuthMiddleware.php','security/SystemIdentity.php'])write(name,fs.readFileSync(path.join(root,name)));
+  for(const name of ['API/chat/resumable-upload.php','services/ChatTusStorage.php','services/ChatUploadAccess.php','services/AttachmentAccess.php','services/AttachmentStore.php','security/middleware/AuthMiddleware.php','security/SystemIdentity.php'])write(name,fs.readFileSync(path.join(root,name)));
   write('config.php',`<?php
     ini_set('session.save_path',${JSON.stringify(temporary)});
     define('ROOT_PATH',__DIR__);define('BASE_URL',${JSON.stringify(base)});define('UPLOAD_DIR',__DIR__.'/uploads/');
@@ -61,8 +61,8 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   assert.equal((await request(url)).status,409);
   assert.equal((await request(url,'PATCH',{'Upload-Offset':'2','Content-Type':'application/offset+octet-stream'},'llo')).status,204);
   assert.equal((await request(url,'GET',{'X-CSRF-Token':'wrong'})).status,403);
-  const complete=await (await request(url)).json();assert.equal(complete.success,true);assert(complete.file_path.endsWith('.txt'));
-  assert.equal(fs.readFileSync(path.join(app,complete.file_path),'utf8'),'hello');
+  const complete=await (await request(url)).json();assert.equal(complete.success,true);assert(complete.file_path.endsWith('.txt'));assert.equal(fs.existsSync(path.join(app,complete.file_path)),false,'Completed bytes must remain outside webroot');
+  assert.equal(fs.readFileSync(path.join(temporary,'ecollab-attachments',require('crypto').createHash('sha256').update(complete.file_path).digest('hex')+'.data'),'utf8'),'hello');
   assert.equal((await request(url,'DELETE')).status,204);assert.equal((await request(url,'HEAD')).status,404);
 
   // A real Uppy+Tus browser instance must interoperate with this PHP endpoint, not just mocks.
@@ -75,7 +75,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const file=new w.File([bytes],'real.txt',{type:'text/plain',lastModified:100});
   const upload=w.EcollabUploads.upload(file,{kind:'channel',id:20});
   const result=await Promise.race([upload,sleep(10000).then(()=>{throw new Error('Real Uppy transfer timed out: '+logs);})]);
-  assert.equal(result.file_size,bytes.length);assert.equal(fs.readFileSync(path.join(app,result.file_path),'utf8'),bytes);
+  assert.equal(result.file_size,bytes.length);assert.equal(fs.readFileSync(path.join(temporary,'ecollab-attachments',require('crypto').createHash('sha256').update(result.file_path).digest('hex')+'.data'),'utf8'),bytes);
   const reused=await w.EcollabUploads.upload(file,{kind:'channel',id:20});
   assert.equal(reused.file_path,result.file_path,'Reselection should recover the stored upload URL');
   const dm=await w.EcollabUploads.upload(file,{kind:'dm',id:3});

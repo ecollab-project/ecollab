@@ -1,0 +1,66 @@
+name: Phase 3AF attachment confidentiality
+on:
+  pull_request:
+    paths:
+      - 'tests/phase3af-*'
+      - 'docs/450-phase3af*'
+      - '.github/workflows/phase3af-*.yml'
+      - 'tests/chat-tus-http-regression.cjs'
+      - 'services/Attachment*.php'
+      - 'API/attachments/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  owned-http-auth:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    env:
+      PHASE3AF_CORRECTION: '1'
+      PHASE3AD_REPAIR: '1'
+      PHASE3AD_IDENTITY: '1'
+      PHASE3AD_OWNED_FRESH_IDENTITY: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Install disposable MariaDB and PHP dependencies
+        run: |
+          mkdir -p "$RUNNER_TEMP/perf-apt/empty" "$RUNNER_TEMP/perf-apt/lists/partial"
+          printf '%s\n' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble-updates main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://security.ubuntu.com/ubuntu noble-security main universe' \
+            > "$RUNNER_TEMP/perf-apt/sources.list"
+          apt_options=(-o "Dir::Etc::sourcelist=$RUNNER_TEMP/perf-apt/sources.list"
+            -o "Dir::Etc::sourceparts=$RUNNER_TEMP/perf-apt/empty"
+            -o "Dir::State::lists=$RUNNER_TEMP/perf-apt/lists"
+            -o Acquire::Retries=0 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20)
+          sudo apt-get "${apt_options[@]}" update
+          sudo apt-get "${apt_options[@]}" install -y nginx mariadb-server php8.3-fpm php8.3-cli php8.3-mysql php8.3-sqlite3 php8.3-curl php8.3-mbstring php8.3-xml
+      - name: Dependencies and browser runtime
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          npm install --prefix "$RUNNER_TEMP/phase3y-browser" --no-save --no-package-lock playwright@1.62.1 jsdom@27.0.0
+          node "$RUNNER_TEMP/phase3y-browser/node_modules/playwright/cli.js" install chromium
+          echo "NODE_PATH=$RUNNER_TEMP/phase3y-browser/node_modules" >> "$GITHUB_ENV"
+      - name: Correction DOM and attachment authorization
+        if: always()
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          PHP_FPM_BIN: /usr/sbin/php-fpm8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          PHASE3AF_REQUIRE_NGINX: '1'
+          PHASE3AF_ATTACHMENT_EVIDENCE: phase3ad-raw/attachment-http.json
+        run: |
+          node tests/phase3af-code-editor.cjs
+          node tests/phase3af-code-rendering.cjs
+          php8.3 tests/phase3af-attachment-access.php
+          php8.3 tests/phase3af-attachment-store.php
+          python3 -B tests/phase3af-attachment-http.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase3af-attachment-evidence
+          path: phase3ad-raw/
