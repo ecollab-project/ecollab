@@ -1277,7 +1277,7 @@ async function handleFileUpload(input, type) {
     }
     if (data.success) {
       pendingAttachment = data;
-      showAttachmentPreview(data, type);
+      showAttachmentPreview({...data,url:data.mime_type?.startsWith('image/') ? URL.createObjectURL(file) : data.url}, type);
       showToast('📎 File ready to send', 'success');
     } else {
       showToast('Upload failed: ' + (data.error || 'unknown error'), 'info');
@@ -1298,6 +1298,8 @@ function showAttachmentPreview(attachment, type) {
     preview.style.cssText = 'padding:8px 12px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;';
     wrapper?.appendChild(preview);
   }
+  const previous = preview.querySelector('img')?.src;
+  if (previous?.startsWith('blob:')) URL.revokeObjectURL(previous);
   const isImage = attachment.mime_type?.startsWith('image/');
   preview.innerHTML = `
     ${isImage ? `<img src="${escHtml(attachment.url)}" style="height:40px;border-radius:4px;">` : '<span style="font-size:20px;">📎</span>'}
@@ -1312,6 +1314,8 @@ function showAttachmentPreview(attachment, type) {
 function clearAttachmentPreview() {
   attachmentUploadGeneration++;
   pendingAttachment = null;
+  const image = document.querySelector('#_attachPreview img')?.src;
+  if (image?.startsWith('blob:')) URL.revokeObjectURL(image);
   document.getElementById('_attachPreview')?.remove();
 }
 
