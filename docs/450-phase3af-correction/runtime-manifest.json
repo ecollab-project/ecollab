@@ -1,0 +1,27 @@
+{
+  "base": "28132097544b555f71fc6b6023fd3dc2ef0f6616",
+  "scope": "Owner authorized isolated A/B/C/D Phase3AF corrections",
+  "hashes": {
+    "API/attachments/download.php": "158351afbad000d25a683167c3c1c71105128822d863dc002096fe27ade64d66",
+    "API/chat/edit-message.php": "a44fe441bae0f51b698648f4d294b709b9344ea2ccbf84c79c15d2ee37ac9cb4",
+    "API/chat/resumable-upload.php": "d071186845263c7645a4061a38c346544036966764e183c45036b10dc79a66e7",
+    "API/chat/upload-file.php": "e1b5fc10ae16ede434ff558e9907b9776e68305b78de3d858aa7790fdf50e092",
+    "API/dm/group-message.php": "61d9b983e0b9b8495b989569f478ecc89cadc1c3a8f5276980d6cb4ffb296e6e",
+    "API/dm/send-message.php": "617f5152b6464268fa55009916b96ce4beb9d03cfecef2f9e4f74e5d7dcdb07c",
+    "API/dm/upload-file.php": "0c7f542ea75d095f889c38bc25d0a349d0c908c1b116be057207566c494f3bd6",
+    "API/threads/index.php": "f783580c8cae73e2afea004d65512bd2ad17b5330a669fa509ba484d4ba64dcf",
+    "API/threads/upload-image.php": "d1e5d092ec6ab42dac62783765ca4cd6bd784fcf52cd1153ed2dbff5c9bf0795",
+    "assets/js/chat/chat-features.js": "58f567a8ce73445d932f592a2b2a2acd180fc64657e09c14e36e836d1a791fa8",
+    "assets/js/chat/chat.js": "3b9ea88e2f7333da097cc5fe9f0469fbcc419e06d94d1a63681ed1f6e71e8920",
+    "assets/js/chat/dm-notifications.js": "daa2423fd2e5d3784cbfedc783e58fced042b405f71f349ee99b5a958553c7ad",
+    "assets/js/chat/functionality-overrides.js": "d2e1b052a5ec98b9f1ed8f2c1c24cebf345e525ab1106942f7e3a98348bbfe91",
+    "assets/js/chat/socket-core.js": "89302d9936ae9222b128074537bbb85311b9247610b265ee511b8efe29c63403",
+    "assets/js/chat/threads-enhancements.js": "b91bb130a159a5c352d69c604268a55da0c6922c9563003b3f30c1ac41c37c05",
+    "deploy/attachments/nginx-attachments.conf.example": "8c3db6e987c1aa75407ad17e11e66a2185ec155344e539d191ed20f883374f14",
+    "services/AttachmentAccess.php": "480ed9a1959d4b4191bec478ad3596b3467667e9466e6d1ac20eaad9d152d33e",
+    "services/AttachmentStore.php": "c83e6601cda47f3ecf5500c0b85792ef473921128eac5001cd5479c3b10443cd",
+    "services/ChatTusStorage.php": "0e575e174ef1e041ce3f6e0b59e009cf7f281b742701c9a0e37c7906b1232d1a",
+    "services/MessageService.php": "103e171637e7a187601df00265d9437be7a2ef43aa736773a23840464e0d2620",
+    "uploads/.htaccess": "81657cd70c600bacc688f1a36b65e4f0e506cb05f61ba5c555c5977dd79564ff"
+  }
+}

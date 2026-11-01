@@ -966,7 +966,7 @@ async function _dmUploadPending(file, target){
     if(!window.EcollabUploads)throw new Error('Upload controls failed to load. Refresh the page.');
     return window.EcollabUploads.upload(file,target);
   }
-  const form=new FormData();form.append('file',file);
+  const form=new FormData();form.append('file',file);form.append('kind',target.kind);form.append('target',String(target.id));
   return window.uploadChatAttachment(BASE()+'/API/dm/upload-file.php', form);
 }
 function _dmAttachmentHTML(m){

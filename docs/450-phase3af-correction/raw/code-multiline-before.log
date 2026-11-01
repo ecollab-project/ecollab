@@ -1,0 +1,16 @@
+AssertionError [ERR_ASSERTION]: Save must preserve whitespace
++ actual - expected
+
++ '  const b = "<i>literal</i>";'
+- '  const b = "<i>literal</i>";\n'
+                                ^
+
+    at /workspace/scratch/5c9d94f07e76/ecollab-phase3af-fix/tests/phase3af-code-edit.cjs:8:378
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: '  const b = "<i>literal</i>";',
+  expected: '  const b = "<i>literal</i>";\n',
+  operator: 'strictEqual',
+  diff: 'simple'
+}

@@ -1,0 +1,6 @@
+<?php
+declare(strict_types=1);
+require dirname(__DIR__).'/services/AttachmentStore.php';
+$root=sys_get_temp_dir().'/ecollab-owned-'.bin2hex(random_bytes(8));mkdir($root);mkdir($root.'/web');
+function denied(callable $f):void{try{$f();}catch(RuntimeException $e){if($e->getCode()===403)return;throw $e;}throw new RuntimeException('Expected ownership denial');}
+try{$s=new AttachmentStore($root.'/private',$root.'/web');file_put_contents($root.'/input','owned sentinel');$s->put($root.'/input','uploads/owned.txt',1,'channel',7,'owned.txt','text/plain');$s->assertOwned('uploads/owned.txt',1,'channel',7);if(file_get_contents($s->file('uploads/owned.txt'))!=='owned sentinel')throw new RuntimeException('Byte mismatch');denied(fn()=>$s->assertOwned('uploads/owned.txt',2,'channel',7));denied(fn()=>$s->assertOwned('uploads/owned.txt',1,'channel',8));denied(fn()=>$s->assertOwned('uploads/owned.txt',1,'dm',7));denied(fn()=>$s->assertOwned('uploads/legacy.txt',1,'channel',7));denied(fn()=>$s->assertOwned('../input',1,'channel',7));echo "PASS private bytes, uploader/destination binding, legacy adoption and traversal denial\n";}finally{foreach(glob($root.'/private/*')?:[]as$f)unlink($f);@rmdir($root.'/private');unlink($root.'/input');rmdir($root.'/web');rmdir($root);}

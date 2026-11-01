@@ -94,6 +94,11 @@ try {
         if (mb_strlen($text) > 4000) { http_response_code(400); echo json_encode(['error' => 'Message too long']); exit; }
         requireGroupMembership($db, $groupId, $uid);
 
+    if ($attachmentPath !== '') {
+        require_once ROOT_PATH.'/services/AttachmentStore.php';
+        $a=AttachmentStore::configured()->assertOwned($attachmentPath,$uid,'group',$groupId);
+        $attachmentName=$a['file_name'];$attachmentSize=$a['file_size'];$attachmentMime=$a['mime_type'];
+    }
         $msgId = RealtimeOutbox::record($db, 'group', $groupId, function () use ($db, $groupId, $uid, $text, $attachmentPath, $attachmentName, $attachmentSize, $attachmentMime) {
             $db->prepare('INSERT INTO dm_messages (group_id, sender_id, body, attachment_path, attachment_name, attachment_size, attachment_mime) VALUES (:gid, :uid, :body, :apath, :aname, :asize, :amime)')
                 ->execute([':gid' => $groupId, ':uid' => $uid, ':body' => $text, ':apath' => $attachmentPath ?: null, ':aname' => $attachmentName ?: null, ':asize' => $attachmentSize ?: null, ':amime' => $attachmentMime ?: null]);

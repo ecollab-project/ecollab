@@ -1,0 +1,22 @@
+AssertionError [ERR_ASSERTION]: Cancel must preserve literal code
++ actual - expected
+
++ undefined
+- '  const a = "<b>literal</b>";\n'
+
+    at /workspace/scratch/5c9d94f07e76/ecollab-phase3af-fix/tests/phase3af-code-edit.cjs:6:117
+    at Object.<anonymous> (/workspace/scratch/5c9d94f07e76/ecollab-phase3af-fix/tests/phase3af-code-edit.cjs:11:30)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: '  const a = "<b>literal</b>";\n',
+  operator: 'strictEqual',
+  diff: 'simple'
+}

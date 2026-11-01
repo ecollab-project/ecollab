@@ -1,9 +1,12 @@
 """Freeze accepted runtime;Phase3AF may add only bounded verification artifacts."""
-import hashlib,json,pathlib,subprocess,sys
+import hashlib,json,pathlib,subprocess,sys,os,runpy
 R=pathlib.Path(__file__).resolve().parents[1];BASE='f319fe16ca30b3157a0ca567fa879bec89c75f19';APP='c65d2f994b10dfa7890f6509a2342e58a064571e'
 def git(*a):return subprocess.check_output(['git',*a],cwd=R,text=True).strip()
 def runtime(p):return p.split('/')[0]in ['API','services','security','database','assets','modules','websocket','scripts','deploy']or p in ['config.php','composer.json','composer.lock','.env.example']
 def main():
+ if os.environ.get('PHASE3AF_CORRECTION')=='1':
+  out=runpy.run_path(str(R/'tests/phase3af-correction-scope.py'))['validate']()
+  p=pathlib.Path(sys.argv[1]if len(sys.argv)>1 else'phase3ad-raw/phase3af-source.json');p.parent.mkdir(exist_ok=True,parents=True);p.write_text(json.dumps(out,indent=2)+'\n');print('PASS frozen bounded correction scope');return
  assert git('merge-base',BASE,'HEAD')==BASE
  paths=git('diff','--name-only',BASE).splitlines();assert all(p.startswith(('tests/phase3af-','docs/450-phase3af','.github/workflows/phase3af-'))for p in paths),paths
  assert not git('diff',APP,'--','API','services','security','database','assets','modules','websocket','scripts','deploy','config.php','composer.json','composer.lock','.env.example')

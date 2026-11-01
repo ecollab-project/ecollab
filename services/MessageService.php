@@ -200,8 +200,8 @@ class MessageService
         if (isset($data['content']) && !is_string($data['content'])) {
             throw new InvalidArgumentException('Message content must be text', 400);
         }
-        $content = trim($data['content'] ?? '');
-        if ($content === '' && empty($data['attachment_path'])) {
+        $content = ($data['content_type'] ?? '') === 'code' ? ($data['content'] ?? '') : trim($data['content'] ?? '');
+        if (trim($content) === '' && empty($data['attachment_path'])) {
             throw new InvalidArgumentException('Message content is required', 400);
         }
 
@@ -228,6 +228,12 @@ class MessageService
             if (count($pollOptions) < 2) throw new InvalidArgumentException('At least 2 poll options required', 400);
             if (count($pollOptions) > 6) throw new InvalidArgumentException('Maximum 6 poll options allowed', 400);
             $content = $pollQuestion;
+        }
+
+        if (!empty($data['attachment_path'])) {
+            require_once __DIR__.'/AttachmentStore.php';
+            $a=AttachmentStore::configured()->assertOwned((string)$data['attachment_path'],$senderId,'channel',$channelId);
+            $data['attachment_name']=$a['file_name'];$data['attachment_size']=$a['file_size'];$data['attachment_mime']=$a['mime_type'];
         }
 
         // Poll, options and message must commit together even when the broker is off.
@@ -299,8 +305,8 @@ class MessageService
         if ((int)$msg['sender_id'] !== $userId && !in_array($userRole, ['admin', 'moderator', 'super_admin'], true)) {
             throw new RuntimeException('Forbidden', 403);
         }
-        $content = trim($newContent);
-        if ($content === '') {
+        $content = ($msg['content_type'] ?? '') === 'code' ? $newContent : trim($newContent);
+        if (trim($content) === '') {
             throw new InvalidArgumentException('Content cannot be empty', 400);
         }
         $upd = $this->db->prepare("UPDATE messages SET content=:c, is_edited=1, updated_at=NOW() WHERE id=:id");

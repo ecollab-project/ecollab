@@ -28,7 +28,14 @@ try {
     $realParent = realpath(dirname($root));
     $realRoot = realpath($root) ?: ($realParent ? $realParent.'/'.basename($root) : '');
     if (!$realRoot || str_starts_with($realRoot.'/', realpath(ROOT_PATH).'/')) throw new RuntimeException('Upload parts must be outside the web root.', 503);
-    $store = new ChatTusStorage($root, UPLOAD_DIR, BASE_URL);
+    require_once ROOT_PATH.'/services/AttachmentStore.php';
+    $attachments=AttachmentStore::configured();
+    $store=new ChatTusStorage($root,$root.'/completed',BASE_URL,static function($part,$path,$meta,$mime) use($attachments) {
+        if($attachments->receipt($path)) {
+            $attachments->assertOwned($path,(int)$meta['uid'],$meta['kind'],(int)$meta['target']);
+            if(hash_file('sha256',$part)!==hash_file('sha256',$attachments->file($path))) throw new RuntimeException('Upload receipt mismatch',409);
+        } else $attachments->put($part,$path,(int)$meta['uid'],$meta['kind'],(int)$meta['target'],$meta['name'],$mime);
+    });
     $db = Database::getInstance();
     $authorize = fn(string $kind, int $target) => ChatUploadAccess::check($db, (int)$user['id'], $kind, $target);
     if ($method === 'POST') {

@@ -4,6 +4,8 @@ require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 
+require_once ROOT_PATH.'/services/AttachmentStore.php';
+require_once ROOT_PATH.'/services/ChatUploadAccess.php';
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
 $user = AuthMiddleware::requireAuth(true);
@@ -13,6 +15,9 @@ AuthMiddleware::verifyCsrf();
 session_write_close();
 
 try {
+    $kind=(string)($_POST['kind'] ?? '');$target=(int)($_POST['target'] ?? 0);
+    if (!in_array($kind,['channel','dm','group'],true)) throw new RuntimeException('Invalid destination',400);
+    ChatUploadAccess::check(Database::getInstance(),(int)$user['id'],$kind,$target);
     if (empty($_FILES['file'])) {
         $tooLarge = (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 20 * 1024 * 1024;
         http_response_code($tooLarge ? 413 : 400);
@@ -40,10 +45,7 @@ try {
     $imageExtensions = ['image/jpeg'=>'jpg','image/png'=>'png','image/gif'=>'gif','image/webp'=>'webp'];
     if (isset($imageExtensions[$mime])) $ext = $imageExtensions[$mime];
     $stored = 'dm_' . date('Ymd_His') . '_' . bin2hex(random_bytes(6)) . ($ext !== '' ? '.' . $ext : '');
-    $dir = UPLOAD_DIR;
-    if (!is_dir($dir) && !mkdir($dir, 0750, true)) throw new RuntimeException('Upload directory creation failed', 500);
-    if (!move_uploaded_file($file['tmp_name'], $dir . $stored)) throw new RuntimeException('Failed to save upload', 500);
-
+    AttachmentStore::configured()->put($file['tmp_name'],'uploads/'.$stored,(int)$user['id'],$kind,$target,$name,$mime);
     echo json_encode([
       'success'=>true,'file_name'=>$name,'file_path'=>'uploads/'.$stored,
       'file_size'=>(int)$file['size'],'mime_type'=>$mime,'url'=>BASE_URL.'/uploads/'.$stored

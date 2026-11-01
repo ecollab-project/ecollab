@@ -15,6 +15,10 @@ function _renderMsgContent(text) {
   });
 }
 
+function _renderMessageBody(text, type) {
+  return type === 'code' ? '<pre class="channel-code"><code>' + escHtml(text) + '</code></pre>' : _renderMsgContent(text);
+}
+
 function escHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;')
@@ -540,6 +544,7 @@ function renderMessages(messages, prepend = false, preserveLive = false) {
 function buildMessageElement(msg) {
   const div = document.createElement('div');
   div.dataset.rawContent = msg.content || '';
+  div.dataset.contentType = msg.content_type || 'text';
   div.className = 'message-group' + (msg.is_pinned ? ' pinned-msg-highlight' : '');
   div.dataset.msgId = msg.id;
   div.dataset.senderId = msg.sender_id;
@@ -607,12 +612,12 @@ function buildMessageElement(msg) {
   div.innerHTML = `
     <div class="msg-action-bar">
       <button class="msg-action-btn" title="Add Reaction" onclick="showEmojiForMsgBar(event,this)">😊</button>
-      <button class="msg-action-btn" title="Reply" onclick="msgReply(this,'${escHtml(msg.username)}', ${msg.id}, '${escHtml((msg.content || '').substring(0, 60))}')">
+      <button class="msg-action-btn" title="Reply" data-message-action="reply">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
       </button>
-      <button class="msg-action-btn ${msg.is_pinned ? 'pin-active' : ''}" title="${msg.is_pinned ? 'Unpin Message' : 'Pin Message'}" onclick="msgPin(this,'${escHtml(msg.username)}','${escHtml((msg.content || '').substring(0, 60))}', ${msg.id})">📌</button>
+      <button class="msg-action-btn ${msg.is_pinned ? 'pin-active' : ''}" title="${msg.is_pinned ? 'Unpin Message' : 'Pin Message'}" data-message-action="pin">📌</button>
       <button class="msg-action-btn" title="Bookmark" onclick="msgBookmark(this, ${msg.id})">🔖</button>
-      <button class="msg-action-btn" title="More Options" onclick="showMsgMenu(event,this,'${escHtml(msg.username)}', ${msg.id}, ${isMe ? 'true' : 'false'})">
+      <button class="msg-action-btn" title="More Options" data-message-action="menu">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
       </button>
     </div>
@@ -630,12 +635,22 @@ function buildMessageElement(msg) {
         <span class="msg-timestamp">${time}</span>
       </div>
       ${replyHtml}
-      ${msg.content_type === 'poll' && msg.poll ? buildPollWidget(msg) : `<div class="msg-text">${_renderMsgContent(msg.content || '')}${edited}</div>`}
+      ${msg.content_type === 'poll' && msg.poll ? buildPollWidget(msg) : `<div class="msg-text">${_renderMessageBody(msg.content || '', msg.content_type)}${edited}</div>`}
       ${attachHtml}
       ${reactionsHtml}
     </div>
   `;
 
+  // Keep author and message text out of executable HTML attributes.
+  div.querySelector('[data-message-action="reply"]').addEventListener('click', function () {
+    msgReply(this, msg.username, Number(msg.id), (msg.content || '').substring(0, 60));
+  });
+  div.querySelector('[data-message-action="pin"]').addEventListener('click', function () {
+    msgPin(this, msg.username, (msg.content || '').substring(0, 60), Number(msg.id));
+  });
+  div.querySelector('[data-message-action="menu"]').addEventListener('click', function (event) {
+    showMsgMenu(event, this, msg.username, Number(msg.id), isMe);
+  });
   window.EcollabPreferences?.decorate(div);
   return div;
 }
@@ -1106,22 +1121,32 @@ function startEditMsg(msgGroup, originalText, msgId) {
   const textEl = msgGroup.querySelector('.msg-text');
   if (!textEl) return;
   originalText = msgGroup.dataset.rawContent ?? originalText;
+  const isCode = msgGroup.dataset.contentType === 'code';
+  let codeEditor = null;
   textEl.textContent = originalText;
-  textEl.contentEditable = 'true';
+  textEl.contentEditable = isCode ? 'false' : 'true';
   textEl.style.outline = '1px solid var(--accent-purple)';
   textEl.style.borderRadius = '4px';
   textEl.style.padding = '2px 4px';
-  textEl.focus();
-  const range = document.createRange();
-  range.selectNodeContents(textEl);
-  range.collapse(false);
-  window.getSelection()?.removeAllRanges();
-  window.getSelection()?.addRange(range);
+  if (isCode) {
+    codeEditor = document.createElement('textarea');
+    codeEditor.className = 'channel-code-edit';
+    codeEditor.value = originalText;
+    codeEditor.rows = Math.min(14, Math.max(4, originalText.split('\n').length));
+    codeEditor.style.cssText = 'width:100%;box-sizing:border-box;font-family:monospace;background:var(--bg-secondary);color:var(--text-primary);';
+    textEl.replaceChildren(codeEditor);codeEditor.focus();
+    codeEditor.setSelectionRange(originalText.length, originalText.length);
+  } else {
+    textEl.focus();
+    const range = document.createRange();range.selectNodeContents(textEl);range.collapse(false);
+    window.getSelection()?.removeAllRanges();window.getSelection()?.addRange(range);
+  }
 
   const hint = document.createElement('div');
   hint.id = '_editHint';
   hint.style.cssText = 'font-size:11px;color:var(--text-muted);margin-top:4px;';
   hint.innerHTML = '<span role="button" tabindex="0" style="color:var(--accent-green);cursor:pointer;">✓ Save</span>  <span role="button" tabindex="0" style="cursor:pointer;">✕ Cancel</span>  <span style="color:var(--text-muted);">· or Enter / Esc</span>';
+  if (isCode) hint.lastElementChild.textContent = '· or Ctrl+Enter / Esc';
   const saveControl = hint.querySelector('span');
   const cancelControl = hint.querySelector('span:nth-child(2)');
   saveControl.onclick = () => saveEditMsg(saveControl, msgId);
@@ -1129,8 +1154,8 @@ function startEditMsg(msgGroup, originalText, msgId) {
   for (const control of [saveControl, cancelControl]) control.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); control.click(); } };
   textEl.parentNode.insertBefore(hint, textEl.nextSibling);
 
-  textEl.onkeydown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveEditMsg(hint.querySelector('span'), msgId); }
+  (codeEditor || textEl).onkeydown = (e) => {
+    if (e.key === 'Enter' && (isCode ? e.ctrlKey || e.metaKey : !e.shiftKey)) { e.preventDefault(); saveEditMsg(hint.querySelector('span'), msgId); }
     if (e.key === 'Escape') cancelEditMsg(hint.querySelector('span:nth-child(2)'), originalText);
   };
 }
@@ -1142,7 +1167,8 @@ async function saveEditMsg(el, msgId) {
   const textEl = msgContent.querySelector('.msg-text');
   if (!textEl) return;
 
-  const newContent = textEl.textContent?.trim();
+  const type = textEl.closest('[data-msg-id]')?.dataset.contentType;
+  const newContent = type === 'code' ? textEl.querySelector('textarea')?.value ?? textEl.textContent : textEl.textContent?.trim();
   textEl.contentEditable = 'false';
   textEl.style.outline = '';
   textEl.style.padding = '';
@@ -1163,7 +1189,7 @@ async function saveEditMsg(el, msgId) {
     });
     const savedContent = updated?.message?.content ?? newContent;
     textEl.closest('[data-msg-id]').dataset.rawContent = savedContent;
-    textEl.innerHTML = _renderMsgContent(savedContent);
+    textEl.innerHTML = _renderMessageBody(savedContent, type);
     const editedTag = document.createElement('span');
     editedTag.className = 'edited-tag';
     editedTag.textContent = '(edited)';
@@ -1187,7 +1213,7 @@ function cancelEditMsg(el, original) {
     textEl.contentEditable = 'false';
     textEl.style.outline = '';
     textEl.style.padding = '';
-    textEl.innerHTML = _renderMsgContent(original);
+    textEl.innerHTML = _renderMessageBody(original, textEl.closest('[data-msg-id]')?.dataset.contentType);
   }
   hint.remove();
 }
@@ -1254,6 +1280,7 @@ async function handleFileUpload(input, type) {
   const generation = ++attachmentUploadGeneration;
   const fd = new FormData();
   fd.append('file', file);
+  fd.append('target', String(targetChannel));
   try {
     showToast('📎 Uploading…', 'info');
     if (window.ECOLLAB?.resumableUploads && !window.EcollabUploads) throw new Error('Upload controls failed to load. Refresh the page.');
@@ -1266,7 +1293,7 @@ async function handleFileUpload(input, type) {
     }
     if (data.success) {
       pendingAttachment = data;
-      showAttachmentPreview(data, type);
+      showAttachmentPreview({...data,url:data.mime_type?.startsWith('image/') ? URL.createObjectURL(file) : data.url}, type);
       showToast('📎 File ready to send', 'success');
     } else {
       showToast('Upload failed: ' + (data.error || 'unknown error'), 'info');
@@ -1287,6 +1314,8 @@ function showAttachmentPreview(attachment, type) {
     preview.style.cssText = 'padding:8px 12px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;';
     wrapper?.appendChild(preview);
   }
+  const previous = preview.querySelector('img')?.src;
+  if (previous?.startsWith('blob:')) URL.revokeObjectURL(previous);
   const isImage = attachment.mime_type?.startsWith('image/');
   preview.innerHTML = `
     ${isImage ? `<img src="${escHtml(attachment.url)}" style="height:40px;border-radius:4px;">` : '<span style="font-size:20px;">📎</span>'}
@@ -1301,6 +1330,8 @@ function showAttachmentPreview(attachment, type) {
 function clearAttachmentPreview() {
   attachmentUploadGeneration++;
   pendingAttachment = null;
+  const image = document.querySelector('#_attachPreview img')?.src;
+  if (image?.startsWith('blob:')) URL.revokeObjectURL(image);
   document.getElementById('_attachPreview')?.remove();
 }
 

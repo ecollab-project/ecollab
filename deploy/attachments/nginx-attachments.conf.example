@@ -1,0 +1,11 @@
+# Include BEFORE generic/static regex locations inside the isolated server block.
+# No ^~ /uploads/ static location may bypass this authorization route.
+location ~ ^/uploads/([^/]+|threads/.+)$ {
+    set $attachment_path uploads/$1;
+    include fastcgi_params;
+    fastcgi_param SCRIPT_FILENAME $document_root/API/attachments/download.php;
+    fastcgi_param SCRIPT_NAME /API/attachments/download.php;
+    fastcgi_param QUERY_STRING path=$attachment_path;
+    fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+}
+# /uploads/avatars/ remains public; Collabs documents retain their existing deny rule/API.

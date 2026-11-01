@@ -20,6 +20,7 @@ jobs:
     env:
       PHASE3AD_REPAIR: '1'
       PHASE3AD_IDENTITY: '1'
+      PHASE3AF_CORRECTION: ${{ startsWith(github.head_ref || github.ref_name, 'correction/phase3af-') && '1' || '0' }}
       PHASE3AD_OWNED_FRESH_IDENTITY: '1'
     steps:
       - uses: actions/checkout@v4

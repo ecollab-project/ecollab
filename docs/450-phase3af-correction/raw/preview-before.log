@@ -1,0 +1,15 @@
+AssertionError [ERR_ASSERTION]: Unbound uploads must preview from local bytes
++ actual - expected
+
++ 'http://localhost/uploads/owned.png'
+- 'blob:http://localhost/owned'
+
+    at /workspace/scratch/5c9d94f07e76/ecollab-phase3af-fix/tests/phase3af-attachment-preview.cjs:10:46
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'http://localhost/uploads/owned.png',
+  expected: 'blob:http://localhost/owned',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
