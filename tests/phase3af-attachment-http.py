@@ -3,7 +3,7 @@ import base64,hashlib,http.client,importlib.util,json,os,pathlib,shutil,socket,s
 R=pathlib.Path(__file__).resolve().parents[1]
 s=importlib.util.spec_from_file_location('h',R/'tests/phase3af-gateway.py');h=importlib.util.module_from_spec(s);s.loader.exec_module(h)
 def main():
- out={'status':'FAIL','head':h.git('rev-parse','HEAD'),'tree':h.git('rev-parse','HEAD^{tree}'),'working_diff':h.git('diff','HEAD'),'cases':[],'routing':'gateway forwards upload paths to actual PHP-FPM; nginx NOT RUN'}
+ out={'status':'FAIL','head':h.git('rev-parse','HEAD'),'tree':h.git('rev-parse','HEAD^{tree}'),'working_diff':h.git('diff','HEAD'),'cases':[],'attachment_requests':[],'routing':'gateway forwards upload paths to actual PHP-FPM; nginx NOT RUN'}
  target=pathlib.Path(os.environ.get('PHASE3AF_ATTACHMENT_EVIDENCE',R/'docs/450-phase3af-correction/raw/attachment-http.json'));target.parent.mkdir(parents=True,exist_ok=True)
  with tempfile.TemporaryDirectory(prefix='phase3af-owned-')as tmp:
   nginx=None;nginxport=None;owned_files=[];o=h.Owned(pathlib.Path(tmp),'UTC','+00:00');o.env.update(CHAT_ATTACHMENT_STORAGE=tmp+'/attachments',CHAT_TUS_STORAGE=tmp+'/parts',CHAT_RESUMABLE_UPLOADS='true')
@@ -15,7 +15,8 @@ def main():
    hd={'Cookie':c.cookie}if c else{};hd.update(headers or{})
    if c and c.token:hd['X-CSRF-Token']=c.token
    port=nginxport if nginxport and path.startswith('/uploads/')else o.port
-   conn=http.client.HTTPConnection('127.0.0.1',port,timeout=30);conn.request(method,path,data,hd);r=conn.getresponse();got=(r.status,r.read(),dict(r.getheaders()));conn.close();return got
+   if port==nginxport:hd['Host']='127.0.0.1:'+str(o.port) # one public origin, two owned listeners
+   conn=http.client.HTTPConnection('127.0.0.1',port,timeout=30);conn.request(method,path,data,hd);r=conn.getresponse();got=(r.status,r.read(),dict(r.getheaders()));conn.close();out['attachment_requests'].append({'method':method,'path':path,'actor':c.uid if c else 0,'listener':'nginx'if port==nginxport else'gateway','status':got[0],'bytes':len(got[1]),'sha256':hashlib.sha256(got[1]).hexdigest(),'cache_control':got[2].get('Cache-Control'),'content_type':got[2].get('Content-Type')});return got
   def upload(c,route,fields,content=b'Owned attachment sentinel\n',field='file',name='owned.txt'):
    b='af-'+uuid.uuid4().hex;body=b''
    for k,v in fields.items():body+=('--'+b+'\r\nContent-Disposition: form-data; name="'+k+'"\r\n\r\n'+str(v)+'\r\n').encode()
@@ -33,7 +34,7 @@ def main():
      try:
       with socket.create_connection(('127.0.0.1',nginxport),timeout=.1):break
      except OSError:time.sleep(.05)
-    check('actual nginx startup',nginx.poll()is None);out['routing']='actual nginx with tracked upload location and native PHP-FPM';out['nginx_config_sha256']=hashlib.sha256(cfg.encode()).hexdigest()
+    check('actual nginx startup',nginx.poll()is None);out['routing']='actual nginx with tracked upload location and native PHP-FPM';out['nginx_config_sha256']=hashlib.sha256(cfg.encode()).hexdigest();out['nginx_configuration']=cfg
    elif os.environ.get('PHASE3AF_REQUIRE_NGINX')=='1':raise RuntimeError('Required nginx unavailable')
    actors=[o.registered()for _ in range(4)];a,b,f,x=[v[0]for v in actors];fixture=php('phase3ad-fixture.php',{'users':[v.uid for v in[a,b,f,x]]});cid=fixture['channels']['general'];private=fixture['channels']['private']
    code="  const text = '<img src=x onerror=alert(1)>';\n    console.log(text);\n";r=a.req('/API/chat/send-message.php','POST',{'channel_id':cid,'content_type':'code','content':code});check('code whitespace preserved',r['status']==201 and r['json']['message']['content']==code)
