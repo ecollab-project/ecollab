@@ -1264,6 +1264,7 @@ async function handleFileUpload(input, type) {
   const generation = ++attachmentUploadGeneration;
   const fd = new FormData();
   fd.append('file', file);
+  fd.append('target', String(targetChannel));
   try {
     showToast('📎 Uploading…', 'info');
     if (window.ECOLLAB?.resumableUploads && !window.EcollabUploads) throw new Error('Upload controls failed to load. Refresh the page.');

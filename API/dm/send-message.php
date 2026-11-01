@@ -112,6 +112,11 @@ try {
         (new JarredJobService($db))->reserveConversation((int)$me['id'],$convId);
     }
 
+    if ($attachmentPath !== '') {
+        require_once ROOT_PATH.'/services/AttachmentStore.php';
+        $a=AttachmentStore::configured()->assertOwned($attachmentPath,(int)$me['id'],'dm',$convId);
+        $attachmentName=$a['file_name'];$attachmentSize=$a['file_size'];$attachmentMime=$a['mime_type'];
+    }
     $msgId = RealtimeOutbox::record($db, 'dm', $convId, function () use ($db, $convId, $me, $text, $attachmentPath, $attachmentName, $attachmentSize, $attachmentMime) {
         $ins = $db->prepare(
             "INSERT INTO dm_messages (conversation_id, sender_id, body, attachment_path, attachment_name, attachment_size, attachment_mime)

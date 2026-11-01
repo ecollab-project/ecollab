@@ -113,7 +113,14 @@ function validThreadAttachments(array $items): array {
 }
 
 function saveThreadAttachments(PDO $db, int $threadId, ?int $replyId, array $items, int $uid): void {
-    foreach (validThreadAttachments($items) as $a) {
+    require_once ROOT_PATH.'/services/AttachmentStore.php';$store=AttachmentStore::configured();
+    $q=$db->prepare('SELECT scope,server_id,channel_id FROM threads WHERE id=? AND is_deleted=0');$q->execute([$threadId]);$t=$q->fetch(PDO::FETCH_ASSOC);
+    if(!$t) throw new RuntimeException('Thread not found',404);
+    foreach(validThreadAttachments($items) as $a) {
+        $path=substr($a['url'],strlen(rtrim(BASE_URL,'/'))+1);$receipt=$store->receipt($path);$kind=$receipt['kind']??'';
+        if($kind==='thread' && $replyId!==null) $target=$threadId;
+        else {$kind='thread-'.$t['scope'];$target=$t['scope']==='public'?0:(int)$t[$t['scope'].'_id'];}
+        $owned=$store->assertOwned($path,$uid,$kind,$target);$a['file_name']=$owned['file_name'];$a['mime_type']=$owned['mime_type'];$a['file_size']=$owned['file_size'];
         $s=$db->prepare('INSERT INTO thread_attachments(thread_id,reply_id,file_url,file_name,mime_type,file_size,created_by) VALUES(?,?,?,?,?,?,?)');
         $s->execute([$threadId,$replyId,$a['url'],$a['file_name'],$a['mime_type'],$a['file_size'],$uid]);
     }
@@ -229,10 +236,12 @@ try {
         if ($scope === 'public') { $serverId = null; $channelId = null; }
         if ($scope === 'server') $channelId = null;
 
+        $db->beginTransaction();
         $s = $db->prepare('INSERT INTO threads(title,body,scope,server_id,channel_id,created_by) VALUES(?,?,?,?,?,?)');
         $s->execute([$title, $content, $scope, $serverId ?: null, $channelId ?: null, $uid]);
         $threadId=(int)$db->lastInsertId();
         saveThreadAttachments($db,$threadId,null,is_array($body['attachments'] ?? null)?$body['attachments']:[],$uid);
+        $db->commit();
         threadJson(['thread_id'=>$threadId,'message'=>'Thread created'], 201);
     }
 
@@ -251,11 +260,13 @@ try {
             $p->execute([$parentId, $threadId]);
             if (!$p->fetchColumn()) threadJson(['error' => 'Parent reply not found'], 404);
         }
+        $db->beginTransaction();
         $s = $db->prepare('INSERT INTO thread_replies(thread_id,parent_reply_id,created_by,body) VALUES(?,?,?,?)');
         $s->execute([$threadId, $parentId ?: null, $uid, $content]);
         $replyId=(int)$db->lastInsertId();
         saveThreadAttachments($db,$threadId,$replyId,is_array($body['attachments'] ?? null)?$body['attachments']:[],$uid);
         $db->prepare('UPDATE threads SET updated_at=NOW() WHERE id=?')->execute([$threadId]);
+        $db->commit();
         $recipients = [(int)$thread['created_by']];
         if ($parentId) {
             $parent = $db->prepare('SELECT created_by FROM thread_replies WHERE id=? AND thread_id=?');
@@ -343,6 +354,7 @@ try {
 
     threadJson(['error' => 'Unknown action'], 400);
 } catch (Throwable $e) {
+    if ($db->inTransaction()) $db->rollBack();
     error_log('[threads] ' . $e->getMessage());
     threadJson(['error' => 'Thread service unavailable'], 500);
 }

@@ -230,6 +230,12 @@ class MessageService
             $content = $pollQuestion;
         }
 
+        if (!empty($data['attachment_path'])) {
+            require_once __DIR__.'/AttachmentStore.php';
+            $a=AttachmentStore::configured()->assertOwned((string)$data['attachment_path'],$senderId,'channel',$channelId);
+            $data['attachment_name']=$a['file_name'];$data['attachment_size']=$a['file_size'];$data['attachment_mime']=$a['mime_type'];
+        }
+
         // Poll, options and message must commit together even when the broker is off.
         $ownsPollTransaction = $contentType === 'poll' && !$this->db->inTransaction();
         if ($ownsPollTransaction) $this->db->beginTransaction();

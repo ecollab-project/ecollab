@@ -9,12 +9,13 @@ async function req(url,opt={}){
   if(!r.ok||d.success===false)throw new Error(d.error||d.message||'Request failed');
   return d;
 }
-async function upload(files){
+async function upload(files,destination){
   const out=[];
   for(const f of Array.from(files||[])){
     if(f.size>10*1024*1024)throw new Error(f.name+': max image size is 10 MB');
     if(!['image/jpeg','image/png','image/gif','image/webp'].includes(f.type))throw new Error(f.name+': only JPG, PNG, GIF or WebP images are allowed');
     const fd=new FormData(); fd.append('image',f);
+    Object.entries(destination).forEach(([key,value])=>fd.append(key,String(value)));
     out.push(await req(base()+'/API/threads/upload-image.php',{method:'POST',body:fd}));
   }
   return out;
@@ -54,8 +55,8 @@ window.createThreadV2=async function(){
   const scope=window._threadCreateScope||'public',sid=Number(window.ECOLLAB?.currentServerId||0);
   if(!title||(!body&&!files?.length)){window.showToast?.('Add a title and either text or an image.','info');return;}
   try{
-    const attachments=normalizedAttachments(await upload(files));
-    await req(api,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'create',title,body,scope,server_id:sid,attachments})});
+    const attachments=normalizedAttachments(await upload(files,{scope,server_id:sid,channel_id:Number(window.ECOLLAB?.currentChannelId||0)}));
+    await req(api,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'create',title,body,scope,server_id:sid,channel_id:Number(window.ECOLLAB?.currentChannelId||0),attachments})});
     originalCloseCreate?.(); window.showToast?.('Discussion posted.','success');
     window.loadThreadsV2?.(scope);
   }catch(e){window.showToast?.(e.message,'error');}
@@ -106,7 +107,7 @@ window.threadPostReply=async function(id){
   const input=document.getElementById('tv2ReplyInput'),body=input?.value.trim(),files=document.getElementById('tv2EnhReplyImages')?.files;
   if(!body&&!files?.length){window.showToast?.('Add text, an image, or both.','info');return;}
   try{
-    const attachments=normalizedAttachments(await upload(files));
+    const attachments=normalizedAttachments(await upload(files,{thread_id:id}));
     await req(api,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'reply',thread_id:id,parent_reply_id:parentReply,body,attachments})});
     parentReply=0; input.value=''; const fi=document.getElementById('tv2EnhReplyImages'); if(fi)fi.value='';
     const f=document.getElementById('tv2EnhReplyFiles');if(f)f.textContent='No images selected';

@@ -6,6 +6,8 @@ require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 
+require_once ROOT_PATH.'/services/AttachmentStore.php';
+require_once ROOT_PATH.'/services/ChatUploadAccess.php';
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
 $user = AuthMiddleware::requireAuth(true);
@@ -16,6 +18,9 @@ AuthMiddleware::verifyCsrf();
 session_write_close();
 
 try {
+    $kind='channel';$target=(int)($_POST['target'] ?? 0);
+    if (!in_array($kind,['channel','dm','group'],true)) throw new RuntimeException('Invalid destination',400);
+    ChatUploadAccess::check(Database::getInstance(),(int)$user['id'],$kind,$target);
     if (empty($_FILES['file'])) {
         $tooLarge = (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 20 * 1024 * 1024;
         http_response_code($tooLarge ? 413 : 400);
@@ -29,8 +34,7 @@ try {
     $finfo=new finfo(FILEINFO_MIME_TYPE); $mimeType=$finfo->file($file['tmp_name']);
     if(!in_array($mimeType,$allowedMimes,true)) throw new RuntimeException('File type not allowed: '.htmlspecialchars($mimeType),400);
     $originalName=preg_replace('/[^a-zA-Z0-9._\-]/','_',basename($file['name'])); $extension=strtolower(pathinfo($originalName,PATHINFO_EXTENSION)); $imageExtensions=['image/jpeg'=>'jpg','image/png'=>'png','image/gif'=>'gif','image/webp'=>'webp']; if(isset($imageExtensions[$mimeType])) $extension=$imageExtensions[$mimeType]; $uniqueName=sprintf('%s_%s.%s',date('Ymd_His'),bin2hex(random_bytes(6)),$extension);
-    $uploadDir=UPLOAD_DIR; if(!is_dir($uploadDir)&&!mkdir($uploadDir,0750,true)) throw new RuntimeException('Upload directory creation failed',500);
-    $destination=$uploadDir.$uniqueName; if(!move_uploaded_file($file['tmp_name'],$destination)) throw new RuntimeException('Failed to move uploaded file',500);
+    AttachmentStore::configured()->put($file['tmp_name'],'uploads/'.$uniqueName,(int)$user['id'],$kind,$target,$originalName,$mimeType);
     echo json_encode(['success'=>true,'file_name'=>$originalName,'file_path'=>'uploads/'.$uniqueName,'file_size'=>$file['size'],'mime_type'=>$mimeType,'url'=>BASE_URL.'/uploads/'.$uniqueName]);
 } catch(RuntimeException $e) { $code=($e->getCode()>=400&&$e->getCode()<600)?$e->getCode():500; http_response_code($code); echo json_encode(['error'=>$e->getMessage()]); }
 catch(Throwable $e){http_response_code(500);echo json_encode(['error'=>'Server error']);}

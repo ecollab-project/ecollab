@@ -11,9 +11,11 @@ final class ChatTusStorage
     private string $root;
     private string $destination;
     private string $baseUrl;
+    private $finalize;
 
-    public function __construct(string $root, string $destination, string $baseUrl)
+    public function __construct(string $root, string $destination, string $baseUrl, ?callable $finalize = null)
     {
+        $this->finalize = $finalize;
         $this->root = rtrim($root, '/');
         $this->destination = rtrim($destination, '/');
         $this->baseUrl = rtrim($baseUrl, '/');
@@ -130,7 +132,9 @@ final class ChatTusStorage
         $name = 'tus_' . $id . '.' . $extensions[$mime];
         $dest = $this->destination . '/' . $name;
         // Copy rather than move so a crash before the metadata commit can be retried.
-        if (!copy($part, $dest) || !chmod($dest, 0640)) throw new RuntimeException('Upload finalization failed.', 503);
+        if ($this->finalize) {
+            ($this->finalize)($part,'uploads/'.$name,$meta,$mime);
+        } elseif (!copy($part,$dest) || !chmod($dest,0640)) throw new RuntimeException('Upload finalization failed.',503);
         $result = ['success'=>true,'file_name'=>$meta['name'],'file_path'=>'uploads/'.$name,
             'file_size'=>$meta['length'],'mime_type'=>$mime,'url'=>$this->baseUrl.'/uploads/'.$name];
         $meta['result'] = $result;

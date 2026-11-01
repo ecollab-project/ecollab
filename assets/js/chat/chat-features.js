@@ -2538,6 +2538,9 @@ async function _selectThreadImage(input) {
   }
   const fd = new FormData();
   fd.append('image', file);
+  fd.append('scope',document.getElementById('threadScopeInput')?.value || 'public');
+  fd.append('server_id',String(window.ECOLLAB?.currentServerId || 0));
+  fd.append('channel_id',String(window.ECOLLAB?.currentChannelId || 0));
   try {
     const base = window.ECOLLAB?.baseUrl || '';
     const res = await fetch(`${base}/API/threads/upload-image.php`, {
@@ -2553,7 +2556,7 @@ async function _selectThreadImage(input) {
     if (preview) {
       preview.style.display = 'block';
       preview.innerHTML = `<div style="position:relative;display:inline-block;max-width:100%;">
-        <img src="${_esc(d.url)}" alt="Thread image preview" style="display:block;max-width:100%;max-height:240px;border-radius:9px;border:1px solid var(--border);object-fit:cover;">
+        <img src="${_esc(URL.createObjectURL(file))}" alt="Thread image preview" style="display:block;max-width:100%;max-height:240px;border-radius:9px;border:1px solid var(--border);object-fit:cover;">
         <button type="button" onclick="_clearThreadImage()" style="position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,.7);color:#fff;cursor:pointer;">×</button>
       </div>`;
     }
