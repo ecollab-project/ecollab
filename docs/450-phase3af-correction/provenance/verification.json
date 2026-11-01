@@ -1,0 +1,26 @@
+{
+  "command": [
+    "python3",
+    "tests/phase3af-provenance-reconcile.py",
+    "../phase3af-final-full.zip",
+    "docs/450-phase3af-correction/final/hosted-raw.tar.gz",
+    "docs/450-phase3af-correction/provenance"
+  ],
+  "exit_code": 0,
+  "stdout": "{\"status\": \"PASS \\u2014 provenance reconciled; environment gate unaffected\", \"changed_records\": 3, \"original_reference_counts\": {\"recomputed-summary.json\": 17, \"integration-summary.json\": 21, \"phase3af-summary.json\": 22}, \"derived_stale_references\": 4}",
+  "corrupted_zip_control": {
+    "expected": "rejected before output",
+    "exit_code": 1,
+    "outcome": "PASS"
+  },
+  "input_sha256_before": [
+    "e40036c33bbd1706c3f4441523f6353d8112413753788bd9452e5b5ed49f93e2",
+    "7784ec90949873335eaf53052330c52dc58a84d9087072edfceb434848bbee87"
+  ],
+  "input_sha256_after": [
+    "e40036c33bbd1706c3f4441523f6353d8112413753788bd9452e5b5ed49f93e2",
+    "7784ec90949873335eaf53052330c52dc58a84d9087072edfceb434848bbee87"
+  ],
+  "input_archives_unchanged": true,
+  "full_runtime_suites_rerun": "NOT RUN \u2014 no application changes"
+}

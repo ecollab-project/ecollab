@@ -1,5 +1,7 @@
 # Phase 3AF corrected candidate — independent audit handoff
 
+**November1 provenance addendum:** See [the reconciliation](450-phase3af-provenance-reconciliation.md) and [separate original/later manifests](450-phase3af-correction/provenance/provenance-ledger.json). The historical `hosted-raw` TAR/manifest describe post-download recomputation; three derived hash-map reports differ from the original ZIP, with unchanged verdict payloads. Original hosted report bytes are now preserved separately. Four later derived-summary references are explicitly recorded as stale. See the [selected VPS proposal](450-phase3af-hostinger-defense-proposal.md); no VPS operation has been performed.
+
 Engineering verification: PASS within isolated tested scope. Independent acceptance is PENDING. Full defense certification remains BLOCKED pending independent audit and final stable-environment acceptance. Phase 3AG has not begun.
 
 Draft PR: https://github.com/ecollab-project/ecollab/pull/105

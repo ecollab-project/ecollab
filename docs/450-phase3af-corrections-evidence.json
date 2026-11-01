@@ -5613,5 +5613,26 @@
     "No deployment or Hostinger operations",
     "No live mail",
     "No Phase3AG advancement before independent acceptance"
-  ]
+  ],
+  "evidence_provenance": {
+    "status": "reconciled; original and post-recomputation representations distinct",
+    "original_hosted_artifact_id": 13079396055,
+    "original_zip_sha256": "e40036c33bbd1706c3f4441523f6353d8112413753788bd9452e5b5ed49f93e2",
+    "later_archive_sha256": "7784ec90949873335eaf53052330c52dc58a84d9087072edfceb434848bbee87",
+    "later_archive_representation": "post-download recomputation, not byte-identical original reports",
+    "separate_manifests": "450-phase3af-correction/provenance/provenance-ledger.json",
+    "original_summary_copies": "450-phase3af-correction/provenance/original-*.json.gz",
+    "non_hash_summary_payloads_unchanged": true,
+    "changed_derived_summaries": 3,
+    "later_stale_derived_summary_references": 4,
+    "source_record_hash_mismatches": 0,
+    "details": "450-phase3af-provenance-reconciliation.md"
+  },
+  "defense_host_followup": {
+    "selected": "Hostinger VPS",
+    "inventory": "NOT RUN",
+    "operations": "NOT AUTHORIZED under uploaded handoff",
+    "proposal": "450-phase3af-hostinger-defense-proposal.md",
+    "phase3ag": "BLOCKED"
+  }
 }
