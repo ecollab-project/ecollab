@@ -46,11 +46,17 @@ $d->exec('DELETE FROM servers WHERE id=3');check((int)$d->query('SELECT COUNT(*)
 // receives1062 after the winner commits; both commit and rollback paths matter.
 foreach(['commit','rollback'] as $finish){
  fresh($d);repair($d);$d->beginTransaction();$d->exec("INSERT INTO collab_workspaces(channel_id,server_id,name,host_id) VALUES(20,2,'winner',1)");
- $script=tempnam(sys_get_temp_dir(),'cw025-child-');file_put_contents($script,'<?php $d=new PDO('.var_export($dsn,true).',"root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);echo "ready:".$d->query("SELECT CONNECTION_ID()")->fetchColumn()."\\n";fflush(STDOUT);$d->exec("SET innodb_lock_wait_timeout=10");try{$d->exec("INSERT INTO collab_workspaces(channel_id,server_id,name,host_id) VALUES(20,2,\'contender\',1)");echo "created";}catch(PDOException $e){echo $e->errorInfo[1];}');
- $proc=proc_open([PHP_BINARY,$script],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);fclose($pipes[0]);$ready=trim((string)fgets($pipes[1]));check((bool)preg_match('/^ready:([1-9][0-9]*)$/D',$ready,$match),'Contender did not reach write barrier');$childId=(int)$match[1];$waiting=false;$startWait=hrtime(true);$deadline=$startWait+5_000_000_000;
+ $script=tempnam(sys_get_temp_dir(),'cw025-child-');file_put_contents($script,'<?php $d=new PDO('.var_export($dsn,true).',"root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);echo "ready:".$d->query("SELECT CONNECTION_ID()")->fetchColumn()."\\n";fflush(STDOUT);if(trim((string)fgets(STDIN))!=="go")throw new RuntimeException("Parent did not release contender");$d->exec("SET innodb_lock_wait_timeout=10");try{$d->exec("INSERT INTO collab_workspaces(channel_id,server_id,name,host_id) VALUES(20,2,\'contender\',1)");echo "created";}catch(PDOException $e){echo $e->errorInfo[1];}');
+ $proc=proc_open([PHP_BINARY,$script],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);$ready=trim((string)fgets($pipes[1]));check((bool)preg_match('/^ready:([1-9][0-9]*)$/D',$ready,$match),'Contender did not reach write barrier');$childId=(int)$match[1];
+ // Source: https://github.com/MariaDB/server/blob/mariadb-10.11.14/storage/innobase/trx/trx0i_s.cc
+ // MariaDB 10.11.14 trx0i_s.cc requires more than 100 ms since the last cache
+ // read before refreshing this diagnostic snapshot. Prime an empty snapshot
+ // before releasing the child, then leave 250 ms between reads.
+ usleep(150000);$prime=$d->query('SELECT COUNT(*) FROM information_schema.INNODB_LOCK_WAITS');check((int)$prime->fetchColumn()===0,'Unexpected wait before contender release');$prime->closeCursor();
+ fwrite($pipes[0],"go\n");fflush($pipes[0]);fclose($pipes[0]);$waiting=false;$startWait=hrtime(true);$deadline=$startWait+5_000_000_000;
  // The child write barrier precedes SQL execution. Allow bounded scheduling
  // and diagnostic visibility delay; require that exact transaction to wait.
- do{$q=$d->prepare('SELECT COUNT(*) FROM information_schema.INNODB_LOCK_WAITS w JOIN information_schema.INNODB_TRX t ON t.trx_id=w.requesting_trx_id WHERE t.trx_mysql_thread_id=?');$q->execute([$childId]);if((int)$q->fetchColumn()>0){$waiting=true;break;}if(!proc_get_status($proc)['running'])break;usleep(20000);}while(hrtime(true)<$deadline);
+ do{$q=$d->prepare('SELECT COUNT(*) FROM information_schema.INNODB_LOCK_WAITS w JOIN information_schema.INNODB_TRX t ON t.trx_id=w.requesting_trx_id WHERE t.trx_mysql_thread_id=?');$q->execute([$childId]);if((int)$q->fetchColumn()>0){$waiting=true;break;}if(!proc_get_status($proc)['running'])break;usleep(250000);}while(hrtime(true)<$deadline);
  if(!$waiting || !proc_get_status($proc)['running']) {
   // Diagnostic reads use an independent connection; do not relax the assertion.
   try {
