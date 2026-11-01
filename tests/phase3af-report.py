@@ -9,6 +9,7 @@ try:
  if os.environ.get('PHASE3AF_CORRECTION')!='1':assert source['runtime_change']=='NONE'
  if core['readiness']!='PASS':out['blockers'].append('Previously required security/regression/integration core failed or incomplete')
  if installed['status']!='PASS':out['blockers'].append('Installed candidate validation: '+installed['status']+' '+installed.get('error',''))
+ if os.environ.get('PHASE3AF_CORRECTION')=='1' and installed.get('post_restore_authorization',{}).get('status')!='PASS':out['blockers'].append('Restored negative attachment authorization not verified')
  if installed.get('backup_restore',{}).get('status')!='PASS':out['blockers'].append('Complete installed backup/restore not verified')
  for c in installed.get('browser',{}).get('cases',[]):
   if c['status']!='PASS':out['blockers'].append(c['name']+': '+c.get('error','FAIL'))

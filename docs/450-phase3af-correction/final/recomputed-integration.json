@@ -1,0 +1,766 @@
+{
+  "readiness": "PASS",
+  "missing_required": [],
+  "required_commands": [
+    {
+      "step": "phase3af-installed-candidate",
+      "command": [
+        "python3",
+        "-B",
+        "tests/phase3af-installed.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793527169.5680196,
+      "finished_epoch": 1793527219.9815207
+    },
+    {
+      "step": "source-gate-and-existing-security-regressions",
+      "command": [
+        "bash",
+        "-e",
+        "tests/phase3ad-step-source-gate-and-existing-security-regressions.sh"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793527220.010166,
+      "finished_epoch": 1793527223.894274
+    },
+    {
+      "step": "full-original-failing-control-and-current-three-orderings-including-native-expiry",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-repair-suite.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793527223.924477,
+      "finished_epoch": 1793527253.538838
+    },
+    {
+      "step": "exact-accepted-phase3x-base-comparison",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-repair-suite.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793527253.5675666,
+      "finished_epoch": 1793527268.3993056
+    },
+    {
+      "step": "exact-accepted-phase3ab-base-comparison",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-repair-suite.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793527268.4282892,
+      "finished_epoch": 1793527284.8509312
+    },
+    {
+      "step": "exact-accepted-phase3ac-source-comparison",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-repair-suite.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793527284.8806314,
+      "finished_epoch": 1793527301.05452
+    },
+    {
+      "step": "actual-corrected-http-hosted-chromium-and-persisted-otp-browser-reset",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-repair-http.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793527301.0832517,
+      "finished_epoch": 1793527345.6226044
+    },
+    {
+      "step": "actual-corrected-native-clocks-sessions-failures-and-legacy-rehearsal",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ac-security.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793527345.6517067,
+      "finished_epoch": 1793527431.102218
+    },
+    {
+      "step": "exact-accepted-phase3y-comparison",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-repair-suite.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793527431.1315367,
+      "finished_epoch": 1793527446.0415199
+    },
+    {
+      "step": "exact-accepted-phase3z-comparison",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-repair-suite.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793527446.069951,
+      "finished_epoch": 1793527461.0141962
+    },
+    {
+      "step": "frozen-original-clock-transition-and-double-consumption-controls",
+      "command": [
+        "bash",
+        "-e",
+        "tests/phase3ad-step-frozen-original-clock-transition-and-double-consumption-controls.sh"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793527461.046178,
+      "finished_epoch": 1793527507.0838032
+    },
+    {
+      "step": "exact-base-static-comparison",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/peer-threads-static.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793527507.112825,
+      "finished_epoch": 1793527529.6543553
+    },
+    {
+      "step": "recompute-actual-security-acceptance-from-raw-records",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B tests/phase3ac-report.py phase3ad-raw"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793527529.6886675,
+      "finished_epoch": 1793527529.7741256
+    },
+    {
+      "step": "four-migration-compatibility-and-recovery-rehearsal",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/coworkspace-migration-integration.py > phase3ad-raw/migration-compatibility.log 2>&1"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793527529.809489,
+      "finished_epoch": 1793527535.2547743
+    },
+    {
+      "step": "actual-code-poll-message-compatibility",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B tests/phase3ad-message-compatibility.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793527535.2837758,
+      "finished_epoch": 1793527566.8073993
+    },
+    {
+      "step": "authoritative-identity-contract",
+      "command": [
+        "python3",
+        "-B",
+        "tests/phase3ad-identity.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793527566.839119,
+      "finished_epoch": 1793527575.229174
+    },
+    {
+      "step": "actual-composed-student-facilitator-collaboration-http-and-chromium",
+      "command": [
+        "bash",
+        "-e",
+        "-c",
+        "python3 -B -u tests/phase3ad-http.py"
+      ],
+      "exit_code": 0,
+      "started_epoch": 1793527575.2576723,
+      "finished_epoch": 1793527594.2882025
+    }
+  ],
+  "step_blockers": [],
+  "blockers": [],
+  "integration_http_status": "PASS",
+  "matching": {
+    "status": "PASS",
+    "http_status": 200,
+    "response": {
+      "ok": true,
+      "matches": [
+        {
+          "id": 12,
+          "name": "Owned Synthetic Actor",
+          "detail": "Student",
+          "bio": "",
+          "pct": 58,
+          "engine": "rules-v1",
+          "semantic": null,
+          "weights": {
+            "subjects": 35,
+            "style": 25,
+            "interests": 25,
+            "hobbies": 15,
+            "semantic": 0
+          },
+          "type": "student",
+          "role": "student",
+          "is_online": false,
+          "online": false,
+          "style_label": "Solo",
+          "study_style": "solo",
+          "score_total": 58.16,
+          "score_subjects": 94.75,
+          "score_style": 100,
+          "score_interests": 0,
+          "score_hobbies": 0,
+          "shared_subjects": [
+            {
+              "subject_id": 1,
+              "role": "studying",
+              "proficiency": "intermediate",
+              "name": "Mathematics"
+            }
+          ],
+          "shared_interests": [],
+          "shared_hobbies": [],
+          "tags": [
+            "Shared subject",
+            "Same study style",
+            "Compatible availability",
+            "Shared learning goal"
+          ],
+          "components": {
+            "subjects": 94.75,
+            "style": 100,
+            "interests": 0,
+            "hobbies": 0,
+            "semantic": null
+          },
+          "already_connected": false,
+          "request_status": null,
+          "avatar_url": "",
+          "grad": "#FF2D75,#9F3BFF"
+        },
+        {
+          "id": 5,
+          "name": "Fatima Santos",
+          "detail": "Student",
+          "bio": "",
+          "pct": 13,
+          "engine": "rules-v1",
+          "semantic": null,
+          "weights": {
+            "subjects": 35,
+            "style": 25,
+            "interests": 25,
+            "hobbies": 15,
+            "semantic": 0
+          },
+          "type": "student",
+          "role": "student",
+          "is_online": true,
+          "online": true,
+          "style_label": "",
+          "study_style": null,
+          "score_total": 12.5,
+          "score_subjects": 0,
+          "score_style": 50,
+          "score_interests": 0,
+          "score_hobbies": 0,
+          "shared_subjects": [],
+          "shared_interests": [],
+          "shared_hobbies": [],
+          "tags": [],
+          "components": {
+            "subjects": 0,
+            "style": 50,
+            "interests": 0,
+            "hobbies": 0,
+            "semantic": null
+          },
+          "already_connected": false,
+          "request_status": null,
+          "avatar_url": "",
+          "grad": "#a855f7,#ec4899"
+        },
+        {
+          "id": 6,
+          "name": "John Doe",
+          "detail": "Student",
+          "bio": "",
+          "pct": 13,
+          "engine": "rules-v1",
+          "semantic": null,
+          "weights": {
+            "subjects": 35,
+            "style": 25,
+            "interests": 25,
+            "hobbies": 15,
+            "semantic": 0
+          },
+          "type": "student",
+          "role": "student",
+          "is_online": true,
+          "online": true,
+          "style_label": "",
+          "study_style": null,
+          "score_total": 12.5,
+          "score_subjects": 0,
+          "score_style": 50,
+          "score_interests": 0,
+          "score_hobbies": 0,
+          "shared_subjects": [],
+          "shared_interests": [],
+          "shared_hobbies": [],
+          "tags": [],
+          "components": {
+            "subjects": 0,
+            "style": 50,
+            "interests": 0,
+            "hobbies": 0,
+            "semantic": null
+          },
+          "already_connected": false,
+          "request_status": null,
+          "avatar_url": "",
+          "grad": "#3b82f6,#00d4ff"
+        },
+        {
+          "id": 10,
+          "name": "Leyla Ahmed",
+          "detail": "Student",
+          "bio": "",
+          "pct": 13,
+          "engine": "rules-v1",
+          "semantic": null,
+          "weights": {
+            "subjects": 35,
+            "style": 25,
+            "interests": 25,
+            "hobbies": 15,
+            "semantic": 0
+          },
+          "type": "student",
+          "role": "student",
+          "is_online": true,
+          "online": true,
+          "style_label": "",
+          "study_style": null,
+          "score_total": 12.5,
+          "score_subjects": 0,
+          "score_style": 50,
+          "score_interests": 0,
+          "score_hobbies": 0,
+          "shared_subjects": [],
+          "shared_interests": [],
+          "shared_hobbies": [],
+          "tags": [],
+          "components": {
+            "subjects": 0,
+            "style": 50,
+            "interests": 0,
+            "hobbies": 0,
+            "semantic": null
+          },
+          "already_connected": false,
+          "request_status": null,
+          "avatar_url": "",
+          "grad": "#ec4899,#db2777"
+        },
+        {
+          "id": 9,
+          "name": "David Wilson",
+          "detail": "Student",
+          "bio": "",
+          "pct": 13,
+          "engine": "rules-v1",
+          "semantic": null,
+          "weights": {
+            "subjects": 35,
+            "style": 25,
+            "interests": 25,
+            "hobbies": 15,
+            "semantic": 0
+          },
+          "type": "student",
+          "role": "student",
+          "is_online": false,
+          "online": false,
+          "style_label": "",
+          "study_style": null,
+          "score_total": 12.5,
+          "score_subjects": 0,
+          "score_style": 50,
+          "score_interests": 0,
+          "score_hobbies": 0,
+          "shared_subjects": [],
+          "shared_interests": [],
+          "shared_hobbies": [],
+          "tags": [],
+          "components": {
+            "subjects": 0,
+            "style": 50,
+            "interests": 0,
+            "hobbies": 0,
+            "semantic": null
+          },
+          "already_connected": false,
+          "request_status": null,
+          "avatar_url": "",
+          "grad": "#8b5cf6,#6d28d9"
+        }
+      ],
+      "profile_ready": true
+    }
+  },
+  "selected_workflows": "PASS:roles,dashboards,workspace,channelmessage/history,facilitatorannouncement,thread/attachmentmetadata,notifications,access/CSRF",
+  "role_browser": {
+    "status": "PASS",
+    "scope": "Actual role pages/JS and real FPM APIs,real login;no auth or application API stubs;external hosts blocked",
+    "cases": [
+      {
+        "role": "student",
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "status": "PASS",
+        "actual_auth": true,
+        "workspace_refresh": true,
+        "role_dashboard_api": true,
+        "page_errors": []
+      },
+      {
+        "role": "student",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "status": "PASS",
+        "actual_auth": true,
+        "workspace_refresh": true,
+        "role_dashboard_api": true,
+        "page_errors": []
+      },
+      {
+        "role": "facilitator",
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "status": "PASS",
+        "actual_auth": true,
+        "workspace_refresh": true,
+        "role_dashboard_api": true,
+        "page_errors": []
+      },
+      {
+        "role": "facilitator",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "status": "PASS",
+        "actual_auth": true,
+        "workspace_refresh": true,
+        "role_dashboard_api": true,
+        "page_errors": []
+      }
+    ],
+    "version": "151.0.7922.34"
+  },
+  "security_core": {
+    "clock_records": 180,
+    "race_rounds": 8,
+    "two_session_rounds": 5,
+    "four_session_rounds": 3,
+    "single_use": "PASS",
+    "timezone": "PASS"
+  },
+  "accepted_runtime_paths": 55,
+  "repair_scope": {
+    "status": "PASS",
+    "base": "28132097544b555f71fc6b6023fd3dc2ef0f6616",
+    "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+    "tree": "a8502d5da68184d3aa2504231e8083ad88df156f",
+    "allowed_runtime": [
+      "API/attachments/download.php",
+      "API/chat/edit-message.php",
+      "API/chat/resumable-upload.php",
+      "API/chat/upload-file.php",
+      "API/dm/group-message.php",
+      "API/dm/send-message.php",
+      "API/dm/upload-file.php",
+      "API/threads/index.php",
+      "API/threads/upload-image.php",
+      "assets/js/chat/chat-features.js",
+      "assets/js/chat/chat.js",
+      "assets/js/chat/dm-notifications.js",
+      "assets/js/chat/functionality-overrides.js",
+      "assets/js/chat/socket-core.js",
+      "assets/js/chat/threads-enhancements.js",
+      "deploy/attachments/nginx-attachments.conf.example",
+      "services/AttachmentAccess.php",
+      "services/AttachmentStore.php",
+      "services/ChatTusStorage.php",
+      "services/MessageService.php",
+      "uploads/.htaccess"
+    ],
+    "hashes": {
+      "API/attachments/download.php": "158351afbad000d25a683167c3c1c71105128822d863dc002096fe27ade64d66",
+      "API/chat/edit-message.php": "a44fe441bae0f51b698648f4d294b709b9344ea2ccbf84c79c15d2ee37ac9cb4",
+      "API/chat/resumable-upload.php": "d071186845263c7645a4061a38c346544036966764e183c45036b10dc79a66e7",
+      "API/chat/upload-file.php": "e1b5fc10ae16ede434ff558e9907b9776e68305b78de3d858aa7790fdf50e092",
+      "API/dm/group-message.php": "61d9b983e0b9b8495b989569f478ecc89cadc1c3a8f5276980d6cb4ffb296e6e",
+      "API/dm/send-message.php": "617f5152b6464268fa55009916b96ce4beb9d03cfecef2f9e4f74e5d7dcdb07c",
+      "API/dm/upload-file.php": "0c7f542ea75d095f889c38bc25d0a349d0c908c1b116be057207566c494f3bd6",
+      "API/threads/index.php": "f783580c8cae73e2afea004d65512bd2ad17b5330a669fa509ba484d4ba64dcf",
+      "API/threads/upload-image.php": "d1e5d092ec6ab42dac62783765ca4cd6bd784fcf52cd1153ed2dbff5c9bf0795",
+      "assets/js/chat/chat-features.js": "58f567a8ce73445d932f592a2b2a2acd180fc64657e09c14e36e836d1a791fa8",
+      "assets/js/chat/chat.js": "3b9ea88e2f7333da097cc5fe9f0469fbcc419e06d94d1a63681ed1f6e71e8920",
+      "assets/js/chat/dm-notifications.js": "daa2423fd2e5d3784cbfedc783e58fced042b405f71f349ee99b5a958553c7ad",
+      "assets/js/chat/functionality-overrides.js": "d2e1b052a5ec98b9f1ed8f2c1c24cebf345e525ab1106942f7e3a98348bbfe91",
+      "assets/js/chat/socket-core.js": "89302d9936ae9222b128074537bbb85311b9247610b265ee511b8efe29c63403",
+      "assets/js/chat/threads-enhancements.js": "b91bb130a159a5c352d69c604268a55da0c6922c9563003b3f30c1ac41c37c05",
+      "deploy/attachments/nginx-attachments.conf.example": "8c3db6e987c1aa75407ad17e11e66a2185ec155344e539d191ed20f883374f14",
+      "services/AttachmentAccess.php": "480ed9a1959d4b4191bec478ad3596b3467667e9466e6d1ac20eaad9d152d33e",
+      "services/AttachmentStore.php": "c83e6601cda47f3ecf5500c0b85792ef473921128eac5001cd5479c3b10443cd",
+      "services/ChatTusStorage.php": "0e575e174ef1e041ce3f6e0b59e009cf7f281b742701c9a0e37c7906b1232d1a",
+      "services/MessageService.php": "103e171637e7a187601df00265d9437be7a2ef43aa736773a23840464e0d2620",
+      "uploads/.htaccess": "81657cd70c600bacc688f1a36b65e4f0e506cb05f61ba5c555c5977dd79564ff"
+    },
+    "working_diff": "",
+    "otp_blob": "7013114a3a7bc0d183c01fc92e0687f06202d3a7"
+  },
+  "message_cases": [
+    {
+      "name": "omitted",
+      "http_status": 201,
+      "expected_type": "text",
+      "status": "PASS",
+      "functional_status": "PASS",
+      "defect_reproduced": false
+    },
+    {
+      "name": "null",
+      "http_status": 201,
+      "expected_type": "text",
+      "status": "PASS",
+      "functional_status": "PASS",
+      "defect_reproduced": false
+    },
+    {
+      "name": "text",
+      "http_status": 201,
+      "expected_type": "text",
+      "status": "PASS",
+      "functional_status": "PASS",
+      "defect_reproduced": false
+    },
+    {
+      "name": "image",
+      "http_status": 201,
+      "expected_type": "image",
+      "status": "PASS",
+      "functional_status": "PASS",
+      "defect_reproduced": false
+    },
+    {
+      "name": "file",
+      "http_status": 201,
+      "expected_type": "file",
+      "status": "PASS",
+      "functional_status": "PASS",
+      "defect_reproduced": false
+    },
+    {
+      "name": "code",
+      "http_status": 201,
+      "expected_type": "code",
+      "status": "PASS",
+      "functional_status": "PASS",
+      "defect_reproduced": false
+    },
+    {
+      "name": "invalid",
+      "http_status": 201,
+      "expected_type": "text",
+      "status": "PASS",
+      "functional_status": "PASS",
+      "defect_reproduced": false
+    },
+    {
+      "name": "array",
+      "http_status": 201,
+      "expected_type": "text",
+      "status": "PASS",
+      "functional_status": "PASS",
+      "defect_reproduced": false
+    },
+    {
+      "name": "poll",
+      "http_status": 201,
+      "expected_type": "poll",
+      "status": "PASS",
+      "functional_status": "PASS",
+      "defect_reproduced": false
+    },
+    {
+      "name": "csrf",
+      "http_status": 403,
+      "status": "PASS"
+    },
+    {
+      "name": "outsider",
+      "http_status": 403,
+      "status": "PASS"
+    },
+    {
+      "name": "private",
+      "http_status": 403,
+      "status": "PASS"
+    },
+    {
+      "name": "announcement",
+      "http_status": 403,
+      "status": "PASS"
+    },
+    {
+      "name": "empty",
+      "http_status": 400,
+      "status": "PASS"
+    },
+    {
+      "name": "one-option",
+      "http_status": 400,
+      "status": "PASS"
+    },
+    {
+      "name": "seven-options",
+      "http_status": 400,
+      "status": "PASS"
+    },
+    {
+      "name": "blank-options",
+      "http_status": 400,
+      "status": "PASS"
+    },
+    {
+      "name": "options-scalar",
+      "http_status": 400,
+      "status": "PASS"
+    },
+    {
+      "name": "options-nested",
+      "http_status": 400,
+      "status": "PASS"
+    },
+    {
+      "name": "question-object",
+      "http_status": 400,
+      "status": "PASS"
+    },
+    {
+      "name": "scalar-body",
+      "http_status": 400,
+      "status": "PASS"
+    },
+    {
+      "name": "array-content",
+      "http_status": 400,
+      "status": "PASS"
+    },
+    {
+      "name": "private-poll-history",
+      "http_status": 403,
+      "status": "PASS"
+    },
+    {
+      "name": "private-poll-parent-member",
+      "http_status": 403,
+      "status": "PASS"
+    },
+    {
+      "name": "private-poll-outsider",
+      "http_status": 403,
+      "status": "PASS"
+    },
+    {
+      "name": "private-poll-csrf",
+      "http_status": 403,
+      "status": "PASS"
+    },
+    {
+      "name": "private-poll-authorized-member",
+      "http_status": 200,
+      "status": "PASS"
+    }
+  ],
+  "excluded_prs": [
+    85,
+    73,
+    72,
+    71,
+    70,
+    69,
+    68,
+    67,
+    66
+  ],
+  "identity_contract": "A-AD-1 owner approved; isolated implementation",
+  "identity_validation": [
+    "Jarred discovery resolves provisioned machine",
+    "matching HTTP200; machine excluded",
+    "human DM roundtrip; outsider/CSRF denial; Jarred CodeLab/preferences denied; authorized queue202; no inference worker executed",
+    "four human writers persist0; HTTP promotion cannot set1; reserved admin request422"
+  ],
+  "file_sha256": {
+    "accepted-phase3z.json": "c1b73118a971e7f02940a32083c6034e241ae67cb9d8d632b34f2f1e4d628c87",
+    "accepted-phase3y.json": "a3e2f2a1f1eb506a7f352d02c292ba79878579c2a5f6ec5569d60bcad29e85aa",
+    "integration-http.json": "b2d38f3ff03e2b49297a0817b72697049c0300274a56facae85a6ac75ad92b8f",
+    "accepted-phase3ab.json": "836cc2ecb36deed28971f02e36da9370950d343747bd5eaffbca48c96883754d",
+    "phase3af-summary.json": "a55ef15e7a76163eed9556fce12302019ce0e1966be317e291ae707b8374b034",
+    "phase3af-installed.json": "09df9ae6452f6aab21647ef954617eccadf455fbe1025f3d70757ddb359670c3",
+    "phase3af-source.json": "658d0dab06c8bcf61a3e67d82aaf9854c83f52d9c181a1fc23f96615f41bbe44",
+    "original-experiments.json": "0907e411682f2b26282ee0a62d35004c0f2ce9ea7edc305e906fdea834f952b6",
+    "message-compatibility.json": "9d41151036daa493cb834d58a70629e38468bf907e558dabeba655db60caa886",
+    "writers.json": "41459e46c446d7d7a879f2689dd313e63062d18b56ef12231ab99b703fdfe7b6",
+    "scope.json": "658d0dab06c8bcf61a3e67d82aaf9854c83f52d9c181a1fc23f96615f41bbe44",
+    "full.json": "b15f20211bd3f67d9baaad5f0ac407eda0e61d6c4702347da1604210ac00799d",
+    "recomputed-summary.json": "41d156576b3607f1b37739d603e053708cce7cd98117fc56cabe105a41f37c88",
+    "original-summary.json": "d05b9775259f182ced269840c1e338bbf1fb9986c8f22beec3dd3e6148ebdc3f",
+    "identity.json": "ce5760e36aab6dc91829c05a95c041d676a9e22dd67ba96778a36403e9888eac",
+    "static.json": "33478a56cee69563c112e14336e12f5d5368af1a3968746aa98050cb3cbd468c",
+    "attachment-http.json": "479d226656cd9e26bc4fca9b57bc86637bf0afd042a0dace92fc4a1e84b6b246",
+    "accepted-phase3ac.json": "6b07d574910a31a2a1b434c6f04799f3ee00f16c695e8f70e23a319f62cbec4d",
+    "security.json": "e32f4bb36b3416fda07fb64cbcc99c2ddaba5d9f1336179f3f845fc7689dcb3b",
+    "http.json": "88c4e008a6ab5b9c48d3875b0c7d0cd6a8d1d9e7fa425929173488c7256cda21",
+    "accepted-base.json": "9c45caf59bdddcb2de04d37f0e7133a0f29989abba542869c27673db96130a2e",
+    "inventory.json": "f2d7f74bb7e70798e0d23a0e40b0385f7c6da57a2fe882247ce118a4ab3a42b4"
+  }
+}

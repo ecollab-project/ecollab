@@ -1,0 +1,130 @@
+{
+  "accepted-base.json": {
+    "bytes": 549825,
+    "sha256": "9c45caf59bdddcb2de04d37f0e7133a0f29989abba542869c27673db96130a2e"
+  },
+  "accepted-phase3ab.json": {
+    "bytes": 549822,
+    "sha256": "836cc2ecb36deed28971f02e36da9370950d343747bd5eaffbca48c96883754d"
+  },
+  "accepted-phase3ac.json": {
+    "bytes": 543884,
+    "sha256": "6b07d574910a31a2a1b434c6f04799f3ee00f16c695e8f70e23a319f62cbec4d"
+  },
+  "accepted-phase3y.json": {
+    "bytes": 549827,
+    "sha256": "a3e2f2a1f1eb506a7f352d02c292ba79878579c2a5f6ec5569d60bcad29e85aa"
+  },
+  "accepted-phase3z.json": {
+    "bytes": 549826,
+    "sha256": "c1b73118a971e7f02940a32083c6034e241ae67cb9d8d632b34f2f1e4d628c87"
+  },
+  "attachment-http.json": {
+    "bytes": 210595,
+    "sha256": "479d226656cd9e26bc4fca9b57bc86637bf0afd042a0dace92fc4a1e84b6b246"
+  },
+  "full.json": {
+    "bytes": 2325490,
+    "sha256": "b15f20211bd3f67d9baaad5f0ac407eda0e61d6c4702347da1604210ac00799d"
+  },
+  "http.json": {
+    "bytes": 1987455,
+    "sha256": "88c4e008a6ab5b9c48d3875b0c7d0cd6a8d1d9e7fa425929173488c7256cda21"
+  },
+  "identity.json": {
+    "bytes": 305395,
+    "sha256": "ce5760e36aab6dc91829c05a95c041d676a9e22dd67ba96778a36403e9888eac"
+  },
+  "integration-http.json": {
+    "bytes": 474531,
+    "sha256": "b2d38f3ff03e2b49297a0817b72697049c0300274a56facae85a6ac75ad92b8f"
+  },
+  "integration-summary.json": {
+    "bytes": 22806,
+    "sha256": "f8cfa728e7fac81263ea7d4e087d728b386d8a2d635460305f204d4b4928416c"
+  },
+  "inventory.json": {
+    "bytes": 82281,
+    "sha256": "f2d7f74bb7e70798e0d23a0e40b0385f7c6da57a2fe882247ce118a4ab3a42b4"
+  },
+  "message-compatibility.json": {
+    "bytes": 2418047,
+    "sha256": "9d41151036daa493cb834d58a70629e38468bf907e558dabeba655db60caa886"
+  },
+  "migration-compatibility.log": {
+    "bytes": 2776,
+    "sha256": "b2b00fb2db2a84bee789e2bca5431293b27d3eb9f00a56d913ae6d1a5e80a0c0"
+  },
+  "original-experiments.json": {
+    "bytes": 1843996,
+    "sha256": "0907e411682f2b26282ee0a62d35004c0f2ce9ea7edc305e906fdea834f952b6"
+  },
+  "original-summary.json": {
+    "bytes": 6676,
+    "sha256": "d05b9775259f182ced269840c1e338bbf1fb9986c8f22beec3dd3e6148ebdc3f"
+  },
+  "phase3af-browser/browser.json": {
+    "bytes": 36660,
+    "sha256": "da424348768008af2849098358971da657cfae8f9654316a6d80c3c6682aa4f5"
+  },
+  "phase3af-installed.json": {
+    "bytes": 441880,
+    "sha256": "09df9ae6452f6aab21647ef954617eccadf455fbe1025f3d70757ddb359670c3"
+  },
+  "phase3af-source.json": {
+    "bytes": 3266,
+    "sha256": "658d0dab06c8bcf61a3e67d82aaf9854c83f52d9c181a1fc23f96615f41bbe44"
+  },
+  "phase3af-summary.json": {
+    "bytes": 9260,
+    "sha256": "cf52858babb33e0ae18d631f721d6b662df1c57a73feaf350c813c86e79cc010"
+  },
+  "recomputation-commands.json": {
+    "bytes": 582,
+    "sha256": "3bfb82249f356d1b8561bc26cd04965c22ff7017fcef2619c0da75e5849eeb6c"
+  },
+  "recomputed-summary.json": {
+    "bytes": 4170,
+    "sha256": "41d156576b3607f1b37739d603e053708cce7cd98117fc56cabe105a41f37c88"
+  },
+  "required-commands.jsonl": {
+    "bytes": 4009,
+    "sha256": "666955ad2d1076a808b6b6ea355537354e89c934d65ecf25b898382abde80580"
+  },
+  "scope.json": {
+    "bytes": 3266,
+    "sha256": "658d0dab06c8bcf61a3e67d82aaf9854c83f52d9c181a1fc23f96615f41bbe44"
+  },
+  "security.json": {
+    "bytes": 3256780,
+    "sha256": "e32f4bb36b3416fda07fb64cbcc99c2ddaba5d9f1336179f3f845fc7689dcb3b"
+  },
+  "static.json": {
+    "bytes": 11023,
+    "sha256": "33478a56cee69563c112e14336e12f5d5368af1a3968746aa98050cb3cbd468c"
+  },
+  "supporting/attachment-http.json": {
+    "bytes": 210462,
+    "sha256": "ed3f7c5dbd7f2104cffc9bbdc8a9071828f24454d53f1f45efebaf15c82a6928"
+  },
+  "supporting/installed-diagnostic.json": {
+    "bytes": 442507,
+    "sha256": "4859f067e962e6e5ed11fa02d1935fa399dc45efd9fee64e570b6c1226553ed3"
+  },
+  "supporting/migration-observer-1.log": {
+    "bytes": 2776,
+    "sha256": "b2b00fb2db2a84bee789e2bca5431293b27d3eb9f00a56d913ae6d1a5e80a0c0"
+  },
+  "supporting/migration-observer-2.log": {
+    "bytes": 2776,
+    "sha256": "b2b00fb2db2a84bee789e2bca5431293b27d3eb9f00a56d913ae6d1a5e80a0c0"
+  },
+  "supporting/migration-observer-3.log": {
+    "bytes": 2776,
+    "sha256": "b2b00fb2db2a84bee789e2bca5431293b27d3eb9f00a56d913ae6d1a5e80a0c0"
+  },
+  "writers.json": {
+    "bytes": 2566,
+    "sha256": "41459e46c446d7d7a879f2689dd313e63062d18b56ef12231ab99b703fdfe7b6"
+  }
+}

@@ -1,0 +1,214 @@
+{
+  "phase": "3AF",
+  "defense_certification": "PENDING independent audit and final stable-environment acceptance",
+  "verification": "PASS within isolated scope",
+  "merge": "NOT AUTHORIZED",
+  "production": "BLOCKED",
+  "blockers": [],
+  "source": {
+    "status": "PASS",
+    "base": "28132097544b555f71fc6b6023fd3dc2ef0f6616",
+    "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+    "tree": "a8502d5da68184d3aa2504231e8083ad88df156f",
+    "allowed_runtime": [
+      "API/attachments/download.php",
+      "API/chat/edit-message.php",
+      "API/chat/resumable-upload.php",
+      "API/chat/upload-file.php",
+      "API/dm/group-message.php",
+      "API/dm/send-message.php",
+      "API/dm/upload-file.php",
+      "API/threads/index.php",
+      "API/threads/upload-image.php",
+      "assets/js/chat/chat-features.js",
+      "assets/js/chat/chat.js",
+      "assets/js/chat/dm-notifications.js",
+      "assets/js/chat/functionality-overrides.js",
+      "assets/js/chat/socket-core.js",
+      "assets/js/chat/threads-enhancements.js",
+      "deploy/attachments/nginx-attachments.conf.example",
+      "services/AttachmentAccess.php",
+      "services/AttachmentStore.php",
+      "services/ChatTusStorage.php",
+      "services/MessageService.php",
+      "uploads/.htaccess"
+    ],
+    "hashes": {
+      "API/attachments/download.php": "158351afbad000d25a683167c3c1c71105128822d863dc002096fe27ade64d66",
+      "API/chat/edit-message.php": "a44fe441bae0f51b698648f4d294b709b9344ea2ccbf84c79c15d2ee37ac9cb4",
+      "API/chat/resumable-upload.php": "d071186845263c7645a4061a38c346544036966764e183c45036b10dc79a66e7",
+      "API/chat/upload-file.php": "e1b5fc10ae16ede434ff558e9907b9776e68305b78de3d858aa7790fdf50e092",
+      "API/dm/group-message.php": "61d9b983e0b9b8495b989569f478ecc89cadc1c3a8f5276980d6cb4ffb296e6e",
+      "API/dm/send-message.php": "617f5152b6464268fa55009916b96ce4beb9d03cfecef2f9e4f74e5d7dcdb07c",
+      "API/dm/upload-file.php": "0c7f542ea75d095f889c38bc25d0a349d0c908c1b116be057207566c494f3bd6",
+      "API/threads/index.php": "f783580c8cae73e2afea004d65512bd2ad17b5330a669fa509ba484d4ba64dcf",
+      "API/threads/upload-image.php": "d1e5d092ec6ab42dac62783765ca4cd6bd784fcf52cd1153ed2dbff5c9bf0795",
+      "assets/js/chat/chat-features.js": "58f567a8ce73445d932f592a2b2a2acd180fc64657e09c14e36e836d1a791fa8",
+      "assets/js/chat/chat.js": "3b9ea88e2f7333da097cc5fe9f0469fbcc419e06d94d1a63681ed1f6e71e8920",
+      "assets/js/chat/dm-notifications.js": "daa2423fd2e5d3784cbfedc783e58fced042b405f71f349ee99b5a958553c7ad",
+      "assets/js/chat/functionality-overrides.js": "d2e1b052a5ec98b9f1ed8f2c1c24cebf345e525ab1106942f7e3a98348bbfe91",
+      "assets/js/chat/socket-core.js": "89302d9936ae9222b128074537bbb85311b9247610b265ee511b8efe29c63403",
+      "assets/js/chat/threads-enhancements.js": "b91bb130a159a5c352d69c604268a55da0c6922c9563003b3f30c1ac41c37c05",
+      "deploy/attachments/nginx-attachments.conf.example": "8c3db6e987c1aa75407ad17e11e66a2185ec155344e539d191ed20f883374f14",
+      "services/AttachmentAccess.php": "480ed9a1959d4b4191bec478ad3596b3467667e9466e6d1ac20eaad9d152d33e",
+      "services/AttachmentStore.php": "c83e6601cda47f3ecf5500c0b85792ef473921128eac5001cd5479c3b10443cd",
+      "services/ChatTusStorage.php": "0e575e174ef1e041ce3f6e0b59e009cf7f281b742701c9a0e37c7906b1232d1a",
+      "services/MessageService.php": "103e171637e7a187601df00265d9437be7a2ef43aa736773a23840464e0d2620",
+      "uploads/.htaccess": "81657cd70c600bacc688f1a36b65e4f0e506cb05f61ba5c555c5977dd79564ff"
+    },
+    "working_diff": "",
+    "otp_blob": "7013114a3a7bc0d183c01fc92e0687f06202d3a7"
+  },
+  "installed_status": "PASS",
+  "browser": [
+    {
+      "name": "facilitator classroom creation and navigation",
+      "status": "PASS",
+      "detail": {
+        "server_id": 8
+      },
+      "network_records": 9
+    },
+    {
+      "name": "channel text UI persistence",
+      "status": "PASS",
+      "detail": {
+        "message_id": 10
+      },
+      "network_records": 21
+    },
+    {
+      "name": "channel native code UI",
+      "status": "PASS",
+      "detail": {
+        "message_id": 11,
+        "submitted": true,
+        "reloaded": true,
+        "literal": true,
+        "edit_cancel": true,
+        "edit_save_reload": true
+      },
+      "network_records": 48
+    },
+    {
+      "name": "public channel poll UI and vote",
+      "status": "PASS",
+      "detail": {
+        "poll_id": 1
+      },
+      "network_records": 12
+    },
+    {
+      "name": "private channel poll UI and outsider denial",
+      "status": "PASS",
+      "detail": {
+        "poll_id": 2,
+        "outsider_status": 403,
+        "negative_control": "real browser fetch;not a positive UI journey"
+      },
+      "network_records": 15
+    },
+    {
+      "name": "peer matching actual UI",
+      "status": "PASS",
+      "detail": {
+        "cards": 5
+      },
+      "network_records": 14
+    },
+    {
+      "name": "human DM actual UI",
+      "status": "PASS",
+      "detail": {
+        "message_id": 1
+      },
+      "network_records": 14
+    },
+    {
+      "name": "threads actual create and read UI",
+      "status": "PASS",
+      "detail": {
+        "thread_id": 2
+      },
+      "network_records": 13
+    },
+    {
+      "name": "notifications actual UI",
+      "status": "PASS",
+      "detail": {
+        "actual_navigation": true
+      },
+      "network_records": 3
+    },
+    {
+      "name": "owned upload send and download composed UI",
+      "status": "PASS",
+      "detail": {
+        "upload_status": 200,
+        "send_status": 201,
+        "download_status": 200,
+        "bytes": 32,
+        "sha256": "08cf3384abefe26a658a963352fdaafcd629a005f15a0056e36678916cd035ff",
+        "anonymous_status": 401,
+        "confidentiality": "anonymous denied by actual PHP download route; nginx is tested separately"
+      },
+      "network_records": 14
+    },
+    {
+      "name": "CSRF and private history browser controls",
+      "status": "PASS",
+      "detail": {
+        "csrf_status": 403,
+        "private_history_status": 403
+      },
+      "network_records": 13
+    }
+  ],
+  "backup_restore": "PASS",
+  "persistent_environment": {
+    "status": "PASS across stop,cold disk restore,restart and fresh login",
+    "state_retained": true,
+    "services": "stopped after bounded verification;owned disk state retained",
+    "durability_boundary": "runner/workspace lifetime only;no stable external/public defense host provisioned",
+    "configuration_publication": "hashes only;private fixture config/backup not uploaded"
+  },
+  "composed_upload_download": {
+    "status": "PASS",
+    "upload_status": 200,
+    "download_status": 200,
+    "bytes": 41,
+    "sha256": "fb2932b51117a6fc9cb39037f0eae629d90e8830bf4486ec14939dc74f3403bf",
+    "scope": "actual FPM upload, message binding and authenticated download"
+  },
+  "retained_gates": [
+    "ws_tokens canonical capacity cleanup excluded",
+    "external integrations/live inference not certified",
+    "existing DB069/production OTP cutover,TLS/proxy/durability not approved",
+    "no50\u2013100-user capacity certification",
+    "runner disk persistence is not a stable public defense deployment"
+  ],
+  "raw_sha256": {
+    "integration-summary.json": "f8cfa728e7fac81263ea7d4e087d728b386d8a2d635460305f204d4b4928416c",
+    "accepted-phase3z.json": "c1b73118a971e7f02940a32083c6034e241ae67cb9d8d632b34f2f1e4d628c87",
+    "accepted-phase3y.json": "a3e2f2a1f1eb506a7f352d02c292ba79878579c2a5f6ec5569d60bcad29e85aa",
+    "integration-http.json": "b2d38f3ff03e2b49297a0817b72697049c0300274a56facae85a6ac75ad92b8f",
+    "accepted-phase3ab.json": "836cc2ecb36deed28971f02e36da9370950d343747bd5eaffbca48c96883754d",
+    "phase3af-installed.json": "09df9ae6452f6aab21647ef954617eccadf455fbe1025f3d70757ddb359670c3",
+    "phase3af-source.json": "658d0dab06c8bcf61a3e67d82aaf9854c83f52d9c181a1fc23f96615f41bbe44",
+    "original-experiments.json": "0907e411682f2b26282ee0a62d35004c0f2ce9ea7edc305e906fdea834f952b6",
+    "message-compatibility.json": "9d41151036daa493cb834d58a70629e38468bf907e558dabeba655db60caa886",
+    "writers.json": "41459e46c446d7d7a879f2689dd313e63062d18b56ef12231ab99b703fdfe7b6",
+    "scope.json": "658d0dab06c8bcf61a3e67d82aaf9854c83f52d9c181a1fc23f96615f41bbe44",
+    "full.json": "b15f20211bd3f67d9baaad5f0ac407eda0e61d6c4702347da1604210ac00799d",
+    "recomputed-summary.json": "41d156576b3607f1b37739d603e053708cce7cd98117fc56cabe105a41f37c88",
+    "original-summary.json": "d05b9775259f182ced269840c1e338bbf1fb9986c8f22beec3dd3e6148ebdc3f",
+    "identity.json": "ce5760e36aab6dc91829c05a95c041d676a9e22dd67ba96778a36403e9888eac",
+    "static.json": "33478a56cee69563c112e14336e12f5d5368af1a3968746aa98050cb3cbd468c",
+    "attachment-http.json": "479d226656cd9e26bc4fca9b57bc86637bf0afd042a0dace92fc4a1e84b6b246",
+    "accepted-phase3ac.json": "6b07d574910a31a2a1b434c6f04799f3ee00f16c695e8f70e23a319f62cbec4d",
+    "security.json": "e32f4bb36b3416fda07fb64cbcc99c2ddaba5d9f1336179f3f845fc7689dcb3b",
+    "http.json": "88c4e008a6ab5b9c48d3875b0c7d0cd6a8d1d9e7fa425929173488c7256cda21",
+    "accepted-base.json": "9c45caf59bdddcb2de04d37f0e7133a0f29989abba542869c27673db96130a2e",
+    "inventory.json": "f2d7f74bb7e70798e0d23a0e40b0385f7c6da57a2fe882247ce118a4ab3a42b4"
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "id": 13079396055,
+  "run_id": 41295404805,
+  "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+  "github_digest": "sha256:e40036c33bbd1706c3f4441523f6353d8112413753788bd9452e5b5ed49f93e2",
+  "sha256": "e40036c33bbd1706c3f4441523f6353d8112413753788bd9452e5b5ed49f93e2",
+  "size_in_bytes": 6791485,
+  "url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404805/artifacts/13079396055",
+  "supporting_artifacts": [
+    {
+      "id": 13078588482,
+      "name": "phase3af-attachment-evidence",
+      "size_in_bytes": 12523,
+      "url": "https://api.github.com/repos/ecollab-project/ecollab/actions/artifacts/13078588482",
+      "archive_download_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/artifacts/13078588482/zip",
+      "expired": false,
+      "created_at": "2026-11-01T09:59:39Z",
+      "expires_at": "2027-01-30T09:58:37Z",
+      "updated_at": "2026-11-01T09:59:39Z",
+      "digest": "sha256:9eb551498a6b7d9556d6f396bb993654f0fc8d5faeaae57b40dde48777504dda",
+      "workflow_run": {
+        "id": 41295404812,
+        "repository_id": 1334985087,
+        "head_repository_id": 1334985087,
+        "head_branch": "correction/phase3af-code-attachments-20261030",
+        "head_sha": "f9e63ff750c0a6c6209810e1e37167105875d371"
+      },
+      "download_sha256_verified": true,
+      "path_safety": "PASS"
+    },
+    {
+      "id": 13079156149,
+      "name": "phase3af-migration-observer-evidence",
+      "size_in_bytes": 3442,
+      "url": "https://api.github.com/repos/ecollab-project/ecollab/actions/artifacts/13079156149",
+      "archive_download_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/artifacts/13079156149/zip",
+      "expired": false,
+      "created_at": "2026-11-01T09:59:39Z",
+      "expires_at": "2027-01-30T09:58:37Z",
+      "updated_at": "2026-11-01T09:59:39Z",
+      "digest": "sha256:0c106410fffe2f80aef31bd36877abe16ada849fd88ad72b5016a376d57cc074",
+      "workflow_run": {
+        "id": 41295404916,
+        "repository_id": 1334985087,
+        "head_repository_id": 1334985087,
+        "head_branch": "correction/phase3af-code-attachments-20261030",
+        "head_sha": "f9e63ff750c0a6c6209810e1e37167105875d371"
+      },
+      "download_sha256_verified": true,
+      "path_safety": "PASS"
+    },
+    {
+      "id": 13079330512,
+      "name": "phase3af-installed-candidate-evidence",
+      "size_in_bytes": 5561471,
+      "url": "https://api.github.com/repos/ecollab-project/ecollab/actions/artifacts/13079330512",
+      "archive_download_url": "https://api.github.com/repos/ecollab-project/ecollab/actions/artifacts/13079330512/zip",
+      "expired": false,
+      "created_at": "2026-11-01T10:00:46Z",
+      "expires_at": "2027-01-30T09:58:37Z",
+      "updated_at": "2026-11-01T10:00:46Z",
+      "digest": "sha256:09017e5053c9025b23bd140441839cdb6e75b5a81c2974c75d9e3729cac8d7da",
+      "workflow_run": {
+        "id": 41295404838,
+        "repository_id": 1334985087,
+        "head_repository_id": 1334985087,
+        "head_branch": "correction/phase3af-code-attachments-20261030",
+        "head_sha": "f9e63ff750c0a6c6209810e1e37167105875d371"
+      },
+      "download_sha256_verified": true,
+      "path_safety": "PASS"
+    }
+  ],
+  "zip_entries": 40,
+  "path_safety": "PASS",
+  "download_sha256_verified": true
+}

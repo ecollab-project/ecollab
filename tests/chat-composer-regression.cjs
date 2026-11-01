@@ -29,6 +29,7 @@ w.EcollabPreferences={enabled:()=>false};dm.value='New paragraph';const beforeSe
 panel.remove();await tick();assert.equal(composer.getEditor(dm),undefined);assert(dmEditor.isDestroyed);
 // Inline edit/cancel uses raw Markdown, including quotes, without putting it into handlers.
 const source=fs.readFileSync(require('node:path').join(__dirname,'../assets/js/chat/chat.js'),'utf8');
+w.eval(source.slice(source.indexOf('function _renderMessageBody('),source.indexOf('function timeAgo(')));
 w.eval(source.slice(source.indexOf('function startEditMsg('),source.indexOf('async function deleteMsg(')));
 w._renderMsgContent=composer.render;w.API_BASE='/API/chat';w.currentChannelId=5;
 const row=w.document.createElement('div');row.className='message-group';row.dataset.msgId='55';row.dataset.rawContent="**Study** and 'quoted' text";

@@ -1,0 +1,27 @@
+[
+  {
+    "name": "phase3af-delayed-child-before.log",
+    "sha256": "f8a4ed1eefa685bbcc13aa6d8d91fd2b9c90ea6f0a732c690f54a67d4b293ea1",
+    "gzip_sha256": "671dcd854e29e766c68923e5b99ab6892e1a2cfad0b73491e5527c9712275f10"
+  },
+  {
+    "name": "phase3af-delayed-child-closecursor.log",
+    "sha256": "0a3f34f83cb2d32e6ca6dbfb026778ca2c8b17bc904486859ca17fad7a0070a2",
+    "gzip_sha256": "7f96e88f694997baf7e692a0d387fe2bb0106581aa10406c2d197ad4ad7448d2"
+  },
+  {
+    "name": "phase3af-delayed-child-idle.log",
+    "sha256": "b2b00fb2db2a84bee789e2bca5431293b27d3eb9f00a56d913ae6d1a5e80a0c0",
+    "gzip_sha256": "145594e9b44c09e6be0d02ce15f840641302c4586ef5f59b7cf0347dd68c1bf1"
+  },
+  {
+    "name": "phase3af-cache-idle-final.log",
+    "sha256": "b2b00fb2db2a84bee789e2bca5431293b27d3eb9f00a56d913ae6d1a5e80a0c0",
+    "gzip_sha256": "145594e9b44c09e6be0d02ce15f840641302c4586ef5f59b7cf0347dd68c1bf1"
+  },
+  {
+    "name": "phase3af-primed-fastpoll-control.log",
+    "sha256": "f6d02eae329183a251b155f5cec759e98d5444630e844a632d426064565b0189",
+    "gzip_sha256": "93dc64c7b841ab63ab69302bd724b6419e7345978f4f03ebcca246331af701f4"
+  }
+]

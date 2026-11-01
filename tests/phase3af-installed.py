@@ -85,6 +85,19 @@ def main():
   fresh=h.Client(o).csrf();login=fresh.req('/API/auth/login.php','POST',{'identifier':actors[0][1]['email'],'password':actors[0][1]['password']});h.check(login['json'].get('success'),'fresh restored human login');fresh.csrf();history=fresh.req('/API/chat/get-messages.php?channel_id='+str(fixture['channels']['general']));h.check(history['status']==200,'restored owned channel history')
   conn=http.client.HTTPConnection('127.0.0.1',o.port,timeout=20);conn.request('GET','/'+up['file_path'],headers={'Cookie':fresh.cookie});res=conn.getresponse();h.check(res.status==200 and res.read()==content,'restored private attachment bytes');conn.close()
   out['backup_restore']={'status':'PASS','bundle_sha256':sha(bundle),'bundle_bytes':bundle.stat().st_size,'database_dump_sha256':sha(dump),'source_vendor_upload_files':len(installed_files),'file_manifest_sha256':hashlib.sha256(json.dumps(installed_files,sort_keys=True).encode()).hexdigest(),'schema_data_before':before,'schema_data_after':after,'configuration_sha256':sha(cfg),'cold_database_recreation':True,'services_quiesced_before_file_snapshot':True,'old_sessions_restored':False,'original_checkpoint_preserved':True,'configuration_rebase':['PHASE3Y_PRIVATE and FPM filesystem paths rebound to new owned directory;semantic settings/ports unchanged'],'fresh_authentication':'PASS','restore_command':o.restore_result,'private_backup_published':False,'scope':'complete owned installed snapshot+config+seed/database+uploads;not a production rollback procedure'}
+  restored_checks=[]
+  def restored_read(client,label,expected):
+   conn=http.client.HTTPConnection('127.0.0.1',o.port,timeout=20);conn.request('GET','/'+up['file_path'],headers={'Cookie':client.cookie}if client else{});res=conn.getresponse();body=res.read();status=res.status;conn.close();restored_checks.append({'case':label,'status':status,'expected':expected,'bytes':len(body),'sha256':hashlib.sha256(body).hexdigest()});h.check(status==expected,'restored attachment '+label)
+  def restored_login(index):
+   client=h.Client(o).csrf();result=client.req('/API/auth/login.php','POST',{'identifier':actors[index][1]['email'],'password':actors[index][1]['password']});h.check(result['json'].get('success'),'restored independent actor login');client.uid=actors[index][0].uid;client.csrf();return client
+  restored_read(None,'anonymous denied',401)
+  outsider=restored_login(3);restored_read(outsider,'outsider denied',404)
+  peer=restored_login(1);restored_read(peer,'current member allowed',200)
+  php('phase3ad-identity-control.php',{'action':'scalar','sql':'DELETE FROM server_members WHERE server_id='+str(fixture['server'])+' AND user_id='+str(peer.uid)})
+  restored_read(peer,'revoked member denied',404)
+  php('phase3ad-identity-control.php',{'action':'scalar','sql':'UPDATE messages SET is_deleted=1 WHERE id='+str(sent['json']['message']['id'])})
+  restored_read(fresh,'deleted message denied',404)
+  out['post_restore_authorization']={'status':'PASS','checks':restored_checks,'scope':'actual restored PHP-FPM/database/private-byte store; fixture mutations occur after snapshot equality, original checkpoint and backup preserved'}
   out['persistent_environment']={'status':'PASS across stop,cold disk restore,restart and fresh login','state_retained':True,'services':'stopped after bounded verification;owned disk state retained','durability_boundary':'runner/workspace lifetime only;no stable external/public defense host provisioned','configuration_publication':'hashes only;private fixture config/backup not uploaded'}
   out['requests']=o.records;out['post_restore']=php('phase3af-control.php',{'action':'postbrowser'})
   if out['browser']['status']=='PASS':out['status']='PASS';out['defense_certification']='PENDING independent audit and final environment acceptance'

@@ -1,0 +1,2456 @@
+{
+  "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+  "runs": [
+    {
+      "id": 41295404979,
+      "name": "Chat read and worker performance",
+      "path": ".github/workflows/chat-performance.yml",
+      "event": "pull_request",
+      "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404979"
+    },
+    {
+      "id": 41295404811,
+      "name": "Chat emoji and animated stickers",
+      "path": ".github/workflows/chat-media.yml",
+      "event": "pull_request",
+      "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404811"
+    },
+    {
+      "id": 41295404849,
+      "name": "Chat timeline and profiles",
+      "path": ".github/workflows/chat-timeline.yml",
+      "event": "pull_request",
+      "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404849"
+    },
+    {
+      "id": 41295404882,
+      "name": "Notification regression",
+      "path": ".github/workflows/notifications.yml",
+      "event": "pull_request",
+      "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404882"
+    },
+    {
+      "id": 41295404930,
+      "name": "UI behavior regression",
+      "path": ".github/workflows/ui-consistency.yml",
+      "event": "pull_request",
+      "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404930"
+    },
+    {
+      "id": 41295404890,
+      "name": "Chat resumable uploads",
+      "path": ".github/workflows/chat-uploads.yml",
+      "event": "pull_request",
+      "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404890"
+    },
+    {
+      "id": 41295404868,
+      "name": "Chat delivery",
+      "path": ".github/workflows/chat-delivery.yml",
+      "event": "pull_request",
+      "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404868"
+    },
+    {
+      "id": 41295404819,
+      "name": "Coworkspace migration 025",
+      "path": ".github/workflows/coworkspace-migration.yml",
+      "event": "pull_request",
+      "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404819"
+    },
+    {
+      "id": 41295404812,
+      "name": "Phase 3AF attachment confidentiality",
+      "path": ".github/workflows/phase3af-attachments.yml",
+      "event": "pull_request",
+      "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404812"
+    },
+    {
+      "id": 41295404916,
+      "name": "Phase 3AF migration observation diagnostics",
+      "path": ".github/workflows/phase3af-migration-observer.yml",
+      "event": "pull_request",
+      "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404916"
+    },
+    {
+      "id": 41295404867,
+      "name": "Settings and Jarred runtime",
+      "path": ".github/workflows/settings-runtime.yml",
+      "event": "pull_request",
+      "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404867"
+    },
+    {
+      "id": 41295404965,
+      "name": "Phase 3AD code and poll compatibility",
+      "path": ".github/workflows/phase3ad-message-default.yml",
+      "event": "pull_request",
+      "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404965"
+    },
+    {
+      "id": 41295404817,
+      "name": "Jarred async privacy integration",
+      "path": ".github/workflows/jarred-async.yml",
+      "event": "pull_request",
+      "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404817"
+    },
+    {
+      "id": 41295404838,
+      "name": "Phase 3AF installed candidate diagnostics",
+      "path": ".github/workflows/phase3af-installed.yml",
+      "event": "pull_request",
+      "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404838"
+    },
+    {
+      "id": 41295404861,
+      "name": "Peer matching and thread SQL performance",
+      "path": ".github/workflows/peer-threads-performance.yml",
+      "event": "pull_request",
+      "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404861"
+    },
+    {
+      "id": 41295404805,
+      "name": "Phase 3AF installed defense verification",
+      "path": ".github/workflows/phase3af-verification.yml",
+      "event": "pull_request",
+      "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404805"
+    },
+    {
+      "id": 41295404833,
+      "name": "Phase 3AD integration readiness",
+      "path": ".github/workflows/phase3ad-integration.yml",
+      "event": "pull_request",
+      "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404833"
+    },
+    {
+      "id": 41295401017,
+      "name": "Chat resumable uploads",
+      "path": ".github/workflows/chat-uploads.yml",
+      "event": "push",
+      "head": "f9e63ff750c0a6c6209810e1e37167105875d371",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ecollab-project/ecollab/actions/runs/41295401017"
+    }
+  ],
+  "jobs": [
+    {
+      "run_id": 41295404979,
+      "id": 124815107348,
+      "name": "isolated-comparison",
+      "status": "completed",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404979/job/124815107348",
+      "started_at": "2026-11-01T09:58:39Z",
+      "completed_at": "2026-11-01T10:00:08Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-01T09:58:39Z",
+          "completed_at": "2026-11-01T09:58:40Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-01T09:58:40Z",
+          "completed_at": "2026-11-01T09:58:46Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-01T09:58:46Z",
+          "completed_at": "2026-11-01T09:58:46Z"
+        },
+        {
+          "name": "Install disposable MariaDB and PHP dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-01T09:58:46Z",
+          "completed_at": "2026-11-01T09:59:06Z"
+        },
+        {
+          "name": "Syntax and existing peer/learning regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-01T09:59:06Z",
+          "completed_at": "2026-11-01T09:59:09Z"
+        },
+        {
+          "name": "Existing chat, workspace and queue regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-01T09:59:09Z",
+          "completed_at": "2026-11-01T09:59:28Z"
+        },
+        {
+          "name": "Real MariaDB recent/read/worker profiles",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-01T09:59:28Z",
+          "completed_at": "2026-11-01T10:00:03Z"
+        },
+        {
+          "name": "Chromium lists and accumulated message history",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-11-01T10:00:03Z",
+          "completed_at": "2026-11-01T10:00:05Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-11-01T10:00:05Z",
+          "completed_at": "2026-11-01T10:00:06Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-11-01T10:00:06Z",
+          "completed_at": "2026-11-01T10:00:06Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18,
+          "started_at": "2026-11-01T10:00:06Z",
+          "completed_at": "2026-11-01T10:00:06Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-11-01T10:00:06Z",
+          "completed_at": "2026-11-01T10:00:06Z"
+        }
+      ]
+    },
+    {
+      "run_id": 41295404811,
+      "id": 124815106646,
+      "name": "media",
+      "status": "completed",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404811/job/124815106646",
+      "started_at": "2026-11-01T09:58:39Z",
+      "completed_at": "2026-11-01T09:58:56Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-01T09:58:40Z",
+          "completed_at": "2026-11-01T09:58:41Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-01T09:58:41Z",
+          "completed_at": "2026-11-01T09:58:46Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-01T09:58:46Z",
+          "completed_at": "2026-11-01T09:58:47Z"
+        },
+        {
+          "name": "Run shivammathur/setup-php@v2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-01T09:58:47Z",
+          "completed_at": "2026-11-01T09:58:49Z"
+        },
+        {
+          "name": "Run python3 scripts/check-chat-media.py",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-01T09:58:49Z",
+          "completed_at": "2026-11-01T09:58:49Z"
+        },
+        {
+          "name": "Run php -l modules/chat/chat.php",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-01T09:58:49Z",
+          "completed_at": "2026-11-01T09:58:50Z"
+        },
+        {
+          "name": "Run npm install --no-save --ignore-scripts jsdom@30.1.2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-01T09:58:50Z",
+          "completed_at": "2026-11-01T09:58:52Z"
+        },
+        {
+          "name": "Run node tests/chat-media-regression.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-11-01T09:58:52Z",
+          "completed_at": "2026-11-01T09:58:53Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-11-01T09:58:53Z",
+          "completed_at": "2026-11-01T09:58:53Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-11-01T09:58:53Z",
+          "completed_at": "2026-11-01T09:58:54Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-11-01T09:58:54Z",
+          "completed_at": "2026-11-01T09:58:54Z"
+        }
+      ]
+    },
+    {
+      "run_id": 41295404849,
+      "id": 124815106757,
+      "name": "check",
+      "status": "completed",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404849/job/124815106757",
+      "started_at": "2026-11-01T09:58:39Z",
+      "completed_at": "2026-11-01T09:58:58Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-01T09:58:40Z",
+          "completed_at": "2026-11-01T09:58:41Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-01T09:58:41Z",
+          "completed_at": "2026-11-01T09:58:46Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-01T09:58:46Z",
+          "completed_at": "2026-11-01T09:58:47Z"
+        },
+        {
+          "name": "Run shivammathur/setup-php@v2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-01T09:58:47Z",
+          "completed_at": "2026-11-01T09:58:50Z"
+        },
+        {
+          "name": "Run npm install --no-save --ignore-scripts jsdom@30.1.2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-01T09:58:50Z",
+          "completed_at": "2026-11-01T09:58:53Z"
+        },
+        {
+          "name": "Run node tests/chat-timeline-regression.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-01T09:58:53Z",
+          "completed_at": "2026-11-01T09:58:54Z"
+        },
+        {
+          "name": "Run node tests/chat-profile-regression.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-01T09:58:54Z",
+          "completed_at": "2026-11-01T09:58:54Z"
+        },
+        {
+          "name": "Run node tests/chat-members-regression.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-11-01T09:58:54Z",
+          "completed_at": "2026-11-01T09:58:55Z"
+        },
+        {
+          "name": "Run php tests/chat-read-regression.php",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-11-01T09:58:55Z",
+          "completed_at": "2026-11-01T09:58:55Z"
+        },
+        {
+          "name": "Run for file in API/chat/get-messages.php API/dm/open-conversation.php API/dm/group-message.php API/dm/groups.php API/profile/get-profile.php services/ChatReadService.php modules/chat/chat.php; do php -l \"$file\" || exit 1; done",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-11-01T09:58:55Z",
+          "completed_at": "2026-11-01T09:58:56Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-11-01T09:58:56Z",
+          "completed_at": "2026-11-01T09:58:56Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20,
+          "started_at": "2026-11-01T09:58:56Z",
+          "completed_at": "2026-11-01T09:58:56Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21,
+          "started_at": "2026-11-01T09:58:56Z",
+          "completed_at": "2026-11-01T09:58:56Z"
+        }
+      ]
+    },
+    {
+      "run_id": 41295404882,
+      "id": 124815106887,
+      "name": "check",
+      "status": "completed",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404882/job/124815106887",
+      "started_at": "2026-11-01T09:58:39Z",
+      "completed_at": "2026-11-01T09:58:53Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-01T09:58:39Z",
+          "completed_at": "2026-11-01T09:58:40Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-01T09:58:40Z",
+          "completed_at": "2026-11-01T09:58:45Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-01T09:58:45Z",
+          "completed_at": "2026-11-01T09:58:45Z"
+        },
+        {
+          "name": "Run shivammathur/setup-php@v2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-01T09:58:45Z",
+          "completed_at": "2026-11-01T09:58:47Z"
+        },
+        {
+          "name": "Run npm install --no-save --ignore-scripts jsdom@30.1.2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-01T09:58:47Z",
+          "completed_at": "2026-11-01T09:58:49Z"
+        },
+        {
+          "name": "Run node tests/notification-routing-regression.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-01T09:58:49Z",
+          "completed_at": "2026-11-01T09:58:49Z"
+        },
+        {
+          "name": "Run node tests/livekit-calls-regression.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-01T09:58:49Z",
+          "completed_at": "2026-11-01T09:58:50Z"
+        },
+        {
+          "name": "Run php tests/notification-service-regression.php",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-11-01T09:58:50Z",
+          "completed_at": "2026-11-01T09:58:50Z"
+        },
+        {
+          "name": "Run for file in API/notifications/get.php API/notifications/mark-read.php API/dm/send-message.php API/dm/group-message.php API/threads/index.php API/server/members.php API/chat/channel-members.php services/NotificationService.php websocket/handlers/DmHandler.php modules/chat/chat.php; do php -l \"$file\" || exit 1; done",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-11-01T09:58:50Z",
+          "completed_at": "2026-11-01T09:58:50Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-11-01T09:58:50Z",
+          "completed_at": "2026-11-01T09:58:50Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18,
+          "started_at": "2026-11-01T09:58:50Z",
+          "completed_at": "2026-11-01T09:58:50Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-11-01T09:58:50Z",
+          "completed_at": "2026-11-01T09:58:50Z"
+        }
+      ]
+    },
+    {
+      "run_id": 41295404930,
+      "id": 124815107317,
+      "name": "regression",
+      "status": "completed",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404930/job/124815107317",
+      "started_at": "2026-11-01T09:58:39Z",
+      "completed_at": "2026-11-01T09:59:01Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-01T09:58:39Z",
+          "completed_at": "2026-11-01T09:58:40Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-01T09:58:40Z",
+          "completed_at": "2026-11-01T09:58:46Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-01T09:58:46Z",
+          "completed_at": "2026-11-01T09:58:47Z"
+        },
+        {
+          "name": "Run shivammathur/setup-php@v2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-01T09:58:47Z",
+          "completed_at": "2026-11-01T09:58:49Z"
+        },
+        {
+          "name": "PHP syntax",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-01T09:58:49Z",
+          "completed_at": "2026-11-01T09:58:50Z"
+        },
+        {
+          "name": "Install DOM test dependency",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-01T09:58:50Z",
+          "completed_at": "2026-11-01T09:58:53Z"
+        },
+        {
+          "name": "Navigation, settings and calls",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-01T09:58:53Z",
+          "completed_at": "2026-11-01T09:58:59Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-11-01T09:58:59Z",
+          "completed_at": "2026-11-01T09:58:59Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-11-01T09:58:59Z",
+          "completed_at": "2026-11-01T09:58:59Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-11-01T09:58:59Z",
+          "completed_at": "2026-11-01T09:58:59Z"
+        }
+      ]
+    },
+    {
+      "run_id": 41295404890,
+      "id": 124815106867,
+      "name": "uploads",
+      "status": "completed",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404890/job/124815106867",
+      "started_at": "2026-11-01T09:58:39Z",
+      "completed_at": "2026-11-01T09:59:04Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-01T09:58:40Z",
+          "completed_at": "2026-11-01T09:58:41Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-01T09:58:41Z",
+          "completed_at": "2026-11-01T09:58:46Z"
+        },
+        {
+          "name": "Run shivammathur/setup-php@v2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-01T09:58:46Z",
+          "completed_at": "2026-11-01T09:58:48Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-01T09:58:48Z",
+          "completed_at": "2026-11-01T09:58:48Z"
+        },
+        {
+          "name": "Run php -l API/chat/resumable-upload.php",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-01T09:58:48Z",
+          "completed_at": "2026-11-01T09:58:49Z"
+        },
+        {
+          "name": "Run npm ci --prefix tools/chat-uploads",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-01T09:58:49Z",
+          "completed_at": "2026-11-01T09:58:50Z"
+        },
+        {
+          "name": "Run npm run --prefix tools/chat-uploads build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-01T09:58:50Z",
+          "completed_at": "2026-11-01T09:58:51Z"
+        },
+        {
+          "name": "Run git diff --exit-code -- assets/js/chat/resumable-uploads.js assets/js/chat/resumable-uploads.js.LEGAL.txt assets/js/chat/resumable-uploads.NOTICES.txt",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-11-01T09:58:51Z",
+          "completed_at": "2026-11-01T09:58:51Z"
+        },
+        {
+          "name": "Run NODE_PATH=\"$PWD/tools/chat-uploads/node_modules\" node tests/chat-uploads-regression.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-11-01T09:58:51Z",
+          "completed_at": "2026-11-01T09:58:52Z"
+        },
+        {
+          "name": "Run NODE_PATH=\"$PWD/tools/chat-uploads/node_modules\" node tests/chat-tus-http-regression.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-11-01T09:58:52Z",
+          "completed_at": "2026-11-01T09:59:02Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-11-01T09:59:02Z",
+          "completed_at": "2026-11-01T09:59:02Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20,
+          "started_at": "2026-11-01T09:59:02Z",
+          "completed_at": "2026-11-01T09:59:02Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21,
+          "started_at": "2026-11-01T09:59:02Z",
+          "completed_at": "2026-11-01T09:59:02Z"
+        }
+      ]
+    },
+    {
+      "run_id": 41295404868,
+      "id": 124815107059,
+      "name": "delivery",
+      "status": "completed",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404868/job/124815107059",
+      "started_at": "2026-11-01T09:58:39Z",
+      "completed_at": "2026-11-01T09:59:23Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-01T09:58:39Z",
+          "completed_at": "2026-11-01T09:58:40Z"
+        },
+        {
+          "name": "Initialize containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-01T09:58:40Z",
+          "completed_at": "2026-11-01T09:59:01Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-01T09:59:01Z",
+          "completed_at": "2026-11-01T09:59:07Z"
+        },
+        {
+          "name": "Run shivammathur/setup-php@v2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-01T09:59:07Z",
+          "completed_at": "2026-11-01T09:59:09Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-01T09:59:09Z",
+          "completed_at": "2026-11-01T09:59:10Z"
+        },
+        {
+          "name": "Run npm ci --ignore-scripts --prefix tools/chat-delivery",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-01T09:59:10Z",
+          "completed_at": "2026-11-01T09:59:11Z"
+        },
+        {
+          "name": "Run npm run build --prefix tools/chat-delivery && git diff --exit-code -- assets/js/chat/centrifugo-delivery*",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-01T09:59:11Z",
+          "completed_at": "2026-11-01T09:59:12Z"
+        },
+        {
+          "name": "Run node tests/centrifugo-client-regression.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-11-01T09:59:12Z",
+          "completed_at": "2026-11-01T09:59:12Z"
+        },
+        {
+          "name": "Run node tests/centrifugo-http-regression.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-11-01T09:59:12Z",
+          "completed_at": "2026-11-01T09:59:12Z"
+        },
+        {
+          "name": "Run docker run -d --name test-centrifugo -p 127.0.0.1:18001:8000 \\",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-11-01T09:59:12Z",
+          "completed_at": "2026-11-01T09:59:18Z"
+        },
+        {
+          "name": "Run php -l services/ChannelReadQueries.php && php -l services/RealtimeDispatchMetrics.php && php -l services/RealtimeOutbox.php && php -l scripts/realtime-worker.php && php -l scripts/profile-chat-reads.php && php tests/chat-read-profiler-regression.php && php tests/centrifugo-regression.php && node tests/centrifugo-broker-regression.cjs && php tests/centrifugo-database-regression.php",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-11-01T09:59:18Z",
+          "completed_at": "2026-11-01T09:59:20Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20,
+          "started_at": "2026-11-01T09:59:20Z",
+          "completed_at": "2026-11-01T09:59:21Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21,
+          "started_at": "2026-11-01T09:59:21Z",
+          "completed_at": "2026-11-01T09:59:21Z"
+        },
+        {
+          "name": "Stop containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22,
+          "started_at": "2026-11-01T09:59:21Z",
+          "completed_at": "2026-11-01T09:59:21Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23,
+          "started_at": "2026-11-01T09:59:21Z",
+          "completed_at": "2026-11-01T09:59:21Z"
+        }
+      ]
+    },
+    {
+      "run_id": 41295404868,
+      "id": 124815107408,
+      "name": "mariadb-reads",
+      "status": "completed",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404868/job/124815107408",
+      "started_at": "2026-11-01T09:58:39Z",
+      "completed_at": "2026-11-01T09:59:02Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-01T09:58:40Z",
+          "completed_at": "2026-11-01T09:58:40Z"
+        },
+        {
+          "name": "Initialize containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-01T09:58:40Z",
+          "completed_at": "2026-11-01T09:58:52Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-01T09:58:52Z",
+          "completed_at": "2026-11-01T09:58:56Z"
+        },
+        {
+          "name": "Run shivammathur/setup-php@v2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-01T09:58:56Z",
+          "completed_at": "2026-11-01T09:58:59Z"
+        },
+        {
+          "name": "Run php tests/chat-read-profiler-regression.php",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-01T09:58:59Z",
+          "completed_at": "2026-11-01T09:59:00Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-11-01T09:59:00Z",
+          "completed_at": "2026-11-01T09:59:00Z"
+        },
+        {
+          "name": "Stop containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-11-01T09:59:00Z",
+          "completed_at": "2026-11-01T09:59:01Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-11-01T09:59:01Z",
+          "completed_at": "2026-11-01T09:59:01Z"
+        }
+      ]
+    },
+    {
+      "run_id": 41295404819,
+      "id": 124815106790,
+      "name": "mariadb-10-11",
+      "status": "completed",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404819/job/124815106790",
+      "started_at": "2026-11-01T09:58:39Z",
+      "completed_at": "2026-11-01T09:59:17Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-01T09:58:40Z",
+          "completed_at": "2026-11-01T09:58:40Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-01T09:58:40Z",
+          "completed_at": "2026-11-01T09:58:48Z"
+        },
+        {
+          "name": "Install disposable MariaDB and PHP dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-01T09:58:48Z",
+          "completed_at": "2026-11-01T09:59:09Z"
+        },
+        {
+          "name": "PHP syntax",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-01T09:59:09Z",
+          "completed_at": "2026-11-01T09:59:09Z"
+        },
+        {
+          "name": "Fresh, legacy, partial, concurrent, registry and daemon recovery fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-01T09:59:09Z",
+          "completed_at": "2026-11-01T09:59:15Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-11-01T09:59:15Z",
+          "completed_at": "2026-11-01T09:59:15Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-11-01T09:59:15Z",
+          "completed_at": "2026-11-01T09:59:15Z"
+        }
+      ]
+    },
+    {
+      "run_id": 41295404812,
+      "id": 124815106669,
+      "name": "owned-http-auth",
+      "status": "completed",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404812/job/124815106669",
+      "started_at": "2026-11-01T09:58:39Z",
+      "completed_at": "2026-11-01T09:59:41Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-01T09:58:40Z",
+          "completed_at": "2026-11-01T09:58:41Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-01T09:58:41Z",
+          "completed_at": "2026-11-01T09:58:46Z"
+        },
+        {
+          "name": "Install disposable MariaDB and PHP dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-01T09:58:46Z",
+          "completed_at": "2026-11-01T09:59:07Z"
+        },
+        {
+          "name": "Dependencies and browser runtime",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-01T09:59:07Z",
+          "completed_at": "2026-11-01T09:59:25Z"
+        },
+        {
+          "name": "Correction DOM and attachment authorization",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-01T09:59:25Z",
+          "completed_at": "2026-11-01T09:59:38Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-01T09:59:38Z",
+          "completed_at": "2026-11-01T09:59:39Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2026-11-01T09:59:39Z",
+          "completed_at": "2026-11-01T09:59:39Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-11-01T09:59:39Z",
+          "completed_at": "2026-11-01T09:59:39Z"
+        }
+      ]
+    },
+    {
+      "run_id": 41295404916,
+      "id": 124815107010,
+      "name": "owned-http-auth",
+      "status": "completed",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404916/job/124815107010",
+      "started_at": "2026-11-01T09:58:39Z",
+      "completed_at": "2026-11-01T09:59:42Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-01T09:58:40Z",
+          "completed_at": "2026-11-01T09:58:41Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-01T09:58:41Z",
+          "completed_at": "2026-11-01T09:58:48Z"
+        },
+        {
+          "name": "Install disposable MariaDB and PHP dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-01T09:58:48Z",
+          "completed_at": "2026-11-01T09:59:16Z"
+        },
+        {
+          "name": "Observe actual isolated migration concurrency",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-01T09:59:16Z",
+          "completed_at": "2026-11-01T09:59:38Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-01T09:59:38Z",
+          "completed_at": "2026-11-01T09:59:40Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-11-01T09:59:40Z",
+          "completed_at": "2026-11-01T09:59:40Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-11-01T09:59:40Z",
+          "completed_at": "2026-11-01T09:59:40Z"
+        }
+      ]
+    },
+    {
+      "run_id": 41295404867,
+      "id": 124815107409,
+      "name": "runtime",
+      "status": "completed",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404867/job/124815107409",
+      "started_at": "2026-11-01T09:58:39Z",
+      "completed_at": "2026-11-01T09:59:38Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-01T09:58:39Z",
+          "completed_at": "2026-11-01T09:58:40Z"
+        },
+        {
+          "name": "Initialize containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-01T09:58:40Z",
+          "completed_at": "2026-11-01T09:58:53Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-01T09:58:53Z",
+          "completed_at": "2026-11-01T09:58:58Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-01T09:58:58Z",
+          "completed_at": "2026-11-01T09:58:58Z"
+        },
+        {
+          "name": "Run shivammathur/setup-php@v2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-01T09:58:58Z",
+          "completed_at": "2026-11-01T09:59:00Z"
+        },
+        {
+          "name": "Run npm install --no-save --ignore-scripts jsdom@30.1.2 playwright@1.58.2 yjs@13.6.27 y-protocols@1.0.6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-01T09:59:00Z",
+          "completed_at": "2026-11-01T09:59:03Z"
+        },
+        {
+          "name": "Run npm ci --prefix tools/chat-composer --ignore-scripts --no-audit --no-fund",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-01T09:59:03Z",
+          "completed_at": "2026-11-01T09:59:04Z"
+        },
+        {
+          "name": "Run npx playwright install --with-deps chromium",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-11-01T09:59:04Z",
+          "completed_at": "2026-11-01T09:59:17Z"
+        },
+        {
+          "name": "Run php tests/client-ip-regression.php",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-11-01T09:59:17Z",
+          "completed_at": "2026-11-01T09:59:17Z"
+        },
+        {
+          "name": "Run node tests/request-security-regression.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-11-01T09:59:17Z",
+          "completed_at": "2026-11-01T09:59:17Z"
+        },
+        {
+          "name": "Run php tests/rate-limit-concurrency.php",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-11-01T09:59:17Z",
+          "completed_at": "2026-11-01T09:59:18Z"
+        },
+        {
+          "name": "Run php tests/settings-runtime-regression.php",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2026-11-01T09:59:18Z",
+          "completed_at": "2026-11-01T09:59:18Z"
+        },
+        {
+          "name": "Run php tests/settings-migration-regression.php",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-11-01T09:59:18Z",
+          "completed_at": "2026-11-01T09:59:18Z"
+        },
+        {
+          "name": "Run php tests/jarred-governance-retention.php",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-11-01T09:59:18Z",
+          "completed_at": "2026-11-01T09:59:18Z"
+        },
+        {
+          "name": "Run php tests/jarred-governance-provider.php",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-11-01T09:59:18Z",
+          "completed_at": "2026-11-01T09:59:18Z"
+        },
+        {
+          "name": "Run node tests/jarred-governance-http.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-11-01T09:59:18Z",
+          "completed_at": "2026-11-01T09:59:18Z"
+        },
+        {
+          "name": "Run node tests/jarred-governance-lock.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-11-01T09:59:18Z",
+          "completed_at": "2026-11-01T09:59:18Z"
+        },
+        {
+          "name": "Run node tests/shared-ai-provider.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18,
+          "started_at": "2026-11-01T09:59:18Z",
+          "completed_at": "2026-11-01T09:59:20Z"
+        },
+        {
+          "name": "Shared inference across separate Linux temporary mount views",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-11-01T09:59:20Z",
+          "completed_at": "2026-11-01T09:59:22Z"
+        },
+        {
+          "name": "Run node tests/jarred-provider-regression.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20,
+          "started_at": "2026-11-01T09:59:22Z",
+          "completed_at": "2026-11-01T09:59:22Z"
+        },
+        {
+          "name": "Run node tests/jarred-session-race.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21,
+          "started_at": "2026-11-01T09:59:22Z",
+          "completed_at": "2026-11-01T09:59:22Z"
+        },
+        {
+          "name": "Run node tests/realtime-settings-regression.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22,
+          "started_at": "2026-11-01T09:59:22Z",
+          "completed_at": "2026-11-01T09:59:23Z"
+        },
+        {
+          "name": "Run node tests/settings-runtime-browser.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23,
+          "started_at": "2026-11-01T09:59:23Z",
+          "completed_at": "2026-11-01T09:59:33Z"
+        },
+        {
+          "name": "Run node tests/chat-composer-regression.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 24,
+          "started_at": "2026-11-01T09:59:33Z",
+          "completed_at": "2026-11-01T09:59:33Z"
+        },
+        {
+          "name": "Run node tests/yjs-channel-presence-regression.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 25,
+          "started_at": "2026-11-01T09:59:33Z",
+          "completed_at": "2026-11-01T09:59:34Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 48,
+          "started_at": "2026-11-01T09:59:34Z",
+          "completed_at": "2026-11-01T09:59:34Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 49,
+          "started_at": "2026-11-01T09:59:34Z",
+          "completed_at": "2026-11-01T09:59:34Z"
+        },
+        {
+          "name": "Stop containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 50,
+          "started_at": "2026-11-01T09:59:34Z",
+          "completed_at": "2026-11-01T09:59:37Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 51,
+          "started_at": "2026-11-01T09:59:37Z",
+          "completed_at": "2026-11-01T09:59:37Z"
+        }
+      ]
+    },
+    {
+      "run_id": 41295404965,
+      "id": 124815107823,
+      "name": "owned-message-contract",
+      "status": "completed",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404965/job/124815107823",
+      "started_at": "2026-11-01T09:58:54Z",
+      "completed_at": "2026-11-01T10:00:36Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-01T09:58:55Z",
+          "completed_at": "2026-11-01T09:58:55Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-01T09:58:55Z",
+          "completed_at": "2026-11-01T09:59:00Z"
+        },
+        {
+          "name": "Install disposable MariaDB and PHP dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-01T09:59:00Z",
+          "completed_at": "2026-11-01T09:59:17Z"
+        },
+        {
+          "name": "Exact source boundary and dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-01T09:59:17Z",
+          "completed_at": "2026-11-01T09:59:24Z"
+        },
+        {
+          "name": "Exact base real HTTP and three full suite orderings",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-01T09:59:24Z",
+          "completed_at": "2026-11-01T09:59:56Z"
+        },
+        {
+          "name": "Candidate real HTTP and three full suite orderings",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-01T09:59:56Z",
+          "completed_at": "2026-11-01T10:00:32Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-01T10:00:32Z",
+          "completed_at": "2026-11-01T10:00:34Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-11-01T10:00:34Z",
+          "completed_at": "2026-11-01T10:00:34Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-11-01T10:00:34Z",
+          "completed_at": "2026-11-01T10:00:34Z"
+        }
+      ]
+    },
+    {
+      "run_id": 41295404817,
+      "id": 124815106637,
+      "name": "isolated-mariadb-http",
+      "status": "completed",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404817/job/124815106637",
+      "started_at": "2026-11-01T09:58:39Z",
+      "completed_at": "2026-11-01T10:00:29Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-01T09:58:39Z",
+          "completed_at": "2026-11-01T09:58:40Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-01T09:58:40Z",
+          "completed_at": "2026-11-01T09:58:45Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-01T09:58:45Z",
+          "completed_at": "2026-11-01T09:58:46Z"
+        },
+        {
+          "name": "Install disposable MariaDB and PHP dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-01T09:58:46Z",
+          "completed_at": "2026-11-01T09:59:08Z"
+        },
+        {
+          "name": "Install isolated JS and browser fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-01T09:59:08Z",
+          "completed_at": "2026-11-01T09:59:26Z"
+        },
+        {
+          "name": "Syntax, queue crash, permission and privacy regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-01T09:59:26Z",
+          "completed_at": "2026-11-01T09:59:42Z"
+        },
+        {
+          "name": "Actual MariaDB, TCP faults, HTTP client and CLI worker recovery",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-01T09:59:42Z",
+          "completed_at": "2026-11-01T10:00:27Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-11-01T10:00:27Z",
+          "completed_at": "2026-11-01T10:00:27Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-11-01T10:00:27Z",
+          "completed_at": "2026-11-01T10:00:27Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-11-01T10:00:27Z",
+          "completed_at": "2026-11-01T10:00:27Z"
+        }
+      ]
+    },
+    {
+      "run_id": 41295404838,
+      "id": 124815106892,
+      "name": "owned-http-auth",
+      "status": "completed",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404838/job/124815106892",
+      "started_at": "2026-11-01T09:58:39Z",
+      "completed_at": "2026-11-01T10:00:49Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-01T09:58:40Z",
+          "completed_at": "2026-11-01T09:58:41Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-01T09:58:41Z",
+          "completed_at": "2026-11-01T09:58:46Z"
+        },
+        {
+          "name": "Install disposable MariaDB and PHP dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-01T09:58:46Z",
+          "completed_at": "2026-11-01T09:59:05Z"
+        },
+        {
+          "name": "Dependencies and browser runtime",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-01T09:59:05Z",
+          "completed_at": "2026-11-01T09:59:21Z"
+        },
+        {
+          "name": "Correction DOM and attachment authorization",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-01T09:59:21Z",
+          "completed_at": "2026-11-01T09:59:34Z"
+        },
+        {
+          "name": "Phase3AF immutable accepted runtime",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-01T09:59:34Z",
+          "completed_at": "2026-11-01T09:59:36Z"
+        },
+        {
+          "name": "Installed candidate browser upload and cold backup restore",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-01T09:59:36Z",
+          "completed_at": "2026-11-01T10:00:45Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-11-01T10:00:45Z",
+          "completed_at": "2026-11-01T10:00:47Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-11-01T10:00:47Z",
+          "completed_at": "2026-11-01T10:00:47Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-11-01T10:00:47Z",
+          "completed_at": "2026-11-01T10:00:47Z"
+        }
+      ]
+    },
+    {
+      "run_id": 41295404861,
+      "id": 124815106891,
+      "name": "isolated-mariadb",
+      "status": "completed",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404861/job/124815106891",
+      "started_at": "2026-11-01T09:58:39Z",
+      "completed_at": "2026-11-01T10:01:45Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-01T09:58:40Z",
+          "completed_at": "2026-11-01T09:58:41Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-01T09:58:41Z",
+          "completed_at": "2026-11-01T09:58:48Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-01T09:58:48Z",
+          "completed_at": "2026-11-01T09:58:49Z"
+        },
+        {
+          "name": "Install disposable MariaDB and PHP dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-01T09:58:49Z",
+          "completed_at": "2026-11-01T09:59:10Z"
+        },
+        {
+          "name": "Existing unit, peer, facilitator, settings, attachment and Jarred regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-01T09:59:10Z",
+          "completed_at": "2026-11-01T09:59:18Z"
+        },
+        {
+          "name": "Alternating actual API equivalence, SQL profile and batch transaction fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-01T09:59:18Z",
+          "completed_at": "2026-11-01T10:01:05Z"
+        },
+        {
+          "name": "Full base and candidate static analysis, reject added diagnostics",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-01T10:01:05Z",
+          "completed_at": "2026-11-01T10:01:41Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-11-01T10:01:41Z",
+          "completed_at": "2026-11-01T10:01:43Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-11-01T10:01:43Z",
+          "completed_at": "2026-11-01T10:01:43Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-11-01T10:01:43Z",
+          "completed_at": "2026-11-01T10:01:43Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-11-01T10:01:43Z",
+          "completed_at": "2026-11-01T10:01:43Z"
+        }
+      ]
+    },
+    {
+      "run_id": 41295404805,
+      "id": 124815106677,
+      "name": "owned-http-auth",
+      "status": "completed",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404805/job/124815106677",
+      "started_at": "2026-11-01T09:58:39Z",
+      "completed_at": "2026-11-01T10:06:38Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-01T09:58:39Z",
+          "completed_at": "2026-11-01T09:58:40Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-01T09:58:40Z",
+          "completed_at": "2026-11-01T09:58:45Z"
+        },
+        {
+          "name": "Install disposable MariaDB and PHP dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-01T09:58:45Z",
+          "completed_at": "2026-11-01T09:59:06Z"
+        },
+        {
+          "name": "Dependencies and browser runtime",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-01T09:59:06Z",
+          "completed_at": "2026-11-01T09:59:18Z"
+        },
+        {
+          "name": "Correction DOM and attachment authorization",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-01T09:59:18Z",
+          "completed_at": "2026-11-01T09:59:28Z"
+        },
+        {
+          "name": "Phase3AF immutable accepted runtime",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-01T09:59:28Z",
+          "completed_at": "2026-11-01T09:59:29Z"
+        },
+        {
+          "name": "Installed candidate browser upload and cold backup restore",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-01T09:59:29Z",
+          "completed_at": "2026-11-01T10:00:19Z"
+        },
+        {
+          "name": "Source gate and existing security regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-11-01T10:00:19Z",
+          "completed_at": "2026-11-01T10:00:23Z"
+        },
+        {
+          "name": "Full original failing control and current three orderings including native expiry",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-11-01T10:00:23Z",
+          "completed_at": "2026-11-01T10:00:53Z"
+        },
+        {
+          "name": "Exact accepted Phase3X base comparison",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-11-01T10:00:53Z",
+          "completed_at": "2026-11-01T10:01:08Z"
+        },
+        {
+          "name": "Exact accepted Phase3AB base comparison",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-11-01T10:01:08Z",
+          "completed_at": "2026-11-01T10:01:24Z"
+        },
+        {
+          "name": "Exact accepted Phase3AC source comparison",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2026-11-01T10:01:24Z",
+          "completed_at": "2026-11-01T10:01:41Z"
+        },
+        {
+          "name": "Actual corrected HTTP, hosted Chromium and persisted OTP browser reset",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-11-01T10:01:41Z",
+          "completed_at": "2026-11-01T10:02:25Z"
+        },
+        {
+          "name": "Actual corrected native clocks, sessions, failures and legacy rehearsal",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-11-01T10:02:25Z",
+          "completed_at": "2026-11-01T10:03:51Z"
+        },
+        {
+          "name": "Exact accepted Phase3Y comparison",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-11-01T10:03:51Z",
+          "completed_at": "2026-11-01T10:04:06Z"
+        },
+        {
+          "name": "Exact accepted Phase3Z comparison",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-11-01T10:04:06Z",
+          "completed_at": "2026-11-01T10:04:21Z"
+        },
+        {
+          "name": "Frozen original clock, transition and double-consumption controls",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-11-01T10:04:21Z",
+          "completed_at": "2026-11-01T10:05:07Z"
+        },
+        {
+          "name": "Exact-base static comparison",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18,
+          "started_at": "2026-11-01T10:05:07Z",
+          "completed_at": "2026-11-01T10:05:29Z"
+        },
+        {
+          "name": "Recompute actual security acceptance from raw records",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-11-01T10:05:29Z",
+          "completed_at": "2026-11-01T10:05:29Z"
+        },
+        {
+          "name": "Four-migration compatibility and recovery rehearsal",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20,
+          "started_at": "2026-11-01T10:05:29Z",
+          "completed_at": "2026-11-01T10:05:35Z"
+        },
+        {
+          "name": "Actual code poll message compatibility",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21,
+          "started_at": "2026-11-01T10:05:35Z",
+          "completed_at": "2026-11-01T10:06:06Z"
+        },
+        {
+          "name": "Authoritative identity migration provisioning authentication DM and Jarred",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22,
+          "started_at": "2026-11-01T10:06:06Z",
+          "completed_at": "2026-11-01T10:06:15Z"
+        },
+        {
+          "name": "Actual composed student facilitator collaboration HTTP and Chromium",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23,
+          "started_at": "2026-11-01T10:06:15Z",
+          "completed_at": "2026-11-01T10:06:34Z"
+        },
+        {
+          "name": "Recompute integration readiness and preserve blockers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 24,
+          "started_at": "2026-11-01T10:06:34Z",
+          "completed_at": "2026-11-01T10:06:34Z"
+        },
+        {
+          "name": "Stop certification on essential candidate failure",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 25,
+          "started_at": "2026-11-01T10:06:34Z",
+          "completed_at": "2026-11-01T10:06:34Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 26,
+          "started_at": "2026-11-01T10:06:34Z",
+          "completed_at": "2026-11-01T10:06:35Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 52,
+          "started_at": "2026-11-01T10:06:35Z",
+          "completed_at": "2026-11-01T10:06:36Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 53,
+          "started_at": "2026-11-01T10:06:36Z",
+          "completed_at": "2026-11-01T10:06:36Z"
+        }
+      ]
+    },
+    {
+      "run_id": 41295401017,
+      "id": 124815094452,
+      "name": "uploads",
+      "status": "completed",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41295401017/job/124815094452",
+      "started_at": "2026-11-01T09:58:36Z",
+      "completed_at": "2026-11-01T09:59:07Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-01T09:58:36Z",
+          "completed_at": "2026-11-01T09:58:38Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-01T09:58:38Z",
+          "completed_at": "2026-11-01T09:58:43Z"
+        },
+        {
+          "name": "Run shivammathur/setup-php@v2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-01T09:58:43Z",
+          "completed_at": "2026-11-01T09:58:46Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-01T09:58:46Z",
+          "completed_at": "2026-11-01T09:58:49Z"
+        },
+        {
+          "name": "Run php -l API/chat/resumable-upload.php",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-01T09:58:49Z",
+          "completed_at": "2026-11-01T09:58:49Z"
+        },
+        {
+          "name": "Run npm ci --prefix tools/chat-uploads",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-01T09:58:49Z",
+          "completed_at": "2026-11-01T09:58:52Z"
+        },
+        {
+          "name": "Run npm run --prefix tools/chat-uploads build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-01T09:58:52Z",
+          "completed_at": "2026-11-01T09:58:52Z"
+        },
+        {
+          "name": "Run git diff --exit-code -- assets/js/chat/resumable-uploads.js assets/js/chat/resumable-uploads.js.LEGAL.txt assets/js/chat/resumable-uploads.NOTICES.txt",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-11-01T09:58:52Z",
+          "completed_at": "2026-11-01T09:58:53Z"
+        },
+        {
+          "name": "Run NODE_PATH=\"$PWD/tools/chat-uploads/node_modules\" node tests/chat-uploads-regression.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-11-01T09:58:53Z",
+          "completed_at": "2026-11-01T09:58:54Z"
+        },
+        {
+          "name": "Run NODE_PATH=\"$PWD/tools/chat-uploads/node_modules\" node tests/chat-tus-http-regression.cjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-11-01T09:58:54Z",
+          "completed_at": "2026-11-01T09:59:04Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-11-01T09:59:04Z",
+          "completed_at": "2026-11-01T09:59:04Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20,
+          "started_at": "2026-11-01T09:59:04Z",
+          "completed_at": "2026-11-01T09:59:05Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21,
+          "started_at": "2026-11-01T09:59:05Z",
+          "completed_at": "2026-11-01T09:59:05Z"
+        }
+      ]
+    },
+    {
+      "run_id": 41295404833,
+      "id": 124815107136,
+      "name": "owned-http-auth",
+      "status": "completed",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "html_url": "https://github.com/ecollab-project/ecollab/actions/runs/41295404833/job/124815107136",
+      "started_at": "2026-11-01T09:58:40Z",
+      "completed_at": "2026-11-01T10:08:34Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-01T09:58:40Z",
+          "completed_at": "2026-11-01T09:58:42Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-01T09:58:42Z",
+          "completed_at": "2026-11-01T09:58:49Z"
+        },
+        {
+          "name": "Install disposable MariaDB and PHP dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-01T09:58:49Z",
+          "completed_at": "2026-11-01T09:59:28Z"
+        },
+        {
+          "name": "Dependencies and browser runtime",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-01T09:59:28Z",
+          "completed_at": "2026-11-01T09:59:44Z"
+        },
+        {
+          "name": "Source gate and existing security regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-01T09:59:44Z",
+          "completed_at": "2026-11-01T09:59:48Z"
+        },
+        {
+          "name": "Full original failing control and current three orderings including native expiry",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-01T09:59:48Z",
+          "completed_at": "2026-11-01T10:00:28Z"
+        },
+        {
+          "name": "Exact accepted Phase3X base comparison",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-01T10:00:28Z",
+          "completed_at": "2026-11-01T10:00:46Z"
+        },
+        {
+          "name": "Exact accepted Phase3AB base comparison",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-11-01T10:00:46Z",
+          "completed_at": "2026-11-01T10:01:06Z"
+        },
+        {
+          "name": "Exact accepted Phase3AC source comparison",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-11-01T10:01:06Z",
+          "completed_at": "2026-11-01T10:01:28Z"
+        },
+        {
+          "name": "Actual corrected HTTP, hosted Chromium and persisted OTP browser reset",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-11-01T10:01:28Z",
+          "completed_at": "2026-11-01T10:02:34Z"
+        },
+        {
+          "name": "Actual corrected native clocks, sessions, failures and legacy rehearsal",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-11-01T10:02:34Z",
+          "completed_at": "2026-11-01T10:04:28Z"
+        },
+        {
+          "name": "Exact accepted Phase3Y comparison",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2026-11-01T10:04:28Z",
+          "completed_at": "2026-11-01T10:04:48Z"
+        },
+        {
+          "name": "Exact accepted Phase3Z comparison",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-11-01T10:04:48Z",
+          "completed_at": "2026-11-01T10:05:09Z"
+        },
+        {
+          "name": "Frozen original clock, transition and double-consumption controls",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-11-01T10:05:09Z",
+          "completed_at": "2026-11-01T10:06:17Z"
+        },
+        {
+          "name": "Exact-base static comparison",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-11-01T10:06:17Z",
+          "completed_at": "2026-11-01T10:06:47Z"
+        },
+        {
+          "name": "Recompute actual security acceptance from raw records",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-11-01T10:06:47Z",
+          "completed_at": "2026-11-01T10:06:47Z"
+        },
+        {
+          "name": "Four-migration compatibility and recovery rehearsal",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-11-01T10:06:47Z",
+          "completed_at": "2026-11-01T10:07:02Z"
+        },
+        {
+          "name": "Actual code poll message compatibility",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18,
+          "started_at": "2026-11-01T10:07:02Z",
+          "completed_at": "2026-11-01T10:07:52Z"
+        },
+        {
+          "name": "Authoritative identity migration provisioning authentication DM and Jarred",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-11-01T10:07:52Z",
+          "completed_at": "2026-11-01T10:08:05Z"
+        },
+        {
+          "name": "Actual composed student facilitator collaboration HTTP and Chromium",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20,
+          "started_at": "2026-11-01T10:08:05Z",
+          "completed_at": "2026-11-01T10:08:29Z"
+        },
+        {
+          "name": "Recompute integration readiness and preserve blockers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21,
+          "started_at": "2026-11-01T10:08:29Z",
+          "completed_at": "2026-11-01T10:08:29Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22,
+          "started_at": "2026-11-01T10:08:29Z",
+          "completed_at": "2026-11-01T10:08:31Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 44,
+          "started_at": "2026-11-01T10:08:31Z",
+          "completed_at": "2026-11-01T10:08:31Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 45,
+          "started_at": "2026-11-01T10:08:31Z",
+          "completed_at": "2026-11-01T10:08:32Z"
+        }
+      ]
+    }
+  ],
+  "step_counts": {
+    "success": 250
+  },
+  "unique_workflows": 17
+}

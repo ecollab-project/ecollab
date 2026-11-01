@@ -16,5 +16,6 @@ try{
         if(!$legacy||!$root||!str_starts_with($legacy,$root.'/')||!is_file($legacy)||is_link(ROOT_PATH.'/'.$path)){http_response_code(404);exit;}$file=$legacy;
     }
     $mime=(new finfo(FILEINFO_MIME_TYPE))->file($file);$inline=in_array($mime,['image/jpeg','image/png','image/gif','image/webp','video/mp4','video/webm','audio/mpeg','audio/ogg','audio/wav'],true);
-    header('Content-Type: '.($inline?$mime:'application/octet-stream'));header('Content-Disposition: '.($inline?'inline':'attachment').'; filename="'.basename($path).'"');header('Content-Length: '.filesize($file));if($_SERVER['REQUEST_METHOD']==='GET')readfile($file);
+    header('Content-Type: '.($inline?$mime:'application/octet-stream'));header('Content-Disposition: '.($inline?'inline':'attachment')); // Same-origin download links retain their original filename.
+    header('Content-Length: '.filesize($file));if($_SERVER['REQUEST_METHOD']==='GET')readfile($file);
 }catch(Throwable $e){http_response_code(503);}
