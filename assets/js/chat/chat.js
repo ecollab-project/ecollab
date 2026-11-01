@@ -607,12 +607,12 @@ function buildMessageElement(msg) {
   div.innerHTML = `
     <div class="msg-action-bar">
       <button class="msg-action-btn" title="Add Reaction" onclick="showEmojiForMsgBar(event,this)">😊</button>
-      <button class="msg-action-btn" title="Reply" onclick="msgReply(this,'${escHtml(msg.username)}', ${msg.id}, '${escHtml((msg.content || '').substring(0, 60))}')">
+      <button class="msg-action-btn" title="Reply" data-message-action="reply">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
       </button>
-      <button class="msg-action-btn ${msg.is_pinned ? 'pin-active' : ''}" title="${msg.is_pinned ? 'Unpin Message' : 'Pin Message'}" onclick="msgPin(this,'${escHtml(msg.username)}','${escHtml((msg.content || '').substring(0, 60))}', ${msg.id})">📌</button>
+      <button class="msg-action-btn ${msg.is_pinned ? 'pin-active' : ''}" title="${msg.is_pinned ? 'Unpin Message' : 'Pin Message'}" data-message-action="pin">📌</button>
       <button class="msg-action-btn" title="Bookmark" onclick="msgBookmark(this, ${msg.id})">🔖</button>
-      <button class="msg-action-btn" title="More Options" onclick="showMsgMenu(event,this,'${escHtml(msg.username)}', ${msg.id}, ${isMe ? 'true' : 'false'})">
+      <button class="msg-action-btn" title="More Options" data-message-action="menu">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
       </button>
     </div>
@@ -636,6 +636,16 @@ function buildMessageElement(msg) {
     </div>
   `;
 
+  // Keep author and message text out of executable HTML attributes.
+  div.querySelector('[data-message-action="reply"]').addEventListener('click', function () {
+    msgReply(this, msg.username, Number(msg.id), (msg.content || '').substring(0, 60));
+  });
+  div.querySelector('[data-message-action="pin"]').addEventListener('click', function () {
+    msgPin(this, msg.username, (msg.content || '').substring(0, 60), Number(msg.id));
+  });
+  div.querySelector('[data-message-action="menu"]').addEventListener('click', function (event) {
+    showMsgMenu(event, this, msg.username, Number(msg.id), isMe);
+  });
   window.EcollabPreferences?.decorate(div);
   return div;
 }
