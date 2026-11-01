@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 50
     env:
+      PHASE3AF_CORRECTION: '1'
       PHASE3AD_REPAIR: '1'
       PHASE3AD_IDENTITY: '1'
       PHASE3AD_OWNED_FRESH_IDENTITY: '1'
@@ -34,13 +35,27 @@ jobs:
             -o "Dir::State::lists=$RUNNER_TEMP/perf-apt/lists"
             -o Acquire::Retries=0 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20)
           sudo apt-get "${apt_options[@]}" update
-          sudo apt-get "${apt_options[@]}" install -y mariadb-server php8.3-fpm php8.3-cli php8.3-mysql php8.3-sqlite3 php8.3-curl php8.3-mbstring php8.3-xml
+          sudo apt-get "${apt_options[@]}" install -y nginx mariadb-server php8.3-fpm php8.3-cli php8.3-mysql php8.3-sqlite3 php8.3-curl php8.3-mbstring php8.3-xml
       - name: Dependencies and browser runtime
         run: |
           composer install --no-interaction --prefer-dist --no-progress
-          npm install --prefix "$RUNNER_TEMP/phase3y-browser" --no-save --no-package-lock playwright@1.62.1
+          npm install --prefix "$RUNNER_TEMP/phase3y-browser" --no-save --no-package-lock playwright@1.62.1 jsdom@27.0.0
           node "$RUNNER_TEMP/phase3y-browser/node_modules/playwright/cli.js" install chromium
           echo "NODE_PATH=$RUNNER_TEMP/phase3y-browser/node_modules" >> "$GITHUB_ENV"
+      - name: Correction DOM and attachment authorization
+        if: always()
+        env:
+          PHP_BIN: /usr/bin/php8.3
+          PHP_FPM_BIN: /usr/sbin/php-fpm8.3
+          MARIADBD_BIN: /usr/sbin/mariadbd
+          PHASE3AF_REQUIRE_NGINX: '1'
+          PHASE3AF_ATTACHMENT_EVIDENCE: phase3ad-raw/attachment-http.json
+        run: |
+          node tests/phase3af-code-editor.cjs
+          node tests/phase3af-code-rendering.cjs
+          php8.3 tests/phase3af-attachment-access.php
+          php8.3 tests/phase3af-attachment-store.php
+          python3 -B tests/phase3af-attachment-http.py
       - name: Phase3AF immutable accepted runtime
         if: always()
         run: python3 -B tests/phase3af-source.py phase3ad-raw/phase3af-source.json

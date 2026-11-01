@@ -1,9 +1,12 @@
 """Stop full defense certification on essential browser/install/restore failure."""
-import hashlib,json,pathlib,sys
+import hashlib,json,pathlib,sys,os
 p=pathlib.Path(sys.argv[1]);out={'phase':'3AF','defense_certification':'BLOCKED','verification':'INCOMPLETE','merge':'NOT AUTHORIZED','production':'BLOCKED','blockers':[]}
 try:
+ if os.environ.get('PHASE3AF_CORRECTION')=='1':
+  attachments=json.loads((p/'attachment-http.json').read_text());assert attachments['status']=='PASS' and attachments['routing'].startswith('actual nginx'),'Required actual nginx attachment gate missing or failed'
  source=json.loads((p/'phase3af-source.json').read_text());core=json.loads((p/'integration-summary.json').read_text());installed=json.loads((p/'phase3af-installed.json').read_text())
- assert source['status']=='PASS'and source['runtime_change']=='NONE'
+ assert source['status']=='PASS'
+ if os.environ.get('PHASE3AF_CORRECTION')!='1':assert source['runtime_change']=='NONE'
  if core['readiness']!='PASS':out['blockers'].append('Previously required security/regression/integration core failed or incomplete')
  if installed['status']!='PASS':out['blockers'].append('Installed candidate validation: '+installed['status']+' '+installed.get('error',''))
  if installed.get('backup_restore',{}).get('status')!='PASS':out['blockers'].append('Complete installed backup/restore not verified')

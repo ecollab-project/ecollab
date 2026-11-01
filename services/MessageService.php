@@ -200,8 +200,8 @@ class MessageService
         if (isset($data['content']) && !is_string($data['content'])) {
             throw new InvalidArgumentException('Message content must be text', 400);
         }
-        $content = trim($data['content'] ?? '');
-        if ($content === '' && empty($data['attachment_path'])) {
+        $content = ($data['content_type'] ?? '') === 'code' ? ($data['content'] ?? '') : trim($data['content'] ?? '');
+        if (trim($content) === '' && empty($data['attachment_path'])) {
             throw new InvalidArgumentException('Message content is required', 400);
         }
 

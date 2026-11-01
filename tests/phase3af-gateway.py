@@ -137,7 +137,10 @@ class Owned:
    def do_DELETE(self):self.forward()
    def do_OPTIONS(self):self.forward()
    def forward(self):
-    route=urllib.parse.urlparse(self.path).path;file=(ROOT/route.lstrip('/')).resolve()
+    route=urllib.parse.urlparse(self.path).path;query=urllib.parse.urlparse(self.path).query
+    if re.fullmatch(r'/uploads/(?:[^/]+|threads/[^/]+)',route):
+     query=urllib.parse.urlencode({'path':route.lstrip('/')});route='/API/attachments/download.php'
+    file=(ROOT/route.lstrip('/')).resolve()
     if not file.is_relative_to(ROOT)or not file.is_file()or not(route.startswith('/API/')or route.startswith('/assets/')or route.startswith('/uploads/')or route in ['/modules/auth/signup.php','/modules/auth/login.php','/modules/onboarding/server-discovery.php','/modules/chat/chat.php','/modules/student/dashboard.php','/modules/facilitator/dashboard.php','/modules/collaboration/server-coworkspaces.php']):self.send_error(404);return
     if route.startswith('/uploads/')and file.suffix.lower()in ['.php','.phtml','.phar','.js','.html','.htm','.svg','.xml','.sh','.py']:
      self.send_error(403);return
@@ -145,7 +148,7 @@ class Owned:
      self.send_response(200);self.send_header('Content-Type',mimetypes.guess_type(str(file))[0]or'application/octet-stream');self.send_header('X-Content-Type-Options','nosniff');self.end_headers();
      if self.command!='HEAD':self.wfile.write(file.read_bytes())
      return
-    body=self.rfile.read(int(self.headers.get('Content-Length','0')));params={'SCRIPT_FILENAME':str(file),'SCRIPT_NAME':route,'REQUEST_URI':self.path,'QUERY_STRING':urllib.parse.urlparse(self.path).query,'REQUEST_METHOD':self.command,'SERVER_PROTOCOL':'HTTP/1.1','SERVER_NAME':'127.0.0.1','SERVER_PORT':owner.port,'HTTP_HOST':f'127.0.0.1:{owner.port}','REMOTE_ADDR':self.client_address[0],'DOCUMENT_ROOT':str(ROOT),'CONTENT_TYPE':self.headers.get('Content-Type',''),'CONTENT_LENGTH':len(body),'HTTP_COOKIE':self.headers.get('Cookie',''),'HTTP_X_CSRF_TOKEN':self.headers.get('X-CSRF-Token','')}
+    body=self.rfile.read(int(self.headers.get('Content-Length','0')));params={'SCRIPT_FILENAME':str(file),'SCRIPT_NAME':route,'REQUEST_URI':self.path,'QUERY_STRING':query,'REQUEST_METHOD':self.command,'SERVER_PROTOCOL':'HTTP/1.1','SERVER_NAME':'127.0.0.1','SERVER_PORT':owner.port,'HTTP_HOST':f'127.0.0.1:{owner.port}','REMOTE_ADDR':self.client_address[0],'DOCUMENT_ROOT':str(ROOT),'CONTENT_TYPE':self.headers.get('Content-Type',''),'CONTENT_LENGTH':len(body),'HTTP_COOKIE':self.headers.get('Cookie',''),'HTTP_X_CSRF_TOKEN':self.headers.get('X-CSRF-Token','')}
     for key,value in self.headers.items():
      if key.lower()not in ['content-type','content-length','cookie','host','x-csrf-token']:params['HTTP_'+key.upper().replace('-','_')]=value
     raw,err=native.fcgi(owner.fcgiport,params,body);h,_,data=raw.partition(b'\r\n\r\n');headers=[x.decode().split(':',1)for x in h.split(b'\r\n')if b':'in x];status=next((int(v.strip().split()[0])for k,v in headers if k.lower()=='status'),200);self.send_response(status)

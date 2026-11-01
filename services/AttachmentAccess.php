@@ -15,11 +15,11 @@ final class AttachmentAccess
         $privileged=$roles&&in_array($roles[0]['role'],$thread?['admin','super_admin']:['admin','super_admin','moderator'],true);
         if($kind==='server'){
             if($privileged)return (bool)self::rows($db,"SELECT id FROM servers WHERE id=? AND status='active'",[$target]);
-            return (bool)self::rows($db,"SELECT sm.server_id FROM server_members sm JOIN servers s ON s.id=sm.server_id WHERE sm.server_id=? AND sm.user_id=? AND s.status='active'",[$target,$uid]);
+            return (bool)self::rows($db,"SELECT server_id FROM server_members WHERE server_id=? AND user_id=?",[$target,$uid]);
         }
         if($kind!=='channel')return false;
         if($privileged)return (bool)self::rows($db,'SELECT id FROM channels WHERE id=?',[$target]);
-        $r=self::rows($db,"SELECT c.is_private,c.created_by,sm.server_role,EXISTS(SELECT 1 FROM channel_members cm WHERE cm.channel_id=c.id AND cm.user_id=?) AS member FROM channels c JOIN servers s ON s.id=c.server_id JOIN server_members sm ON sm.server_id=c.server_id WHERE c.id=? AND sm.user_id=? AND s.status='active'",[$uid,$target,$uid]);
+        $r=self::rows($db,"SELECT c.is_private,c.created_by,sm.server_role,EXISTS(SELECT 1 FROM channel_members cm WHERE cm.channel_id=c.id AND cm.user_id=?) AS member FROM channels c JOIN server_members sm ON sm.server_id=c.server_id WHERE c.id=? AND sm.user_id=?",[$uid,$target,$uid]);
         if(!$r)return false;$c=$r[0];
         // Threads only permit owner/admin overrides, matching canAccessChannel().
         return !(int)$c['is_private']||(bool)$c['member']||(int)$c['created_by']===$uid||in_array($c['server_role'],$thread?['owner','admin']:['owner','admin','moderator'],true);

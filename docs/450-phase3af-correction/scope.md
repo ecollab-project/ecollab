@@ -15,3 +15,17 @@ Proposed design:private storage outside the web root;server-issued upload IDs wi
 Remaining:complete upload-consumer inventory and allowed-file guard,implement confidentiality across legacy and tus paths,actual MariaDB/HTTP/Chromium negative controls,full accepted regression/OTP/identity/static/backup suite,final-head CI and independent audit. Current editor edits are NOT yet browser-validated or accepted. Phase3AG remains blocked.
 
 Checkpoint verification:node --check passed for both edited scripts. NODE_PATH=../ecollab/node_modules node tests/phase3af-code-editor.cjs passed,using jsdom dialog shims and a simulated API. It verifies destination capture,error draft retention,successful clearing and preserved resource/Collabs dispatch. This is not an HTTP/MariaDB/Chromium or safe-rendering acceptance result. Attachment confidentiality implementation and all required final gates remain NOT RUN/incomplete.
+
+## Restored implementation, November 1
+
+The published editor checkpoint survived a workspace reset; unpublished attachment work did not. The restored candidate must be judged by fresh records, not the earlier lost samples.
+
+Implemented private attachment bytes and immutable uploader/destination receipts, checks at message binding, live message/thread/DM read authorization, scoped upload routing, and public-avatar preservation. Original physical legacy files are retained. Unknown legacy paths cannot be adopted by new message writers. A path reused across old references fails closed if any reference is deleted or unreadable. Current thread owner/admin and channel-member rules are distinguished from chat moderator rules. Code messages preserve whitespace and use literal rendering; reply/pin/menu no longer embed message text in executable attributes.
+
+The runtime manifest pins the exact authorized paths and preserves security, identity, migrations, dependency locks and application configuration from the accepted baseline. Historical source guards remain active unless the explicit correction flag selects this manifest.
+
+Fresh local controls: editor DOM, literal rendering, 17 SQLite authorization cases and private-store ownership controls pass. The native FPM/MariaDB test passes 34 attachment/code cases through the owned gateway. Actual Nginx, hosted Chromium, full regression/OTP/identity/static, full private-storage backup/restore and final artifact verification remain required. CI must run the tracked Nginx upload rule; a PHP-only or gateway-only result cannot certify legacy static-file confidentiality.
+
+A fresh reviewer identified a private-thread moderator mismatch and a tuple-key environment typo in the backup harness. Both were corrected. That reviewer stopped at a usage limit, so the review was incomplete and does not provide independent acceptance.
+
+Rollback for the isolated candidate: stop the owned services, restore the complete source/configuration/database/legacy uploads/private attachment receipt+byte backup into an empty local installation, rebind only owned filesystem paths, and verify fresh login plus authenticated download. Never roll back only application files while leaving a mismatched storage layout. No production rollback or transition is authorized.
