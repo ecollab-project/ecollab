@@ -51,6 +51,13 @@ foreach(['commit','rollback'] as $finish){
  // The child write barrier precedes SQL execution. Allow bounded scheduling
  // and diagnostic visibility delay; require that exact transaction to wait.
  do{$q=$d->prepare('SELECT COUNT(*) FROM information_schema.INNODB_LOCK_WAITS w JOIN information_schema.INNODB_TRX t ON t.trx_id=w.requesting_trx_id WHERE t.trx_mysql_thread_id=?');$q->execute([$childId]);if((int)$q->fetchColumn()>0){$waiting=true;break;}if(!proc_get_status($proc)['running'])break;usleep(20000);}while(hrtime(true)<$deadline);
+ if(!$waiting || !proc_get_status($proc)['running']) {
+  // Diagnostic reads use an independent connection; do not relax the assertion.
+  try {
+   $observer=connection();stream_set_blocking($pipes[1],false);stream_set_blocking($pipes[2],false);
+   echo 'WAIT_DIAGNOSTIC '.json_encode(['finish'=>$finish,'child_connection'=>$childId,'parent_connection'=>$d->query('SELECT CONNECTION_ID()')->fetchColumn(),'parent_transaction'=>$d->inTransaction(),'child_process'=>proc_get_status($proc),'child_stdout'=>stream_get_contents($pipes[1]),'child_stderr'=>stream_get_contents($pipes[2]),'waits'=>$observer->query('SELECT * FROM information_schema.INNODB_LOCK_WAITS')->fetchAll(PDO::FETCH_ASSOC),'transactions'=>$observer->query('SELECT trx_id,trx_state,trx_mysql_thread_id,trx_query FROM information_schema.INNODB_TRX')->fetchAll(PDO::FETCH_ASSOC),'processes'=>$observer->query("SELECT ID,STATE,INFO FROM information_schema.PROCESSLIST WHERE DB='coworkspace_025_test'")->fetchAll(PDO::FETCH_ASSOC)],JSON_THROW_ON_ERROR)."\n";
+  } catch(Throwable $diagnosticError) {echo 'WAIT_DIAGNOSTIC_ERROR '.$diagnosticError->getMessage()."\n";}
+ }
  check($waiting&&proc_get_status($proc)['running'],'Contender did not wait on unique key; exact child '.$childId);echo 'OBSERVED unique-key child wait '.round((hrtime(true)-$startWait)/1e6).' ms for '.$finish."\n";$finish==='commit'?$d->commit():$d->rollBack();$out=stream_get_contents($pipes[1]);$err=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);proc_close($proc);unlink($script);check($out===($finish==='commit'?'1062':'created'),'Unexpected contender: '.$out.$err);check((int)$d->query('SELECT COUNT(*) FROM collab_workspaces WHERE server_id=2 AND archived=0')->fetchColumn()===1,'Concurrent duplicate');echo "PASS concurrent create with winner $finish\n";
 }
 // Simulated interrupted ALTER: hold metadata lock, kill only that fixture query,
