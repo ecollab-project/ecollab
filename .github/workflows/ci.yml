@@ -88,6 +88,16 @@ jobs:
       - name: Apply database migrations
         run: php database/migrate.php
 
+      - name: Existing schema compatibility
+        env:
+          COWORKSPACE_TEST_DSN: mysql:host=127.0.0.1;port=3306;dbname=coworkspace_test
+          COLLABORA_TEST_DSN: mysql:host=127.0.0.1;port=3306;dbname=collabora_test
+          COLLABORA_TEST_PASSWORD: ''
+        run: |
+          mysql -h 127.0.0.1 -P 3306 -u root -e "CREATE DATABASE coworkspace_test; CREATE DATABASE collabora_test"
+          php tests/coworkspace-storage-regression.php
+          php tests/migration-rerun-regression.php
+
       - name: Run Unit tests
         run: vendor/bin/phpunit --testsuite Unit
 

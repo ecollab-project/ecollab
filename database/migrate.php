@@ -183,9 +183,11 @@ function applyMigration(PDO $db, string $sql): void
         // Some MySQL configurations can leave an active result set when a
         // row-returning statement such as SELECT is executed through exec().
         // Consume row-returning statements explicitly before continuing.
-        if (preg_match('/^(?:SELECT|SHOW|DESCRIBE|DESC|EXPLAIN)\b/i', $stmt)) {
+        // EXECUTE may run a guarded SELECT 1 rather than DDL. Drain that
+        // result too, otherwise the following DEALLOCATE/ALTER can fail.
+        if (preg_match('/^(?:SELECT|SHOW|DESCRIBE|DESC|EXPLAIN|EXECUTE)\b/i', $stmt)) {
             $statement = $db->query($stmt);
-            $statement->fetchAll(PDO::FETCH_ASSOC);
+            if ($statement->columnCount() > 0) $statement->fetchAll(PDO::FETCH_ASSOC);
             $statement->closeCursor();
             continue;
         }

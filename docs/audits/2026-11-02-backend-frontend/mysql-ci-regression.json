@@ -1,0 +1,9 @@
+{
+  "commit": "536419d86113ef6eb2e1948d881e032b4031016b",
+  "run_id": 41411454772,
+  "job_id": 125165206829,
+  "failure_step": "Apply database migrations",
+  "migration": "022_whiteboard_sessions.sql",
+  "error": "MySQL 1064: ADD COLUMN IF NOT EXISTS is not supported",
+  "followup": "Portable metadata guards; EXECUTE result draining; VIRTUAL generated storage and existing-schema regressions"
+}
