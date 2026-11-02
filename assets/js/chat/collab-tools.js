@@ -23,13 +23,17 @@ const COLLAB_API = (window.ECOLLAB?.baseUrl || '') + '/API/collab/collab.php';
 async function collabFetch(tool, action, body = {}, method = 'POST') {
   const channelId = window.ECOLLAB?.currentChannelId;
   if (!channelId) { showToast('Open a channel first', 'info'); throw new Error('No channel'); }
-  const url = `${COLLAB_API}?tool=${tool}&action=${action}&channel_id=${channelId}`;
+  const params = new URLSearchParams(method === 'GET' ? body : {});
+  params.set('tool', tool);
+  params.set('action', action);
+  params.set('channel_id', channelId);
+  const url = `${COLLAB_API}?${params}`;
   const opts = { method, credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.ECOLLAB?.csrfToken || '' } };
   if (method !== 'GET') opts.body = JSON.stringify({ ...body, channel_id: channelId });
   const res = await fetch(url, opts);
   const data = await res.json();
-  if (!data.ok) throw new Error(data.error || 'Request failed');
+  if (!res.ok || !data.ok) throw new Error(data.error || 'Request failed');
   return data;
 }
 
@@ -335,6 +339,8 @@ async function saveCode(manual = false) {
   try {
     const res = await collabFetch('code', 'save', { title, language: lang, code, version: _codeVersion });
     _codeVersion = res.version;
+    const toolbar = document.querySelector('#collabPane_code [data-snippet-id]');
+    if (toolbar) toolbar.dataset.snippetId = String(res.snippet_id);
     if (s) s.textContent = 'Saved ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
     if (manual && window.showToast) showToast('💾 Snippet saved', 'success');
   } catch (e) {
@@ -764,7 +770,7 @@ async function loadCalendar() {
   const pane = document.getElementById('collabPane_calendar');
   if (!pane) return;
   try {
-    const { events } = await collabFetch(`calendar`, `list&from=${from}&to=${to}`, {}, 'GET');
+    const { events } = await collabFetch('calendar', 'list', { from, to }, 'GET');
     _calEvents = events;
     renderCalendar(pane, events);
   } catch (e) { pane.innerHTML = `<div class="collab-err">⚠ ${escH(e.message)}</div>`; }

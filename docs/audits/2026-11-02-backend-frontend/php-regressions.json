@@ -1,0 +1,77 @@
+[
+  {
+    "test": "learning-workspace-regression.php",
+    "exit": 0,
+    "output": "Learning workspace regression checks passed.\n"
+  },
+  {
+    "test": "learning-tools-regression.php",
+    "exit": 0,
+    "output": "Learning connected tools regression checks passed.\n"
+  },
+  {
+    "test": "whiteboard-scene-regression.php",
+    "exit": 0,
+    "output": "Whiteboard scene regression checks passed\n"
+  },
+  {
+    "test": "whiteboard-presence-regression.php",
+    "exit": 0,
+    "output": "Presence checks passed: authenticated identity, room isolation, clocks, validation, expiry and multiple tabs.\n"
+  },
+  {
+    "test": "whiteboard-realtime-regression.php",
+    "exit": 2,
+    "output": "Dedicated collabora_test database required; never run against production.\n"
+  },
+  {
+    "test": "notification-service-regression.php",
+    "exit": 0,
+    "output": "Notification service regression checks passed\n"
+  },
+  {
+    "test": "admin-workspace-regression.php",
+    "exit": 0,
+    "output": "Admin workspace query, pagination, role protection, conflicts, audit, atomic announcements and availability checks passed\n"
+  },
+  {
+    "test": "admin-connected-regression.php",
+    "exit": 0,
+    "output": "Admin connected-page regression checks passed.\n"
+  },
+  {
+    "test": "book-events-regression.php",
+    "exit": 1,
+    "output": "BOOK_EVENTS_TEST_DSN required (disposable database)\n"
+  },
+  {
+    "test": "collabora-regression.php",
+    "exit": 2,
+    "output": "Set COLLABORA_TEST_DSN to a dedicated collabora_test database. Never use production.\n"
+  },
+  {
+    "test": "settings-runtime-regression.php",
+    "exit": 0,
+    "output": "PASS: profile/receipt privacy, Jarred preferences, bounded continuity, conversation lock, atomic exchange, isolation and greeting fast path\n"
+  },
+  {
+    "test": "settings-migration-regression.php",
+    "exit": 255,
+    "output": "\nFatal error: Uncaught RuntimeException: Set SETTINGS_TEST_DSN to an isolated test database. in /workspace/scratch/6d37397a80fd/ecollab/tests/settings-migration-regression.php:5\nStack trace:\n#0 {main}\n  thrown in /workspace/scratch/6d37397a80fd/ecollab/tests/settings-migration-regression.php on line 5\n"
+  },
+  {
+    "test": "client-ip-regression.php",
+    "exit": 0,
+    "output": "PASS: direct peer, spoofed headers, trusted proxy chain, malformed input and IPv4/IPv6 CIDRs\n"
+  },
+  {
+    "test": "code-lab-integrity-policy.php",
+    "exit": 0,
+    "output": "PASS: Code Lab-only Jarred scope gate; chat, documents and dashboards unaffected\n"
+  },
+  {
+    "test": "collab-request-security-regression.php",
+    "exit": 0,
+    "output": "PASS: 32 collaboration method/CSRF checks; no database access\n"
+  }
+]

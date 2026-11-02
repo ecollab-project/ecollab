@@ -1,0 +1,48 @@
+name: Collaboration API contracts
+on:
+  pull_request:
+    paths:
+      - 'API/collab/**'
+      - 'assets/js/chat/collab-tools.js'
+      - 'assets/js/chat/chat-features.js'
+      - 'assets/js/chat/chat.js'
+      - 'tests/collab-*'
+      - 'tests/private-channel-members-regression.cjs'
+      - 'tests/chat-navigation-regression.cjs'
+      - '.github/workflows/collab-contract.yml'
+  push:
+    branches: [ecollab-collabs]
+    paths:
+      - 'API/collab/**'
+      - 'assets/js/chat/collab-tools.js'
+      - 'assets/js/chat/chat-features.js'
+      - 'assets/js/chat/chat.js'
+      - 'tests/collab-*'
+      - 'tests/private-channel-members-regression.cjs'
+      - 'tests/chat-navigation-regression.cjs'
+      - '.github/workflows/collab-contract.yml'
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - run: npm install --no-save --ignore-scripts jsdom@30.1.2
+      - name: Syntax and request contracts
+        run: |
+          php -l API/collab/collab.php
+          php -l API/collab/collab-extra.php
+          node --check assets/js/chat/collab-tools.js
+          node --check assets/js/chat/chat-features.js
+          node --test tests/collab-contract-regression.cjs
+          node --test tests/private-channel-members-regression.cjs
+          node tests/chat-navigation-regression.cjs
+          php tests/collab-request-security-regression.php
