@@ -1,0 +1,227 @@
+[
+  {
+    "test": "admin-connected-ui-regression.cjs",
+    "exit": 0,
+    "output": "Admin connected UI checks passed.\n"
+  },
+  {
+    "test": "ai-dashboard-regression.cjs",
+    "exit": 0,
+    "output": "PASS AI modal show, late loading, send, duplicate guard and recoverable errors\n"
+  },
+  {
+    "test": "browser-push-regression.cjs",
+    "exit": 0,
+    "output": "PASS: push opt-in, generic payload, same-origin navigation and Code Lab focus protection\n"
+  },
+  {
+    "test": "call-settings-regression.cjs",
+    "exit": 0,
+    "output": "PASS: settings apply, preview-only changes, mute preservation, camera quality, volume, device failure rollback\n"
+  },
+  {
+    "test": "call-taskbar-regression.cjs",
+    "exit": 0,
+    "output": "PASS: voice taskbar, close/restore preview without disconnect, mobile controls and cleanup\n"
+  },
+  {
+    "test": "centrifugo-client-regression.cjs",
+    "exit": 0,
+    "output": "Browser adapter: scoped tokens, reconnect sync, duplicate events, queued reads and stale target guards passed\n"
+  },
+  {
+    "test": "centrifugo-http-regression.cjs",
+    "exit": 0,
+    "output": "Bounded fanout, deduplication, HTTP reuse and rejection checks passed\n"
+  },
+  {
+    "test": "chat-composer-regression.cjs",
+    "exit": 0,
+    "output": "Composer checks passed: formats, drafts, mentions, emoji, send/newline, code block, length, disabled state, safe rendering and panel cleanup\n"
+  },
+  {
+    "test": "chat-media-regression.cjs",
+    "exit": 0,
+    "output": "PASS: search, recents, Unicode preservation, tones, sticker allowlist, code/link exclusions, reduced motion, channel/DM isolation, rich-editor insertion, disabled input, Escape and live messages\n"
+  },
+  {
+    "test": "chat-members-regression.cjs",
+    "exit": 0,
+    "output": "PASS: bounded sidebar, complete directory search, real profile IDs, request deduplication, access denial, retries and stale-channel protection\n"
+  },
+  {
+    "test": "chat-navigation-regression.cjs",
+    "exit": 0,
+    "output": "PASS: refresh preserves selected channel and section; missing channel falls back; server switch clears stale channel\n"
+  },
+  {
+    "test": "chat-profile-regression.cjs",
+    "exit": 0,
+    "output": "PASS: profile click/keyboard, apostrophe names, avatar and content rendering, Escape/focus, response races and API errors\n"
+  },
+  {
+    "test": "chat-timeline-regression.cjs",
+    "exit": 0,
+    "output": "PASS: Manila midnight rollover, UTC/ISO parsing, date grouping, history merging, stable unread boundaries and hidden-tab arrivals\n"
+  },
+  {
+    "test": "chat-tus-http-regression.cjs",
+    "exit": 0,
+    "output": "Chat tus HTTP, authentication and real Uppy integration checks passed\n"
+  },
+  {
+    "test": "chat-uploads-regression.cjs",
+    "exit": 0,
+    "output": "Chat upload controls and navigation regression checks passed\n"
+  },
+  {
+    "test": "code-lab-integrity-regression.cjs",
+    "exit": 0,
+    "output": "PASS: external/forged paste and drop blocked; internal copy/cut/paste, read-only protection, typing, authoring isolation and task boundaries verified\n"
+  },
+  {
+    "test": "code-lab-piston-batch.cjs",
+    "exit": 0,
+    "output": "PASS: one compile, pristine per-case snapshots, fixed limits, compiler failure, rejected links and bounded artifacts\n"
+  },
+  {
+    "test": "code-lab-ui-regression.cjs",
+    "exit": 0,
+    "output": "PASS: task dialog, weighted check authoring, execution output, no-deadline publishing, private editor flow, failed-save preservation, escaped titles, server navigation and four supported language options\n"
+  },
+  {
+    "test": "collab-contract-regression.cjs",
+    "exit": 0,
+    "output": "\u2714 quiz get transmits quiz ID as a GET parameter (144.504774ms)\n\u2714 quiz results transmits quiz ID as a GET parameter (30.472285ms)\n\u2714 calendar retains the selected date range (74.642956ms)\n\u2714 HTTP failure cannot be reported as successful collaboration response (24.619375ms)\n\u2714 first snippet save supplies its returned ID to subsequent run logging (51.619463ms)\n\u2714 a channel change cannot save the previous channel editor into the new channel (54.849226ms)\n\u2714 a late snippet load cannot replace the newly selected channel editor (23.382723ms)\n\u2139 tests 7\n\u2139 suites 0\n\u2139 pass 7\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 1299.717885\n"
+  },
+  {
+    "test": "color-palettes-regression.cjs",
+    "exit": 0,
+    "output": "PASS: 20 reference palettes, readable dark/light colors, selection, account saving, CSRF, rollback, device mode and invalid palette fallback\n"
+  },
+  {
+    "test": "device-layout-regression.cjs",
+    "exit": 0,
+    "output": "PASS: all page templates load responsive assets; tables preserve actions, wrappers and accessible labels; editor header sizing updates\n"
+  },
+  {
+    "test": "feature-capacity-mock.cjs",
+    "exit": 0,
+    "output": "PASS: real k6 ai success\nPASS: real k6 ai busy\nPASS: real k6 ai wrong\nPASS: real k6 code-run success\nPASS: real k6 code-run wrong\nPASS: real k6 code-grade success\nPASS: real k6 code-grade wrong\nPASS: real k6 code-run queued\nPASS: real k6 code-run late\nPASS: real k6 code-run sustained\nPASS: real k6 code-run sustained-wrong\n"
+  },
+  {
+    "test": "feature-capacity-stats.cjs",
+    "exit": 0,
+    "output": "PASS: selected transport path, legacy fallback, no stale/zero imputation, bounded retry and per-connection RTT coverage\nPASS: absent packet progress, measured all-loss, mixed streams, counter reset, source/publication and publisher diagnostics\n"
+  },
+  {
+    "test": "jarred-provider-regression.cjs",
+    "exit": 0,
+    "output": "PASS: real cURL, local-only URLs, proxy bypass, no redirects, token/CPU bounds, timings, warm-up and error lock release\n"
+  },
+  {
+    "test": "jarred-session-race.cjs",
+    "exit": 0,
+    "output": "PASS: in-flight reply isolation, out-of-order session navigation and rename/delete races\n"
+  },
+  {
+    "test": "learning-workspace-ui-regression.cjs",
+    "exit": 0,
+    "output": "Student and facilitator UI regression checks passed.\n"
+  },
+  {
+    "test": "legacy-otp-route-regression.cjs",
+    "exit": 0,
+    "output": "PASS: legacy OTP route returns 410 without generating or delivering codes\n"
+  },
+  {
+    "test": "livekit-calls-regression.cjs",
+    "exit": 0,
+    "output": "PASS: independent cameras, local group preview, call-id isolation, six tiles, cleanup, quality and cancellation\n"
+  },
+  {
+    "test": "livekit-voice-regression.cjs",
+    "exit": 0,
+    "output": "[LiveKit] participant connected: user-2\n[LiveKit] participant disconnected: user-2\nPASS: local/remote mute agreement, roster uniqueness, exact participant count\n"
+  },
+  {
+    "test": "load-test-diagnostics.cjs",
+    "exit": 0,
+    "output": "PASS: endpoint phase metrics, numeric socket diagnostics and truthful early/full/failed schedule reports\n"
+  },
+  {
+    "test": "load-test-mock.cjs",
+    "exit": 0,
+    "output": "Real k6 smoke passed: unique logins, CSRF, reads, Ratchet, broker pings and 201 message delivery\n"
+  },
+  {
+    "test": "load-test-plan-regression.cjs",
+    "exit": 0,
+    "output": "Load-test plan checks passed: distinct synthetic users, target validation, limits and smoke defaults\nPlanned-close checks passed: active-period failures remain counted; ramp-down closes excluded\n"
+  },
+  {
+    "test": "load-test-ratchet-contract.cjs",
+    "exit": 0,
+    "output": "Ratchet production contract passed: runner uses the actual server credential field\n"
+  },
+  {
+    "test": "notification-routing-regression.cjs",
+    "exit": 0,
+    "output": "PASS exact DM, group, thread, missed-call routing; invite URL validation; unsafe links; keyboard and escaping\n"
+  },
+  {
+    "test": "private-channel-members-regression.cjs",
+    "exit": 0,
+    "output": "\u2714 member selector uses the existing member API without a preliminary broken URL (252.401052ms)\n\u2714 member selector rejects HTTP failure (20.537369ms)\n\u2139 tests 2\n\u2139 suites 0\n\u2139 pass 2\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 288.23948\n"
+  },
+  {
+    "test": "realtime-settings-regression.cjs",
+    "exit": 0,
+    "output": "PASS: preference effects, explicit media reveal, screen-reader log, stable unread/date nodes and 1,000 incremental appends (136ms, local DOM test only)\n"
+  },
+  {
+    "test": "request-security-regression.cjs",
+    "exit": 0,
+    "output": "PASS: absent/empty/malformed/mismatched CSRF rejected, header/form tokens accepted, strict cookie-only sessions\n"
+  },
+  {
+    "test": "sounds-regression.cjs",
+    "exit": 0,
+    "output": "PASS: no autoplay, supplied assets, preference/output volume, MP3 fallback, throttling, cancellable ringing, deafen, previews and blocked playback\n"
+  },
+  {
+    "test": "team-audit-regression.cjs",
+    "exit": 0,
+    "output": "PASS: Drafts-to-channel restore, voice retained outside hidden views, Watch survives refresh, strict presence, concurrent drawing merge and echo suppression\n"
+  },
+  {
+    "test": "ui-consistency-regression.cjs",
+    "exit": 0,
+    "output": "PASS: role navigation restore/Back, invalid sections, drawer closing, settings URL, font scaling, selected microphone and password Escape/focus\n"
+  },
+  {
+    "test": "whiteboard-socket-regression.cjs",
+    "exit": 0,
+    "output": "[WS] Authenticated as user 18\n[WS] Authenticated as user 18\nPASS: standalone whiteboards rejoin their room without joining chat; chat pages retain channel joins\n"
+  },
+  {
+    "test": "workspace-taskbar-regression.cjs",
+    "exit": 0,
+    "output": "PASS: logo menu actions/keyboard, separate Settings link, display-only account, server scrolling and responsive control placement\n"
+  },
+  {
+    "test": "yjs-channel-presence-regression.cjs",
+    "exit": 0,
+    "output": "PASS chat awareness: typing timeout, no draft exposure, no echo, channel isolation, clock lifecycle and disconnect\n"
+  },
+  {
+    "test": "yjs-presence-regression.cjs",
+    "exit": 0,
+    "output": "PASS Yjs: join, real protocol frames, throttling, no echoes, stale clocks, selection, room isolation, disconnect and idle\n"
+  },
+  {
+    "test": "collab-role-routing-regression.cjs",
+    "exit": 0,
+    "output": "\u2714 student collaboration menu follows the existing role policy without opening an unrelated pane (170.871227ms)\n\u2714 facilitator collaboration menu follows the existing role policy without opening an unrelated pane (28.207873ms)\n\u2714 admin collaboration menu follows the existing role policy without opening an unrelated pane (24.426524ms)\n\u2139 tests 3\n\u2139 suites 0\n\u2139 pass 3\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 927.001842\n"
+  }
+]

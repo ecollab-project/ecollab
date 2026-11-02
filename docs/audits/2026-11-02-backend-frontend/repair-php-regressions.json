@@ -1,0 +1,122 @@
+[
+  {
+    "test": "admin-connected-regression.php",
+    "exit": 0,
+    "output": "Admin connected-page regression checks passed.\n"
+  },
+  {
+    "test": "admin-workspace-regression.php",
+    "exit": 0,
+    "output": "Admin workspace query, pagination, role protection, conflicts, audit, atomic announcements and availability checks passed\n"
+  },
+  {
+    "test": "centrifugo-regression.php",
+    "exit": 0,
+    "output": "Centrifugo token and transaction checks passed\n"
+  },
+  {
+    "test": "chat-read-regression.php",
+    "exit": 0,
+    "output": "PASS: legacy read fallback, unread snapshots, same-second delivery, monotonic and per-user/scope read state\n"
+  },
+  {
+    "test": "chat-tus-regression.php",
+    "exit": 0,
+    "output": "Chat tus storage regression checks passed\n"
+  },
+  {
+    "test": "chat-upload-access-regression.php",
+    "exit": 0,
+    "output": "Chat upload access regression checks passed\n"
+  },
+  {
+    "test": "client-ip-regression.php",
+    "exit": 0,
+    "output": "PASS: direct peer, spoofed headers, trusted proxy chain, malformed input and IPv4/IPv6 CIDRs\n"
+  },
+  {
+    "test": "code-lab-batch-regression.php",
+    "exit": 0,
+    "output": "PASS: capability negotiation, one batch per grade, strict completion, output decoding and legacy fallback\n"
+  },
+  {
+    "test": "code-lab-execution-regression.php",
+    "exit": 0,
+    "output": "PASS: private attempts, playground isolation, roles, cross-server access, submission locking, deadlines, timing and stale saves\nPASS: queue ownership, frozen submissions, weighted grading, hidden-case privacy, quotas, runtime/limit enforcement, outage retry and manual overrides\nPASS: malformed grading kind never produces a completed result\n"
+  },
+  {
+    "test": "code-lab-integrity-policy.php",
+    "exit": 0,
+    "output": "PASS: Code Lab-only Jarred scope gate; chat, documents and dashboards unaffected\n"
+  },
+  {
+    "test": "code-lab-regression.php",
+    "exit": 0,
+    "output": "PASS: private attempts, playground isolation, roles, cross-server access, submission locking, deadlines, timing and stale saves\n"
+  },
+  {
+    "test": "code-lab-server-queue.php",
+    "exit": 0,
+    "output": "PASS: private attempts, playground isolation, roles, cross-server access, submission locking, deadlines, timing and stale saves\nPASS: server fairness, persistent cursor, retry arrival order, private advisory positions, late arrivals and unlocked compilation\n"
+  },
+  {
+    "test": "code-lab-worker-pool.php",
+    "exit": 0,
+    "output": "PASS: two bounded workers, graceful drain, child-failure propagation, no orphan processes\n"
+  },
+  {
+    "test": "collab-request-security-regression.php",
+    "exit": 0,
+    "output": "PASS: 32 collaboration method/CSRF checks; no database access\n"
+  },
+  {
+    "test": "learning-tools-regression.php",
+    "exit": 0,
+    "output": "Learning connected tools regression checks passed.\n"
+  },
+  {
+    "test": "learning-upgrades-regression.php",
+    "exit": 0,
+    "output": "PASS: private attempts, playground isolation, roles, cross-server access, submission locking, deadlines, timing and stale saves\nPASS: facilitator-only immutable comparisons, unchanged grades, rate limits, push endpoint validation, privacy, preferences, deduplication, account ownership and deadlines\n"
+  },
+  {
+    "test": "learning-workspace-regression.php",
+    "exit": 0,
+    "output": "Learning workspace regression checks passed.\n"
+  },
+  {
+    "test": "notification-service-regression.php",
+    "exit": 0,
+    "output": "Notification service regression checks passed\n"
+  },
+  {
+    "test": "peer-ml-regression.php",
+    "exit": 0,
+    "output": "Peer ML regression checks passed\n"
+  },
+  {
+    "test": "settings-runtime-regression.php",
+    "exit": 0,
+    "output": "PASS: profile/receipt privacy, Jarred preferences, bounded continuity, conversation lock, atomic exchange, isolation and greeting fast path\n"
+  },
+  {
+    "test": "system-capacity-regression.php",
+    "exit": 0,
+    "output": "System capacity presence, history, validation, transactions and audit checks passed\n"
+  },
+  {
+    "test": "websocket-maintenance-regression.php",
+    "exit": 0,
+    "output": "PASS: public WebSocket timer flush, due/early saves, dirty counters and repeat maintenance\nPASS: Ratchet decorated resource ID registration\n"
+  },
+  {
+    "test": "whiteboard-presence-regression.php",
+    "exit": 0,
+    "output": "Presence checks passed: authenticated identity, room isolation, clocks, validation, expiry and multiple tabs.\n"
+  },
+  {
+    "test": "whiteboard-scene-regression.php",
+    "exit": 0,
+    "output": "Whiteboard scene regression checks passed\n"
+  }
+]

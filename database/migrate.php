@@ -43,9 +43,14 @@ foreach ($args as $a) {
 
 $db = Database::getInstance();
 
-// ── Ensure registry table exists ─────────────────────────────────────────
-$registrySql = file_get_contents(__DIR__ . '/migrations/000_migration_registry.sql');
-$db->exec($registrySql);
+// Preview modes must remain read-only, including on a fresh database.
+$registryExists = (bool)$db->query("SELECT COUNT(*) FROM information_schema.TABLES
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'schema_migrations'")->fetchColumn();
+if (!$registryExists && !$statusOnly && !$dryRun) {
+    $registrySql = file_get_contents(__DIR__ . '/migrations/000_migration_registry.sql');
+    $db->exec($registrySql);
+    $registryExists = true;
+}
 
 // ── Load all migration files in order ────────────────────────────────────
 $dir = __DIR__ . '/migrations';
@@ -53,8 +58,9 @@ $files = glob($dir . '/*.sql');
 sort($files); // filenames are zero-padded, so lexical sort == numeric order
 
 // ── Get already-applied migrations ───────────────────────────────────────
-$applied = $db->query("SELECT filename, checksum, applied_at, success FROM schema_migrations")
-              ->fetchAll(PDO::FETCH_ASSOC);
+$applied = $registryExists
+    ? $db->query("SELECT filename, checksum, applied_at, success FROM schema_migrations")->fetchAll(PDO::FETCH_ASSOC)
+    : [];
 $appliedMap = [];
 foreach ($applied as $row) $appliedMap[$row['filename']] = $row;
 

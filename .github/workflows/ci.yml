@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, ecollab-collabs ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, ecollab-collabs ]
 
 permissions:
   contents: read
@@ -64,6 +64,9 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
+      - name: Install isolated push analysis dependencies
+        run: composer install --working-dir=tools/web-push --no-dev --no-progress --no-interaction --no-plugins
+
       - name: Wait for MySQL
         run: |
           for i in {1..30}; do
@@ -79,6 +82,9 @@ jobs:
           echo "MySQL did not become ready in time."
           exit 1
 
+      - name: Read-only migration previews
+        run: php tests/migration-preview-regression.php
+
       - name: Apply database migrations
         run: php database/migrate.php
 
@@ -88,5 +94,8 @@ jobs:
       - name: Run Integration tests
         run: vendor/bin/phpunit --testsuite Integration
 
+      - name: Collaboration HTTP contracts
+        run: python3 tests/collab-http-regression.py
+
       - name: Run PHPStan
-        run: vendor/bin/phpstan analyse --error-format=github --no-progress
+        run: vendor/bin/phpstan analyse --error-format=github --no-progress --memory-limit=1G

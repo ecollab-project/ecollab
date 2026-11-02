@@ -33,7 +33,7 @@ vendor/bin/phpunit --testsuite Integration   # needs ecollab_test set up as abov
 vendor/bin/phpunit                           # both
 ```
 
-**None of this has been executed in the environment this suite was authored in** — no PHP interpreter or Composer network access was available. Every file was hand-reviewed for correctness against the actual source it tests, but you should run the suite yourself before trusting it green.
+Validated on November 2, 2026 using PHP 8.3 and an isolated MariaDB 10.11 database: the full PHPUnit suite passed 50 tests / 171 assertions. Authentication fixtures use `Tests\Support\RecordingOtpService` to exercise real signup verification and login OTP handling without sending mail. The default application transport remains unchanged. See `docs/audits/2026-11-02-backend-frontend/REPAIR_CLOSEOUT.md` for scope and evidence.
 
 ## What's covered
 
@@ -57,3 +57,22 @@ Making this testable without changing runtime behavior would mean extracting `pm
 ## Database safety
 
 Integration tests only ever touch `ecollab_test` (or the database named in `ECOLLAB_TEST_DB_NAME`), never your real `.env`'s `DB_NAME` — enforced by the guard in `tests/bootstrap.php`. Each integration test cleans up the specific rows it created in `tearDown()`, scoped by unique per-test identifiers (`uniqid()`), so tests are safe to run in any order or repeatedly without manual database resets between runs.
+
+## Static analysis
+
+Install the optional worker dependencies before PHPStan so it can analyze the real WebPush types:
+
+```bash
+composer install --working-dir=tools/web-push --no-dev --no-plugins
+vendor/bin/phpstan analyse --memory-limit=1G
+```
+
+The migration preview regression must run against a **fresh, empty** loopback test database before applying migrations:
+
+```bash
+DB_NAME=ecollab_test php tests/migration-preview-regression.php
+DB_NAME=ecollab_test php database/migrate.php
+DB_NAME=ecollab_test python3 tests/collab-http-regression.py
+```
+
+Set DB_HOST, DB_PORT, DB_USER and DB_PASS for that disposable database. Never point these commands at production. The HTTP regression creates synthetic records and a temporary PHP-only session router; that router is never installed in the application.

@@ -1,5 +1,7 @@
 # Backend–frontend consistency audit — November 2, 2026
 
+> This is the initial audit snapshot. The authorized follow-up resolves its PHPStan and database-validation gaps; see [REPAIR_CLOSEOUT.md](REPAIR_CLOSEOUT.md) for the current results.
+
 **Source:** `ecollab-project/ecollab`, branch `ecollab-collabs`, commit `c838359711a14e9b6eb3f345c4386d184a178b25` (merge of PR #65). The remote branch was rechecked during this audit and still pointed to this commit. Later phase reports are not evidence that those changes exist on this branch.
 
 **Decision:** scoped fixes pass their local contract tests. This is not a full-system security certification or production release approval. Changes are proposed in a separate branch; no merge, deployment, production database operation, service activation, firewall change, or message delivery was performed.

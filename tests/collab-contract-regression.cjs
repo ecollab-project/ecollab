@@ -59,3 +59,23 @@ test('first snippet save supplies its returned ID to subsequent run logging',asy
     assert.equal(requests.find(r=>r.action==='log_run')?.body.snippet_id,81);
   }finally{dom.window.close();}
 });
+test('a channel change cannot save the previous channel editor into the new channel',async()=>{
+ const {dom,w}=setup();
+ try{
+  let saves=0;
+  w.fetch=async(url)=>{const action=new URL(url,'https://ecollab.test').searchParams.get('action');if(action==='save')saves++;return {ok:true,json:async()=>({ok:true,snippet:{id:1,version:1,code:'private old channel'},snippet_id:1,version:2})};};
+  await w.loadCode();w.ECOLLAB.currentChannelId=8;w.document.dispatchEvent(new w.Event('channelSwitched'));
+  await w.saveCode();
+  assert.equal(saves,0,'Old editor must not write into the newly selected channel');
+ }finally{w.close();}
+});
+test('a late snippet load cannot replace the newly selected channel editor',async()=>{
+ const {dom,w}=setup();
+ try{
+  const pending=[];w.fetch=url=>new Promise(resolve=>pending.push({url,resolve}));
+  const old=w.loadCode();w.ECOLLAB.currentChannelId=8;const current=w.loadCode();
+  pending[1].resolve({ok:true,json:async()=>({ok:true,snippet:{id:8,version:1,title:'Channel 8',code:'new'}})});await current;
+  pending[0].resolve({ok:true,json:async()=>({ok:true,snippet:{id:7,version:1,title:'Channel 7',code:'old'}})});await old;
+  assert.equal(w.document.getElementById('codeTitle').value,'Channel 8');
+ }finally{w.close();}
+});

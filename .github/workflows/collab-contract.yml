@@ -5,8 +5,16 @@ on:
       - 'API/collab/**'
       - 'assets/js/chat/collab-tools.js'
       - 'assets/js/chat/chat-features.js'
+      - 'assets/js/chat/functionality-overrides.js'
+      - 'modules/chat/chat.php'
       - 'assets/js/chat/chat.js'
       - 'tests/collab-*'
+      - 'tests/legacy-otp-route-regression.cjs'
+      - 'tests/websocket-maintenance-regression.php'
+      - 'tests/code-lab-execution-regression.php'
+      - 'websocket/**'
+      - 'services/CodeLabExecutionService.php'
+      - 'API/auth/send-otp.php'
       - 'tests/private-channel-members-regression.cjs'
       - 'tests/chat-navigation-regression.cjs'
       - '.github/workflows/collab-contract.yml'
@@ -16,8 +24,16 @@ on:
       - 'API/collab/**'
       - 'assets/js/chat/collab-tools.js'
       - 'assets/js/chat/chat-features.js'
+      - 'assets/js/chat/functionality-overrides.js'
+      - 'modules/chat/chat.php'
       - 'assets/js/chat/chat.js'
       - 'tests/collab-*'
+      - 'tests/legacy-otp-route-regression.cjs'
+      - 'tests/websocket-maintenance-regression.php'
+      - 'tests/code-lab-execution-regression.php'
+      - 'websocket/**'
+      - 'services/CodeLabExecutionService.php'
+      - 'API/auth/send-otp.php'
       - 'tests/private-channel-members-regression.cjs'
       - 'tests/chat-navigation-regression.cjs'
       - '.github/workflows/collab-contract.yml'
@@ -34,15 +50,20 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
+          extensions: pdo_sqlite, mbstring, dom
           coverage: none
       - run: npm install --no-save --ignore-scripts jsdom@30.1.2
+      - run: composer install --no-interaction --no-progress --no-plugins
       - name: Syntax and request contracts
         run: |
           php -l API/collab/collab.php
           php -l API/collab/collab-extra.php
           node --check assets/js/chat/collab-tools.js
           node --check assets/js/chat/chat-features.js
-          node --test tests/collab-contract-regression.cjs
+          node --test tests/collab-contract-regression.cjs tests/collab-role-routing-regression.cjs
           node --test tests/private-channel-members-regression.cjs
           node tests/chat-navigation-regression.cjs
           php tests/collab-request-security-regression.php
+          node tests/legacy-otp-route-regression.cjs
+          php tests/websocket-maintenance-regression.php
+          php tests/code-lab-execution-regression.php
