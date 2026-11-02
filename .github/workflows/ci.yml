@@ -86,7 +86,9 @@ jobs:
         run: php tests/migration-preview-regression.php
 
       - name: Apply database migrations
-        run: php database/migrate.php
+        run: |
+          php database/migrate.php
+          php database/migrate.php
 
       - name: Existing schema compatibility
         env:

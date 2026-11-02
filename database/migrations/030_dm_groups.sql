@@ -99,36 +99,14 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
--- ── dm_reads: allow group-scoped read cursors too (guarded) ──────
-SET @col_type2 := (
-    SELECT COLUMN_TYPE FROM information_schema.COLUMNS
-    WHERE table_schema = DATABASE()
-      AND table_name = 'dm_reads'
-      AND column_name = 'conversation_id'
-      AND is_nullable = 'NO'
-);
-SET @sql := IF(@col_type2 IS NOT NULL,
-    'ALTER TABLE dm_reads MODIFY COLUMN conversation_id INT UNSIGNED NULL',
-    'DO 0'
-);
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-
+-- Group read cursors. Key/nullability conversion follows in
+-- 030_dm_groups_cursor_key.sql so MySQL never makes a PK column nullable.
 SET @col_exists2 := (
     SELECT COUNT(*) FROM information_schema.COLUMNS
     WHERE table_schema = DATABASE()
       AND table_name = 'dm_reads'
       AND column_name = 'group_id'
 );
-SET @sql := IF(@col_exists2 = 0,
-    'ALTER TABLE dm_reads ADD COLUMN group_id BIGINT UNSIGNED NULL AFTER conversation_id, ADD PRIMARY KEY (user_id, conversation_id, group_id)',
-    'DO 0'
-);
--- Note: dm_reads' existing PK is (user_id, conversation_id). Adding group_id
--- to the PK requires dropping the old PK first; done as a single guarded
--- statement pair below instead of inline above, since MySQL can't add a
--- column and redefine the PK atomically via the same IF-guard cleanly.
 SET @sql := IF(@col_exists2 = 0,
     'ALTER TABLE dm_reads ADD COLUMN group_id BIGINT UNSIGNED NULL AFTER conversation_id',
     'DO 0'

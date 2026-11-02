@@ -2,7 +2,7 @@
 
 Scope: the user authorized fixing the remaining backend/frontend defects after PR #106. This follows the initial `ecollab-collabs` audit at `c838359` and the first PR commit `ff3c34e`. The original evidence remains archived beside this file.
 
-**Local result:** all defects described below have regression coverage and pass. PHPStan now reports **zero diagnostics**, down from 15. Full PHPUnit passes **50 tests / 171 assertions**, including isolated database integration. This result does not certify an entire deployed system, real multiuser WebSocket recovery, provider delivery or production capacity.
+**Local result:** all defects described below have regression coverage and pass. PHPStan now reports **zero diagnostics**, down from 15. Full PHPUnit passes **51 tests / 175 assertions**, including isolated database integration. This result does not certify an entire deployed system, real multiuser WebSocket recovery, provider delivery or production capacity.
 
 ## Changes and evidence
 
@@ -15,7 +15,7 @@ Scope: the user authorized fixing the remaining backend/frontend defects after P
 | Unused legacy OTP route referenced undefined mail constants and issued session codes no verifier consumes | Retire `/API/auth/send-otp.php` with HTTP 410; current signup/login/reset routes are unchanged | No current repository callers found; GET/POST route test verifies 410 without generating codes |
 | Authentication tests omitted the existing email-verification prerequisite and expected immediate password login | Add an optional OtpService constructor dependency, leaving the default transport unchanged; tests use in-memory mail, real email-proof verification and real login OTP verification | Full PHPUnit, including missing-proof rejection and failed-delivery cleanup; no email sent |
 | OTP lifetime mixed PHP local time with database verification time | Compute expiry with `DATE_ADD(NOW(), INTERVAL :ttl SECOND)` at insertion | Reproduced 29,400-second validity for a 600-second code; UTC/Manila mismatch tests now verify TTL, expiry and single use |
-| Fresh MariaDB migration 025 rejected a generated column depending on an `ON UPDATE CASCADE` FK | Add `024_coworkspace_server_scope_compat.sql` before 025: retain delete cascading, restrict immutable server-ID updates, and use an indexed VIRTUAL expression with an existing-STORED conversion path | All 66 migrations on a fresh MariaDB 10.11 fixture; repeat runner; active-workspace uniqueness, archiving/replacement and server-delete cascade tests |
+| Fresh MariaDB migration 025 rejected a generated column depending on an `ON UPDATE CASCADE` FK | Add `024_coworkspace_server_scope_compat.sql` before 025: retain delete cascading, restrict immutable server-ID updates, and use an indexed VIRTUAL expression with an existing-STORED conversion path | All 67 migrations on a fresh MariaDB 10.11 fixture; repeat runner; active-workspace uniqueness, archiving/replacement and server-delete cascade tests |
 | `migrate.php --status` and `--dry-run` wrote the registry on an empty database | Inspect registry presence and create it only for real apply mode | Regression reproduced `--status mutated the empty database`; both preview flags now leave it unchanged |
 | A snippet load could overwrite the next channel; pending editor content could save to the wrong channel | Track the editor's channel/load generation, cancel queued saves on switching, and ignore stale loads/save responses | Two failing channel-switch DOM reproductions now pass; quiz/calendar/snippet contract regressions remain green |
 | Student Code Snippet menu conflicted with the established Notes/Documents-only member policy and opened Notes instead | Hide the unavailable menu item for members and stop unsupported-tool fallback; preserve privileged-role access | Student/facilitator/admin menu and routing regressions |
@@ -25,14 +25,14 @@ Scope: the user authorized fixing the remaining backend/frontend defects after P
 
 | Check | Result |
 | --- | --- |
-| Full PHPUnit with disposable MariaDB | 50 tests / 171 assertions PASS |
+| Full PHPUnit with disposable MariaDB | 51 tests / 175 assertions PASS |
 | New/extended collaboration DOM suites | 12 tests PASS (7 contracts, 2 private-member loading, 3 role-routing cases) |
 | Collaboration pre-dispatch CSRF/method suite | 32 cases PASS |
 | Real PHP collaboration HTTP handlers with isolated DB | 22 cases PASS: anonymous/nonmember rejection, token/method rejection, snippet persistence/version conflict/run log, quiz IDs/results and calendar range |
 | Node regression entry points | 45 scripts PASS, including browser-push, loopback broker HTTP, Uppy upload HTTP, k6 mocks and frontend DOM suites |
 | Standalone PHP regression entry points | 24 scripts PASS, including worker supervision, upload storage, queue isolation, preferences, notifications and WebSocket maintenance |
 | Dedicated database suites | Collabora, whiteboard authorization, settings migrations, book events, partial-schema reruns and stored-to-virtual compatibility PASS |
-| Migration lifecycle | Preview has no writes; 66 fresh migrations PASS; repeat apply has zero pending migrations |
+| Migration lifecycle | Preview has no writes; 67 fresh migrations PASS; repeat apply has zero pending migrations |
 | Production-directory syntax | 259 PHP and 67 JavaScript files PASS; modified/new tests executed or syntax checked |
 | PHPStan level 2 | 0 errors / 0 file diagnostics; original baseline had 15 |
 | Workflow syntax and whitespace | YAML parse and `git diff --check` PASS |
@@ -63,3 +63,5 @@ Coordinator: eCollab IT Orchestrator, Integrations lead with Backend, Security, 
 The first full MySQL run on `536419d` failed at migration 022 because MySQL 8.0 rejects MariaDB's `ADD COLUMN IF NOT EXISTS` syntax. Portable information_schema/PREPARE guards now replace these clauses in 022, 041, 047, 048 and 051, including the document-report index guard. The migration runner now drains result sets from EXECUTE as well as SELECT, preventing an observed PDO 2014 failure when a guarded no-op returns rows. Partial/complete schema reruns preserve attachment and bookmark data.
 
 MySQL's [generated-column foreign-key restrictions](https://dev.mysql.com/doc/refman/8.0/en/create-table-foreign-keys.html) also require the active-server expression to use VIRTUAL storage if base-column delete cascading is retained. The compatibility migration upgrades a previously STORED expression without removing source rows; repeated upgrades, active uniqueness, archived replacements and delete cascades pass in the new dedicated fixture. Main CI checks fresh installs and existing-schema compatibility. Current MySQL conclusions remain attached to the current PR head, not the failed earlier commit.
+
+A second MySQL run (`93991d6`, run 41412643690) advanced through migration 025 and failed at 030: `dm_reads.conversation_id` was being made nullable while still in its primary key. Migration 030 now leaves nullability alone until the new additive `030_dm_groups_cursor_key.sql` replaces that primary key with per-user conversation uniqueness. The existing per-user group unique key is retained. The new integration regression verifies distinct DM/group cursor records and repeated upserts without losing read timestamps. This repair also applies to installations that already recorded migration 030.

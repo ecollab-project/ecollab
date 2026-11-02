@@ -33,7 +33,7 @@ vendor/bin/phpunit --testsuite Integration   # needs ecollab_test set up as abov
 vendor/bin/phpunit                           # both
 ```
 
-Validated on November 2, 2026 using PHP 8.3 and an isolated MariaDB 10.11 database: the full PHPUnit suite passed 50 tests / 171 assertions. Authentication fixtures use `Tests\Support\RecordingOtpService` to exercise real signup verification and login OTP handling without sending mail. The default application transport remains unchanged. See `docs/audits/2026-11-02-backend-frontend/REPAIR_CLOSEOUT.md` for scope and evidence.
+Validated on November 2, 2026 using PHP 8.3 and an isolated MariaDB 10.11 database: the full PHPUnit suite passed 51 tests / 175 assertions. Authentication fixtures use `Tests\Support\RecordingOtpService` to exercise real signup verification and login OTP handling without sending mail. The default application transport remains unchanged. See `docs/audits/2026-11-02-backend-frontend/REPAIR_CLOSEOUT.md` for scope and evidence.
 
 ## What's covered
 
