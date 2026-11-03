@@ -1,0 +1,13 @@
+[Unit]
+Description=Preload the configured eCollab Jarred model without user data
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=ecollabadmin
+WorkingDirectory=/home/ecollabadmin/ecollab-inspect
+ExecStart=/usr/bin/php /home/ecollabadmin/ecollab-inspect/scripts/warm-jarred.php
+TimeoutStartSec=100
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=full

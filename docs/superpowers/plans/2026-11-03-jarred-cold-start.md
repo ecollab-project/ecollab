@@ -1,0 +1,11 @@
+# Jarred cold-start, gateway and chat-state fixes
+
+Source local 719d29d, equivalent deployed head 2ee9303. User screenshots show an old control marker in a reply, a Jarred pending indicator in a human conversation and a palette-mismatched login autofill. User reports a cold-start wait followed by a gateway toast. Integrations leads; backend latency, frontend state/CSS and QA lenses support.
+
+Root causes inspected: greeting requests reach model generation; Ollama request timeout is 90 seconds; one unscoped DOM typing indicator survives conversation changes; autofill paints hard-coded #191523. Actual gateway/server logs and model cold-load duration are not available, so no exact gateway diagnosis or latency guarantee is claimed.
+
+Implementation: deterministic plain greetings after persisted Code Lab gating; 45-second inference budget shared across tool rounds and structured timeout handling; separate 90-second CLI warm-up; no user content in warm-up. Model control markers/reasoning blocks are filtered from new provider replies, without rewriting saved history. Conversation-keyed pending state clears/restores on navigation, prevents duplicate in-flight requests and does not erase human typing on old completion. Outgoing uncertain AI messages remain visibly unconfirmed after network/gateway failure rather than silently discarded or retried. Autofill background/text follow theme variables; social links use button typography. Cache keys bumped for changed entrypoints. Supplied optional eight-minute preload timer keeps the existing model resident.
+
+Verification: new typing regression fails on the original shared indicator; greeting regression demonstrates original model fallback. New tests pass for human/AI pending isolation, late completion and visible gateway recovery, real cURL timeout/lock release, marker filtering and normal provider protocol. Existing provider/session/UI/Code Lab checks and 25 PHPUnit tests / 56 assertions pass. Full PHPStan passes. Hosted CI runs new regressions. No live message sent, VPS changed, browser password-manager autofill session or real model cold-start timing performed by this implementation.
+
+Rollback: restore prior source and restart PHP-FPM; disable the new warm timer if installed. No migrations or dependency changes.

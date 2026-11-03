@@ -5,9 +5,11 @@ final class OllamaService
 {
     private string $baseUrl;
     private string $model;
+    private int $requestTimeout;
 
-    public function __construct(?string $baseUrl = null, ?string $model = null)
+    public function __construct(?string $baseUrl = null, ?string $model = null, int $timeoutSeconds = 45)
     {
+        $this->requestTimeout=max(1,min(45,$timeoutSeconds));
         $this->baseUrl = rtrim($baseUrl ?: (getenv('OLLAMA_URL') ?: 'http://127.0.0.1:11434'), '/');
         $this->model = $model ?: (getenv('OLLAMA_MODEL') ?: 'qwen3:1.7b');
         $parts = parse_url($this->baseUrl);
@@ -22,7 +24,7 @@ final class OllamaService
     {
         $started = microtime(true);
         $data = $this->requestChat(['model'=>$this->model,'messages'=>[],'stream'=>false,'keep_alive'=>'10m',
-            'options'=>['num_ctx'=>4096,'num_thread'=>max(1,min(2,(int)(getenv('OLLAMA_NUM_THREADS') ?: 1)))]]);
+            'options'=>['num_ctx'=>4096,'num_thread'=>max(1,min(2,(int)(getenv('OLLAMA_NUM_THREADS') ?: 1)))]], 90);
         return ['elapsed_ms'=>(int)round((microtime(true)-$started)*1000),
             'load_ms'=>(int)round(($data['load_duration']??0)/1000000)];
     }
@@ -45,6 +47,7 @@ final class OllamaService
         $outputTokens = 0;
         $rounds = max(1, min(5, $maxRounds));
 
+        $deadline=microtime(true)+$this->requestTimeout;
         for ($round = 0; $round < $rounds; $round++) {
             $payload = [
                 'model' => $this->model,
@@ -57,7 +60,9 @@ final class OllamaService
                 'num_ctx' => 4096,
                 'num_predict' => max(1, min(1024, $maxTokens))],
             ];
-            $data = $this->requestChat($payload);
+            $remaining=(int)ceil($deadline-microtime(true));
+            if($remaining<1)throw new RuntimeException('Jarred took too long to reply. Please try a shorter question.',504);
+            $data = $this->requestChat($payload,$remaining);
             $inputTokens += (int)($data['prompt_eval_count'] ?? 0);
             $outputTokens += (int)($data['eval_count'] ?? 0);
             $message = is_array($data['message'] ?? null) ? $data['message'] : [];
@@ -65,7 +70,7 @@ final class OllamaService
 
             if (!$toolCalls) {
                 return [
-                    'text' => (string)($message['content'] ?? ''),
+                    'text' => self::cleanResponse((string)($message['content'] ?? '')),
                     'input_tokens' => $inputTokens ?: null,
                     'output_tokens' => $outputTokens ?: null,
                     'model' => (string)($data['model'] ?? $this->model),
@@ -102,7 +107,7 @@ final class OllamaService
         throw new RuntimeException('Jarred exceeded the maximum tool-call rounds');
     }
 
-    private function requestChat(array $payload): array
+    private function requestChat(array $payload,?int $timeoutSeconds=null): array
     {
         $lock = @fopen(sys_get_temp_dir() . '/ecollab-ollama-inference.lock', 'c');
         if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) {
@@ -118,10 +123,13 @@ final class OllamaService
                 CURLOPT_PROTOCOLS => CURLPROTO_HTTP,
                 CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
                 CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
-                CURLOPT_CONNECTTIMEOUT => 5, CURLOPT_TIMEOUT => 90,
+                CURLOPT_CONNECTTIMEOUT => 5, CURLOPT_TIMEOUT => $timeoutSeconds??$this->requestTimeout,
             ]);
             $raw = curl_exec($ch);
-            if ($raw === false) throw new RuntimeException('Ollama request failed: ' . curl_error($ch));
+            if ($raw === false) {
+                if(curl_errno($ch)===CURLE_OPERATION_TIMEDOUT)throw new RuntimeException('Jarred took too long to reply. Please try a shorter question.',504);
+                throw new RuntimeException('Local model is temporarily unavailable.',503);
+            }
             $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
             if ($status < 200 || $status >= 300) throw new RuntimeException('Ollama returned HTTP ' . $status);
             $data=json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
@@ -131,6 +139,14 @@ final class OllamaService
             if ($ch !== null) curl_close($ch);
             flock($lock, LOCK_UN); fclose($lock);
         }
+    }
+
+    public static function cleanResponse(string $text): string
+    {
+        // Provider control markers and reasoning blocks never belong in a user reply.
+        $text=preg_replace('~<think\b[^>]*>.*?</think\s*>~is','',$text)??'';
+        $text=preg_replace('~<think\b[^>]*>.*$~is','',$text)??'';
+        return trim(str_replace(['/no_think','/think'],'',$text));
     }
 
     public function generate(array $messages, string $systemPrompt = '', int $maxTokens = 400): array
@@ -169,7 +185,7 @@ final class OllamaService
         $data = $this->requestChat($payload);
 
         return [
-            'text' => (string)($data['message']['content'] ?? ''),
+            'text' => self::cleanResponse((string)($data['message']['content'] ?? '')),
             'input_tokens' => $data['prompt_eval_count'] ?? null,
             'output_tokens' => $data['eval_count'] ?? null,
             'model' => (string)($data['model'] ?? $this->model),

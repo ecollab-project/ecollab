@@ -19,6 +19,7 @@ final class JarredAssistancePolicy
         if(preg_match('/what (?:can|do) you (?:do|help)|your (?:capabilities|capacity)|what are you (?:able|capable)/i',$prompt))return self::capabilities();
         $task=CodeLabIntegrityPolicy::activeAttempt($db,$uid);
         if($task)return CodeLabIntegrityPolicy::workflow($task,$prompt);
+        if(preg_match('/^(?:hi|hello|hey|good (?:morning|afternoon|evening)|kumusta|kamusta)(?:[!.?\s]*)$/iu',trim($prompt)))return "Hi! I'm Jarred. What would you like help with? You can ask what I can do, find resources, or get study guidance.";
         return self::unsupported($prompt)?self::REFUSAL:null;
     }
     public static function instructions(): string

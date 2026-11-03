@@ -35,6 +35,8 @@ jobs:
           node tests/livekit-calls-regression.cjs
           node tests/code-lab-ui-regression.cjs
           node tests/code-lab-integrity-regression.cjs
+          node tests/jarred-dm-pending.cjs
+          node tests/jarred-timeout-regression.cjs
           node tests/jarred-provider-regression.cjs
           node tests/jarred-session-race.cjs
   sql:

@@ -300,7 +300,7 @@ JARRED_SYSTEM_PROMPT . JarredConversation::instructions($prefs),
             'created_at' => $createdAt,
             'recipient_id' => $recipientId,
             'is_ai' => true,
-            'ai_error' => in_array($aiError->getCode(),[409,503],true)?'Jarred is busy. Wait briefly and try again.':'AI is temporarily unavailable',
+            'ai_error' => $aiError->getCode()===504?'Jarred took too long to reply. Your message is saved; try a shorter follow-up.':(in_array($aiError->getCode(),[409,503],true)?'Jarred is busy. Wait briefly and try again.':'AI is temporarily unavailable'),
         ]);
     }
 } catch (Throwable $e) {

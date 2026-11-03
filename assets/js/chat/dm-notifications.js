@@ -76,6 +76,7 @@ const DM = {
   activePartnerIsAI: false,
   groups: [],               // [{id, name, display_name, members, last_message, ...}]
   activeGroupId: null,
+  aiPending: new Set(),
   typingTimers: {},         // conversation_id => clearTimeout handle
 };
 
@@ -192,16 +193,17 @@ function _onWsDmMessage(data) {
 }
 
 function _onWsDmTyping(data) {
-  if (DM.activeConvId !== data.conversation_id) return;
+  if (DM.activeConvId !== data.conversation_id || DM.activePartnerIsAI || DM.activeGroupId) return;
   const indicator = document.getElementById('dmTypingIndicator');
   if (!indicator) return;
 
   if (data.is_typing) {
+    delete indicator.dataset.aiConversation;
     indicator.style.display = 'flex';
     indicator.textContent   = `${String(data.sender_name||'Someone')} is typing…`;
     clearTimeout(DM.typingTimers[data.conversation_id]);
     DM.typingTimers[data.conversation_id] = setTimeout(() => {
-      indicator.style.display = 'none';
+      if (DM.activeConvId === data.conversation_id && !DM.activeGroupId && !DM.activePartnerIsAI) indicator.style.display = 'none';
     }, 3000);
   } else {
     indicator.style.display = 'none';
@@ -247,10 +249,11 @@ function _onWsDmGroupTyping(data) {
 
   const key = 'group_' + data.group_id;
   if (data.is_typing) {
+    delete indicator.dataset.aiConversation;
     indicator.style.display = 'flex';
     indicator.textContent   = `${String(data.sender_name||'Someone')} is typing…`;
     clearTimeout(DM.typingTimers[key]);
-    DM.typingTimers[key] = setTimeout(() => { indicator.style.display = 'none'; }, 3000);
+    DM.typingTimers[key] = setTimeout(() => { if (DM.activeGroupId == data.group_id) indicator.style.display = 'none'; }, 3000);
   } else {
     indicator.style.display = 'none';
     clearTimeout(DM.typingTimers[key]);
@@ -773,6 +776,7 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
   partnerName  = partnerName || 'User';
 
   DM.activeGroupId     = null;
+  DM.activeConvId      = null;
   DM.activePartnerId   = partnerId;
   DM.activePartnerName = partnerName;
   const selectedConv = DM.conversations.find(c => Number(c.partner_id) === partnerId);
@@ -783,6 +787,10 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
     String(partnerName).trim().toLowerCase() === 'ecollab ai';
 
   _ensureDmPanel();
+  _clearDmTyping();
+  _syncAiTyping();
+  const composer = document.getElementById('dmInputField');
+  if (composer) composer.disabled = false;
 
   const panel = document.getElementById('dmConversationPanel');
   panel.style.display = 'flex';
@@ -819,6 +827,8 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
     const data = await apiFetch(BASE() + `/API/dm/open-conversation.php?partner_id=${partnerId}&read=${document.hidden?0:1}`);
     if (DM.activePartnerId !== partnerId || DM.activeGroupId) return;
     DM.activeConvId = Number(data.conversation_id);
+    _syncAiTyping();
+    if (composer) composer.disabled = DM.activePartnerIsAI && DM.aiPending.has(DM.activeConvId);
 
     // Clear unread from list
     const conv = DM.conversations.find(c => c.conversation_id === DM.activeConvId);
@@ -827,6 +837,7 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
     _renderDmMessages(data.messages || [],data.first_unread_id);
     _renderDmReadReceipt(data.partner_last_read_id);
   } catch (err) {
+    if (DM.activePartnerId !== partnerId || DM.activeGroupId) return;
     msgArea.innerHTML = `<div style="text-align:center;padding:20px;color:#f87171;font-size:13px;">Failed to load: ${_esc(err.message)}</div>`;
   }
 };
@@ -837,8 +848,13 @@ window.openGroupConversation = async function(groupId) {
   DM.activeConvId    = null;
   DM.activePartnerId = null;
   DM.activeGroupId   = groupId;
+  DM.activePartnerIsAI = false;
 
   _ensureDmPanel();
+  _clearDmTyping();
+  _syncAiTyping();
+  const composer = document.getElementById('dmInputField');
+  if (composer) composer.disabled = false;
   document.getElementById('dmPanelTitle').textContent = 'Loading group…';
   window.EcollabDmSettings?.opened({ type: 'group', id: groupId, name: 'Group', members: [] });
 
@@ -864,6 +880,7 @@ window.openGroupConversation = async function(groupId) {
     window.EcollabDmSettings?.opened({ type: 'group', id: groupId, name: displayName, members: data.members || [] });
     _renderDmMessages(data.messages || [],data.first_unread_id);
   } catch (err) {
+    if (DM.activeGroupId !== groupId) return;
     msgArea.innerHTML = `<div style="text-align:center;padding:20px;color:#f87171;font-size:13px;">Failed to load: ${_esc(err.message)}</div>`;
   }
 };
@@ -994,18 +1011,31 @@ function _appendDmMessage(m) {
   if(follow){area.scrollTop = area.scrollHeight;window.EcollabTimeline?.requestRead(area);}
 }
 
-function _showAiTyping() {
+function _syncAiTyping() {
   const indicator = document.getElementById('dmTypingIndicator');
   if (!indicator) return;
-  indicator.style.display = 'flex';
-  indicator.innerHTML = 'Jarred is typing <span style="letter-spacing:2px;margin-left:4px;">•••</span>';
+  const pending = !DM.activeGroupId && DM.activePartnerIsAI && DM.aiPending.has(Number(DM.activeConvId));
+  if (pending) {
+    indicator.dataset.aiConversation = String(DM.activeConvId);
+    indicator.style.display = 'flex';
+    indicator.textContent = 'Jarred is preparing a reply…';
+  } else if (indicator.dataset.aiConversation) {
+    indicator.style.display = 'none';
+    indicator.textContent = '';
+    delete indicator.dataset.aiConversation;
+  }
 }
-
-function _hideAiTyping() {
+function _clearDmTyping() {
   const indicator = document.getElementById('dmTypingIndicator');
-  if (!indicator) return;
-  indicator.style.display = 'none';
-  indicator.innerHTML = '';
+  if (indicator) { indicator.style.display = 'none'; indicator.textContent = ''; delete indicator.dataset.aiConversation; }
+}
+function _showAiTyping(conversationId) {
+  DM.aiPending.add(Number(conversationId));
+  _syncAiTyping();
+}
+function _hideAiTyping(conversationId) {
+  if (conversationId != null) DM.aiPending.delete(Number(conversationId));
+  _syncAiTyping();
 }
 
 // Typing signal debounce
@@ -1030,6 +1060,8 @@ window.sendDmMessage = async function() {
   const targetConv = DM.activeConvId;
   const targetGroup = DM.activeGroupId;
   const targetPartner = DM.activePartnerId;
+  const targetIsAI = Boolean(DM.activePartnerIsAI && !targetGroup);
+  if (targetIsAI && DM.aiPending.has(Number(targetConv))) return;
   const stillInChat = () => targetConv === DM.activeConvId && targetGroup === DM.activeGroupId && targetPartner === DM.activePartnerId && document.getElementById('dmInputField') === input;
 
   input.value    = '';
@@ -1042,7 +1074,7 @@ window.sendDmMessage = async function() {
       if(!stillInChat())throw new Error('Chat changed. Return to the original chat and select the attachment again.');
       if(_dmPendingFile === pendingFile)_dmClearFile();
     }
-  } catch(e){input.disabled=false;if(stillInChat())input.value=text;showToast('Upload failed: '+e.message,'error');return;}
+  } catch(e){if(stillInChat()){input.disabled=false;input.value=text;}showToast('Upload failed: '+e.message,'error');return;}
 
   // Optimistic UI
   const optimistic = {
@@ -1074,12 +1106,11 @@ window.sendDmMessage = async function() {
       _wsSend({ type: 'dm_group_message' , group_id: targetGroup, message_id: data.message_id, body: text, created_at: new Date().toISOString() });
       const grp = DM.groups.find(g => g.id === targetGroup);
       if (grp) { grp.last_message = (text || (uploaded ? '📎 '+uploaded.file_name : '')).slice(0, 120); grp.last_msg_at = new Date().toISOString(); _renderGroupList(); }
-      input.disabled = false;
-      if (stillInChat()) input.focus();
+      if (stillInChat()) { input.disabled = false; input.focus(); }
       return;
     }
 
-    if (DM.activePartnerIsAI) _showAiTyping();
+    if (targetIsAI) _showAiTyping(targetConv);
 
     const data = await apiFetch(BASE() + '/API/dm/send-message.php', {
       method: 'POST',
@@ -1097,7 +1128,7 @@ window.sendDmMessage = async function() {
       }),
     });
 
-    _hideAiTyping();
+    _hideAiTyping(targetConv);
 
     // Replace optimistic ID with the real DB message ID.
     const optimisticEl = document.querySelector(`[data-msg-id="${optimistic.id}"]`);
@@ -1168,13 +1199,21 @@ window.sendDmMessage = async function() {
     }
 
   } catch (err) {
-    _hideAiTyping();
-    showToast('Failed to send: ' + err.message, 'error');
-    // Remove optimistic message
-    document.querySelector(`[data-msg-id="${optimistic.id}"]`)?.remove();
+    _hideAiTyping(targetConv);
+    const uncertain = targetIsAI && ([502, 503, 504].includes(Number(err.status)) || (err instanceof TypeError || err instanceof SyntaxError));
+    showToast(uncertain ? 'Jarred could not finish the request. Your message may already be saved; check this chat before sending it again.' : 'Failed to send: ' + err.message, 'error');
+    const pending = document.querySelector(`[data-msg-id="${optimistic.id}"]`);
+    if (uncertain && pending) {
+      pending.dataset.deliveryState = 'unconfirmed';
+      const notice = document.createElement('small');
+      notice.textContent = 'Delivery unconfirmed. Reopen this chat to check.';
+      notice.style.cssText = 'display:block;margin-top:4px;font-size:11px;opacity:.8';
+      pending.querySelector('.dm-message-bubble')?.append(notice);
+    }
+    else pending?.remove();
   } finally {
-    input.disabled = false;
-    if (stillInChat()) input.focus();
+    if (targetIsAI) _hideAiTyping(targetConv);
+    if (stillInChat()) { input.disabled = false; input.focus(); }
   }
 };
 
