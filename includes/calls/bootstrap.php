@@ -16,7 +16,7 @@ if (!empty($_SESSION['user_id']) && !defined('ECOLLAB_CALLS_LOADED')):
 <script nonce="<?=htmlspecialchars($callNonce, ENT_QUOTES)?>" src="<?= htmlspecialchars(BASE_URL, ENT_QUOTES) ?>/assets/js/calls/media-settings.js?v=settings-speed-1" defer></script>
 <script nonce="<?=htmlspecialchars($callNonce, ENT_QUOTES)?>" src="<?= htmlspecialchars(BASE_URL, ENT_QUOTES) ?>/assets/js/sounds.js?v=project-sfx-1" defer></script>
 <script nonce="<?=htmlspecialchars($callNonce, ENT_QUOTES)?>" src="<?= htmlspecialchars(BASE_URL, ENT_QUOTES) ?>/assets/js/calls/call-dock.js?v=4" defer></script>
-<script nonce="<?=htmlspecialchars($callNonce, ENT_QUOTES)?>" src="<?= htmlspecialchars(BASE_URL, ENT_QUOTES) ?>/assets/js/calls/call-continuity.js?v=3" defer></script>
+<script nonce="<?=htmlspecialchars($callNonce, ENT_QUOTES)?>" src="<?= htmlspecialchars(BASE_URL, ENT_QUOTES) ?>/assets/js/calls/call-continuity.js?v=4" defer></script>
 <script nonce="<?=htmlspecialchars($callNonce, ENT_QUOTES)?>" src="<?= htmlspecialchars(BASE_URL, ENT_QUOTES) ?>/assets/js/chat/dm-call.js?v=continuity-1" defer></script>
 <?php endif; ?>
 

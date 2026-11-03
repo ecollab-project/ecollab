@@ -1125,7 +1125,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-timeline.css?v=1">
   <script src="<?= BASE_URL ?>/assets/js/chat/timeline.js?v=dm-identity-20261103" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=jarred-pending-20261103" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=continuity-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=call-routing-4" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js?v=media-1" defer></script>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-media.css?v=1">
   <script src="<?= BASE_URL ?>/assets/js/chat/media-picker.js?v=settings-speed-1" defer></script>
@@ -3470,7 +3470,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <script src="<?= BASE_URL ?>/assets/js/chat/collabs-ui.js?v=inline-workspace-3" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/nav-persistence.js?v=2" defer></script>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/profile-view-overrides.css?v=1">
-  <script id="profileViewScript" src="<?= BASE_URL ?>/assets/js/chat/profile-view.js?v=2" defer></script>
+  <script id="profileViewScript" src="<?= BASE_URL ?>/assets/js/chat/profile-view.js?v=call-routing-4" defer></script>
 <script type="module" src="<?= BASE_URL ?>/assets/js/chat/yjs-channel-presence.js?v=settings-speed-1"></script>
 </body>
 

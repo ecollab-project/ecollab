@@ -5,6 +5,7 @@ require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 AuthMiddleware::startSession();
 $user=AuthMiddleware::requireAuth();
+require_once ROOT_PATH.'/includes/calls/workspace-frame-policy.php';
 $csrf=AuthMiddleware::csrfToken();
 $role=strtolower((string)($user['role']??'student'));
 $dashboard=match($role){'admin','super_admin','moderator'=>BASE_URL.'/modules/admin/dashboard.php','facilitator'=>BASE_URL.'/modules/facilitator/dashboard.php',default=>BASE_URL.'/modules/student/dashboard.php'};
