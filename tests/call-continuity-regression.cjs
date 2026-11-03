@@ -14,6 +14,7 @@ function page(uid,owner=false,fallback=false){
  return {dom,w,state,actions,opened};
 }
 (async()=>{const a=page(7,true),b=page(7),other=page(8);await tick();
+for(const hash of ['#','#section']){const anchor=a.w.document.getElementById('anchor');anchor.href=hash;const inPage=new a.w.MouseEvent('click',{bubbles:true,cancelable:true,button:0});anchor.dispatchEvent(inPage);assert(!inPage.defaultPrevented,'in-page menu anchors retain their existing behavior');}
 const click=new a.w.MouseEvent('click',{bubbles:true,cancelable:true,button:0});a.w.document.getElementById('lab').dispatchEvent(click);
 assert(click.defaultPrevented,'navigation must preserve the media-owning document');assert.equal(a.opened.length,1);assert(a.opened[0].location.href.includes('/modules/code-lab/'));assert.equal(a.opened[0].opener,null,'workspace does not retain an opener');assert(a.state.active,'navigation never ends the call');
 assert(b.w.EcollabCallContinuity.remoteActive());assert(!other.w.EcollabCallContinuity.remoteActive(),'another account never sees call status');

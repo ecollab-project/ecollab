@@ -39,7 +39,7 @@
     const path=url.pathname.slice(root.length);
     if(!url.pathname.startsWith(root+'/')||!(/\/modules\//.test(path)||path==='/'||path==='/index.php'))return null;
     if(/^\/(?:API|security)\//.test(path)||/^\/modules\/auth\//.test(path))return null;
-    if(url.pathname===location.pathname&&url.search===location.search&&url.hash)return null;
+    if(url.pathname===location.pathname&&url.search===location.search&&url.href.includes('#'))return null;
     return url;
   }
   function openWorkspace(value){
