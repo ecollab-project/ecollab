@@ -2,7 +2,7 @@
 
 In an owned server, choose **Create task → From a module**, upload a lesson, select Easy/Medium/Hard and C/C++/Python/Java, then select **Generate task with Jarred**. Generation creates one private, editable draft. The facilitator reviews its source excerpt, title and instructions, then explicitly publishes the task to that server. The default grading method is facilitator review. Starter code, automatic checks and timing remain under Advanced options; Write manually remains available.
 
-The coding workspace order is program → program input → Run code → result. Copy/save/download utilities remain beside the program. Execution payloads and student-attempt restrictions are unchanged.
+The coding workspace has one Console for both typed input and returned output, with no standalone stdin section or inline Jarred guidance panel. Enter adds an input line; Ctrl/Cmd+Enter or Run code sends the console input with the program. The current runner uses per-run input and returns completed output; it is not a live interactive terminal. Copy/save/download utilities and student-attempt restrictions remain. Module-based facilitator task generation is unchanged.
 
 ## Files and privacy
 
@@ -31,7 +31,7 @@ cd ~/ecollab-inspect &&
 umask 0022 &&
 git pull --ff-only origin feat/collaboration-assistance-matching &&
 sudo apt-get update &&
-sudo apt-get install -y --no-install-recommends poppler-utils unzip &&
+sudo apt-get install -y --no-install-recommends poppler-utils unzip php8.3-xml &&
 php database/migrate.php &&
 sudo systemctl restart php8.3-fpm ecollab-jarred-worker@1.service ecollab-jarred-worker@2.service
 systemctl is-active php8.3-fpm ecollab-jarred-worker@1.service ecollab-jarred-worker@2.service
@@ -45,4 +45,4 @@ Rollback: stop both Jarred worker instances briefly, revert this module feature 
 
 ## Verification
 
-Local tests exercise real PDF/DOCX extraction, bounded input validation, module provenance/schema checks, draft privacy/ownership, revoked ownership, cancelled/expired leases, retries, no automatic publication and idempotent publication. JSDOM checks the complete upload/review/publish contract, close/reopen recovery, escaped rendering, advanced options and program/input/run/result order. Hosted CI adds MySQL 8/MariaDB five-process claim/publish races and Chromium module flows at 240/390/1440px alongside existing responsive, PHPStan, PHPUnit and Code Lab regressions. These use synthetic lessons and accounts; no production module or student content was inspected.
+Local tests exercise real PDF/DOCX extraction, bounded input validation, module provenance/schema checks, draft privacy/ownership, revoked ownership, cancelled/expired leases, retries, no automatic publication and idempotent publication. JSDOM checks the complete upload/review/publish contract, close/reopen recovery, escaped rendering, advanced options and the unified console, multiline input, keyboard run, literal output and no inline Jarred controls. Hosted CI adds MySQL 8/MariaDB five-process claim/publish races and Chromium module flows at 240/390/1440px alongside existing responsive, PHPStan, PHPUnit and Code Lab regressions. These use synthetic lessons and accounts; no production module or student content was inspected.

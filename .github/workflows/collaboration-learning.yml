@@ -42,6 +42,7 @@ jobs:
           node tests/livekit-calls-regression.cjs
           node tests/call-continuity-regression.cjs
           node tests/call-inline-workspace.cjs
+          node tests/code-lab-console.cjs
           node tests/code-lab-module-ui.cjs
           node tests/code-lab-ui-regression.cjs
           node tests/code-lab-integrity-regression.cjs
