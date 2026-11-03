@@ -126,6 +126,7 @@
     syncScreenControls();
     _syncVoiceQuickActions();
     refreshParticipantCounts();
+    window.EcollabCallContinuity?.refresh();
   }
 
   function syncParticipantState(participant) {
@@ -512,7 +513,7 @@
       console.warn('[LiveKit] Ignored server voice join during DM group call flow.');
       return;
     }
-    if (window.EcollabCalls?.busy()) { showToast('Leave your current call first.', 'info'); return; }
+    if (window.EcollabCalls?.busy() || window.EcollabCallContinuity?.remoteActive()) { showToast('Leave your current call first.', 'info'); return; }
     if (vcActive && Number(vcChannelId) === Number(channelId)) { toggleVcMinimize(); return; }
     if (vcActive) await disconnectVoice();
     vcMicMuted = preferredMicMuted; vcCamOn = false; vcScreenOn = false; vcDeafened = preferredDeafened;
@@ -523,6 +524,7 @@
     if (el) el.classList.add('connected');
 
     vcActive = true;
+    window.EcollabCallContinuity?.refresh();
     vcMinimized = false;
     vcChannelId = Number(channelId);
     vcRoomName = roomNameOverride || el?.textContent?.trim()?.replace(/\\d+/g, '').trim() || 'Voice Channel';
@@ -545,6 +547,7 @@
       if (typeof _reportVoiceStatus === 'function') _reportVoiceStatus('join', channelId);
       window.wsSend?.({type:'join_voice',channel_id:Number(channelId)});
       refreshParticipantCounts();
+      window.EcollabCallContinuity?.refresh();
       showToast('🔊 Joined ' + vcRoomName, 'success');
     } catch (err) {
       console.error('[LiveKit] join failed', err);
@@ -561,6 +564,7 @@
     const leavingChannel = vcChannelId;
     vcActive = false;
     await disconnect();
+    window.EcollabCallContinuity?.refresh();
     vcMinimized = false;
     vcCamOn = false;
     vcScreenOn = false;
@@ -650,6 +654,7 @@
     document.querySelectorAll('audio.livekit-media-track').forEach(el=>el.muted=vcDeafened);
     document.getElementById('vcDeafBtn')?.classList.toggle('muted-state',vcDeafened);
     _syncVoiceQuickActions();
+    window.EcollabCallContinuity?.refresh();
   };
   toggleMute = function (event) { event?.stopPropagation(); return toggleVcMic(); };
   toggleDeafen = function (event) { event?.stopPropagation(); return toggleVcDeafen(); };

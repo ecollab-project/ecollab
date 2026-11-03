@@ -10,7 +10,7 @@
  const status=s=>{$('clStatus').textContent=s;};
  async function api(action,data={},post=false){const params={action,server_id:sid,...data};const response=await fetch(base+'/API/code-lab/index.php'+(post?'':'?'+new URLSearchParams(params)),post?{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':root.dataset.csrf},body:JSON.stringify(params)}:{cache:'no-store'});let result;try{result=await response.json();}catch{throw Error('Code Lab could not load. Check your connection.');}if(!response.ok||!result.success)throw Error(result.error||'Request failed');if(result.data.server_now)clockOffset=result.data.server_now*1000-Date.now();return result.data;}
  function canLeave(){if(saving){status('Wait for the current save to finish.');return false;}return !dirty||confirm('You have unsaved code. Leave without saving?');}
- $('clServer').addEventListener('change',e=>{if(canLeave())location.href=base+'/modules/code-lab/index.php?server_id='+encodeURIComponent(e.target.value);else e.target.value=String(sid);});
+ $('clServer').addEventListener('change',e=>{if(canLeave()){const url=base+'/modules/code-lab/index.php?server_id='+encodeURIComponent(e.target.value);if(window.EcollabCallContinuity)window.EcollabCallContinuity.navigate(url);else location.href=url;}else e.target.value=String(sid);});
  window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
  if(!sid||!$('clTasks'))return;
  async function load(){try{const data=await api('overview');tasks=data.tasks;runnable=data.runnable_languages||[];render();}catch(e){status(e.message);$('clTasks').textContent='Unable to load tasks.';}}

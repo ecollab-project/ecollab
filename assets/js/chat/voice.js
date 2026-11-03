@@ -810,7 +810,9 @@ function openWhiteboard() {
     showToast('📋 Select a channel before opening the whiteboard', 'info');
     return;
   }
-  window.location.href = `${window.ECOLLAB?.baseUrl || ''}/modules/whiteboard/index.php?channel_id=${encodeURIComponent(channelId)}`;
+  const url = `${window.ECOLLAB?.baseUrl || ''}/modules/whiteboard/index.php?channel_id=${encodeURIComponent(channelId)}`;
+  if (window.EcollabCallContinuity) window.EcollabCallContinuity.navigate(url);
+  else window.location.href = url;
 }
 
 // ── Noise / Audio settings helpers ────────────────────────────────────────

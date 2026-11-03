@@ -195,3 +195,13 @@ body.vc-active #voiceChannelView.active:not(.vc-minimized) .vc-header{position:r
  .workspace-call-slot #vcConnectedBar{flex-basis:280px;width:280px;border-radius:12px}
  .ec-call.is-taskbar-docked .ec-call-preview,#voiceChannelView.vc-minimized{bottom:calc(var(--server-dock-height,58px) + 14px + env(safe-area-inset-bottom))!important}
 }
+
+/* The media-owning tab remains open while the workspace navigates. */
+.ec-call-continuity{position:fixed;left:12px;bottom:calc(var(--server-dock-height,58px) + 16px + env(safe-area-inset-bottom));z-index:10080;box-sizing:border-box;width:min(420px,calc(100vw - 24px));padding:12px 14px;border:1px solid var(--border-color,#40534b);border-radius:14px;background:var(--bg-secondary,#162724);color:var(--text-primary,#f0f5f2);box-shadow:0 8px 28px #0005;font:14px/1.45 system-ui,sans-serif}
+.ec-call-continuity[hidden],.ec-call-continuity button[hidden]{display:none!important}
+.ec-call-continuity p{margin:0 0 9px}
+.ec-call-continuity-actions{display:flex;flex-wrap:wrap;gap:7px}
+.ec-call-continuity button{min-height:40px;padding:7px 12px;border:1px solid var(--border-color,#52695e);border-radius:9px;color:inherit;background:var(--bg-tertiary,#223d30);cursor:pointer;font:inherit}
+.ec-call-continuity button:focus-visible{outline:3px solid #65d9a0;outline-offset:2px}
+.ec-call-continuity button:disabled{opacity:.55;cursor:wait}
+.ec-call-continuity button[data-continuity=end]{background:#a72d3c;color:#fff;border-color:#b64a57}
