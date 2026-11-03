@@ -201,6 +201,8 @@
   async function handle(data){
     if(!/^dm_(?:call_|group_call_)/.test(data.type||''))return false;
     if(data.type==='dm_call_offer'||data.type==='dm_group_call_start'){
+      // The media owner handles offers; workspace tabs must not decline its call.
+      if(window.EcollabCallContinuity?.remoteActive())return true;
       if(call && ((data.type==='dm_call_offer' && call.logId===Number(data.log_id)) || (data.type==='dm_group_call_start' && call.groupId===Number(data.group_id)))) return true;
       if(busy()){if(!data.group_id)send({type:'dm_call_decline',target_user_id:data.from_user_id,log_id:data.log_id});else send({type:'dm_group_call_busy',group_id:data.group_id,target_user_id:data.from_user_id});return true;}
       if(data.type==='dm_call_offer'&&data.media!=='livekit'){send({type:'dm_call_decline',target_user_id:data.from_user_id,log_id:data.log_id});notice('The caller needs to refresh eCollab before calling.');return true;}
