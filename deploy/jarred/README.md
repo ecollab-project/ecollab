@@ -52,7 +52,7 @@ After pulling, install the profile only if Ollama uses its normal systemd servic
 ```bash
 systemctl cat ollama.service >/dev/null &&
 sudo install -d /etc/systemd/system/ollama.service.d &&
-sudo install -m 644 deploy/jarred/ollama-concurrency.conf /etc/systemd/system/ollama.service.d/40-ecollab-concurrency.conf &&
+sudo install -m 644 deploy/jarred/ollama-concurrency.conf /etc/systemd/system/ollama.service.d/zz-ecollab-concurrency.conf &&
 sudo systemctl daemon-reload &&
 sudo systemctl restart ollama.service php8.3-fpm
 sudo -u www-data php scripts/warm-jarred.php
@@ -63,4 +63,4 @@ The benchmark creates five concurrent synthetic provider requests, reports compl
 
 Grounding improvements separate retrieved data from instructions, bound evidence as intact JSON with explicit truncation/omission metadata, reduce old DM history when live evidence is supplied, shorten the DM system prompt and use temperature 0.1. They instruct Jarred to acknowledge unverifiable facts rather than inventing app data or treating prior replies as evidence. Backend role/resource checks and active Code Lab restrictions remain authoritative. These changes reduce risk; no prompt or temperature setting guarantees factual accuracy. Reproduce wrong answers with a concrete prompt/reply pair before attributing them to request concurrency.
 
-Rollback the runtime profile: remove only `/etc/systemd/system/ollama.service.d/40-ecollab-concurrency.conf`, run `sudo systemctl daemon-reload`, then restart the existing Ollama service. Code rollback is a revert of the concurrency/grounding change. No database migration or model download is needed.
+Rollback the runtime profile: remove only `/etc/systemd/system/ollama.service.d/zz-ecollab-concurrency.conf`, run `sudo systemctl daemon-reload`, then restart the existing Ollama service. Code rollback is a revert of the concurrency/grounding change. No database migration or model download is needed.
