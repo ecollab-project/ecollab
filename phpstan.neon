@@ -36,17 +36,7 @@ parameters:
     # PHPStan analyzes these fine; it type-checks statically, it doesn't
     # execute anything.
 
-    ignoreErrors:
-        # Confirmed false positive, not a bug: Ratchet\ConnectionInterface
-        # doesn't declare $resourceId, but every real connection object
-        # Ratchet actually passes to onOpen/onMessage/etc. has it at runtime
-        # (Ratchet decorates connections with a concrete class before handing
-        # them to application code). Verified against Ratchet's real v0.4.x
-        # source, and matches the exact scenario PHPStan's own docs describe:
-        # https://phpstan.org/blog/solving-phpstan-access-to-undefined-property
-        # Scoped narrowly (exact message + this one file) so it can't
-        # accidentally swallow an unrelated future finding in the same file.
-        -
-            message: '#Access to an undefined property Ratchet\\ConnectionInterface::\$resourceId#'
-            path: websocket/ChatServer.php
-            count: 9
+    # Analyze the optional worker against its real, separately pinned dependencies.
+    # Install with: composer install --working-dir=tools/web-push --no-dev
+    bootstrapFiles:
+        - tools/web-push/vendor/autoload.php

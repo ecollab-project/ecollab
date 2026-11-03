@@ -18,9 +18,9 @@ class AuthService {
     private PDO $db;
     private OtpService $otpService;
 
-    public function __construct() {
+    public function __construct(?OtpService $otpService = null) {
         $this->db         = Database::getInstance();
-        $this->otpService = new OtpService();
+        $this->otpService = $otpService ?? new OtpService();
     }
 
     // ═══════════════════════════════════════════════════════════════

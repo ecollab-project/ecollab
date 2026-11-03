@@ -1,5 +1,5 @@
 import {build} from 'esbuild';
-import {readFileSync,writeFileSync,existsSync} from 'node:fs';
+import {readFileSync,writeFileSync,existsSync,mkdirSync,copyFileSync} from 'node:fs';
 import path from 'node:path';
 const directory=import.meta.dirname;
 const output=path.resolve(directory,'../../assets/js/chat/rich-composer.js');
@@ -26,3 +26,11 @@ for(const folder of [...packages].sort()){
   }
 }
 writeFileSync(output.replace(/\.js$/,'.NOTICES.txt'),notices.join('\n'));
+// Serve the learning workspace's Markdown dependencies from the same locked
+// packages used by the composer instead of an unpinned external CDN.
+for(const [name,source] of [['dompurify','dist/purify.min.js'],['marked','lib/marked.umd.js']]){
+  const destination=path.resolve(directory,'../../assets/vendor',name);
+  mkdirSync(destination,{recursive:true});
+  copyFileSync(path.join(directory,'node_modules',name,source),path.join(destination,path.basename(source)));
+  copyFileSync(path.join(directory,'node_modules',name,'LICENSE'),path.join(destination,'LICENSE'));
+}

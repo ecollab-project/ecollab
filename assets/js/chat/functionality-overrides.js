@@ -223,6 +223,9 @@ window.ECOLLAB_ESC = esc;
       const tool = btn.dataset.tool;
       btn.style.display = (!isPrivileged && !memberTools.has(tool)) ? 'none' : '';
     });
+    document.querySelectorAll('#extrasMenu [data-collab-tool]').forEach(item => {
+      item.style.display = (!isPrivileged && !memberTools.has(item.dataset.collabTool)) ? 'none' : '';
+    });
   }
 
   async function loadDocuments() {
@@ -342,7 +345,7 @@ window.ECOLLAB_ESC = esc;
 
   function switchTool(tool) {
     const requested = String(tool || 'notes');
-    if (!isPrivileged && !memberTools.has(requested)) return originalSwitch('notes');
+    if (!isPrivileged && !memberTools.has(requested)) return;
     if (requested === 'documents') {
       ensureDocumentsUI();
       setPane('documents');
@@ -358,7 +361,8 @@ window.ECOLLAB_ESC = esc;
 
   function openHub(tool) {
     const requested = String(tool || 'notes');
-    const safeTool = (!isPrivileged && !memberTools.has(requested)) ? 'notes' : requested;
+    if (!isPrivileged && !memberTools.has(requested)) return;
+    const safeTool = requested;
     ensureDocumentsUI();
     filterTabs();
     if (safeTool === 'documents') {

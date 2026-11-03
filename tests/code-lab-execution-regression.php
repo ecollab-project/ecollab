@@ -74,3 +74,11 @@ $summary=$metrics->drain(30);$g=$summary['groups']['run/python'];clCheck($summar
 clCheck(!str_contains(json_encode($summary),'PRIVATE')&&$metrics->drain(30)===null,'Only safe aggregates emitted and drained');
 echo "PASS: queue ownership, frozen submissions, weighted grading, hidden-case privacy, quotas, runtime/limit enforcement, outage retry and manual overrides\n";
 
+// A malformed queue kind must fail closed, even when it references a valid submission.
+$attemptId=(int)$db->query('SELECT id FROM code_lab_attempts WHERE submitted_at IS NOT NULL AND task_id='.(int)$tid.' AND user_id=2 LIMIT 1')->fetchColumn();
+$db->exec('DELETE FROM code_lab_jobs WHERE attempt_id='.$attemptId);
+$db->prepare("INSERT INTO code_lab_jobs(server_id,user_id,attempt_id,language,runtime_id,kind,source_code,stdin,state,created_at) VALUES(1,2,?,'python',71,'invalid-kind','print(42)','','queued',?)")->execute([$attemptId,gmdate('Y-m-d H:i:s',$now)]);
+$invalidJob=(int)$db->lastInsertId();
+while($executor->workOne()){}
+clCheck($db->query('SELECT state FROM code_lab_jobs WHERE id='.$invalidJob)->fetchColumn()==='failed','Unknown job kinds fail closed');
+echo "PASS: malformed grading kind never produces a completed result\n";

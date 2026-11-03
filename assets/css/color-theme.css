@@ -38,6 +38,29 @@ html:root body[data-mobile-surface="forms"] :is(.card,.form-box){background:var(
 html:root body[data-mobile-surface="forms"] :is(.login-btn,.nav-logo .ico,.step-fill){background:var(--grad);color:#fff;box-shadow:0 0 20px var(--ec-accent-soft)}
 html:root body[data-mobile-surface="forms"] .hero-text h1{background:linear-gradient(90deg,var(--ec-accent),var(--ec-accent2));background-clip:text;-webkit-background-clip:text}
 html:root body[data-mobile-surface="forms"] :is(.terms-link,.forgot){color:var(--ec-accent)}
+/* Keep the complete auth control, including browser autofill, on one palette. */
+html:root body[data-mobile-surface="forms"]{color-scheme:dark}
+html:root[data-theme="light"] body[data-mobile-surface="forms"]{color-scheme:light}
+html:root body[data-mobile-surface="forms"] .input-row{background:var(--ec-input);border-color:var(--ec-line);padding:0;overflow:hidden}
+html:root body[data-mobile-surface="forms"] .input-row :is(input,select){color:var(--ec-text);padding:0 14px;min-width:0;flex:1 1 0}
+html:root body[data-mobile-surface="forms"] .input-row input:-webkit-autofill,
+html:root body[data-mobile-surface="forms"] .input-row input:-webkit-autofill:hover,
+html:root body[data-mobile-surface="forms"] .input-row input:-webkit-autofill:focus{
+ -webkit-text-fill-color:var(--ec-text);caret-color:var(--ec-text);
+ -webkit-box-shadow:0 0 0 1000px var(--ec-input) inset;box-shadow:0 0 0 1000px var(--ec-input) inset;
+}
+html:root body[data-mobile-surface="forms"] .input-row input:autofill{color:var(--ec-text);caret-color:var(--ec-text);background-color:var(--ec-input)}
+html:root body[data-mobile-surface="forms"] .eye-btn{color:var(--ec-muted);min-width:36px;min-height:36px;margin-right:8px}
+html:root body[data-mobile-surface="forms"] .social-btn{color:var(--ec-text);border-color:var(--ec-line);background:var(--ec-input);text-decoration:none;min-height:46px;height:auto;padding:10px 14px}
+html:root body[data-mobile-surface="forms"] .social-btn:hover{border-color:var(--ec-accent);background:var(--ec-raised)}
+html:root body[data-mobile-surface="forms"] .hero-text h1 .white{color:var(--ec-text)}
+html:root body[data-mobile-surface="forms"] .hero-text h1 .grad{background-image:linear-gradient(135deg,var(--ec-accent),var(--ec-accent2))}
+html:root body[data-mobile-surface="forms"] .signup-text a{color:var(--ec-accent)}
+html:root body[data-mobile-surface="forms"] :is(.back-btn,.badge){color:var(--ec-text);border-color:var(--ec-line);background:var(--ec-raised)}
+html:root body[data-mobile-surface="forms"] .back-btn svg{stroke:currentColor}
+html:root body[data-mobile-surface="forms"] .badge .b-ico{background:var(--ec-accent-soft)}
+html:root body[data-mobile-surface="forms"] .brain-chip{right:12px;top:20px;background:var(--ec-raised);border-color:var(--ec-line);box-shadow:0 0 20px var(--ec-accent-soft);width:44px;height:44px}
+@media(forced-colors:active){html:root body[data-mobile-surface="forms"] .input-row input:-webkit-autofill{-webkit-text-fill-color:CanvasText;box-shadow:none;-webkit-box-shadow:none}}
 html:root body[data-mobile-surface="landing"] :is(.tablet-outer,.tab-body,.tab-sidebar,.tab-topbar,.user-card){background:var(--ec-surface);border-color:var(--ec-line)}
 html:root body[data-mobile-surface="landing"] :is(.btn-start,.btn-cta,.cta-btn){background:var(--grad);color:#fff}
 html:root .send-btn{box-shadow:0 2px 12px var(--ec-accent-soft)}

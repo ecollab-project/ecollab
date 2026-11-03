@@ -4,15 +4,24 @@ $dsn = getenv('COLLABORA_TEST_DSN') ?: '';
 if (!str_ends_with($dsn, ';dbname=collabora_test')) {
     fwrite(STDERR, "Dedicated collabora_test database required.\n"); exit(2);
 }
-$db = new PDO($dsn, 'root', getenv('COLLABORA_TEST_PASSWORD') ?: 'test', [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+$db = new PDO($dsn, 'root', getenv('COLLABORA_TEST_PASSWORD') !== false ? getenv('COLLABORA_TEST_PASSWORD') : 'test', [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
 function verify(bool $ok, string $message): void { if (!$ok) throw new RuntimeException($message); }
 function applySql(PDO $db, string $file): void {
     $sql = preg_replace('/^\s*--.*$/m', '', file_get_contents($file));
-    foreach (explode(';', $sql) as $statement) if (trim($statement) !== '') $db->exec($statement);
+    foreach (explode(';', $sql) as $statement) {
+        $statement = trim($statement);
+        if ($statement === '') continue;
+        if (preg_match('/^(SELECT|EXECUTE)\b/i', $statement)) {
+            $query = $db->query($statement);
+            if ($query->columnCount() > 0) $query->fetchAll(PDO::FETCH_ASSOC);
+            $query->closeCursor();
+        } else $db->exec($statement);
+    }
 }
 foreach (['fresh', 'partial', 'complete'] as $scenario) {
-    $db->exec('CREATE TEMPORARY TABLE dm_messages (id BIGINT PRIMARY KEY, body TEXT)');
-    $db->exec('CREATE TEMPORARY TABLE threads (id BIGINT PRIMARY KEY, is_pinned TINYINT NOT NULL DEFAULT 0)');
+    $db->exec('DROP TABLE IF EXISTS dm_messages, threads');
+    $db->exec('CREATE TABLE dm_messages (id BIGINT PRIMARY KEY, body TEXT)');
+    $db->exec('CREATE TABLE threads (id BIGINT PRIMARY KEY, is_pinned TINYINT NOT NULL DEFAULT 0)');
     $db->exec("INSERT INTO dm_messages VALUES (1,'Keep this message')");
     $db->exec('INSERT INTO threads VALUES (1,1)');
     if ($scenario !== 'fresh') {
@@ -37,7 +46,7 @@ foreach (['fresh', 'partial', 'complete'] as $scenario) {
         verify((int)$db->query('SELECT is_bookmarked FROM threads WHERE id=1')->fetchColumn()===1, "$scenario altered bookmark");
     }
     if ($scenario === 'complete') verify($message['attachment_name']==='keep.png' && (int)$message['attachment_size']===123 && $message['attachment_mime']==='image/png', 'Existing attachment metadata altered');
-    $db->exec('DROP TEMPORARY TABLE dm_messages');
-    $db->exec('DROP TEMPORARY TABLE threads');
+    $db->exec('DROP TABLE dm_messages');
+    $db->exec('DROP TABLE threads');
 }
 echo "Migration rerun checks passed: fresh, partial and complete schemas preserve data.\n";

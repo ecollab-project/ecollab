@@ -1,0 +1,21 @@
+{
+  "failures": [
+    {
+      "commit": "536419d86113ef6eb2e1948d881e032b4031016b",
+      "run_id": 41411454772,
+      "job_id": 125165206829,
+      "failure_step": "Apply database migrations",
+      "migration": "022_whiteboard_sessions.sql",
+      "error": "MySQL 1064: ADD COLUMN IF NOT EXISTS is not supported",
+      "followup": "Portable metadata guards; EXECUTE result draining; VIRTUAL generated storage and existing-schema regressions"
+    },
+    {
+      "commit": "93991d6f99d326db8cda186961381085557174e2",
+      "run_id": 41412643690,
+      "job_id": 125168959117,
+      "migration": "030_dm_groups.sql",
+      "error": "MySQL 1171: nullable column remains in primary key",
+      "followup": "Additive cursor-key migration and separate DM/group upsert regression"
+    }
+  ]
+}

@@ -42,16 +42,14 @@ class OtpService {
 
         $otp       = str_pad((string)random_int(0, (int)(10 ** OTP_LENGTH) - 1), OTP_LENGTH, '0', STR_PAD_LEFT);
         $otpHash   = password_hash($otp, PASSWORD_BCRYPT, ['cost' => 10]);
-        $expiresAt = date('Y-m-d H:i:s', time() + OTP_EXPIRY);
-
         $this->db->prepare("
             INSERT INTO otp_codes (user_id, action, code_hash, expires_at, created_at)
-            VALUES (:uid, :action, :hash, :exp, NOW())
+            VALUES (:uid, :action, :hash, DATE_ADD(NOW(), INTERVAL :ttl SECOND), NOW())
         ")->execute([
             ':uid'    => $userId,
             ':action' => $action,
             ':hash'   => $otpHash,
-            ':exp'    => $expiresAt,
+            ':ttl'    => OTP_EXPIRY,
         ]);
 
         return $otp;

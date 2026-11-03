@@ -1,1 +1,5 @@
-{"name":"ecollab/web-push-worker","description":"Isolated push worker dependencies","type":"project","require":{"php":">=8.2","minishlink/web-push":"11.0.0","guzzlehttp/guzzle":"7.10.0"},"config":{"allow-plugins":false,"sort-packages":true}}
+{"name":"ecollab/web-push-worker","description":"Isolated push worker dependencies","type":"project","require":{
+        "php": ">=8.2",
+        "guzzlehttp/guzzle": "7.15.4",
+        "minishlink/web-push": "11.0.0"
+    },"config":{"allow-plugins":false,"sort-packages":true}}

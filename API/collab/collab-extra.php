@@ -25,10 +25,24 @@ $tool   = $_GET['tool']   ?? '';
 $action = $_GET['action'] ?? '';
 $method = $_SERVER['REQUEST_METHOD'];
 
+// GET is reserved for read actions. Mutations must pass the CSRF gate below.
+$readActions = [
+    'flashcards' => ['list_decks', 'get_deck'],
+    'mindmap' => ['get'],
+    'review' => ['list', 'get'],
+    'summary' => ['list'],
+    'goals' => ['list'],
+    'resources' => ['list', 'get_comments'],
+];
+if (!in_array($method, ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], true)
+    || ($method === 'GET' && !in_array($action, $readActions[$tool] ?? [], true))) {
+    json_fail('Method not allowed', 405);
+}
+
 $body = [];
 if (in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
     $body = json_decode(file_get_contents('php://input'), true) ?? [];
-    if ($method !== 'DELETE') CSRF::verify();
+    CSRF::verify();
 }
 
 $uid      = (int)$user['id'];

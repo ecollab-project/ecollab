@@ -23,13 +23,17 @@ const COLLAB_API = (window.ECOLLAB?.baseUrl || '') + '/API/collab/collab.php';
 async function collabFetch(tool, action, body = {}, method = 'POST') {
   const channelId = window.ECOLLAB?.currentChannelId;
   if (!channelId) { showToast('Open a channel first', 'info'); throw new Error('No channel'); }
-  const url = `${COLLAB_API}?tool=${tool}&action=${action}&channel_id=${channelId}`;
+  const params = new URLSearchParams(method === 'GET' ? body : {});
+  params.set('tool', tool);
+  params.set('action', action);
+  params.set('channel_id', channelId);
+  const url = `${COLLAB_API}?${params}`;
   const opts = { method, credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.ECOLLAB?.csrfToken || '' } };
   if (method !== 'GET') opts.body = JSON.stringify({ ...body, channel_id: channelId });
   const res = await fetch(url, opts);
   const data = await res.json();
-  if (!data.ok) throw new Error(data.error || 'Request failed');
+  if (!res.ok || !data.ok) throw new Error(data.error || 'Request failed');
   return data;
 }
 
@@ -87,7 +91,12 @@ function _loadCollabTool(tool) {
 }
 
 // Reload active tool when channel changes
-document.addEventListener('channelSwitched', () => { if (_collabOpen) _loadCollabTool(_collabActive); });
+document.addEventListener('channelSwitched', () => {
+  clearTimeout(_codeSaveTimer);
+  _codeChannelId = null;
+  ++_codeLoadRequest;
+  if (_collabOpen) _loadCollabTool(_collabActive);
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. SHARED NOTES
@@ -289,14 +298,22 @@ window._collabBoardOnUpdate = (data) => {
 // ─────────────────────────────────────────────────────────────────────────────
 let _codeVersion  = 0;
 let _codeSaveTimer = null;
+let _codeChannelId = null;
+let _codeLoadRequest = 0;
 const CODE_LANGS = ['javascript','python','php','html','css','sql','bash','json','markdown','typescript'];
 
 async function loadCode() {
   const pane = document.getElementById('collabPane_code');
   if (!pane) return;
+  clearTimeout(_codeSaveTimer);
+  const channelId = String(window.ECOLLAB?.currentChannelId || '');
+  const request = ++_codeLoadRequest;
+  _codeChannelId = null;
   pane.innerHTML = `<div class="collab-loading"><div class="collab-spinner"></div></div>`;
   try {
     const { snippet } = await collabFetch('code', 'get', {}, 'GET');
+    if (request !== _codeLoadRequest || channelId !== String(window.ECOLLAB?.currentChannelId || '')) return;
+    _codeChannelId = channelId;
     _codeVersion = parseInt(snippet.version) || 0;
     pane.innerHTML = `
       <div class="code-toolbar" data-snippet-id="${escH(snippet.id || '')}">
@@ -315,7 +332,10 @@ async function loadCode() {
         <span id="codeSaveStatus" class="notes-status">All saved</span>
       </div>
       <div id="codeOutput" class="code-output">— Run code to see output —</div>`;
-  } catch (e) { pane.innerHTML = `<div class="collab-err">⚠ ${escH(e.message)}</div>`; }
+  } catch (e) {
+    if (request === _codeLoadRequest && channelId === String(window.ECOLLAB?.currentChannelId || ''))
+      pane.innerHTML = `<div class="collab-err">⚠ ${escH(e.message)}</div>`;
+  }
 }
 
 function _scheduleCodeSave() {
@@ -328,16 +348,23 @@ window._scheduleCodeSave = _scheduleCodeSave;
 
 async function saveCode(manual = false) {
   clearTimeout(_codeSaveTimer);
+  const channelId = _codeChannelId;
+  const request = _codeLoadRequest;
+  if (!channelId || channelId !== String(window.ECOLLAB?.currentChannelId || '')) return;
   const title = document.getElementById('codeTitle')?.value?.trim() || 'Untitled';
   const lang  = document.getElementById('codeLang')?.value || 'javascript';
   const code  = document.getElementById('codeEditor')?.value || '';
   const s     = document.getElementById('codeSaveStatus');
+  const toolbar = document.querySelector('#collabPane_code [data-snippet-id]');
   try {
     const res = await collabFetch('code', 'save', { title, language: lang, code, version: _codeVersion });
+    if (request !== _codeLoadRequest || channelId !== String(window.ECOLLAB?.currentChannelId || '')) return;
     _codeVersion = res.version;
+    if (toolbar) toolbar.dataset.snippetId = String(res.snippet_id);
     if (s) s.textContent = 'Saved ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
     if (manual && window.showToast) showToast('💾 Snippet saved', 'success');
   } catch (e) {
+    if (request !== _codeLoadRequest || channelId !== String(window.ECOLLAB?.currentChannelId || '')) return;
     if (s) s.textContent = '⚠ ' + e.message;
     if (window.showToast) showToast('⚠ ' + e.message, 'info');
   }
@@ -345,6 +372,7 @@ async function saveCode(manual = false) {
 window.saveCode = saveCode;
 
 async function runCode() {
+  if (!_codeChannelId || _codeChannelId !== String(window.ECOLLAB?.currentChannelId || '')) return;
   const lang   = document.getElementById('codeLang')?.value || 'javascript';
   const code   = document.getElementById('codeEditor')?.value || '';
   const outEl  = document.getElementById('codeOutput');
@@ -764,7 +792,7 @@ async function loadCalendar() {
   const pane = document.getElementById('collabPane_calendar');
   if (!pane) return;
   try {
-    const { events } = await collabFetch(`calendar`, `list&from=${from}&to=${to}`, {}, 'GET');
+    const { events } = await collabFetch('calendar', 'list', { from, to }, 'GET');
     _calEvents = events;
     renderCalendar(pane, events);
   } catch (e) { pane.innerHTML = `<div class="collab-err">⚠ ${escH(e.message)}</div>`; }

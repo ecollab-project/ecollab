@@ -8,11 +8,11 @@
   },
   "dependencies": {
     "@tiptap/core": "3.31.4",
-    "@tiptap/starter-kit": "3.31.4",
     "@tiptap/markdown": "3.31.4",
-    "dompurify": "3.4.16",
-    "marked": "18.1.0",
-    "@tiptap/pm": "3.31.4"
+    "@tiptap/pm": "3.31.4",
+    "@tiptap/starter-kit": "3.31.4",
+    "dompurify": "3.4.17",
+    "marked": "18.1.0"
   },
   "devDependencies": {
     "esbuild": "0.25.12",

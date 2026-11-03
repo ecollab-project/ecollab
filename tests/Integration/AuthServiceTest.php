@@ -17,12 +17,16 @@ use PHPUnit\Framework\TestCase;
 final class AuthServiceTest extends TestCase
 {
     private \PDO $db;
+    private \Tests\Support\RecordingOtpService $mail;
+    private \AuthService $auth;
     private array $createdEmails = [];
 
     protected function setUp(): void
     {
         $this->db = \Database::getInstance();
         $_SESSION = [];
+        $this->mail = new \Tests\Support\RecordingOtpService();
+        $this->auth = new \AuthService($this->mail);
     }
 
     protected function tearDown(): void
@@ -34,6 +38,7 @@ final class AuthServiceTest extends TestCase
             $stmt->execute([':e' => $email]);
             $id = $stmt->fetchColumn();
             if ($id) {
+                $this->db->prepare("DELETE FROM otp_codes WHERE user_id = :id")->execute([':id' => $id]);
                 $this->db->prepare("DELETE FROM pm_user_study_prefs WHERE user_id = :id")->execute([':id' => $id]);
                 $this->db->prepare("DELETE FROM user_interests WHERE user_id = :id")->execute([':id' => $id]);
                 $this->db->prepare("DELETE FROM user_hobbies WHERE user_id = :id")->execute([':id' => $id]);
@@ -52,7 +57,7 @@ final class AuthServiceTest extends TestCase
         $email  = $unique . '@fatima.edu.ph';
         $this->createdEmails[] = $email;
 
-        return array_merge([
+        $data = array_merge([
             'full_name'    => 'Test Student ' . $unique,
             'email'        => $email,
             'password'     => 'a-valid-password-8',
@@ -67,11 +72,16 @@ final class AuthServiceTest extends TestCase
             'availability' => [],
             'hobbies'      => [],
         ], $overrides);
+        $sent = $this->auth->sendPreSignupEmailOtp($data['email'], $data['full_name']);
+        self::assertTrue($sent['success'], $sent['error'] ?? 'Fixture email proof failed');
+        $proof = $this->auth->verifyPreSignupEmailOtp($data['email'], $this->mail->latestCode());
+        self::assertTrue($proof['success'], $proof['error'] ?? 'Fixture OTP was rejected');
+        return $data;
     }
 
     public function testRegisterCreatesUserAndReturnsSuccess(): void
     {
-        $authService = new \AuthService();
+        $authService = $this->auth;
         $result = $authService->register($this->validRegistrationData());
 
         $this->assertTrue($result['success'], $result['error'] ?? 'expected success');
@@ -80,7 +90,7 @@ final class AuthServiceTest extends TestCase
 
     public function testRegisterRejectsPasswordUnderEightCharacters(): void
     {
-        $authService = new \AuthService();
+        $authService = $this->auth;
         $result = $authService->register($this->validRegistrationData(['password' => 'short']));
 
         $this->assertFalse($result['success']);
@@ -89,7 +99,7 @@ final class AuthServiceTest extends TestCase
 
     public function testRegisterRejectsMissingTermsAgreement(): void
     {
-        $authService = new \AuthService();
+        $authService = $this->auth;
         $result = $authService->register($this->validRegistrationData(['terms_agreed' => false]));
 
         $this->assertFalse($result['success']);
@@ -97,7 +107,7 @@ final class AuthServiceTest extends TestCase
 
     public function testRegisterRejectsDuplicateEmail(): void
     {
-        $authService = new \AuthService();
+        $authService = $this->auth;
         $data = $this->validRegistrationData();
 
         $first = $authService->register($data);
@@ -115,7 +125,7 @@ final class AuthServiceTest extends TestCase
      */
     public function testRegisterSeedsPmUserStudyPrefs(): void
     {
-        $authService = new \AuthService();
+        $authService = $this->auth;
         $data   = $this->validRegistrationData(['study_style' => 'Group', 'primary_goal' => 'Build projects']);
         $result = $authService->register($data);
         $this->assertTrue($result['success'], $result['error'] ?? 'expected success');
@@ -132,7 +142,7 @@ final class AuthServiceTest extends TestCase
 
     public function testRegisterFallsBackToDefaultsWhenStyleGoalUnrecognized(): void
     {
-        $authService = new \AuthService();
+        $authService = $this->auth;
         // Values that don't match any key in AuthService's $styleMap/$goalMap
         $data   = $this->validRegistrationData(['study_style' => 'Not A Real Option', 'primary_goal' => 'Also Not Real']);
         $result = $authService->register($data);
@@ -148,20 +158,27 @@ final class AuthServiceTest extends TestCase
 
     public function testLoginSucceedsWithCorrectCredentials(): void
     {
-        $authService = new \AuthService();
+        $authService = $this->auth;
         $data = $this->validRegistrationData();
         $reg  = $authService->register($data);
         $this->assertTrue($reg['success'], 'precondition: registration must succeed');
 
+        // Registration authenticates a verified new account. Start a fresh
+        // login session before asserting that the password cannot bypass OTP.
+        $_SESSION = [];
         $login = $authService->login($data['email'], $data['password']);
 
         $this->assertTrue($login['success'], $login['error'] ?? 'expected login success');
-        $this->assertSame($data['email'], $login['user']['email']);
+        $this->assertTrue($login['otp_required']);
+        $this->assertArrayNotHasKey('user_id', $_SESSION, 'Password alone must not authenticate');
+        $verified = $authService->verifyOtp((int)$reg['user_id'], $this->mail->latestCode(), '2fa');
+        $this->assertTrue($verified['success'], $verified['error'] ?? 'Login code rejected');
+        $this->assertSame((int)$reg['user_id'], (int)$_SESSION['user_id']);
     }
 
     public function testLoginFailsWithIncorrectPassword(): void
     {
-        $authService = new \AuthService();
+        $authService = $this->auth;
         $data = $this->validRegistrationData();
         $authService->register($data);
 
@@ -172,9 +189,53 @@ final class AuthServiceTest extends TestCase
 
     public function testLoginFailsForNonexistentEmail(): void
     {
-        $authService = new \AuthService();
+        $authService = $this->auth;
         $login = $authService->login('nobody-' . uniqid() . '@fatima.edu.ph', 'irrelevant-password');
 
         $this->assertFalse($login['success']);
+    }
+    public function testRegistrationStillRequiresVerifiedEmail(): void
+    {
+        $data = $this->validRegistrationData();
+        $_SESSION = [];
+        $result = $this->auth->register($data);
+        self::assertFalse($result['success']);
+        self::assertStringContainsString('verify', $result['error']);
+    }
+
+    public function testDeliveryFailureClearsPendingSignupProof(): void
+    {
+        $this->mail->failDelivery = true;
+        $result = $this->auth->sendPreSignupEmailOtp('fixture_' . uniqid() . '@fatima.edu.ph', 'Fixture Student');
+        self::assertFalse($result['success']);
+        self::assertArrayNotHasKey('pending_signup_email_hash', $_SESSION);
+        self::assertArrayNotHasKey('pending_signup_email_expires', $_SESSION);
+    }
+
+    public function testOtpLifetimeUsesTheDatabaseClockAcrossTimezones(): void
+    {
+        $registration = $this->auth->register($this->validRegistrationData());
+        self::assertTrue($registration['success']);
+        $userId = (int)$registration['user_id'];
+        $phpTimezone = date_default_timezone_get();
+        $databaseTimezone = $this->db->query('SELECT @@session.time_zone')->fetchColumn();
+        try {
+            foreach ([['Asia/Manila', '+00:00'], ['UTC', '+08:00']] as [$phpZone, $dbZone]) {
+                date_default_timezone_set($phpZone);
+                $this->db->exec("SET time_zone = " . $this->db->quote($dbZone));
+                $code = $this->mail->generate($userId, '2fa');
+                $ttl = (int)$this->db->query('SELECT TIMESTAMPDIFF(SECOND, NOW(), expires_at) FROM otp_codes WHERE user_id=' . $userId . ' AND used_at IS NULL ORDER BY id DESC LIMIT 1')->fetchColumn();
+                self::assertGreaterThanOrEqual(OTP_EXPIRY - 2, $ttl);
+                self::assertLessThanOrEqual(OTP_EXPIRY, $ttl);
+                self::assertTrue($this->mail->verify($userId, $code, '2fa')['success']);
+                self::assertFalse($this->mail->verify($userId, $code, '2fa')['success'], 'Code must be single use');
+                $expired = $this->mail->generate($userId, '2fa');
+                $this->db->exec('UPDATE otp_codes SET expires_at=DATE_SUB(NOW(), INTERVAL 1 SECOND) WHERE user_id=' . $userId . ' AND used_at IS NULL');
+                self::assertFalse($this->mail->verify($userId, $expired, '2fa')['success']);
+            }
+        } finally {
+            date_default_timezone_set($phpTimezone);
+            $this->db->exec('SET time_zone = ' . $this->db->quote($databaseTimezone));
+        }
     }
 }

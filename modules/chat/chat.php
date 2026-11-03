@@ -574,7 +574,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
             <div style="font-size:11px;color:var(--text-muted);">Gather votes from members</div>
           </div>
         </div>
-        <div class="attach-item" onclick="openExtrasAction('code')">
+        <div class="attach-item" data-collab-tool="code" onclick="openExtrasAction('code')">
           <div class="a-icon a-orange">💻</div>
           <div>
             <div style="font-size:13px;font-weight:600;color:var(--text-primary);">Code Snippet</div>

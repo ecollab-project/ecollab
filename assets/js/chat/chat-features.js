@@ -2104,14 +2104,10 @@ async function _loadPrivateMemberSelector() {
   try {
     const base = window.ECOLLAB?.baseUrl || '';
     const servId = window.ECOLLAB?.currentServerId || 0;
-    const res = await fetch(`${base}/API/active-now.php?server_id=${servId}&action=get_all_members`, {
-      headers: { 'X-CSRF-Token': window.ECOLLAB?.csrfToken || '' }
-    });
-    // active-now doesn't have get_all_members — use get-channels to infer, but really
-    // we should use the threads endpoint which lists all server members
     const res2 = await fetch(`${base}/API/threads/get-server-members.php?server_id=${servId}`, {
       headers: { 'X-CSRF-Token': window.ECOLLAB?.csrfToken || '' }
     });
+    if (!res2.ok) throw new Error('Failed to load members');
     const d = await res2.json();
     if (loadingEl) loadingEl.style.display = 'none';
     if (!d.success || !d.members?.length) {

@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, ecollab-collabs ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, ecollab-collabs ]
 
 permissions:
   contents: read
@@ -64,6 +64,14 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
+      - name: Install isolated push analysis dependencies
+        run: composer install --working-dir=tools/web-push --no-dev --no-progress --no-interaction --no-plugins
+
+      - name: Audit production PHP dependencies
+        run: |
+          composer audit --no-dev
+          composer audit --working-dir=tools/web-push --no-dev
+
       - name: Wait for MySQL
         run: |
           for i in {1..30}; do
@@ -79,8 +87,26 @@ jobs:
           echo "MySQL did not become ready in time."
           exit 1
 
+      - name: Read-only migration previews
+        run: php tests/migration-preview-regression.php
+
+      - name: Login HTTP failure boundaries
+        run: python3 tests/login-http-regression.py
+
       - name: Apply database migrations
-        run: php database/migrate.php
+        run: |
+          php database/migrate.php
+          php database/migrate.php
+
+      - name: Existing schema compatibility
+        env:
+          COWORKSPACE_TEST_DSN: mysql:host=127.0.0.1;port=3306;dbname=coworkspace_test
+          COLLABORA_TEST_DSN: mysql:host=127.0.0.1;port=3306;dbname=collabora_test
+          COLLABORA_TEST_PASSWORD: ''
+        run: |
+          mysql -h 127.0.0.1 -P 3306 -u root -e "CREATE DATABASE coworkspace_test; CREATE DATABASE collabora_test"
+          php tests/coworkspace-storage-regression.php
+          php tests/migration-rerun-regression.php
 
       - name: Run Unit tests
         run: vendor/bin/phpunit --testsuite Unit
@@ -88,5 +114,8 @@ jobs:
       - name: Run Integration tests
         run: vendor/bin/phpunit --testsuite Integration
 
+      - name: Collaboration HTTP contracts
+        run: python3 tests/collab-http-regression.py
+
       - name: Run PHPStan
-        run: vendor/bin/phpstan analyse --error-format=github --no-progress
+        run: vendor/bin/phpstan analyse --error-format=github --no-progress --memory-limit=1G

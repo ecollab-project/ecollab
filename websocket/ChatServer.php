@@ -38,6 +38,13 @@ class ChatServer implements MessageComponentInterface
         echo "[ChatServer] Started\n";
     }
 
+    /** Ratchet IoServer assigns resourceId; decorators forward it via __get(). */
+    private function connectionId(ConnectionInterface $conn): int
+    {
+        /** @var ConnectionInterface&object{resourceId: int} $conn */
+        return $conn->resourceId;
+    }
+
     private function refreshDatabase(): void
     {
         $this->db = Database::getLiveInstance();
@@ -62,7 +69,7 @@ class ChatServer implements MessageComponentInterface
     public function onOpen(ConnectionInterface $conn): void
     {
         $this->clients->attach($conn);
-        $rid = $conn->resourceId;
+        $rid = $this->connectionId($conn);
         $this->connMeta[$rid] = [
             'user_id' => null,
             'username' => null,
@@ -84,7 +91,7 @@ class ChatServer implements MessageComponentInterface
             $from->send(json_encode(['type'=>'error','message'=>'Realtime database temporarily unavailable']));
             return;
         }
-        $rid = $from->resourceId;
+        $rid = $this->connectionId($from);
         $meta = &$this->connMeta[$rid];
         $data = json_decode($rawMsg, true);
         if (!is_array($data) || empty($data['type'])) return;
@@ -165,7 +172,7 @@ class ChatServer implements MessageComponentInterface
 
     public function onClose(ConnectionInterface $conn): void
     {
-        $rid = $conn->resourceId;
+        $rid = $this->connectionId($conn);
         $meta = $this->connMeta[$rid] ?? [];
         $this->removeWbPresence($conn,$meta);
         if (!empty($meta['channel_id'])) $this->removeFromChannel($conn, (int)$meta['channel_id']);
@@ -207,7 +214,7 @@ class ChatServer implements MessageComponentInterface
 
     public function onError(ConnectionInterface $conn, \Exception $e): void
     {
-        echo "[WS] Error on {$conn->resourceId}: {$e->getMessage()}\n"; $conn->close();
+        echo "[WS] Error on " . $this->connectionId($conn) . ": {$e->getMessage()}\n"; $conn->close();
     }
 
     private function handleAuth(ConnectionInterface $conn, array $data, array &$meta): void
@@ -231,7 +238,7 @@ class ChatServer implements MessageComponentInterface
         $isSysAdmin=in_array($meta['role'],['admin','super_admin'],true);
         if(!$isSysAdmin){$this->setUserOnline($userId,true);$this->broadcastPresence($userId,true,$username);}
         $conn->send(json_encode(['type'=>'auth_ok','user_id'=>$userId]));
-        echo "[WS] User {$username} ({$userId}) authenticated on {$conn->resourceId}\n";
+        echo "[WS] User {$username} ({$userId}) authenticated on " . $this->connectionId($conn) . "\n";
     }
 
     private function handleCodeMessage(ConnectionInterface $from, array $data, array &$meta): void
@@ -255,19 +262,19 @@ class ChatServer implements MessageComponentInterface
     private function handleCodeOutput(ConnectionInterface $from,array $data,array $meta):void{$sid=(int)($data['session_id']??0);$uid=(int)$meta['user_id'];if(!$this->requireCodeEditor($from,$sid,$uid))return;$payload=['type'=>'code_output','session_id'=>$sid,'stdout'=>(string)($data['stdout']??''),'stderr'=>(string)($data['stderr']??''),'exit_code'=>isset($data['exit_code'])?(int)$data['exit_code']:null];$this->broadcastCodeSession($sid,json_encode($payload),$from);}
     private function handleCodeLeave(ConnectionInterface $from,array $data,array &$meta):void{$sid=(int)($data['session_id']??0);if($sid)$this->removeCodeConnection($from,$meta,$sid,true);}
     private function handleCodeSessionClosed(ConnectionInterface $from,array $data,array $meta):void{$sid=(int)($data['session_id']??0);$uid=(int)$meta['user_id'];if(!$sid||!$this->isCodeOwner($sid,$uid)){$this->codeError($from,'Only the coding-session owner can close the session.');return;}$this->ensureCodeSessionLoaded($sid);$this->persistCodeSession($sid);$this->broadcastCodeSession($sid,json_encode(['type'=>'code_session_closed','session_id'=>$sid]));foreach($this->codeSessions[$sid]['connections']??[] as $rid=>$entry)if(isset($this->connMeta[$rid]))$this->connMeta[$rid]['code_sessions']=array_values(array_filter($this->connMeta[$rid]['code_sessions']??[],fn($id)=>(int)$id!==$sid));unset($this->codeSessions[$sid]);}
-    private function codeJoinConnection(ConnectionInterface $conn,array &$meta,int $sid,string $role,bool $announceCreate):void{$this->ensureCodeSessionLoaded($sid);$rid=$conn->resourceId;$uid=(int)$meta['user_id'];$already=isset($this->codeSessions[$sid]['connections'][$rid]);$this->codeSessions[$sid]['connections'][$rid]=['conn'=>$conn,'user_id'=>$uid,'username'=>$meta['username'],'role'=>$role];if(!in_array($sid,$meta['code_sessions']??[],true))$meta['code_sessions'][]=$sid;$conn->send(json_encode(['type'=>'code_joined','session_id'=>$sid,'version'=>(int)$this->codeSessions[$sid]['version'],'content'=>$this->codeSessions[$sid]['content'],'role'=>$role]));if(!$already&&!$announceCreate)$this->broadcastCodeSession($sid,json_encode(['type'=>'code_user_joined','session_id'=>$sid,'user_id'=>$uid,'username'=>$meta['username'],'role'=>$role]),$conn);}
+    private function codeJoinConnection(ConnectionInterface $conn,array &$meta,int $sid,string $role,bool $announceCreate):void{$this->ensureCodeSessionLoaded($sid);$rid=$this->connectionId($conn);$uid=(int)$meta['user_id'];$already=isset($this->codeSessions[$sid]['connections'][$rid]);$this->codeSessions[$sid]['connections'][$rid]=['conn'=>$conn,'user_id'=>$uid,'username'=>$meta['username'],'role'=>$role];if(!in_array($sid,$meta['code_sessions']??[],true))$meta['code_sessions'][]=$sid;$conn->send(json_encode(['type'=>'code_joined','session_id'=>$sid,'version'=>(int)$this->codeSessions[$sid]['version'],'content'=>$this->codeSessions[$sid]['content'],'role'=>$role]));if(!$already&&!$announceCreate)$this->broadcastCodeSession($sid,json_encode(['type'=>'code_user_joined','session_id'=>$sid,'user_id'=>$uid,'username'=>$meta['username'],'role'=>$role]),$conn);}
     private function cleanupCodeConnection(ConnectionInterface $conn,array $meta):void{foreach(array_values($meta['code_sessions']??[]) as $sid)$this->removeCodeConnection($conn,$meta,(int)$sid,true);}
-    private function removeCodeConnection(ConnectionInterface $conn,array &$meta,int $sid,bool $broadcast):void{if(!isset($this->codeSessions[$sid])){$meta['code_sessions']=array_values(array_filter($meta['code_sessions']??[],fn($id)=>(int)$id!==$sid));return;}$rid=$conn->resourceId;$entry=$this->codeSessions[$sid]['connections'][$rid]??null;unset($this->codeSessions[$sid]['connections'][$rid]);$meta['code_sessions']=array_values(array_filter($meta['code_sessions']??[],fn($id)=>(int)$id!==$sid));if($broadcast&&$entry!==null){$uid=(int)($entry['user_id']??$meta['user_id']??0);$still=false;foreach($this->codeSessions[$sid]['connections'] as $peer)if((int)$peer['user_id']===$uid){$still=true;break;}if(!$still)$this->broadcastCodeSession($sid,json_encode(['type'=>'code_user_left','session_id'=>$sid,'user_id'=>$uid,'username'=>$entry['username']??($meta['username']??'')]));}}
+    private function removeCodeConnection(ConnectionInterface $conn,array &$meta,int $sid,bool $broadcast):void{if(!isset($this->codeSessions[$sid])){$meta['code_sessions']=array_values(array_filter($meta['code_sessions']??[],fn($id)=>(int)$id!==$sid));return;}$rid=$this->connectionId($conn);$entry=$this->codeSessions[$sid]['connections'][$rid]??null;unset($this->codeSessions[$sid]['connections'][$rid]);$meta['code_sessions']=array_values(array_filter($meta['code_sessions']??[],fn($id)=>(int)$id!==$sid));if($broadcast&&$entry!==null){$uid=(int)($entry['user_id']??$meta['user_id']??0);$still=false;foreach($this->codeSessions[$sid]['connections'] as $peer)if((int)$peer['user_id']===$uid){$still=true;break;}if(!$still)$this->broadcastCodeSession($sid,json_encode(['type'=>'code_user_left','session_id'=>$sid,'user_id'=>$uid,'username'=>$entry['username']??($meta['username']??'')]));}}
     private function requireCodeParticipant(ConnectionInterface $from,int $sid,int $uid):bool{if(!$sid||!$this->getCodeRole($sid,$uid)){$this->codeError($from,'Coding-session membership is required.');return false;}if(!$this->isCodeConnectionPresent($sid,$from)){$this->codeError($from,'Join the coding session first.');return false;}return true;}
     private function requireCodeEditor(ConnectionInterface $from,int $sid,int $uid):bool{if(!$this->requireCodeParticipant($from,$sid,$uid))return false;if($this->getCodeRole($sid,$uid)!=='editor'){$this->codeError($from,'Editor access is required.');return false;}return true;}
     private function getCodeRole(int $sid,int $uid):?string{$stmt=$this->db->prepare('SELECT owner_id FROM coding_sessions WHERE id=:sid LIMIT 1');$stmt->execute([':sid'=>$sid]);$owner=$stmt->fetchColumn();if($owner===false)return null;if((int)$owner===$uid)return'editor';$stmt=$this->db->prepare("SELECT role FROM coding_session_participants WHERE session_id=:sid AND user_id=:uid AND status='approved' LIMIT 1");$stmt->execute([':sid'=>$sid,':uid'=>$uid]);$role=$stmt->fetchColumn();return $role===false?null:(string)$role;}
     private function isCodeOwner(int $sid,int $uid):bool{$stmt=$this->db->prepare('SELECT 1 FROM coding_sessions WHERE id=:sid AND owner_id=:uid LIMIT 1');$stmt->execute([':sid'=>$sid,':uid'=>$uid]);return(bool)$stmt->fetchColumn();}
-    private function isCodeConnectionPresent(int $sid,ConnectionInterface $conn):bool{return isset($this->codeSessions[$sid]['connections'][$conn->resourceId]);}
+    private function isCodeConnectionPresent(int $sid,ConnectionInterface $conn):bool{return isset($this->codeSessions[$sid]['connections'][$this->connectionId($conn)]);}
     private function loadCodeSession(int $sid,string $content,int $version):void{if(isset($this->codeSessions[$sid]))return;$this->codeSessions[$sid]=['version'=>max(0,$version),'content'=>$content,'connections'=>[],'dirty_changes'=>0,'last_persist_at'=>microtime(true)];}
     private function ensureCodeSessionLoaded(int $sid):void{if(isset($this->codeSessions[$sid]))return;$stmt=$this->db->prepare('SELECT code_state,version FROM coding_sessions WHERE id=:sid LIMIT 1');$stmt->execute([':sid'=>$sid]);$row=$stmt->fetch(PDO::FETCH_ASSOC);if(!$row)throw new \RuntimeException('Coding session not found.');$this->loadCodeSession($sid,(string)$row['code_state'],(int)$row['version']);}
     private function sendCodeResync(ConnectionInterface $from,int $sid):void{$this->ensureCodeSessionLoaded($sid);$from->send(json_encode(['type'=>'code_resync','session_id'=>$sid,'content'=>$this->codeSessions[$sid]['content'],'version'=>(int)$this->codeSessions[$sid]['version']]));}
     private function maybePersistCodeSession(int $sid):void{if(isset($this->codeSessions[$sid])&&$this->codeSessions[$sid]['dirty_changes']>=$this->codePersistEveryChanges)$this->persistCodeSession($sid);}
-    private function persistDirtyCodeSessions():void{$now=microtime(true);foreach(array_keys($this->codeSessions) as $sid){if(($this->codeSessions[$sid]['dirty_changes']??0)<1)continue;if($now-(float)$this->codeSessions[$sid]['last_persist_at']>=$this->codePersistEverySeconds)$this->persistCodeSession((int)$sid);}}
+    public function persistDirtyCodeSessions():void{$now=microtime(true);foreach(array_keys($this->codeSessions) as $sid){if(($this->codeSessions[$sid]['dirty_changes']??0)<1)continue;if($now-(float)$this->codeSessions[$sid]['last_persist_at']>=$this->codePersistEverySeconds)$this->persistCodeSession((int)$sid);}}
     private function persistCodeSession(int $sid):void{if(!isset($this->codeSessions[$sid]))return;$stmt=$this->db->prepare('UPDATE coding_sessions SET code_state=:state,version=:version WHERE id=:sid');$stmt->execute([':state'=>$this->codeSessions[$sid]['content'],':version'=>(int)$this->codeSessions[$sid]['version'],':sid'=>$sid]);$this->codeSessions[$sid]['dirty_changes']=0;$this->codeSessions[$sid]['last_persist_at']=microtime(true);}
     private function broadcastCodeSession(int $sid,string $payload,?ConnectionInterface $exclude=null):void{foreach($this->codeSessions[$sid]['connections']??[] as $entry){$conn=$entry['conn'];if($exclude&&$conn===$exclude)continue;try{$conn->send($payload);}catch(\Exception){}}}
     private function codeError(ConnectionInterface $conn,string $message):void{$conn->send(json_encode(['type'=>'code_error','message'=>$message]));}
@@ -348,7 +355,7 @@ class ChatServer implements MessageComponentInterface
             'full_name'=>$user['full_name']??$meta['username'],
             'avatar_color_gradient'=>$user['avatar_color_gradient']??'#3b82f6,#6366f1',
             'role'=>$user['role']??'student',
-            'resourceId'=>$from->resourceId
+            'resourceId'=>$this->connectionId($from)
         ];
 
         if(!$isDm){
@@ -421,9 +428,9 @@ class ChatServer implements MessageComponentInterface
     private function handleThreadReply(ConnectionInterface $from,array $data,array $meta):void{$cid=(int)($data['channel_id']??$meta['channel_id']??0);$pid=(int)($data['parent_id']??0);if(!$cid||!$pid||empty($data['reply']))return;$this->broadcastToChannel($cid,json_encode(['type'=>'thread_reply','channel_id'=>$cid,'parent_id'=>$pid,'reply'=>$data['reply']]),$from);}
     private function handleMentionRelay(ConnectionInterface $from,array $data,array $meta):void{$target=(int)($data['target_user_id']??0);if(!$target)return;foreach($this->userConns[$target]??[] as $conn)try{$conn->send(json_encode(['type'=>'mention','entry'=>$data['entry']??[]]));}catch(\Exception){}}
     private function broadcastToChannel(int $cid,string $payload,?ConnectionInterface $exclude=null):void{foreach($this->channelSubs[$cid]??[] as $conn){if($exclude&&$conn===$exclude)continue;try{$conn->send($payload);}catch(\Exception $e){echo "[WS] Send error: {$e->getMessage()}\n";}}}
-    private function broadcastToAll(string $payload,?ConnectionInterface $exclude=null):void{foreach($this->clients as $client){if($exclude&&$client===$exclude)continue;$rid=$client->resourceId;if(empty($this->connMeta[$rid]['authed']))continue;try{$client->send($payload);}catch(\Exception){}}}
+    private function broadcastToAll(string $payload,?ConnectionInterface $exclude=null):void{foreach($this->clients as $client){if($exclude&&$client===$exclude)continue;$rid=$this->connectionId($client);if(empty($this->connMeta[$rid]['authed']))continue;try{$client->send($payload);}catch(\Exception){}}}
     private function removeFromChannel(ConnectionInterface $conn,int $cid):void{
-        $id=$this->wbPresence->leave('chat:'.$cid,$conn->resourceId);
+        $id=$this->wbPresence->leave('chat:'.$cid,$this->connectionId($conn));
         if($id!==null)$this->broadcastToChannel($cid,json_encode(['type'=>'chat_presence_remove','channel_id'=>$cid,'client_ids'=>[$id]]),$conn);
         if(!isset($this->channelSubs[$cid]))return;$this->channelSubs[$cid]=array_values(array_filter($this->channelSubs[$cid],fn($c)=>$c!==$conn));if(empty($this->channelSubs[$cid]))unset($this->channelSubs[$cid]);}
     private function setUserOnline(int $uid,bool $online):void{try{$stmt=$this->db->prepare("UPDATE users SET is_online=:o,last_active_at=NOW() WHERE id=:id");$stmt->execute([':o'=>(int)$online,':id'=>$uid]);}catch(\Exception $e){echo "[WS] DB error: {$e->getMessage()}\n";}}
@@ -432,7 +439,7 @@ class ChatServer implements MessageComponentInterface
     private function broadcastWbPresence(array $payload, ?ConnectionInterface $exclude=null): void
     {
         foreach($this->clients as $connection){
-            $peer=$this->connMeta[$connection->resourceId]??[];
+            $peer=$this->connMeta[$this->connectionId($connection)]??[];
             if($connection===$exclude || (int)($peer['wb_channel_id']??0)!==(int)$payload['channel_id'] || (int)($peer['wb_whiteboard_id']??0)!==(int)$payload['whiteboard_id'])continue;
             try {
                 if($this->wbHandler->authorize((int)$payload['channel_id'],(int)$peer['user_id'],(int)$payload['whiteboard_id'])!==null)$connection->send(json_encode($payload));
@@ -444,7 +451,7 @@ class ChatServer implements MessageComponentInterface
         $channel=(int)($meta['wb_channel_id']??0);$board=(int)($meta['wb_whiteboard_id']??0);
         if($channel<1||$board<1)return;
         try {
-            $presence=$this->wbPresence->publish($channel.':'.$board,$from->resourceId,$data,['id'=>(int)$meta['user_id'],'name'=>(string)$meta['username']]);
+            $presence=$this->wbPresence->publish($channel.':'.$board,$this->connectionId($from),$data,['id'=>(int)$meta['user_id'],'name'=>(string)$meta['username']]);
             if($presence)$this->broadcastWbPresence(['type'=>'wb_presence','channel_id'=>$channel,'whiteboard_id'=>$board,'presence'=>$presence],$from);
         }catch(\InvalidArgumentException $e){$from->send(json_encode(['type'=>'error','message'=>$e->getMessage()]));}
     }
@@ -452,7 +459,7 @@ class ChatServer implements MessageComponentInterface
     {
         $channel=(int)($meta['wb_channel_id']??0);$board=(int)($meta['wb_whiteboard_id']??0);
         if($channel<1||$board<1)return;
-        $id=$this->wbPresence->leave($channel.':'.$board,$connection->resourceId);
+        $id=$this->wbPresence->leave($channel.':'.$board,$this->connectionId($connection));
         if($id!==null)$this->broadcastWbPresence(['type'=>'wb_presence_remove','channel_id'=>$channel,'whiteboard_id'=>$board,'client_ids'=>[$id]],$connection);
     }
 
@@ -460,11 +467,11 @@ class ChatServer implements MessageComponentInterface
     {
         $channel=(int)($meta['channel_id']??0);if($channel<1)return;
         try {
-            $presence=$this->wbPresence->publish('chat:'.$channel,$from->resourceId,$data,['id'=>(int)$meta['user_id'],'name'=>(string)$meta['username']],null,'chat');
+            $presence=$this->wbPresence->publish('chat:'.$channel,$this->connectionId($from),$data,['id'=>(int)$meta['user_id'],'name'=>(string)$meta['username']],null,'chat');
             if(!$presence)return;
             foreach($this->channelSubs[$channel]??[] as $peer){
                 if($peer===$from)continue;
-                $peerMeta=$this->connMeta[$peer->resourceId]??[];
+                $peerMeta=$this->connMeta[$this->connectionId($peer)]??[];
                 if($this->authorizeChannelMessage($peer,['type'=>'chat_presence','channel_id'=>$channel],$peerMeta))$peer->send(json_encode(['type'=>'chat_presence','channel_id'=>$channel,'presence'=>$presence]));
             }
         }catch(\InvalidArgumentException $e){$from->send(json_encode(['type'=>'error','message'=>$e->getMessage()]));}

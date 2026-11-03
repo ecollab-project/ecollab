@@ -6,5 +6,5 @@
 
 ALTER TABLE collab_workspaces
     ADD COLUMN active_server_id INT UNSIGNED
-        GENERATED ALWAYS AS (IF(archived = 0, server_id, NULL)) STORED,
+        GENERATED ALWAYS AS (IF(archived = 0, server_id, NULL)) VIRTUAL,
     ADD UNIQUE KEY uk_coworkspace_active_server (active_server_id);
