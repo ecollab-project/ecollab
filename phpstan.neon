@@ -49,4 +49,3 @@ parameters:
         -
             message: '#Access to an undefined property Ratchet\\ConnectionInterface::\$resourceId#'
             path: websocket/ChatServer.php
-            count: 9

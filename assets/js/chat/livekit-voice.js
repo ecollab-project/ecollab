@@ -236,6 +236,14 @@
         if (typeof _showRemoteScreenShareSection === 'function') {
           _showRemoteScreenShareSection(uid, username, stream);
         }
+        // Adaptive streaming observes the SDK's attached elements. A raw cloned
+        // MediaStream alone leaves the subscriber invisible and can pause video.
+        const screenVideo = document.getElementById('vcScreenGrid')
+          ?.querySelector('[data-screen-user="' + uid + '"] .vc-screen-card-video');
+        if (screenVideo) {
+          track.attach(screenVideo);
+          screenVideo.play().catch(() => {});
+        }
 
         // Ensure the screen-share card always has a visible Watch/Unwatch
         // control even when the card was created by the LiveKit path.

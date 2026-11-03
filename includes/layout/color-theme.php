@@ -9,3 +9,5 @@ require_once ROOT_PATH.'/services/ColorPaletteService.php';
 <script src="<?= BASE_URL ?>/assets/js/chat/preferences.js?v=1" defer></script>
 <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js?v=settings-speed-1" defer></script>
 <script src="<?= BASE_URL ?>/assets/js/color-theme.js?v=1" defer></script>
+
+<script src="<?= BASE_URL ?>/assets/js/learning-activity.js?v=1" defer></script>

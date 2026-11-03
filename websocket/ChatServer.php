@@ -7,6 +7,7 @@ require_once dirname(__DIR__, 1) . '/database/config/db.php';
 require_once __DIR__ . '/handlers/WhiteboardHandler.php';
 require_once __DIR__ . '/handlers/DmHandler.php';
 require_once dirname(__DIR__).'/services/WhiteboardPresenceService.php';
+require_once dirname(__DIR__).'/services/TemporaryVoiceService.php';
 
 use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
@@ -53,7 +54,15 @@ class ChatServer implements MessageComponentInterface
             $ids = [];
             foreach ($rows as $row) {
                 $ids[] = (int)$row['id'];
-                foreach ($this->channelSubs[(int)$row['channel_id']] ?? [] as $conn) try { $conn->send($row['payload']); } catch (\Exception) {}
+                if((int)$row['channel_id']===0){
+                    $event=json_decode($row['payload'],true);
+                    if(!is_array($event)||($event['type']??'')!=='channel_deleted')continue;
+                    $audience=$event['_recipients']??[];unset($event['_recipients']);
+                    $check=$this->db->prepare('SELECT 1 FROM server_members WHERE server_id=? AND user_id=?');
+                    foreach($audience as $uid){$check->execute([(int)$event['server_id'],(int)$uid]);if(!$check->fetchColumn())continue;foreach($this->userConns[(int)$uid]??[] as $conn)try{$conn->send(json_encode($event));}catch(\Exception){}}
+                }else{
+                    foreach ($this->channelSubs[(int)$row['channel_id']] ?? [] as $conn) try { $conn->send($row['payload']); } catch (\Exception) {}
+                }
             }
             $this->db->exec('DELETE FROM ws_relay WHERE id IN (' . implode(',', $ids) . ')');
         } catch (\Throwable $e) { echo "[WS] relay drain error: {$e->getMessage()}\n"; }
@@ -167,6 +176,7 @@ class ChatServer implements MessageComponentInterface
     {
         $rid = $conn->resourceId;
         $meta = $this->connMeta[$rid] ?? [];
+        if (!empty($meta['voice_channel_id'])) $this->handleLeaveVoice($conn, [], $meta);
         $this->removeWbPresence($conn,$meta);
         if (!empty($meta['channel_id'])) $this->removeFromChannel($conn, (int)$meta['channel_id']);
         $this->cleanupCodeConnection($conn, $meta);
@@ -196,7 +206,7 @@ class ChatServer implements MessageComponentInterface
                     }
                 }
                 unset($participants);
-                try { $this->db->prepare("UPDATE users SET voice_channel_id=NULL WHERE id=:id")->execute([':id'=>$uid]); } catch (\Exception) {}
+
                 $isSysAdmin=in_array((string)($meta['role']??''),['admin','super_admin'],true);
                 if(!$isSysAdmin){$this->setUserOnline($uid, false);$this->broadcastPresence($uid, false, $username);}
             }
@@ -267,7 +277,7 @@ class ChatServer implements MessageComponentInterface
     private function ensureCodeSessionLoaded(int $sid):void{if(isset($this->codeSessions[$sid]))return;$stmt=$this->db->prepare('SELECT code_state,version FROM coding_sessions WHERE id=:sid LIMIT 1');$stmt->execute([':sid'=>$sid]);$row=$stmt->fetch(PDO::FETCH_ASSOC);if(!$row)throw new \RuntimeException('Coding session not found.');$this->loadCodeSession($sid,(string)$row['code_state'],(int)$row['version']);}
     private function sendCodeResync(ConnectionInterface $from,int $sid):void{$this->ensureCodeSessionLoaded($sid);$from->send(json_encode(['type'=>'code_resync','session_id'=>$sid,'content'=>$this->codeSessions[$sid]['content'],'version'=>(int)$this->codeSessions[$sid]['version']]));}
     private function maybePersistCodeSession(int $sid):void{if(isset($this->codeSessions[$sid])&&$this->codeSessions[$sid]['dirty_changes']>=$this->codePersistEveryChanges)$this->persistCodeSession($sid);}
-    private function persistDirtyCodeSessions():void{$now=microtime(true);foreach(array_keys($this->codeSessions) as $sid){if(($this->codeSessions[$sid]['dirty_changes']??0)<1)continue;if($now-(float)$this->codeSessions[$sid]['last_persist_at']>=$this->codePersistEverySeconds)$this->persistCodeSession((int)$sid);}}
+    public function persistDirtyCodeSessions():void{$now=microtime(true);foreach(array_keys($this->codeSessions) as $sid){if(($this->codeSessions[$sid]['dirty_changes']??0)<1)continue;if($now-(float)$this->codeSessions[$sid]['last_persist_at']>=$this->codePersistEverySeconds)$this->persistCodeSession((int)$sid);}}
     private function persistCodeSession(int $sid):void{if(!isset($this->codeSessions[$sid]))return;$stmt=$this->db->prepare('UPDATE coding_sessions SET code_state=:state,version=:version WHERE id=:sid');$stmt->execute([':state'=>$this->codeSessions[$sid]['content'],':version'=>(int)$this->codeSessions[$sid]['version'],':sid'=>$sid]);$this->codeSessions[$sid]['dirty_changes']=0;$this->codeSessions[$sid]['last_persist_at']=microtime(true);}
     private function broadcastCodeSession(int $sid,string $payload,?ConnectionInterface $exclude=null):void{foreach($this->codeSessions[$sid]['connections']??[] as $entry){$conn=$entry['conn'];if($exclude&&$conn===$exclude)continue;try{$conn->send($payload);}catch(\Exception){}}}
     private function codeError(ConnectionInterface $conn,string $message):void{$conn->send(json_encode(['type'=>'code_error','message'=>$message]));}
@@ -319,16 +329,49 @@ class ChatServer implements MessageComponentInterface
             if(!$chk->fetchColumn())return;
         }
 
+        try{
+            $lifecycle=new TemporaryVoiceService($this->db);
+            if(!$isDm)$lifecycle->joinChannel($uid,$channelId);
+            else{
+                $old=$this->db->prepare('SELECT voice_channel_id FROM users WHERE id=?');$old->execute([$uid]);
+                $lifecycle->leaveChannel($uid,(int)($old->fetchColumn()?:0));
+            }
+        }catch(\Throwable $e){$from->send(json_encode(['type'=>'error','message'=>'Voice channel access denied']));return;}
+
         $stmt=$this->db->prepare('SELECT id,username,full_name,avatar_color_gradient,role FROM users WHERE id=:id');
         $stmt->execute([':id'=>$uid]);
         $user=$stmt->fetch()?:[];
 
+        // The account has one active room, but may keep several tabs in that room.
+        // Moving rooms explicitly disconnects old media sessions instead of leaving ghosts.
+        foreach($this->voiceRooms as $oldId=>&$oldPeers){
+            if((int)$oldId===$channelId)continue;
+            foreach($oldPeers as $p){
+                if((int)$p['user_id']!==$uid)continue;
+                $rid=(int)($p['resourceId']??0);
+                if(isset($this->connMeta[$rid]))$this->connMeta[$rid]['voice_channel_id']=null;
+                foreach($this->userConns[$uid]??[] as $oldConn){
+                    if((int)$oldConn->resourceId===$rid && $rid!==(int)$from->resourceId){
+                        $oldConn->send(json_encode(['type'=>'voice_session_moved','channel_id'=>(int)$oldId]));
+                    }
+                }
+            }
+            $hadUser=(bool)array_filter($oldPeers,fn($p)=>(int)$p['user_id']===$uid);
+            $oldPeers=array_values(array_filter($oldPeers,fn($p)=>(int)$p['user_id']!==$uid));
+            if($hadUser){
+                $notice=json_encode(['type'=>'voice_leave','user_id'=>$uid,'username'=>$meta['username'],'channel_id'=>(int)$oldId]);
+                foreach($oldPeers as $p)foreach($this->userConns[(int)$p['user_id']]??[] as $peer){try{$peer->send($notice);}catch(\Exception){}}
+            }
+        }
+        unset($oldPeers);
+
         // A connection can only belong to one voice room. Remove it from any
         // previous room, but notify only that room's participants.
         foreach($this->voiceRooms as $oldId=>&$participants){
-            $wasIn=array_filter($participants,fn($p)=>$p['user_id']===$uid);
+            $wasIn=array_filter($participants,fn($p)=>(int)($p['resourceId']??0)===(int)$from->resourceId);
             if(!empty($wasIn)){
-                $participants=array_values(array_filter($participants,fn($p)=>$p['user_id']!==$uid));
+                $participants=array_values(array_filter($participants,fn($p)=>(int)($p['resourceId']??0)!==(int)$from->resourceId));
+                if(array_filter($participants,fn($p)=>(int)$p['user_id']===$uid))continue;
                 $leave=json_encode(['type'=>'voice_leave','user_id'=>$uid,'username'=>$meta['username'],'channel_id'=>(int)$oldId]);
                 foreach($participants as $p){
                     foreach($this->userConns[(int)$p['user_id']]??[] as $peerConn){
@@ -351,9 +394,7 @@ class ChatServer implements MessageComponentInterface
             'resourceId'=>$from->resourceId
         ];
 
-        if(!$isDm){
-            try{$this->db->prepare("UPDATE users SET voice_channel_id=:cid WHERE id=:id")->execute([':cid'=>$channelId,':id'=>$uid]);}catch(\Exception){}
-        }
+
 
         $payload=json_encode(['type'=>'voice_join','user'=>$user,'channel_id'=>$channelId]);
         // CRITICAL: voice events are scoped strictly to this room.
@@ -378,19 +419,22 @@ class ChatServer implements MessageComponentInterface
     {
         $uid=(int)$meta['user_id'];
         $channelId=(int)($meta['voice_channel_id']??0);
+        if(isset($data['channel_id']) && (int)$data['channel_id']!==$channelId)return;
         $remaining=[];
         $isDm=$channelId>=self::DM_GROUP_VOICE_ID_OFFSET;
 
         if($channelId&&isset($this->voiceRooms[$channelId])){
-            $this->voiceRooms[$channelId]=array_values(array_filter($this->voiceRooms[$channelId],fn($p)=>$p['user_id']!==$uid));
+            $this->voiceRooms[$channelId]=array_values(array_filter($this->voiceRooms[$channelId],fn($p)=>(int)($p['resourceId']??0)!==(int)$from->resourceId));
             $remaining=$this->voiceRooms[$channelId];
             if(empty($this->voiceRooms[$channelId]))unset($this->voiceRooms[$channelId]);
         }
 
         $meta['voice_channel_id']=null;
-        if(!$isDm){
-            try{$this->db->prepare("UPDATE users SET voice_channel_id=NULL WHERE id=:id")->execute([':id'=>$uid]);}catch(\Exception){}
+        $stillPresent=(bool)array_filter($remaining,fn($p)=>(int)$p['user_id']===$uid);
+        if(!$isDm && !$stillPresent){
+            try{(new TemporaryVoiceService($this->db))->leaveChannel($uid,$channelId);}catch(\Throwable $e){error_log('[WS] voice cleanup unavailable');}
         }
+        if($stillPresent)return;
 
         $payload=json_encode(['type'=>'voice_leave','user_id'=>$uid,'username'=>$meta['username'],'channel_id'=>$channelId]);
         foreach($remaining as $p){

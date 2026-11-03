@@ -9,7 +9,7 @@ require_once dirname(__DIR__, 2) . '/services/OllamaService.php';
 require_once dirname(__DIR__, 2) . '/services/JarredConversation.php';
 require_once dirname(__DIR__, 2) . '/services/JarredTools.php';
 require_once dirname(__DIR__, 2) . '/services/JarredActionService.php';
-require_once dirname(__DIR__, 2) . '/services/CodeLabIntegrityPolicy.php';
+require_once dirname(__DIR__, 2) . '/services/JarredAssistancePolicy.php';
 
 require_once dirname(__DIR__, 2) . '/services/NotificationService.php';
 
@@ -90,7 +90,6 @@ try {
         (int)($recipient['is_system'] ?? 0) === 1
         && ($recipient['username'] ?? '') === 'ecollab_ai';
 
-    if ($isAiConversation && CodeLabIntegrityPolicy::isCodeLab($jarredSurface,(string)($_SERVER['HTTP_REFERER']??''))) {http_response_code(403);echo json_encode(['success'=>false,'error'=>CodeLabIntegrityPolicy::AI_MESSAGE]);exit;}
 
     if($isAiConversation){$prefs=UserPreferences::get($db,(int)$me['id']);UserPreferences::assertJarred($prefs);$turnLock=JarredConversation::lock((int)$me['id'],'dm',$convId);}
 
@@ -179,8 +178,8 @@ try {
 
         // Central action authority runs before Qwen. PHP owns action state,
         // authorization and execution; the model never receives write access.
-        $jarredActions = new JarredActionService();
-        $actionResult = $jarredActions->handleMessage((int)$me['id'], $convId, $text, $activeServerId, $jarredSurface);
+        $direct = JarredAssistancePolicy::reply($db, (int)$me['id'], $text);
+        $actionResult = $direct !== null ? ['reply'=>$direct] : (new JarredActionService())->handleMessage((int)$me['id'], $convId, $text, $activeServerId, $jarredSurface);
         if ($actionResult !== null) {
             $aiText = (string)$actionResult['reply'];
             $aiMsgId = RealtimeOutbox::record($db, 'dm', $convId, function () use ($db, $convId, $recipientId, $aiText) {

@@ -21,6 +21,7 @@ try {
     $service=new CodeLabService(Database::getInstance());$action=$input['action']??'overview';
     $execution=new CodeLabExecutionService(Database::getInstance(),new CodeLabRunner());
     $data=match ($method.':'.$action) {
+        'GET:assistance'=>$service->assistance($sid,$uid),
         'GET:sample'=>$service->sample($sid,$uid,(string)($input['language']??'')),
         'POST:similarity'=>(new CodeLabSimilarityService(Database::getInstance()))->queue($sid,$uid,$tid),
         'GET:similarity'=>(new CodeLabSimilarityService(Database::getInstance()))->latest($sid,$uid,$tid),

@@ -1,0 +1,61 @@
+name: Collaboration and learning
+on:
+  pull_request:
+    branches: [ecollab-collabs, main]
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_sqlite, mbstring, dom
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: composer install --no-interaction --prefer-dist --no-plugins
+      - run: npm install --no-save --ignore-scripts jsdom@30.1.2
+      - run: |
+          php tests/temporary-voice-lifecycle.php
+          php tests/temporary-voice-websocket.php
+          php tests/ai-learning-policy.php
+          php tests/peer-behavior-regression.php
+          php tests/peer-ml-regression.php
+          php tests/code-lab-regression.php
+          php tests/code-lab-integrity-policy.php
+          vendor/bin/phpunit --testsuite Unit
+          node tests/livekit-voice-regression.cjs
+          node tests/livekit-calls-regression.cjs
+          node tests/code-lab-ui-regression.cjs
+          node tests/code-lab-integrity-regression.cjs
+          node tests/jarred-provider-regression.cjs
+          node tests/jarred-session-race.cjs
+  sql:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        image: ['mysql:8.0', 'mariadb:10.11']
+    services:
+      sql:
+        image: ${{ matrix.image }}
+        env:
+          MYSQL_ROOT_PASSWORD: test-password
+          MYSQL_DATABASE: ecollab_feature_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -ptest-password --silent"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_mysql, mbstring
+      - run: php tests/collaboration-mysql.php
+        env:
+          FEATURE_TEST_DSN: mysql:host=127.0.0.1;dbname=ecollab_feature_test
+          DB_USER: root
+          DB_PASS: test-password

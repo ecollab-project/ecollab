@@ -16,6 +16,8 @@ declare(strict_types=1);
  * The service intentionally contains no HTTP/session logic so it can be
  * tested independently from API/chat/peer-match.php.
  */
+require_once __DIR__.'/PeerBehaviorService.php';
+
 class PeerMatchingService
 {
     public const WEIGHT_SUBJECTS = 35;
@@ -99,14 +101,23 @@ class PeerMatchingService
             if ($semantic >= 60) $tags[] = 'Related study topics';
         }
 
+        $behavior = PeerBehaviorService::similarity($profileA['behavior'] ?? null, $profileB['behavior'] ?? null);
+        if ($behavior !== null) {
+            $total = $total * 0.8 + $behavior * 0.2;
+            if ($behavior >= 60) $tags[] = 'Similar learning activity';
+        }
+        $weights=$usesML
+            ? ['subjects'=>26.25,'style'=>18.75,'interests'=>18.75,'hobbies'=>11.25,'semantic'=>25]
+            : ['subjects'=>35,'style'=>25,'interests'=>25,'hobbies'=>15,'semantic'=>0];
+        if($behavior!==null){$weights=array_map(fn($w)=>$w*.8,$weights);$weights['behavior']=20;}
         return [
+            'behavior' => $behavior === null ? null : round($behavior, 2),
+            'behavior_weight' => $behavior === null ? 0 : 20,
             'total' => round($total, 2),
             'rule_total' => $ruleTotal,
             'semantic' => $usesML ? round($semantic, 2) : null,
-            'engine' => $usesML ? 'hybrid-v1' : 'rules-v1',
-            'weights' => $usesML
-                ? ['subjects'=>26.25, 'style'=>18.75, 'interests'=>18.75, 'hobbies'=>11.25, 'semantic'=>25]
-                : ['subjects'=>35, 'style'=>25, 'interests'=>25, 'hobbies'=>15, 'semantic'=>0],
+            'engine' => $behavior !== null ? ($usesML ? 'hybrid-behavior-v1' : 'rules-behavior-v1') : ($usesML ? 'hybrid-v1' : 'rules-v1'),
+            'weights' => $weights,
 
             'subjects' => round($subjects['score'], 2),
             'style' => round($style['score'], 2),
@@ -603,6 +614,7 @@ class PeerMatchingService
         $hobbies = $hobbiesStmt->fetchAll(PDO::FETCH_ASSOC);
 
         return [
+            'behavior' => (new PeerBehaviorService($db))->profile($userId),
             'prefs' => $prefs,
             'subjects' => $subjects,
             'interests' => $interests,

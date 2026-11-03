@@ -75,6 +75,10 @@ try {
         $sql='UPDATE user_settings SET '.implode(', ',$updates).' WHERE user_id=:id LIMIT 1';
         $stmt=$db->prepare($sql); $stmt->execute($params);
     }
+    if (array_key_exists('ai_matching',$body) && !(int)$params[':ai_matching']) {
+        require_once ROOT_PATH.'/services/PeerBehaviorService.php';
+        (new PeerBehaviorService($db))->clear($userId);
+    }
     $stmt=$db->prepare('SELECT * FROM user_settings WHERE user_id=:id LIMIT 1');
     $stmt->execute([':id'=>$userId]);
     echo json_encode(['success'=>true,'settings'=>cleanSettings($stmt->fetch(PDO::FETCH_ASSOC) ?: [],$defaults)]);

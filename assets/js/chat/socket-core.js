@@ -279,6 +279,19 @@ function handleSocketMessage(data) {
     case 'channel_created':
       handleChannelCreated(data.channel);
       break;
+    case 'voice_session_moved': {
+      if (Number(vcChannelId) === Number(data.channel_id)) {
+        disconnectVoice();
+        showToast('Your voice session moved to another room in another tab.', 'info');
+      }
+      break;
+    }
+    case 'channel_deleted': {
+      const id = Number(data.channel_id);
+      if (id > 0) document.querySelectorAll('.channel-item[data-channel-id="' + id + '"]').forEach(el => el.remove());
+      window.dispatchEvent(new CustomEvent('ecollab:channel-deleted', {detail:data}));
+      break;
+    }
     case 'channel_seen':
       handleChannelSeen(data);
       break;

@@ -20,6 +20,8 @@ final class CodeLabService
         $row = $this->query('SELECT s.id,s.name,s.owner_id,u.role FROM servers s JOIN server_members m ON m.server_id=s.id JOIN users u ON u.id=m.user_id WHERE s.id=? AND m.user_id=? AND s.status=? AND u.deleted_at IS NULL AND u.status NOT IN ("banned","suspended","deactivated")', [$sid,$uid,'active'])->fetch(PDO::FETCH_ASSOC);
         if (!$row) self::fail('You are not a member of this active server.',403);
         $row['can_manage'] = in_array($row['role'],['facilitator','admin','super_admin'],true);
+        $row['can_publish'] = in_array($row['role'], ['admin','super_admin'], true)
+            || ($row['role'] === 'facilitator' && (int)$row['owner_id'] === $uid);
         return $row;
     }
     private function task(int $tid, int $sid): array
@@ -69,9 +71,18 @@ final class CodeLabService
         if ($date->format('Y-m-d\TH:i:s')!==substr($value,0,19)) self::fail('Invalid calendar date.');
         return $date->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
     }
+    public function assistance(int $sid,int $uid): array
+    {
+        $this->member($sid,$uid);
+        require_once __DIR__.'/JarredAssistancePolicy.php';
+        require_once __DIR__.'/UserPreferences.php';
+        UserPreferences::assertJarred(UserPreferences::get($this->db,$uid));
+        $task=CodeLabIntegrityPolicy::activeAttempt($this->db,$uid);
+        return ['mode'=>$task?'workflow':'normal','message'=>$task?CodeLabIntegrityPolicy::workflow($task):JarredAssistancePolicy::capabilities()];
+    }
     public function create(int $sid,int $uid,array $input): array
     {
-        if (!$this->member($sid,$uid)['can_manage']) self::fail('Only server facilitators can create tasks.',403);
+        if (!$this->member($sid,$uid)['can_publish']) self::fail('Facilitators can publish tasks only in servers they own.',403);
         $title=self::text($input['title']??null,160,'title',true); $instructions=self::text($input['instructions']??null,20000,'instructions',true);
         $language=$input['language']??''; $kind=$input['kind']??'';
         if (!in_array($language,self::LANGUAGES,true) || !in_array($kind,['assignment','practice'],true)) self::fail('Invalid task type or language.');

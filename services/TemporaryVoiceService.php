@@ -6,7 +6,7 @@ require_once dirname(__DIR__) . '/database/config/db.php';
 final class TemporaryVoiceService
 {
     private PDO $db;
-    public function __construct() { $this->db = Database::getInstance(); $this->ensureTables(); }
+    public function __construct(?PDO $db=null) { $this->db = $db ?? Database::getInstance(); if ($db === null) $this->ensureTables(); }
 
     private function ensureTables(): void
     {
@@ -122,58 +122,62 @@ final class TemporaryVoiceService
         $this->db->prepare("UPDATE temporary_voice_rooms SET empty_since=NULL,expires_at=NULL WHERE channel_id=?")->execute([$channelId]);
     }
 
-    public function markLeftAndSchedule(int $channelId): void
+    private function lockSuffix(): string { return $this->db->getAttribute(PDO::ATTR_DRIVER_NAME)==='mysql'?' FOR UPDATE':''; }
+
+    public function joinChannel(int $uid,int $cid): void
     {
-        if ($channelId<=0) return;
-        $q=$this->db->prepare("SELECT COUNT(*) FROM users WHERE voice_channel_id=?");
-        $q->execute([$channelId]);
-        if ((int)$q->fetchColumn()===0) {
-            // Jarred temporary rooms are ephemeral: once the last participant
-            // leaves, remove the room immediately instead of leaving an empty
-            // channel visible for a grace period.
-            $this->deleteIfEmpty($channelId);
-        }
+        $old=0;$this->db->beginTransaction();
+        try {
+            $q=$this->db->prepare('SELECT id,server_id,type,is_private,created_by FROM channels WHERE id=?'.$this->lockSuffix());$q->execute([$cid]);$c=$q->fetch(PDO::FETCH_ASSOC);
+            if(!$c||$c['type']!=='voice')throw new RuntimeException('Voice channel unavailable.',403);
+            $q=$this->db->prepare("SELECT sm.server_role,u.role,u.voice_channel_id FROM server_members sm JOIN users u ON u.id=sm.user_id WHERE sm.server_id=? AND sm.user_id=? AND u.deleted_at IS NULL AND u.status NOT IN ('banned','suspended','deactivated')".$this->lockSuffix());$q->execute([$c['server_id'],$uid]);$member=$q->fetch(PDO::FETCH_ASSOC);
+            if(!$member)throw new RuntimeException('Voice access denied.',403);
+            if((int)$c['is_private'] && (int)$c['created_by']!==$uid && !in_array($member['server_role'],['owner','admin'],true) && !in_array($member['role'],['admin','super_admin'],true)){
+                $q=$this->db->prepare('SELECT 1 FROM channel_members WHERE channel_id=? AND user_id=?');$q->execute([$cid,$uid]);if(!$q->fetchColumn())throw new RuntimeException('Private voice access denied.',403);
+            }
+            $old=(int)($member['voice_channel_id']??0);
+            $this->db->prepare('UPDATE users SET voice_channel_id=? WHERE id=?')->execute([$cid,$uid]);
+            $this->markJoined($cid);$this->db->commit();
+        }catch(Throwable $e){if($this->db->inTransaction())$this->db->rollBack();throw $e;}
+        if($old>0&&$old!==$cid)$this->markLeftAndSchedule($old);
     }
+
+    public function leaveChannel(int $uid,int $cid): void
+    {
+        if($cid<=0)return;
+        $this->db->beginTransaction();
+        try{
+            $q=$this->db->prepare('SELECT id FROM channels WHERE id=?'.$this->lockSuffix());$q->execute([$cid]);$q->fetchColumn();
+            $q=$this->db->prepare('UPDATE users SET voice_channel_id=NULL WHERE id=? AND voice_channel_id=?');$q->execute([$uid,$cid]);$changed=$q->rowCount()>0;
+            $this->db->commit();
+        }catch(Throwable $e){if($this->db->inTransaction())$this->db->rollBack();throw $e;}
+        if($changed)$this->markLeftAndSchedule($cid);
+    }
+
+    public function markLeftAndSchedule(int $channelId): void { if($channelId>0)$this->deleteIfEmpty($channelId); }
 
     private function deleteIfEmpty(int $channelId): bool
     {
-        $exists=$this->db->prepare("SELECT 1 FROM temporary_voice_rooms WHERE channel_id=? LIMIT 1");
-        $exists->execute([$channelId]);
-        if(!$exists->fetchColumn()) return false;
-
-        $c=$this->db->prepare("SELECT COUNT(*) FROM users WHERE voice_channel_id=?");
-        $c->execute([$channelId]);
-        if((int)$c->fetchColumn()>0) return false;
-
         $this->db->beginTransaction();
-        try {
-            $this->db->prepare("DELETE FROM channel_members WHERE channel_id=?")->execute([$channelId]);
-            $this->db->prepare("DELETE FROM temporary_voice_rooms WHERE channel_id=?")->execute([$channelId]);
-            $this->db->prepare("DELETE FROM channels WHERE id=?")->execute([$channelId]);
-            $this->db->commit();
-            return true;
-        } catch(Throwable $e) {
-            if($this->db->inTransaction()) $this->db->rollBack();
-            error_log('[TemporaryVoiceService] immediate cleanup failed: '.$e->getMessage());
-            return false;
-        }
+        try{
+            $q=$this->db->prepare('SELECT c.id,c.server_id,c.is_private,c.created_by FROM channels c JOIN temporary_voice_rooms t ON t.channel_id=c.id WHERE c.id=?'.$this->lockSuffix());$q->execute([$channelId]);$channel=$q->fetch(PDO::FETCH_ASSOC);
+            if(!$channel){$this->db->commit();return false;}
+            $q=$this->db->prepare('SELECT COUNT(*) FROM users WHERE voice_channel_id=?');$q->execute([$channelId]);
+            if((int)$q->fetchColumn()>0){$this->db->commit();return false;}
+            $q=$this->db->prepare("SELECT sm.user_id FROM server_members sm JOIN users u ON u.id=sm.user_id WHERE sm.server_id=? AND (?=0 OR sm.user_id=? OR sm.server_role IN ('owner','admin') OR u.role IN ('admin','super_admin') OR EXISTS(SELECT 1 FROM channel_members cm WHERE cm.channel_id=? AND cm.user_id=sm.user_id))");
+            $q->execute([$channel['server_id'],$channel['is_private'],$channel['created_by'],$channelId]);$audience=array_map('intval',$q->fetchAll(PDO::FETCH_COLUMN));
+            $this->db->prepare('DELETE FROM channel_members WHERE channel_id=?')->execute([$channelId]);
+            $this->db->prepare('DELETE FROM temporary_voice_rooms WHERE channel_id=?')->execute([$channelId]);
+            $this->db->prepare('DELETE FROM channels WHERE id=?')->execute([$channelId]);
+            try{$this->db->prepare('INSERT INTO ws_relay(channel_id,payload) VALUES(0,?)')->execute([json_encode(['type'=>'channel_deleted','channel_id'=>$channelId,'server_id'=>(int)$channel['server_id'],'_recipients'=>$audience],JSON_THROW_ON_ERROR)]);}catch(Throwable $ignored){}
+            $this->db->commit();return true;
+        }catch(Throwable $e){if($this->db->inTransaction())$this->db->rollBack();error_log('[TemporaryVoiceService] cleanup unavailable');return false;}
     }
 
     public function cleanupExpired(): void
     {
         $q=$this->db->query("SELECT channel_id FROM temporary_voice_rooms WHERE expires_at IS NOT NULL AND expires_at<=NOW()");
-        foreach($q->fetchAll(PDO::FETCH_COLUMN) as $cid) {
-            $cid=(int)$cid;
-            $c=$this->db->prepare("SELECT COUNT(*) FROM users WHERE voice_channel_id=?");$c->execute([$cid]);
-            if((int)$c->fetchColumn()>0){$this->markJoined($cid);continue;}
-            $this->db->beginTransaction();
-            try {
-                $this->db->prepare("DELETE FROM channel_members WHERE channel_id=?")->execute([$cid]);
-                $this->db->prepare("DELETE FROM temporary_voice_rooms WHERE channel_id=?")->execute([$cid]);
-                $this->db->prepare("DELETE FROM channels WHERE id=?")->execute([$cid]);
-                $this->db->commit();
-            } catch(Throwable $e){if($this->db->inTransaction())$this->db->rollBack();error_log('[TemporaryVoiceService] cleanup failed: '.$e->getMessage());}
-        }
+        foreach($q->fetchAll(PDO::FETCH_COLUMN) as $cid) $this->markLeftAndSchedule((int)$cid);
         $this->db->exec("DELETE FROM jarred_pending_actions WHERE expires_at<=NOW()");
     }
 
