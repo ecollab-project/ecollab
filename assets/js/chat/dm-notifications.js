@@ -1065,7 +1065,7 @@ function _applyJarredJob(conversationId,job,retryMessageId=null) {
   let status=document.getElementById('dmJarredStatus');
   const retry=!pending&&retryMessageId&&(!job||job.state==='failed');
   if(!status&&retry){status=document.createElement('div');status.id='dmJarredStatus';status.setAttribute('role','status');status.style.cssText='padding:8px 14px;font-size:12px;color:var(--text-muted)';document.getElementById('dmTypingIndicator')?.after(status);}
-  if(!status)return;status.hidden=!retry;if(!retry)return;
+  if(!status)return;status.hidden=!retry;if(!retry){delete status.dataset.messageId;return;}
   if(status.dataset.messageId===String(retryMessageId)&&status.querySelector('button'))return;
   status.dataset.messageId=String(retryMessageId);
   status.replaceChildren(document.createTextNode('Your question is saved. '));

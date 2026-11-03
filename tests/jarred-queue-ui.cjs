@@ -12,6 +12,7 @@ const dm=w.fixture,input=w.document.getElementById('dmInputField'),typing=w.docu
  dm.activeConvId=1;dm.activePartnerIsAI=true;w.jobStatus(1,{id:1,state:'running'},11);assert(typing.textContent.includes('preparing'));w.jobStatus(1,{id:1,state:'done',reply_message_id:12});assert(!input.disabled&&!dm.aiPending.has(1),'completed background reply releases composer');
  w.jobStatus(1,{id:2,state:'failed'},21);const button=w.document.querySelector('#dmJarredStatus button');assert(button);button.focus();w.jobStatus(1,{id:2,state:'failed'},21);assert.equal(w.document.activeElement,button,'polling does not steal Retry keyboard focus');
  w.apiFetch=async(url,options)=>{assert(url.includes('jarred-retry.php'));assert.equal(JSON.parse(options.body).message_id,21);posts++;return {ai_job:{id:2,state:'queued'}};};button.click();await new Promise(r=>setTimeout(r,0));assert.equal(posts,2,'retry uses separate saved-message endpoint');assert(dm.aiPending.has(1));assert(w.document.getElementById('dmJarredStatus').hidden);
+ w.jobStatus(1,{id:2,state:'failed'},21);assert(!w.document.querySelector('#dmJarredStatus button').disabled,'a second failure must offer an enabled retry');
  w.jobStatus(1,null,30);assert(w.document.querySelector('#dmJarredStatus button'),'legacy saved unanswered question can retry after upgrade');
  console.log('PASS: fast queued ack, persistent pending state, conversation isolation, completion, saved-question retry and focus');
 }finally{w.close();}})().catch(e=>{console.error(e);process.exitCode=1;});
