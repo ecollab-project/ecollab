@@ -25,4 +25,4 @@ finally:
     except OSError:pass
     try:_,status=os.waitpid(pid,0)
     except ChildProcessError:status=0
-sys.exit(os.waitstatus_to_exitcode(status) if os.WIFEXITED(status) else 1)
+sys.exit(os.WEXITSTATUS(status) if os.WIFEXITED(status) else 128 + os.WTERMSIG(status))
