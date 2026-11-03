@@ -156,7 +156,7 @@ final class OllamaService
         return trim(str_replace(['/no_think','/think'],'',$text));
     }
 
-    public function generate(array $messages, string $systemPrompt = '', int $maxTokens = 400): array
+    public function generate(array $messages, string $systemPrompt = '', int $maxTokens = 400, ?array $schema = null): array
     {
         $payloadMessages = [];
         if ($systemPrompt !== '') {
@@ -188,6 +188,8 @@ final class OllamaService
                 'num_predict' => max(1, min(1024, $maxTokens)),
             ],
         ];
+
+        if($schema!==null)$payload['format']=$schema;
 
         $data = $this->requestChat($payload);
 

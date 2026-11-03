@@ -92,3 +92,8 @@ Keep the previously installed two-generation Ollama profile. No Ollama restart o
 Validation includes SQLite worker/UI fixtures and MySQL 8/MariaDB concurrent claims. These verify durable admission, two-worker bounds, exact-once publication, lease recovery, retry identity and fresh policy enforcement. They do not certify actual model full-answer speed on the VPS.
 
 Rollback: stop/disable both worker instances, revert the queue code together with its UI/API changes, then restart PHP-FPM. Retain additive queue tables and saved messages; do not drop them or replay completed jobs. Pending questions remain saved and can be retried when the queue is restored.
+
+
+## Code Lab module drafts (migration 067)
+
+The same two Jarred worker instances now alternate normal DM jobs and facilitator module drafts, with at most one module generation at a time. Apply pending migrations before restarting workers after this feature is pulled. Install poppler-utils/unzip for readable PDF/DOCX extraction; TXT/Markdown also work. See [module task creation](../../docs/code-lab-module-tasks.md) for the upload → difficulty → editable review → publish flow, private storage limits, verification and rollback. No extra inference process or service is added.

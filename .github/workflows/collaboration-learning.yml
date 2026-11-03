@@ -16,6 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends poppler-utils unzip
       - run: composer install --no-interaction --prefer-dist --no-plugins
       - run: composer install --working-dir=tools/web-push --no-dev --no-interaction --prefer-dist --no-plugins
       - run: npm install --no-save --ignore-scripts jsdom@30.1.2
@@ -32,6 +33,8 @@ jobs:
           php tests/dm-message-identity.php
           php tests/peer-behavior-regression.php
           php tests/peer-ml-regression.php
+          php tests/code-lab-module-reader.php
+          php tests/code-lab-module-tasks.php
           php tests/code-lab-regression.php
           php tests/code-lab-integrity-policy.php
           vendor/bin/phpunit --testsuite Unit
@@ -39,6 +42,7 @@ jobs:
           node tests/livekit-calls-regression.cjs
           node tests/call-continuity-regression.cjs
           node tests/call-inline-workspace.cjs
+          node tests/code-lab-module-ui.cjs
           node tests/code-lab-ui-regression.cjs
           node tests/code-lab-integrity-regression.cjs
           node tests/jarred-dm-pending.cjs
@@ -71,7 +75,9 @@ jobs:
         with:
           php-version: '8.3'
           extensions: pdo_mysql, mbstring
-      - run: php tests/collaboration-mysql.php
+      - run: |
+          php tests/collaboration-mysql.php
+          php tests/code-lab-module-mysql.php
         env:
           FEATURE_TEST_DSN: mysql:host=127.0.0.1;dbname=ecollab_feature_test
           DB_USER: root

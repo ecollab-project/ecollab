@@ -96,16 +96,16 @@ final class CodeLabService
         $cases=$mode==='automatic'?CodeLabExecutionService::validateCases($input['test_cases']??null,$language):[];
         $runtime=$language==='web'?null:CodeLabRunner::runtime($language);
         if($mode==='automatic'&&$language!=='web'&&(!(new CodeLabRunner())->enabled()||!$runtime))self::fail('Configure the runner and language before publishing an automatically graded task.');
-        $this->db->beginTransaction();
+        $owns=!$this->db->inTransaction();if($owns)$this->db->beginTransaction();
         try {
             $this->query('INSERT INTO code_lab_tasks (server_id,created_by,title,instructions,language,kind,starter_code,opens_at,due_at,duration_minutes,grading_mode,runtime_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',[$sid,$uid,$title,$instructions,$language,$kind,$starter,$opens,$due,$duration,$mode,$runtime]);
             $id=(int)$this->db->lastInsertId();
             foreach($cases as$pos=>$case)$this->query('INSERT INTO code_lab_test_cases(task_id,position,input_data,expected_output,hidden,weight) VALUES(?,?,?,?,?,?)',[$id,$pos,$case['input'],$case['expected_output'],(int)$case['hidden'],$case['weight']]);
-            $this->db->commit();
+            if($owns)$this->db->commit();
             require_once __DIR__.'/NotificationService.php';
             try { foreach($this->query('SELECT user_id FROM server_members WHERE server_id=?',[$sid])->fetchAll(PDO::FETCH_COLUMN)as$recipient)NotificationService::create($this->db,(int)$recipient,$uid,'class_update','New Code Lab task','Your facilitator published a coding activity.','/modules/code-lab/index.php?server_id='.$sid,'💻'); } catch(Throwable $notificationError) { error_log('[code-lab/notifications] delivery unavailable'); }
             return ['id'=>$id];
-        }catch(Throwable $e){if($this->db->inTransaction())$this->db->rollBack();throw $e;}
+        }catch(Throwable $e){if($owns&&$this->db->inTransaction())$this->db->rollBack();throw $e;}
     }
     /** Unique (task,user) makes double clicks and refreshes resume the same session. */
     public function start(int $sid,int $uid,int $tid): array
