@@ -18,5 +18,11 @@ dm.activeConvId=2;dm.activePartnerIsAI=false;indicator.textContent='Alex is typi
  assert.equal(dm.aiPending.size,0);assert.equal(w.document.getElementById('dmInputField').disabled,false);
  assert(w.document.querySelector('[data-delivery-state="unconfirmed"]'),'gateway uncertainty does not erase a potentially saved message');
  assert(w.document.getElementById('dmMessagesArea').textContent.includes('Delivery unconfirmed'));
+ let aiReply,humanReply;w.CSS={escape:String};
+ w.apiFetch=async(url,options)=>{const body=JSON.parse(options.body);return await new Promise(resolve=>{if(body.conversation_id===3)aiReply=()=>resolve({message_id:31,is_ai:true});else humanReply=()=>resolve({message_id:41,is_ai:false,recipient_id:5});});};
+ dm.activeConvId=3;dm.activePartnerId=99;dm.activePartnerIsAI=true;w.document.getElementById('dmInputField').value='New AI question';const aiSending=w.sendDmMessage();
+ dm.activeConvId=4;dm.activePartnerId=5;dm.activePartnerIsAI=false;w.document.getElementById('dmInputField').disabled=false;w.document.getElementById('dmInputField').value='Human message';const humanSending=w.sendDmMessage();
+ aiReply();await aiSending;assert.equal(w.document.getElementById('dmInputField').disabled,true,'old AI completion preserves a newer human send lock');
+ humanReply();await humanSending;assert.equal(w.document.getElementById('dmInputField').disabled,false);
  w.close();console.log('PASS: conversation-scoped AI typing, human isolation, out-of-order completion and gateway recovery');
 })().catch(e=>{console.error(e);w.close();process.exitCode=1;});

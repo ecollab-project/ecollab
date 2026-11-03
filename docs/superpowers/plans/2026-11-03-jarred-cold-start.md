@@ -11,3 +11,4 @@ Verification: new typing regression fails on the original shared indicator; gree
 Rollback: restore prior source and restart PHP-FPM; disable the new warm timer if installed. No migrations or dependency changes.
 
 Deployment review: preload service and manual command use the observed FPM account www-data. Using the deployment account with a private umask could create an inference lock that FPM cannot open when temporary directories are shared. No cross-service lock namespace guarantee is claimed.
+Hosted upload regression caught composer cleanup after switching during an attachment upload. Reproduced locally; generic conversation-keyed send state now releases only its own request and derives composer disabling from the current conversation. Both upload navigation and a new old-AI/new-human overlapping-send test pass. This corrects the failure without weakening the upload regression.

@@ -77,6 +77,7 @@ const DM = {
   groups: [],               // [{id, name, display_name, members, last_message, ...}]
   activeGroupId: null,
   aiPending: new Set(),
+  sending: new Set(),
   typingTimers: {},         // conversation_id => clearTimeout handle
 };
 
@@ -828,7 +829,7 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
     if (DM.activePartnerId !== partnerId || DM.activeGroupId) return;
     DM.activeConvId = Number(data.conversation_id);
     _syncAiTyping();
-    if (composer) composer.disabled = DM.activePartnerIsAI && DM.aiPending.has(DM.activeConvId);
+    if (composer) composer.disabled = DM.sending.has('dm:'+DM.activeConvId);
 
     // Clear unread from list
     const conv = DM.conversations.find(c => c.conversation_id === DM.activeConvId);
@@ -854,7 +855,7 @@ window.openGroupConversation = async function(groupId) {
   _clearDmTyping();
   _syncAiTyping();
   const composer = document.getElementById('dmInputField');
-  if (composer) composer.disabled = false;
+  if (composer) composer.disabled = DM.sending.has('group:'+groupId);
   document.getElementById('dmPanelTitle').textContent = 'Loading group…';
   window.EcollabDmSettings?.opened({ type: 'group', id: groupId, name: 'Group', members: [] });
 
@@ -1063,6 +1064,16 @@ window.sendDmMessage = async function() {
   const targetIsAI = Boolean(DM.activePartnerIsAI && !targetGroup);
   if (targetIsAI && DM.aiPending.has(Number(targetConv))) return;
   const stillInChat = () => targetConv === DM.activeConvId && targetGroup === DM.activeGroupId && targetPartner === DM.activePartnerId && document.getElementById('dmInputField') === input;
+  DM.sending ??= new Set();
+  const sendKey = targetGroup ? 'group:'+targetGroup : 'dm:'+targetConv;
+  if (DM.sending.has(sendKey)) return;
+  DM.sending.add(sendKey);
+  const releaseComposer = () => {
+    DM.sending.delete(sendKey);
+    if (document.getElementById('dmInputField') !== input) return;
+    const activeKey = DM.activeGroupId ? 'group:'+DM.activeGroupId : 'dm:'+DM.activeConvId;
+    input.disabled = DM.sending.has(activeKey);
+  };
 
   input.value    = '';
   input.disabled = true;
@@ -1074,7 +1085,7 @@ window.sendDmMessage = async function() {
       if(!stillInChat())throw new Error('Chat changed. Return to the original chat and select the attachment again.');
       if(_dmPendingFile === pendingFile)_dmClearFile();
     }
-  } catch(e){if(stillInChat()){input.disabled=false;input.value=text;}showToast('Upload failed: '+e.message,'error');return;}
+  } catch(e){releaseComposer();if(stillInChat()){input.value=text;}showToast('Upload failed: '+e.message,'error');return;}
 
   // Optimistic UI
   const optimistic = {
@@ -1106,7 +1117,7 @@ window.sendDmMessage = async function() {
       _wsSend({ type: 'dm_group_message' , group_id: targetGroup, message_id: data.message_id, body: text, created_at: new Date().toISOString() });
       const grp = DM.groups.find(g => g.id === targetGroup);
       if (grp) { grp.last_message = (text || (uploaded ? '📎 '+uploaded.file_name : '')).slice(0, 120); grp.last_msg_at = new Date().toISOString(); _renderGroupList(); }
-      if (stillInChat()) { input.disabled = false; input.focus(); }
+      if (stillInChat()) input.focus();
       return;
     }
 
@@ -1213,7 +1224,8 @@ window.sendDmMessage = async function() {
     else pending?.remove();
   } finally {
     if (targetIsAI) _hideAiTyping(targetConv);
-    if (stillInChat()) { input.disabled = false; input.focus(); }
+    releaseComposer();
+    if (stillInChat()) input.focus();
   }
 };
 
