@@ -140,7 +140,7 @@ final class CodeLabExecutionService
             }
             $this->db->beginTransaction();
             if($this->q("UPDATE code_lab_jobs SET state='done',result_json=?,finished_at=? WHERE id=? AND state='running'",[json_encode($result,JSON_THROW_ON_ERROR),gmdate('Y-m-d H:i:s',($this->clock)()),$j['id']])->rowCount()!==1)throw new RuntimeException('Execution claim expired.');
-            if($j['kind']==='grade')$this->q('UPDATE code_lab_attempts SET auto_score=?,score=CASE WHEN reviewed_by IS NULL THEN ? ELSE score END WHERE id=? AND submitted_at IS NOT NULL',[$score,$score,$j['attempt_id']]);
+            if($j['kind']==='grade')$this->q('UPDATE code_lab_attempts SET auto_score=?,score=CASE WHEN reviewed_by IS NULL THEN ? ELSE score END WHERE id=? AND submitted_at IS NOT NULL',[$result['score'],$result['score'],$j['attempt_id']]);
             if($this->db->inTransaction())$this->db->commit();
             $finishedState='done';
             if($j['kind']==='grade'){ try {

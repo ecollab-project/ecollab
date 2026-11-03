@@ -21,7 +21,7 @@ php tests/peer-behavior-regression.php
 sudo systemctl restart php8.3-fpm
 ```
 
-Restart the existing Ratchet/WebSocket service after migrations; otherwise its long-running worker still runs the old room cleanup. To identify its actual name, inspect `systemctl list-unit-files --type=service` and its `ExecStart` using `systemctl cat SERVICE`. Restart the unit whose command runs this checkout's `websocket/ChatServer.php` or `websocket/bin/server.php`. The project does not declare a universal existing unit name. Existing active voice sessions may disconnect during this restart.
+Restart the existing Ratchet/WebSocket service after migrations; otherwise its long-running worker still runs the old room cleanup. Run `bash scripts/find-websocket-service.sh` to discover matching systemd workers and print their restart commands without restarting anything. If discovery cannot match a wrapper/process manager, inspect `systemctl list-unit-files --type=service` and its `ExecStart` using `systemctl cat SERVICE`. Restart the unit whose command runs this checkout's `websocket/ChatServer.php` or `websocket/bin/server.php`. The project does not declare a universal existing unit name. Existing active voice sessions may disconnect during this restart.
 
 Git stores executable bits, not PHP read permissions. Ensure the FPM/WS service accounts can read the checkout and traverse its parent directories. Do not use recursive `777`, make secrets public, or change `.env` ownership blindly. `sudo -u www-data test -r API/auth/login.php` checks the previously observed login permission issue.
 
@@ -57,4 +57,4 @@ The timer refreshes Mondays at 03:00 Asia/Manila, with up to ten minutes of jitt
 
 Focused PHP/DOM suites and PHPUnit unit suite pass locally; SQLite covers task state, ownership, opt-out, dedup, retention and lifecycle. MariaDB 10.11 runs the additive migrations twice and exercises real transactional voice cleanup and weekly snapshots. The new CI workflow repeats the SQL fixture on MySQL 8 and MariaDB 10.11. Live provider media, true concurrent leave/join load and VPS integration remain deployment acceptance checks.
 
-Full PHPStan is not clean on this base branch: six findings remain in unchanged OTP, execution-grading and nested WebPush dependency files. Changed-source checks are clear. These are not represented as passing release checks.
+Follow-up: full PHPStan now passes. The legacy OTP mail branch rejects a missing/invalid sender with JSON/503; grading persists the score from its completed result; PHPStan discovers the isolated Web Push package. CI installs that package before static analysis. No real mail was sent by the regression test.

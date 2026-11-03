@@ -50,7 +50,12 @@ $_SESSION[$otpKey] = [
 // Send email (if mail is configured)
 $sent = false;
 if (defined('MAIL_HOST') && MAIL_HOST !== '' && MAIL_HOST !== 'localhost') {
-    // Use OtpService if available, otherwise basic mail()
+    if (!defined('MAIL_FROM') || !filter_var(MAIL_FROM, FILTER_VALIDATE_EMAIL)) {
+        http_response_code(503);
+        echo json_encode(['success'=>false,'error'=>'Mail service is not configured.']);
+        exit;
+    }
+    // Legacy verification transport; reject missing/invalid sender configuration.
     $subject = 'Your ' . APP_NAME . ' Verification Code';
     $body    = "Your verification code is: {$otpPlain}\n\nThis code expires in 10 minutes.\n\nIf you didn't request this, ignore this email.";
     $headers = "From: " . MAIL_FROM . "\r\nContent-Type: text/plain; charset=UTF-8";

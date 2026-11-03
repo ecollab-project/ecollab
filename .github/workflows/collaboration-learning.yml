@@ -17,8 +17,11 @@ jobs:
         with:
           node-version: '22'
       - run: composer install --no-interaction --prefer-dist --no-plugins
+      - run: composer install --working-dir=tools/web-push --no-dev --no-interaction --prefer-dist --no-plugins
       - run: npm install --no-save --ignore-scripts jsdom@30.1.2
       - run: |
+          php tests/otp-mail-configuration.php
+          vendor/bin/phpstan analyse --memory-limit=512M --no-progress
           php tests/temporary-voice-lifecycle.php
           php tests/temporary-voice-websocket.php
           php tests/ai-learning-policy.php

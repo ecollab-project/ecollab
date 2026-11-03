@@ -18,6 +18,10 @@ parameters:
         - database
         - websocket
 
+    # Discover the worker-only library without executing its isolated autoloader.
+    scanDirectories:
+        - tools/web-push/vendor/minishlink/web-push/src
+
     excludePaths:
         - vendor/*
         - tests/*
