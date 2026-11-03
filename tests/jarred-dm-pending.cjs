@@ -3,7 +3,7 @@ const {JSDOM}=require('jsdom'),fs=require('fs'),assert=require('node:assert/stri
 const dom=new JSDOM('<div id="dmTypingIndicator" style="display:none"></div>',{url:'https://ecollab.test',runScripts:'outside-only'}),w=dom.window;
 let source=fs.readFileSync('assets/js/chat/dm-notifications.js','utf8');
 const start=source.indexOf("if (document.readyState === 'loading') {");const end=source.indexOf('// Export for global access',start);assert(start>0&&end>start);source=source.slice(0,start)+source.slice(end);
-w.eval(source+'\nwindow.dmFixture=DM;window.dmShow=_showAiTyping;window.dmHide=_hideAiTyping;');const dm=w.dmFixture,indicator=w.document.getElementById('dmTypingIndicator');
+w.eval(source+'\nwindow.dmFixture=DM;window.dmShow=_showAiTyping;window.dmHide=_hideAiTyping;window.dmMessageHTML=_dmMessageHTML;');const dm=w.dmFixture,indicator=w.document.getElementById('dmTypingIndicator');
 dm.activeConvId=1;dm.activePartnerIsAI=true;w.dmShow(1);assert.equal(indicator.style.display,'flex');
 dm.activeConvId=2;dm.activePartnerIsAI=false;w.dmShow(1);assert.equal(indicator.style.display,'none','Jarred pending state never appears in human chat');
 dm.activeConvId=3;dm.activePartnerIsAI=true;w.dmShow(3);w.dmHide(1);assert.equal(indicator.style.display,'flex','an old reply cannot hide another pending conversation');w.dmHide(3);assert.equal(indicator.style.display,'none');
@@ -11,6 +11,7 @@ dm.activeConvId=2;dm.activePartnerIsAI=false;indicator.textContent='Alex is typi
 (async()=>{
  w.document.body.insertAdjacentHTML('beforeend','<input id="dmInputField"><div id="dmMessagesArea"></div>');
  w.ECOLLAB={userId:7};w.showToast=()=>{};
+ dm.activePartnerIsAI=true;const legacy=w.dmMessageHTML({sender_id:99,body:'<think>internal reasoning</think>Hello /no_thinkHi!',created_at:'2026-11-03 00:00:00'});assert(!legacy.includes('/no_think')&&!legacy.includes('internal reasoning'));dm.activePartnerIsAI=false;assert(w.dmMessageHTML({sender_id:99,body:'Literal /no_think',created_at:'2026-11-03 00:00:00'}).includes('/no_think'),'human messages stay unchanged');
  w.apiFetch=async()=>{const e=new w.Error('Gateway timeout');e.status=504;throw e;};
  w.eval('_appendDmMessage=m=>{const e=document.createElement("div");e.dataset.msgId=m.id;e.innerHTML="<div class=dm-message-bubble></div>";document.getElementById("dmMessagesArea").append(e);};');
  dm.activeConvId=3;dm.activeGroupId=null;dm.activePartnerId=99;dm.activePartnerIsAI=true;

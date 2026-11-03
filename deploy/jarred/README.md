@@ -4,7 +4,7 @@ Plain standalone greetings (hello, hi, hey, good morning/afternoon/evening, kumu
 
 Interactive Ollama calls have a 45-second maximum wait. Tool rounds share that budget. A transport timeout returns a controlled failure instead of waiting 90 seconds for inference. The CLI-only warm-up has a separate 90-second load budget. Actual end-to-end time still includes middleware, data lookup and upstream configuration; this is not a measured VPS latency guarantee.
 
-AI pending state belongs to its conversation. Moving to another DM/group clears the visible indicator, and returning to the original pending conversation restores it. Timeout/network uncertainty retains an unconfirmed outgoing item and asks the user to check saved history rather than implying the send definitely failed. No automatic POST retry is added. Old messages already stored with control-token text are not rewritten.
+AI pending state belongs to its conversation. Moving to another DM/group clears the visible indicator, and returning to the original pending conversation restores it. Timeout/network uncertainty retains an unconfirmed outgoing item and asks the user to check saved history rather than implying the send definitely failed. No automatic POST retry is added. Stored history is not rewritten; control markers/reasoning blocks in old Jarred replies are filtered when displayed. Human messages are unchanged.
 
 ## Pull and pre-load on the VPS
 

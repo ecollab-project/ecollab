@@ -977,7 +977,11 @@ function _dmAttachmentHTML(m){
 }
 function _dmMessageHTML(m) {
   const isMine = m.sender_id == ME_ID();
-  const name   = m.sender_name || m.sender_username || 'User';
+  if (!isMine && DM.activePartnerIsAI) {
+    const body = String(m.body || '').replace(/<think\b[^>]*>[\s\S]*?<\/think\s*>/gi, '').replace(/<think\b[^>]*>[\s\S]*$/gi, '').replace(/\/(?:no_)?think/g, '').trim();
+    m = { ...m, body };
+  }
+  const name   = !isMine && DM.activePartnerIsAI ? 'Jarred' : (m.sender_name || m.sender_username || 'User');
   const grad   = m.sender_gradient || '';
   const avatarUrl = m.sender_avatar_url || '';
   return `
