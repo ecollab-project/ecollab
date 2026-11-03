@@ -1,7 +1,7 @@
 name: Color palettes
 on:
   pull_request:
-    paths: ['assets/css/color-*', 'assets/js/color-theme.js', 'assets/data/color-palettes.json', 'services/ColorPaletteService.php', 'includes/layout/**', 'modules/**', 'API/profile/settings.php', 'database/migrations/059*', 'tests/color-palettes-*', '.github/workflows/color-palettes.yml']
+    paths: ['assets/css/color-*', 'assets/js/color-theme.js', 'assets/data/color-palettes.json', 'services/ColorPaletteService.php', 'includes/layout/**', 'modules/**', 'API/profile/settings.php', 'database/migrations/059*', 'tests/color-palettes-*', 'tests/auth-visual-browser.cjs', '.github/workflows/color-palettes.yml']
 jobs:
   palettes:
     runs-on: ubuntu-latest
@@ -24,3 +24,4 @@ jobs:
       - run: php tests/color-palettes-regression.php
         env: {PALETTE_TEST_DSN: 'mysql:host=127.0.0.1;port=3306;dbname=palettes_test'}
       - run: node tests/color-palettes-browser.cjs
+      - run: node tests/auth-visual-browser.cjs

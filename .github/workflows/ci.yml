@@ -90,6 +90,9 @@ jobs:
       - name: Read-only migration previews
         run: php tests/migration-preview-regression.php
 
+      - name: Login HTTP failure boundaries
+        run: python3 tests/login-http-regression.py
+
       - name: Apply database migrations
         run: |
           php database/migrate.php
