@@ -12,12 +12,12 @@ After pulling `feat/collaboration-assistance-matching`, restart PHP-FPM and refr
 
 ```bash
 cd /home/ecollabadmin/ecollab-inspect
-php scripts/warm-jarred.php
+sudo -u www-data php scripts/warm-jarred.php
 ```
 
 This loads the configured local model with an empty message list. It sends no user conversation and generates no answer. It can report busy if another request owns the inference lock. Run it before a demonstration or use the timer below to keep the model resident between conversations. Existing payloads retain it for ten minutes; the timer refreshes every eight minutes. This keeps model memory allocated while enabled.
 
-Review the default user/path in the supplied unit files before installing:
+The warm-up runs as the observed PHP-FPM account `www-data`, so its inference lock is not created under a different file owner. Review that account and checkout path in the supplied unit files before installing:
 
 ```bash
 sudo install -m 644 deploy/jarred/ecollab-jarred-warm.service /etc/systemd/system/

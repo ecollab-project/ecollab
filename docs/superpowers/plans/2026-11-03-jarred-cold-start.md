@@ -9,3 +9,5 @@ Implementation: deterministic plain greetings after persisted Code Lab gating; 4
 Verification: new typing regression fails on the original shared indicator; greeting regression demonstrates original model fallback. New tests pass for human/AI pending isolation, late completion and visible gateway recovery, real cURL timeout/lock release, marker filtering and normal provider protocol. Existing provider/session/UI/Code Lab checks and 25 PHPUnit tests / 56 assertions pass. Full PHPStan passes. Hosted CI runs new regressions. No live message sent, VPS changed, browser password-manager autofill session or real model cold-start timing performed by this implementation.
 
 Rollback: restore prior source and restart PHP-FPM; disable the new warm timer if installed. No migrations or dependency changes.
+
+Deployment review: preload service and manual command use the observed FPM account www-data. Using the deployment account with a private umask could create an inference lock that FPM cannot open when temporary directories are shared. No cross-service lock namespace guarantee is claimed.

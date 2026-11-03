@@ -4,7 +4,7 @@ After=network-online.target
 
 [Service]
 Type=oneshot
-User=ecollabadmin
+User=www-data
 WorkingDirectory=/home/ecollabadmin/ecollab-inspect
 ExecStart=/usr/bin/php /home/ecollabadmin/ecollab-inspect/scripts/warm-jarred.php
 TimeoutStartSec=100
