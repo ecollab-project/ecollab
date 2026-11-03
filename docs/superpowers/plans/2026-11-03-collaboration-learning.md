@@ -57,5 +57,5 @@ Interface: record authenticated bounded events, refresh snapshots, load aggregat
 
 ### Task 6: Release evidence
 - [x] Run focused suites plus existing unit/integration/browser checks appropriate to changed flows.
-- [ ] Fresh review; fix critical issues with regressions; publish a separate reviewable PR and exact pull/deploy/scheduler instructions.
+- [x] Fresh review; fix critical issues with regressions; publish a separate reviewable PR and exact pull/deploy/scheduler instructions.
 - [x] State live-provider, VPS and representative-load checks not executed.

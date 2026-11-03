@@ -11,7 +11,7 @@ cd /home/ecollabadmin/ecollab-inspect
 umask 0022
 git status --short
 git rev-parse HEAD
-git fetch origin feat/collaboration-assistance-matching
+git fetch origin refs/heads/feat/collaboration-assistance-matching:refs/remotes/origin/feat/collaboration-assistance-matching
 git switch feat/collaboration-assistance-matching
 git pull --ff-only origin feat/collaboration-assistance-matching
 php database/migrate.php --status
