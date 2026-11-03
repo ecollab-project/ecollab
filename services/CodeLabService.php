@@ -71,14 +71,14 @@ final class CodeLabService
         if ($date->format('Y-m-d\TH:i:s')!==substr($value,0,19)) self::fail('Invalid calendar date.');
         return $date->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
     }
-    public function assistance(int $sid,int $uid): array
+    public function assistance(int $sid,int $uid,string $focus='workflow'): array
     {
         $this->member($sid,$uid);
         require_once __DIR__.'/JarredAssistancePolicy.php';
         require_once __DIR__.'/UserPreferences.php';
         UserPreferences::assertJarred(UserPreferences::get($this->db,$uid));
         $task=CodeLabIntegrityPolicy::activeAttempt($this->db,$uid);
-        return ['mode'=>$task?'workflow':'normal','message'=>$task?CodeLabIntegrityPolicy::workflow($task):JarredAssistancePolicy::capabilities()];
+        return ['mode'=>$task?'workflow':'normal','focus'=>CodeLabIntegrityPolicy::focus($focus),'message'=>$task?CodeLabIntegrityPolicy::workflow($task,$focus):JarredAssistancePolicy::capabilities()];
     }
     public function create(int $sid,int $uid,array $input): array
     {

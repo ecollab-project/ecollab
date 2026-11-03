@@ -25,6 +25,7 @@ jobs:
           php tests/temporary-voice-lifecycle.php
           php tests/temporary-voice-websocket.php
           php tests/ai-learning-policy.php
+          php tests/jarred-task-optimization.php
           php tests/peer-behavior-regression.php
           php tests/peer-ml-regression.php
           php tests/code-lab-regression.php

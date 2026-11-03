@@ -32,15 +32,26 @@ final class CodeLabIntegrityPolicy
         }
     }
 
-    public static function workflow(array $task): string
+    public static function workflow(array $task,string $focus='workflow'): string
     {
-        return "A Code Lab task is in progress. I can help you work through it without supplying a ready-to-submit solution.\n\n"
-            ."1. Restate the goal in your own words and identify inputs, outputs and constraints.\n"
-            ."2. Break the problem into small steps; sketch your own algorithm on paper.\n"
-            ."3. Write a small part yourself, then compile or run it.\n"
-            ."4. Build test cases for normal inputs, boundaries and invalid inputs.\n"
-            ."5. Read the first compiler error or failing test, trace the relevant values, and fix one cause at a time.\n"
-            ."6. Explain why your approach works, review the rubric and submit your own work.\n\n"
-            ."Use your lesson notes for concepts and examples that are separate from the task. Normal AI assistance resumes after submission or expiry.";
+        $focus=self::focus($focus);
+        $steps=match($focus){
+            'plan'=>"1. Restate the task goal in your own words.\n2. List the required inputs, outputs and constraints.\n3. Split your approach into small milestones, then explain the first milestone before coding.\n\nWhat input and output does the task require?",
+            'debug'=>"1. Read the first error and identify whether it happens while compiling or running.\n2. Trace the relevant values on paper using your own example.\n3. Change one cause at a time, then rerun your test cases.\n\nAt which step does your expected result first differ from the actual result? Describe the step without pasting your solution.",
+            'test'=>"1. Choose one normal input and predict its result by hand.\n2. Add boundary and empty/minimum-size cases allowed by the instructions.\n3. Consider invalid inputs only if the task requires handling them.\n4. Compare actual and predicted results without copying hidden assessment cases.\n\nWhich boundary condition have you not tested yet?",
+            'review'=>"1. Check each instruction and rubric item against your own work.\n2. Explain why your algorithm works and consider time or space limits.\n3. Rerun your test cases and verify input/output formatting.\n4. Save your draft, then submit through Code Lab yourself.\n\nWhich requirement is least certain in your current approach?",
+            default=>"1. Restate the goal and constraints.\n2. Break the problem into small steps.\n3. Implement one small part yourself.\n4. Build test cases for normal inputs and boundaries.\n5. Trace the first failing step.\n6. Review the rubric and submit your own work.\n\nChoose planning, debugging, testing or review for focused guidance.",
+        };
+        return "A Code Lab task is in progress. I can guide your workflow without supplying code or a ready-to-submit solution.\n\n".$steps."\n\nNormal AI assistance resumes after submission or expiry.";
+    }
+
+    public static function focus(string $text): string
+    {
+        $text=mb_strtolower(mb_substr($text,0,4000));
+        if(preg_match('/\b(debug|debugging|error|errors|bug|bugs|crash|crashes|failing|failed|stuck|wrong output)\b/',$text))return 'debug';
+        if(preg_match('/\b(test|tests|testing|boundary|edge case)\b/',$text))return 'test';
+        if(preg_match('/\b(review|rubric|submit|submission|checklist)\b/',$text))return 'review';
+        if(preg_match('/\b(plan|planning|start|approach|break down)\b/',$text))return 'plan';
+        return 'workflow';
     }
 }
