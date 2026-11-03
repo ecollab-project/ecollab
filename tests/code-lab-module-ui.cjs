@@ -13,7 +13,7 @@ w.fetch=async(url,options={})=>{
 };
 const tick=()=>new Promise(r=>setTimeout(r,15));
 (async()=>{try{
- w.eval(fs.readFileSync('assets/js/code-lab-module.js','utf8'));w.eval(fs.readFileSync('assets/js/code-lab.js','utf8'));await tick();
+ w.eval(fs.readFileSync('assets/js/code-lab-module.js','utf8'));w.eval(fs.readFileSync('assets/js/code-lab-live.js','utf8'));w.eval(fs.readFileSync('assets/js/code-lab.js','utf8'));await tick();
  const code=d.getElementById('clCode'),input=d.getElementById('clStdin'),run=d.getElementById('clRun'),output=d.getElementById('clOutput');
  assert(code.compareDocumentPosition(run)&w.Node.DOCUMENT_POSITION_FOLLOWING,'Program precedes Run');assert(d.getElementById('clConsole').contains(input)&&d.getElementById('clConsole').contains(output),'Input and output share one console');assert.equal(d.querySelector('.cl-stdin'),null,'No standalone stdin section');assert.equal(d.querySelector('#clWorkspace #clWorkflowHelp'),null,'No inline Jarred guidance');
  d.getElementById('clCreate').click();await tick();assert(!d.getElementById('clModulePane').hidden);assert(d.getElementById('clTaskForm').hidden,'Upload is the simple default');

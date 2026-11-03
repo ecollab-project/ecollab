@@ -6,6 +6,7 @@ require_once ROOT_PATH.'/security/middleware/AuthMiddleware.php';
 require_once ROOT_PATH.'/services/CodeLabService.php';
 require_once ROOT_PATH.'/services/CodeLabExecutionService.php';
 require_once ROOT_PATH.'/services/CodeLabSimilarityService.php';
+require_once ROOT_PATH.'/services/CodeLabInteractiveService.php';
 header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
 $user=AuthMiddleware::requireAuth(true);
 $method=$_SERVER['REQUEST_METHOD'];
@@ -20,7 +21,13 @@ try {
     $sid=(int)($input['server_id']??0);$tid=(int)($input['task_id']??0);$uid=(int)$user['id'];
     $service=new CodeLabService(Database::getInstance());$action=$input['action']??'overview';
     $execution=new CodeLabExecutionService(Database::getInstance(),new CodeLabRunner());
+    $live=new CodeLabInteractiveService(Database::getInstance(),new CodeLabRunner());
+    $liveId=(int)($input['session_id']??0);
     $data=match ($method.':'.$action) {
+        'POST:live_start'=>$live->start($sid,$uid,$input),
+        'GET:live_status'=>$live->status($sid,$uid,$liveId),
+        'POST:live_input'=>$live->input($sid,$uid,$liveId,$input),
+        'POST:live_stop'=>$live->stop($sid,$uid,$liveId),
         'GET:assistance'=>$service->assistance($sid,$uid,is_string($input['focus']??null)?$input['focus']:'workflow'),
         'GET:sample'=>$service->sample($sid,$uid,(string)($input['language']??'')),
         'POST:similarity'=>(new CodeLabSimilarityService(Database::getInstance()))->queue($sid,$uid,$tid),

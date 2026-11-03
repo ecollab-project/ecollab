@@ -35,6 +35,7 @@ jobs:
           php tests/peer-ml-regression.php
           php tests/code-lab-module-reader.php
           php tests/code-lab-module-tasks.php
+          php tests/code-lab-interactive-service.php
           php tests/code-lab-regression.php
           php tests/code-lab-integrity-policy.php
           vendor/bin/phpunit --testsuite Unit

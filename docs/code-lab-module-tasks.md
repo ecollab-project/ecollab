@@ -2,7 +2,7 @@
 
 In an owned server, choose **Create task → From a module**, upload a lesson, select Easy/Medium/Hard and C/C++/Python/Java, then select **Generate task with Jarred**. Generation creates one private, editable draft. The facilitator reviews its source excerpt, title and instructions, then explicitly publishes the task to that server. The default grading method is facilitator review. Starter code, automatic checks and timing remain under Advanced options; Write manually remains available.
 
-The coding workspace has one Console for both typed input and returned output, with no standalone stdin section or inline Jarred guidance panel. Enter adds an input line; Ctrl/Cmd+Enter or Run code sends the console input with the program. The current runner uses per-run input and returns completed output; it is not a live interactive terminal. Copy/save/download utilities and student-attempt restrictions remain. Module-based facilitator task generation is unchanged.
+The coding workspace uses a live Console: click Run, wait for program prompts, then type answers while that same sandboxed process runs. Input is no longer collected before starting. See [live console deployment](code-lab-live-console.md), which includes additive migration 068 and rebuilding the adapter. Inline Jarred guidance remains removed; facilitator module generation is unchanged.
 
 ## Files and privacy
 
