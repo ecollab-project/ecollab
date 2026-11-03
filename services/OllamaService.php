@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/JarredInferenceGate.php';
 
 final class OllamaService
 {
@@ -22,9 +23,10 @@ final class OllamaService
     /** Load the local model without reading a conversation or generating a reply. */
     public function warmUp(): array
     {
+        if((new JarredInferenceGate($this->baseUrl))->busy())return ['skipped'=>true,'reason'=>'interactive_requests_active'];
         $started = microtime(true);
         $data = $this->requestChat(['model'=>$this->model,'messages'=>[],'stream'=>false,'keep_alive'=>'10m',
-            'options'=>['num_ctx'=>4096,'num_thread'=>max(1,min(2,(int)(getenv('OLLAMA_NUM_THREADS') ?: 1)))]], 90);
+            'options'=>['num_ctx'=>4096,'num_thread'=>max(1,min(2,(int)(getenv('OLLAMA_NUM_THREADS') ?: 1)))]], 90, true);
         return ['elapsed_ms'=>(int)round((microtime(true)-$started)*1000),
             'load_ms'=>(int)round(($data['load_duration']??0)/1000000)];
     }
@@ -56,7 +58,7 @@ final class OllamaService
                 'stream' => false,
                 'keep_alive' => '10m',
                 'think' => false,
-                'options' => ['temperature' => 0.3, 'num_thread' => max(1, min(2, (int)(getenv('OLLAMA_NUM_THREADS') ?: 1))),
+                'options' => ['temperature' => 0.1, 'num_thread' => max(1, min(2, (int)(getenv('OLLAMA_NUM_THREADS') ?: 1))),
                 'num_ctx' => 4096,
                 'num_predict' => max(1, min(1024, $maxTokens))],
             ];
@@ -107,13 +109,10 @@ final class OllamaService
         throw new RuntimeException('Jarred exceeded the maximum tool-call rounds');
     }
 
-    private function requestChat(array $payload,?int $timeoutSeconds=null): array
+    private function requestChat(array $payload,?int $timeoutSeconds=null,bool $warmup=false): array
     {
-        $lock = @fopen(sys_get_temp_dir() . '/ecollab-ollama-inference.lock', 'c');
-        if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) {
-            if (is_resource($lock)) fclose($lock);
-            throw new RuntimeException('Jarred is busy with another request. Please try again shortly.', 503);
-        }
+        $deadline=microtime(true)+($timeoutSeconds??$this->requestTimeout);
+        $lock=$warmup?null:(new JarredInferenceGate($this->baseUrl))->acquire($deadline);
         $ch = null;
         try {
             $ch = curl_init($this->baseUrl . '/api/chat');
@@ -123,7 +122,8 @@ final class OllamaService
                 CURLOPT_PROTOCOLS => CURLPROTO_HTTP,
                 CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
                 CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
-                CURLOPT_CONNECTTIMEOUT => 5, CURLOPT_TIMEOUT => $timeoutSeconds??$this->requestTimeout,
+                CURLOPT_CONNECTTIMEOUT_MS => min(5000,max(1,(int)(($deadline-microtime(true))*1000))),
+                CURLOPT_TIMEOUT_MS => max(1,(int)(($deadline-microtime(true))*1000)),
             ]);
             $raw = curl_exec($ch);
             if ($raw === false) {
@@ -131,13 +131,13 @@ final class OllamaService
                 throw new RuntimeException('Local model is temporarily unavailable.',503);
             }
             $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            if ($status < 200 || $status >= 300) throw new RuntimeException('Ollama returned HTTP ' . $status);
+            if ($status < 200 || $status >= 300) throw new RuntimeException('Local model returned HTTP ' . $status,503);
             $data=json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
             if(!is_array($data)||isset($data['error']))throw new RuntimeException('Local model returned an invalid response.',503);
             return $data;
         } finally {
-            if ($ch !== null) curl_close($ch);
-            flock($lock, LOCK_UN); fclose($lock);
+            JarredInferenceGate::release($lock);
+            if ($ch instanceof CurlHandle) curl_close($ch);
         }
     }
 
@@ -175,7 +175,7 @@ final class OllamaService
                 'keep_alive' => '10m',
             'think' => false,
             'options' => [
-                'temperature' => 0.25,
+                'temperature' => 0.1,
                 'num_thread' => max(1, min(2, (int)(getenv('OLLAMA_NUM_THREADS') ?: 1))),
                 'num_ctx' => 4096,
                 'num_predict' => max(1, min(1024, $maxTokens)),

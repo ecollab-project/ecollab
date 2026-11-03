@@ -27,6 +27,7 @@ jobs:
           php tests/temporary-voice-websocket.php
           php tests/ai-learning-policy.php
           php tests/jarred-task-optimization.php
+          php tests/jarred-grounding.php
           php tests/dm-message-identity.php
           php tests/peer-behavior-regression.php
           php tests/peer-ml-regression.php
@@ -43,6 +44,9 @@ jobs:
           node tests/dm-message-reconciliation.cjs
           node tests/jarred-timeout-regression.cjs
           node tests/jarred-provider-regression.cjs
+          node tests/jarred-concurrency-regression.cjs
+          node tests/jarred-admission-regression.cjs
+          node tests/jarred-smoke-script.cjs
           node tests/jarred-session-race.cjs
   sql:
     runs-on: ubuntu-24.04

@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/CodeLabIntegrityPolicy.php';
 require_once __DIR__.'/JarredCapabilities.php';
+require_once __DIR__.'/JarredGroundingPolicy.php';
 /** Deterministic capability/help replies run before inference or action execution. */
 final class JarredAssistancePolicy
 {
@@ -24,6 +25,6 @@ final class JarredAssistancePolicy
     }
     public static function instructions(): string
     {
-        return "\nAPPLICATION CAPABILITIES: ".self::capabilities()." If a requested operation is outside these enabled capabilities, say exactly: ".self::REFUSAL." Never invent tools or successful actions. Normal conversation and academic explanations remain available.";
+        return "\nAPPLICATION CAPABILITIES: ".self::capabilities()." If a requested operation is outside these enabled capabilities, say exactly: ".self::REFUSAL." Never invent tools or successful actions. Normal conversation and academic explanations remain available.".JarredGroundingPolicy::instructions();
     }
 }
