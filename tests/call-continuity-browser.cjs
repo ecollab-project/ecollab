@@ -1,14 +1,15 @@
 'use strict';
 // Real browser navigation and cross-tab transport, with a stub media controller.
 const {chromium}=require('playwright'),http=require('http'),fs=require('fs'),assert=require('node:assert/strict');
+const dock=fs.readFileSync('assets/js/calls/call-dock.js','utf8');
 const script=fs.readFileSync('assets/js/calls/call-continuity.js','utf8'),css=fs.readFileSync('assets/css/calls/calls.css','utf8');
 const server=http.createServer((req,res)=>{
  res.setHeader('Content-Type','text/html');
  const owner=req.url.includes('owner=1');
- res.end(`<title>Workspace</title><style>${css}</style><a id="lab" href="/modules/code-lab/index.php">Code Lab</a><button id="dashboard" onclick="location.href='/modules/student/dashboard.php'">Dashboard</button><script>
+ res.end(`<title>Workspace</title><style>${css}</style><nav id="workspaceSwitcher"><div id="workspaceCallDock"></div><button id="muteBtn">Mic</button><button id="deafenBtn">Audio</button></nav><button id="bookmarks" onclick="history.replaceState({},'','?owner=1&view=bookmarks');document.body.dataset.view='bookmarks'">Bookmarks</button><a id="lab" href="/modules/code-lab/index.php">Code Lab</a><button id="dashboard" onclick="location.href='/modules/student/dashboard.php'">Dashboard</button><script>
  window.ECOLLAB_CALLS_CONFIG={userId:7,baseUrl:''};window.state={active:${owner},muted:false,deafened:false,ends:0};window.mediaIdentity={};
  window.EcollabCalls={get snapshot(){return {...state,state:'active',kind:'direct'}},async control(action){if(action==='mic')state.muted=!state.muted;if(action==='deafen')state.deafened=!state.deafened;if(action==='end'){state.active=false;state.ends++}}};
- </script><script>${script}</script>`);
+ </script><script>${dock}</script><script>${script}</script>`);
 });
 (async()=>{
  await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
@@ -17,10 +18,12 @@ const server=http.createServer((req,res)=>{
   const context=await browser.newContext(),owner=await context.newPage();
   const base='http://127.0.0.1:'+server.address().port;
   await owner.goto(base+'/modules/chat/chat.php?owner=1');await owner.evaluate(()=>window.originalMedia=mediaIdentity);
+  await owner.locator('#bookmarks').click();assert.equal(await owner.getAttribute('body','data-view'),'bookmarks');assert.equal(context.pages().length,1,'history-only sidebar actions cannot create another tab');assert(owner.url().includes('view=bookmarks'),'owner updates only its in-page location');
   const opened=context.waitForEvent('page');await owner.locator('#lab').click();const workspace=await opened;await workspace.waitForLoadState();
   assert(workspace.url().includes('/modules/code-lab/'));assert.equal(await workspace.evaluate(()=>window.opener),null);
   await workspace.waitForFunction(()=>EcollabCallContinuity.remoteActive());
-  await workspace.locator('[data-continuity=mic]').click();await owner.waitForFunction(()=>state.muted);
+  assert.equal(await owner.locator('#ecCallContinuityPanel').count(),0);assert.equal(await workspace.locator('#ecCallContinuityPanel').count(),0);assert.equal(await workspace.locator('#workspaceCallDock #ecRemoteCallBar').count(),1,'remote bar uses existing dock');
+  await workspace.locator('#muteBtn').click();await owner.waitForFunction(()=>state.muted);
   assert(await owner.evaluate(()=>state.active&&mediaIdentity===originalMedia&&state.ends===0),'owner and media controller survive tool navigation');
   await workspace.goto(base+'/modules/collaboration/server-coworkspaces.php');await workspace.waitForFunction(()=>EcollabCallContinuity.remoteActive());
   await owner.locator('#dashboard').click();await workspace.waitForURL('**/modules/student/dashboard.php');

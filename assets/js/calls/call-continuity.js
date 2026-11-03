@@ -7,7 +7,7 @@
   const root=new URL(config.baseUrl||'/',location.origin).pathname.replace(/\/$/,''),tab=crypto.randomUUID();
   const stateKey='ecollab-call-state-'+uid,commandKey='ecollab-call-command-'+uid;
   const bus=typeof BroadcastChannel==='function'?new BroadcastChannel('ecollab-call-continuity-'+uid):null;
-  let remote=null,localWasActive=false,sequence=0,panel,workspace=null,note='',noteUntil=0;
+  let remote=null,localWasActive=false,sequence=0,remoteBar,workspace=null,note='',noteUntil=0;
   const handled=new Set(),requests=new Map();
   const put=(key,value)=>{try{localStorage.setItem(key,JSON.stringify(value));}catch{}};
   const read=key=>{try{return JSON.parse(localStorage.getItem(key)||'null');}catch{return null;}};
@@ -32,7 +32,7 @@
     if(s.active||localWasActive)put(stateKey,packet);
     bus?.postMessage(packet);localWasActive=s.active;
   }
-  function say(text){note=text;noteUntil=Date.now()+6000;render();}
+  function say(text){note=text;noteUntil=Date.now()+6000;if(typeof window.showToast==='function')window.showToast(text,'info');else if(snapshot().active)window.alert(text);render();}
   function eligible(value){
     let url;try{url=new URL(value,location.href);}catch{return null;}
     if(url.origin!==location.origin||url.username||url.password||!/^https?:$/.test(url.protocol))return null;
@@ -91,32 +91,32 @@
     const result={type:'result',userId:uid,tab,target:data.tab,id:data.id,ok};
     put(commandKey,result);bus?.postMessage(result);
   }
-  function ensurePanel(){
-    if(panel)return;
-    panel=document.createElement('aside');panel.id='ecCallContinuityPanel';panel.className='ec-call-continuity';panel.hidden=true;panel.setAttribute('aria-label','Ongoing call');
-    const status=document.createElement('p');status.dataset.continuityStatus='';status.setAttribute('role','status');panel.append(status);
-    const row=document.createElement('div');row.className='ec-call-continuity-actions';
-    for(const [action,label] of [['workspace','Open workspace'],['focus','Show call'],['mic','Mute'],['deafen','Mute audio'],['end','Leave call']]){
-      const button=document.createElement('button');button.type='button';button.dataset.continuity=action;button.textContent=label;
-      button.addEventListener('click',()=>{
-        if(action==='workspace')openWorkspace((config.baseUrl||'')+'/modules/chat/chat.php');
-        else if(snapshot().active)control(action).catch(()=>say('The call control could not be updated.'));
-        else{sendCommand(action);if(action==='focus')say('Switch to your eCollab Call tab if it is not brought forward.');}
-      });row.append(button);
+  function ensureRemoteBar(){
+    if(remoteBar)return;
+    remoteBar=document.createElement('section');remoteBar.id='ecRemoteCallBar';remoteBar.className='ec-call-remote';remoteBar.setAttribute('aria-label','Call connected in another tab');
+    const icons={mic:'<path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21H8v2h8v-2h-3v-3.08A7 7 0 0 0 19 11h-2Z"/>',deafen:'<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>',end:'<path d="m6 6 12 12M6 18 18 6" fill="none" stroke="currentColor" stroke-width="3"/>'};
+    for(const [action,label] of [['focus','Call in another tab'],['mic','Mute'],['deafen','Mute audio'],['end','Leave call']]){
+      const button=document.createElement('button');button.type='button';button.dataset.continuity=action;button.title=label;button.setAttribute('aria-label',label);
+      if(action==='focus'){button.className='ec-call-remote-status';button.textContent=label;}
+      else button.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'+icons[action]+'</svg>';
+      button.addEventListener('click',()=>{sendCommand(action);if(action==='focus')say('Switch to your eCollab Call tab if it is not brought forward.');});remoteBar.append(button);
     }
-    panel.append(row);document.body.append(panel);
+    window.EcollabCallDock?.mount(remoteBar);
   }
   function render(){
-    if(!document.body)return;ensurePanel();const local=snapshot(),other=remoteState(),current=local.active?local:other;
-    panel.hidden=!current;if(!current)return;
-    const status=panel.querySelector('[data-continuity-status]');
-    const text=noteUntil>Date.now()?note:local.active?'Your call stays connected here. Open a workspace tab to keep browsing.':'Your call is connected in another eCollab tab.';
-    if(status.textContent!==text)status.textContent=text;
-    for(const button of panel.querySelectorAll('button')){
-      const action=button.dataset.continuity;button.hidden=action==='workspace'?!local.active:action==='focus'?local.active:local.active&&action!=='end';
-      button.disabled=['mic','deafen'].includes(action)&&current.state!=='active';
-      if(action==='mic')button.textContent=current.muted?'Unmute':'Mute';
-      if(action==='deafen')button.textContent=current.deafened?'Unmute audio':'Mute audio';
+    if(!document.body)return;const other=remoteState();
+    // Local calls already have their own bottom dock. Never add a second panel.
+    if(!other){if(remoteBar){remoteBar.remove();remoteBar=null;window.EcollabCallDock?.refresh();window._syncVoiceQuickActions?.();}return;}
+    ensureRemoteBar();
+    window.EcollabCallDock?.mount(remoteBar);
+    const status=remoteBar.querySelector('[data-continuity=focus]');
+    const text=noteUntil>Date.now()?note:'Call in another tab';if(status.textContent!==text)status.textContent=text;status.title=text;
+    for(const action of ['mic','deafen']){
+      const button=remoteBar.querySelector('[data-continuity='+action+']'),muted=action==='mic'?other.muted:other.deafened;
+      const label=action==='mic'?(muted?'Unmute microphone':'Mute microphone'):(muted?'Unmute audio':'Mute audio');
+      button.disabled=other.state!=='active';button.title=label;button.setAttribute('aria-label',label);button.setAttribute('aria-pressed',String(muted));button.classList.toggle('media-off',muted);
+      const footer=document.getElementById(action==='mic'?'muteBtn':'deafenBtn');
+      if(footer){footer.classList.toggle('media-on',!muted);footer.classList.toggle('media-off',muted);footer.setAttribute('aria-pressed',String(!muted));footer.setAttribute('aria-label',label);footer.title=label;}
     }
   }
   function refresh(){
@@ -130,6 +130,11 @@
   }
   if(bus)bus.onmessage=event=>receive(event.data);
   window.addEventListener('storage',event=>{if(event.key===stateKey||event.key===commandKey){try{receive(JSON.parse(event.newValue||'null'));}catch{}}});
+  // Existing account-footer buttons operate on the media-owning tab as well.
+  window.addEventListener('click',event=>{
+    const button=event.target.closest?.('#muteBtn,#deafenBtn');if(!button||!remoteState())return;
+    event.preventDefault();event.stopImmediatePropagation();sendCommand(button.id==='muteBtn'?'mic':'deafen');
+  },true);
   // Bubble after page-specific handlers so AJAX forms and in-page tools retain their behavior.
   window.addEventListener('click',event=>{
     if(event.defaultPrevented||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
@@ -148,7 +153,7 @@
   window.navigation?.addEventListener('navigate',event=>{
     const destination=new URL(event.destination.url);
     if(destination.origin===location.origin&&destination.pathname===root+'/modules/auth/logout.php'){endAll().catch(()=>{});return;}
-    if(event.defaultPrevented||!event.cancelable||!event.canIntercept||event.navigationType==='reload'||event.hashChange||event.formData||event.downloadRequest||!snapshot().active)return;
+    if(event.defaultPrevented||!event.cancelable||!event.canIntercept||event.navigationType==='reload'||event.destination.sameDocument||event.hashChange||event.formData||event.downloadRequest||!snapshot().active)return;
     const url=eligible(event.destination.url);if(!url)return;event.preventDefault();openWorkspace(url);
   });
   window.addEventListener('beforeunload',event=>{if(snapshot().active){event.preventDefault();event.returnValue='';}});

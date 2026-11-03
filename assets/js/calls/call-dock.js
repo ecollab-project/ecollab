@@ -62,7 +62,7 @@
   window.addEventListener('resize', () => {
     for (const control of controls) {
       if (!control.isConnected) { controls.delete(control); continue; }
-      if (control.id === 'vcConnectedBar' || control.classList.contains('is-taskbar-docked')) mount(control);
+      if (control.id === 'vcConnectedBar' || control.classList.contains('ec-call-remote') || control.classList.contains('is-taskbar-docked')) mount(control);
     }
     refresh();
   });
