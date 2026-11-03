@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once dirname(__DIR__,2).'/services/DmMessageIdentity.php';
 
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
@@ -93,18 +94,20 @@ try {
 
     if($isAiConversation){$prefs=UserPreferences::get($db,(int)$me['id']);UserPreferences::assertJarred($prefs);$turnLock=JarredConversation::lock((int)$me['id'],'dm',$convId);}
 
-    $msgId = RealtimeOutbox::record($db, 'dm', $convId, function () use ($db, $convId, $me, $text, $attachmentPath, $attachmentName, $attachmentSize, $attachmentMime) {
+    $saved = DmMessageIdentity::record($db,(int)$me['id'],$body['client_message_id']??null,'dm',$convId,[$text,$attachmentPath,$attachmentName,$attachmentSize,$attachmentMime],fn()=>RealtimeOutbox::record($db, 'dm', $convId, function () use ($db, $convId, $me, $text, $attachmentPath, $attachmentName, $attachmentSize, $attachmentMime) {
         $ins = $db->prepare(
             "INSERT INTO dm_messages (conversation_id, sender_id, body, attachment_path, attachment_name, attachment_size, attachment_mime)
              VALUES (:cid, :uid, :body, :apath, :aname, :asize, :amime)"
         );
         $ins->execute([':cid' => $convId, ':uid' => $me['id'], ':body' => $text, ':apath' => $attachmentPath ?: null, ':aname' => $attachmentName ?: null, ':asize' => $attachmentSize ?: null, ':amime' => $attachmentMime ?: null]);
         return (int)$db->lastInsertId();
-    });
+    }));
+    $msgId = $saved['id'];
 
     $createdStmt = $db->prepare("SELECT created_at FROM dm_messages WHERE id = :id LIMIT 1");
     $createdStmt->execute([':id' => $msgId]);
     $createdAt = (string)($createdStmt->fetchColumn() ?: gmdate('Y-m-d H:i:s'));
+    if($saved['replayed']){echo json_encode(['success'=>true,'message_id'=>$msgId,'created_at'=>$createdAt,'recipient_id'=>$recipientId,'is_ai'=>$isAiConversation,'replayed'=>true]);exit;}
 
     $db->prepare(
         "UPDATE dm_conversations SET last_message = :body, last_msg_at = :created_at WHERE id = :cid"
@@ -305,7 +308,7 @@ JARRED_SYSTEM_PROMPT . JarredConversation::instructions($prefs),
     }
 } catch (Throwable $e) {
     error_log('[dm/send-message] ' . $e->getMessage());
-    $status=in_array($e->getCode(),[403,409,503],true)?$e->getCode():500;http_response_code($status);
+    $status=in_array($e->getCode(),[400,403,409,503],true)?$e->getCode():500;http_response_code($status);
     echo json_encode(['error' => $status===500?'Server error':$e->getMessage()]);
 }
 

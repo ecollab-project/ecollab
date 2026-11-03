@@ -1,0 +1,11 @@
+# Duplicate outgoing DM bubble repair
+
+Source local a972d6c / deployed branch a8d1169. User reports one outgoing Jarred message displayed twice, sometimes disappearing and sometimes remaining. Integrations leads; frontend reconciliation, backend transaction integrity and QA support.
+
+Confirmed root causes: HTTP acknowledgement mutates the optimistic DOM ID without updating the timeline's cached ID map. Saved user messages can also arrive via polling while the request still waits for model generation, before its acknowledgement. Reproduced with the real timeline and DM renderer: optimistic + canonical echo renders two nodes.
+
+Implementation: each new DM/group send gets a random UUID, atomically mapped to its saved message in additive migration 065_dm_client_identity.sql. The existing authorized history endpoints return that correlation only to the sender. Rendering replaces the matching own optimistic node; acknowledgement explicitly rekeys/reindexes the timeline. The timeline can also repair an old temporary ID promotion without scanning all saved messages. Same sender/UUID retries persist once; cross-target/content reuse is rejected. No text-based deduplication, historical message deletion, permission expansion, or AI regeneration on replay. Existing notification/outbox writes are not repeated on replay. Legacy requests without a UUID remain supported; old history reads tolerate missing identity schema until migration.
+
+Verification: the original early-echo regression failed with two rows; new tests pass for polling before/after HTTP, late identity, duplicate events, sender isolation, intentional repeated text, retry identity, target/content conflict, rollback and deleted-message protection. Existing DM pending/upload/timeline tests and PHPUnit unit suite pass. Full PHPStan passes. MySQL8/MariaDB CI applies migration twice and exercises identity writes/reads. Live VPS schema/run remains user-operated; the screenshots alone do not prove duplicate database rows.
+
+Deploy: pull feature branch, run php database/migrate.php, restart PHP-FPM and hard refresh. No WebSocket protocol or worker source change is required. Keep the additive metadata table on source rollback; do not delete existing messages to undo this fix.

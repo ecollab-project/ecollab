@@ -985,7 +985,7 @@ function _dmMessageHTML(m) {
   const grad   = m.sender_gradient || '';
   const avatarUrl = m.sender_avatar_url || '';
   return `
-    <div style="display:flex;flex-direction:${isMine ? 'row-reverse' : 'row'};align-items:flex-end;gap:8px;" data-msg-id="${m.id}" data-sender-id="${Number(m.sender_id)||0}" data-message-timestamp="${_esc(m.created_at||'')}">
+    <div style="display:flex;flex-direction:${isMine ? 'row-reverse' : 'row'};align-items:flex-end;gap:8px;" data-msg-id="${m.id}" data-client-message-id="${_esc(m.client_message_id||'')}" data-sender-id="${Number(m.sender_id)||0}" data-message-timestamp="${_esc(m.created_at||'')}">
       ${!isMine ? _avatar(name, grad, 26, avatarUrl) : ''}
       <div class="dm-message-bubble" data-mine="${isMine}" style="max-width:72%;background:${isMine ? 'var(--accent-purple)' : 'var(--bg-tertiary)'};color:${isMine ? '#fff' : 'var(--text-primary)'};padding:8px 12px;border-radius:${isMine ? '12px 12px 4px 12px' : '12px 12px 12px 4px'};font-size:13px;line-height:1.5;word-break:break-word;">
         ${_dmAttachmentHTML(m)}
@@ -1006,6 +1006,19 @@ function _appendDmMessage(m) {
   if (!area) return;
   m = { ...m, id: m.id ?? m.message_id };
   window.EcollabDmSettings?.record([m]);
+  if (Number(m.sender_id) === Number(ME_ID()) && m.client_message_id && Number(m.id) > 0) {
+    const optimistic = [...area.querySelectorAll('[data-client-message-id]')].find(el => el.dataset.clientMessageId === String(m.client_message_id) && Number(el.dataset.senderId) === Number(ME_ID()) && el.dataset.msgId.startsWith('opt_'));
+    if (optimistic) {
+      const saved=[...area.querySelectorAll('[data-msg-id]')].find(el=>el.dataset.msgId===String(m.id));
+      if(saved){optimistic.remove();saved.dataset.clientMessageId=String(m.client_message_id);window.EcollabTimeline?.decorate(area);return;}
+      const replacement = document.createElement('div');replacement.innerHTML = _dmMessageHTML(m);
+      const message=replacement.firstElementChild;window.EcollabPreferences?.decorate(message);
+      optimistic.replaceWith(message);
+      window.EcollabTimeline?.decorate(area);
+      return;
+    }
+  }
+
   if (m.id == null || (window.EcollabTimeline?window.EcollabTimeline.has(area,m.id):area.querySelector(`[data-msg-id="${CSS.escape(String(m.id))}"]`))) return;
   const follow=window.EcollabTimeline?.beforeAppend(area,m)??true;
   const el = document.createElement('div');
@@ -1014,6 +1027,15 @@ function _appendDmMessage(m) {
   area.appendChild(message);
   window.EcollabTimeline?.append(area,message);
   if(follow){area.scrollTop = area.scrollHeight;window.EcollabTimeline?.requestRead(area);}
+}
+
+function _confirmDmMessage(optimisticId,data) {
+  if (!data.message_id) return;
+  const area=document.getElementById('dmMessagesArea');if(!area)return;
+  if(window.EcollabTimeline?.rekey){window.EcollabTimeline.rekey(area,optimisticId,data.message_id);return;}
+  const old=[...area.querySelectorAll('[data-msg-id]')].find(e=>e.dataset.msgId===String(optimisticId));
+  const saved=[...area.querySelectorAll('[data-msg-id]')].find(e=>e.dataset.msgId===String(data.message_id));
+  if(old&&saved&&old!==saved)old.remove();else if(old)old.dataset.msgId=String(data.message_id);
 }
 
 function _syncAiTyping() {
@@ -1091,9 +1113,11 @@ window.sendDmMessage = async function() {
     }
   } catch(e){releaseComposer();if(stillInChat()){input.value=text;}showToast('Upload failed: '+e.message,'error');return;}
 
+  const clientMessageId=window.crypto.randomUUID?.() || (()=>{const b=window.crypto.getRandomValues(new Uint8Array(16));b[6]=(b[6]&15)|64;b[8]=(b[8]&63)|128;const h=[...b].map(x=>x.toString(16).padStart(2,'0')).join('');return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20);})();
   // Optimistic UI
   const optimistic = {
-    id: 'opt_' + Date.now(),
+    id: 'opt_' + clientMessageId,
+    client_message_id: clientMessageId,
     sender_id: ME_ID(),
     body: text,
     created_at: new Date().toISOString(),
@@ -1111,16 +1135,12 @@ window.sendDmMessage = async function() {
     if (targetGroup) {
       const data = await apiFetch(BASE() + '/API/dm/group-message.php', {
         method: 'POST',
-        body: JSON.stringify({ group_id: targetGroup, body: text, attachment_path:uploaded?.file_path||'', attachment_name:uploaded?.file_name||'', attachment_size:uploaded?.file_size||0, attachment_mime:uploaded?.mime_type||'' }),
+        body: JSON.stringify({ group_id: targetGroup, client_message_id: clientMessageId, body: text, attachment_path:uploaded?.file_path||'', attachment_name:uploaded?.file_name||'', attachment_size:uploaded?.file_size||0, attachment_mime:uploaded?.mime_type||'' }),
       });
-      const optimisticEl = document.querySelector(`[data-msg-id="${optimistic.id}"]`);
-      if (optimisticEl && data.message_id) {
-        const existing = document.querySelector(`#dmMessagesArea [data-msg-id="${CSS.escape(String(data.message_id))}"]`);
-        if (existing) optimisticEl.remove(); else optimisticEl.dataset.msgId = String(data.message_id);
-      }
-      _wsSend({ type: 'dm_group_message' , group_id: targetGroup, message_id: data.message_id, body: text, created_at: new Date().toISOString() });
+      _confirmDmMessage(optimistic.id,data);
+      if (!data.replayed) _wsSend({ type: 'dm_group_message' , group_id: targetGroup, message_id: data.message_id, body: text, created_at: new Date().toISOString() });
       const grp = DM.groups.find(g => g.id === targetGroup);
-      if (grp) { grp.last_message = (text || (uploaded ? '📎 '+uploaded.file_name : '')).slice(0, 120); grp.last_msg_at = new Date().toISOString(); _renderGroupList(); }
+      if (grp && !data.replayed) { grp.last_message = (text || (uploaded ? '📎 '+uploaded.file_name : '')).slice(0, 120); grp.last_msg_at = new Date().toISOString(); _renderGroupList(); }
       if (stillInChat()) input.focus();
       return;
     }
@@ -1131,6 +1151,7 @@ window.sendDmMessage = async function() {
       method: 'POST',
       body: JSON.stringify({
         conversation_id: targetConv,
+        client_message_id: clientMessageId,
         body: text,
         attachment_path:uploaded?.file_path||'', attachment_name:uploaded?.file_name||'', attachment_size:uploaded?.file_size||0, attachment_mime:uploaded?.mime_type||'',
         active_server_id: parseInt(window.ECOLLAB?.currentServerId || window.ECOLLAB?.serverId || window.currentServerId || document.querySelector('[data-server-id].active')?.dataset?.serverId || 0) || null,
@@ -1146,15 +1167,11 @@ window.sendDmMessage = async function() {
     _hideAiTyping(targetConv);
 
     // Replace optimistic ID with the real DB message ID.
-    const optimisticEl = document.querySelector(`[data-msg-id="${optimistic.id}"]`);
-    if (optimisticEl && data.message_id) {
-      const existing = document.querySelector(`#dmMessagesArea [data-msg-id="${CSS.escape(String(data.message_id))}"]`);
-      if (existing) optimisticEl.remove(); else optimisticEl.dataset.msgId = String(data.message_id);
-    }
+    _confirmDmMessage(optimistic.id,data);
 
     // Human DMs still use WebSocket. The AI reply is returned directly
     // from send-message.php and has no WebSocket client of its own.
-    if (!data.is_ai) {
+    if (!data.is_ai && !data.replayed) {
       _wsSend({
         type:            'dm_message',
         conversation_id: targetConv,
@@ -1202,7 +1219,7 @@ window.sendDmMessage = async function() {
 
     // Update sidebar preview
     const conv = DM.conversations.find(c => c.conversation_id === targetConv);
-    if (conv) {
+    if (conv && !data.replayed) {
       if (data.is_ai && data.ai_message) {
         conv.last_message = String(data.ai_message.body || '').slice(0, 120);
         conv.last_msg_at  = data.ai_message.created_at || data.created_at;

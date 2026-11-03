@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once dirname(__DIR__,2).'/services/DmMessageIdentity.php';
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
@@ -111,6 +112,7 @@ try {
     $msgs->execute($params);
     $messages = $msgs->fetchAll(PDO::FETCH_ASSOC);
     if ($after === null) $messages = array_reverse($messages);
+    $messages=DmMessageIdentity::enrich($db,$messages,(int)$me['id']);
     $msgs->closeCursor();
 
     if(($_GET['read']??'1')!=='0'){

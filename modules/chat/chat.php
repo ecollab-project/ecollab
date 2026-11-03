@@ -1123,7 +1123,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <script src="<?= BASE_URL ?>/assets/js/chat/rich-composer.js?v=settings-speed-1" defer></script>
   <?php endif; ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-timeline.css?v=1">
-  <script src="<?= BASE_URL ?>/assets/js/chat/timeline.js?v=settings-speed-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/timeline.js?v=dm-identity-20261103" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=jarred-pending-20261103" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=member-performance-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js?v=media-1" defer></script>
@@ -1178,7 +1178,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     </button>
   </div>
 
-  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=jarred-pending-20261103" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=dm-identity-20261103" defer></script>
   <?php if (filter_var(env('CENTRIFUGO_ENABLED', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
   <script src="<?= BASE_URL ?>/assets/js/chat/centrifugo-delivery.js?v=delivery-1" defer></script>
   <?php endif; ?>

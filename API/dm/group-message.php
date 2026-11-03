@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once dirname(__DIR__,2).'/services/DmMessageIdentity.php';
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/services/RealtimeOutbox.php';
@@ -68,6 +69,7 @@ try {
         $msgs->execute($params);
         $messages = $msgs->fetchAll(PDO::FETCH_ASSOC);
         if ($after === null) $messages = array_reverse($messages);
+        $messages=DmMessageIdentity::enrich($db,$messages,$uid);
 
         if(($_GET['read']??'1')!=='0')$reads->mark('group',$groupId,$uid,$messages,$after);
         echo json_encode([
@@ -94,11 +96,13 @@ try {
         if (mb_strlen($text) > 4000) { http_response_code(400); echo json_encode(['error' => 'Message too long']); exit; }
         requireGroupMembership($db, $groupId, $uid);
 
-        $msgId = RealtimeOutbox::record($db, 'group', $groupId, function () use ($db, $groupId, $uid, $text, $attachmentPath, $attachmentName, $attachmentSize, $attachmentMime) {
+        $saved = DmMessageIdentity::record($db,$uid,$body['client_message_id']??null,'group',$groupId,[$text,$attachmentPath,$attachmentName,$attachmentSize,$attachmentMime],fn()=>RealtimeOutbox::record($db, 'group', $groupId, function () use ($db, $groupId, $uid, $text, $attachmentPath, $attachmentName, $attachmentSize, $attachmentMime) {
             $db->prepare('INSERT INTO dm_messages (group_id, sender_id, body, attachment_path, attachment_name, attachment_size, attachment_mime) VALUES (:gid, :uid, :body, :apath, :aname, :asize, :amime)')
                 ->execute([':gid' => $groupId, ':uid' => $uid, ':body' => $text, ':apath' => $attachmentPath ?: null, ':aname' => $attachmentName ?: null, ':asize' => $attachmentSize ?: null, ':amime' => $attachmentMime ?: null]);
             return (int)$db->lastInsertId();
-        });
+        }));
+        $msgId = $saved['id'];
+        if($saved['replayed']){echo json_encode(['success'=>true,'message_id'=>$msgId,'replayed'=>true]);exit;}
 
         $db->prepare('UPDATE dm_groups SET last_message = :msg, last_msg_at = NOW() WHERE id = :gid')
             ->execute([':msg' => mb_substr($text !== '' ? $text : ('📎 ' . ($attachmentName ?: 'Attachment')), 0, 200), ':gid' => $groupId]);
@@ -120,8 +124,8 @@ try {
     echo json_encode(['error' => 'Method not allowed']);
 } catch (Throwable $e) {
     error_log('[dm/group-message] ' . $e->getMessage());
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => (defined('APP_DEBUG') && APP_DEBUG) ? $e->getMessage() : 'Server error']);
+    $status=in_array($e->getCode(),[400,403,409,503],true)?$e->getCode():500;http_response_code($status);
+    echo json_encode(['success' => false, 'error' => $status===500?'Server error':$e->getMessage()]);
 }
 
 
