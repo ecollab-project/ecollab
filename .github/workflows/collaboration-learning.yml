@@ -28,6 +28,7 @@ jobs:
           php tests/ai-learning-policy.php
           php tests/jarred-task-optimization.php
           php tests/jarred-grounding.php
+          php tests/jarred-queue-regression.php
           php tests/dm-message-identity.php
           php tests/peer-behavior-regression.php
           php tests/peer-ml-regression.php
@@ -41,6 +42,7 @@ jobs:
           node tests/code-lab-ui-regression.cjs
           node tests/code-lab-integrity-regression.cjs
           node tests/jarred-dm-pending.cjs
+          node tests/jarred-queue-ui.cjs
           node tests/dm-message-reconciliation.cjs
           node tests/jarred-timeout-regression.cjs
           node tests/jarred-provider-regression.cjs

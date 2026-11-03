@@ -77,6 +77,7 @@ const DM = {
   groups: [],               // [{id, name, display_name, members, last_message, ...}]
   activeGroupId: null,
   aiPending: new Set(),
+  aiJobs: new Map(),
   sending: new Set(),
   typingTimers: {},         // conversation_id => clearTimeout handle
 };
@@ -140,7 +141,7 @@ async function _syncOpenDmMessages() {
         if (groupId !== DM.activeGroupId || partnerId !== DM.activePartnerId) {dmSyncDirty = true; break;}
         const previous = cursor;
         (data.messages || []).forEach(message => {_appendDmMessage(message); cursor = Math.max(cursor, Number(message.id) || 0);});
-        if(!groupId)_renderDmReadReceipt(data.partner_last_read_id);
+        if(!groupId){_renderDmReadReceipt(data.partner_last_read_id);_applyJarredJob(DM.activeConvId,data.ai_job,data.ai_retry_message_id);}
         dmDeliveryCursors.set(key, cursor);
         if (!data.has_more || cursor <= previous) break;
         if (page === 19) setTimeout(_syncOpenDmMessages, 0);
@@ -837,6 +838,7 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
 
     _renderDmMessages(data.messages || [],data.first_unread_id);
     _renderDmReadReceipt(data.partner_last_read_id);
+    _applyJarredJob(DM.activeConvId,data.ai_job,data.ai_retry_message_id);
   } catch (err) {
     if (DM.activePartnerId !== partnerId || DM.activeGroupId) return;
     msgArea.innerHTML = `<div style="text-align:center;padding:20px;color:#f87171;font-size:13px;">Failed to load: ${_esc(err.message)}</div>`;
@@ -1042,15 +1044,34 @@ function _syncAiTyping() {
   const indicator = document.getElementById('dmTypingIndicator');
   if (!indicator) return;
   const pending = !DM.activeGroupId && DM.activePartnerIsAI && DM.aiPending.has(Number(DM.activeConvId));
+  const savedStatus=document.getElementById('dmJarredStatus');if(savedStatus&&(!DM.activePartnerIsAI||DM.activeGroupId))savedStatus.hidden=true;
   if (pending) {
     indicator.dataset.aiConversation = String(DM.activeConvId);
     indicator.style.display = 'flex';
-    indicator.textContent = 'Jarred is preparing a reply…';
+    const state=DM.aiJobs.get(Number(DM.activeConvId))?.state;
+    indicator.textContent = state==='queued'||state==='preparing'?'Jarred is queued. You can keep using eCollab.':'Jarred is preparing a reply…';
   } else if (indicator.dataset.aiConversation) {
     indicator.style.display = 'none';
     indicator.textContent = '';
     delete indicator.dataset.aiConversation;
   }
+}
+function _applyJarredJob(conversationId,job,retryMessageId=null) {
+  if(job===undefined||!DM.activePartnerIsAI||DM.activeGroupId||Number(DM.activeConvId)!==Number(conversationId))return;
+  DM.aiJobs.set(Number(conversationId),job);
+  const pending=job&&['preparing','queued','running'].includes(job.state);
+  if(pending)_showAiTyping(conversationId);else _hideAiTyping(conversationId);
+  const input=document.getElementById('dmInputField');if(input)input.disabled=!!pending||DM.sending.has('dm:'+conversationId);
+  let status=document.getElementById('dmJarredStatus');
+  const retry=!pending&&retryMessageId&&(!job||job.state==='failed');
+  if(!status&&retry){status=document.createElement('div');status.id='dmJarredStatus';status.setAttribute('role','status');status.style.cssText='padding:8px 14px;font-size:12px;color:var(--text-muted)';document.getElementById('dmTypingIndicator')?.after(status);}
+  if(!status)return;status.hidden=!retry;if(!retry)return;
+  if(status.dataset.messageId===String(retryMessageId)&&status.querySelector('button'))return;
+  status.dataset.messageId=String(retryMessageId);
+  status.replaceChildren(document.createTextNode('Your question is saved. '));
+  const button=document.createElement('button');button.type='button';button.textContent='Retry reply';
+  button.onclick=async()=>{button.disabled=true;try{const data=await apiFetch(BASE()+'/API/dm/jarred-retry.php',{method:'POST',body:JSON.stringify({message_id:Number(retryMessageId),server_id:Number(window.ECOLLAB?.currentServerId)||null})});if(Number(DM.activeConvId)===Number(conversationId))_applyJarredJob(conversationId,data.ai_job,retryMessageId);}catch(e){showToast(e.message,'info');button.disabled=false;}};
+  status.append(button);
 }
 function _clearDmTyping() {
   const indicator = document.getElementById('dmTypingIndicator');
@@ -1098,7 +1119,7 @@ window.sendDmMessage = async function() {
     DM.sending.delete(sendKey);
     if (document.getElementById('dmInputField') !== input) return;
     const activeKey = DM.activeGroupId ? 'group:'+DM.activeGroupId : 'dm:'+DM.activeConvId;
-    input.disabled = DM.sending.has(activeKey);
+    input.disabled = DM.sending.has(activeKey)||(!DM.activeGroupId&&DM.activePartnerIsAI&&DM.aiPending.has(Number(DM.activeConvId)));
   };
 
   input.value    = '';
@@ -1131,6 +1152,7 @@ window.sendDmMessage = async function() {
   };
   _appendDmMessage(optimistic);
 
+  let aiQueued=false;
   try {
     if (targetGroup) {
       const data = await apiFetch(BASE() + '/API/dm/group-message.php', {
@@ -1164,13 +1186,15 @@ window.sendDmMessage = async function() {
       }),
     });
 
-    _hideAiTyping(targetConv);
+    aiQueued=!!(data.ai_pending||data.ai_job&&['preparing','queued','running'].includes(data.ai_job.state));
+    if(!aiQueued)_hideAiTyping(targetConv);
+    _applyJarredJob(targetConv,data.ai_job,data.message_id);
 
     // Replace optimistic ID with the real DB message ID.
     _confirmDmMessage(optimistic.id,data);
 
-    // Human DMs still use WebSocket. The AI reply is returned directly
-    // from send-message.php and has no WebSocket client of its own.
+    // Human DMs still use WebSocket. Jarred replies arrive through saved
+    // history/outbox; deterministic replies may also arrive in this response.
     if (!data.is_ai && !data.replayed) {
       _wsSend({
         type:            'dm_message',
@@ -1244,7 +1268,7 @@ window.sendDmMessage = async function() {
     }
     else pending?.remove();
   } finally {
-    if (targetIsAI) _hideAiTyping(targetConv);
+    if (targetIsAI&&!aiQueued&&!['preparing','queued','running'].includes(DM.aiJobs.get(Number(targetConv))?.state)) _hideAiTyping(targetConv);
     releaseComposer();
     if (stillInChat()) input.focus();
   }
@@ -1313,7 +1337,7 @@ window.closeDmPanel = function() {
 function _init() {
   _hookWebSocket();
   setInterval(() => {
-    if (!window.isChatRealtimeReady?.()) _syncOpenDmMessages();
+    if (DM.activePartnerIsAI || !window.isChatRealtimeReady?.()) _syncOpenDmMessages();
   }, 3000);
 
   // Load initial data

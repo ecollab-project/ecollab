@@ -2,13 +2,13 @@
 
 Plain standalone greetings (hello, hi, hey, good morning/afternoon/evening, kumusta/kamusta) are answered by PHP without loading a model. Greetings containing a real question still use normal assistance. Persisted active Code Lab restrictions continue to apply before greeting fallback.
 
-Interactive Ollama calls have a 45-second maximum wait. Tool rounds share that budget. A transport timeout returns a controlled failure instead of waiting 90 seconds for inference. The CLI-only warm-up has a separate 90-second load budget. Actual end-to-end time still includes middleware, data lookup and upstream configuration; this is not a measured VPS latency guarantee.
+Synchronous Ollama calls outside Jarred DMs have a 45-second maximum wait. Normal Jarred DM inference now runs in the durable queue described below. Tool rounds share that budget. A transport timeout returns a controlled failure instead of waiting 90 seconds for inference. The CLI-only warm-up has a separate 90-second load budget. Actual end-to-end time still includes middleware, data lookup and upstream configuration; this is not a measured VPS latency guarantee.
 
 AI pending state belongs to its conversation. Moving to another DM/group clears the visible indicator, and returning to the original pending conversation restores it. Timeout/network uncertainty retains an unconfirmed outgoing item and asks the user to check saved history rather than implying the send definitely failed. No automatic POST retry is added. Stored history is not rewritten; control markers/reasoning blocks in old Jarred replies are filtered when displayed. Human messages are unchanged.
 
 ## Pull and pre-load on the VPS
 
-After pulling `feat/collaboration-assistance-matching`, restart PHP-FPM and refresh the browser. No migration or dependency change is required for this patch.
+After pulling `feat/collaboration-assistance-matching`, restart PHP-FPM and refresh the browser. Apply migration 066 and install the reply workers below before using the updated DM endpoint. No new dependency is required.
 
 ```bash
 cd /home/ecollabadmin/ecollab-inspect
@@ -28,7 +28,7 @@ systemctl list-timers ecollab-jarred-warm.timer --no-pager
 journalctl -u ecollab-jarred-warm.service -n 20 --no-pager
 ```
 
-If loading fails, inspect the existing local Ollama service/configuration. Do not change the Nginx timeout to mask a failing model. Disable the warm timer with `sudo systemctl disable --now ecollab-jarred-warm.timer` if rolling back. The code update has no database rollback.
+If loading fails, inspect the existing local Ollama service/configuration. Do not change the Nginx timeout to mask a failing model. Disable the warm timer with `sudo systemctl disable --now ecollab-jarred-warm.timer` if rolling back. Migration 066 is additive; retain its tables when reverting code.
 
 ## Acceptance
 
@@ -43,9 +43,9 @@ Local regression tests use a local HTTP fixture and synthetic conversations. No 
 
 The site-wide exclusive inference lock has been replaced by a shared pool of five admission slots across PHP workers using the same OS account (`JARRED_MAX_INFLIGHT`, bounded 1–8). Excess callers wait up to `JARRED_ADMISSION_WAIT_MS` (default 1000, maximum 5000), within the existing inference deadline, then receive controlled backpressure. Conversation turn locks remain per user/conversation. Warm-up yields when real users are active and does not consume a user slot. Locks are private to the PHP OS account; run CLI checks as the FPM account `www-data`.
 
-The observed Hostinger machine has **2 CPUs and 8192 MB RAM** (read-only API inventory, November 3, 2026). Five admitted HTTP requests do **not** mean five fast model generations. The supplied Ollama profile decodes two at a time and queues the rest, keeps one model resident and retains a 4096-token context. This is a starting configuration for the repository's default qwen3:1.7b model (the live model/version and current free RAM remain unverified), not measured production capacity. Long answers can still hit the 45-second deadline on this shared CPU server. Do not raise parallelism to five without measuring memory, latency and the impact on other services.
+The observed Hostinger machine has **2 CPUs and 8192 MB RAM** (read-only API inventory, November 3, 2026). Five admitted HTTP requests do **not** mean five fast model generations. The supplied Ollama profile decodes two at a time and queues the rest, keeps one model resident and retains a 4096-token context. This is a starting configuration for the repository's default qwen3:1.7b model (the VPS benchmark subsequently confirmed qwen3:1.7b), not measured production capacity. Long synchronous answers can still hit the 45-second deadline on this shared CPU server. Normal DMs use the separate CLI budget below. Do not raise parallelism to five without measuring memory, latency and the impact on other services.
 
-Official scheduler and systemd settings: https://docs.ollama.com/faq#how-does-ollama-handle-concurrent-requests . Model queueing is managed by Ollama; no durable/background app job queue is introduced here.
+Official scheduler and systemd settings: https://docs.ollama.com/faq#how-does-ollama-handle-concurrent-requests . Ollama manages model scheduling; normal DMs additionally use the durable application queue below.
 
 After pulling, install the profile only if Ollama uses its normal systemd service:
 
@@ -63,4 +63,32 @@ The benchmark creates five concurrent synthetic provider requests, reports compl
 
 Grounding improvements separate retrieved data from instructions, bound evidence as intact JSON with explicit truncation/omission metadata, reduce old DM history when live evidence is supplied, shorten the DM system prompt and use temperature 0.1. They instruct Jarred to acknowledge unverifiable facts rather than inventing app data or treating prior replies as evidence. Backend role/resource checks and active Code Lab restrictions remain authoritative. These changes reduce risk; no prompt or temperature setting guarantees factual accuracy. Reproduce wrong answers with a concrete prompt/reply pair before attributing them to request concurrency.
 
-Rollback the runtime profile: remove only `/etc/systemd/system/ollama.service.d/zz-ecollab-concurrency.conf`, run `sudo systemctl daemon-reload`, then restart the existing Ollama service. Code rollback is a revert of the concurrency/grounding change. No database migration or model download is needed.
+Rollback the runtime profile: remove only `/etc/systemd/system/ollama.service.d/zz-ecollab-concurrency.conf`, run `sudo systemctl daemon-reload`, then restart the existing Ollama service. Code rollback is a revert of the concurrency/grounding change. No model download is needed; migration 066 belongs to the durable DM queue below.
+
+
+## Durable Jarred DM replies (migration 066)
+
+Normal DM questions are saved with a durable job and acknowledged without running model generation inside PHP-FPM. Standalone greetings, capability guidance, Code Lab guidance and authorized deterministic actions retain their immediate PHP path. Other AI surfaces still use their existing synchronous budget. Two CLI workers claim jobs across conversations; the queue admits up to 20 active turns, one per conversation. Defaults: `JARRED_JOB_WORKERS=2`, `JARRED_JOB_TIMEOUT=180` seconds (60–300), `JARRED_QUEUE_LIMIT=20` (5–100). Keep two workers on the observed 2-CPU VPS. Five short synthetic requests passing does not establish full-answer throughput.
+
+The conversation shows queued/preparing status and polls saved history even with an active WebSocket. Navigating or refreshing resumes pending status. Failed or legacy unanswered latest questions offer **Retry Reply**, which reuses the saved message without posting duplicate text. A job can still fail if the model is unavailable or exceeds its CLI budget; retry is explicit. Queued jobs expire after 15 minutes. A crashed worker's six-minute lease can be reclaimed once; stale workers cannot publish. Inference runs outside database transactions; successful publication and job completion commit together. Workers recheck account, conversation, server/resource access, preferences and current Code Lab restrictions before publishing. They never replay write actions.
+
+Run from the existing VPS checkout (unit paths assume `/home/ecollabadmin/ecollab-inspect` and PHP account `www-data`):
+
+```bash
+cd ~/ecollab-inspect &&
+umask 0022 &&
+git pull --ff-only origin feat/collaboration-assistance-matching &&
+php database/migrate.php &&
+sudo install -m 644 deploy/jarred/ecollab-jarred-worker@.service /etc/systemd/system/ &&
+sudo systemctl daemon-reload &&
+sudo systemctl enable --now ecollab-jarred-worker@1.service ecollab-jarred-worker@2.service &&
+sudo systemctl restart php8.3-fpm ecollab-jarred-worker@1.service ecollab-jarred-worker@2.service
+systemctl is-active php8.3-fpm ecollab-jarred-worker@1.service ecollab-jarred-worker@2.service
+journalctl -u ecollab-jarred-worker@1.service -u ecollab-jarred-worker@2.service -n 30 --no-pager
+```
+
+Keep the previously installed two-generation Ollama profile. No Ollama restart or Composer install is required for this queue change. Hard-refresh the browser, reopen Jarred and use Retry Reply on the saved unanswered question. Verify five independent real-user conversations receive exactly one reply each while other pages remain responsive. Inspect worker logs and saved job states if a reply fails. Private messages are not printed in worker logs.
+
+Validation includes SQLite worker/UI fixtures and MySQL 8/MariaDB concurrent claims. These verify durable admission, two-worker bounds, exact-once publication, lease recovery, retry identity and fresh policy enforcement. They do not certify actual model full-answer speed on the VPS.
+
+Rollback: stop/disable both worker instances, revert the queue code together with its UI/API changes, then restart PHP-FPM. Retain additive queue tables and saved messages; do not drop them or replay completed jobs. Pending questions remain saved and can be retried when the queue is restored.

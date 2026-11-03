@@ -20,6 +20,13 @@ final class OllamaService
         }
     }
 
+    /** Longer budgets are CLI-only: HTTP callers keep their existing 45-second cap. */
+    public static function background(): self
+    {
+        if(PHP_SAPI!=='cli')throw new LogicException('Background inference requires a CLI worker.');
+        $service=new self();$service->requestTimeout=max(60,min(300,(int)(getenv('JARRED_JOB_TIMEOUT')?:180)));return $service;
+    }
+
     /** Load the local model without reading a conversation or generating a reply. */
     public function warmUp(): array
     {
