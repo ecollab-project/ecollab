@@ -67,6 +67,11 @@ jobs:
       - name: Install isolated push analysis dependencies
         run: composer install --working-dir=tools/web-push --no-dev --no-progress --no-interaction --no-plugins
 
+      - name: Audit production PHP dependencies
+        run: |
+          composer audit --no-dev
+          composer audit --working-dir=tools/web-push --no-dev
+
       - name: Wait for MySQL
         run: |
           for i in {1..30}; do

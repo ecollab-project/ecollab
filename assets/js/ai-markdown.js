@@ -48,7 +48,7 @@
     window.renderAiMarkdown = function (markdown) {
         const source = String(markdown ?? '');
 
-        if (typeof window.marked === 'undefined') {
+        if (typeof window.marked === 'undefined' || typeof window.DOMPurify === 'undefined') {
             return escapeHtml(source).replace(/\n/g, '<br>');
         }
 

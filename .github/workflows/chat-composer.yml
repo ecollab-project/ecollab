@@ -2,7 +2,10 @@ name: Chat composer
 on:
   push:
     branches: [ecollab-collabs]
-    paths: ['tools/chat-composer/**','assets/js/chat/**','assets/css/chat-composer.css','modules/chat/chat.php','tests/chat-composer*','scripts/*chat-composer*','.github/workflows/chat-composer.yml']
+    paths: ['tools/chat-composer/**','assets/js/chat/**','assets/js/ai-markdown.js','assets/vendor/**','includes/layout/learning-workspace.php','assets/css/chat-composer.css','modules/chat/chat.php','tests/chat-composer*','tests/ai-markdown*','scripts/*chat-composer*','.github/workflows/chat-composer.yml']
+  pull_request:
+    branches: [ecollab-collabs]
+    paths: ['tools/chat-composer/**','assets/js/chat/**','assets/js/ai-markdown.js','assets/vendor/**','includes/layout/learning-workspace.php','assets/css/chat-composer.css','modules/chat/chat.php','tests/chat-composer*','tests/ai-markdown*','scripts/*chat-composer*','.github/workflows/chat-composer.yml']
   workflow_dispatch:
 jobs:
   composer:
@@ -14,6 +17,8 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with: {php-version: '8.3'}
       - run: npm ci --ignore-scripts --prefix tools/chat-composer
-      - run: npm run build --prefix tools/chat-composer && git diff --exit-code -- assets/js/chat/rich-composer*
+      - run: npm run build --prefix tools/chat-composer && git diff --exit-code -- assets/js/chat/rich-composer* assets/vendor/
+      - run: npm audit --omit=dev && npm audit --prefix tools/chat-composer --omit=dev
       - run: node tests/chat-composer-regression.cjs
+      - run: node tests/ai-markdown-security-regression.cjs
       - run: bash -n scripts/deploy-chat-composer.sh && php -l scripts/configure-chat-composer.php && php -l modules/chat/chat.php
