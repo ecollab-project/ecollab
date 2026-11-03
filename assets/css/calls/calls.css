@@ -208,3 +208,10 @@ body.vc-active #voiceChannelView.active:not(.vc-minimized) .vc-header{position:r
 .vc-screen-card:focus-within .vc-screen-card-watch{opacity:1}
 .vc-screen-card.vc-screen-expanded .vc-screen-card-watch{display:flex;inset:auto 8px 8px auto;background:transparent;opacity:1}
 @media(hover:none){.vc-screen-card-watch{opacity:1}}
+
+/* Four full workspaces share the call's existing document and bottom dock. */
+#ecCallWorkspace{position:fixed;z-index:9000;inset:0 0 max(64px,var(--server-dock-height,64px));display:flex;flex-direction:column;background:var(--bg-primary,#111827);color:var(--text-primary,#f0f5f2)}
+#ecCallWorkspace[hidden]{display:none!important}
+#ecCallWorkspace>header{display:flex;align-items:center;gap:16px;flex:0 0 44px;padding:4px 12px;border-bottom:1px solid var(--border,#40534b);font:14px system-ui,sans-serif}
+#ecCallWorkspace>header button{min-height:36px;padding:4px 12px;border:1px solid var(--border,#40534b);border-radius:8px;background:var(--bg-secondary,#223d30);color:inherit;cursor:pointer}
+#ecCallWorkspaceFrame{display:block;flex:1;min-height:0;width:100%;border:0;background:var(--bg-primary,#111827)}

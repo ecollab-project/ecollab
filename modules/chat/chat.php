@@ -3467,7 +3467,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
   <script src="<?= BASE_URL ?>/assets/js/chat/functionality-overrides.js?v=profile-2" defer></script>
   <!-- Thread enhancements are loaded by functionality-overrides.js after threads-v2.js is ready. -->
-  <script src="<?= BASE_URL ?>/assets/js/chat/collabs-ui.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/collabs-ui.js?v=inline-workspace-3" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/nav-persistence.js?v=2" defer></script>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/profile-view-overrides.css?v=1">
   <script id="profileViewScript" src="<?= BASE_URL ?>/assets/js/chat/profile-view.js?v=2" defer></script>

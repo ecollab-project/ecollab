@@ -4,7 +4,9 @@ require_once dirname(__DIR__,2).'/config.php';
 require_once ROOT_PATH.'/database/config/db.php';
 require_once ROOT_PATH.'/security/middleware/AuthMiddleware.php';
 require_once ROOT_PATH.'/services/CodeLabService.php';
-$user=AuthMiddleware::requireAuth();$csrf=AuthMiddleware::csrfToken();$sid=(int)($_GET['server_id']??0);$server=null;$servers=[];
+$user=AuthMiddleware::requireAuth();
+require_once ROOT_PATH.'/includes/calls/workspace-frame-policy.php';
+$csrf=AuthMiddleware::csrfToken();$sid=(int)($_GET['server_id']??0);$server=null;$servers=[];
 try {
  $db=Database::getInstance();
  $q=$db->prepare('SELECT s.id,s.name FROM servers s JOIN server_members m ON m.server_id=s.id WHERE m.user_id=? AND s.status=? ORDER BY s.name');$q->execute([(int)$user['id'],'active']);$servers=$q->fetchAll(PDO::FETCH_ASSOC);

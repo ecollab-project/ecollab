@@ -45,7 +45,8 @@
       if (window.showToast) window.showToast('Select a server in Chat first', 'info');
       return;
     }
-    window.location.href = collabsUrl();
+    if(window.EcollabCallContinuity)window.EcollabCallContinuity.navigate(collabsUrl());
+    else window.location.href = collabsUrl();
   }
 
   function install() {

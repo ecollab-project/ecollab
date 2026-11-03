@@ -42,8 +42,50 @@
     if(url.pathname===location.pathname&&url.search===location.search&&url.href.includes('#'))return null;
     return url;
   }
+  let workspaceView=null,workspaceFrame=null,returnFocus=null;
+  function inlineWorkspace(url){
+    const path=url.pathname.slice(root.length);
+    return /^\/modules\/(?:collaboration|code-lab|library|whiteboard)\//.test(path)||/^\/modules\/(?:student|facilitator|admin)\/dashboard\.php$/.test(path);
+  }
+  function closeWorkspace(){
+    if(!workspaceView)return;workspaceView.hidden=true;returnFocus?.focus?.({preventScroll:true});
+  }
+  function showInlineWorkspace(url,load=true){
+    if(!workspaceView){
+      workspaceView=document.createElement('section');workspaceView.id='ecCallWorkspace';workspaceView.setAttribute('aria-label','Workspace');
+      const header=document.createElement('header'),back=document.createElement('button'),title=document.createElement('strong');
+      back.type='button';back.dataset.callWorkspaceClose='';back.textContent='← Back';back.addEventListener('click',closeWorkspace);title.id='ecCallWorkspaceTitle';
+      header.append(back,title);workspaceFrame=document.createElement('iframe');workspaceFrame.id='ecCallWorkspaceFrame';workspaceFrame.name='ecollab-inline-'+tab;workspaceFrame.title='eCollab workspace';
+      workspaceFrame.setAttribute('sandbox','allow-same-origin allow-scripts allow-forms allow-modals allow-downloads allow-popups allow-popups-to-escape-sandbox');
+      workspaceFrame.setAttribute('allow',"camera 'none'; microphone 'none'; display-capture 'none'; clipboard-read; clipboard-write; fullscreen");
+      workspaceFrame.addEventListener('load',()=>{
+        let child;try{child=workspaceFrame.contentWindow;if(child.location.origin!==location.origin)return;}catch{return;}
+        const doc=child.document;if(!doc||doc.__ecCallWorkspaceBound)return;doc.__ecCallWorkspaceBound=true;
+        doc.addEventListener('click',event=>{
+          const link=event.target.closest?.('a[href]');if(!link||event.defaultPrevented||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey||link.target&&link.target!=='_self')return;
+          const target=new URL(link.href);if(target.origin!==location.origin)return;
+          if(target.pathname===root+'/modules/chat/chat.php'){event.preventDefault();closeWorkspace();}
+          if(target.pathname===root+'/modules/auth/logout.php')endAll().catch(()=>{});
+        });
+        child.navigation?.addEventListener('navigate',event=>{const target=new URL(event.destination.url);if(target.origin===location.origin&&target.pathname===root+'/modules/auth/logout.php')endAll().catch(()=>{});});
+        const fetch=child.fetch;if(fetch)child.fetch=function(input,options){
+          const target=new URL(input?.url||String(input),child.location.href);
+          if(target.origin===location.origin&&target.pathname===root+'/API/auth/logout.php'&&String(options?.method||input?.method||'GET').toUpperCase()==='POST')endAll().catch(()=>{});
+          return fetch.call(this,input,options);
+        };
+      });
+      workspaceView.append(header,workspaceFrame);document.body.append(workspaceView);
+    }
+    returnFocus=document.activeElement;
+    document.getElementById('ecCallWorkspaceTitle').textContent=url.pathname.includes('/dashboard.php')?'Dashboard':url.pathname.includes('/code-lab/')?'Code Lab':url.pathname.includes('/library/')?'Library':'Collabs';
+    workspaceView.hidden=false;
+    if(load&&workspaceFrame.src!==url.href)workspaceFrame.src=url.href;
+    if(typeof vcActive!=='undefined'&&vcActive&&typeof vcMinimized!=='undefined'&&!vcMinimized)window.toggleVcMinimize?.();
+    return true;
+  }
   function openWorkspace(value){
     const url=eligible(value);if(!url)return false;
+    if(inlineWorkspace(url))return showInlineWorkspace(url);
     try{
       // Reuse only a same-origin workspace. Never take over an external resource tab.
       if(workspace&&!workspace.closed&&workspace.location.origin===location.origin){workspace.location.href=url.href;workspace.focus();return true;}
@@ -146,6 +188,7 @@
   window.addEventListener('submit',event=>{
     if(event.defaultPrevented||!snapshot().active)return;const form=event.target;
     if(form.target&&!['_self','_top'].includes(form.target)||!eligible(form.action))return;
+    const url=eligible(form.action);if(inlineWorkspace(url)){showInlineWorkspace(url,false);form.target=workspaceFrame.name;return;}
     const name='ecollab-workspace-'+crypto.randomUUID(),child=window.open('',name);
     if(!child){event.preventDefault();say('Allow the workspace tab to open, then submit again.');return;}
     child.opener=null;workspace=child;form.target=name;
