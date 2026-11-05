@@ -59,7 +59,9 @@ async function apiFetch(url, options = {}, _retried = false) {
         }
       } catch (_) { /* fallback */ }
     }
-    throw new Error(err.error || 'Request failed');
+    const error = new Error(err.error || 'Request failed');
+    error.status = res.status;
+    throw error;
   }
   return res.json();
 }

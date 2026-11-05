@@ -8,6 +8,8 @@ require_once dirname(__DIR__, 2) . '/services/ChannelService.php';
 
 AuthMiddleware::startSession();
 $user = AuthMiddleware::requireAuth();
+require_once ROOT_PATH.'/includes/calls/workspace-frame-policy.php';
+
 $channelService = new ChannelService();
 $servers = $channelService->getServersForUser($user['id']);
 $requestedServerId = (int)($_GET['server_id'] ?? 0);

@@ -18,6 +18,10 @@ parameters:
         - database
         - websocket
 
+    # Discover the worker-only library without executing its isolated autoloader.
+    scanDirectories:
+        - tools/web-push/vendor/minishlink/web-push/src
+
     excludePaths:
         - vendor/*
         - tests/*
@@ -49,4 +53,3 @@ parameters:
         -
             message: '#Access to an undefined property Ratchet\\ConnectionInterface::\$resourceId#'
             path: websocket/ChatServer.php
-            count: 9

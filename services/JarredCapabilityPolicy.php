@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/JarredCapabilities.php';
 
 require_once dirname(__DIR__) . '/database/config/db.php';
 
@@ -72,6 +73,8 @@ final class JarredCapabilityPolicy
             'persona'=>$isFacilitator?'facilitator':'student',
             'surface'=>$surfaceName,
             'capabilities'=>$caps,
+            'enabled_actions'=>array_keys(JarredCapabilities::actions()),
+            'enabled_read_tools'=>array_column(array_column(JarredCapabilities::tools(),'function'),'name'),
             'guardrails'=>[
                 'resource_permissions_always_override_role',
                 'never_invent_dashboard_assessment_or_skill_evidence',

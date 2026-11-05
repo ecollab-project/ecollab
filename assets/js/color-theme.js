@@ -4,10 +4,10 @@
  const root=document.documentElement,source=document.getElementById('ecColorPalettes');
  if(!source||window.EcollabColors)return;
  const palettes=JSON.parse(source.textContent),byId=new Map(palettes.map(p=>[p.id,p]));
- let selected='forest-mint',saving=false;
+ let selected='ecollab-original',saving=false;
  const media=window.matchMedia?.('(prefers-color-scheme: light)');
  function apply(settings={}){
-  selected=byId.has(settings.color_palette)?settings.color_palette:'forest-mint';
+  selected=byId.has(settings.color_palette)?settings.color_palette:'ecollab-original';
   root.dataset.colorPalette=selected;
   document.querySelectorAll('[data-color-choice]').forEach(b=>{const active=b.dataset.colorChoice===selected;b.setAttribute('aria-pressed',String(active));b.classList.toggle('selected',active);});
  }
@@ -31,7 +31,7 @@
    const b=document.createElement('button');b.type='button';b.className='ec-palette-choice';b.dataset.colorChoice=palette.id;b.setAttribute('aria-pressed','false');
    const swatches=document.createElement('span');swatches.className='ec-palette-swatches';swatches.setAttribute('aria-hidden','true');
    for(const color of palette.swatches){const swatch=document.createElement('span');swatch.style.backgroundColor=color;swatches.append(swatch);}
-   const name=document.createElement('strong');name.textContent=palette.name;const note=document.createElement('small');note.textContent=palette.id==='forest-mint'?'Ecollab default':palette.swatches.map(x=>x.toUpperCase()).join(' · ');
+   const name=document.createElement('strong');name.textContent=palette.name;const note=document.createElement('small');note.textContent=palette.id==='ecollab-original'?'Ecollab default':palette.swatches.map(x=>x.toUpperCase()).join(' · ');
    b.append(swatches,name,note);b.addEventListener('click',()=>choose(palette.id));host.append(b);
   }
  }

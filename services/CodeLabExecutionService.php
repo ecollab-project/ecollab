@@ -52,6 +52,8 @@ final class CodeLabExecutionService
             $gate=$this->q('SELECT * FROM code_lab_run_gates WHERE user_id=?'.$suffix,[$uid])->fetch(PDO::FETCH_ASSOC);
             if($aid){$existing=$this->q('SELECT id,state FROM code_lab_jobs WHERE attempt_id=?',[$aid])->fetch(PDO::FETCH_ASSOC);if($existing&&$existing['state']!=='failed'){if($own)$this->db->commit();return ['job_id'=>(int)$existing['id']];}}
             if((int)$this->q("SELECT COUNT(*) FROM code_lab_jobs WHERE state IN ('queued','running')")->fetchColumn()>=1000)$this->fail('The execution queue is full. Try again shortly.',429);
+            if($kind==='run')try{if($this->q('SELECT id FROM code_lab_live_sessions WHERE active_user_id=? AND expires_at>?',[$uid,gmdate('Y-m-d H:i:s',($this->clock)())])->fetchColumn())$this->fail('Stop your running console before starting another run.',409);}
+            catch(PDOException $e){if($e->getCode()!=='42S02'&&!str_contains($e->getMessage(),'no such table'))throw $e;}
             $active=$this->q("SELECT id FROM code_lab_jobs WHERE user_id=? AND state IN ('queued','running') LIMIT 1",[$uid])->fetchColumn();if($kind==='run'&&$active)$this->fail('Wait for your current execution to finish before running again.',409);
             $window=(new DateTimeImmutable($gate['window_started'],new DateTimeZone('UTC')))->getTimestamp();
             $count=$window<=($this->clock)()-3600?0:(int)$gate['request_count'];
@@ -140,7 +142,7 @@ final class CodeLabExecutionService
             }
             $this->db->beginTransaction();
             if($this->q("UPDATE code_lab_jobs SET state='done',result_json=?,finished_at=? WHERE id=? AND state='running'",[json_encode($result,JSON_THROW_ON_ERROR),gmdate('Y-m-d H:i:s',($this->clock)()),$j['id']])->rowCount()!==1)throw new RuntimeException('Execution claim expired.');
-            if($j['kind']==='grade')$this->q('UPDATE code_lab_attempts SET auto_score=?,score=CASE WHEN reviewed_by IS NULL THEN ? ELSE score END WHERE id=? AND submitted_at IS NOT NULL',[$score,$score,$j['attempt_id']]);
+            if($j['kind']==='grade')$this->q('UPDATE code_lab_attempts SET auto_score=?,score=CASE WHEN reviewed_by IS NULL THEN ? ELSE score END WHERE id=? AND submitted_at IS NOT NULL',[$result['score'],$result['score'],$j['attempt_id']]);
             if($this->db->inTransaction())$this->db->commit();
             $finishedState='done';
             if($j['kind']==='grade'){ try {

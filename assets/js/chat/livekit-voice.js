@@ -126,6 +126,7 @@
     syncScreenControls();
     _syncVoiceQuickActions();
     refreshParticipantCounts();
+    window.EcollabCallContinuity?.refresh();
   }
 
   function syncParticipantState(participant) {
@@ -236,32 +237,17 @@
         if (typeof _showRemoteScreenShareSection === 'function') {
           _showRemoteScreenShareSection(uid, username, stream);
         }
+        // Adaptive streaming observes the SDK's attached elements. A raw cloned
+        // MediaStream alone leaves the subscriber invisible and can pause video.
+        const screenVideo = document.getElementById('vcScreenGrid')
+          ?.querySelector('[data-screen-user="' + uid + '"] .vc-screen-card-video');
+        if (screenVideo) {
+          track.attach(screenVideo);
+          screenVideo.play().catch(() => {});
+        }
 
-        // Ensure the screen-share card always has a visible Watch/Unwatch
-        // control even when the card was created by the LiveKit path.
-        requestAnimationFrame(() => {
-          const card = document.getElementById('vcScreenGrid')?.querySelector('[data-screen-user="' + uid + '"]');
-          if (!card) return;
-          let wrap = card.querySelector('.vc-screen-card-watch');
-          if (!wrap) {
-            wrap = document.createElement('div');
-            wrap.className = 'vc-screen-card-watch';
-            card.appendChild(wrap);
-          }
-          let btn = wrap.querySelector('.vc-screen-watch-btn');
-          if (!btn) {
-            btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'vc-screen-watch-btn';
-            wrap.appendChild(btn);
-          }
-          btn.onclick = event => {
-            event.stopPropagation();
-            if (typeof toggleScreenWatch === 'function') toggleScreenWatch(uid);
-          };
-          if (typeof _applyScreenWatchState === 'function') _applyScreenWatchState(uid);
-          else btn.textContent = 'Watch';
-        });
+        // voice.js owns the Watch listener. A second onclick here would toggle
+        // expansion twice on one click (remote shares only).
         return;
       }
 
@@ -504,7 +490,7 @@
       console.warn('[LiveKit] Ignored server voice join during DM group call flow.');
       return;
     }
-    if (window.EcollabCalls?.busy()) { showToast('Leave your current call first.', 'info'); return; }
+    if (window.EcollabCalls?.busy() || window.EcollabCallContinuity?.remoteActive()) { showToast('Leave your current call first.', 'info'); return; }
     if (vcActive && Number(vcChannelId) === Number(channelId)) { toggleVcMinimize(); return; }
     if (vcActive) await disconnectVoice();
     vcMicMuted = preferredMicMuted; vcCamOn = false; vcScreenOn = false; vcDeafened = preferredDeafened;
@@ -515,6 +501,7 @@
     if (el) el.classList.add('connected');
 
     vcActive = true;
+    window.EcollabCallContinuity?.refresh();
     vcMinimized = false;
     vcChannelId = Number(channelId);
     vcRoomName = roomNameOverride || el?.textContent?.trim()?.replace(/\\d+/g, '').trim() || 'Voice Channel';
@@ -537,6 +524,7 @@
       if (typeof _reportVoiceStatus === 'function') _reportVoiceStatus('join', channelId);
       window.wsSend?.({type:'join_voice',channel_id:Number(channelId)});
       refreshParticipantCounts();
+      window.EcollabCallContinuity?.refresh();
       showToast('🔊 Joined ' + vcRoomName, 'success');
     } catch (err) {
       console.error('[LiveKit] join failed', err);
@@ -553,6 +541,7 @@
     const leavingChannel = vcChannelId;
     vcActive = false;
     await disconnect();
+    window.EcollabCallContinuity?.refresh();
     vcMinimized = false;
     vcCamOn = false;
     vcScreenOn = false;
@@ -642,6 +631,7 @@
     document.querySelectorAll('audio.livekit-media-track').forEach(el=>el.muted=vcDeafened);
     document.getElementById('vcDeafBtn')?.classList.toggle('muted-state',vcDeafened);
     _syncVoiceQuickActions();
+    window.EcollabCallContinuity?.refresh();
   };
   toggleMute = function (event) { event?.stopPropagation(); return toggleVcMic(); };
   toggleDeafen = function (event) { event?.stopPropagation(); return toggleVcDeafen(); };

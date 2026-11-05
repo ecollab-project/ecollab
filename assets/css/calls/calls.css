@@ -195,3 +195,23 @@ body.vc-active #voiceChannelView.active:not(.vc-minimized) .vc-header{position:r
  .workspace-call-slot #vcConnectedBar{flex-basis:280px;width:280px;border-radius:12px}
  .ec-call.is-taskbar-docked .ec-call-preview,#voiceChannelView.vc-minimized{bottom:calc(var(--server-dock-height,58px) + 14px + env(safe-area-inset-bottom))!important}
 }
+
+/* Remote call controls share the existing bottom dock; no floating status panel. */
+.ec-call-remote{display:flex;align-items:center;gap:4px;flex:0 0 auto;box-sizing:border-box;max-width:calc(100vw - 24px);height:42px;padding:4px 6px;border:1px solid #22c55e40;border-radius:10px;background:var(--bg-secondary,#162724);color:var(--text-primary,#f0f5f2);font:11px/1.3 system-ui,sans-serif}
+.ec-call-remote button{display:inline-flex;align-items:center;justify-content:center;flex:0 0 32px;width:32px;height:32px;padding:0;border:1px solid var(--border,#40534b);border-radius:7px;color:inherit;background:var(--bg-tertiary,#223d30);cursor:pointer}
+.ec-call-remote .ec-call-remote-status{display:block;flex:0 1 138px;width:auto;min-width:65px;padding:0 6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;text-align:left;font:inherit;color:var(--accent-green,#22c55e)}
+.ec-call-remote button:focus-visible{outline:3px solid #65d9a0;outline-offset:2px}
+.ec-call-remote button:disabled{opacity:.55;cursor:wait}
+.ec-call-remote button[data-continuity=end]{background:#a72d3c;color:#fff}
+.ec-call-remote button.media-off{color:#fca5a5}
+/* Keep Watch/Restore reachable for remote viewers, keyboard and touch. */
+.vc-screen-card:focus-within .vc-screen-card-watch{opacity:1}
+.vc-screen-card.vc-screen-expanded .vc-screen-card-watch{display:flex;inset:auto 8px 8px auto;background:transparent;opacity:1}
+@media(hover:none){.vc-screen-card-watch{opacity:1}}
+
+/* Four full workspaces share the call's existing document and bottom dock. */
+#ecCallWorkspace{position:fixed;z-index:9000;inset:0 0 max(64px,var(--server-dock-height,64px));display:flex;flex-direction:column;background:var(--bg-primary,#111827);color:var(--text-primary,#f0f5f2)}
+#ecCallWorkspace[hidden]{display:none!important}
+#ecCallWorkspace>header{display:flex;align-items:center;gap:16px;flex:0 0 44px;padding:4px 12px;border-bottom:1px solid var(--border,#40534b);font:14px system-ui,sans-serif}
+#ecCallWorkspace>header button{min-height:36px;padding:4px 12px;border:1px solid var(--border,#40534b);border-radius:8px;background:var(--bg-secondary,#223d30);color:inherit;cursor:pointer}
+#ecCallWorkspaceFrame{display:block;flex:1;min-height:0;width:100%;border:0;background:var(--bg-primary,#111827)}

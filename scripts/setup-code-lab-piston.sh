@@ -27,6 +27,7 @@ restore_worker() { if [[ "$worker_was_active" == 1 ]]; then systemctl start ecol
 trap restore_worker EXIT
 systemctl stop ecollab-code-lab 2>/dev/null || [[ "$worker_was_active" == 0 ]]
 php "$project_path/scripts/check-code-lab-runner.php" --queue-idle
+"${compose[@]}" build adapter
 "${compose[@]}" up -d piston
 # Freeze the installed versions. A repeat deploy never silently changes old task runtimes.
 if ! python3 -c 'import json,sys;c=json.load(open(sys.argv[1]));sys.exit(0 if {p["id"] for p in c.get("profiles",[])} in (set(range(10001,10006)),set(range(10001,10007))) and len(c.get("token",""))>=32 else 1)' "$CODE_LAB_RUNNER_STATE/profiles.json"; then

@@ -14,6 +14,7 @@ jobs:
       - run: node tests/code-lab-piston-batch.cjs
       - run: php tests/code-lab-batch-regression.php
       - run: python3 -B tests/code-lab-piston-test.py
+      - run: python3 -B tests/code-lab-interactive-test.py
       - run: bash -n scripts/setup-code-lab-piston.sh
   sandbox:
     runs-on: ubuntu-24.04
@@ -32,6 +33,7 @@ jobs:
           mkdir -p "$CODE_LAB_RUNNER_STATE"
           chmod 700 "$CODE_LAB_RUNNER_STATE"
           printf '{}\n' > "$CODE_LAB_RUNNER_STATE/profiles.json"
+          docker compose -f deploy/code-lab/piston/compose.yml build adapter
           docker compose -f deploy/code-lab/piston/compose.yml up -d piston
           docker compose -f deploy/code-lab/piston/compose.yml run --rm --no-deps adapter python -B /runner/prepare.py > "$CODE_LAB_RUNNER_STATE/profiles.new.json"
           mv "$CODE_LAB_RUNNER_STATE/profiles.new.json" "$CODE_LAB_RUNNER_STATE/profiles.json"
@@ -42,6 +44,8 @@ jobs:
           docker compose -f deploy/code-lab/piston/compose.yml up -d adapter
       - name: Actual compiler and isolation smoke checks
         run: python3 -B tests/code-lab-piston-live.py
+      - name: Actual interactive prompts and persistent processes
+        run: python3 -B tests/code-lab-piston-interactive-live.py
       - name: Diagnostic status
         if: failure()
         run: |

@@ -76,6 +76,9 @@ const DM = {
   activePartnerIsAI: false,
   groups: [],               // [{id, name, display_name, members, last_message, ...}]
   activeGroupId: null,
+  aiPending: new Set(),
+  aiJobs: new Map(),
+  sending: new Set(),
   typingTimers: {},         // conversation_id => clearTimeout handle
 };
 
@@ -138,7 +141,7 @@ async function _syncOpenDmMessages() {
         if (groupId !== DM.activeGroupId || partnerId !== DM.activePartnerId) {dmSyncDirty = true; break;}
         const previous = cursor;
         (data.messages || []).forEach(message => {_appendDmMessage(message); cursor = Math.max(cursor, Number(message.id) || 0);});
-        if(!groupId)_renderDmReadReceipt(data.partner_last_read_id);
+        if(!groupId){_renderDmReadReceipt(data.partner_last_read_id);_applyJarredJob(DM.activeConvId,data.ai_job,data.ai_retry_message_id);}
         dmDeliveryCursors.set(key, cursor);
         if (!data.has_more || cursor <= previous) break;
         if (page === 19) setTimeout(_syncOpenDmMessages, 0);
@@ -192,16 +195,17 @@ function _onWsDmMessage(data) {
 }
 
 function _onWsDmTyping(data) {
-  if (DM.activeConvId !== data.conversation_id) return;
+  if (DM.activeConvId !== data.conversation_id || DM.activePartnerIsAI || DM.activeGroupId) return;
   const indicator = document.getElementById('dmTypingIndicator');
   if (!indicator) return;
 
   if (data.is_typing) {
+    delete indicator.dataset.aiConversation;
     indicator.style.display = 'flex';
     indicator.textContent   = `${String(data.sender_name||'Someone')} is typing…`;
     clearTimeout(DM.typingTimers[data.conversation_id]);
     DM.typingTimers[data.conversation_id] = setTimeout(() => {
-      indicator.style.display = 'none';
+      if (DM.activeConvId === data.conversation_id && !DM.activeGroupId && !DM.activePartnerIsAI) indicator.style.display = 'none';
     }, 3000);
   } else {
     indicator.style.display = 'none';
@@ -247,10 +251,11 @@ function _onWsDmGroupTyping(data) {
 
   const key = 'group_' + data.group_id;
   if (data.is_typing) {
+    delete indicator.dataset.aiConversation;
     indicator.style.display = 'flex';
     indicator.textContent   = `${String(data.sender_name||'Someone')} is typing…`;
     clearTimeout(DM.typingTimers[key]);
-    DM.typingTimers[key] = setTimeout(() => { indicator.style.display = 'none'; }, 3000);
+    DM.typingTimers[key] = setTimeout(() => { if (DM.activeGroupId == data.group_id) indicator.style.display = 'none'; }, 3000);
   } else {
     indicator.style.display = 'none';
     clearTimeout(DM.typingTimers[key]);
@@ -773,6 +778,7 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
   partnerName  = partnerName || 'User';
 
   DM.activeGroupId     = null;
+  DM.activeConvId      = null;
   DM.activePartnerId   = partnerId;
   DM.activePartnerName = partnerName;
   const selectedConv = DM.conversations.find(c => Number(c.partner_id) === partnerId);
@@ -783,6 +789,10 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
     String(partnerName).trim().toLowerCase() === 'ecollab ai';
 
   _ensureDmPanel();
+  _clearDmTyping();
+  _syncAiTyping();
+  const composer = document.getElementById('dmInputField');
+  if (composer) composer.disabled = false;
 
   const panel = document.getElementById('dmConversationPanel');
   panel.style.display = 'flex';
@@ -819,6 +829,8 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
     const data = await apiFetch(BASE() + `/API/dm/open-conversation.php?partner_id=${partnerId}&read=${document.hidden?0:1}`);
     if (DM.activePartnerId !== partnerId || DM.activeGroupId) return;
     DM.activeConvId = Number(data.conversation_id);
+    _syncAiTyping();
+    if (composer) composer.disabled = DM.sending.has('dm:'+DM.activeConvId);
 
     // Clear unread from list
     const conv = DM.conversations.find(c => c.conversation_id === DM.activeConvId);
@@ -826,7 +838,9 @@ window.openDmConversation = async function(partnerId, partnerName, partnerGradie
 
     _renderDmMessages(data.messages || [],data.first_unread_id);
     _renderDmReadReceipt(data.partner_last_read_id);
+    _applyJarredJob(DM.activeConvId,data.ai_job,data.ai_retry_message_id);
   } catch (err) {
+    if (DM.activePartnerId !== partnerId || DM.activeGroupId) return;
     msgArea.innerHTML = `<div style="text-align:center;padding:20px;color:#f87171;font-size:13px;">Failed to load: ${_esc(err.message)}</div>`;
   }
 };
@@ -837,8 +851,13 @@ window.openGroupConversation = async function(groupId) {
   DM.activeConvId    = null;
   DM.activePartnerId = null;
   DM.activeGroupId   = groupId;
+  DM.activePartnerIsAI = false;
 
   _ensureDmPanel();
+  _clearDmTyping();
+  _syncAiTyping();
+  const composer = document.getElementById('dmInputField');
+  if (composer) composer.disabled = DM.sending.has('group:'+groupId);
   document.getElementById('dmPanelTitle').textContent = 'Loading group…';
   window.EcollabDmSettings?.opened({ type: 'group', id: groupId, name: 'Group', members: [] });
 
@@ -864,6 +883,7 @@ window.openGroupConversation = async function(groupId) {
     window.EcollabDmSettings?.opened({ type: 'group', id: groupId, name: displayName, members: data.members || [] });
     _renderDmMessages(data.messages || [],data.first_unread_id);
   } catch (err) {
+    if (DM.activeGroupId !== groupId) return;
     msgArea.innerHTML = `<div style="text-align:center;padding:20px;color:#f87171;font-size:13px;">Failed to load: ${_esc(err.message)}</div>`;
   }
 };
@@ -959,11 +979,15 @@ function _dmAttachmentHTML(m){
 }
 function _dmMessageHTML(m) {
   const isMine = m.sender_id == ME_ID();
-  const name   = m.sender_name || m.sender_username || 'User';
+  if (!isMine && DM.activePartnerIsAI) {
+    const body = String(m.body || '').replace(/<think\b[^>]*>[\s\S]*?<\/think\s*>/gi, '').replace(/<think\b[^>]*>[\s\S]*$/gi, '').replace(/\/(?:no_)?think/g, '').trim();
+    m = { ...m, body };
+  }
+  const name   = !isMine && DM.activePartnerIsAI ? 'Jarred' : (m.sender_name || m.sender_username || 'User');
   const grad   = m.sender_gradient || '';
   const avatarUrl = m.sender_avatar_url || '';
   return `
-    <div style="display:flex;flex-direction:${isMine ? 'row-reverse' : 'row'};align-items:flex-end;gap:8px;" data-msg-id="${m.id}" data-sender-id="${Number(m.sender_id)||0}" data-message-timestamp="${_esc(m.created_at||'')}">
+    <div style="display:flex;flex-direction:${isMine ? 'row-reverse' : 'row'};align-items:flex-end;gap:8px;" data-msg-id="${m.id}" data-client-message-id="${_esc(m.client_message_id||'')}" data-sender-id="${Number(m.sender_id)||0}" data-message-timestamp="${_esc(m.created_at||'')}">
       ${!isMine ? _avatar(name, grad, 26, avatarUrl) : ''}
       <div class="dm-message-bubble" data-mine="${isMine}" style="max-width:72%;background:${isMine ? 'var(--accent-purple)' : 'var(--bg-tertiary)'};color:${isMine ? '#fff' : 'var(--text-primary)'};padding:8px 12px;border-radius:${isMine ? '12px 12px 4px 12px' : '12px 12px 12px 4px'};font-size:13px;line-height:1.5;word-break:break-word;">
         ${_dmAttachmentHTML(m)}
@@ -984,6 +1008,19 @@ function _appendDmMessage(m) {
   if (!area) return;
   m = { ...m, id: m.id ?? m.message_id };
   window.EcollabDmSettings?.record([m]);
+  if (Number(m.sender_id) === Number(ME_ID()) && m.client_message_id && Number(m.id) > 0) {
+    const optimistic = [...area.querySelectorAll('[data-client-message-id]')].find(el => el.dataset.clientMessageId === String(m.client_message_id) && Number(el.dataset.senderId) === Number(ME_ID()) && el.dataset.msgId.startsWith('opt_'));
+    if (optimistic) {
+      const saved=[...area.querySelectorAll('[data-msg-id]')].find(el=>el.dataset.msgId===String(m.id));
+      if(saved){optimistic.remove();saved.dataset.clientMessageId=String(m.client_message_id);window.EcollabTimeline?.decorate(area);return;}
+      const replacement = document.createElement('div');replacement.innerHTML = _dmMessageHTML(m);
+      const message=replacement.firstElementChild;window.EcollabPreferences?.decorate(message);
+      optimistic.replaceWith(message);
+      window.EcollabTimeline?.decorate(area);
+      return;
+    }
+  }
+
   if (m.id == null || (window.EcollabTimeline?window.EcollabTimeline.has(area,m.id):area.querySelector(`[data-msg-id="${CSS.escape(String(m.id))}"]`))) return;
   const follow=window.EcollabTimeline?.beforeAppend(area,m)??true;
   const el = document.createElement('div');
@@ -994,18 +1031,59 @@ function _appendDmMessage(m) {
   if(follow){area.scrollTop = area.scrollHeight;window.EcollabTimeline?.requestRead(area);}
 }
 
-function _showAiTyping() {
-  const indicator = document.getElementById('dmTypingIndicator');
-  if (!indicator) return;
-  indicator.style.display = 'flex';
-  indicator.innerHTML = 'Jarred is typing <span style="letter-spacing:2px;margin-left:4px;">•••</span>';
+function _confirmDmMessage(optimisticId,data) {
+  if (!data.message_id) return;
+  const area=document.getElementById('dmMessagesArea');if(!area)return;
+  if(window.EcollabTimeline?.rekey){window.EcollabTimeline.rekey(area,optimisticId,data.message_id);return;}
+  const old=[...area.querySelectorAll('[data-msg-id]')].find(e=>e.dataset.msgId===String(optimisticId));
+  const saved=[...area.querySelectorAll('[data-msg-id]')].find(e=>e.dataset.msgId===String(data.message_id));
+  if(old&&saved&&old!==saved)old.remove();else if(old)old.dataset.msgId=String(data.message_id);
 }
 
-function _hideAiTyping() {
+function _syncAiTyping() {
   const indicator = document.getElementById('dmTypingIndicator');
   if (!indicator) return;
-  indicator.style.display = 'none';
-  indicator.innerHTML = '';
+  const pending = !DM.activeGroupId && DM.activePartnerIsAI && DM.aiPending.has(Number(DM.activeConvId));
+  const savedStatus=document.getElementById('dmJarredStatus');if(savedStatus&&(!DM.activePartnerIsAI||DM.activeGroupId))savedStatus.hidden=true;
+  if (pending) {
+    indicator.dataset.aiConversation = String(DM.activeConvId);
+    indicator.style.display = 'flex';
+    const state=DM.aiJobs.get(Number(DM.activeConvId))?.state;
+    indicator.textContent = state==='queued'||state==='preparing'?'Jarred is queued. You can keep using eCollab.':'Jarred is preparing a reply…';
+  } else if (indicator.dataset.aiConversation) {
+    indicator.style.display = 'none';
+    indicator.textContent = '';
+    delete indicator.dataset.aiConversation;
+  }
+}
+function _applyJarredJob(conversationId,job,retryMessageId=null) {
+  if(job===undefined||!DM.activePartnerIsAI||DM.activeGroupId||Number(DM.activeConvId)!==Number(conversationId))return;
+  DM.aiJobs.set(Number(conversationId),job);
+  const pending=job&&['preparing','queued','running'].includes(job.state);
+  if(pending)_showAiTyping(conversationId);else _hideAiTyping(conversationId);
+  const input=document.getElementById('dmInputField');if(input)input.disabled=!!pending||DM.sending.has('dm:'+conversationId);
+  let status=document.getElementById('dmJarredStatus');
+  const retry=!pending&&retryMessageId&&(!job||job.state==='failed');
+  if(!status&&retry){status=document.createElement('div');status.id='dmJarredStatus';status.setAttribute('role','status');status.style.cssText='padding:8px 14px;font-size:12px;color:var(--text-muted)';document.getElementById('dmTypingIndicator')?.after(status);}
+  if(!status)return;status.hidden=!retry;if(!retry){delete status.dataset.messageId;return;}
+  if(status.dataset.messageId===String(retryMessageId)&&status.querySelector('button'))return;
+  status.dataset.messageId=String(retryMessageId);
+  status.replaceChildren(document.createTextNode('Your question is saved. '));
+  const button=document.createElement('button');button.type='button';button.textContent='Retry reply';
+  button.onclick=async()=>{button.disabled=true;try{const data=await apiFetch(BASE()+'/API/dm/jarred-retry.php',{method:'POST',body:JSON.stringify({message_id:Number(retryMessageId),server_id:Number(window.ECOLLAB?.currentServerId)||null})});if(Number(DM.activeConvId)===Number(conversationId))_applyJarredJob(conversationId,data.ai_job,retryMessageId);}catch(e){showToast(e.message,'info');button.disabled=false;}};
+  status.append(button);
+}
+function _clearDmTyping() {
+  const indicator = document.getElementById('dmTypingIndicator');
+  if (indicator) { indicator.style.display = 'none'; indicator.textContent = ''; delete indicator.dataset.aiConversation; }
+}
+function _showAiTyping(conversationId) {
+  DM.aiPending.add(Number(conversationId));
+  _syncAiTyping();
+}
+function _hideAiTyping(conversationId) {
+  if (conversationId != null) DM.aiPending.delete(Number(conversationId));
+  _syncAiTyping();
 }
 
 // Typing signal debounce
@@ -1030,7 +1108,19 @@ window.sendDmMessage = async function() {
   const targetConv = DM.activeConvId;
   const targetGroup = DM.activeGroupId;
   const targetPartner = DM.activePartnerId;
+  const targetIsAI = Boolean(DM.activePartnerIsAI && !targetGroup);
+  if (targetIsAI && DM.aiPending.has(Number(targetConv))) return;
   const stillInChat = () => targetConv === DM.activeConvId && targetGroup === DM.activeGroupId && targetPartner === DM.activePartnerId && document.getElementById('dmInputField') === input;
+  DM.sending ??= new Set();
+  const sendKey = targetGroup ? 'group:'+targetGroup : 'dm:'+targetConv;
+  if (DM.sending.has(sendKey)) return;
+  DM.sending.add(sendKey);
+  const releaseComposer = () => {
+    DM.sending.delete(sendKey);
+    if (document.getElementById('dmInputField') !== input) return;
+    const activeKey = DM.activeGroupId ? 'group:'+DM.activeGroupId : 'dm:'+DM.activeConvId;
+    input.disabled = DM.sending.has(activeKey)||(!DM.activeGroupId&&DM.activePartnerIsAI&&DM.aiPending.has(Number(DM.activeConvId)));
+  };
 
   input.value    = '';
   input.disabled = true;
@@ -1042,11 +1132,13 @@ window.sendDmMessage = async function() {
       if(!stillInChat())throw new Error('Chat changed. Return to the original chat and select the attachment again.');
       if(_dmPendingFile === pendingFile)_dmClearFile();
     }
-  } catch(e){input.disabled=false;if(stillInChat())input.value=text;showToast('Upload failed: '+e.message,'error');return;}
+  } catch(e){releaseComposer();if(stillInChat()){input.value=text;}showToast('Upload failed: '+e.message,'error');return;}
 
+  const clientMessageId=window.crypto.randomUUID?.() || (()=>{const b=window.crypto.getRandomValues(new Uint8Array(16));b[6]=(b[6]&15)|64;b[8]=(b[8]&63)|128;const h=[...b].map(x=>x.toString(16).padStart(2,'0')).join('');return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20);})();
   // Optimistic UI
   const optimistic = {
-    id: 'opt_' + Date.now(),
+    id: 'opt_' + clientMessageId,
+    client_message_id: clientMessageId,
     sender_id: ME_ID(),
     body: text,
     created_at: new Date().toISOString(),
@@ -1060,31 +1152,28 @@ window.sendDmMessage = async function() {
   };
   _appendDmMessage(optimistic);
 
+  let aiQueued=false;
   try {
     if (targetGroup) {
       const data = await apiFetch(BASE() + '/API/dm/group-message.php', {
         method: 'POST',
-        body: JSON.stringify({ group_id: targetGroup, body: text, attachment_path:uploaded?.file_path||'', attachment_name:uploaded?.file_name||'', attachment_size:uploaded?.file_size||0, attachment_mime:uploaded?.mime_type||'' }),
+        body: JSON.stringify({ group_id: targetGroup, client_message_id: clientMessageId, body: text, attachment_path:uploaded?.file_path||'', attachment_name:uploaded?.file_name||'', attachment_size:uploaded?.file_size||0, attachment_mime:uploaded?.mime_type||'' }),
       });
-      const optimisticEl = document.querySelector(`[data-msg-id="${optimistic.id}"]`);
-      if (optimisticEl && data.message_id) {
-        const existing = document.querySelector(`#dmMessagesArea [data-msg-id="${CSS.escape(String(data.message_id))}"]`);
-        if (existing) optimisticEl.remove(); else optimisticEl.dataset.msgId = String(data.message_id);
-      }
-      _wsSend({ type: 'dm_group_message' , group_id: targetGroup, message_id: data.message_id, body: text, created_at: new Date().toISOString() });
+      _confirmDmMessage(optimistic.id,data);
+      if (!data.replayed) _wsSend({ type: 'dm_group_message' , group_id: targetGroup, message_id: data.message_id, body: text, created_at: new Date().toISOString() });
       const grp = DM.groups.find(g => g.id === targetGroup);
-      if (grp) { grp.last_message = (text || (uploaded ? '📎 '+uploaded.file_name : '')).slice(0, 120); grp.last_msg_at = new Date().toISOString(); _renderGroupList(); }
-      input.disabled = false;
+      if (grp && !data.replayed) { grp.last_message = (text || (uploaded ? '📎 '+uploaded.file_name : '')).slice(0, 120); grp.last_msg_at = new Date().toISOString(); _renderGroupList(); }
       if (stillInChat()) input.focus();
       return;
     }
 
-    if (DM.activePartnerIsAI) _showAiTyping();
+    if (targetIsAI) _showAiTyping(targetConv);
 
     const data = await apiFetch(BASE() + '/API/dm/send-message.php', {
       method: 'POST',
       body: JSON.stringify({
         conversation_id: targetConv,
+        client_message_id: clientMessageId,
         body: text,
         attachment_path:uploaded?.file_path||'', attachment_name:uploaded?.file_name||'', attachment_size:uploaded?.file_size||0, attachment_mime:uploaded?.mime_type||'',
         active_server_id: parseInt(window.ECOLLAB?.currentServerId || window.ECOLLAB?.serverId || window.currentServerId || document.querySelector('[data-server-id].active')?.dataset?.serverId || 0) || null,
@@ -1097,18 +1186,16 @@ window.sendDmMessage = async function() {
       }),
     });
 
-    _hideAiTyping();
+    aiQueued=!!(data.ai_pending||data.ai_job&&['preparing','queued','running'].includes(data.ai_job.state));
+    if(!aiQueued)_hideAiTyping(targetConv);
+    _applyJarredJob(targetConv,data.ai_job,data.message_id);
 
     // Replace optimistic ID with the real DB message ID.
-    const optimisticEl = document.querySelector(`[data-msg-id="${optimistic.id}"]`);
-    if (optimisticEl && data.message_id) {
-      const existing = document.querySelector(`#dmMessagesArea [data-msg-id="${CSS.escape(String(data.message_id))}"]`);
-      if (existing) optimisticEl.remove(); else optimisticEl.dataset.msgId = String(data.message_id);
-    }
+    _confirmDmMessage(optimistic.id,data);
 
-    // Human DMs still use WebSocket. The AI reply is returned directly
-    // from send-message.php and has no WebSocket client of its own.
-    if (!data.is_ai) {
+    // Human DMs still use WebSocket. Jarred replies arrive through saved
+    // history/outbox; deterministic replies may also arrive in this response.
+    if (!data.is_ai && !data.replayed) {
       _wsSend({
         type:            'dm_message',
         conversation_id: targetConv,
@@ -1156,7 +1243,7 @@ window.sendDmMessage = async function() {
 
     // Update sidebar preview
     const conv = DM.conversations.find(c => c.conversation_id === targetConv);
-    if (conv) {
+    if (conv && !data.replayed) {
       if (data.is_ai && data.ai_message) {
         conv.last_message = String(data.ai_message.body || '').slice(0, 120);
         conv.last_msg_at  = data.ai_message.created_at || data.created_at;
@@ -1168,12 +1255,21 @@ window.sendDmMessage = async function() {
     }
 
   } catch (err) {
-    _hideAiTyping();
-    showToast('Failed to send: ' + err.message, 'error');
-    // Remove optimistic message
-    document.querySelector(`[data-msg-id="${optimistic.id}"]`)?.remove();
+    _hideAiTyping(targetConv);
+    const uncertain = targetIsAI && ([502, 503, 504].includes(Number(err.status)) || (err instanceof TypeError || err instanceof SyntaxError));
+    showToast(uncertain ? 'Jarred could not finish the request. Your message may already be saved; check this chat before sending it again.' : 'Failed to send: ' + err.message, 'error');
+    const pending = document.querySelector(`[data-msg-id="${optimistic.id}"]`);
+    if (uncertain && pending) {
+      pending.dataset.deliveryState = 'unconfirmed';
+      const notice = document.createElement('small');
+      notice.textContent = 'Delivery unconfirmed. Reopen this chat to check.';
+      notice.style.cssText = 'display:block;margin-top:4px;font-size:11px;opacity:.8';
+      pending.querySelector('.dm-message-bubble')?.append(notice);
+    }
+    else pending?.remove();
   } finally {
-    input.disabled = false;
+    if (targetIsAI&&!aiQueued&&!['preparing','queued','running'].includes(DM.aiJobs.get(Number(targetConv))?.state)) _hideAiTyping(targetConv);
+    releaseComposer();
     if (stillInChat()) input.focus();
   }
 };
@@ -1241,7 +1337,7 @@ window.closeDmPanel = function() {
 function _init() {
   _hookWebSocket();
   setInterval(() => {
-    if (!window.isChatRealtimeReady?.()) _syncOpenDmMessages();
+    if (DM.activePartnerIsAI || !window.isChatRealtimeReady?.()) _syncOpenDmMessages();
   }, 3000);
 
   // Load initial data

@@ -270,7 +270,7 @@ try {
                     'shared_interests'=>$sharedInterests,
                     'shared_hobbies'=>$sharedHobbies,
                     'tags'=>$score['tags'],
-                    'components'=>['subjects'=>$score['subjects'],'style'=>$score['style'],'interests'=>$score['interests'],'hobbies'=>$score['hobbies'],'semantic'=>$score['semantic']],
+                    'components'=>['subjects'=>$score['subjects'],'style'=>$score['style'],'interests'=>$score['interests'],'hobbies'=>$score['hobbies'],'semantic'=>$score['semantic'],'behavior'=>$score['behavior'],'weights'=>$score['weights']],
                     'already_connected'=>$friendship === 'accepted',
                     'request_status'=>$requestStatus,
                     'avatar_url'=>(string)($candidate['avatar_url'] ?? ''),
@@ -432,7 +432,7 @@ try {
             $semantic=(new PeerSemanticClient())->scores($mine,[$their]);
             $score=(new PeerMatchingService())->scoreProfiles($mine,$their,$semantic[0]);
             $json([
-                'score'=>['total'=>$score['total'],'subjects'=>$score['subjects'],'style'=>$score['style'],'interests'=>$score['interests'],'hobbies'=>$score['hobbies'],'semantic'=>$score['semantic']],
+                'score'=>['total'=>$score['total'],'subjects'=>$score['subjects'],'style'=>$score['style'],'interests'=>$score['interests'],'hobbies'=>$score['hobbies'],'semantic'=>$score['semantic'],'behavior'=>$score['behavior'],'weights'=>$score['weights']],
                 'engine'=>$score['engine'],
                 'weights'=>$score['weights'],
                 'shared_subjects'=>array_values(array_filter($their['subjects'], static fn($s)=>in_array((int)$s['subject_id'],array_map(static fn($x)=>(int)$x['subject_id'],$mine['subjects']),true))),

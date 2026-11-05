@@ -1081,6 +1081,7 @@ function switchSettingsTab(tabId, navEl) {
 }
 
 function handleLogout() {
+  window.EcollabCallContinuity?.endAll().catch(()=>{});
   if (window.closeModal) closeModal('platformSettingsModal');
   if (window.showToast) showToast('👋 Logging out…', 'info');
   setTimeout(() => { window.location.href = (window.ECOLLAB?.baseUrl || window.ECOLLAB_BASE || '') + '/modules/auth/logout.php'; }, 800);
@@ -1097,7 +1098,8 @@ function goToDashboard() {
   } else {
     url = base + '/modules/student/dashboard.php';
   }
-  window.location.href = url;
+  if (window.EcollabCallContinuity) window.EcollabCallContinuity.navigate(url);
+  else window.location.href = url;
 }
 
 function applyTheme(theme, el) {
@@ -1135,7 +1137,9 @@ function _vcNoop(name) { if (typeof window[name] === 'function' && window[name] 
 function openWhiteboard(boardName, channelId) {
   const targetChannelId = channelId || window.ECOLLAB?.currentChannelId || window.__currentChannelId;
   if (targetChannelId && !window.ECOLLAB?.whiteboardStandalone) {
-    window.location.href = `${window.ECOLLAB?.baseUrl || ''}/modules/whiteboard/index.php?channel_id=${encodeURIComponent(targetChannelId)}`;
+    const url = `${window.ECOLLAB?.baseUrl || ''}/modules/whiteboard/index.php?channel_id=${encodeURIComponent(targetChannelId)}`;
+    if (window.EcollabCallContinuity) window.EcollabCallContinuity.navigate(url);
+    else window.location.href = url;
     return;
   }
   if (window._wbOpen) { window._wbOpen(boardName, channelId); return; }
@@ -1602,7 +1606,7 @@ async function openChatNotification(el) {
   if (link) {
     try {
       const url = new URL(link, window.location.origin);
-      if (url.origin === window.location.origin) { window.location.href = url.href; return; }
+      if (url.origin === window.location.origin) { if(window.EcollabCallContinuity)window.EcollabCallContinuity.navigate(url.href);else window.location.href = url.href; return; }
     } catch (e) {}
   }
 }

@@ -1,0 +1,21 @@
+'use strict';
+const {JSDOM}=require('jsdom'),fs=require('fs'),{execFileSync}=require('node:child_process'),assert=require('node:assert/strict');
+const html=execFileSync(process.env.PHP_BIN||'php',['-d','session.save_path=/tmp','tests/responsive-render-fixture.php','codelabfac'],{encoding:'utf8'});
+const dom=new JSDOM(html,{runScripts:'outside-only',url:'https://ecollab.test/modules/code-lab/index.php?server_id=1'}),w=dom.window,d=w.document;
+w.setInterval=()=>0;w.setTimeout=(fn,ms)=>setTimeout(fn,Math.min(ms,5));w.confirm=()=>true;
+let starts=0,answers=[],seq=0,lost=false,stopped=0;
+w.fetch=async(url,options={})=>{const p=options.body?JSON.parse(options.body):Object.fromEntries(new URL(url,w.location).searchParams);let data={};switch(p.action){
+ case'overview':data={tasks:[],runnable_languages:['python']};break;case'playground':data={code:'a=input("First? ");b=input("Second? ");print(a+b)',version:1};break;
+ case'live_start':starts++;assert.equal(p.stdin,undefined);data={session_id:7};break;
+ case'live_input':answers.push(p);assert.equal(p.session_id,7);assert.equal(p.sequence,seq+1);seq=p.sequence;data={input_seq:seq};if(!lost){lost=true;throw Error('Response lost after input was accepted');}break;
+ case'live_status':data={state:seq<2?'running':'finished',output:seq===0?'First? ':seq===1?'First? one\nSecond? ':'First? one\nSecond? two\nonetwo\n',input_seq:seq,reason:seq===2?'Finished':''};break;
+ case'live_stop':stopped++;data={stopped:true};break;
+ }return {ok:true,json:async()=>({success:true,data})};};
+const tick=()=>new Promise(r=>setTimeout(r,30));
+(async()=>{try{for(const path of ['assets/js/code-lab-module.js','assets/js/code-lab-live.js','assets/js/code-lab.js'])w.eval(fs.readFileSync(path,'utf8'));await tick();d.querySelector('[data-section=playground]').click();await tick();const input=d.getElementById('clStdin'),run=d.getElementById('clRun'),output=d.getElementById('clOutput');
+ assert(d.getElementById('clConsoleEntry').hidden&&input.disabled,'Input is unavailable before Run');assert.equal(d.querySelector('#clWorkspace #clWorkflowHelp'),null);run.click();run.click();await tick();assert.equal(starts,1,'Repeated Run starts exactly one process');assert.equal(output.textContent,'First? ');assert(!input.disabled&&!d.getElementById('clConsoleEntry').hidden,'Input appears only while program runs');
+ input.value='one';input.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));await tick();assert.equal(output.textContent,'First? one\nSecond? ');assert.equal(input.value,'','Polling reconciles accepted input despite a lost HTTP acknowledgement');assert.equal(answers.length,1,'An uncertain acknowledgement does not replay input');
+ input.value='two';input.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',shiftKey:true,bubbles:true,cancelable:true}));assert.equal(answers.length,1,'Shift+Enter remains available for multiline typing');input.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));await tick();assert.equal(starts,1);assert.equal(answers.length,2);assert.deepEqual(answers.map(a=>a.data),['one\n','two\n']);assert(output.textContent.includes('onetwo'));assert.equal(d.getElementById('clConsoleStatus').textContent,'Finished');assert(d.getElementById('clConsoleEntry').hidden&&!run.disabled);
+ seq=0;run.click();await tick();d.getElementById('clStop').click();await tick();assert.equal(stopped,1);assert(d.getElementById('clConsoleEntry').hidden);assert(!run.disabled);
+ console.log('PASS: Run before input, prompt before answer, two answers in one session, Enter/Shift+Enter, delivery reconciliation, one process and Stop');
+}finally{dom.window.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

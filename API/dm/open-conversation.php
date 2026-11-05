@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+require_once dirname(__DIR__,2).'/services/DmMessageIdentity.php';
+require_once dirname(__DIR__,2).'/services/JarredReplyQueue.php';
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
@@ -111,6 +113,7 @@ try {
     $msgs->execute($params);
     $messages = $msgs->fetchAll(PDO::FETCH_ASSOC);
     if ($after === null) $messages = array_reverse($messages);
+    $messages=DmMessageIdentity::enrich($db,$messages,(int)$me['id']);
     $msgs->closeCursor();
 
     if(($_GET['read']??'1')!=='0'){
@@ -125,9 +128,16 @@ try {
     $reads->mark('dm',$convId,(int)$me['id'],$messages,$after);
     }
     $partnerRead=UserPreferences::partnerRead($db,$convId,(int)$me['id'],$partnerId);
+    $aiJob=null;$retryMessage=null;
+    if((int)($partner['is_system']??0)===1&&($partner['username']??'')==='ecollab_ai'){
+        $aiJob=(new JarredReplyQueue($db))->latest((int)$me['id'],$convId);
+        $last=$db->prepare('SELECT id,sender_id FROM dm_messages WHERE conversation_id=? AND is_deleted=0 ORDER BY id DESC LIMIT 1');$last->execute([$convId]);$row=$last->fetch(PDO::FETCH_ASSOC);
+        if($row&&(int)$row['sender_id']===(int)$me['id'])$retryMessage=(int)$row['id'];
+    }
     echo json_encode([
         'success' => true,
         'conversation_id' => $convId,
+        'ai_job'=>$aiJob,'ai_retry_message_id'=>$retryMessage,
         'partner_last_read_id'=>$partnerRead,
         'partner' => $partner,
         'friend_status' => $friendStatus ?: 'none',

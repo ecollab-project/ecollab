@@ -17,6 +17,8 @@ try {
   require_once ROOT_PATH.'/database/config/db.php';
   $counts=['queued'=>0,'running'=>0];
   foreach(Database::getInstance()->query("SELECT state,COUNT(*) AS total FROM code_lab_jobs WHERE state IN ('queued','running') GROUP BY state")->fetchAll(PDO::FETCH_ASSOC)as$row)$counts[$row['state']]=(int)$row['total'];
+  try{$counts['interactive']=(int)Database::getInstance()->query('SELECT COUNT(*) FROM code_lab_live_sessions WHERE active_user_id IS NOT NULL AND expires_at>UTC_TIMESTAMP()')->fetchColumn();}
+  catch(PDOException $e){if($e->getCode()!=='42S02')throw $e;} // Legacy deployments may not yet have migration 068.
   echo json_encode($counts)."\n";
   if(array_sum($counts)){fwrite(STDERR,"Code Lab queue is active. Let current jobs finish before restarting the adapter.\n");exit(2);}exit;
  }

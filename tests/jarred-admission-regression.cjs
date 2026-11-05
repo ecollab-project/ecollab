@@ -1,0 +1,13 @@
+'use strict';
+const http=require('http'),{execFile}=require('node:child_process'),assert=require('node:assert/strict');
+let arrivals=[],release,received=0;const ready=new Promise(r=>release=r);
+const server=http.createServer((req,res)=>{req.resume();req.on('end',()=>{received++;if(received<=5){arrivals.push(res);if(arrivals.length===5)release();}else res.end(JSON.stringify({message:{content:'released'}}));});});
+const php=code=>new Promise((resolve,reject)=>execFile(process.env.PHP_BIN||'php',['-r',code],{cwd:require('path').resolve(__dirname,'..'),timeout:10000,env:{...process.env,JARRED_MAX_INFLIGHT:'5',JARRED_ADMISSION_WAIT_MS:'100'}},(e,out,err)=>e?reject(Error(err||String(e))):resolve(out)));
+(async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));const port=server.address().port,make=`require 'services/OllamaService.php';$s=new OllamaService('http://127.0.0.1:${port}','fixture',4);`;
+try{const active=Array.from({length:5},()=>php(make+`echo $s->generate([['role'=>'user','content'=>'held']])['text'];`));await Promise.race([ready,new Promise((_,reject)=>setTimeout(()=>reject(Error('Five admissions did not arrive')),3000))]);
+ const excess=await php(make+`try{$s->generate([['role'=>'user','content'=>'excess']]);exit(2);}catch(RuntimeException $e){if($e->getCode()!==503)exit(3);echo 'bounded';}`);assert.equal(excess,'bounded');assert.equal(received,5,'full admission gate never floods provider');
+ const warm=JSON.parse(await php(make+`echo json_encode($s->warmUp());`));assert.equal(warm.skipped,true);assert.equal(received,5,'warmer yields to real users');
+ for(const res of arrivals)res.end(JSON.stringify({message:{content:'held'}}));assert.deepEqual(await Promise.all(active),Array(5).fill('held'));
+ assert.equal(await php(make+`echo $s->generate([['role'=>'user','content'=>'after release']])['text'];`),'released');
+ console.log('PASS: bounded overload, warmer priority and admission release after concurrent requests');
+}finally{for(const res of arrivals)if(!res.writableEnded)res.end('{}');await new Promise(r=>server.close(r));}})().catch(e=>{console.error(e);server.close();process.exitCode=1;});

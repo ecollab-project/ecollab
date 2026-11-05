@@ -6,5 +6,7 @@ require_once ROOT_PATH.'/security/middleware/RoleMiddleware.php';
 $user=AuthMiddleware::requireAuth();
 RoleMiddleware::requireRole(['student','facilitator','admin','super_admin','moderator']);
 $csrfToken=AuthMiddleware::csrfToken();
+require_once ROOT_PATH.'/includes/calls/workspace-frame-policy.php';
+
 $learningMode='student';
 require ROOT_PATH.'/includes/layout/learning-workspace.php';

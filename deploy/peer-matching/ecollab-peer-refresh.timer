@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh eCollab peer activity every Monday in Manila
+
+[Timer]
+OnCalendar=Mon *-*-* 03:00:00 Asia/Manila
+Persistent=true
+RandomizedDelaySec=10m
+Unit=ecollab-peer-refresh.service
+
+[Install]
+WantedBy=timers.target

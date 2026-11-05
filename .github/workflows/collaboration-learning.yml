@@ -1,0 +1,86 @@
+name: Collaboration and learning
+on:
+  pull_request:
+    branches: [ecollab-collabs, main]
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_sqlite, mbstring, dom
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends poppler-utils unzip
+      - run: composer install --no-interaction --prefer-dist --no-plugins
+      - run: composer install --working-dir=tools/web-push --no-dev --no-interaction --prefer-dist --no-plugins
+      - run: npm install --no-save --ignore-scripts jsdom@30.1.2
+      - run: |
+          php tests/otp-mail-configuration.php
+          php tests/call-workspace-policy.php
+          vendor/bin/phpstan analyse --memory-limit=512M --no-progress
+          php tests/temporary-voice-lifecycle.php
+          php tests/temporary-voice-websocket.php
+          php tests/ai-learning-policy.php
+          php tests/jarred-task-optimization.php
+          php tests/jarred-grounding.php
+          php tests/jarred-queue-regression.php
+          php tests/dm-message-identity.php
+          php tests/peer-behavior-regression.php
+          php tests/peer-ml-regression.php
+          php tests/code-lab-module-reader.php
+          php tests/code-lab-module-tasks.php
+          php tests/code-lab-interactive-service.php
+          php tests/code-lab-regression.php
+          php tests/code-lab-integrity-policy.php
+          vendor/bin/phpunit --testsuite Unit
+          node tests/livekit-voice-regression.cjs
+          node tests/livekit-calls-regression.cjs
+          node tests/call-continuity-regression.cjs
+          node tests/call-inline-workspace.cjs
+          node tests/code-lab-console.cjs
+          node tests/code-lab-module-ui.cjs
+          node tests/code-lab-ui-regression.cjs
+          node tests/code-lab-integrity-regression.cjs
+          node tests/jarred-dm-pending.cjs
+          node tests/jarred-queue-ui.cjs
+          node tests/dm-message-reconciliation.cjs
+          node tests/jarred-timeout-regression.cjs
+          node tests/jarred-provider-regression.cjs
+          node tests/jarred-concurrency-regression.cjs
+          node tests/jarred-admission-regression.cjs
+          node tests/jarred-smoke-script.cjs
+          node tests/jarred-session-race.cjs
+  sql:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        image: ['mysql:8.0', 'mariadb:10.11']
+    services:
+      sql:
+        image: ${{ matrix.image }}
+        env:
+          MYSQL_ROOT_PASSWORD: test-password
+          MYSQL_DATABASE: ecollab_feature_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -ptest-password --silent"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_mysql, mbstring
+      - run: |
+          php tests/collaboration-mysql.php
+          php tests/code-lab-module-mysql.php
+        env:
+          FEATURE_TEST_DSN: mysql:host=127.0.0.1;dbname=ecollab_feature_test
+          DB_USER: root
+          DB_PASS: test-password

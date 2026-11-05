@@ -27,9 +27,9 @@ $resetSuccess = ($_GET['reset'] ?? '') === '1';
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/variables.css">
-  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/auth.css">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/auth.css?v=autofill-20261103">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/auth-mobile.css">
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=1">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=autofill-20261103">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=2">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script>
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">

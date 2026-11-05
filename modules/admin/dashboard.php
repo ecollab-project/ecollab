@@ -5,6 +5,8 @@ require_once ROOT_PATH.'/security/middleware/AuthMiddleware.php';
 require_once ROOT_PATH.'/security/middleware/RoleMiddleware.php';
 $user=AuthMiddleware::requireAuth();RoleMiddleware::requireRole(['admin','super_admin']);
 $csrfToken=AuthMiddleware::csrfToken();
+require_once ROOT_PATH.'/includes/calls/workspace-frame-policy.php';
+
 function workspaceTable(string $id,array $headers): void { ?><div class="workspace-table-wrap"><table><thead><tr><?php foreach($headers as $header):?><th scope="col"><?=htmlspecialchars($header)?></th><?php endforeach;?></tr></thead><tbody id="<?=$id?>"><tr><td colspan="<?=count($headers)?>" class="workspace-empty">Loading…</td></tr></tbody></table></div><?php }
 function workspacePager(string $id): void { ?><div class="workspace-pager" data-pager="<?=$id?>"><span data-summary>—</span><div><button type="button" data-prev aria-label="Previous page">←</button><span data-number>1</span><button type="button" data-next aria-label="Next page">→</button></div></div><?php }
 ?>
