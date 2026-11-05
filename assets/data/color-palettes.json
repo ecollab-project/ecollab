@@ -445,39 +445,39 @@
   },
   {
     "id": "forest-mint",
-    "name": "Forest & Lime",
+    "name": "FCMS Burgundy & Coral",
     "swatches": [
-      "#0b3d2e",
-      "#1e7f57",
-      "#a7d966",
-      "#f4f9f4",
+      "#180303",
+      "#780c0c",
+      "#b52b2b",
+      "#ff8085",
       "#ffffff"
     ],
     "dark": {
-      "page": "#072b20",
-      "surface": "#0b3d2e",
-      "raised": "#124b39",
-      "input": "#083225",
-      "line": "#4d7d61",
+      "page": "#180303",
+      "surface": "#780c0c",
+      "raised": "#68171b",
+      "input": "#2d080b",
+      "line": "#b3656a",
       "text": "#ffffff",
-      "muted": "#c3d5c8",
-      "accent": "#a7d966",
-      "accent2": "#f4f9f4",
-      "primary": "#1e7f57",
-      "primary-end": "#1e7f57"
+      "muted": "#efd0d2",
+      "accent": "#ff8085",
+      "accent2": "#ffffff",
+      "primary": "#b52b2b",
+      "primary-end": "#b52b2b"
     },
     "light": {
-      "page": "#f4f9f4",
+      "page": "#fff6f6",
       "surface": "#ffffff",
-      "raised": "#edf5e9",
+      "raised": "#ffe8e9",
       "input": "#ffffff",
-      "line": "#b6cdb9",
-      "text": "#0b3d2e",
-      "muted": "#37684f",
-      "accent": "#1e7f57",
-      "accent2": "#0b3d2e",
-      "primary": "#1e7f57",
-      "primary-end": "#1e7f57"
+      "line": "#c48b91",
+      "text": "#180303",
+      "muted": "#704047",
+      "accent": "#b52b2b",
+      "accent2": "#780c0c",
+      "primary": "#b52b2b",
+      "primary-end": "#b52b2b"
     }
   },
   {

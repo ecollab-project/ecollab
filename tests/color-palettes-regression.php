@@ -4,7 +4,7 @@ if(PHP_SAPI!=='cli')exit(1);
 require dirname(__DIR__).'/services/ColorPaletteService.php';
 function check(bool $value,string $label):void{if(!$value)throw new RuntimeException($label);}
 check(count(ColorPaletteService::all())===20,'All reference palettes');
-check(ColorPaletteService::DEFAULT==='forest-mint','Forest & Mint default');
+check(ColorPaletteService::DEFAULT==='forest-mint','FCMS default uses the compatible saved palette ID');
 foreach(ColorPaletteService::all() as $palette)check(ColorPaletteService::valid($palette['id']),'Allow named palette');
 foreach(['','unknown','FOREST-MINT',"forest-mint'; DROP TABLE users",'<script>alert(1)</script>'] as $id)check(!ColorPaletteService::valid($id),'Reject unlisted or unsafe palette');
 if($dsn=getenv('PALETTE_TEST_DSN')){

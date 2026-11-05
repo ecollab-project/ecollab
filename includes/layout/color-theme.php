@@ -2,7 +2,7 @@
 require_once ROOT_PATH.'/services/ColorPaletteService.php';
 ?>
 <meta name="ecollab-user" content="<?= (int)($_SESSION['user_id'] ?? 0) ?>">
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/color-palettes.css?v=forest-lime-20261105">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/color-palettes.css?v=fcms-burgundy-coral-20261105">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/color-theme.css?v=1">
 <script type="application/json" id="ecColorPalettes"><?= json_encode(ColorPaletteService::all(), JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?></script>
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-preferences.css?v=1">
