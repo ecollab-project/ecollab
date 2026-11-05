@@ -1,7 +1,7 @@
 name: Color palettes
 on:
   pull_request:
-    paths: ['assets/css/color-*', 'assets/js/color-theme.js', 'assets/data/color-palettes.json', 'services/ColorPaletteService.php', 'includes/layout/**', 'modules/**', 'API/profile/settings.php', 'database/migrations/059*', 'tests/color-palettes-*', '.github/workflows/color-palettes.yml']
+    paths: ['assets/css/color-*', 'assets/js/color-theme.js', 'assets/data/color-palettes.json', 'services/ColorPaletteService.php', 'includes/layout/**', 'modules/**', 'API/profile/settings.php', 'database/migrations/059*', 'database/migrations/069*', 'scripts/build-color-palettes.py', 'tests/color-palettes-*', '.github/workflows/color-palettes.yml']
 jobs:
   palettes:
     runs-on: ubuntu-latest

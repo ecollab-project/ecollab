@@ -1,5 +1,42 @@
 [
   {
+    "id": "ecollab-original",
+    "name": "eCollab Original",
+    "swatches": [
+      "#05010d",
+      "#ff2d75",
+      "#ff1493",
+      "#a855f7",
+      "#ffffff"
+    ],
+    "dark": {
+      "page": "#05010d",
+      "surface": "#0f0c1a",
+      "raised": "#191323",
+      "input": "#1a1525",
+      "line": "#79516d",
+      "text": "#ffffff",
+      "muted": "#b0b0c0",
+      "accent": "#ff2d75",
+      "accent2": "#a855f7",
+      "primary": "#ce1764",
+      "primary-end": "#bb1375"
+    },
+    "light": {
+      "page": "#fff7fb",
+      "surface": "#ffffff",
+      "raised": "#f8edf8",
+      "input": "#ffffff",
+      "line": "#b48ca6",
+      "text": "#1d1028",
+      "muted": "#6b4e68",
+      "accent": "#bb1455",
+      "accent2": "#8038c6",
+      "primary": "#ce1764",
+      "primary-end": "#bb1375"
+    }
+  },
+  {
     "id": "minimal-monochrome",
     "name": "Minimal Monochrome",
     "swatches": [
@@ -444,7 +481,7 @@
     }
   },
   {
-    "id": "forest-mint",
+    "id": "fcms-burgundy-coral",
     "name": "FCMS Burgundy & Coral",
     "swatches": [
       "#180303",
