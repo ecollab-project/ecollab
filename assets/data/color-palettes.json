@@ -445,39 +445,39 @@
   },
   {
     "id": "forest-mint",
-    "name": "Forest & Mint",
+    "name": "Forest & Lime",
     "swatches": [
-      "#064e3b",
-      "#16a34a",
-      "#86efac",
-      "#d1fae5",
-      "#f0fdf4"
+      "#0b3d2e",
+      "#1e7f57",
+      "#a7d966",
+      "#f4f9f4",
+      "#ffffff"
     ],
     "dark": {
-      "page": "#071a14",
-      "surface": "#112a23",
-      "raised": "#1c3b31",
-      "input": "#0c211b",
-      "line": "#34654c",
-      "text": "#f2f7f4",
-      "muted": "#afbeb6",
-      "accent": "#86efac",
-      "accent2": "#d1fae5",
-      "primary": "#064e3b",
-      "primary-end": "#12873d"
+      "page": "#072b20",
+      "surface": "#0b3d2e",
+      "raised": "#124b39",
+      "input": "#083225",
+      "line": "#4d7d61",
+      "text": "#ffffff",
+      "muted": "#c3d5c8",
+      "accent": "#a7d966",
+      "accent2": "#f4f9f4",
+      "primary": "#1e7f57",
+      "primary-end": "#1e7f57"
     },
     "light": {
-      "page": "#fefffe",
+      "page": "#f4f9f4",
       "surface": "#ffffff",
-      "raised": "#fdfffd",
+      "raised": "#edf5e9",
       "input": "#ffffff",
-      "line": "#c1d3ce",
-      "text": "#16231d",
-      "muted": "#526158",
-      "accent": "#064e3b",
-      "accent2": "#12863d",
-      "primary": "#064e3b",
-      "primary-end": "#12873d"
+      "line": "#b6cdb9",
+      "text": "#0b3d2e",
+      "muted": "#37684f",
+      "accent": "#1e7f57",
+      "accent2": "#0b3d2e",
+      "primary": "#1e7f57",
+      "primary-end": "#1e7f57"
     }
   },
   {
