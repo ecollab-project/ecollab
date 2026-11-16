@@ -1577,19 +1577,22 @@ function markAllRead() {
 }
 
 // ── Modals ──
+const modalDisplayTimers = new WeakMap();
 function openModal(id) {
   const el = document.getElementById(id);
   if (el) {
+    clearTimeout(modalDisplayTimers.get(el));
     el.style.display = 'flex';
-    setTimeout(() => el.classList.add('open'), 10);
+    modalDisplayTimers.set(el, setTimeout(() => el.classList.add('open'), 10));
   }
 }
 
 function closeModal(id) {
   const el = document.getElementById(id);
   if (el) {
+    clearTimeout(modalDisplayTimers.get(el));
     el.classList.remove('open');
-    setTimeout(() => { el.style.display = ''; }, 200);
+    modalDisplayTimers.set(el, setTimeout(() => { el.style.display = 'none'; }, 200));
   }
 }
 window.openModal = openModal;

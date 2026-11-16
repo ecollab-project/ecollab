@@ -230,7 +230,9 @@ function _pmMatchCard(m) {
         </button>
         ${m.already_connected
           ? `<button class="pm-btn-connected" disabled>✓ Connected</button>`
-          : `<button class="pm-btn-primary" onclick="openSendRequestModal(${m.id}, '${pmEsc(m.name)}', '${pmEsc(m.pct)}')">
+          : m.request_status === 'pending'
+            ? `<button class="pm-btn-connected" disabled>Request sent</button>`
+            : `<button class="pm-btn-primary" onclick="openSendRequestModal(${m.id}, '${pmEsc(m.name)}', '${pmEsc(m.pct)}')">
                🤝 Connect
              </button>`}
       </div>
@@ -418,7 +420,11 @@ async function _pmRenderLeaderboard(body) {
                 <div class="pm-card-bio">${p.shared_subjects} subjects · ${p.shared_interests} interests · ${p.shared_hobbies} hobbies</div>
               </div>
               <div class="pm-lb-score" style="color:${_pmScoreColor(p.score_total)}">${Math.round(p.score_total)}%</div>
-              <button class="pm-btn-primary pm-btn-xs" onclick="openSendRequestModal(${p.peer_id},'${pmEsc(p.full_name||p.username)}',${Math.round(p.score_total)})">Connect</button>
+              ${p.already_connected
+                ? '<button class="pm-btn-connected pm-btn-xs" disabled>✓ Connected</button>'
+                : p.request_status === 'pending'
+                  ? '<button class="pm-btn-connected pm-btn-xs" disabled>Request sent</button>'
+                  : `<button class="pm-btn-primary pm-btn-xs" onclick="openSendRequestModal(${p.peer_id},'${pmEsc(p.full_name||p.username)}',${Math.round(p.score_total)})">Connect</button>`}
             </div>`;
         }).join('')}
       </div>`;
