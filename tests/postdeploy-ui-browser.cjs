@@ -9,7 +9,7 @@ const modalFunctions=chat.slice(chat.indexOf('// ── Modals ──'),chat.ind
 let html=execFileSync(process.env.PHP_BIN||'php',['-d','session.save_path=/tmp','tests/responsive-render-fixture.php','chat'],{cwd:root,encoding:'utf8'});
 html=html.replace(/<script\b[\s\S]*?<\/script>/gi,'')
   .replace(/(href|src)="https?:\/\/[^/"\s]+(\/assets\/[^"\s]+)"/g,'$1="$2"')
-  .replace('</body>','<button id="fixtureOpen" onclick="openModal(\'addChannelModal\')">Open fixture dialog</button><script src="/fixture-modal.js"></script><script src="/assets/js/chat/modal-accessibility.js"></script></body>');
+  .replace('</body>','<button id="fixtureOpen" style="position:fixed;top:4px;left:4px;z-index:999" onclick="openModal(\'addChannelModal\')">Open fixture dialog</button><script src="/fixture-modal.js"></script><script src="/assets/js/chat/modal-accessibility.js"></script></body>');
 const server=http.createServer((req,res)=>{
   const url=new URL(req.url,'http://fixture');
   if(url.pathname==='/fixture'){res.setHeader('Content-Type','text/html');return res.end(html);}
@@ -60,6 +60,7 @@ const server=http.createServer((req,res)=>{
         scrollWidth:document.documentElement.scrollWidth,
       }));
       assert(dimensions.scrollWidth<=width+2,'Page overflows at '+width);
+      if(width<=420)console.log('Narrow composer',width,await page.locator('#chatInputField').evaluate(e=>{const rows=[];for(let p=e;p&&rows.length<5;p=p.parentElement){const s=getComputedStyle(p);rows.push({tag:p.tagName,id:p.id,class:p.className,width:p.getBoundingClientRect().width,display:s.display,flex:s.flex,columns:s.gridTemplateColumns});}return rows;}));
       if(width<=420)assert(dimensions.input.width>=width-65,'Text row is too narrow at '+width+': '+dimensions.input.width);
       assert.equal(dimensions.heading,width<=860?'none':'flex','Only one channel heading on mobile');
       for(const id of ['attachBtn','extrasBtn','emojiBtn','gifBtn','micBtn'])assert(await page.locator('#'+id).isVisible(),id+' remains available');

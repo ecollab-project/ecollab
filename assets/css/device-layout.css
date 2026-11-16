@@ -103,6 +103,7 @@ body.has-call-taskbar:not([data-mobile-surface=chat]):not([data-mobile-surface=w
  body[data-mobile-surface=library] .lib-grid{grid-template-columns:minmax(0,1fr)}
  body[data-mobile-surface=settings] .inner{padding:18px 10px}
  body[data-mobile-surface=settings] .hero{flex-wrap:wrap}.row .copy{min-width:0}
+ body[data-mobile-surface=chat] #chatInputContainer{display:block}
  /* Put the text on its own row; keep every media action available below it. */
  body[data-mobile-surface=chat] .chat-input-main{display:flex;flex-wrap:wrap;gap:4px;padding:8px}
  body[data-mobile-surface=chat] #chatInputField,body[data-mobile-surface=chat] .chat-input-main>.ec-composer{order:-1;flex:1 0 100%;width:100%;min-height:44px;box-sizing:border-box}
