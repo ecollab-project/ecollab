@@ -12,6 +12,7 @@ CREATE TABLE channels(id INTEGER PRIMARY KEY,server_id INTEGER,name TEXT,type TE
 CREATE TABLE server_members(server_id INTEGER,user_id INTEGER,server_role TEXT,UNIQUE(server_id,user_id));
 CREATE TABLE channel_members(channel_id INTEGER,user_id INTEGER);
 CREATE TABLE uploaded_files(id INTEGER PRIMARY KEY,channel_id INTEGER,original_name TEXT,file_size INTEGER,created_at TEXT,deleted_at TEXT);
+CREATE TABLE message_attachments(id INTEGER PRIMARY KEY,message_id INTEGER,file_name TEXT,file_size INTEGER);
 CREATE TABLE moderation_actions(id INTEGER PRIMARY KEY,server_id INTEGER,target_user_id INTEGER,action_type TEXT,is_active INTEGER,expires_at TEXT);
 CREATE TABLE messages(id INTEGER PRIMARY KEY AUTOINCREMENT,channel_id INTEGER,sender_id INTEGER,content TEXT,content_type TEXT,is_deleted INTEGER DEFAULT 0,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE study_room_sessions(id INTEGER PRIMARY KEY AUTOINCREMENT,channel_id INTEGER,title TEXT,description TEXT,status TEXT,scheduled_start TEXT,scheduled_end TEXT,created_by INTEGER);
@@ -28,6 +29,14 @@ $s->mutate(1,false,'save_note',['id'=>$n['id'],'title'=>'Edited','content'=>'Upd
 $s->mutate(1,false,'read_notifications',[]);verify((int)$db->query('SELECT is_read FROM notifications WHERE recipient_id=2')->fetchColumn()===0,'Other notifications modified');
 $d=$s->data(3,false);verify(array_column($d['channels']['items'],'id')===[11,13],'Private channel leaked');verify(array_column($d['resources']['items'],'id')===[1],'Private file leaked');
 $db->exec('INSERT INTO channel_members VALUES(12,3)');verify(count($s->data(3,false)['resources']['items'])===2,'Explicit private access missing');
+$db->exec("INSERT INTO messages(id,channel_id,sender_id,content,is_deleted) VALUES(100,11,1,'',0),(101,12,1,'',0),(102,21,2,'',0),(103,11,1,'',1);
+INSERT INTO message_attachments VALUES(100,100,'chat-public.pdf',123),(101,101,'chat-private.pdf',123),(102,102,'other-server.pdf',123),(103,103,'deleted.pdf',123)");
+$resources=$s->data(3,false)['resources'];verify($resources['available'],'Resource query failed');
+verify(count($resources['items'])===4,'Both upload and attachment sources must appear');
+$db->exec('DELETE FROM channel_members WHERE channel_id=12 AND user_id=3');
+$resources=$s->data(3,false)['resources'];verify(count($resources['items'])===2,'Private or deleted attachments leaked');
+verify(in_array('chat-public.pdf',array_column($resources['items'],'title'),true),'Chat attachment missing');
+$owned=$s->data(1,true,10)['resources']['items'];verify(count($owned)===4,'Owner must see own space resources only');
 rejects(fn()=>$s->data(2,true,10),403);rejects(fn()=>$s->mutate(2,true,'session',['server_id'=>10]),403);rejects(fn()=>$s->mutate(1,false,'session',['server_id'=>10]),403);
 $session=['server_id'=>10,'channel_id'=>11,'title'=>'Study','starts_at'=>'2026-10-14T10:00','ends_at'=>'2026-10-14T11:00'];$s->mutate(1,true,'session',$session);verify($db->query('SELECT scheduled_start FROM study_room_sessions')->fetchColumn()==='2026-10-14 02:00:00','Philippines time conversion failed');rejects(fn()=>$s->mutate(1,true,'session',array_replace($session,['channel_id'=>21])));rejects(fn()=>$s->mutate(1,true,'session',array_replace($session,['ends_at'=>'2026-10-14T09:00'])));
 rejects(fn()=>$s->mutate(3,false,'join_space',['server_id'=>20]),403);rejects(fn()=>$s->mutate(3,false,'join_space',['server_id'=>30]),403);

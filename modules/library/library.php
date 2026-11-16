@@ -59,6 +59,7 @@ $serverName = (string)($currentServer['name'] ?? 'Current Server');
     <h2 id="libraryHeading">Recommended for <?= htmlspecialchars($serverName, ENT_QUOTES, 'UTF-8') ?></h2>
     <p id="libraryDescription">Books will be ranked using this server's academic context, subject and tags. The catalog integrations and recommendation API will populate this view next.</p>
   </section>
+  <p class="lib-sub">Publication years are supplied by Open Library and may refer to a different edition.</p>
   <section class="lib-grid" id="libraryGrid">
     <div class="lib-placeholder">DOAB / OAPEN recommendations</div>
     <div class="lib-placeholder">Open textbook recommendations</div>
@@ -79,7 +80,7 @@ function renderBooks(books){
   grid.innerHTML=books.map(b=>`<article class="lib-placeholder" style="padding:0;overflow:hidden;color:var(--text)">
     ${b.cover?`<img src="${esc(b.cover)}" alt="" loading="lazy" style="width:100%;height:230px;object-fit:cover;background:#0f172a">`:'<div style="height:230px;display:grid;place-items:center;font-size:42px;background:#0f172a">📚</div>'}
     <div style="padding:14px"><strong style="display:block;line-height:1.35">${esc(b.title)}</strong>
-    <div style="font-size:12px;color:var(--muted);margin:7px 0">${esc((b.authors||[]).slice(0,2).join(', ')||'Unknown author')}${b.year?' · '+esc(b.year):''}</div>
+    <div style="font-size:12px;color:var(--muted);margin:7px 0">${esc((b.authors||[]).slice(0,2).join(', ')||'Unknown author')}${b.year?' · Catalog year: '+esc(b.year):''}</div>
     <div style="font-size:11px;color:var(--muted)">${esc(b.source||'Open Library')}</div>
     ${b.url?`<a data-work-key="${esc(b.work_key||'')}" href="${esc(b.url)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;color:#c084fc;text-decoration:none;font-weight:700">${esc(b.action||'View book')} →</a>`:''}
     ${trackingEnabled && b.work_key ? `<button type="button" data-useful="${esc(b.work_key)}" style="margin-left:8px">Useful</button>` : ''}</div></article>`).join('');

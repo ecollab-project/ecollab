@@ -3,6 +3,9 @@
 :root{--device-gutter:clamp(10px,2vw,32px);--device-editor-header:70px}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{min-width:0}
+button.sidebar-nav-item{appearance:none;width:100%;border:0;background:transparent;color:inherit;font-family:inherit;text-align:left}
+button.mob-hamburger,button.mob-right-btn{appearance:none;background:transparent;color:inherit;font:inherit}
+button.sidebar-nav-item:focus-visible,.sidebar-workspace-header:focus-visible{outline:2px solid var(--accent-purple);outline-offset:-2px}
 :where(main,section,article,header,footer,aside,form,fieldset){box-sizing:border-box;min-width:0}
 :where(img,video){max-width:100%}
 :where(input,select,textarea){box-sizing:border-box;min-width:0;max-width:100%}
@@ -26,6 +29,14 @@ body.has-call-taskbar:not([data-mobile-surface=chat]):not([data-mobile-surface=w
  .lw-row-actions{flex-shrink:1}
 }
 @media(max-width:860px){
+ body[data-mobile-surface=chat] .chat-header>div:first-child,body[data-mobile-surface=chat] .chat-header>.header-sep{display:none}
+ body[data-mobile-surface=chat] .chat-header .notif-wrap>button{display:none}
+ body[data-mobile-surface=chat] .chat-header{flex-wrap:nowrap}
+ body[data-mobile-surface=chat] #channelPresenceBadge{display:none}
+ body[data-mobile-surface=chat] .messages-area{overflow-x:hidden}
+ body[data-mobile-surface=chat] .message-group{min-width:0;max-width:100%;box-sizing:border-box}
+ body[data-mobile-surface=chat] .msg-content{min-width:0;max-width:calc(100% - 44px)}
+ body[data-mobile-surface=chat] .notif-dropdown{top:calc(112px + env(safe-area-inset-top))}
  :where(button,[role=button],a.btn,a.lw-button,.navbtn,.workspaceSettings,.workspace-pin,.footer-icon-btn){min-height:44px;touch-action:manipulation}
  :where(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=hidden]),select,textarea){font-size:16px}
  :where(dialog){padding:16px;max-height:calc(var(--app-viewport-height,100dvh) - 20px)}

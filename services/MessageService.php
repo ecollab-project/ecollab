@@ -370,7 +370,16 @@ class MessageService
             ORDER BY m.created_at DESC
         ");
         $stmt->execute([':cid' => $channelId]);
-        return $stmt->fetchAll() ?: [];
+        $messages = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        if (!$messages) return [];
+        $ids = array_column($messages, 'id');
+        $files = $this->db->prepare('SELECT message_id,file_name,file_path,file_size,mime_type FROM message_attachments WHERE message_id IN (' . implode(',', array_fill(0, count($ids), '?')) . ') ORDER BY id');
+        $files->execute($ids);
+        $attachments = [];
+        foreach ($files->fetchAll(PDO::FETCH_ASSOC) as $file) $attachments[$file['message_id']][] = $file;
+        foreach ($messages as &$message) $message['attachments'] = $attachments[$message['id']] ?? [];
+        unset($message);
+        return $messages;
     }
 
     /**
