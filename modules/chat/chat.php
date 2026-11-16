@@ -179,7 +179,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat-taskbar.css?v=neon-account-1">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script>
 <script defer src="<?= BASE_URL ?>/assets/js/chat/workspace-taskbar.js?v=separators-tooltips-1"></script>
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=ui-audit-20261116">
 <script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
 <?php require_once ROOT_PATH.'/includes/layout/color-theme.php'; ?>
 </head>
@@ -191,15 +191,15 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
   <!-- MOBILE TOPBAR -->
   <div class="mobile-topbar" id="mobileTopbar">
-    <div class="mob-hamburger" onclick="toggleSidebar()">
+    <button type="button" class="mob-hamburger" onclick="toggleSidebar()" aria-label="Open channel navigation" aria-controls="sidebarLeft">
       <span></span><span></span><span></span>
-    </div>
+    </button>
     <div class="mob-channel-info">
       <span style="color:var(--accent-purple);font-size:16px;">#</span>
       <span class="mob-channel-name" id="mobChannelName">channels</span>
     </div>
-    <div class="mob-right-btn" onclick="openFullMatchesModal()" title="AI Suggested Matches" aria-label="AI Suggested Matches">✨</div>
-    <div class="mob-right-btn" onclick="toggleNotifications()" title="Notifications" aria-label="Notifications">&#x1F514;</div>
+    <button type="button" class="mob-right-btn" onclick="openFullMatchesModal()" title="AI Suggested Matches" aria-label="AI Suggested Matches">✨</button>
+    <button type="button" class="mob-right-btn" onclick="toggleNotifications()" title="Notifications" aria-label="Notifications">&#x1F514;</button>
   </div>
 
   <!-- WORKSPACE SWITCHER -->
@@ -236,7 +236,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
   <!-- LEFT SIDEBAR -->
   <div class="sidebar-left" id="sidebarLeft">
-    <div class="sidebar-workspace-header" id="wsHeader" onclick="openServerManager()" title="Server settings">
+    <div class="sidebar-workspace-header" id="wsHeader" role="button" tabindex="0" onkeydown="if(event.target===this &amp;&amp; (event.key==='Enter' || event.key===' ')){event.preventDefault();openServerManager();}" onclick="openServerManager()" title="Server settings">
       <div class="ws-icon" id="wsIcon"><?= htmlspecialchars($firstServer['icon_emoji'] ?? '⭐') ?></div>
       <div class="ws-name" id="wsName"><?= htmlspecialchars($firstServer['name'] ?? 'Ecollab') ?></div>
       <div class="ws-chevron">▾</div>
@@ -252,36 +252,36 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
     <div class="sidebar-scroll">
       <div class="sidebar-nav">
-        <div class="sidebar-nav-item active" onclick="switchView('home', this)">
+        <button type="button" class="sidebar-nav-item active" onclick="switchView('home', this)">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
           </svg>
           Home
-        </div>
-        <div class="sidebar-nav-item" onclick="switchView('mentions', this)">
+        </button>
+        <button type="button" class="sidebar-nav-item" onclick="switchView('mentions', this)">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10h5v-2h-5c-4.34 0-8-3.66-8-8s3.66-8 8-8 8 3.66 8 8v1.43c0 .79-.71 1.57-1.5 1.57s-1.5-.78-1.5-1.57V12c0-2.76-2.24-5-5-5s-5 2.24-5 5 2.24 5 5 5c1.38 0 2.64-.56 3.54-1.47.65.89 1.77 1.47 2.96 1.47 1.97 0 3.5-1.6 3.5-3.57V12c0-5.52-4.48-10-10-10zm0 13c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z" />
           </svg>
           Mentions
-        </div>
-        <div class="sidebar-nav-item" onclick="switchView('bookmarks', this)">
+        </button>
+        <button type="button" class="sidebar-nav-item" onclick="switchView('bookmarks', this)">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
           </svg>
           Bookmarks
-        </div>
-        <div class="sidebar-nav-item" onclick="switchView('threads', this)">
+        </button>
+        <button type="button" class="sidebar-nav-item" onclick="switchView('threads', this)">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
           </svg>
           Threads
-        </div>
-        <div class="sidebar-nav-item" onclick="switchView('drafts', this)">
+        </button>
+        <button type="button" class="sidebar-nav-item" onclick="switchView('drafts', this)">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z" />
           </svg>
           Drafts
-        </div>
+        </button>
         <a class="sidebar-nav-item" id="serverCodeLabNav" href="<?= BASE_URL ?>/modules/code-lab/index.php?server_id=<?= (int)($firstServer['id'] ?? 0) ?>" style="text-decoration:none;color:inherit;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m8 6-6 6 6 6m8-12 6 6-6 6M14 4l-4 16"/></svg>
           Code Lab
@@ -1124,8 +1124,8 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <?php endif; ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-timeline.css?v=1">
   <script src="<?= BASE_URL ?>/assets/js/chat/timeline.js?v=dm-identity-20261103" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=jarred-pending-20261103" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=call-routing-4" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=ui-audit-20261116" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=ui-audit-20261116" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js?v=media-1" defer></script>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-media.css?v=1">
   <script src="<?= BASE_URL ?>/assets/js/chat/media-picker.js?v=settings-speed-1" defer></script>
@@ -3471,7 +3471,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <script src="<?= BASE_URL ?>/assets/js/chat/nav-persistence.js?v=2" defer></script>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/profile-view-overrides.css?v=1">
   <script id="profileViewScript" src="<?= BASE_URL ?>/assets/js/chat/profile-view.js?v=call-routing-4" defer></script>
-<script type="module" src="<?= BASE_URL ?>/assets/js/chat/yjs-channel-presence.js?v=settings-speed-1"></script>
+<script type="module" src="<?= BASE_URL ?>/assets/js/chat/yjs-channel-presence.js?v=ui-audit-20261116"></script>
 </body>
 
 <!-- ── FLASHCARD MODALS ── -->
@@ -3573,7 +3573,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 <div id="resourceCommentsModal" class="collab-modal-overlay" style="display:none"></div>
 
 <?php require_once dirname(__DIR__, 2) . '/includes/calls/bootstrap.php'; ?>
-<script type="module" src="<?= BASE_URL ?>/assets/js/chat/yjs-channel-presence.js?v=settings-speed-1"></script>
+<script type="module" src="<?= BASE_URL ?>/assets/js/chat/yjs-channel-presence.js?v=ui-audit-20261116"></script>
 </body>
 
 </html>

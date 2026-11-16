@@ -10,6 +10,16 @@ export function createChannelPresence({send,changed}) {
   return {
     receive(message){
       if(message.type==='joined_channel'){
+        // Repeated acknowledgements are not new browser clients. The server binds
+        // an awareness ID to this connection; preserve its ID and clock on rejoin.
+        if(room===Number(message.channel_id)&&awareness){
+          const remote=[...awareness.meta.keys()].filter(id=>id!==awareness.clientID);
+          removeAwarenessStates(awareness,remote,'remote');
+          for(const id of remote)awareness.meta.delete(id);
+          for(const entry of message.presence||[])if(entry.client_id!==awareness.clientID)applyAwarenessUpdate(awareness,awarenessFrame(entry),'remote');
+          awareness.setLocalState(awareness.getLocalState());
+          render();return;
+        }
         clear();room=Number(message.channel_id);doc=new Y.Doc();awareness=new Awareness(doc);
         awareness.on('update',(_changes,origin)=>{if(origin!=='remote')publish();});awareness.on('change',render);
         awareness.setLocalState(window._userSettings?.activity_status===0?null:{typing:false,status:document.hidden?'idle':'active'});

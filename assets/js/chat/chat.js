@@ -1517,7 +1517,7 @@ function renderPinnedModal(messages) {
   list.innerHTML = messages.map(msg => `
     <div class="pinned-msg">
       <div class="pinned-msg-meta">${escHtml(msg.username)} · ${timeAgo(msg.created_at)}</div>
-      <div class="pinned-msg-text">${escHtml(msg.content || '')}</div>
+      <div class="pinned-msg-text">${escHtml(msg.content || (msg.attachments || []).map(file => file.file_name).filter(Boolean).join(', ') || ({image:'Image attachment',file:'File attachment',voice:'Voice message',poll:'Poll',code:'Code snippet'}[msg.content_type]) || 'Message attachment')}</div>
     </div>
   `).join('');
 }

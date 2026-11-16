@@ -368,9 +368,20 @@ async function castPollVote(msgId, pollId, optionId) {
 // SEARCH OVERLAY
 // ═══════════════════════════════════════════════════════
 function openSearchModal() {
+  _searchReturnFocus = document.activeElement;
   if (window.openModal) openModal('searchOverlay');
   setTimeout(() => document.getElementById('searchInput')?.focus(), 100);
 }
+
+let _searchReturnFocus = null;
+document.addEventListener('keydown', event => {
+  const overlay = document.getElementById('searchOverlay');
+  if (event.key === 'Escape' && overlay?.style.display === 'flex') {
+    event.preventDefault();
+    window.closeModal?.('searchOverlay');
+    _searchReturnFocus?.focus();
+  }
+});
 
 function closeSearchOverlay(event) {
   if (event.target === document.getElementById('searchOverlay')) {
@@ -396,7 +407,7 @@ function searchMessages(query) {
       const rows=data.results||[];
       if(!rows.length){resultsEl.innerHTML='<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">No matching messages found.</div>';return;}
       resultsEl.innerHTML=rows.map(m=>{
-        const author=_esc(m.full_name||m.username||'User'), channel=_esc(m.channel_name||'channel'), text=_esc(m.content||''), time=_esc(m.created_at||'');
+        const author=_esc(m.full_name||m.username||'User'), channel=_esc(m.channel_name||'channel'), text=_esc(m.content||''), time=_esc(window.EcollabTimeline?.stamp(m.created_at)||m.created_at||'');
         return '<button type="button" onclick="_openSearchResult('+Number(m.channel_id)+','+Number(m.id)+')" style="display:block;width:100%;text-align:left;padding:10px;background:var(--bg-tertiary);border-radius:8px;margin-bottom:8px;cursor:pointer;border:1px solid var(--border);color:inherit"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;"><strong style="color:var(--text-primary)">'+author+'</strong> · #'+channel+' · '+time+'</div><div style="font-size:13px;color:var(--text-secondary);white-space:normal;word-break:break-word;">'+text+'</div></button>';
       }).join('');
     }catch(e){resultsEl.innerHTML='<div style="text-align:center;color:#f87171;font-size:13px;padding:20px 0;">'+_esc(e.message||'Search failed')+'</div>';}
