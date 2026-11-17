@@ -191,6 +191,8 @@ body.vc-active #voiceChannelView.active:not(.vc-minimized) .vc-header{position:r
 :is(.workspace-switcher,.ec-call-taskbar) #vcConnectedBar .vcb-label{text-transform:none;letter-spacing:0;white-space:nowrap;font-size:11px}
 
 @media(min-width:861px){
+ /* The expanded panel must leave the workspace call dock visible and clickable. */
+ body.vc-active #voiceChannelView.active:not(.vc-minimized){height:calc(var(--app-viewport-height,100dvh) - var(--server-dock-height,58px))!important}
  .workspace-call-slot .ec-call.is-taskbar-docked{width:280px!important;border-radius:12px;background:#162724;border-color:#22c55e30}
  .workspace-call-slot #vcConnectedBar{flex-basis:280px;width:280px;border-radius:12px}
  .ec-call.is-taskbar-docked .ec-call-preview,#voiceChannelView.vc-minimized{bottom:calc(var(--server-dock-height,58px) + 14px + env(safe-area-inset-bottom))!important}
