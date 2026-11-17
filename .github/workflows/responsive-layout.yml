@@ -23,6 +23,7 @@ jobs:
       - run: node tests/code-lab-module-browser.cjs
       - run: node tests/responsive-browser-regression.cjs
       - run: node tests/call-continuity-browser.cjs
+      - run: node tests/call-exit-browser.cjs
       - run: node tests/remote-stream-browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
