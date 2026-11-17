@@ -762,7 +762,7 @@ let _currentView = 'home';
 
 const _navViewConfigs = {
   mentions: { icon: '@', label: 'Mentions', desc: 'Messages that mentioned you', color: '#a855f7' },
-  bookmarks: { icon: '📌', label: 'Pinned', desc: 'All pinned messages across this server', color: '#f59e0b' },
+  bookmarks: { icon: '🔖', label: 'Bookmarks', desc: 'Saved messages and discussions across your spaces', color: '#f59e0b' },
   threads: { icon: '💬', label: 'Threads', desc: 'Direct messages with server members', color: '#22c55e' },
   drafts: { icon: '📝', label: 'Drafts', desc: 'Unsent messages', color: '#3b82f6' },
 };
@@ -795,7 +795,7 @@ async function _fetchNavViewData(viewName) {
     if (window._updateMentionBadge) window._updateMentionBadge();
   }
   if (viewName === 'bookmarks') {
-    // Fetch server-wide pinned messages from the API
+    // Fetch bookmarked messages and accessible saved discussions from the API
     try {
       const apiBase = window.API_BASE || '/API/chat';
       const resp = await fetch(`${apiBase}/nav-view-data.php?view=bookmarks`, { credentials: 'same-origin' });

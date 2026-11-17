@@ -179,7 +179,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat-taskbar.css?v=neon-account-1">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script>
 <script defer src="<?= BASE_URL ?>/assets/js/chat/workspace-taskbar.js?v=separators-tooltips-1"></script>
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=ui-audit-20261116">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=postdeploy-ui-20261116">
 <script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
 <?php require_once ROOT_PATH.'/includes/layout/color-theme.php'; ?>
 </head>
@@ -461,7 +461,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
     <!-- CHAT HEADER -->
     <div class="chat-header">
-      <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+      <div class="chat-channel-heading" style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
         <span style="font-size:22px;color:var(--text-muted);font-weight:300;">#</span>
         <div>
           <div style="font-size:15px;font-weight:700;color:var(--text-primary);line-height:1.2;" id="channelTitle">Select a channel</div>
@@ -1124,8 +1124,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <?php endif; ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-timeline.css?v=1">
   <script src="<?= BASE_URL ?>/assets/js/chat/timeline.js?v=dm-identity-20261103" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=ui-audit-20261116" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=ui-audit-20261116" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=postdeploy-ui-20261116" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/modal-accessibility.js?v=postdeploy-ui-20261116" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=postdeploy-ui-20261116" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js?v=media-1" defer></script>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-media.css?v=1">
   <script src="<?= BASE_URL ?>/assets/js/chat/media-picker.js?v=settings-speed-1" defer></script>
@@ -1193,7 +1194,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-tools.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-liveeditor.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-extra.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/peer-matching.js?v=matching-avatars-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/peer-matching.js?v=postdeploy-ui-20261116-matching-avatars-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/server-channel-management.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/server-discovery.js?v=privacy1" defer></script>
 

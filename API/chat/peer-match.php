@@ -188,6 +188,7 @@ try {
             $db->prepare('DELETE FROM pm_compatibility WHERE user_a_id = ? OR user_b_id = ?')->execute([$uid, $uid]);
             $json(['saved' => true]);
 
+        case 'get_leaderboard':
         case 'get_matches':
             $limiter = new RateLimiter();
             $rl = $limiter->attempt('pm_get_matches', (string)$uid, 20, 3600);
@@ -195,7 +196,7 @@ try {
 
             $profile = $loadProfile($uid, $db);
             $ready = !empty($profile['subjects']) || !empty($profile['interests']) || !empty($profile['hobbies']);
-            if (!$ready) $json(['matches' => [], 'profile_ready' => false]);
+            if (!$ready) $json([$action === 'get_leaderboard' ? 'leaderboard' : 'matches' => [], 'profile_ready' => false]);
 
             $limit = max(1, min(50, (int)($_GET['limit'] ?? 24)));
             $style = trim((string)($_GET['study_style'] ?? ''));
@@ -284,9 +285,24 @@ try {
                     'style' => ($b['score_style'] <=> $a['score_style']) ?: ($b['pct'] <=> $a['pct']),
                     'interests' => ($b['score_interests'] <=> $a['score_interests']) ?: ($b['pct'] <=> $a['pct']),
                     'hobbies' => ($b['score_hobbies'] <=> $a['score_hobbies']) ?: ($b['pct'] <=> $a['pct']),
-                    default => $b['pct'] <=> $a['pct'],
+                    default => ($b['score_total'] <=> $a['score_total']) ?: ($a['id'] <=> $b['id']),
                 };
             });
+            if ($action === 'get_leaderboard') {
+                // Top uses the same current hybrid score and access filters as Matches.
+                // pm_compatibility deliberately stores only rules, not personalized scores.
+                usort($matches, static fn(array $a, array $b): int => ($b['score_total'] <=> $a['score_total']) ?: ($a['id'] <=> $b['id']));
+                $json(['leaderboard'=>array_map(static fn(array $match): array => [
+                    'peer_id'=>$match['id'], 'full_name'=>$match['name'],
+                    'avatar_url'=>$match['avatar_url'], 'avatar_color_gradient'=>$match['grad'],
+                    'is_online'=>$match['is_online'], 'score_total'=>$match['score_total'],
+                    'shared_subjects'=>count($match['shared_subjects']),
+                    'shared_interests'=>count($match['shared_interests']),
+                    'shared_hobbies'=>count($match['shared_hobbies']),
+                    'already_connected'=>$match['already_connected'],
+                    'request_status'=>$match['request_status'],
+                ], array_slice($matches, 0, 20)), 'profile_ready'=>true]);
+            }
             $json(['matches'=>array_slice($matches, 0, $limit), 'profile_ready'=>true]);
 
         case 'search_users':
@@ -452,11 +468,6 @@ try {
             $stmt = $db->prepare("INSERT INTO pm_match_feedback (match_id, reviewer_id, rating, comment, tags) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE rating=VALUES(rating), comment=VALUES(comment), tags=VALUES(tags)");
             $stmt->execute([$matchId, $uid, $rating, mb_substr((string)($body['comment'] ?? ''), 0, 500), mb_substr((string)($body['tags'] ?? ''), 0, 200)]);
             $json(['saved' => true]);
-
-        case 'get_leaderboard':
-            $stmt=$db->prepare("SELECT c.*, CASE WHEN c.user_a_id=? THEN c.user_b_id ELSE c.user_a_id END AS peer_id, u.username,u.full_name,u.avatar_url,u.avatar_color_gradient,CASE WHEN NOT EXISTS(SELECT 1 FROM user_settings privacy WHERE privacy.user_id=u.id AND privacy.activity_status=0) THEN u.is_online ELSE 0 END AS is_online FROM pm_compatibility c JOIN users u ON u.id=CASE WHEN c.user_a_id=? THEN c.user_b_id ELSE c.user_a_id END WHERE (c.user_a_id=? OR c.user_b_id=?) AND u.deleted_at IS NULL AND u.status!='banned' AND COALESCE(u.is_system,0)=0 AND NOT EXISTS (SELECT 1 FROM user_settings us WHERE us.user_id=u.id AND us.ai_matching=0) ORDER BY c.score_total DESC LIMIT 20");
-            $stmt->execute([$uid,$uid,$uid,$uid]);
-            $json(['leaderboard'=>$stmt->fetchAll(PDO::FETCH_ASSOC)]);
 
         default:
             $fail('Unknown peer matching action.', 404);

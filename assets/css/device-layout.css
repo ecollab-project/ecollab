@@ -3,6 +3,9 @@
 :root{--device-gutter:clamp(10px,2vw,32px);--device-editor-header:70px}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{min-width:0}
+/* Opacity alone leaves closed dialogs in the keyboard and accessibility trees. */
+body[data-mobile-surface=chat] .modal-overlay:not(.open){visibility:hidden}
+body[data-mobile-surface=chat] .modal-overlay.open{visibility:visible}
 button.sidebar-nav-item{appearance:none;width:100%;border:0;background:transparent;color:inherit;font-family:inherit;text-align:left}
 button.mob-hamburger,button.mob-right-btn{appearance:none;background:transparent;color:inherit;font:inherit}
 button.sidebar-nav-item:focus-visible,.sidebar-workspace-header:focus-visible{outline:2px solid var(--accent-purple);outline-offset:-2px}
@@ -29,7 +32,7 @@ body.has-call-taskbar:not([data-mobile-surface=chat]):not([data-mobile-surface=w
  .lw-row-actions{flex-shrink:1}
 }
 @media(max-width:860px){
- body[data-mobile-surface=chat] .chat-header>div:first-child,body[data-mobile-surface=chat] .chat-header>.header-sep{display:none}
+ body[data-mobile-surface=chat] .chat-header>.chat-channel-heading,body[data-mobile-surface=chat] .chat-header>.header-sep{display:none!important}
  body[data-mobile-surface=chat] .chat-header .notif-wrap>button{display:none}
  body[data-mobile-surface=chat] .chat-header{flex-wrap:nowrap}
  body[data-mobile-surface=chat] #channelPresenceBadge{display:none}
@@ -100,6 +103,12 @@ body.has-call-taskbar:not([data-mobile-surface=chat]):not([data-mobile-surface=w
  body[data-mobile-surface=library] .lib-grid{grid-template-columns:minmax(0,1fr)}
  body[data-mobile-surface=settings] .inner{padding:18px 10px}
  body[data-mobile-surface=settings] .hero{flex-wrap:wrap}.row .copy{min-width:0}
+ body[data-mobile-surface=chat] #chatInputContainer{display:block}
+ /* Put the text on its own row; keep every media action available below it. */
+ body[data-mobile-surface=chat] .chat-input-main{display:flex;flex-wrap:wrap;gap:4px;padding:8px}
+ body[data-mobile-surface=chat] #chatInputField,body[data-mobile-surface=chat] .chat-input-main>.ec-composer{order:-1;flex:1 0 100%;width:100%;min-height:44px;box-sizing:border-box}
+ body[data-mobile-surface=chat] .chat-input-main>.input-btn-icon{width:44px;min-width:44px;height:44px}
+ body[data-mobile-surface=chat] .chat-input-main>.ec-composer{max-width:100%}
  body[data-mobile-surface=chat] .user-profile-footer{padding:8px;gap:6px;flex-wrap:wrap}
  body[data-mobile-surface=chat] .footer-controls{margin-left:auto}
  body[data-mobile-surface=landing] :where(.hero-btns,.nav-actions,.cta-btns){flex-wrap:wrap;gap:8px}
