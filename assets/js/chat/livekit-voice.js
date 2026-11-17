@@ -9,6 +9,7 @@
   let activeChannelId = null;
   let screenQuality = null;
   let mediaBusy = false;
+  let screenBusy = false;
   let preferredMicMuted = vcMicMuted;
   let preferredDeafened = vcDeafened;
   let countFetchBusy = false;
@@ -444,9 +445,16 @@
 
   async function setScreen(enabled) {
     if (!room) throw new Error('Not connected to voice.');
+    const targetRoom = room;
     const options = window.EcollabMediaSettings.screenOptions(screenQuality || window.EcollabMediaSettings.preferences.quality);
-    await room.localParticipant.setScreenShareEnabled(Boolean(enabled), options.capture, options.publish);
-    vcScreenOn = room.localParticipant.isScreenShareEnabled;
+    await targetRoom.localParticipant.setScreenShareEnabled(Boolean(enabled), options.capture, options.publish);
+    // The native chooser can outlive the call. Never attach a late capture to
+    // a new room or leave its tracks running after the user has disconnected.
+    if (room !== targetRoom) {
+      await targetRoom.localParticipant.setScreenShareEnabled(false);
+      return;
+    }
+    vcScreenOn = targetRoom.localParticipant.isScreenShareEnabled;
     syncScreenControls();
 
     const uid = Number(window.ECOLLAB?.userId || 0);
@@ -603,6 +611,7 @@
   }
   toggleScreenShare = function () {
     if (!room) return;
+    if (screenBusy) { showToast('Finish or cancel the browser screen chooser first.', 'info'); return; }
     if (!navigator.mediaDevices?.getDisplayMedia) { showToast('Screen sharing is unavailable in this browser.', 'info'); return; }
     if (vcScreenOn) stopScreenShare(); else {
       const selected=screenQuality||window.EcollabMediaSettings.preferences.quality;
@@ -615,12 +624,22 @@
     document.querySelectorAll('.screen-quality-btn').forEach(el=>el.classList.toggle('active',el===button));
   };
   startStopScreenShare = async function () {
-    if (!room || mediaBusy) return;
-    mediaBusy = true;
-    try { await setScreen(!vcScreenOn); closeModal('vcScreenModal'); }
-    catch (e) { showToast('Screen share: '+e.message,'info'); }
-    finally { mediaBusy = false; }
+    if (!room || screenBusy) return;
+    screenBusy = true;
+    const button = document.getElementById('vcScreenStartBtn');
+    if (button) button.disabled = true;
+    try {
+      // Request capture in this click's activation, then dismiss our setup
+      // overlay before waiting on the browser's own chooser. Mic/camera and
+      // leave-call controls remain usable while that chooser is pending.
+      const operation = setScreen(!vcScreenOn);
+      closeModal('vcScreenModal');
+      await operation;
+    }
+    catch (e) { showToast(e.name === 'NotAllowedError' ? 'Screen sharing cancelled or not permitted.' : 'Screen share: '+e.message,'info'); }
+    finally { screenBusy = false; if (button) button.disabled = false; }
   };
+  closeScreenShare = function () { closeModal('vcScreenModal'); };
   stopScreenShare = async function () {
     if (!room) return;
     try { await setScreen(false); } catch(e) { showToast(e.message,'info'); }
@@ -638,7 +657,7 @@
   openAudioSettings = function () { if(room) window.EcollabMediaSettings.open(room); };
   openNoiseCancelModal = openAudioSettings;
   // Keep deferred inline event stubs aligned with the media adapter.
-  for (const name of ['joinVoice','disconnectVoice','toggleVcMic','toggleCamera','toggleScreenShare','startStopScreenShare','stopScreenShare','selectScreenQuality','toggleVcDeafen','toggleMute','toggleDeafen','openAudioSettings','openNoiseCancelModal']) window['__real_'+name]=window[name];
+  for (const name of ['joinVoice','disconnectVoice','toggleVcMic','toggleCamera','toggleScreenShare','closeScreenShare','startStopScreenShare','stopScreenShare','selectScreenQuality','toggleVcDeafen','toggleMute','toggleDeafen','openAudioSettings','openNoiseCancelModal']) window['__real_'+name]=window[name];
 
   _syncVoiceQuickActions();
 

@@ -43,7 +43,7 @@
 
   var script = document.createElement('script');
   // Bump the cache key so the browser also gets this bootstrap fix.
-  script.src = (window.ECOLLAB?.baseUrl || '') + '/assets/js/chat/socket-core.js?v=collaboration-20261103';
+  script.src = (window.ECOLLAB?.baseUrl || '') + '/assets/js/chat/socket-core.js?v=qa-runtime-20261117-1';
   script.onload = function () {
     window.__ECOLLAB_SOCKET_CORE_LOADED = true;
     window.__ECOLLAB_SOCKET_CORE_LOADING = false;
