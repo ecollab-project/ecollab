@@ -37,7 +37,7 @@ export function createWhiteboardPresence(config, {send, changed}) {
         removeAwarenessStates(awareness,previous,'remote');
         for(const id of previous)awareness.meta.delete(id);
         for(const entry of message.presence||[])applyAwarenessUpdate(awareness,awarenessFrame(entry),'remote');
-        transmit();return false;
+        transmit();render();return false;
       }
       if(message.type==='wb_presence'){
         const entry=message.presence;

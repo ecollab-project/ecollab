@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Excalidraw } from "https://esm.sh/@excalidraw/excalidraw@0.18.0/dist/dev/index.js?external=react,react-dom";
 
-import {createWhiteboardPresence} from "./yjs-presence.js?v=yjs-presence-1";
+import {createWhiteboardPresence} from "./yjs-presence.js?v=qa-runtime-20261117-1";
 
 const cfg = window.ECOLLAB_EXCALIDRAW || {};
 const host = document.getElementById("excalidraw-root");

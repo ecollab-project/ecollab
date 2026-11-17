@@ -1,10 +1,11 @@
 const {JSDOM}=require('jsdom');const fs=require('fs'),path=require('path'),assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');
-const dom=new JSDOM('<div class="voice-channel" data-channel-id="20"><b class="vc-count">0</b></div><div id="voiceChannelView"><div class="vc-body"></div></div><div id="vcSpeakingGrid"></div><div id="vcListeningGrid"></div><button id="vcCamBtn"></button><div id="vcScreenGrid"></div><div id="vcScreenSection"></div><span id="vcScreenSectionCount"></span><button id="vcUnwatchBtn"></button>',{url:'https://ecollab.test',runScripts:'outside-only'});const w=dom.window;
+const dom=new JSDOM('<div class="voice-channel" data-channel-id="20"><b class="vc-count">0</b></div><div id="voiceChannelView"><div class="vc-body"></div></div><div id="vcSpeakingGrid"></div><div id="vcListeningGrid"></div><button id="vcCamBtn"></button><div id="vcScreenModal" class="open"><button id="vcScreenStartBtn"></button></div><div id="vcScreenGrid"></div><div id="vcScreenSection"></div><span id="vcScreenSectionCount"></span><button id="vcUnwatchBtn"></button>',{url:'https://ecollab.test',runScripts:'outside-only'});const w=dom.window;
 let outerScrolls=0,bodyScrolls=0;w.HTMLElement.prototype.scrollIntoView=()=>{outerScrolls++;};w.HTMLElement.prototype.scrollTo=()=>{bodyScrolls++;};
 w.HTMLMediaElement.prototype.play=()=>Promise.resolve();
 w.ECOLLAB={userId:1};w.fetch=async()=>({ok:true,json:async()=>({success:true,token:'x',url:'wss://test'})});w.escHtml=x=>x;w.showToast=()=>{};
-for(const name of ['joinVoice','disconnectVoice','toggleVcMic','toggleCamera','toggleScreenShare','startStopScreenShare','stopScreenShare','selectScreenQuality','toggleVcDeafen','toggleMute','toggleDeafen','openAudioSettings','openNoiseCancelModal','_setVcLabels','_updateConnectedBar','_ensureMinimizeBtn','_ensureVoiceQuickActions','_syncVoiceQuickActions','_refreshVoiceLayout','_reportVoiceStatus','updateVcCounts','_removeRemoteScreenShare','_hideRemoteScreenShareSection'])w[name]=()=>{};
+for(const name of ['joinVoice','disconnectVoice','toggleVcMic','toggleCamera','toggleScreenShare','closeScreenShare','startStopScreenShare','stopScreenShare','selectScreenQuality','toggleVcDeafen','toggleMute','toggleDeafen','openAudioSettings','openNoiseCancelModal','_setVcLabels','_updateConnectedBar','_ensureMinimizeBtn','_ensureVoiceQuickActions','_syncVoiceQuickActions','_refreshVoiceLayout','_reportVoiceStatus','updateVcCounts','_removeRemoteScreenShare','_hideRemoteScreenShareSection'])w[name]=()=>{};
+w.openModal=id=>w.document.getElementById(id)?.classList.add('open');w.closeModal=id=>w.document.getElementById(id)?.classList.remove('open');
 w.vcActive=false;w.vcChannelId=null;w.vcCamOn=false;w.vcMicMuted=true;w.vcScreenOn=false;w.vcDeafened=false;w.vcMinimized=false;w.vcRoomName='';
 w.addVcParticipant=(p,speaking)=>{const el=w.document.createElement('div');el.className=speaking?'vc-speaker-card':'vc-listener-card';el.dataset.userId=p.id;el.innerHTML='<button class="sc-mic-btn"></button>';w.document.getElementById(speaking?'vcSpeakingGrid':'vcListeningGrid').append(el);};
 w.renderVcUser=()=>w.addVcParticipant({id:1},false);w._moveUserCardOnMute=muted=>{w.document.querySelector('[data-user-id="1"]').remove();w.addVcParticipant({id:1},!muted);};
@@ -32,7 +33,17 @@ room.emit('TrackSubscribed',screen,{source:'screen_share'},p);assert(screen.atta
 room.emit('TrackStreamStateChanged',{source:'screen_share',track:screen},'active',p);assert(w.document.querySelector('.vc-screen-expanded'),'screen refresh preserves expansion');const watch=w.document.querySelector('[data-screen-user="2"] .vc-screen-watch-btn');watch.click();assert(!w.document.querySelector('[data-screen-user="2"]').classList.contains('vc-screen-expanded'),'one click restores a remote stream');watch.click();assert(w.document.querySelector('[data-screen-user="2"]').classList.contains('vc-screen-expanded'),'one click expands again after refresh');assert.equal(w.document.querySelector('[data-user-id="2"] video'),cameraEl);
 room.emit('TrackMuted',{source:'screen_share'},p);assert(!w.document.querySelector('[data-screen-user="2"]'));assert.equal(w.document.getElementById('vcUnwatchBtn').style.display,'none','stopped share clears stale Unwatch control');assert.equal(w.document.querySelector('[data-user-id="2"] video'),cameraEl,'stopping share preserves camera');
 room.emit('TrackSubscribed',screen,{source:'screen_share'},p);room.emit('TrackSubscribed',camera,{source:'camera'},p);assert(w.document.querySelector('[data-screen-user="2"]'));assert.equal(w.document.querySelectorAll('[data-user-id="2"] video').length,1,'reverse publication order keeps camera separate');
-room.remoteParticipants.delete('user-2');room.emit('ParticipantDisconnected',p);assert.equal(w.document.querySelector('.vc-count').textContent,'1');await w.disconnectVoice();dom.window.close();console.log('PASS: local/remote mute agreement, roster uniqueness, exact participant count');})().catch(e=>{console.error(e);dom.window.close();process.exitCode=1;});
+room.remoteParticipants.delete('user-2');room.emit('ParticipantDisconnected',p);assert.equal(w.document.querySelector('.vc-count').textContent,'1');let finishCapture;
+room.localParticipant.setScreenShareEnabled=enabled=>enabled?new Promise(resolve=>{finishCapture=resolve;}):Promise.resolve();
+w.navigator.mediaDevices={getDisplayMedia(){}};
+const pendingCapture=w.startStopScreenShare();
+assert(!w.document.getElementById('vcScreenModal').classList.contains('open'),'setup closes before native chooser resolves');
+assert(w.document.getElementById('vcScreenStartBtn').disabled,'duplicate share requests disabled');
+await w.toggleVcMic();assert.equal(w.vcMicMuted,false,'pending capture cannot lock microphone controls');
+await w.disconnectVoice();finishCapture();await pendingCapture;
+assert.equal(w.vcScreenOn,false,'late capture cannot reactivate sharing after leaving');
+assert.equal(w.document.getElementById('vcScreenStartBtn').disabled,false,'share control recovers after completion');
+dom.window.close();console.log('PASS: local/remote mute agreement, roster uniqueness, exact participant count');})().catch(e=>{console.error(e);dom.window.close();process.exitCode=1;});
 
 
 

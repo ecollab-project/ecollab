@@ -19,28 +19,33 @@ let socketReconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
 const typingUsers          = new Set();
 let _authed                = false;
-let _wsToken               = null;        // server-issued token, fetched before connect
+let _connectionAttempt     = null;
 let _socketAuthenticated    = false;
 
 // ── Token fetch + connect entry point ────────────────────────────────────────
-async function connectWebSocket() {
-  try {
+function connectWebSocket() {
+  if (chatSocket && [WebSocket.CONNECTING, WebSocket.OPEN].includes(chatSocket.readyState)) return Promise.resolve();
+  if (_connectionAttempt) return _connectionAttempt;
+  _connectionAttempt = (async () => { try {
     const base = window.ECOLLAB?.baseUrl || '';
-    const res  = await fetch(`${base}/API/auth/ws-token.php`, { credentials: 'same-origin' });
+    const res  = await fetch(`${base}/API/auth/ws-token.php`, { credentials: 'same-origin', cache: 'no-store' });
     if (!res.ok) throw new Error('ws-token fetch failed: ' + res.status);
     const data = await res.json();
-    if (!data.token) throw new Error('No token in ws-token response');
-    _wsToken = data.token;
+    if (typeof data.token !== 'string' || !data.token.trim()) throw new Error('No token in ws-token response');
+    initWebSocket(data.token);
   } catch (err) {
     console.warn('[WS] Could not fetch ws_token — falling back to polling.', err.message);
     startPollingFallback();
     return;
-  }
-  initWebSocket();
+  } })().finally(() => { _connectionAttempt = null; });
+  return _connectionAttempt;
 }
 
 // ── Core WebSocket init ───────────────────────────────────────────────────────
-function initWebSocket() {
+function initWebSocket(token) {
+  // Legacy DOMContentLoaded callers must go through token acquisition too.
+  // They can race the asynchronous token fetch performed by auto-start.
+  if (typeof token !== 'string' || !token.trim()) return connectWebSocket();
   const wsUrl = window.ECOLLAB?.wsUrl || 'ws://localhost:8080';
 
   if (chatSocket && (chatSocket.readyState === WebSocket.CONNECTING || chatSocket.readyState === WebSocket.OPEN)) {
@@ -61,7 +66,7 @@ function initWebSocket() {
       _socketAuthenticated    = false;
 
       // Authenticate this exact socket; a reconnect may have replaced the global.
-      socket.send(JSON.stringify({ type: 'auth', ws_token: _wsToken }));
+      socket.send(JSON.stringify({ type: 'auth', ws_token: token }));
     };
 
     socket.onmessage = (event) => {
@@ -117,15 +122,9 @@ function scheduleReconnect() {
   clearTimeout(socketReconnectTimer);
   socketReconnectAttempts++;
   // Fetch a fresh token before each reconnect attempt
-  socketReconnectTimer = setTimeout(async () => {
+  socketReconnectTimer = setTimeout(() => {
     console.log('[WS] Reconnecting… attempt', socketReconnectAttempts);
-    try {
-      const base = window.ECOLLAB?.baseUrl || '';
-      const res  = await fetch(`${base}/API/auth/ws-token.php`, { credentials: 'same-origin' });
-      const data = await res.json();
-      if (data.token) _wsToken = data.token;
-    } catch { /* use last token; server will reject if expired and we'll retry */ }
-    initWebSocket();
+    connectWebSocket();
   }, socketReconnectDelay);
   socketReconnectDelay = Math.min(socketReconnectDelay * 1.5, 30000);
 }

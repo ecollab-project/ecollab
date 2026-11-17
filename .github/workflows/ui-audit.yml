@@ -19,6 +19,9 @@ jobs:
           node tests/modal-accessibility-regression.cjs
           node tests/yjs-channel-presence-regression.cjs
           node tests/yjs-presence-regression.cjs
+          node tests/socket-auth-race-regression.cjs
+          node tests/channel-presence-bootstrap-regression.cjs
+          node tests/whiteboard-socket-regression.cjs
           node tests/chat-navigation-regression.cjs
           node tests/chat-timeline-regression.cjs
           node tests/learning-workspace-ui-regression.cjs
@@ -27,5 +30,6 @@ jobs:
           php tests/peer-top-regression.php
           php tests/whiteboard-presence-regression.php
           php tests/whiteboard-scene-regression.php
+          php tests/jarred-response-format.php
       - run: |
           for file in API/chat/peer-match.php modules/chat/chat.php modules/chat/settings.php modules/library/library.php modules/whiteboard/session.php services/LearningWorkspaceService.php services/MessageService.php; do php -l "$file" || exit 1; done

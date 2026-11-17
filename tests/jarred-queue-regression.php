@@ -52,4 +52,12 @@ try{$queue->reserve(1,1,99,'rollback',null,[],function()use($save){$save(1,'roll
 jq((int)$db->query('SELECT COUNT(*) FROM jarred_reply_jobs')->fetchColumn()===$count,'failed save rolls back the reservation');
 $nonce='b7fce7d0-174e-42d5-8ff7-118cf44c7461';$callback=fn()=>$queue->reserve(1,1,99,'Once',null,[],fn()=>$save(1,'Once'));
 $first=DmMessageIdentity::record($db,1,$nonce,'dm',1,['Once'],$callback);$second=DmMessageIdentity::record($db,1,$nonce,'dm',1,['Once'],$callback);jq($first['id']===$second['id']&&$second['replayed'],'HTTP retry does not enqueue another job');
+$formatDb=queueFixture();$formatQueue=new JarredReplyQueue($formatDb);
+foreach ([['Answer only with the number: 17 + 25.','{"answer":42}','42'],['Explain sessions in exactly two short sentences.','{"sentences":["Sessions keep server data.","A cookie can identify the session."]}','Sessions keep server data. A cookie can identify the session.']] as [$question,$output,$expected]) {
+    $saveFormat=function()use($formatDb,$question){$formatDb->prepare('INSERT INTO dm_messages(conversation_id,sender_id,body) VALUES(1,1,?)')->execute([$question]);return (int)$formatDb->lastInsertId();};
+    $message=$formatQueue->reserve(1,1,99,$question,null,[],$saveFormat);$formatQueue->activate(1,$message);$job=$formatQueue->claim();
+    $formatWorker=new JarredDmReplyWorker($formatDb,function($messages,$prompt,$tokens,$schema)use($output){jq(is_array($schema)&&str_contains($prompt,'Output contract'),'worker passes schema and current-request format instructions');return ['text'=>$output];},fn()=>'');
+    $answer=$formatWorker->generate($job);jq($answer===$expected,'worker publishes plain formatted text, never schema JSON');
+    $formatQueue->finish($job,fn()=>$formatWorker->persist($job,$answer));
+}
 echo "PASS: five durable questions, two worker leases, exact-once publication, crash recovery, retry identity, rollback, authorization and fresh Code Lab policy\n";
