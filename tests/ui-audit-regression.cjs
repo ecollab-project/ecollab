@@ -8,11 +8,12 @@ w.openModal=id=>d.getElementById(id).style.display='flex';
 w.closeModal=id=>d.getElementById(id).style.display='none';
 w._esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 w.escHtml=w._esc;w.timeAgo=()=> 'date';
-w.fetch=async()=>({ok:true,json:async()=>({success:true,results:[{id:7,channel_id:20,channel_name:'general',full_name:'<img src=x>',content:'<script>bad()</script>',created_at:'2026-11-03 11:17:23'}]})});
+w.fetch=async()=>({ok:true,json:async()=>({success:true,results:[{id:7,channel_id:20,channel_name:'general',full_name:'<img src=x>',content:'[@Legal Shota](#ecollab-mention-42) <script>bad()</script>',created_at:'2026-11-03 11:17:23'}]})});
 w.eval(fs.readFileSync('assets/js/chat/timeline.js','utf8'));
 const features=fs.readFileSync('assets/js/chat/chat-features.js','utf8');
 w.eval(features.slice(features.indexOf('function openSearchModal()'),features.indexOf('// ACTIVE NOW MODAL')));
 const chat=fs.readFileSync('assets/js/chat/chat.js','utf8');
+w.eval(chat.slice(chat.indexOf('function mentionLinks('),chat.indexOf('const nativeMentionState')));
 w.eval(chat.slice(chat.indexOf('function renderPinnedModal('),chat.indexOf('// ── Attach / Extras menus')));
 (async()=>{
  const trigger=d.getElementById('searchTrigger');trigger.focus();w.openSearchModal();
@@ -22,6 +23,11 @@ w.eval(chat.slice(chat.indexOf('function renderPinnedModal('),chat.indexOf('// �
  w.searchMessages('hello');await new Promise(r=>setTimeout(r,300));
  const result=d.querySelector('#searchResults button');assert(result);assert(result.textContent.includes(w.EcollabTimeline.stamp('2026-11-03 11:17:23')),'search uses chat timestamp formatter');
  assert.equal(result.querySelectorAll('img,script').length,0,'search output escapes user content');
+ assert.match(result.textContent,/@Legal Shota/);
+ assert.doesNotMatch(result.textContent,/#ecollab-mention/);
+ w.renderPinnedModal([{username:'test',content:'[@Legal Shota](#ecollab-mention-42)'}]);
+ assert.match(d.getElementById('pinnedList').textContent,/@Legal Shota/);
+ assert.doesNotMatch(d.getElementById('pinnedList').textContent,/#ecollab-mention/);
  w.renderPinnedModal([{username:'test',content:'',content_type:'image',attachments:[{file_name:'<unsafe>.png'}]}]);
  assert(d.getElementById('pinnedList').textContent.includes('<unsafe>.png'));assert.equal(d.querySelectorAll('#pinnedList unsafe').length,0);
  w.renderPinnedModal([{username:'test',content:'',content_type:'image'}]);assert(d.getElementById('pinnedList').textContent.includes('Image attachment'));
