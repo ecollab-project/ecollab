@@ -251,6 +251,7 @@ body[data-mobile-surface=chat] :is(.chat-header, #chatInputContainer) button:foc
   }
 
   body[data-mobile-surface=chat] #chatInputContainer #chatInputField {
+    min-height: 44px;
     padding-inline: 8px;
     font-size: 16px;
   }
