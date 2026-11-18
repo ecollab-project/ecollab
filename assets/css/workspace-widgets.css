@@ -1,0 +1,61 @@
+[data-workspace-widget][hidden], #sidebarRight[hidden], [data-context-toggle][hidden], #ecContextBackdrop[hidden] { display: none !important; }
+.ec-customize-link {
+  display: block;
+  flex-shrink: 0;
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-size: .8rem;
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+.ec-customize-link:hover { background: var(--bg-hover); }
+.ec-customize-link:focus-visible, .ec-context-toggle:focus-visible { outline: 2px solid var(--ec-focus); outline-offset: -2px; }
+.ec-context-toggle { display: none; }
+#ecContextBackdrop { display: none; }
+@media (max-width: 1100px) {
+  .ec-context-toggle {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    padding-inline: 10px;
+    font: inherit;
+    font-size: .8rem;
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  #sidebarRight.ec-context-open {
+    display: flex;
+    position: fixed;
+    inset: 52px 0 0 auto;
+    height: auto;
+    width: min(330px, calc(100vw - 24px));
+    z-index: 300;
+    box-shadow: -12px 0 28px #0004;
+  }
+  #ecContextBackdrop:not([hidden]) {
+    display: block;
+    position: fixed;
+    inset: 52px 0 0;
+    z-index: 299;
+    background: #0007;
+    border: 0;
+  }
+}
+@media (max-width: 860px) { .chat-header .ec-context-toggle { display: none; } }
+.ec-widget-fieldset { padding: 0; margin: 0; border: 0; }
+.ec-widget-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.ec-widget-column { padding: 10px; border: 1px solid var(--ec-line); border-radius: 10px; }
+.ec-widget-column h3 { font-size: .9rem; margin: 2px 0 8px; }
+.ec-widget-column ul { margin: 0; padding: 0; list-style: none; }
+.ec-widget-column li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; border-top: 1px solid var(--ec-line); padding: 5px 0; }
+.ec-widget-column label { display: inline-flex; align-items: center; gap: 8px; font-size: .82rem; cursor: pointer; min-height: 44px; }
+.ec-widget-column input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--ec-accent); }
+.ec-widget-actions { display: flex; flex-wrap: wrap; gap: 4px; }
+.ec-widget-actions .btn { padding: 5px 8px; min-width: 44px; min-height: 44px; font-size: .75rem; }
+.ec-widget-actions .btn:disabled { opacity: .4; cursor: default; }
+.ec-widget-empty { color: var(--ec-muted); font-size: .8rem; }
+#ecWidgetStatus { min-height: 1.3em; font-size: .8rem; }
+@media (max-width: 700px) { .ec-widget-columns { grid-template-columns: 1fr; } }
