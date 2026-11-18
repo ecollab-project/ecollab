@@ -916,7 +916,7 @@ function _ensureDmPanel() {
     <div id="dmMessagesArea" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;"></div>
 
     <!-- Typing indicator -->
-    <div id="dmTypingIndicator" style="display:none;padding:4px 14px;font-size:11px;color:var(--text-muted);font-style:italic;"></div>
+    <div id="dmTypingIndicator" role="status" aria-atomic="true" style="display:none;padding:4px 14px;font-size:11px;color:var(--text-muted);font-style:italic;"></div>
 
     <!-- Input -->
     <div id="dmAttachmentPreview" style="display:none;padding:8px 12px 0;border-top:1px solid var(--border);"></div>
@@ -1049,7 +1049,8 @@ function _syncAiTyping() {
     indicator.dataset.aiConversation = String(DM.activeConvId);
     indicator.style.display = 'flex';
     const state=DM.aiJobs.get(Number(DM.activeConvId))?.state;
-    indicator.textContent = state==='queued'||state==='preparing'?'Jarred is queued. You can keep using eCollab.':'Jarred is preparing a reply…';
+    const status = state === 'running' ? 'Jarred is preparing a reply…' : 'Request queued. Jarred will reply here. You can keep using eCollab.';
+    if (indicator.textContent !== status) indicator.textContent = status;
   } else if (indicator.dataset.aiConversation) {
     indicator.style.display = 'none';
     indicator.textContent = '';

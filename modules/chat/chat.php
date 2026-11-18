@@ -179,7 +179,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat-taskbar.css?v=neon-account-1">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script>
 <script defer src="<?= BASE_URL ?>/assets/js/chat/workspace-taskbar.js?v=separators-tooltips-1"></script>
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=postdeploy-ui-20261116">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=ux-audit-1">
 <script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
 <?php require_once ROOT_PATH.'/includes/layout/color-theme.php'; ?>
 </head>
@@ -191,7 +191,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
   <!-- MOBILE TOPBAR -->
   <div class="mobile-topbar" id="mobileTopbar">
-    <button type="button" class="mob-hamburger" onclick="toggleSidebar()" aria-label="Open channel navigation" aria-controls="sidebarLeft">
+    <button type="button" class="mob-hamburger" onclick="toggleSidebar()" aria-label="Open channel navigation" aria-controls="sidebarLeft workspaceSwitcher" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
     <div class="mob-channel-info">
@@ -274,7 +274,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
           </svg>
-          Threads
+          Discussions
         </button>
         <button type="button" class="sidebar-nav-item" onclick="switchView('drafts', this)">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
@@ -666,7 +666,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
         <div class="chat-input-actions">
           <div class="input-spacer"></div>
-          <button class="ai-assist-btn" id="aiAssistBtn" onclick="generateAIReply()">✨ AI Assist <span class="ai-assist-chevron">▾</span></button>
+          <button class="ai-assist-btn" id="aiAssistBtn" aria-label="AI Assist" onclick="generateAIReply()">✨ <span class="ai-assist-label">AI Assist</span> <span class="ai-assist-chevron">▾</span></button>
           <button class="send-btn" onclick="sendMessage()">Send</button>
         </div>
       </div>
@@ -1124,8 +1124,8 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <?php endif; ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-timeline.css?v=1">
   <script src="<?= BASE_URL ?>/assets/js/chat/timeline.js?v=dm-identity-20261103" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=postdeploy-ui-20261116" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/modal-accessibility.js?v=postdeploy-ui-20261116" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=ux-audit-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/modal-accessibility.js?v=ux-audit-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=postdeploy-ui-20261116" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js?v=media-1" defer></script>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-media.css?v=1">
@@ -1179,7 +1179,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     </button>
   </div>
 
-  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=jarred-queue-20261103" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=ux-audit-1" defer></script>
   <?php if (filter_var(env('CENTRIFUGO_ENABLED', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
   <script src="<?= BASE_URL ?>/assets/js/chat/centrifugo-delivery.js?v=delivery-1" defer></script>
   <?php endif; ?>
@@ -1194,7 +1194,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-tools.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-liveeditor.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-extra.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/peer-matching.js?v=postdeploy-ui-20261116-matching-avatars-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/peer-matching.js?v=ux-audit-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/server-channel-management.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/server-discovery.js?v=privacy1" defer></script>
 
@@ -1321,12 +1321,12 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </div>
 
   <!-- SEARCH OVERLAY -->
-  <div class="modal-overlay" id="searchOverlay" onclick="closeSearchOverlay(event)" style="display:none;">
+  <div class="modal-overlay" id="searchOverlay" aria-label="Search messages" onclick="closeSearchOverlay(event)" style="display:none;">
     <div class="modal modal-md" style="margin-top:-200px;">
       <div class="modal-header">
         <div style="display:flex;align-items:center;gap:8px;flex:1;">
           <span>🔍</span>
-          <input type="text" id="searchInput" style="flex:1;background:transparent;border:none;outline:none;font-size:16px;color:var(--text-primary);font-family:'Inter',sans-serif;" placeholder="Search messages..." oninput="searchMessages(this.value)" />
+          <input type="text" id="searchInput" aria-label="Search messages in this channel" style="flex:1;background:transparent;border:none;outline:none;font-size:16px;color:var(--text-primary);font-family:'Inter',sans-serif;" placeholder="Search messages..." oninput="searchMessages(this.value)" />
         </div>
         <button class="modal-close" onclick="closeModal('searchOverlay')">×</button>
       </div>
@@ -3421,14 +3421,14 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <!-- ══════════════════════════════════════════════════════════════
        PEER MATCHING MODAL
        ══════════════════════════════════════════════════════════════ -->
-  <div id="peerMatchingModal">
+  <div id="peerMatchingModal" aria-label="Find study partners">
     <div class="pm-shell">
       <div class="pm-header">
         <div>
           <div class="pm-header-title">🤝 Find Study Partners</div>
           <div class="pm-header-sub">Matched by subjects · study style · hobbies · interests</div>
         </div>
-        <button class="pm-close" onclick="closePeerMatchingModal()">✕</button>
+        <button class="pm-close" aria-label="Close study partners" onclick="closePeerMatchingModal()">✕</button>
       </div>
       <div class="pm-tab-bar">
         <button class="pm-tab-btn pm-active" data-tab="matches" onclick="_pmShowTab('matches')">✨ Matches</button>
@@ -3442,7 +3442,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </div>
 
   <!-- Send request modal -->
-  <div id="pmSendRequestModal">
+  <div id="pmSendRequestModal" aria-label="Send connection request">
     <div class="pm-req-box">
       <div class="modal-header">
         <div>
@@ -3464,7 +3464,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </div>
 
   <!-- Compatibility detail modal -->
-  <div id="pmCompatModal"></div>
+  <div id="pmCompatModal" aria-label="Compatibility details"></div>
 
   <script src="<?= BASE_URL ?>/assets/js/chat/functionality-overrides.js?v=profile-2" defer></script>
   <!-- Thread enhancements are loaded by functionality-overrides.js after threads-v2.js is ready. -->
