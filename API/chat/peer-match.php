@@ -112,6 +112,31 @@ try {
         return $profile;
     };
 
+    $loadRelationship = static function (int $viewer, int $peer) use ($db): array {
+        $friends = $db->prepare("SELECT status, requester_id FROM friendships
+            WHERE (requester_id=? AND addressee_id=?) OR (requester_id=? AND addressee_id=?)");
+        $friends->execute([$viewer, $peer, $peer, $viewer]);
+        $accepted = false;
+        $sent = false;
+        $received = false;
+        foreach ($friends->fetchAll(PDO::FETCH_ASSOC) as $friend) {
+            $accepted = $accepted || $friend['status'] === 'accepted';
+            $sent = $sent || ($friend['status'] === 'pending' && (int)$friend['requester_id'] === $viewer);
+            $received = $received || ($friend['status'] === 'pending' && (int)$friend['requester_id'] === $peer);
+        }
+        $requests = $db->prepare("SELECT requester_id FROM pm_match_requests WHERE status='pending'
+            AND ((requester_id=? AND addressee_id=?) OR (requester_id=? AND addressee_id=?))");
+        $requests->execute([$viewer, $peer, $peer, $viewer]);
+        foreach ($requests->fetchAll(PDO::FETCH_COLUMN) as $sender) {
+            $sent = $sent || (int)$sender === $viewer;
+            $received = $received || (int)$sender === $peer;
+        }
+        return [
+            'already_connected' => $accepted,
+            'request_status' => $sent ? 'pending' : ($received ? 'received' : null),
+        ];
+    };
+
     if (in_array($action, ['get_matches', 'search_users', 'get_compatibility', 'get_leaderboard'], true)) {
         $settings = $db->prepare('SELECT ai_matching FROM user_settings WHERE user_id=?');
         $settings->execute([$uid]);
@@ -242,12 +267,7 @@ try {
                 $sharedInterests = array_values(array_filter($candidateProfile['interests'], static fn($s) => in_array((int)$s['interest_id'], $myInterestIds, true)));
                 $sharedHobbies = array_values(array_filter($candidateProfile['hobbies'], static fn($s) => in_array((int)$s['hobby_id'], $myHobbyIds, true)));
 
-                $friendStmt = $db->prepare("SELECT status FROM friendships WHERE (requester_id=? AND addressee_id=?) OR (requester_id=? AND addressee_id=?) LIMIT 1");
-                $friendStmt->execute([$uid,$cid,$cid,$uid]);
-                $friendship = $friendStmt->fetchColumn();
-                $requestStmt = $db->prepare("SELECT status FROM pm_match_requests WHERE requester_id=? AND addressee_id=? LIMIT 1");
-                $requestStmt->execute([$uid,$cid]);
-                $requestStatus = $requestStmt->fetchColumn() ?: null;
+                $relationship = $loadRelationship($uid, $cid);
 
                 $matches[] = [
                     'id'=>$cid,
@@ -272,8 +292,7 @@ try {
                     'shared_hobbies'=>$sharedHobbies,
                     'tags'=>$score['tags'],
                     'components'=>['subjects'=>$score['subjects'],'style'=>$score['style'],'interests'=>$score['interests'],'hobbies'=>$score['hobbies'],'semantic'=>$score['semantic'],'behavior'=>$score['behavior'],'weights'=>$score['weights']],
-                    'already_connected'=>$friendship === 'accepted',
-                    'request_status'=>$requestStatus,
+                    ...$relationship,
                     'avatar_url'=>(string)($candidate['avatar_url'] ?? ''),
                     'grad'=>(string)($candidate['avatar_color_gradient'] ?? '#a855f7,#ec4899'),
                 ];
@@ -331,7 +350,7 @@ try {
             foreach ($candidates as $index => $candidate) {
                 $cp = $profiles[$index];
                 $score = $service->scoreProfiles($mine,$cp,$semantic[$index]);
-                $users[] = [...$candidate,'pct'=>(int)round($score['total'])];
+                $users[] = [...$candidate, ...$loadRelationship($uid, (int)$candidate['id']), 'pct'=>(int)round($score['total'])];
             }
             $json(['users'=>$users]);
 
@@ -448,6 +467,7 @@ try {
             $semantic=(new PeerSemanticClient())->scores($mine,[$their]);
             $score=(new PeerMatchingService())->scoreProfiles($mine,$their,$semantic[0]);
             $json([
+                ...$loadRelationship($uid, $peerId),
                 'score'=>['total'=>$score['total'],'subjects'=>$score['subjects'],'style'=>$score['style'],'interests'=>$score['interests'],'hobbies'=>$score['hobbies'],'semantic'=>$score['semantic'],'behavior'=>$score['behavior'],'weights'=>$score['weights']],
                 'engine'=>$score['engine'],
                 'weights'=>$score['weights'],

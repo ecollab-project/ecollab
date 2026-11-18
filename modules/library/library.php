@@ -35,7 +35,8 @@ $serverName = (string)($currentServer['name'] ?? 'Current Server');
   <style>
     :root{--bg:#0b0f1a;--panel:#111827;--card:#1a2235;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--purple:#a855f7;--pink:#ec4899}
     *{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}.lib-shell{max-width:1200px;margin:auto;padding:24px}.lib-top{display:flex;align-items:center;gap:14px;margin-bottom:24px}.lib-back{color:var(--muted);text-decoration:none;padding:9px 12px;border:1px solid var(--border);border-radius:9px}.lib-title{font-size:25px;font-weight:800}.lib-sub{color:var(--muted);font-size:13px;margin-top:3px}.lib-search{width:100%;padding:13px 15px;background:var(--panel);border:1px solid var(--border);border-radius:11px;color:var(--text);outline:none}.lib-tabs{display:flex;gap:8px;margin:18px 0}.lib-tab{border:1px solid var(--border);background:var(--panel);color:var(--muted);padding:10px 14px;border-radius:9px;cursor:pointer;font-weight:700}.lib-tab.active{color:white;border-color:rgba(168,85,247,.5);background:rgba(168,85,247,.16)}.lib-note{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px}.lib-note h2{margin:0 0 7px;font-size:18px}.lib-note p{margin:0;color:var(--muted);line-height:1.6}.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;margin-top:18px}.lib-placeholder{min-height:220px;background:var(--card);border:1px solid var(--border);border-radius:13px;padding:18px;color:var(--muted)}@media(max-width:600px){.lib-shell{padding:14px}.lib-title{font-size:21px}.lib-tabs{overflow:auto}.lib-tab{white-space:nowrap}.lib-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-  </style>
+  .lib-search-row{display:flex;align-items:center;gap:8px}.lib-search-row .lib-search{flex:1;min-width:0}.lib-search-row button{min-height:44px;flex:none}
+</style>
   <meta name="csrf-token" content="<?= htmlspecialchars(AuthMiddleware::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=1">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=2">
@@ -50,14 +51,18 @@ $serverName = (string)($currentServer['name'] ?? 'Current Server');
     <a class="lib-back" href="<?= BASE_URL ?>/modules/chat/chat.php?server_id=<?= $serverId ?>">← Server</a>
     <div><div class="lib-title">📚 eCollab Library</div><div class="lib-sub"><?= htmlspecialchars($serverName, ENT_QUOTES, 'UTF-8') ?></div></div>
   </header>
+  <div class="lib-search-row">
   <input class="lib-search" type="search" placeholder="Search books, authors, subjects or ISBN…" aria-label="Search library">
-  <div class="lib-tabs" role="tablist">
-    <button class="lib-tab active" data-mode="server">Recommended for this Server</button>
-    <button class="lib-tab" data-mode="me">Recommended for Me</button>
+  <button class="lib-tab" id="libraryClear" type="button" hidden>Clear search</button>
+  </div>
+  <div class="lib-tabs" role="group" aria-label="Book recommendations">
+    <button class="lib-tab active" type="button" aria-pressed="true" data-mode="server">Recommended for this Server</button>
+    <button class="lib-tab" type="button" aria-pressed="false" data-mode="me">Recommended for Me</button>
   </div>
   <section class="lib-note" id="libraryIntro">
     <h2 id="libraryHeading">Recommended for <?= htmlspecialchars($serverName, ENT_QUOTES, 'UTF-8') ?></h2>
-    <p id="libraryDescription">Books will be ranked using this server's academic context, subject and tags. The catalog integrations and recommendation API will populate this view next.</p>
+    <p id="libraryDescription" role="status">Loading books…</p>
+    <p id="libraryTracking" hidden>Your book clicks and Useful feedback help evaluate recommendations.</p>
   </section>
   <p class="lib-sub">Publication years are supplied by Open Library and may refer to a different edition.</p>
   <section class="lib-grid" id="libraryGrid">
@@ -74,6 +79,13 @@ let trackingEnabled = false;
 let loadVersion = 0;
 const grid = document.getElementById('libraryGrid');
 const search = document.querySelector('.lib-search');
+const heading = document.getElementById('libraryHeading');
+const description = document.getElementById('libraryDescription');
+const recommendationTabs = document.querySelectorAll('[data-mode]');
+const clearSearch = document.getElementById('libraryClear');
+const trackingNotice = document.getElementById('libraryTracking');
+const serverName = heading.textContent;
+let timer;
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
 function renderBooks(books){
   if(!books.length){grid.innerHTML='<div class="lib-placeholder">No books found. Try another search.</div>';return;}
@@ -88,20 +100,49 @@ function renderBooks(books){
 async function loadBooks(q=''){
   const version = ++loadVersion;
   trackingEnabled=false;
-  document.getElementById('libraryDescription').textContent=libMode==='me'?'Books selected using your course, year level and interests.':'Books selected using this server’s academic context.';
+  heading.textContent = q ? `Search results for “${q}”` : (libMode === 'me' ? 'Recommended for Me' : serverName);
+  description.textContent = 'Loading books…';
+  clearSearch.hidden = !q;
+  trackingNotice.hidden = true;
+  recommendationTabs.forEach(tab => {
+    const active = !q && tab.dataset.mode === libMode;
+    tab.classList.toggle('active', active);
+    tab.setAttribute('aria-pressed', String(active));
+  });
   grid.innerHTML='<div class="lib-placeholder">Loading books…</div>';
   const u=new URL(LIB_BASE+'/API/library/books.php',location.origin);
   u.searchParams.set('server_id',LIB_SERVER_ID);u.searchParams.set('mode',libMode);if(q)u.searchParams.set('q',q);
-  try{const r=await fetch(u);const d=await r.json();if(version!==loadVersion)return;if(!r.ok||!d.success)throw new Error(d.error||'Unable to load books');trackingEnabled=d.tracking_enabled===true;renderBooks(d.books||[]);
-    if(trackingEnabled)document.getElementById('libraryDescription').textContent='Your book clicks and Useful feedback help evaluate future recommendations. Turn off AI matching in Settings to stop collection.';
-    if(d.context?.label)document.getElementById('libraryHeading').textContent=libMode==='me'?'Recommended for Me':'Recommended for '+d.context.label;
-  }catch(e){if(version!==loadVersion)return;grid.innerHTML='<div class="lib-placeholder">'+esc(e.message)+'</div>';}
+  try {
+    const response = await fetch(u);
+    const data = await response.json();
+    if (version !== loadVersion) return;
+    if (!response.ok || !data.success) throw new Error(data.error || 'Unable to load books');
+    const books = data.books || [];
+    trackingEnabled = data.tracking_enabled === true;
+    trackingNotice.hidden = !trackingEnabled;
+    renderBooks(books);
+    description.textContent = `${books.length} ${books.length === 1 ? 'book' : 'books'} found.`;
+  } catch (error) {
+    if (version !== loadVersion) return;
+    grid.replaceChildren();
+    description.textContent = error.message;
+  }
 }
-document.querySelectorAll('.lib-tab').forEach(btn=>btn.addEventListener('click',()=>{
-  document.querySelectorAll('.lib-tab').forEach(x=>x.classList.toggle('active',x===btn));libMode=btn.dataset.mode;
-  document.getElementById('libraryDescription').textContent=libMode==='me'?'Books ranked using your course, year level and interests.':'Books ranked using this server\'s name, description and academic tags.';
-  loadBooks(search.value.trim());
+
+function resetSearch() {
+  clearTimeout(timer);
+  search.value = '';
+  loadBooks();
+}
+recommendationTabs.forEach(button => button.addEventListener('click', () => {
+  libMode = button.dataset.mode;
+  resetSearch();
 }));
+clearSearch.addEventListener('click', () => {
+  search.focus();
+  resetSearch();
+});
+
 async function recordBook(key,type){
   const response=await fetch(LIB_BASE+'/API/library/book-event.php',{
     method:'POST',credentials:'same-origin',keepalive:true,
@@ -121,7 +162,12 @@ grid.addEventListener('click',async event=>{
     catch(e){button.disabled=false;button.textContent='Retry feedback';}
   }
 });
-let timer;search.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>loadBooks(search.value.trim()),450);});
+search.addEventListener('input', () => {
+  clearTimeout(timer);
+  loadVersion++;
+  clearSearch.hidden = !search.value;
+  timer = setTimeout(() => loadBooks(search.value.trim()), 450);
+});
 loadBooks();
 </script>
 <?php require_once dirname(__DIR__, 2) . '/includes/calls/bootstrap.php'; ?>

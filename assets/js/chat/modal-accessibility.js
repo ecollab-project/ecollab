@@ -3,7 +3,7 @@
 (() => {
   const states = new WeakMap();
   const stack = [];
-  const selector = '.modal-overlay';
+  const selector = '.modal-overlay, #peerMatchingModal, #pmCompatModal, #pmSendRequestModal';
   const focusable = 'button,input,select,textarea,a[href],[tabindex]';
   function controls(modal) {
     return [...modal.querySelectorAll(focusable)].filter(el =>
@@ -11,7 +11,7 @@
       getComputedStyle(el).visibility !== 'hidden' && el.getClientRects().length);
   }
   function sync(modal) {
-    const open = modal.classList.contains('open') && modal.style.display !== 'none';
+    const open = (modal.classList.contains('open') || modal.classList.contains('modal-open')) && modal.style.display !== 'none';
     const previous = states.get(modal);
     if (previous?.open === open) return;
     let trigger = previous?.trigger;
@@ -61,7 +61,7 @@
     if (event.key === 'Escape') {
       event.preventDefault();
       event.stopImmediatePropagation();
-      const close = modal.querySelector('.modal-close');
+      const close = modal.querySelector('.modal-close, .pm-close');
       if (close) close.click();
       else window.closeModal?.(modal.id);
     } else if (event.key === 'Tab') {

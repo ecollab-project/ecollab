@@ -1643,14 +1643,54 @@ async function generateAIReply() {
 }
 
 // ── Mobile sidebar ──
-function toggleSidebar() {
-  const open = document.body.classList.toggle('sidebar-open');
+const mobileChannelLayout = window.matchMedia('(max-width: 860px)');
+
+function setChannelDrawer(open) {
+  const trigger = document.querySelector('.mob-hamburger');
+  const sidebar = document.getElementById('sidebarLeft');
+  const workspaces = document.getElementById('workspaceSwitcher');
+  const wasOpen = document.body.classList.contains('sidebar-open');
+  open = mobileChannelLayout.matches && open;
+  if (wasOpen && !open && mobileChannelLayout.matches) trigger?.focus();
+  document.body.classList.toggle('sidebar-open', open);
   document.getElementById('mobileOverlay')?.classList.toggle('open', open);
+  trigger?.setAttribute('aria-expanded', String(open));
+  if (sidebar) sidebar.inert = mobileChannelLayout.matches && !open;
+  if (workspaces) workspaces.inert = mobileChannelLayout.matches && !open;
+  const chat = document.getElementById('chatMain');
+  if (chat) chat.inert = open;
+  const members = document.getElementById('sidebarRight');
+  if (members) members.inert = open;
+}
+
+function toggleSidebar() {
+  setChannelDrawer(!document.body.classList.contains('sidebar-open'));
 }
 
 function closeSidebar() {
-  document.body.classList.remove('sidebar-open');
-  document.getElementById('mobileOverlay')?.classList.remove('open');
+  setChannelDrawer(false);
+}
+
+if (document.querySelector('.mob-hamburger')) {
+  closeSidebar();
+  mobileChannelLayout.addEventListener('change', closeSidebar);
+  document.addEventListener('keydown', event => {
+    if (event.defaultPrevented || !document.body.classList.contains('sidebar-open')) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeSidebar();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const controls = [...document.querySelectorAll('.mob-hamburger, #workspaceSwitcher button, #sidebarLeft :is(button, a[href], input, [tabindex])')]
+      .filter(control => !control.disabled && control.tabIndex >= 0 && control.getClientRects().length);
+    if (!controls.length) return;
+    const active = controls.indexOf(document.activeElement);
+    if (active < 0 || (event.shiftKey ? active === 0 : active === controls.length - 1)) {
+      event.preventDefault();
+      controls[event.shiftKey ? controls.length - 1 : 0].focus();
+    }
+  });
 }
 
 // ── Toast ──

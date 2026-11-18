@@ -73,7 +73,7 @@ const server=http.createServer((req,res)=>{
         {peer_id:3,full_name:'Pending peer',request_status:'pending',score_total:50,shared_subjects:1,shared_interests:0,shared_hobbies:0},
         {peer_id:4,full_name:'Available peer',score_total:40,shared_subjects:0,shared_interests:1,shared_hobbies:0},
       ]});
-      document.getElementById('peerMatchingModal').style.display='flex';
+      showMatchingDialog(document.getElementById('peerMatchingModal'));
       return _pmRenderLeaderboard(document.getElementById('pmModalBody'));
     });
     assert.equal(await page.locator('.pm-leaderboard-row button:disabled').count(),2);
