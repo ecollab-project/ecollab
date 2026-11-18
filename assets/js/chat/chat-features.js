@@ -169,12 +169,9 @@ function sendRecording() {
   const msgEl = document.createElement('div');
   msgEl.className = 'message-group';
   const user = window.ECOLLAB || {};
-  const grad = user.avatarGradient || '#a855f7,#ec4899';
-  const [c1, c2] = grad.split(',');
-  const init = (user.username || 'Me')[0].toUpperCase();
   msgEl.innerHTML = `
     <div class="msg-avatar">
-      <div class="avatar-placeholder" style="width:36px;height:36px;font-size:14px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;position:relative;">${init}<div class="online-dot"></div></div>
+      ${messageAvatarMarkup(user.fullName || user.username || 'Me', user.avatarUrl, user.avatarGradient)}
     </div>
     <div class="msg-content">
       <div class="msg-header">

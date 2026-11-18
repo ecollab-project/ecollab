@@ -539,6 +539,19 @@ function renderMessages(messages, prepend = false, preserveLive = false) {
   }
 }
 
+function messageAvatarMarkup(name, url, gradient) {
+  const colors = String(gradient || '').split(',').map(color => color.trim());
+  const valid = colors.length === 2 && colors.every(color => /^#[0-9a-f]{3,8}$/i.test(color));
+  const background = valid ? colors.join(',') : '#3b82f6,#6366f1';
+  const initial = escHtml(Array.from(String(name || '').trim())[0]?.toUpperCase() || '?');
+  const source = chatAvatarUrl(url);
+  const photo = source ? `<img class="msg-avatar-photo" src="${escHtml(source)}" alt="" loading="lazy"
+    referrerpolicy="no-referrer" onload="this.previousElementSibling.hidden = true; this.classList.add('is-loaded')" onerror="this.remove()">` : '';
+  return `<div class="avatar-placeholder msg-avatar-face" aria-hidden="true" style="background:linear-gradient(135deg,${background})">
+    <span>${initial}</span>${photo}<div class="online-dot"></div>
+  </div>`;
+}
+
 function buildMessageElement(msg) {
   const div = document.createElement('div');
   div.dataset.rawContent = msg.content || '';
@@ -547,12 +560,6 @@ function buildMessageElement(msg) {
   div.dataset.senderId = msg.sender_id;
   div.dataset.messageTimestamp = msg.created_at||'';
 
-  const grad = msg.avatar_color_gradient || '#3b82f6,#6366f1';
-  const [c1, c2] = grad.split(',');
-  const init = (msg.full_name || msg.username || '?').charAt(0).toUpperCase();
-  const avatarUrl = chatAvatarUrl(msg.avatar_url);
-  const avatarBg = avatarUrl ? `url("${escHtml(avatarUrl)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
-  const avatarText = avatarUrl ? '' : init;
   const isMe = parseInt(msg.sender_id) === parseInt(window.ECOLLAB?.userId);
   const time = formatTime(msg.created_at);
   const edited = msg.is_edited ? '<span class="edited-tag" style="font-size:10px;color:var(--text-muted);margin-left:4px;">(edited)</span>' : '';
@@ -619,10 +626,7 @@ function buildMessageElement(msg) {
       </button>
     </div>
     <div class="msg-avatar" role="button" tabindex="0" aria-label="Open profile" data-profile-user-id="${Number(msg.sender_id)||0}">
-      <div class="avatar-placeholder" style="width:36px;height:36px;font-size:14px;border-radius:50%;background:${avatarBg};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;position:relative;flex-shrink:0;">
-        ${avatarText}
-        <div class="online-dot"></div>
-      </div>
+      ${messageAvatarMarkup(msg.full_name || msg.username, msg.avatar_url, msg.avatar_color_gradient)}
     </div>
     <div class="msg-content">
       <div class="msg-header">

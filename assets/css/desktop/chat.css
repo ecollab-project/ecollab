@@ -2125,7 +2125,10 @@ html.compact-mode .message-group {
   padding: 2px 8px 2px 4px;
 }
 
-html.compact-mode .msg-avatar,
+html.compact-mode .msg-avatar {
+  --message-avatar-size: 28px;
+}
+
 html.compact-mode .message-group .avatar {
   width: 28px;
   height: 28px;
@@ -2223,8 +2226,32 @@ html.compact-mode .sidebar-section-header {
 }
 
 .msg-avatar {
-  flex-shrink: 0;
+  --message-avatar-size: 36px;
+  flex: none;
+  width: var(--message-avatar-size);
+  height: var(--message-avatar-size);
   margin-top: 2px;
+}
+
+.msg-avatar .msg-avatar-face {
+  position: relative;
+  width: var(--message-avatar-size);
+  height: var(--message-avatar-size);
+  font-size: 14px;
+}
+
+.msg-avatar-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+  opacity: 0;
+}
+
+.msg-avatar-photo.is-loaded {
+  opacity: 1;
 }
 
 .msg-content {

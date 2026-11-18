@@ -48,7 +48,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken) ?>">
   <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js?v=settings-speed-1" defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat.css?v=voice-name-spacing-1">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat.css?v=chat-avatar-1">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/whiteboard.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/whiteboard-mobile.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/collab-tools.css">
@@ -1124,9 +1124,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <?php endif; ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-timeline.css?v=1">
   <script src="<?= BASE_URL ?>/assets/js/chat/timeline.js?v=dm-identity-20261103" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=ux-audit-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=chat-avatar-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/modal-accessibility.js?v=ux-audit-1" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=postdeploy-ui-20261116" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=chat-avatar-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js?v=media-1" defer></script>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-media.css?v=1">
   <script src="<?= BASE_URL ?>/assets/js/chat/media-picker.js?v=settings-speed-1" defer></script>
