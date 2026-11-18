@@ -2,6 +2,14 @@ name: Peer ML regression
 on:
   push:
     branches: [ml-peer-matching-integration]
+  pull_request:
+    paths:
+      - 'ml/peer_matching/**'
+      - 'services/Peer*.php'
+      - 'API/chat/get-matches.php'
+      - 'API/chat/peer-match.php'
+      - 'tests/peer-*.php'
+      - '.github/workflows/peer-ml.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -10,6 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_sqlite, mbstring
       - name: PHP syntax and fallback contract
         run: |
           php -l services/PeerMatchingService.php
@@ -17,6 +29,8 @@ jobs:
           php -l API/chat/get-matches.php
           php -l API/chat/peer-match.php
           php tests/peer-ml-regression.php
+          php tests/peer-behavior-regression.php
+          php tests/peer-top-regression.php
       - name: JavaScript syntax
         run: node --check assets/js/chat/peer-matching.js
       - name: Python similarity and HTTP contract

@@ -46,6 +46,52 @@ class ScorerTests(unittest.TestCase):
         self.assertGreater(scorer.score({'query':'PHP','candidates':['Laravel']})[0], 90)
         self.assertEqual(len(scorer.cache), 1)
 
+    def test_warm_requests_complete_while_encoder_is_busy(self):
+        entered = threading.Event()
+        release = threading.Event()
+
+        class BlockingEncoder(FakeEncoder):
+            def encode(self, texts, **kwargs):
+                if 'Biology' in texts:
+                    entered.set()
+                    if not release.wait(5):
+                        raise RuntimeError('Test did not release encoder')
+                return super().encode(texts, **kwargs)
+
+        scorer = Scorer(BlockingEncoder())
+        warm = {'query': 'PHP', 'candidates': ['Laravel']}
+        expected = scorer.score(warm)
+        server = ThreadingHTTPServer(('127.0.0.1', 0), make_handler(scorer, 'test-token'))
+        worker = threading.Thread(target=server.serve_forever, daemon=True)
+        worker.start()
+
+        def request(payload):
+            connection = http.client.HTTPConnection(*server.server_address, timeout=2)
+            try:
+                connection.request('POST', '/v1/similarity', json.dumps(payload),
+                                   {'Authorization': 'Bearer test-token'})
+                response = connection.getresponse()
+                return response.status, json.loads(response.read())
+            finally:
+                connection.close()
+
+        cold_result = []
+        cold = threading.Thread(target=lambda: cold_result.append(
+            request({'query': 'PHP', 'candidates': ['Biology']})), daemon=True)
+        try:
+            cold.start()
+            self.assertTrue(entered.wait(2))
+            self.assertEqual(request(warm), (200, {'version': 'semantic-v1', 'scores': expected}))
+            self.assertEqual(request({'query': 'PHP', 'candidates': ['Opposite']}),
+                             (503, {'error': 'Busy'}))
+        finally:
+            release.set()
+            cold.join()
+            server.shutdown()
+            server.server_close()
+            worker.join()
+        self.assertEqual(cold_result, [(200, {'version': 'semantic-v1', 'scores': [0.]})])
+
     def test_http_auth_validation_and_success(self):
         server = ThreadingHTTPServer(('127.0.0.1', 0), make_handler(Scorer(FakeEncoder()), 'test-token'))
         thread = threading.Thread(target=server.serve_forever, daemon=True)

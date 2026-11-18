@@ -231,7 +231,7 @@ try {
 
             $users = $db->prepare("SELECT u.id, u.username, u.full_name, u.role, u.avatar_url, u.avatar_color_gradient, u.bio,CASE WHEN NOT EXISTS(SELECT 1 FROM user_settings privacy WHERE privacy.user_id=u.id AND privacy.activity_status=0) THEN u.is_online ELSE 0 END AS is_online
                 FROM users u
-                WHERE u.id != ? AND u.deleted_at IS NULL AND u.status != 'banned' AND COALESCE(u.is_system, 0) = 0
+                WHERE u.id != ? AND u.deleted_at IS NULL AND u.status NOT IN ('banned','suspended','deactivated') AND COALESCE(u.is_system, 0) = 0
                   AND NOT EXISTS (SELECT 1 FROM user_settings us WHERE us.user_id=u.id AND us.ai_matching=0)
                 ORDER BY is_online DESC, u.last_active_at DESC LIMIT 100");
             $users->execute([$uid]);
@@ -239,15 +239,21 @@ try {
             $matches = [];
 
             $candidates = $users->fetchAll(PDO::FETCH_ASSOC);
-            $profiles = array_map(static fn($candidate) => $loadProfile((int)$candidate['id'], $db), $candidates);
+            $profilesById = $service->loadProfiles($db, array_column($candidates, 'id'));
+            $candidates = array_values(array_filter($candidates, static function ($candidate) use ($profilesById, $style, $role) {
+                $candidateProfile = $profilesById[(int)$candidate['id']];
+                $ready = $candidateProfile['subjects'] || $candidateProfile['interests'] || $candidateProfile['hobbies'];
+                return $ready && ($style === '' || ($candidateProfile['prefs']['study_style'] ?? '') === $style)
+                    && ($role === '' || (string)$candidate['role'] === $role);
+            }));
+            $profiles = array_map(static fn($candidate) => $profilesById[(int)$candidate['id']], $candidates);
             $semantic = (new PeerSemanticClient())->scores($profile, $profiles);
+            $mySubjectIds = array_map(static fn($x) => (int)$x['subject_id'], $profile['subjects']);
+            $myInterestIds = array_map(static fn($x) => (int)$x['interest_id'], $profile['interests']);
+            $myHobbyIds = array_map(static fn($x) => (int)$x['hobby_id'], $profile['hobbies']);
             foreach ($candidates as $index => $candidate) {
                 $cid = (int)$candidate['id'];
                 $candidateProfile = $profiles[$index];
-                $candidateReady = !empty($candidateProfile['subjects']) || !empty($candidateProfile['interests']) || !empty($candidateProfile['hobbies']);
-                if (!$candidateReady) continue;
-                if ($style !== '' && ($candidateProfile['prefs']['study_style'] ?? '') !== $style) continue;
-                if ($role !== '' && (string)$candidate['role'] !== $role) continue;
 
                 $score = $service->scoreProfiles($profile, $candidateProfile, $semantic[$index]);
                 if ($score['total'] < $minScore) continue;
@@ -257,17 +263,12 @@ try {
                     (user_a_id,user_b_id,score_total,score_subjects,score_interests,score_hobbies,score_style,shared_subjects,shared_interests,shared_hobbies,match_tags)
                     VALUES (?,?,?,?,?,?,?,?,?,?,?)
                     ON DUPLICATE KEY UPDATE score_total=VALUES(score_total),score_subjects=VALUES(score_subjects),score_interests=VALUES(score_interests),score_hobbies=VALUES(score_hobbies),score_style=VALUES(score_style),shared_subjects=VALUES(shared_subjects),shared_interests=VALUES(shared_interests),shared_hobbies=VALUES(shared_hobbies),match_tags=VALUES(match_tags),computed_at=CURRENT_TIMESTAMP");
-                $cache->execute([$a,$b,$score['rule_total'],$score['subjects'],$score['interests'],$score['hobbies'],$score['style'],$score['shared_subjects'],$score['shared_interests'],$score['shared_hobbies'],json_encode($service->scoreProfiles($profile, $candidateProfile)['tags'], JSON_UNESCAPED_UNICODE)]);
+                $cache->execute([$a,$b,$score['rule_total'],$score['subjects'],$score['interests'],$score['hobbies'],$score['style'],$score['shared_subjects'],$score['shared_interests'],$score['shared_hobbies'],json_encode($score['rule_tags'], JSON_UNESCAPED_UNICODE)]);
 
                 $name = (string)($candidate['full_name'] ?: $candidate['username']);
-                $mySubjectIds = array_map(static fn($x) => (int)$x['subject_id'], $profile['subjects']);
-                $myInterestIds = array_map(static fn($x) => (int)$x['interest_id'], $profile['interests']);
-                $myHobbyIds = array_map(static fn($x) => (int)$x['hobby_id'], $profile['hobbies']);
                 $sharedSubjects = array_values(array_filter($candidateProfile['subjects'], static fn($s) => in_array((int)$s['subject_id'], $mySubjectIds, true)));
                 $sharedInterests = array_values(array_filter($candidateProfile['interests'], static fn($s) => in_array((int)$s['interest_id'], $myInterestIds, true)));
                 $sharedHobbies = array_values(array_filter($candidateProfile['hobbies'], static fn($s) => in_array((int)$s['hobby_id'], $myHobbyIds, true)));
-
-                $relationship = $loadRelationship($uid, $cid);
 
                 $matches[] = [
                     'id'=>$cid,
@@ -292,7 +293,6 @@ try {
                     'shared_hobbies'=>$sharedHobbies,
                     'tags'=>$score['tags'],
                     'components'=>['subjects'=>$score['subjects'],'style'=>$score['style'],'interests'=>$score['interests'],'hobbies'=>$score['hobbies'],'semantic'=>$score['semantic'],'behavior'=>$score['behavior'],'weights'=>$score['weights']],
-                    ...$relationship,
                     'avatar_url'=>(string)($candidate['avatar_url'] ?? ''),
                     'grad'=>(string)($candidate['avatar_color_gradient'] ?? '#a855f7,#ec4899'),
                 ];
@@ -318,11 +318,14 @@ try {
                     'shared_subjects'=>count($match['shared_subjects']),
                     'shared_interests'=>count($match['shared_interests']),
                     'shared_hobbies'=>count($match['shared_hobbies']),
-                    'already_connected'=>$match['already_connected'],
-                    'request_status'=>$match['request_status'],
+                    ...$loadRelationship($uid, $match['id']),
                 ], array_slice($matches, 0, 20)), 'profile_ready'=>true]);
             }
-            $json(['matches'=>array_slice($matches, 0, $limit), 'profile_ready'=>true]);
+            $visibleMatches = array_map(
+                static fn(array $match): array => [...$match, ...$loadRelationship($uid, $match['id'])],
+                array_slice($matches, 0, $limit),
+            );
+            $json(['matches'=>$visibleMatches, 'profile_ready'=>true]);
 
         case 'search_users':
             $q = trim((string)($_GET['q'] ?? ''));
@@ -332,7 +335,7 @@ try {
             $studyStyle = trim((string)($_GET['study_style'] ?? ''));
             if ($q === '' && !$subjectId && !$hobbyId && !$interestId && $studyStyle === '') $json(['users'=>[]]);
 
-            $where = ['u.id != ?', 'u.deleted_at IS NULL', "u.status != 'banned'", 'COALESCE(u.is_system, 0) = 0', 'NOT EXISTS (SELECT 1 FROM user_settings us WHERE us.user_id=u.id AND us.ai_matching=0)'];
+            $where = ['u.id != ?', 'u.deleted_at IS NULL', "u.status NOT IN ('banned','suspended','deactivated')", 'COALESCE(u.is_system, 0) = 0', 'NOT EXISTS (SELECT 1 FROM user_settings us WHERE us.user_id=u.id AND us.ai_matching=0)'];
             $params = [$uid];
             if ($q !== '') { $where[] = '(u.full_name LIKE ? OR u.username LIKE ? OR u.bio LIKE ?)'; $params[]="%$q%"; $params[]="%$q%"; $params[]="%$q%"; }
             if ($subjectId) { $where[] = 'EXISTS (SELECT 1 FROM pm_user_subjects ps WHERE ps.user_id=u.id AND ps.subject_id=?)'; $params[]=$subjectId; }
@@ -345,7 +348,8 @@ try {
             $service = new PeerMatchingService();
             $mine = $loadProfile($uid,$db);
             $candidates = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $profiles = array_map(static fn($candidate) => $loadProfile((int)$candidate['id'], $db), $candidates);
+            $profilesById = $service->loadProfiles($db, array_column($candidates, 'id'));
+            $profiles = array_map(static fn($candidate) => $profilesById[(int)$candidate['id']], $candidates);
             $semantic = (new PeerSemanticClient())->scores($mine, $profiles);
             foreach ($candidates as $index => $candidate) {
                 $cp = $profiles[$index];
@@ -459,11 +463,13 @@ try {
         case 'get_compatibility':
             $peerId=(int)($_GET['user_id'] ?? 0);
             if ($peerId <= 0 || $peerId === $uid) $fail('Invalid user.');
-            $eligible = $db->prepare("SELECT u.id FROM users u WHERE u.id=? AND u.deleted_at IS NULL AND u.status!='banned' AND COALESCE(u.is_system,0)=0 AND NOT EXISTS (SELECT 1 FROM user_settings us WHERE us.user_id=u.id AND us.ai_matching=0)");
+            $eligible = $db->prepare("SELECT u.id FROM users u WHERE u.id=? AND u.deleted_at IS NULL AND u.status NOT IN ('banned','suspended','deactivated') AND COALESCE(u.is_system,0)=0 AND NOT EXISTS (SELECT 1 FROM user_settings us WHERE us.user_id=u.id AND us.ai_matching=0)");
             $eligible->execute([$peerId]);
             if (!$eligible->fetchColumn()) $fail('Study buddy not found.', 404);
-            $mine=$hydrateTags($loadProfile($uid,$db),$db);
-            $their=$hydrateTags($loadProfile($peerId,$db),$db);
+            $service = new PeerMatchingService();
+            $profiles = $service->loadProfiles($db, [$uid, $peerId]);
+            $mine = $hydrateTags($profiles[$uid], $db);
+            $their = $hydrateTags($profiles[$peerId], $db);
             $semantic=(new PeerSemanticClient())->scores($mine,[$their]);
             $score=(new PeerMatchingService())->scoreProfiles($mine,$their,$semantic[0]);
             $json([
