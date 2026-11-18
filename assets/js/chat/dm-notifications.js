@@ -1049,7 +1049,7 @@ function _syncAiTyping() {
     indicator.dataset.aiConversation = String(DM.activeConvId);
     indicator.style.display = 'flex';
     const state=DM.aiJobs.get(Number(DM.activeConvId))?.state;
-    const status = state === 'running' ? 'Jarred is writing a reply…' : 'Request received. Jarred will reply here. You can keep using eCollab.';
+    const status = state === 'running' ? 'Jarred is preparing a reply…' : 'Request queued. Jarred will reply here. You can keep using eCollab.';
     if (indicator.textContent !== status) indicator.textContent = status;
   } else if (indicator.dataset.aiConversation) {
     indicator.style.display = 'none';
