@@ -179,7 +179,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat-taskbar.css?v=neon-account-1">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script>
 <script defer src="<?= BASE_URL ?>/assets/js/chat/workspace-taskbar.js?v=separators-tooltips-1"></script>
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=ux-audit-1">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=chat-layout-1">
 <script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
 <?php require_once ROOT_PATH.'/includes/layout/color-theme.php'; ?>
 </head>
@@ -461,16 +461,16 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
     <!-- CHAT HEADER -->
     <div class="chat-header">
-      <div class="chat-channel-heading" style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
-        <span style="font-size:22px;color:var(--text-muted);font-weight:300;">#</span>
-        <div>
-          <div style="font-size:15px;font-weight:700;color:var(--text-primary);line-height:1.2;" id="channelTitle">Select a channel</div>
-          <div class="channel-desc" id="channelDesc" style="font-size:12px;color:var(--text-muted);"></div>
+      <div class="chat-channel-heading">
+        <span class="chat-channel-mark" aria-hidden="true">#</span>
+        <div class="chat-channel-summary">
+          <div id="channelTitle">Select a channel</div>
+          <div class="channel-desc" id="channelDesc"></div>
           <a id="channelDashboardLink" href="<?= BASE_URL ?>/modules/student/dashboard.php" style="display:none;font-size:11px;color:#c084fc;text-decoration:none;font-weight:700;margin-top:3px;" title="Open dashboard">↗ Dashboard</a>
         </div>
       </div>
       <div class="header-sep"></div>
-      <div style="display:flex;align-items:center;gap:4px;">
+      <div class="chat-channel-actions">
         <!-- Manage private channel members - shown only when current channel is private and user is owner/admin -->
         <button class="header-icon-btn" id="manageChannelBtn" onclick="openPrivateChannelManager()" title="Manage Channel Members" style="display:none;">
           <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
@@ -620,7 +620,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
               <circle cx="19" cy="12" r="1.9" />
             </svg>
           </button>
-          <input class="chat-input-field" id="chatInputField" placeholder="Message…" oninput="handleTyping(event)" onkeydown="handleKeyDown(event)" />
+          <input class="chat-input-field" id="chatInputField" aria-label="Message" placeholder="Message…" oninput="handleTyping(event)" onkeydown="handleKeyDown(event)" />
           <button class="input-btn-icon" id="emojiBtn" title="Emoji" onclick="toggleEmojiPicker(event)">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10" />
