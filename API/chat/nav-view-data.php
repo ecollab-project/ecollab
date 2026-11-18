@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
+require_once dirname(__DIR__, 2) . '/services/ChatMentions.php';
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
 $user = AuthMiddleware::requireAuth(true);
@@ -12,21 +13,14 @@ try {
     $uid  = $user['id'];
     $items = [];
     if ($view === 'mentions') {
-        $stmt = $db->prepare("
-            SELECT m.id, m.content, m.created_at, u.username AS author, u.full_name,
-                   u.avatar_color_gradient AS grad, c.name AS channel, s.name AS server
-            FROM messages m
-            JOIN users u ON u.id = m.sender_id
-            JOIN channels c ON c.id = m.channel_id
-            JOIN servers s ON s.id = c.server_id
-            JOIN server_members sm ON sm.server_id = s.id AND sm.user_id = :uid
-            WHERE m.content LIKE :mention AND m.is_deleted = 0 AND m.sender_id != :uid2
-            ORDER BY m.created_at DESC LIMIT 20
-        ");
-        $stmt->execute([':uid'=>$uid,':uid2'=>$uid,':mention'=>'%@' . $user['username'] . '%']);
-        $rows = $stmt->fetchAll();
-        foreach ($rows as $r) {
-            $items[] = ['server'=>$r['server'],'channel'=>$r['channel'],'time'=>date('g:i A',strtotime($r['created_at'])),'author'=>$r['author'],'letter'=>strtoupper(($r['full_name']?:$r['author'])[0]),'text'=>$r['content'],'grad'=>$r['grad']??'#3b82f6,#6366f1'];
+        foreach (ChatMentions::inbox($db, $user, 0, 20) as $row) {
+            $items[] = [
+                'id' => (int)$row['id'], 'channelId' => (int)$row['channel_id'],
+                'server' => $row['server'], 'channel' => $row['channel'],
+                'time' => date('g:i A', strtotime($row['created_at'])), 'author' => $row['author'],
+                'letter' => mb_strtoupper(mb_substr($row['author'], 0, 1)),
+                'text' => ChatMentions::plainText($row['content']), 'grad' => $row['grad'] ?? '#3b82f6,#6366f1',
+            ];
         }
     } elseif ($view === 'bookmarks') {
         $stmt = $db->prepare("

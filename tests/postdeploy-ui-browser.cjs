@@ -6,7 +6,8 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),
 const root=path.resolve(__dirname,'..');
 const chat=fs.readFileSync(path.join(root,'assets/js/chat/chat.js'),'utf8');
 const modalFunctions=chat.slice(chat.indexOf('// ── Modals ──'),chat.indexOf('// ── Sidebar filter ──'));
-const avatarFunctions=chat.slice(chat.indexOf('function chatAvatarUrl('),chat.indexOf('const API_BASE'))
+const avatarFunctions=chat.slice(chat.indexOf('function mentionLinks('),chat.indexOf('const nativeMentionState'))
+  +chat.slice(chat.indexOf('function chatAvatarUrl('),chat.indexOf('const API_BASE'))
   +chat.slice(chat.indexOf('function messageAvatarMarkup('),chat.indexOf('function buildPollWidget('));
 let html=execFileSync(process.env.PHP_BIN||'php',['-d','session.save_path=/tmp','tests/responsive-render-fixture.php','chat'],{cwd:root,encoding:'utf8'});
 html=html.replace(/<script\b[\s\S]*?<\/script>/gi,'')

@@ -306,9 +306,6 @@ function handleSocketMessage(data) {
       break;
 
     // ── Mentions ──
-    case 'mention':
-      handleMentionEvent(data);
-      break;
 
     // ── Voice ──
     case 'voice_join':
@@ -450,30 +447,6 @@ function handleIncomingMessage(msg) {
   const myUserId    = parseInt(window.ECOLLAB?.userId);
   const isFromMe    = parseInt(msg.sender_id) === myUserId;
 
-  // ── Mention detection — all channels, all messages not from self ──
-  if (!isFromMe) {
-    const myUsername = (window.ECOLLAB?.username || '').toLowerCase();
-    const myFullName = (window.ECOLLAB?.fullName  || '').toLowerCase();
-    const content    = (msg.content || '').toLowerCase();
-    const mentionedMe = (
-      (myUsername && content.includes('@' + myUsername)) ||
-      (myFullName  && content.includes('@' + myFullName))
-    );
-    if (mentionedMe) {
-      const entry = {
-        id:        msg.id,
-        author:    msg.full_name || msg.username || '?',
-        text:      msg.content,
-        channel:   msg.channel_name || msg.channel_id,
-        channelId: msg.channel_id,
-        time:      new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        letter:    (msg.full_name || msg.username || '?').charAt(0).toUpperCase(),
-        read:      false,
-      };
-      _storeMention(entry);
-    }
-  }
-
   // Only render if the message belongs to the currently open channel
   if (parseInt(msg.channel_id) !== parseInt(myChannelId)) return;
   if (isFromMe) return; // already rendered optimistically
@@ -487,7 +460,7 @@ function handleMessageEdited(msg) {
   if (!el) return;
   el.querySelectorAll('.edited-tag').forEach(t => t.remove());
   el.closest('[data-msg-id]').dataset.rawContent = msg.content;
-  if (window.EcollabComposer) el.innerHTML = window.EcollabComposer.render(msg.content);
+  if (window._renderMsgContent) el.innerHTML = window._renderMsgContent(msg.content);
   else if (el.firstChild) el.firstChild.textContent = msg.content;
   const tag = document.createElement('span');
   tag.className = 'edited-tag';
@@ -679,26 +652,6 @@ function showDesktopNotification(kind, title, body) {
 }
 window.showDesktopNotification = showDesktopNotification;
 
-// ── Mentions ─────────────────────────────────────────────────────────────────
-function handleMentionEvent(data) {
-  if (!data.entry) return;
-  _storeMention(data.entry);
-  if (typeof showToast === 'function')
-    showToast(`💬 You were mentioned in #${data.entry.channel || 'a channel'}`, 'info');
-  showDesktopNotification('notification_mentions', 'You were mentioned', `in #${data.entry.channel || 'a channel'}`);
-}
-
-function _storeMention(entry) {
-  const stored   = JSON.parse(localStorage.getItem('ec_mentions') || '[]');
-  const ids      = new Set(stored.map(s => s.id));
-  if (entry.id && ids.has(entry.id)) return; // dedupe
-  stored.unshift(entry);
-  if (stored.length > 100) stored.length = 100;
-  localStorage.setItem('ec_mentions', JSON.stringify(stored));
-  if (window._mentions) { window._mentions.length = 0; stored.forEach(i => window._mentions.push(i)); }
-  if (window._updateMentionBadge) window._updateMentionBadge();
-}
-
 // ── Screen share ─────────────────────────────────────────────────────────────
 function handleScreenShareNotify(data) {
   if (data.active) {
@@ -877,23 +830,24 @@ let _lastMentionPollId = 0;
 
 async function _fetchMentions(after) {
   try {
+    const key = window.chatMentionStorageKey;
+    if (!key) return;
     const base = window.ECOLLAB?.baseUrl || '';
     const res  = await fetch(`${base}/API/chat/get-mentions.php?after=${after}`);
     if (!res.ok) return;
     const data = await res.json();
     if (!data.mentions?.length) return;
 
-    const stored   = JSON.parse(localStorage.getItem('ec_mentions') || '[]');
+    const stored   = JSON.parse(localStorage.getItem(key) || '[]');
     const storedIds = new Set(stored.map(s => s.id));
     let added = 0;
     data.mentions.forEach(m => {
       if (!storedIds.has(m.id)) { stored.unshift(m); added++; }
     });
-    if (!added) return;
-
     _lastMentionPollId = Math.max(_lastMentionPollId, ...data.mentions.map(m => m.id));
+    if (!added) return;
     if (stored.length > 100) stored.length = 100;
-    localStorage.setItem('ec_mentions', JSON.stringify(stored));
+    localStorage.setItem(key, JSON.stringify(stored));
     if (window._mentions) { window._mentions.length = 0; stored.forEach(i => window._mentions.push(i)); }
     if (window._updateMentionBadge) window._updateMentionBadge();
   } catch { }

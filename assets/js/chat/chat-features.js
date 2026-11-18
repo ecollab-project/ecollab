@@ -783,12 +783,12 @@ async function _fetchNavViewData(viewName) {
       (json.items || []).forEach(i => _mentionMessages.push(i));
     } catch (e) {
       // Fall back to localStorage mentions if API fails
-      const data = window._mentions || JSON.parse(localStorage.getItem('ec_mentions') || '[]');
+      const data = window._mentions || JSON.parse(localStorage.getItem(window.chatMentionStorageKey) || '[]');
       _mentionMessages.length = 0;
       data.forEach(i => _mentionMessages.push(i));
     }
     // Mark all as read when viewing
-    localStorage.setItem('ec_mentions', JSON.stringify([]));
+    localStorage.setItem(window.chatMentionStorageKey, JSON.stringify([]));
     if (window._updateMentionBadge) window._updateMentionBadge();
   }
   if (viewName === 'bookmarks') {
@@ -957,8 +957,8 @@ function _renderNavView(viewName, overlay) {
           <span>${_esc(m.time)}</span>
         </div>
         <div style="display:flex;gap:10px;">
-          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#6366f1);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">${m.letter}</div>
-          <div><div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:2px;">${_esc(m.author)}</div><div style="font-size:12px;color:var(--text-secondary);">${_esc(m.text)}</div></div>
+          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#6366f1);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">${_esc(m.letter)}</div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:2px;">${_esc(m.author)}</div><div style="font-size:12px;color:var(--text-secondary);">${_esc(window.plainMentionText?.(m.text) ?? m.text)}</div></div>
         </div>
         <div style="display:flex;gap:8px;margin-top:8px;">
           <button onclick="event.stopPropagation()" style="font-size:11px;padding:4px 10px;border-radius:6px;background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.2);color:#c084fc;cursor:pointer;font-family:inherit;">↩ Reply</button>
@@ -977,7 +977,7 @@ function _renderNavView(viewName, overlay) {
           <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,${_esc(m.grad || '#a855f7,#ec4899')});display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">${_esc(m.letter || '?')}</div>
           <div style="flex:1;min-width:0;">
             <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:3px;">${_esc(m.author)}</div>
-            <div style="font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${_esc(m.text)}</div>
+            <div style="font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${_esc(window.plainMentionText?.(m.text) ?? m.text)}</div>
             ${m.image_url ? `<img src="${_esc(m.image_url)}" alt="${_esc(m.image_name || 'Bookmarked discussion image')}" loading="lazy" style="display:block;width:100%;max-width:520px;max-height:300px;object-fit:cover;border-radius:9px;border:1px solid var(--border);margin-top:10px;background:var(--bg-secondary);">` : ''}
           </div>
         </div>
@@ -1013,9 +1013,9 @@ function _renderNavView(viewName, overlay) {
           <span style="font-size:14px;">📝</span>
           <span>#${m.channelId ? _esc(m.channel || m.channelId) : 'unknown'} · Saved ${_esc(m.saved || '')}</span>
         </div>
-        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;">${_esc(m.text)}</div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;">${_esc(window.plainMentionText?.(m.text) ?? m.text)}</div>
         <div style="display:flex;gap:8px;">
-          <button onclick="event.stopPropagation();_editDraftInChannel('${m.channelId}','${m.text}')" style="font-size:11px;padding:4px 10px;border-radius:6px;background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.2);color:#c084fc;cursor:pointer;font-family:inherit;">✏️ Edit in channel</button>
+          <button onclick="event.stopPropagation();_editDraftInChannel(${Number(m.channelId) || 0})" style="font-size:11px;padding:4px 10px;border-radius:6px;background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.2);color:#c084fc;cursor:pointer;font-family:inherit;">✏️ Edit in channel</button>
           <button onclick="event.stopPropagation();_deleteDraftById('${m.channelId}');this.closest('div[style]').remove()" style="font-size:11px;padding:4px 10px;border-radius:6px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:#f87171;cursor:pointer;font-family:inherit;">🗑 Delete</button>
         </div>
       </div>`).join('') || _nvEmpty('No drafts saved.');
@@ -1835,15 +1835,15 @@ function _removeBookmark(msgId) {
 function _deleteDraftById(channelId) {
   if (window._deleteDraft) window._deleteDraft(channelId);
 }
-function _editDraftInChannel(channelId, text) {
+async function _editDraftInChannel(channelId) {
+  if (!channelId) return;
   switchView('home', document.querySelector('.sidebar-nav-item'));
   const channelEl = document.querySelector(`.channel-item[data-channel-id="${channelId}"]`);
   if (channelEl && window.switchChannel) {
-    window.switchChannel(channelEl, parseInt(channelId));
-    setTimeout(() => {
-      const inputEl = document.getElementById('chatInputField');
-      if (inputEl) { inputEl.value = text; inputEl.focus(); }
-    }, 600);
+    await window.switchChannel(channelEl, channelId);
+    if (Number(window.ECOLLAB?.currentChannelId) !== channelId) return;
+    window.resumeChannelDraft?.(channelId);
+    document.getElementById('chatInputField')?.focus();
   }
 }
 window._jumpToBookmark = _jumpToBookmark;
