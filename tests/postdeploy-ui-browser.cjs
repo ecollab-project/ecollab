@@ -50,7 +50,7 @@ const server=http.createServer((req,res)=>{
     await page.getByRole('button',{name:'Close dynamic'}).waitFor({state:'visible'});
     await page.keyboard.press('Escape');
     await page.waitForFunction(()=>document.getElementById('dynamicModal').inert);
-    const sizes=[320,390,768,1384];
+    const sizes=[320,390,540,768,1384];
     for(const width of sizes){
       await page.setViewportSize({width,height:844});
       await page.evaluate(()=>document.getElementById('chatInputWrapper').style.display='block');
@@ -63,7 +63,7 @@ const server=http.createServer((req,res)=>{
       }));
       assert(dimensions.scrollWidth<=width+2,'Page overflows at '+width);
       if(width<=420)console.log('Narrow composer',width,await page.locator('#chatInputField').evaluate(e=>{const rows=[];for(let p=e;p&&rows.length<5;p=p.parentElement){const s=getComputedStyle(p);rows.push({tag:p.tagName,id:p.id,class:p.className,width:p.getBoundingClientRect().width,display:s.display,flex:s.flex,columns:s.gridTemplateColumns});}return rows;}));
-      if(width<=420){
+      if(width<=600){
         assert(dimensions.input.width>=200,'Text field remains usable at '+width);
         assert(Math.abs(dimensions.input.y-dimensions.send.y)<=2,'Send stays beside the editor');
         assert(dimensions.send.height>=44,'Send has a 44px touch target');
@@ -89,7 +89,7 @@ const server=http.createServer((req,res)=>{
     assert.equal(await page.locator('.pm-leaderboard-row button:disabled').count(),2);
     assert.equal(await page.locator('.pm-leaderboard-row button:not(:disabled)').count(),1);
     assert.equal(await page.locator('.pm-lb-score').first().innerText(),'64%');
-    console.log('PASS: real-template modal isolation, focus trap/return, dynamic overlays, reopen race, 320/390/768/1384 layouts and Top connection states');
+    console.log('PASS: real-template modal isolation, focus trap/return, dynamic overlays, reopen race, 320/390/540/768/1384 layouts and Top connection states');
     await page.close();
   }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
 })().catch(error=>{console.error(error);server.close();process.exitCode=1;});

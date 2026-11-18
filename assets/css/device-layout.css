@@ -258,6 +258,9 @@ body[data-mobile-surface=chat] :is(.chat-header, #chatInputContainer) button:foc
   body[data-mobile-surface=chat] .chat-input-main > .input-btn-icon {
     grid-row: 2;
     justify-self: center;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
   }
 
   body[data-mobile-surface=chat] #chatInputContainer .ai-assist-btn {
