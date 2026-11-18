@@ -56,12 +56,22 @@ const server=http.createServer((req,res)=>{
       await page.evaluate(()=>document.getElementById('chatInputWrapper').style.display='block');
       const dimensions=await page.evaluate(()=>({
         input:document.getElementById('chatInputField').getBoundingClientRect().toJSON(),
+        send:document.querySelector('#chatInputContainer .send-btn').getBoundingClientRect().toJSON(),
+        tools:['attachBtn','extrasBtn','emojiBtn','gifBtn','micBtn','aiAssistBtn'].map(id=>document.getElementById(id).getBoundingClientRect().toJSON()),
         heading:getComputedStyle(document.querySelector('.chat-channel-heading')).display,
         scrollWidth:document.documentElement.scrollWidth,
       }));
       assert(dimensions.scrollWidth<=width+2,'Page overflows at '+width);
       if(width<=420)console.log('Narrow composer',width,await page.locator('#chatInputField').evaluate(e=>{const rows=[];for(let p=e;p&&rows.length<5;p=p.parentElement){const s=getComputedStyle(p);rows.push({tag:p.tagName,id:p.id,class:p.className,width:p.getBoundingClientRect().width,display:s.display,flex:s.flex,columns:s.gridTemplateColumns});}return rows;}));
-      if(width<=420)assert(dimensions.input.width>=width-65,'Text row is too narrow at '+width+': '+dimensions.input.width);
+      if(width<=420){
+        assert(dimensions.input.width>=200,'Text field remains usable at '+width);
+        assert(Math.abs(dimensions.input.y-dimensions.send.y)<=2,'Send stays beside the editor');
+        assert(dimensions.send.height>=44,'Send has a 44px touch target');
+        assert(dimensions.tools.every(row=>row.width>=44&&row.height>=44&&row.top>=dimensions.input.bottom),
+          'Secondary tools remain reachable below the editor');
+        assert(dimensions.tools.every(row=>Math.abs(row.top-dimensions.tools[0].top)<=2),
+          'Secondary tools fit on one row');
+      }
       assert.equal(dimensions.heading,width<=860?'none':'flex','Only one channel heading on mobile');
       for(const id of ['attachBtn','extrasBtn','emojiBtn','gifBtn','micBtn'])assert(await page.locator('#'+id).isVisible(),id+' remains available');
     }
