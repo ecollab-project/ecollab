@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/database/config/db.php';
+require_once __DIR__ . '/AccountType.php';
 require_once __DIR__ . '/RealtimeOutbox.php';
 require_once __DIR__ . '/ChatMentions.php';
 
@@ -57,12 +58,13 @@ class MessageService
         if ($after !== null) $beforeClause = 'AND m.id > :after';
         $messageOrder = $after !== null ? 'ASC' : 'DESC';
 
+        $accountType = AccountType::sql();
         $stmt = $this->db->prepare("
             SELECT m.id, m.channel_id, m.sender_id, m.content, m.content_type,
                    m.parent_id, m.is_edited, m.is_pinned, m.reaction_count,
                    m.created_at, m.updated_at,
                    u.username, u.full_name, u.avatar_url, u.avatar_color_gradient, u.role,
-                   u.is_verified,
+                   u.is_verified, $accountType AS account_type,
                    pm.content AS parent_content,
                    pu.full_name AS parent_author
             FROM messages m
@@ -436,6 +438,7 @@ class MessageService
     }
     private function getMessageById(int $id): array
     {
+        $accountType = AccountType::sql();
         $stmt = $this->db->prepare("
         SELECT m.*,
                u.username,
@@ -444,6 +447,7 @@ class MessageService
                u.avatar_color_gradient,
                u.role,
                u.is_verified,
+               $accountType AS account_type,
                pm.content AS parent_content,
                pu.full_name AS parent_author
         FROM messages m

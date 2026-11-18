@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once dirname(__DIR__).'/database/config/db.php';
+require_once __DIR__ . '/AccountType.php';
 require_once dirname(__DIR__).'/services/RealtimeOutbox.php';
 
 /** Admin workspace data. Optional sources remain unavailable rather than becoming fabricated zeros. */
@@ -67,8 +68,15 @@ final class AdminWorkspaceService
         foreach (['role'=>['student','facilitator','moderator','admin','super_admin'],'status'=>['active','offline','idle','banned','suspended','deactivated']] as $field=>$allowed) {
             if (!empty($query[$field])) {if (!in_array($query[$field],$allowed,true))throw new InvalidArgumentException('Invalid filter.');$where.=" AND u.$field=?";$params[]=$query[$field];}
         }
+        $accountType = AccountType::sql();
+        $type = $query['account_type'] ?? '';
+        if ($type !== '') {
+            if (!is_string($type) || !isset(AccountType::LABELS[$type])) throw new InvalidArgumentException('Invalid account type.');
+            $where .= " AND ($accountType)=?";
+            $params[] = $type;
+        }
         $total=$this->count("SELECT COUNT(*) FROM users u WHERE $where",$params);
-        $items=$this->rows("SELECT u.id,u.username,u.full_name,u.email,u.role,u.status,u.created_at,u.is_online,u.last_active_at,u.last_seen_at,ap.name AS course_name FROM users u LEFT JOIN user_profiles up ON up.user_id=u.id LEFT JOIN academic_programs ap ON ap.id=up.academic_program_id WHERE $where ORDER BY u.id DESC LIMIT ? OFFSET ?",[...$params,$limit,$offset]);
+        $items=$this->rows("SELECT u.id,u.username,u.full_name,u.email,$accountType AS account_type,u.role,u.status,u.created_at,u.is_online,u.last_active_at,u.last_seen_at,ap.name AS course_name FROM users u LEFT JOIN user_profiles up ON up.user_id=u.id LEFT JOIN academic_programs ap ON ap.id=up.academic_program_id WHERE $where ORDER BY u.id DESC LIMIT ? OFFSET ?",[...$params,$limit,$offset]);
         return ['items'=>$items,'total'=>$total,'page'=>$page,'limit'=>$limit];
     }
     public function spaces(array $query): array {

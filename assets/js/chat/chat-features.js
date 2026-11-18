@@ -552,9 +552,12 @@ function _getPlaceholderActiveUsers() {
 // ═══════════════════════════════════════════════════════
 let _membersTab = 'all';
 let _membersSearch = '';
+let _membersAccountType = '';
 
 async function openMembersPanel() {
-  _membersTab = 'all'; _membersSearch = '';
+  _membersTab = 'all'; _membersSearch = ''; _membersAccountType = '';
+  const accountFilter = document.getElementById('membersAccountType');
+  if (accountFilter) accountFilter.value = '';
   const inp = document.getElementById('membersSearch');
   if (inp) inp.value = '';
   document.querySelectorAll('#membersStatusTabs .filter-tab').forEach((t, i) => t.classList.toggle('active', i === 0));
@@ -579,6 +582,7 @@ function _renderMembersModal() {
   const source = _getModalMembersSource();
   let data = source;
   if (_membersTab !== 'all') data = data.filter(m => m.status === _membersTab);
+  if (_membersAccountType) data = data.filter(m => m.accountType === _membersAccountType);
   if (_membersSearch) data = data.filter(m => m.name.toLowerCase().includes(_membersSearch) || (m.role || '').toLowerCase().includes(_membersSearch));
   if (!data.length) { container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px;font-size:13px;">No members found</div>'; return; }
   const order = ['online', 'idle', 'offline'];
@@ -598,7 +602,7 @@ function _renderMembersModal() {
           <div style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;border:2px solid var(--bg-secondary);background:${dotColor};"></div>
         </div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${_esc(m.name)}</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${_esc(m.name)} ${window.chatAccountBadge?.(m.accountType) || ''}</div>
           <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(m.role || 'Member')}</div>
         </div>
         <button onclick="event.stopPropagation();sendConnectionRequest(this,${m.id || 0})"
@@ -614,6 +618,7 @@ function _getModalMembersSource() {
   if (Array.isArray(window.serverMembers)) return window.serverMembers.map(m => ({
     id: Number(m.id), name: m.full_name || m.nickname || m.username || '?',
     role: m.server_role || m.role || 'Member', grad: m.avatar_color_gradient,
+    accountType: m.account_type || 'personal',
     status: Number(m.is_online) === 1 ? 'online' : 'offline',
   }));
   // Fallback for older pages without the directory loader.
@@ -627,11 +632,16 @@ function _getModalMembersSource() {
       const isOffline = item.querySelector('.online-dot.offline') !== null;
       const id = parseInt(item.dataset.userId || 0);
       const grad = item.dataset.userGrad || '#3b82f6,#6366f1';
-      result.push({ id, name, role, status: isOffline ? 'offline' : isOnline ? 'online' : 'idle', grad });
+      result.push({ id, name, role, accountType: item.dataset.accountType || 'personal', status: isOffline ? 'offline' : isOnline ? 'online' : 'idle', grad });
     });
     return result;
   }
   return [];
+}
+
+function filterMembersByAccountType(type) {
+  _membersAccountType = type;
+  _renderMembersModal();
 }
 
 function switchMembersTab(btn, tab) {

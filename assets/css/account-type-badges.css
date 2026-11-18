@@ -1,0 +1,44 @@
+.account-type-badge {
+  display: inline-block;
+  width: fit-content;
+  padding: 1px 6px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: var(--text-primary, var(--text, inherit));
+  font-size: 0.6875rem;
+  font-weight: 650;
+  line-height: 1.35;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.account-type-badge[data-account-type="student"] {
+  border-color: #3b82f6;
+}
+
+.account-type-badge[data-account-type="professor"] {
+  border-color: #a855f7;
+}
+
+.account-type-badge[data-account-type="personal"] {
+  border-color: #64748b;
+}
+
+.members-account-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-bottom: 12px;
+  font-size: 0.8125rem;
+}
+
+.members-account-filter select {
+  max-width: 100%;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font: inherit;
+}
