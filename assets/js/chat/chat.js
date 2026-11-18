@@ -93,6 +93,13 @@ function escHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
+function chatAccountBadge(type) {
+  const labels = {student: 'Student', professor: 'Professor', personal: 'Personal'};
+  const value = Object.hasOwn(labels, type) ? type : 'personal';
+  return '<span class="account-type-badge" data-account-type="' + value + '">' + labels[value] + '</span>';
+}
+window.chatAccountBadge = chatAccountBadge;
+
 function timeAgo(dateStr) {
   const d = new Date(dateStr);
   const now = new Date();
@@ -703,6 +710,7 @@ function buildMessageElement(msg) {
     <div class="msg-content">
       <div class="msg-header">
         <span class="msg-username ${roleClass}" role="button" tabindex="0" data-profile-user-id="${Number(msg.sender_id)||0}" data-profile-name="${escHtml(msg.full_name||msg.username)}">${escHtml(msg.full_name || msg.username)}</span>
+        ${window.chatAccountBadge?.(msg.account_type) || ''}
         ${msg.role === 'facilitator' ? '<span class="msg-badge">FACULTY</span>' : ''}
         ${msg.is_verified ? '<span style="color:#a855f7;font-size:12px;" title="Verified">✓</span>' : ''}
         <span class="msg-timestamp">${time}</span>
@@ -834,6 +842,7 @@ async function sendMessage() {
     full_name: window.ECOLLAB?.fullName,
     avatar_color_gradient: window.ECOLLAB?.avatarGradient,
     role: window.ECOLLAB?.role,
+    account_type: window.ECOLLAB?.accountType,
     is_verified: false,
     is_pinned: false,
     is_edited: false,
@@ -1520,13 +1529,14 @@ function renderMembersPanel(members, total = members.length) {
     const memberInitial = memberAvatarUrl ? '' : init;
     const online = chatMemberOnline(m) ? 'online' : '';
     return `
-      <div class="member-item" data-user-id="${m.id || m.user_id || 0}" data-user-grad="${grad}" role="button" tabindex="0" data-profile-user-id="${Number(m.id||m.user_id)||0}" data-profile-name="${escHtml(m.full_name||m.username)}">
+      <div class="member-item" data-user-id="${m.id || m.user_id || 0}" data-user-grad="${grad}" data-account-type="${['student', 'professor'].includes(m.account_type) ? m.account_type : 'personal'}" role="button" tabindex="0" data-profile-user-id="${Number(m.id||m.user_id)||0}" data-profile-name="${escHtml(m.full_name||m.username)}">
         <div class="user-avatar">
           ${chatSidebarAvatar(m.full_name || m.username, m.avatar_url, grad, 28)}
           <div class="online-dot ${chatMemberOnline(m) ? '' : 'offline'}"></div>
         </div>
         <div class="member-info">
           <div class="member-name">${escHtml(m.full_name || m.nickname || m.username)}${m.server_role === 'owner' ? ' <span class="member-badge">👑</span>' : ''}</div>
+          ${window.chatAccountBadge?.(m.account_type) || ''}
         </div>
         <div class="member-status ${online}">● ${chatMemberOnline(m) ? 'Online' : 'Offline'}</div>
       </div>

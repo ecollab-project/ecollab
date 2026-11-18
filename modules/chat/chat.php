@@ -10,6 +10,7 @@ AuthMiddleware::startSession();
 $user = AuthMiddleware::requireAuth();
 
 $csrfToken = AuthMiddleware::csrfToken();
+$accountType = AccountType::forUser(Database::getInstance(), (int)$user['id']);
 
 $channelService = new ChannelService();
 $servers        = $channelService->getServersForUser($user['id']);
@@ -48,6 +49,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken) ?>">
   <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js?v=settings-speed-1" defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/account-type-badges.css?v=1">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat.css?v=chat-avatar-1">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/whiteboard.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/whiteboard-mobile.css">
@@ -432,7 +434,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <div style="font-size:13px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
           <?= htmlspecialchars($user['username']) ?>
         </div>
-        <div style="font-size:11px;color:var(--accent-green);">● Online</div>
+        <div style="font-size:11px;color:var(--accent-green);">● Online
+          <span class="account-type-badge" data-account-type="<?= $accountType ?>"><?= AccountType::LABELS[$accountType] ?></span>
+        </div>
       </div>
       <div class="footer-controls">
         <button type="button" class="footer-icon-btn" onclick="event.stopPropagation();if(window.EcollabCalls?.busy())window.EcollabCalls.control('mic');else toggleMute(event)" title="Mute" id="muteBtn">
@@ -1042,6 +1046,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       username: <?= json_encode($user['username']) ?>,
       fullName: <?= json_encode($user['full_name']) ?>,
       role: <?= json_encode($user['role']) ?>,
+      accountType: <?= json_encode($accountType) ?>,
       avatarGradient: <?= json_encode($user['avatar_color_gradient']) ?>,
       avatarUrl: <?= json_encode($user['avatar_url'] ?? '') ?>,
       initials: <?= json_encode($initials) ?>,
@@ -1062,7 +1067,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     (function() {
       var _deferred = [
         'openExtrasAction', 'switchActiveTab', 'filterActiveNow', 'openActiveNowModal',
-        'openMembersPanel', 'switchMembersTab', 'filterMembersModal',
+        'openMembersPanel', 'switchMembersTab', 'filterMembersModal', 'filterMembersByAccountType',
         'openFullMatchesModal', 'filterMatchTab', 'refreshMatches', 'sendConnectionRequest',
         'switchView', 'openSearchModal', 'closeSearchOverlay', 'searchMessages',
         'openUserSettings', 'closePlatformSettingsOverlay', 'switchSettingsTab',
@@ -1124,9 +1129,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <?php endif; ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-timeline.css?v=1">
   <script src="<?= BASE_URL ?>/assets/js/chat/timeline.js?v=dm-identity-20261103" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=mentions-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=account-types-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/modal-accessibility.js?v=ux-audit-1" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=mentions-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=account-types-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js?v=media-1" defer></script>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-media.css?v=1">
   <script src="<?= BASE_URL ?>/assets/js/chat/media-picker.js?v=settings-speed-1" defer></script>
@@ -1385,6 +1390,14 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           <button onclick="switchMembersTab(this,'idle')" class="filter-tab" style="font-size:11px;padding:4px 12px;">🟡 Idle</button>
           <button onclick="switchMembersTab(this,'offline')" class="filter-tab" style="font-size:11px;padding:4px 12px;">⚫ Offline</button>
         </div>
+        <label class="members-account-filter" for="membersAccountType">Account type
+          <select id="membersAccountType" onchange="filterMembersByAccountType(this.value)">
+            <option value="">All accounts</option>
+            <?php foreach (AccountType::LABELS as $type => $label): ?>
+              <option value="<?= $type ?>"><?= $label ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
         <div id="membersModalList" style="display:flex;flex-direction:column;gap:2px;max-height:440px;overflow-y:auto;"></div>
       </div>
     </div>
@@ -3471,7 +3484,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <script src="<?= BASE_URL ?>/assets/js/chat/collabs-ui.js?v=inline-workspace-3" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/nav-persistence.js?v=2" defer></script>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/profile-view-overrides.css?v=1">
-  <script id="profileViewScript" src="<?= BASE_URL ?>/assets/js/chat/profile-view.js?v=call-routing-4" defer></script>
+  <script id="profileViewScript" src="<?= BASE_URL ?>/assets/js/chat/profile-view.js?v=account-types-1" defer></script>
 <!-- ── FLASHCARD MODALS ── -->
 <div id="createDeckModal" class="collab-modal-overlay" style="display:none">
   <div class="modal-box" style="max-width:480px;width:92%">

@@ -17,7 +17,7 @@ vm.runInContext(source.slice(source.indexOf('let memberDirectoryPending'), sourc
 vm.runInContext(source.slice(source.indexOf('function renderMembersPanel('), source.indexOf('async function refreshMembersPanel(')), context);
 vm.runInContext(features.slice(features.indexOf("let _membersTab ="), features.indexOf('function switchMembersTab(')), context);
 vm.runInContext(features.slice(features.indexOf('function _esc('), features.indexOf('// ═',features.indexOf('function _esc('))), context);
-const members = Array.from({length:1000}, (_,i) => ({id:i+1, username:'member'+i, full_name:i===999?'Outside preview':"O'Neil "+i, is_online: i<5 ? 1 : 0}));
+const members = Array.from({length:1000}, (_,i) => ({id:i+1, username:'member'+i, full_name:i===999?'Outside preview':"O'Neil "+i, is_online: i<5 ? 1 : 0, account_type: i===999 ? 'professor' : i<3 ? 'student' : 'personal'}));
 (async () => {
   context.renderMembersPanel(members.slice(0,20),1000);
   assert.equal(dom.window.document.querySelectorAll('.member-item').length,20);
@@ -33,6 +33,15 @@ const members = Array.from({length:1000}, (_,i) => ({id:i+1, username:'member'+i
   vm.runInContext("_membersSearch='outside preview'; _renderMembersModal();",context);
   assert.match(dom.window.document.getElementById('membersModalList').textContent,/Outside preview/);
   assert.equal(dom.window.document.querySelector('#membersModalList [data-profile-user-id]').dataset.profileUserId,'1000','Profile uses the actual user ID');
+  context.filterMembersByAccountType('student');
+  assert.match(dom.window.document.getElementById('membersModalList').textContent,/No members found/,'Account type and name search combine');
+  vm.runInContext("_membersSearch=''",context);
+  context.filterMembersByAccountType('student');
+  assert.equal(dom.window.document.querySelectorAll('#membersModalList .account-type-badge[data-account-type="student"]').length,3);
+  context.filterMembersByAccountType('professor');
+  assert.equal(dom.window.document.querySelectorAll('#membersModalList .account-type-badge[data-account-type="professor"]').length,1);
+  assert.match(dom.window.document.getElementById('membersModalList').textContent,/Outside preview/);
+  context.filterMembersByAccountType('');
   const stale=context.loadChatMemberDirectory();
   context.currentChannelId=81; context.window.serverMembers=[];
   pending.shift().resolve({success:true,has_access:true,members}); await stale;

@@ -5,6 +5,8 @@ require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 
+require_once dirname(__DIR__, 2) . '/services/AccountType.php';
+
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
 $me = AuthMiddleware::requireAuth(true);
@@ -124,6 +126,7 @@ try {
             'username'              => $user['username'],
             'full_name'             => $user['full_name'],
             'role'                  => $user['role'],
+            'account_type'          => AccountType::classify((string)$user['email'], (bool)$user['email_verified']),
             'avatar_url'            => $user['avatar_url'] ?? '',
             'avatar_color_gradient' => $user['avatar_color_gradient'] ?? '',
             'bio'                   => $user['bio'] ?? '',

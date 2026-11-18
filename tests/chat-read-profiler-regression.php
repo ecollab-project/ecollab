@@ -9,7 +9,7 @@ ensure($db->query('SELECT DATABASE()')->fetchColumn()==='delivery_test','Refuse 
 $db->exec('CREATE DATABASE read_profile_test');$db->exec('USE read_profile_test');
 try {
     $schema=[
-        "CREATE TABLE users(id INT PRIMARY KEY,username VARCHAR(60),full_name VARCHAR(80),avatar_url VARCHAR(200),avatar_color_gradient VARCHAR(40),status VARCHAR(20),role VARCHAR(20),deleted_at DATETIME NULL,last_active_at DATETIME,is_verified INT)",
+        "CREATE TABLE users(id INT PRIMARY KEY,username VARCHAR(60),full_name VARCHAR(80),avatar_url VARCHAR(200),avatar_color_gradient VARCHAR(40),status VARCHAR(20),role VARCHAR(20),deleted_at DATETIME NULL,last_active_at DATETIME,is_verified INT,email VARCHAR(120),email_verified INT)",
         "CREATE TABLE channels(id INT PRIMARY KEY,server_id INT,is_private INT,created_by INT,name VARCHAR(60),type VARCHAR(20),position INT,created_at DATETIME,slug VARCHAR(60),description TEXT,is_locked INT DEFAULT 0,member_count INT DEFAULT 0)",
         "CREATE TABLE server_members(server_id INT,user_id INT,server_role VARCHAR(20),nickname VARCHAR(60),joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,PRIMARY KEY(server_id,user_id))",
         "CREATE TABLE channel_members(channel_id INT,user_id INT,PRIMARY KEY(channel_id,user_id))",
@@ -24,7 +24,7 @@ try {
     foreach($schema as $sql)$db->exec($sql);
     $users=[];$members=[];
     for($i=1;$i<=1000;$i++){
-        $users[]="($i,'k6_1234abcd_$i','PRIVATE_NAME_SENTINEL','','','active','student',NULL,NOW(),1)";
+        $users[]="($i,'k6_1234abcd_$i','PRIVATE_NAME_SENTINEL','','','active','student',NULL,NOW(),1,'fixtureuser6632ant@student.fatima.edu.ph',1)";
         $members[]="(19,$i,'member',NULL,NOW())";
     }
     $db->exec('INSERT INTO users VALUES'.implode(',',$users));
