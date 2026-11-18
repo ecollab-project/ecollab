@@ -32,20 +32,33 @@
 <div class="card" id="workspace-layout">
   <div class="head">Workspace layout</div>
   <div class="body">
-    <p class="desc">Choose what appears in your Chat sidebars. Move widgets between sides or reorder them within a side.</p>
+    <p class="desc" id="ecLayoutHelp">Drag widgets or use the move buttons. Changes stay in this preview until you save.</p>
     <form id="ecWidgetForm">
-      <fieldset class="ec-widget-fieldset" aria-label="Chat widgets">
-        <div class="ec-widget-columns">
+      <fieldset class="ec-widget-fieldset" aria-label="Chat workspace preview" aria-describedby="ecLayoutHelp">
+        <div class="ec-workspace-preview">
+          <div class="ec-preview-top" aria-hidden="true"><span>E</span><strong>eCollab Chat</strong></div>
+          <div class="ec-widget-columns">
           <section class="ec-widget-column" aria-labelledby="ecWidgetsLeft">
             <h3 id="ecWidgetsLeft">Left sidebar</h3>
-            <ul id="ecWidgetList-left"></ul>
+            <ul id="ecWidgetList-left" data-widget-drop="left"></ul>
           </section>
+          <div class="ec-preview-chat" aria-hidden="true">
+            <div class="ec-preview-channel"><span>#</span> general</div>
+            <div class="ec-preview-message"><span></span><div><b>Preview</b><small>Your conversation appears here.</small></div></div>
+            <div class="ec-preview-composer"><span>Message #general</span><b>Send</b></div>
+          </div>
           <section class="ec-widget-column" aria-labelledby="ecWidgetsRight">
             <h3 id="ecWidgetsRight">Right sidebar</h3>
-            <ul id="ecWidgetList-right"></ul>
+            <ul id="ecWidgetList-right" data-widget-drop="right"></ul>
           </section>
+          </div>
         </div>
+        <section class="ec-widget-tray" aria-labelledby="ecWidgetsHidden">
+          <h3 id="ecWidgetsHidden">Hidden widgets</h3>
+          <ul id="ecWidgetList-hidden" data-widget-drop="hidden"></ul>
+        </section>
         <div class="actions">
+          <button type="button" class="btn secondary" id="ecWidgetUndo">Discard edits</button>
           <button type="button" class="btn secondary" id="ecWidgetReset">Restore default layout</button>
           <button type="submit" class="btn primary">Save workspace layout</button>
         </div>
