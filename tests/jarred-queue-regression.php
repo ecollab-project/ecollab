@@ -56,7 +56,7 @@ $formatDb=queueFixture();$formatQueue=new JarredReplyQueue($formatDb);
 foreach ([['Answer only with the number: 17 + 25.','{"answer":42}','42'],['Explain sessions in exactly two short sentences.','{"sentences":["Sessions keep server data.","A cookie can identify the session."]}','Sessions keep server data. A cookie can identify the session.']] as [$question,$output,$expected]) {
     $saveFormat=function()use($formatDb,$question){$formatDb->prepare('INSERT INTO dm_messages(conversation_id,sender_id,body) VALUES(1,1,?)')->execute([$question]);return (int)$formatDb->lastInsertId();};
     $message=$formatQueue->reserve(1,1,99,$question,null,[],$saveFormat);$formatQueue->activate(1,$message);$job=$formatQueue->claim();
-    $formatWorker=new JarredDmReplyWorker($formatDb,function($messages,$prompt,$tokens,$schema)use($output){jq(is_array($schema)&&str_contains($prompt,'Output contract'),'worker passes schema and current-request format instructions');return ['text'=>$output];},fn()=>'');
+    $formatWorker=new JarredDmReplyWorker($formatDb,function($messages,$prompt,$tokens,$schema)use($output,$expected){jq($tokens===($expected==='42'?128:400),'only numeric output uses the smaller budget');jq(is_array($schema)&&str_contains($prompt,'Output contract'),'worker passes schema and current-request format instructions');return ['text'=>$output];},fn()=>'');
     $answer=$formatWorker->generate($job);jq($answer===$expected,'worker publishes plain formatted text, never schema JSON');
     $formatQueue->finish($job,fn()=>$formatWorker->persist($job,$answer));
 }

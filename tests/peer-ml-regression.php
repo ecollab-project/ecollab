@@ -31,6 +31,7 @@ $hybrid = $service->scoreProfiles($profile, $profile, 80.);
 check(abs($hybrid['total'] - round($rules['total']*.75+20,2)) < .011, 'Hybrid weighting');
 check(array_sum($hybrid['weights']) === 100.0, 'Weights must sum to 100');
 check($hybrid['subjects'] === $rules['subjects'], 'Explainable components retained');
+check($hybrid['rule_tags'] === $rules['tags'], 'Cached reasons exclude hybrid signals');
 check(PeerSemanticClient::profileText($profile) === 'Databases; PHP', 'Only allowed labels leave PHP');
 check(PeerSemanticClient::profileText(['subjects'=>[['subject_id'=>9]]]) === '', 'IDs are not semantic text');
 $client = new StubSemanticClient();

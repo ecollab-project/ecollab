@@ -32,14 +32,40 @@ final class PeerBehaviorService
     }
     public function profile(int $uid): ?array
     {
-        if(!$this->allowed($uid))return null;
+        return $this->profiles([$uid])[$uid] ?? null;
+    }
+
+    /** Read only current, opt-in behavior aggregates. */
+    public function profiles(array $ids): array
+    {
+        if (!$ids) return [];
+        $parameters = implode(',', array_fill(0, count($ids), '?'));
         try {
-            $q=$this->db->prepare('SELECT features_json,event_count,refreshed_at FROM peer_behavior_profiles WHERE user_id=?');
-            $q->execute([$uid]);$r=$q->fetch(PDO::FETCH_ASSOC);
-            if(!$r || (int)$r['event_count']<5 || strtotime($r['refreshed_at'].' UTC')<time()-14*86400)return null;
-            $f=json_decode($r['features_json'],true);
-            return is_array($f)?['features'=>$f,'event_count'=>(int)$r['event_count']]:null;
-        } catch(PDOException $e) { if(self::missing($e))return null; throw $e; }
+            $query = $this->db->prepare("SELECT p.user_id, p.features_json, p.event_count, p.refreshed_at
+                FROM peer_behavior_profiles p
+                JOIN users u ON u.id = p.user_id
+                LEFT JOIN user_settings s ON s.user_id = u.id
+                WHERE p.user_id IN ($parameters) AND p.event_count >= 5
+                  AND u.status NOT IN ('banned','suspended','deactivated')
+                  AND u.deleted_at IS NULL AND u.is_system = 0
+                  AND (s.user_id IS NULL OR s.ai_matching = 1)");
+            $query->execute($ids);
+            $profiles = [];
+            $cutoff = time() - 14 * 86400;
+            foreach ($query->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                if (strtotime($row['refreshed_at'] . ' UTC') < $cutoff) continue;
+                $features = json_decode($row['features_json'], true);
+                if (is_array($features)) {
+                    $profiles[(int)$row['user_id']] = [
+                        'features' => $features, 'event_count' => (int)$row['event_count'],
+                    ];
+                }
+            }
+            return $profiles;
+        } catch (PDOException $error) {
+            if (self::missing($error)) return [];
+            throw $error;
+        }
     }
     public static function similarity(?array $a,?array $b): ?float
     {
