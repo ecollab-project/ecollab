@@ -34,7 +34,7 @@ try {
           OR (f.requester_id = u.id AND f.addressee_id = :uid2)
         WHERE u.id != :uid3
           AND u.deleted_at IS NULL
-          AND u.status != 'banned'
+          AND u.status NOT IN ('banned','suspended','deactivated')
           AND COALESCE(u.is_system, 0) = 0
           AND NOT EXISTS (SELECT 1 FROM user_settings us WHERE us.user_id=u.id AND us.ai_matching=0)
           AND (f.id IS NULL OR f.status = 'rejected')
@@ -77,19 +77,16 @@ try {
     $matches = [];
 
     if ($currentProfileReady) {
-        $profiles = array_map(static fn($candidate) => $service->loadProfile($db, (int)$candidate['id']), $users);
-        $semantic = (new PeerSemanticClient())->scores($currentProfile, $profiles);
+        $profiles = $service->loadProfiles($db, array_column($users, 'id'));
+        $users = array_values(array_filter($users, static function (array $candidate) use ($profiles): bool {
+            $profile = $profiles[(int)$candidate['id']];
+            return (bool)($profile['subjects'] || $profile['interests'] || $profile['hobbies']);
+        }));
+        $orderedProfiles = array_map(static fn(array $candidate) => $profiles[(int)$candidate['id']], $users);
+        $semantic = (new PeerSemanticClient())->scores($currentProfile, $orderedProfiles);
         foreach ($users as $index => $candidate) {
             $candidateId = (int)$candidate['id'];
-            $candidateProfile = $profiles[$index];
-
-            $candidateReady = !empty($candidateProfile['subjects'])
-                || !empty($candidateProfile['interests'])
-                || !empty($candidateProfile['hobbies']);
-
-            if (!$candidateReady) {
-                continue;
-            }
+            $candidateProfile = $orderedProfiles[$index];
 
             $score = $service->scoreProfiles($currentProfile, $candidateProfile, $semantic[$index]);
 
@@ -106,7 +103,7 @@ try {
                 $score['shared_subjects'],
                 $score['shared_interests'],
                 $score['shared_hobbies'],
-                json_encode($service->scoreProfiles($currentProfile, $candidateProfile)['tags'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+                json_encode($score['rule_tags'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
             ]);
 
             $name = (string)($candidate['full_name'] ?: $candidate['username']);
