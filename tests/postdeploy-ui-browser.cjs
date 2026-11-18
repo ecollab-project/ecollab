@@ -6,6 +6,8 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),
 const root=path.resolve(__dirname,'..');
 const chat=fs.readFileSync(path.join(root,'assets/js/chat/chat.js'),'utf8');
 const modalFunctions=chat.slice(chat.indexOf('// ── Modals ──'),chat.indexOf('// ── Sidebar filter ──'));
+const avatarFunctions=chat.slice(chat.indexOf('function chatAvatarUrl('),chat.indexOf('const API_BASE'))
+  +chat.slice(chat.indexOf('function messageAvatarMarkup('),chat.indexOf('function buildPollWidget('));
 let html=execFileSync(process.env.PHP_BIN||'php',['-d','session.save_path=/tmp','tests/responsive-render-fixture.php','chat'],{cwd:root,encoding:'utf8'});
 html=html.replace(/<script\b[\s\S]*?<\/script>/gi,'')
   .replace(/(href|src)="https?:\/\/[^/"\s]+(\/assets\/[^"\s]+)"/g,'$1="$2"')
@@ -13,7 +15,11 @@ html=html.replace(/<script\b[\s\S]*?<\/script>/gi,'')
 const server=http.createServer((req,res)=>{
   const url=new URL(req.url,'http://fixture');
   if(url.pathname==='/fixture'){res.setHeader('Content-Type','text/html');return res.end(html);}
-  if(url.pathname==='/fixture-modal.js'){res.setHeader('Content-Type','text/javascript');return res.end(modalFunctions);}
+  if(url.pathname==='/fixture-modal.js'){res.setHeader('Content-Type','text/javascript');return res.end(modalFunctions+avatarFunctions);}
+  if(url.pathname==='/fixture-avatar.svg'){
+    res.setHeader('Content-Type','image/svg+xml');
+    return res.end('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="40"><rect width="80" height="40" fill="orange"/></svg>');
+  }
   const file=path.resolve(root,'.'+url.pathname);
   if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.statusCode=404;return res.end();}
   res.setHeader('Content-Type',file.endsWith('.css')?'text/css':file.endsWith('.js')?'text/javascript':'application/octet-stream');
@@ -50,6 +56,21 @@ const server=http.createServer((req,res)=>{
     await page.getByRole('button',{name:'Close dynamic'}).waitFor({state:'visible'});
     await page.keyboard.press('Escape');
     await page.waitForFunction(()=>document.getElementById('dynamicModal').inert);
+    await page.evaluate(()=>{
+      window.escHtml=value=>String(value??'').replace(/[<>"&']/g,char=>'&#'+char.charCodeAt(0)+';');
+      window.formatTime=()=>'9:00';
+      window._renderMsgContent=()=>'<span>Fixture message</span>';
+      const list=document.getElementById('messagesArea');
+      for(const [id,name,url] of [[101,'Photo','/fixture-avatar.svg'],[102,'Broken','/missing-avatar.png'],[103,'Initial','']]){
+        list.append(buildMessageElement({id,sender_id:id,full_name:name,username:name,avatar_url:url}));
+      }
+      document.documentElement.classList.add('compact-mode');
+    });
+    await page.locator('[data-msg-id="101"] .msg-avatar-photo.is-loaded').waitFor({state:'visible'});
+    await page.locator('[data-msg-id="102"] .msg-avatar-photo').waitFor({state:'detached'});
+    assert.equal(await page.locator('[data-msg-id="101"] .msg-avatar-face span').isVisible(),false);
+    assert.equal(await page.locator('[data-msg-id="102"] .msg-avatar-face span').innerText(),'B');
+    assert.equal(await page.locator('[data-msg-id="103"] .msg-avatar-face span').innerText(),'I');
     const sizes=[320,390,540,768,1384];
     for(const width of sizes){
       await page.setViewportSize({width,height:844});
@@ -60,8 +81,21 @@ const server=http.createServer((req,res)=>{
         tools:['attachBtn','extrasBtn','emojiBtn','gifBtn','micBtn','aiAssistBtn'].map(id=>document.getElementById(id).getBoundingClientRect().toJSON()),
         heading:getComputedStyle(document.querySelector('.chat-channel-heading')).display,
         scrollWidth:document.documentElement.scrollWidth,
+        avatars:[...document.querySelectorAll('.msg-avatar-face')].map(face=>{
+          const rect=face.getBoundingClientRect();
+          const parent=face.parentElement.getBoundingClientRect();
+          const header=face.closest('.message-group').querySelector('.msg-header').getBoundingClientRect();
+          return {width:rect.width,height:rect.height,slot:parent.width,gap:header.left-rect.right};
+        }),
       }));
       assert(dimensions.scrollWidth<=width+2,'Page overflows at '+width);
+      assert.equal(dimensions.avatars.length,3);
+      for(const avatar of dimensions.avatars){
+        assert.equal(avatar.width,28,'Compact avatar remains square and fits its slot');
+        assert.equal(avatar.height,avatar.width);
+        assert.equal(avatar.slot,avatar.width);
+        assert(avatar.gap>=8,'Avatar leaves space before the sender name');
+      }
       if(width<=420)console.log('Narrow composer',width,await page.locator('#chatInputField').evaluate(e=>{const rows=[];for(let p=e;p&&rows.length<5;p=p.parentElement){const s=getComputedStyle(p);rows.push({tag:p.tagName,id:p.id,class:p.className,width:p.getBoundingClientRect().width,display:s.display,flex:s.flex,columns:s.gridTemplateColumns});}return rows;}));
       if(width<=600){
         assert(dimensions.input.width>=200,'Text field remains usable at '+width);
