@@ -10,10 +10,18 @@ function contrast(a,b){const x=luminance(a.slice(1)),y=luminance(b.slice(1));ret
  for(const p of palettes){assert.equal(p.swatches.length,5);for(const mode of ['dark','light']){const c=p[mode];for(const [key,value] of Object.entries(c)){assert.match(value,/^#[a-f0-9]{6}$/);assert(css.includes('--ec-'+key+':'+value+';'));}for(const bg of ['page','surface','raised']){assert(contrast(c.text,c[bg])>=4.5,p.name+' '+mode+' text');assert(contrast(c.muted,c[bg])>=4.5,p.name+' '+mode+' muted');}assert(contrast(c.accent,c.surface)>=4.5,p.name+' '+mode+' accent');assert(contrast('#ffffff',c.primary)>=4.5,p.name+' button');assert(contrast('#ffffff',c['primary-end'])>=4.5,p.name+' gradient end');}}
  const dom=new JSDOM('<meta name="csrf-token" content="test-csrf"><script src="/assets/js/accessibility-apply.js"></script><script id="ecColorPalettes" type="application/json">'+JSON.stringify(palettes)+'</script><div id="ecPaletteGrid"></div><p id="ecPaletteStatus"></p>',{runScripts:'outside-only',url:'https://ecollab.test'}),w=dom.window,d=w.document;let failure=false,post;
  let change;w.matchMedia=()=>({matches:true,addEventListener:(event,cb)=>change=cb});
- w.fetch=async(url,opts)=>{post=opts;const id=JSON.parse(opts.body).color_palette;return {ok:!failure,json:async()=>failure?{error:'Save rejected'}:{success:true,settings:{color_palette:id,theme:'system'}}};};
+ w.fetch=async(url,opts)=>{post=opts;const values=JSON.parse(opts.body);return {ok:!failure,json:async()=>failure?{error:'Save rejected'}:{success:true,settings:{...values,theme:'system'}}};};
  w.eval(fs.readFileSync('assets/js/color-theme.js','utf8'));assert.equal(d.documentElement.dataset.colorPalette,'ecollab-original');assert.equal(d.querySelectorAll('[data-color-choice]').length,21);
  for(const p of palettes){await w.EcollabColors.choose(p.id);assert.equal(d.documentElement.dataset.colorPalette,p.id);assert.equal(d.querySelector('[aria-pressed="true"]').textContent.includes(p.name),true);assert.equal(post.headers['X-CSRF-Token'],'test-csrf');}
  failure=true;const previous=d.documentElement.dataset.colorPalette;await w.EcollabColors.choose('ecollab-original');assert.equal(d.documentElement.dataset.colorPalette,previous);assert.equal(d.getElementById('ecPaletteStatus').textContent,'Save rejected');failure=false;
- await w.EcollabColors.choose('ecollab-original');change();assert.equal(d.documentElement.dataset.theme,'light');w.dispatchEvent(new w.CustomEvent('ecollab:settings-applied',{detail:{color_palette:'purple-pink'}}));assert.equal(d.documentElement.dataset.colorPalette,'purple-pink');w.EcollabColors.apply({color_palette:'invalid'});assert.equal(d.documentElement.dataset.colorPalette,'ecollab-original');w.close();
+ await w.EcollabColors.choose('ecollab-original');change();assert.equal(d.documentElement.dataset.theme,'light');w.dispatchEvent(new w.CustomEvent('ecollab:settings-applied',{detail:{color_palette:'purple-pink'}}));assert.equal(d.documentElement.dataset.colorPalette,'purple-pink');w.EcollabColors.apply({color_palette:'invalid'});assert.equal(d.documentElement.dataset.colorPalette,'ecollab-original');
+ const custom='#101828,#202a44,#f4bc63,#4fd5e2,#ffffff';
+ await w.EcollabColors.choose('custom',custom);
+ assert.equal(d.documentElement.dataset.colorPalette,'custom');
+ assert.equal(d.documentElement.style.getPropertyValue('--ec-custom-primary'),'#f4bc63');
+ assert.equal(d.documentElement.style.getPropertyValue('--ec-custom-button-text'),'#000000');
+ await w.EcollabColors.choose('ecollab-original');
+ assert.equal(d.documentElement.style.getPropertyValue('--ec-custom-primary'),'');
+ w.close();
  console.log('PASS: 21 palettes, readable dark/light colors, selection, account saving, CSRF, rollback, device mode and invalid palette fallback');
 })().catch(e=>{console.error(e);process.exitCode=1;});

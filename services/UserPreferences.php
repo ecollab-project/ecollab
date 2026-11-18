@@ -1,11 +1,12 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/ColorPaletteService.php';
+require_once __DIR__.'/WorkspaceCustomization.php';
 final class UserPreferences {
  public static function defaults():array {
 return [
     'connection_requests'=>1,'direct_messages'=>1,'activity_status'=>1,'read_receipts'=>1,'screenshot_alerts'=>1,'ai_matching'=>1,
-    'profile_visibility'=>'everyone','avatar_gradient'=>'#a855f7,#ec4899','theme'=>'dark','color_palette'=>ColorPaletteService::DEFAULT,'compact_mode'=>0,'reduce_motion'=>0,
+    'profile_visibility'=>'everyone','avatar_gradient'=>'#a855f7,#ec4899','theme'=>'dark','color_palette'=>ColorPaletteService::DEFAULT,'custom_palette'=>'','workspace_layout'=>'','compact_mode'=>0,'reduce_motion'=>0,
     'high_contrast'=>0,'screen_reader_mode'=>0,'notification_desktop'=>1,'notification_messages'=>1,'notification_mentions'=>1,
     'notification_matches'=>1,'notification_sound'=>1,'input_device'=>null,'output_device'=>null,'mic_volume'=>100,'output_volume'=>100,
     'noise_suppression'=>1,'echo_cancellation'=>1,'auto_gain_control'=>1,

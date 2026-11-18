@@ -184,6 +184,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=chat-layout-1">
 <script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
 <?php require_once ROOT_PATH.'/includes/layout/color-theme.php'; ?>
+<?php require_once ROOT_PATH.'/includes/layout/workspace-widgets.php'; ?>
 </head>
 
 <body data-mobile-surface="chat">
@@ -200,7 +201,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       <span style="color:var(--accent-purple);font-size:16px;">#</span>
       <span class="mob-channel-name" id="mobChannelName">channels</span>
     </div>
-    <button type="button" class="mob-right-btn" onclick="openFullMatchesModal()" title="AI Suggested Matches" aria-label="AI Suggested Matches">✨</button>
+    <button type="button" class="ec-context-toggle" data-context-toggle aria-controls="sidebarRight" aria-expanded="false">Widgets</button>
     <button type="button" class="mob-right-btn" onclick="toggleNotifications()" title="Notifications" aria-label="Notifications">&#x1F514;</button>
   </div>
 
@@ -252,8 +253,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       </div>
     </div>
 
-    <div class="sidebar-scroll">
-      <div class="sidebar-nav">
+    <a class="ec-customize-link" href="<?= BASE_URL ?>/modules/chat/settings.php?section=appearance#workspace-layout" onclick="if(window.EcollabCallContinuity){event.preventDefault();window.EcollabCallContinuity.navigate(this.href);}">Customize workspace</a>
+    <div class="sidebar-scroll" id="ecWorkspaceLeft">
+      <div class="sidebar-nav" data-workspace-widget="shortcuts">
         <button type="button" class="sidebar-nav-item active" onclick="switchView('home', this)">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
@@ -296,7 +298,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         </a>
       </div>
 
-      <div class="sidebar-section">
+      <div class="sidebar-section" data-workspace-widget="channels">
         <div class="sidebar-section-header">
           <span class="sidebar-section-title">Channels</span>
           <span class="sidebar-section-add" onclick="openAddChannelModal('text')">+</span>
@@ -338,7 +340,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         </div>
       </div>
 
-      <div class="sidebar-section">
+      <div class="sidebar-section" data-workspace-widget="voice">
         <div class="sidebar-section-header">
           <span class="sidebar-section-title">Voice Channels</span>
           <span class="sidebar-section-add" onclick="openAddChannelModal('voice')">+</span>
@@ -359,7 +361,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       </div>
 
 
-      <div class="sidebar-section" id="whiteboardSection">
+      <div class="sidebar-section" id="whiteboardSection" data-workspace-widget="whiteboards">
         <div class="sidebar-section-header">
           <span class="sidebar-section-title">Whiteboard Channels</span>
           <span class="sidebar-section-add" onclick="openAddChannelModal('whiteboard')" title="Add whiteboard channel">+</span>
@@ -382,7 +384,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         </div>
       </div>
 
-      <div class="sidebar-section">
+      <div class="sidebar-section" data-workspace-widget="direct">
         <div class="sidebar-section-header">
           <span class="sidebar-section-title">Direct Messages</span>
           <span class="sidebar-section-add" onclick="openNewDMModal()">+</span>
@@ -390,7 +392,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <div id="dmList"></div>
       </div>
 
-      <div class="sidebar-section">
+      <div class="sidebar-section" data-workspace-widget="groups">
         <div class="sidebar-section-header">
           <span class="sidebar-section-title">Group Messages</span>
           <span class="sidebar-section-add" onclick="openNewGroupModal()">+</span>
@@ -475,6 +477,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       </div>
       <div class="header-sep"></div>
       <div class="chat-channel-actions">
+        <button type="button" class="ec-context-toggle" data-context-toggle aria-controls="sidebarRight" aria-expanded="false">Widgets</button>
         <!-- Manage private channel members - shown only when current channel is private and user is owner/admin -->
         <button class="header-icon-btn" id="manageChannelBtn" onclick="openPrivateChannelManager()" title="Manage Channel Members" style="display:none;">
           <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
@@ -824,8 +827,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </div>
 
   <!-- RIGHT SIDEBAR -->
-  <div class="sidebar-right" id="sidebarRight">
-    <div class="right-panel">
+  <button id="ecContextBackdrop" type="button" tabindex="-1" aria-label="Close workspace widgets" hidden></button>
+  <div class="sidebar-right" id="sidebarRight" tabindex="-1" aria-label="Workspace widgets">
+    <div class="right-panel" data-workspace-widget="activity">
       <div class="panel-title" style="display:flex;align-items:center;justify-content:space-between;">
         Active Now
         <span id="activeNowCountBadge" style="font-size:11px;font-weight:700;background:rgba(34,197,94,0.15);color:#22c55e;padding:2px 8px;border-radius:99px;min-width:20px;text-align:center;">0</span>
@@ -833,7 +837,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       <div id="activeMembersList" style="display:flex;flex-direction:column;gap:3px;margin-bottom:8px;max-height:220px;overflow-y:auto;"></div>
       <button class="see-all-btn" onclick="openActiveNowModal()">See All</button>
     </div>
-    <div class="right-panel">
+    <div class="right-panel" data-workspace-widget="matches">
       <div class="matches-header">
         <div class="matches-title">AI Suggested Matches ✨</div>
         <button class="refresh-btn" onclick="refreshMatches(this)">Refresh</button>
@@ -841,7 +845,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       <div id="matchesList"></div>
       <button class="see-all-btn" style="margin-top:10px;" onclick="openFullMatchesModal()">See All Matches</button>
     </div>
-    <div class="right-panel">
+    <div class="right-panel" data-workspace-widget="members">
       <div class="panel-title">
         Members
         <span class="panel-badge" id="memberCountBadge"></span>

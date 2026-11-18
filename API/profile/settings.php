@@ -51,7 +51,11 @@ try {
         if (!array_key_exists($key,$body)) continue;
         $value=$body[$key];
         if (is_array($value)||is_object($value)) {http_response_code(422);echo json_encode(['error'=>'Invalid setting value']);exit;}
-        if ($key==='color_palette' && (!is_string($value) || !ColorPaletteService::valid($value))) { http_response_code(422); echo json_encode(['error'=>'Unknown color palette']); exit; }
+        if ($key==='color_palette' && (!is_string($value) || ($value !== 'custom' && !ColorPaletteService::valid($value)))) { http_response_code(422); echo json_encode(['error'=>'Unknown color palette']); exit; }
+        if (in_array($key, ['custom_palette', 'workspace_layout'], true)) {
+            $value = WorkspaceCustomization::normalize($key, $value);
+            if ($value === null) { http_response_code(422); echo json_encode(['error'=>'Invalid customization']); exit; }
+        }
         if (is_int($defaults[$key])) {
             $value=(int)(bool)$value;
             if (in_array($key,['mic_volume','output_volume','input_sensitivity'],true)) $value=max(0,min(100,(int)$body[$key]));
