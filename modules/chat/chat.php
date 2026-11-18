@@ -1113,20 +1113,20 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     6. whiteboard.js — collaborative whiteboard
     7. dm-notifications.js — DM badge polling
   -->
-  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=qa-runtime-20261117-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=mentions-1" defer></script>
   <?php if (filter_var(env('CHAT_RESUMABLE_UPLOADS', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-uploads.css?v=uppy-1">
   <script src="<?= BASE_URL ?>/assets/js/chat/resumable-uploads.js?v=uppy-1" defer></script>
   <?php endif; ?>
   <?php if (filter_var(env('CHAT_RICH_COMPOSER', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-composer.css?v=tiptap-1">
-  <script src="<?= BASE_URL ?>/assets/js/chat/rich-composer.js?v=settings-speed-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/rich-composer.js?v=mentions-1" defer></script>
   <?php endif; ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-timeline.css?v=1">
   <script src="<?= BASE_URL ?>/assets/js/chat/timeline.js?v=dm-identity-20261103" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=chat-avatar-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=mentions-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/modal-accessibility.js?v=ux-audit-1" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=chat-avatar-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=mentions-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js?v=media-1" defer></script>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-media.css?v=1">
   <script src="<?= BASE_URL ?>/assets/js/chat/media-picker.js?v=settings-speed-1" defer></script>

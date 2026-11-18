@@ -6,6 +6,7 @@ require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/database/config/db.php';
 require_once dirname(__DIR__, 2) . '/security/middleware/AuthMiddleware.php';
 require_once dirname(__DIR__, 2) . '/services/ChannelService.php';
+require_once dirname(__DIR__, 2) . '/services/ChatMentions.php';
 
 header('Content-Type: application/json');
 AuthMiddleware::startSession();
@@ -24,7 +25,7 @@ try {
 
     // Sidebar is bounded; explicit directory requests retain the full roster contract.
     $memberMode = $_GET['members'] ?? 'sidebar';
-    if (!is_string($memberMode) || !in_array($memberMode, ['sidebar', 'all', 'none'], true)) {
+    if (!is_string($memberMode) || !in_array($memberMode, ['sidebar', 'all', 'none', 'mentions'], true)) {
         throw new InvalidArgumentException('Invalid member mode', 400);
     }
     $db = Database::getInstance();
@@ -55,6 +56,12 @@ try {
         $accStmt = $db->prepare("SELECT 1 FROM channel_members WHERE channel_id = :cid AND user_id = :uid LIMIT 1");
         $accStmt->execute([':cid' => $channelId, ':uid' => $user['id']]);
         $hasAccess = $isSysAdmin || (bool)$accStmt->fetchColumn() || $canManage;
+    }
+
+    if ($memberMode === 'mentions') {
+        echo json_encode(['success' => true, 'has_access' => $hasAccess, 'members' => $hasAccess
+            ? ChatMentions::directory($db, (int)$channelId, (int)$user['id']) : []]);
+        exit;
     }
 
     $members = $hasAccess && $memberMode !== 'none'
