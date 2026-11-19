@@ -10,8 +10,21 @@ try{for(const width of [320,768,1440]){const page=await browser.newPage({viewpor
  for(const palette of palettes){for(const theme of ['dark','light']){await page.evaluate(({id,theme})=>{document.documentElement.dataset.theme=theme;window.EcollabColors.apply({color_palette:id});},{id:palette.id,theme});const actual=await page.evaluate(()=>({page:getComputedStyle(document.body).getPropertyValue('--ec-page').trim(),accent:getComputedStyle(document.body).getPropertyValue('--accent').trim(),overflow:document.documentElement.scrollWidth>innerWidth+2}));assert.equal(actual.page,palette[theme].page,name+' '+palette.name+' '+theme);assert.equal(actual.accent,palette[theme].accent);assert(!actual.overflow,name+' palette causes overflow at '+width);checks++;}}
  if(name==='settings'){await page.locator('[data-color-choice="fcms-burgundy-coral"]').click();await page.locator('#ecPaletteStatus').filter({hasText:'FCMS Burgundy & Coral saved'}).waitFor();await page.reload({waitUntil:'networkidle'});await page.waitForFunction(()=>document.documentElement.dataset.colorPalette==='fcms-burgundy-coral');await page.locator('[data-color-choice="ecollab-original"]').click();await page.locator('#ecPaletteStatus').filter({hasText:'saved to your account'}).waitFor();await page.locator('[data-color-choice="purple-pink"]').click();await page.locator('#ecPaletteStatus').filter({hasText:'Purple & Pink saved'}).waitFor();await page.reload({waitUntil:'networkidle'});await page.waitForFunction(()=>document.documentElement.dataset.colorPalette==='purple-pink');assert.equal(await page.locator('[aria-pressed="true"]').count(),1);reject=true;await page.locator('[data-color-choice="ecollab-original"]').click();await page.locator('#ecPaletteStatus').filter({hasText:'Please retry'}).waitFor();assert.equal(await page.evaluate(()=>document.documentElement.dataset.colorPalette),'purple-pink');reject=false;}
  }
+ await page.goto(base+'/fixture/settings?section=appearance',{waitUntil:'networkidle'});
+ const preview=page.locator('.ec-workspace-preview');
+ assert(await preview.isVisible());
+ for(const area of ['.ec-preview-search','.ec-preview-tools','.ec-preview-thread','.ec-preview-composer','.ec-preview-account','.ec-preview-switcher']){
+   assert(await preview.locator(area).isVisible(),area+' renders at '+width);
+ }
+ assert.equal(await preview.locator('[data-editor-widget] .ec-preview-samples').count(),9);
+ assert.equal(await preview.locator('.ec-preview-left [data-editor-widget="shortcuts"]').getByText('Library',{exact:true}).count(),1);
+ assert.equal(await preview.locator('.ec-preview-right [data-editor-widget="members"]').getByText('Professor',{exact:true}).count(),1);
+ assert(await preview.evaluate(e=>[e,...e.querySelectorAll('[data-editor-widget],.ec-preview-bar,.ec-preview-dock')].every(part=>part.scrollWidth<=part.clientWidth+2)),'Preview and its contents fit at '+width);
+ if(width===320){
+   const touchButton=preview.getByRole('button',{name:'Move left for Active now'});
+   assert((await touchButton.boundingBox()).height>=44,'Move controls are touch-sized');
+ }
  if(width===320 || width===1440){
-  await page.goto(base+'/fixture/settings?section=appearance',{waitUntil:'networkidle'});
   const colors=['#111827','#202c44','#f4bc63','#4fd5e2','#f8fafc'];
   const editor=page.locator('#ecCustomPalette');
   assert.equal(await editor.locator('input[type="color"]').count(),5);
@@ -23,13 +36,12 @@ try{for(const width of [320,768,1440]){const page=await browser.newPage({viewpor
   await page.locator('#ecPaletteStatus').filter({hasText:'Custom palette saved'}).waitFor();
   const form=page.locator('#ecWidgetForm');
   const activity=form.locator('[data-editor-widget="activity"]');
-  assert(await form.locator('.ec-workspace-preview').isVisible());
-  assert(await form.locator('.ec-workspace-preview').evaluate(e=>e.scrollWidth<=e.clientWidth+2),'Preview fits its column');
   if(width===1440){
     const target=form.locator('#ecWidgetList-left [data-editor-widget="shortcuts"]');
     await activity.locator('.ec-widget-grip').dragTo(target,{targetPosition:{x:20,y:5}});
     await form.locator('#ecWidgetList-left [data-editor-widget="activity"]').waitFor();
     assert.equal(await form.locator('#ecWidgetList-left [data-editor-widget]').first().getAttribute('data-editor-widget'),'activity');
+    assert(await form.locator('#ecWidgetList-left [data-editor-widget="activity"] .ec-preview-samples').isVisible());
     assert.equal(saved.workspace_layout,undefined,'Dragging updates the preview without saving');
     await form.getByRole('button',{name:'Discard edits'}).click();
     assert.equal(await form.locator('#ecWidgetList-right [data-editor-widget="activity"]').count(),1);
@@ -37,7 +49,9 @@ try{for(const width of [320,768,1440]){const page=await browser.newPage({viewpor
   await activity.getByRole('button',{name:'Move left for Active now'}).click();
   await activity.getByRole('button',{name:'Move Active now up'}).click();
   await form.locator('[data-editor-widget="matches"]').getByRole('checkbox').uncheck();
-  assert.equal(await form.locator('#ecWidgetList-hidden [data-editor-widget="matches"]').count(),1);
+  const hiddenMatches=form.locator('#ecWidgetList-hidden [data-editor-widget="matches"]');
+  assert.equal(await hiddenMatches.count(),1);
+  assert.equal(await hiddenMatches.locator('.ec-preview-samples').count(),0);
   await form.getByRole('button',{name:'Save workspace layout'}).click();
   await page.locator('#ecWidgetStatus').filter({hasText:'Workspace layout saved'}).waitFor();
   await page.goto(base+'/fixture/chat',{waitUntil:'networkidle'});
