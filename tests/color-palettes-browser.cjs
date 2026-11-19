@@ -16,7 +16,8 @@ try{for(const width of [320,768,1440]){const page=await browser.newPage({viewpor
  for(const area of ['.ec-preview-search','.ec-preview-tools','.ec-preview-thread','.ec-preview-composer','.ec-preview-account','.ec-preview-switcher']){
    assert(await preview.locator(area).isVisible(),area+' renders at '+width);
  }
- assert.equal(await preview.locator('[data-editor-widget] .ec-preview-samples').count(),9);
+ assert.equal(await preview.locator('[data-editor-widget] .ec-preview-samples').count(),8);
+ assert.equal(await page.locator('[data-editor-widget="whiteboards"]').count(),0);
  assert.equal(await preview.locator('.ec-preview-left [data-editor-widget="shortcuts"]').getByText('Library',{exact:true}).count(),1);
  assert.equal(await preview.locator('.ec-preview-right [data-editor-widget="members"]').getByText('Professor',{exact:true}).count(),1);
  assert(await preview.evaluate(e=>[e,...e.querySelectorAll('[data-editor-widget],.ec-preview-bar,.ec-preview-dock')].every(part=>part.scrollWidth<=part.clientWidth+2)),'Preview and its contents fit at '+width);
@@ -63,6 +64,8 @@ try{for(const width of [320,768,1440]){const page=await browser.newPage({viewpor
   assert.equal(await page.evaluate(()=>getComputedStyle(document.body).getPropertyValue('--ec-page').trim()),'#111827');
   assert.equal(await page.locator('#ecWorkspaceLeft [data-workspace-widget="activity"]').count(),1);
   assert.deepEqual(await page.locator('#ecWorkspaceLeft [data-workspace-widget]').evaluateAll(rows=>rows.slice(-3).map(row=>row.dataset.workspaceWidget)),['direct','activity','groups']);
+  assert(JSON.parse(saved.workspace_layout).some(([id])=>id==='whiteboards'),'Stored layout can be read by the previous release');
+  assert.equal(await page.locator('#whiteboardSection, .channel-type-opt[data-type="whiteboard"], #channelList [data-channel-type="whiteboard"]').count(),0);
   assert(await page.locator('[data-workspace-widget="matches"]').isHidden());
   if(width===320){
     await page.locator('#mobileTopbar [data-context-toggle]').click();

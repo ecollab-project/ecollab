@@ -96,7 +96,10 @@
     if (!editor) return;
     for (const side of ['left', 'right', 'hidden']) {
       const host = document.getElementById('ecWidgetList-' + side);
-      const rows = draft.filter(([, position, visible]) => side === 'hidden' ? !visible : visible && position === side);
+      const rows = draft.filter(([id, position, visible]) => {
+        if (catalog[id].retired) return false;
+        return side === 'hidden' ? !visible : visible && position === side;
+      });
       host.replaceChildren();
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];

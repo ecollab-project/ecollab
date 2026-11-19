@@ -92,9 +92,8 @@
         <?php
         $workspacePreviewSamples = [
           'shortcuts' => [['⌂', 'Home'], ['@', 'Mentions'], ['▮', 'Bookmarks'], ['◫', 'Discussions'], ['▤', 'Drafts'], ['✦', 'Collabs'], ['‹›', 'Code Lab'], ['▥', 'Library']],
-          'channels' => [['#', 'announcements'], ['#', 'general'], ['#', 'whiteboard']],
+          'channels' => [['#', 'announcements'], ['#', 'general'], ['#', 'study-room']],
           'voice' => [['◖', 'general-voice']],
-          'whiteboards' => [['✎', 'whiteboard']],
           'direct' => [['J', 'Jarred'], ['M', 'Mika']],
           'groups' => [['G', 'Study group']],
           'activity' => [['M', 'Mika', 'Active']],
