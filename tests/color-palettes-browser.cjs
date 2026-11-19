@@ -20,6 +20,10 @@ try{for(const width of [320,768,1440]){const page=await browser.newPage({viewpor
  assert.equal(await preview.locator('.ec-preview-left [data-editor-widget="shortcuts"]').getByText('Library',{exact:true}).count(),1);
  assert.equal(await preview.locator('.ec-preview-right [data-editor-widget="members"]').getByText('Professor',{exact:true}).count(),1);
  assert(await preview.evaluate(e=>[e,...e.querySelectorAll('[data-editor-widget],.ec-preview-bar,.ec-preview-dock')].every(part=>part.scrollWidth<=part.clientWidth+2)),'Preview and its contents fit at '+width);
+ if(width===1440){
+   const desktopButton=preview.getByRole('button',{name:'Move left for Suggested matches'});
+   assert((await desktopButton.boundingBox()).width<=28,'Compact desktop controls leave room for the widget name');
+ }
  if(width===320){
    const touchButton=preview.getByRole('button',{name:'Move left for Active now'});
    assert((await touchButton.boundingBox()).height>=44,'Move controls are touch-sized');
