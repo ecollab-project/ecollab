@@ -130,11 +130,13 @@
   gap: 6px 12px;
   padding: 6px 7px;
   border-top: 1px solid var(--ec-line);
-  background: var(--ec-surface);
+  background: var(--ec-page);
 }
 .ec-preview-account, .ec-preview-switcher { display: flex; align-items: center; gap: 5px; }
-.ec-preview-account small { display: block; color: var(--ec-accent); }
-.ec-preview-account-tools { margin-inline-start: 4px; color: var(--ec-muted); white-space: nowrap; }
+.ec-preview-account { padding: 3px 5px; border: 1px solid var(--ec-line); border-radius: 6px; background: var(--ec-surface); }
+.ec-preview-account small { display: block; color: var(--ec-muted); }
+.ec-preview-account-tools { display: flex; gap: 5px; margin-inline-start: 4px; color: var(--ec-muted); }
+.ec-preview-switcher .ec-preview-current { border: 1px solid var(--ec-accent); background: var(--ec-accent-soft); color: var(--ec-text); }
 .ec-preview-dock-label { color: var(--ec-muted); }
 .ec-preview-samples { display: grid; grid-column: 1 / -1; gap: 1px; color: var(--ec-muted); }
 [data-editor-widget="shortcuts"] .ec-preview-samples { grid-template-columns: repeat(auto-fit, minmax(min(100%, 74px), 1fr)); }

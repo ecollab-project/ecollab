@@ -77,8 +77,8 @@
           <div class="ec-preview-dock" aria-hidden="true">
             <div class="ec-preview-account">
               <span class="ec-preview-avatar ec-preview-avatar-alt">Y</span>
-              <span><b>Your profile</b><small>Online</small></span>
-              <span class="ec-preview-account-tools">♩ ◖ ⚙</span>
+              <span><b>Your profile</b><small>Online · Student</small></span>
+              <span class="ec-preview-account-tools"><span>♩</span><span>◖</span></span>
             </div>
             <div class="ec-preview-switcher">
               <span class="ec-preview-tile ec-preview-current">✦</span>

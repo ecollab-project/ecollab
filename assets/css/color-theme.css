@@ -19,7 +19,6 @@ html:root :is(.cl-shell input,.cl-shell select,.cl-shell textarea,.cl-shell butt
 html:root :is(.cl-shell dialog,.cl-shell .cl-badge){background:var(--ec-raised);color:var(--ec-text);border-color:var(--ec-line)}
 html:root :is(.workspace-brand-mark,.workspace-server.active){border-color:var(--ec-accent)}
 html:root .workspace-logo-menu button:hover{background:var(--ec-accent-soft);outline-color:var(--ec-accent)}
-@media(min-width:861px){html:root #workspaceAccountDock .user-profile-footer{background:linear-gradient(var(--ec-surface),var(--ec-surface)) padding-box,linear-gradient(115deg,var(--ec-accent),var(--ec-accent2)) border-box;box-shadow:0 0 14px color-mix(in srgb,var(--ec-accent) 20%,transparent)}}
 /* Keep safety states distinct from cosmetic accents. */
 html:root.high-contrast{--ec-page:#000!important;--ec-surface:#000!important;--ec-raised:#151515!important;--ec-input:#000!important;--ec-line:#fff!important;--ec-text:#fff!important;--ec-muted:#fff!important;--ec-accent:#fde047!important;--ec-accent2:#fff!important;--ec-focus:#fde047!important}
 html:root.high-contrast[data-theme=light]{--ec-page:#fff!important;--ec-surface:#fff!important;--ec-raised:#eee!important;--ec-input:#fff!important;--ec-line:#000!important;--ec-text:#000!important;--ec-muted:#000!important;--ec-accent:#064e3b!important;--ec-accent2:#111!important;--ec-focus:#064e3b!important}

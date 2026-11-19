@@ -16,6 +16,20 @@ try{for(const name of pages){for(const [width,height] of sizes){const page=await
 });await page.goto(base+'/fixture/'+name,{waitUntil:'networkidle'});
 await page.evaluate(()=>{const composer=document.getElementById('chatInputWrapper');if(composer)composer.style.display='block';const host=document.getElementById('lw-view');if(host)host.innerHTML='<div class="lw-card-grid"><article class="lw-space-card"><h3>A learning community with a deliberately long name for a narrow screen</h3><p>Resources and collaboration</p><footer><span>24 members</span><button>Manage this space</button></footer></article></div><div class="lw-panel"><div class="lw-panel-body"><div class="lw-row"><div><strong>Long learner name that wraps</strong><p>https://example.invalid/'+('long-resource-path-'.repeat(8))+'</p></div><div class="lw-row-actions"><button>Review</button><button>Resolve</button></div></div><table><caption>Fixture records</caption><tr><th>Name</th><th>Details</th><th>Action</th></tr><tr><td>Member</td><td>'+('Evidence '.repeat(20))+'</td><td><button>Open</button></td></tr></table></div></div>';});await page.waitForTimeout(60);if(name==='codelabfac'){await page.locator('#clCreate').click();await page.locator('#clManualMode').click();await page.locator('#clTaskAdvanced>summary').click();await page.locator('#clGradingMode').selectOption('automatic');}if(name==='codelab'){await page.locator('[data-start]').click();await page.locator('#clWorkspace').waitFor({state:'visible'});}
 if(name==='chat'){
+ if(width>860){
+  const dock=await page.evaluate(()=>{
+   const box=id=>document.getElementById(id).getBoundingClientRect();
+   const bar=box('workspaceSwitcher'), account=box('workspaceAccount');
+   const details=document.querySelector('.taskbar-account-meta').getBoundingClientRect();
+   const targets=['workspaceLogo','muteBtn','deafenBtn','workspaceSettings','workspaceServerList'].map(box);
+   return {height:bar.height,details:details.height,contained:targets.every(r=>r.top>=bar.top&&r.bottom<=bar.bottom&&r.left>=bar.left&&r.right<=bar.right),
+    accountFits:!details.height||(details.top>=account.top&&details.bottom<=account.bottom),touch:targets.slice(0,4).every(r=>r.height>=44)};
+  });
+  assert(dock.height>=64&&dock.contained,'Desktop dock keeps its controls inside the bar at '+width);
+  assert(dock.accountFits,'Presence and badge remain inside the profile card at '+width);
+  if(width===1024)assert(dock.touch,'Touch desktop dock targets are at least 44 px');
+  if(width>=1440)assert(dock.details>0,'Wide dock displays the account status and badge');
+ }
  await page.evaluate(()=>window.EcollabMedia.open('emoji',document.getElementById('chatInputField'),document.getElementById('emojiBtn')));
  await page.locator('#ecMediaPicker input').fill('rocket');
  await page.locator('.ec-media-grid button').first().click();

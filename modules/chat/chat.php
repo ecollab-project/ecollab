@@ -178,7 +178,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </style>
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=notifications-2">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=3">
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat-taskbar.css?v=neon-account-1">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat-taskbar.css?v=dock-1">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script>
 <script defer src="<?= BASE_URL ?>/assets/js/chat/workspace-taskbar.js?v=separators-tooltips-1"></script>
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=chat-layout-1">
@@ -426,17 +426,17 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     <!-- USER PROFILE FOOTER -->
     <div id="workspaceAccountHome"></div>
     <div class="user-profile-footer" id="workspaceAccount">
-      <div class="user-avatar" aria-label="Your account">
+      <div class="user-avatar" role="img" aria-label="<?= htmlspecialchars($user['username']) ?>, online" title="<?= htmlspecialchars($user['username']) ?>">
         <div class="avatar-placeholder avatar-lg" style="<?= $avatarStyle ?>;border-radius:50%;">
           <?= htmlspecialchars($initials) ?>
         </div>
         <div class="online-dot"></div>
       </div>
-      <div class="taskbar-account-details" style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+      <div class="taskbar-account-details">
+        <div class="taskbar-account-name" title="<?= htmlspecialchars($user['username']) ?>">
           <?= htmlspecialchars($user['username']) ?>
         </div>
-        <div style="font-size:11px;color:var(--accent-green);">● Online
+        <div class="taskbar-account-meta"><span>Online</span>
           <span class="account-type-badge" data-account-type="<?= $accountType ?>"><?= AccountType::LABELS[$accountType] ?></span>
         </div>
       </div>
