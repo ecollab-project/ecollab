@@ -7,7 +7,8 @@ final class WorkspaceCustomization
         'shortcuts' => ['label' => 'Workspace shortcuts', 'side' => 'left'],
         'channels' => ['label' => 'Text channels', 'side' => 'left'],
         'voice' => ['label' => 'Voice channels', 'side' => 'left'],
-        'whiteboards' => ['label' => 'Whiteboard channels', 'side' => 'left'],
+        // Keep this row in stored layouts so existing preferences survive a rollback.
+        'whiteboards' => ['label' => 'Whiteboard channels', 'side' => 'left', 'retired' => true],
         'direct' => ['label' => 'Direct messages', 'side' => 'left'],
         'groups' => ['label' => 'Group messages', 'side' => 'left'],
         'activity' => ['label' => 'Active now', 'side' => 'right'],

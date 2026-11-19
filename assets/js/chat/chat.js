@@ -343,17 +343,14 @@ async function loadServerChannels(serverId, startAtGeneral = false) {
 function renderChannelList(channels, startAtGeneral = false) {
   const textList = document.getElementById('channelList');
   const voiceList = document.getElementById('voiceChannelList');
-  const wbList = document.getElementById('whiteboardChannelList');
-  const wbSection = document.getElementById('whiteboardSection');
   if (!textList || !voiceList) return;
 
   textList.innerHTML = '';
   voiceList.innerHTML = '';
-  if (wbList) wbList.innerHTML = '';
-
-  let hasWhiteboard = false;
 
   channels.forEach(ch => {
+    if (ch.type === 'whiteboard') return;
+
     // ── Voice ─────────────────────────────────────────────────────
     if (ch.type === 'voice') {
       const el = document.createElement('div');
@@ -367,24 +364,6 @@ function renderChannelList(channels, startAtGeneral = false) {
       `;
       el.onclick = () => window.joinVoice?.(ch.slug, el, ch.id);
       voiceList.appendChild(el);
-
-      // ── Whiteboard ────────────────────────────────────────────────
-    } else if (ch.type === 'whiteboard') {
-      hasWhiteboard = true;
-      if (!wbList) return;
-      const el = document.createElement('div');
-      el.className = 'channel-item wb-channel-item';
-      el.dataset.channelId = ch.id;
-      el.dataset.channelName = ch.name;
-      el.dataset.channelType = ch.type;
-      el.innerHTML = `
-        <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24" style="color:var(--accent-purple);flex-shrink:0;">
-          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-        </svg>
-        <span class="channel-name" style="flex:1;">${escHtml(ch.name)}</span>
-      `;
-      el.onclick = () => openWhiteboardChannel(parseInt(ch.id), ch.name);
-      wbList.appendChild(el);
 
       // ── Text / Announcement / everything else ─────────────────────
     } else {
@@ -413,9 +392,6 @@ function renderChannelList(channels, startAtGeneral = false) {
       textList.appendChild(el);
     }
   });
-
-  // Show/hide whiteboard section based on whether channels exist
-  if (wbSection) wbSection.style.display = hasWhiteboard ? '' : 'none';
 
   // Changing servers starts at General. Same-server list updates retain selection.
   const wanted = startAtGeneral ? null : lastServerChannels.get(Number(currentServerId));

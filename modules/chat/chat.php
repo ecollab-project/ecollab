@@ -304,7 +304,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           <span class="sidebar-section-add" onclick="openAddChannelModal('text')">+</span>
         </div>
         <div id="channelList">
-          <?php foreach ($channels as $ch): if ($ch['type'] !== 'voice'): ?>
+          <?php foreach ($channels as $ch): if (!in_array($ch['type'], ['voice', 'whiteboard'], true)): ?>
               <?php $isNew = !empty($ch['is_new']) && $ch['is_new'] == 1; ?>
               <div class="channel-item <?= $ch === reset($channels) ? 'active' : '' ?>"
                 data-channel-id="<?= (int)$ch['id'] ?>"
@@ -354,30 +354,6 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
                 </svg>
                 <?= htmlspecialchars($ch['name']) ?>
                 <span class="vc-count"><?= (int)$ch['member_count'] ?></span>
-              </div>
-          <?php endif;
-          endforeach; ?>
-        </div>
-      </div>
-
-
-      <div class="sidebar-section" id="whiteboardSection" data-workspace-widget="whiteboards">
-        <div class="sidebar-section-header">
-          <span class="sidebar-section-title">Whiteboard Channels</span>
-          <span class="sidebar-section-add" onclick="openAddChannelModal('whiteboard')" title="Add whiteboard channel">+</span>
-        </div>
-        <div id="whiteboardChannelList">
-          <?php foreach ($channels as $ch): if ($ch['type'] === 'whiteboard'): ?>
-              <div class="channel-item wb-channel-item" data-channel-id="<?= (int)$ch['id'] ?>" data-channel-name="<?= htmlspecialchars($ch['name']) ?>"
-                data-channel-type="<?= htmlspecialchars($ch['type']) ?>"
-                onclick="openWhiteboardChannel(<?= (int)$ch['id'] ?>, '<?= htmlspecialchars($ch['name']) ?>')" title="Open <?= htmlspecialchars($ch['name']) ?>">
-                <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24" style="color:var(--accent-purple);flex-shrink:0;">
-                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-                </svg>
-                <span class="channel-name" style="flex:1;"><?= htmlspecialchars($ch['name']) ?></span>
-                <span class="wb-live-badge" style="display:none;">
-                  <span class="wb-live-dot"></span>Live
-                </span>
               </div>
           <?php endif;
           endforeach; ?>
@@ -887,10 +863,6 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
               <div style="font-size:13px;font-weight:600;color:var(--text-primary);">🔊 Voice</div>
               <div style="font-size:11px;color:var(--text-muted);">Hang out with voice &amp; video</div>
             </div>
-            <div class="channel-type-opt" data-type="whiteboard" onclick="selectChannelType(this,'whiteboard')" style="flex:1;min-width:100px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;">
-              <div style="font-size:13px;font-weight:600;color:var(--text-primary);">✏️ Whiteboard</div>
-              <div style="font-size:11px;color:var(--text-muted);">Collaborate on a canvas</div>
-            </div>
           </div>
         </div>
         <div style="margin-bottom:14px;">
@@ -1133,7 +1105,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <?php endif; ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-timeline.css?v=1">
   <script src="<?= BASE_URL ?>/assets/js/chat/timeline.js?v=dm-identity-20261103" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=account-types-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=channel-sidebar-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/modal-accessibility.js?v=ux-audit-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=account-types-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js?v=media-1" defer></script>
@@ -1816,7 +1788,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
   <!-- ═══════════════════════════════════════════════════════════════════
      FULL-SCREEN WHITEBOARD — collaborative canvas
-     Triggered by: sidebar whiteboard channels, Join button, voice MoreMenu
+     Triggered by: Join button and voice MoreMenu
 ═══════════════════════════════════════════════════════════════════ -->
   <style>
     /* ── live pulse for sidebar dot ── */
