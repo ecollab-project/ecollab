@@ -31,6 +31,13 @@ if ($requestedServerId > 0) {
 }
 $firstServer    = $firstServer ?? ($servers[0] ?? null);
 $channels       = $firstServer ? $channelService->getChannelsForUser((int)$firstServer['id'], $user['id']) : [];
+$textChannels   = array_values(array_filter($channels, static function (array $channel): bool {
+  $type = $channel['type'];
+  $legacyBoard = $type === 'text'
+    && (strcasecmp((string)($channel['slug'] ?? ''), 'whiteboard') === 0
+      || strcasecmp((string)($channel['name'] ?? ''), 'whiteboard') === 0);
+  return !in_array($type, ['voice', 'whiteboard'], true) && !$legacyBoard;
+}));
 
 // Gradient first color for current user avatar
 $gradColors  = explode(',', $user['avatar_color_gradient'] ?? '#a855f7,#ec4899');
@@ -304,9 +311,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           <span class="sidebar-section-add" onclick="openAddChannelModal('text')">+</span>
         </div>
         <div id="channelList">
-          <?php foreach ($channels as $ch): if (!in_array($ch['type'], ['voice', 'whiteboard'], true)): ?>
+          <?php foreach ($textChannels as $ch): ?>
               <?php $isNew = !empty($ch['is_new']) && $ch['is_new'] == 1; ?>
-              <div class="channel-item <?= $ch === reset($channels) ? 'active' : '' ?>"
+              <div class="channel-item <?= $ch === $textChannels[0] ? 'active' : '' ?>"
                 data-channel-id="<?= (int)$ch['id'] ?>"
                 data-channel-name="<?= htmlspecialchars($ch['name']) ?>"
                 data-channel-type="<?= htmlspecialchars($ch['type']) ?>"
@@ -335,8 +342,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
                   <span class="channel-unread"><?= (int)$ch['unread_count'] ?></span>
                 <?php endif; ?>
               </div>
-          <?php endif;
-          endforeach; ?>
+          <?php endforeach; ?>
         </div>
       </div>
 
@@ -1105,7 +1111,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <?php endif; ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-timeline.css?v=1">
   <script src="<?= BASE_URL ?>/assets/js/chat/timeline.js?v=dm-identity-20261103" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=channel-sidebar-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=channel-sidebar-2" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/modal-accessibility.js?v=ux-audit-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=account-types-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js?v=media-1" defer></script>

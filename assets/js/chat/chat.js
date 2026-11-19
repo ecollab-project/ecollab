@@ -349,7 +349,9 @@ function renderChannelList(channels, startAtGeneral = false) {
   voiceList.innerHTML = '';
 
   channels.forEach(ch => {
-    if (ch.type === 'whiteboard') return;
+    const legacyBoard = ch.type === 'text' && [ch.slug, ch.name]
+      .some(value => String(value ?? '').toLowerCase() === 'whiteboard');
+    if (ch.type === 'whiteboard' || legacyBoard) return;
 
     // ── Voice ─────────────────────────────────────────────────────
     if (ch.type === 'voice') {

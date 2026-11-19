@@ -65,6 +65,7 @@ try{for(const width of [320,768,1440]){const page=await browser.newPage({viewpor
   assert.equal(await page.locator('#ecWorkspaceLeft [data-workspace-widget="activity"]').count(),1);
   assert.deepEqual(await page.locator('#ecWorkspaceLeft [data-workspace-widget]').evaluateAll(rows=>rows.slice(-3).map(row=>row.dataset.workspaceWidget)),['direct','activity','groups']);
   assert(JSON.parse(saved.workspace_layout).some(([id])=>id==='whiteboards'),'Stored layout can be read by the previous release');
+  assert.deepEqual(await page.locator('#channelList [data-channel-name]').evaluateAll(rows=>rows.map(row=>row.dataset.channelName)), ['general','whiteboard-notes']);
   assert.equal(await page.locator('#whiteboardSection, .channel-type-opt[data-type="whiteboard"], #channelList [data-channel-type="whiteboard"]').count(),0);
   assert(await page.locator('[data-workspace-widget="matches"]').isHidden());
   if(width===320){
