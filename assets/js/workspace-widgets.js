@@ -12,6 +12,8 @@
   const toggles = [...document.querySelectorAll('[data-context-toggle]')];
   const editor = document.getElementById('ecWidgetForm');
   const liveStatus = document.getElementById('ecWidgetStatus');
+  const samples = new Map([...(editor?.querySelectorAll('[data-widget-sample]') ?? [])]
+    .map(template => [template.dataset.widgetSample, template]));
   let previous = null;
   let saved = '';
   let draft = defaults();
@@ -154,6 +156,8 @@
         });
         actions.append(move);
         item.append(actions);
+        const sample = samples.get(id);
+        if (sample) item.append(sample.content.cloneNode(true));
         host.append(item);
       }
       if (!rows.length) {

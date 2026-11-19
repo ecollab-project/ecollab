@@ -32,27 +32,90 @@
 <div class="card" id="workspace-layout">
   <div class="head">Workspace layout</div>
   <div class="body">
-    <p class="desc" id="ecLayoutHelp">Drag widgets or use the move buttons. Changes stay in this preview until you save.</p>
+    <p class="desc" id="ecLayoutHelp">Drag a widget or use its move buttons to rearrange the workspace. The preview uses sample content and updates as you edit. Save when you’re ready.</p>
     <form id="ecWidgetForm">
       <fieldset class="ec-widget-fieldset" aria-label="Chat workspace preview" aria-describedby="ecLayoutHelp">
         <div class="ec-workspace-preview">
-          <div class="ec-preview-top" aria-hidden="true"><span>E</span><strong>eCollab Chat</strong></div>
           <div class="ec-widget-columns">
-          <section class="ec-widget-column" aria-labelledby="ecWidgetsLeft">
-            <h3 id="ecWidgetsLeft">Left sidebar</h3>
-            <ul id="ecWidgetList-left" data-widget-drop="left"></ul>
-          </section>
-          <div class="ec-preview-chat" aria-hidden="true">
-            <div class="ec-preview-channel"><span>#</span> general</div>
-            <div class="ec-preview-message"><span></span><div><b>Preview</b><small>Your conversation appears here.</small></div></div>
-            <div class="ec-preview-composer"><span>Message #general</span><b>Send</b></div>
+            <section class="ec-widget-column ec-preview-left" aria-labelledby="ecWidgetsLeft">
+              <div class="ec-preview-bar" aria-hidden="true">
+                <span class="ec-preview-tile">✦</span><strong>Campus workspace</strong><span class="ec-preview-end">▾</span>
+              </div>
+              <div class="ec-preview-sidebar-content">
+                <div class="ec-preview-search" aria-hidden="true"><span>⌕ Search</span><kbd>⌘K</kbd></div>
+                <h3 id="ecWidgetsLeft">Left sidebar</h3>
+                <ul id="ecWidgetList-left" data-widget-drop="left"></ul>
+              </div>
+            </section>
+            <div class="ec-preview-chat" aria-hidden="true">
+              <div class="ec-preview-bar ec-preview-channel">
+                <span class="ec-preview-tile">#</span><strong>general</strong>
+                <div class="ec-preview-tools"><span>⌕</span><span>⚑</span><span class="ec-preview-pill">Collab</span><span>♟</span></div>
+              </div>
+              <div class="ec-preview-thread">
+                <div class="ec-preview-message">
+                  <span class="ec-preview-avatar">M</span>
+                  <div><b>Mika</b> <span class="ec-preview-pill">Student</span><p>Who’s free for a review session?</p></div>
+                </div>
+                <div class="ec-preview-date">Today</div>
+                <div class="ec-preview-message">
+                  <span class="ec-preview-avatar ec-preview-avatar-alt">A</span>
+                  <div><b>Alex</b> <span class="ec-preview-pill">Personal</span><p>I’m in. Here are my notes.</p><div class="ec-preview-file"><span>▤</span> Review notes.pdf</div></div>
+                </div>
+              </div>
+              <div class="ec-preview-composer">
+                <span>⊕</span><span class="ec-preview-placeholder">Message #general</span><span class="ec-preview-pill">AI Assist</span><b>Send</b>
+              </div>
+            </div>
+            <section class="ec-widget-column ec-preview-right" aria-labelledby="ecWidgetsRight">
+              <div class="ec-preview-bar"><h3 id="ecWidgetsRight">Right sidebar</h3></div>
+              <div class="ec-preview-sidebar-content">
+                <ul id="ecWidgetList-right" data-widget-drop="right"></ul>
+              </div>
+            </section>
           </div>
-          <section class="ec-widget-column" aria-labelledby="ecWidgetsRight">
-            <h3 id="ecWidgetsRight">Right sidebar</h3>
-            <ul id="ecWidgetList-right" data-widget-drop="right"></ul>
-          </section>
+          <div class="ec-preview-dock" aria-hidden="true">
+            <div class="ec-preview-account">
+              <span class="ec-preview-avatar ec-preview-avatar-alt">Y</span>
+              <span><b>Your profile</b><small>Online</small></span>
+              <span class="ec-preview-account-tools">♩ ◖ ⚙</span>
+            </div>
+            <div class="ec-preview-switcher">
+              <span class="ec-preview-tile ec-preview-current">✦</span>
+              <span class="ec-preview-tile">▥</span>
+              <span class="ec-preview-tile">⌘</span>
+              <span class="ec-preview-tile">+</span>
+            </div>
+            <span class="ec-preview-dock-label">Workspace dock</span>
           </div>
         </div>
+        <?php
+        $workspacePreviewSamples = [
+          'shortcuts' => [['⌂', 'Home'], ['@', 'Mentions'], ['▮', 'Bookmarks'], ['◫', 'Discussions'], ['▤', 'Drafts'], ['✦', 'Collabs'], ['‹›', 'Code Lab'], ['▥', 'Library']],
+          'channels' => [['#', 'announcements'], ['#', 'general'], ['#', 'whiteboard']],
+          'voice' => [['◖', 'general-voice']],
+          'whiteboards' => [['✎', 'whiteboard']],
+          'direct' => [['J', 'Jarred'], ['M', 'Mika']],
+          'groups' => [['G', 'Study group']],
+          'activity' => [['M', 'Mika', 'Active']],
+          'matches' => [['J', 'Jules', '92% match'], ['S', 'Sam', '86% match']],
+          'members' => [['M', 'Mika', 'Student'], ['A', 'Alex', 'Personal'], ['R', 'Riley', 'Professor']],
+        ];
+        foreach ($workspacePreviewSamples as $widgetId => $sampleRows):
+        ?>
+          <template data-widget-sample="<?= htmlspecialchars($widgetId) ?>">
+            <div class="ec-preview-samples" aria-hidden="true">
+              <?php foreach ($sampleRows as $sampleRow):
+                [$icon, $text] = $sampleRow;
+                $detail = $sampleRow[2] ?? null; ?>
+                <div class="ec-preview-sample<?= in_array($text, ['Home', 'general'], true) ? ' ec-preview-selected' : '' ?>">
+                  <span><?= htmlspecialchars($icon) ?></span><span><?= htmlspecialchars($text) ?></span>
+                  <?php if ($detail !== null): ?><small><?= htmlspecialchars($detail) ?></small><?php endif; ?>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          </template>
+        <?php endforeach; ?>
         <section class="ec-widget-tray" aria-labelledby="ecWidgetsHidden">
           <h3 id="ecWidgetsHidden">Hidden widgets</h3>
           <ul id="ecWidgetList-hidden" data-widget-drop="hidden"></ul>
