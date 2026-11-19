@@ -158,8 +158,21 @@
 .ec-widget-grip { align-self: start; padding: 5px 2px; color: var(--ec-muted); cursor: grab; }
 .ec-widget-grip:active { cursor: grabbing; }
 .ec-widget-actions { display: flex; flex-wrap: wrap; gap: 3px; grid-column: 1 / -1; }
-.ec-widget-actions .btn { padding: 3px; min-width: 34px; min-height: 34px; font-size: .9rem; }
-.ec-widget-actions .btn:disabled { opacity: .4; cursor: default; }
+.ec-widget-action {
+  padding: 3px;
+  min-width: 34px;
+  min-height: 34px;
+  border: 1px solid var(--ec-line);
+  border-radius: 6px;
+  background: var(--ec-input);
+  color: var(--ec-text);
+  font: inherit;
+  font-size: .9rem;
+  cursor: pointer;
+}
+.ec-widget-action:hover:not(:disabled) { background: var(--ec-accent-soft); }
+.ec-widget-action:focus-visible { outline: 2px solid var(--ec-focus); outline-offset: -2px; }
+.ec-widget-action:disabled { opacity: .4; cursor: default; }
 [data-widget-drop] > .ec-widget-empty { display: block; padding: 12px 5px; border-style: dashed; background: transparent; color: var(--ec-muted); font-size: .74rem; text-align: center; }
 .ec-widget-tray { margin-top: 12px; padding: 8px; border: 1px dashed var(--ec-line); border-radius: 10px; }
 .ec-widget-tray ul { grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); padding-bottom: 0; }
@@ -172,7 +185,7 @@
   @container (min-width: 720px) {
     .ec-widget-column [data-widget-drop] > [data-editor-widget] { grid-template-columns: auto minmax(0, 1fr) auto; }
     .ec-widget-column .ec-widget-actions { grid-column: auto; flex-wrap: nowrap; }
-    .ec-widget-column .ec-widget-actions .btn { min-width: 24px; min-height: 26px; }
+    .ec-widget-column .ec-widget-action { width: 24px; min-width: 0; min-height: 26px; }
   }
 }
 @container (max-width: 595px) {
@@ -181,6 +194,6 @@
   .ec-preview-right { border-inline-start: 0; }
 }
 @media (max-width: 700px), (pointer: coarse) {
-  .ec-widget-actions .btn { min-width: 44px; min-height: 44px; }
+  .ec-widget-action { min-width: 44px; min-height: 44px; }
   [data-widget-drop] label { min-height: 44px; }
 }

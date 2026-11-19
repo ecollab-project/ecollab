@@ -130,7 +130,7 @@
         for (const [direction, offset] of [['up', -1], ['down', 1]]) {
           const button = document.createElement('button');
           button.type = 'button';
-          button.className = 'btn secondary';
+          button.className = 'ec-widget-action';
           button.dataset.widgetControl = direction;
           button.textContent = direction === 'up' ? '↑' : '↓';
           button.title = 'Move ' + name + ' ' + direction;
@@ -144,7 +144,7 @@
         }
         const move = document.createElement('button');
         move.type = 'button';
-        move.className = 'btn secondary';
+        move.className = 'ec-widget-action';
         move.dataset.widgetControl = 'move';
         const other = side === 'left' ? 'right' : 'left';
         move.textContent = side === 'left' ? '→' : '←';
