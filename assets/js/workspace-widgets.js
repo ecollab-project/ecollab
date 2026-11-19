@@ -17,6 +17,8 @@
   let draft = defaults();
   let saving = false;
   let origin;
+  let dragged = null;
+  let marked = null;
 
   function decode(raw) {
     if (!raw) return defaults();
@@ -80,11 +82,19 @@
     if (zones.right.hidden) drawer(false);
   }
 
+  function place(row, side, target, after = false) {
+    if (row === target) return;
+    row[1] = side;
+    row[2] = true;
+    draft.splice(draft.indexOf(row), 1);
+    draft.splice(target ? draft.indexOf(target) + Number(after) : draft.length, 0, row);
+  }
+
   function render(focus) {
     if (!editor) return;
-    for (const side of ['left', 'right']) {
+    for (const side of ['left', 'right', 'hidden']) {
       const host = document.getElementById('ecWidgetList-' + side);
-      const rows = draft.filter(row => row[1] === side);
+      const rows = draft.filter(([, position, visible]) => side === 'hidden' ? !visible : visible && position === side);
       host.replaceChildren();
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
@@ -92,14 +102,27 @@
         const name = catalog[id].label;
         const item = document.createElement('li');
         item.dataset.editorWidget = id;
+        const grip = document.createElement('span');
+        grip.className = 'ec-widget-grip';
+        grip.draggable = true;
+        grip.textContent = '⠿';
+        grip.title = 'Drag ' + name;
+        grip.setAttribute('aria-hidden', 'true');
         const label = document.createElement('label');
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.checked = visible;
         checkbox.dataset.widgetControl = 'visibility';
-        checkbox.addEventListener('change', () => { row[2] = checkbox.checked; });
+        checkbox.addEventListener('change', () => {
+          row[2] = checkbox.checked;
+          render([id, 'visibility']);
+        });
         label.append(checkbox, name);
-        item.append(label);
+        item.append(grip, label);
+        if (!visible) {
+          host.append(item);
+          continue;
+        }
         const actions = document.createElement('div');
         actions.className = 'ec-widget-actions';
         for (const [direction, offset] of [['up', -1], ['down', 1]]) {
@@ -108,12 +131,11 @@
           button.className = 'btn secondary';
           button.dataset.widgetControl = direction;
           button.textContent = direction === 'up' ? '↑' : '↓';
-          button.setAttribute('aria-label', 'Move ' + name + ' ' + direction);
+          button.title = 'Move ' + name + ' ' + direction;
+          button.setAttribute('aria-label', button.title);
           button.disabled = i + offset < 0 || i + offset >= rows.length;
           button.addEventListener('click', () => {
-            const from = draft.indexOf(row);
-            const to = draft.indexOf(rows[i + offset]);
-            [draft[from], draft[to]] = [draft[to], draft[from]];
+            place(row, side, rows[i + offset], offset > 0);
             render([id, direction]);
           });
           actions.append(button);
@@ -122,12 +144,12 @@
         move.type = 'button';
         move.className = 'btn secondary';
         move.dataset.widgetControl = 'move';
-        move.textContent = side === 'left' ? 'Move right' : 'Move left';
-        move.setAttribute('aria-label', move.textContent + ' for ' + name);
+        const other = side === 'left' ? 'right' : 'left';
+        move.textContent = side === 'left' ? '→' : '←';
+        move.title = 'Move ' + other + ' for ' + name;
+        move.setAttribute('aria-label', move.title);
         move.addEventListener('click', () => {
-          row[1] = side === 'left' ? 'right' : 'left';
-          draft.splice(draft.indexOf(row), 1);
-          draft.push(row);
+          place(row, other);
           render([id, 'move']);
         });
         actions.append(move);
@@ -137,7 +159,7 @@
       if (!rows.length) {
         const empty = document.createElement('li');
         empty.className = 'ec-widget-empty';
-        empty.textContent = 'No widgets';
+        empty.textContent = side === 'hidden' ? 'Drop widgets here to hide them' : 'Drop a widget here';
         host.append(empty);
       }
     }
@@ -149,11 +171,26 @@
     }
   }
 
+  function clearDrop() {
+    if (marked) delete marked.dataset.dropEdge;
+    marked = null;
+  }
+
+  function locateDrop(event) {
+    const zone = event.target.closest?.('[data-widget-drop]');
+    if (!zone || !editor.contains(zone)) return null;
+    const item = event.target.closest('[data-editor-widget]');
+    const rect = item?.getBoundingClientRect();
+    return {zone, item, after: !!rect && event.clientY > rect.top + rect.height / 2};
+  }
+
   function load(settings = {}) {
     const raw = typeof settings.workspace_layout === 'string' ? settings.workspace_layout : '';
     apply(raw);
     if (!editor || (editor.dataset.ready && saved === raw)) return;
     saved = raw;
+    dragged = null;
+    clearDrop();
     draft = decode(raw);
     editor.dataset.ready = 'true';
     render();
@@ -188,6 +225,48 @@
   }
 
   if (editor) {
+    editor.addEventListener('dragstart', event => {
+      const grip = event.target.closest?.('.ec-widget-grip');
+      if (!grip || saving || !event.dataTransfer) return;
+      const item = grip.closest('[data-editor-widget]');
+      dragged = draft.find(row => row[0] === item.dataset.editorWidget);
+      if (!dragged) return;
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', catalog[dragged[0]].label);
+      event.dataTransfer.setDragImage(item, 20, 20);
+    });
+    editor.addEventListener('dragover', event => {
+      if (!dragged || saving) return;
+      clearDrop();
+      const drop = locateDrop(event);
+      if (!drop || drop.item?.dataset.editorWidget === dragged[0]) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      marked = drop.item || drop.zone;
+      marked.dataset.dropEdge = drop.item ? (drop.after ? 'after' : 'before') : 'zone';
+    });
+    editor.addEventListener('dragleave', event => {
+      if (marked && !marked.contains(event.relatedTarget)) clearDrop();
+    });
+    editor.addEventListener('dragend', () => { dragged = null; clearDrop(); });
+    editor.addEventListener('drop', event => {
+      if (!dragged || saving) return;
+      const drop = locateDrop(event);
+      if (!drop) return;
+      event.preventDefault();
+      const row = dragged;
+      dragged = null;
+      clearDrop();
+      const side = drop.zone.dataset.widgetDrop;
+      if (side === 'hidden') row[2] = false;
+      else place(row, side, draft.find(candidate => candidate[0] === drop.item?.dataset.editorWidget), drop.after);
+      render([row[0], 'visibility']);
+    });
+    document.getElementById('ecWidgetUndo').addEventListener('click', () => {
+      draft = decode(saved);
+      render();
+      liveStatus.textContent = 'Unsaved changes discarded.';
+    });
     editor.addEventListener('submit', event => {
       event.preventDefault();
       save(JSON.stringify(draft));

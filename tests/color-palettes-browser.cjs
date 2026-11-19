@@ -23,9 +23,21 @@ try{for(const width of [320,768,1440]){const page=await browser.newPage({viewpor
   await page.locator('#ecPaletteStatus').filter({hasText:'Custom palette saved'}).waitFor();
   const form=page.locator('#ecWidgetForm');
   const activity=form.locator('[data-editor-widget="activity"]');
+  assert(await form.locator('.ec-workspace-preview').isVisible());
+  assert(await form.locator('.ec-workspace-preview').evaluate(e=>e.scrollWidth<=e.clientWidth+2),'Preview fits its column');
+  if(width===1440){
+    const target=form.locator('#ecWidgetList-left [data-editor-widget="shortcuts"]');
+    await activity.locator('.ec-widget-grip').dragTo(target,{targetPosition:{x:20,y:5}});
+    await form.locator('#ecWidgetList-left [data-editor-widget="activity"]').waitFor();
+    assert.equal(await form.locator('#ecWidgetList-left [data-editor-widget]').first().getAttribute('data-editor-widget'),'activity');
+    assert.equal(saved.workspace_layout,undefined,'Dragging updates the preview without saving');
+    await form.getByRole('button',{name:'Discard edits'}).click();
+    assert.equal(await form.locator('#ecWidgetList-right [data-editor-widget="activity"]').count(),1);
+  }
   await activity.getByRole('button',{name:'Move left for Active now'}).click();
   await activity.getByRole('button',{name:'Move Active now up'}).click();
   await form.locator('[data-editor-widget="matches"]').getByRole('checkbox').uncheck();
+  assert.equal(await form.locator('#ecWidgetList-hidden [data-editor-widget="matches"]').count(),1);
   await form.getByRole('button',{name:'Save workspace layout'}).click();
   await page.locator('#ecWidgetStatus').filter({hasText:'Workspace layout saved'}).waitFor();
   await page.goto(base+'/fixture/chat',{waitUntil:'networkidle'});
