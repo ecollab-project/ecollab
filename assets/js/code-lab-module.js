@@ -1,9 +1,14 @@
 'use strict';
 (() => {
- window.EcollabCodeLabModules={init({root,api,onPublished,status}){
+ window.EcollabCodeLabModules={init({root,api,onPublished,status,getTaskKind=()=>'assignment'}){
   const $=id=>document.getElementById(id),dialog=$('clTaskDialog'),form=$('clTaskForm'),upload=$('clModuleForm'),sid=Number(root.dataset.serverId);
   let mode='module',job=null,appliedId=0,poll=0,busy=false,epoch=0;
-  const fail=message=>{$('clFormError').textContent=message;};
+  let taskKind = 'assignment';
+  const fail = message => {
+   const error = $('clFormError');
+   error.textContent = message;
+   error.hidden = !message;
+  };
   async function request(action,data={},file=null){
    const params={action,server_id:sid,...data};let options,url=root.dataset.base+'/API/code-lab/module-tasks.php';
    if(action==='status'){url+='?'+new URLSearchParams(params);options={cache:'no-store'};}
@@ -12,7 +17,7 @@
    const response=await fetch(url,options);let result;try{result=await response.json();}catch{throw Error('Module request failed. Reopen this form to check your saved draft.');}
    if(!response.ok||!result.success)throw Error(result.error||'Module request failed.');return result.data;
   }
-  function resetReview(){form.reset();$('clTaskAdvanced').open=false;$('clCaseEditor').hidden=true;$('clCaseRows').replaceChildren();}
+  function resetReview(){form.reset();form.elements.kind.value=taskKind;$('clTaskAdvanced').open=false;$('clCaseEditor').hidden=true;$('clCaseRows').replaceChildren();}
   function controls(){
    $('clModuleMode').setAttribute('aria-pressed',String(mode==='module'));$('clManualMode').setAttribute('aria-pressed',String(mode==='manual'));
    $('clModuleMode').classList.toggle('active',mode==='module');$('clManualMode').classList.toggle('active',mode==='manual');$('clModulePane').hidden=mode!=='module';
@@ -35,10 +40,10 @@
    catch(e){if(token===poll)fail(e.message);return;}await new Promise(r=>setTimeout(r,3000));
   }if(token===poll)fail('Still waiting. Reopen this form to check your saved draft.');}
   async function resume(){const token=++epoch;try{const data=await request('status');if(token!==epoch||!dialog.open||mode!=='module')return;showJob(data.job);if(['queued','running'].includes(data.job?.state))watch(data.job.id);}catch(e){if(token===epoch&&mode==='module')fail(e.message);}}
-  $('clCreate').onclick=()=>{if(busy){status('Your task request is still finishing. Reopen shortly.');return;}fail('');mode='module';controls();dialog.showModal();resume();};
+  $('clCreate').onclick=()=>{if(busy){status('Your task request is still finishing. Reopen shortly.');return;}fail('');taskKind=getTaskKind();mode='module';controls();dialog.showModal();resume();};
   $('clCancel').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{++poll;++epoch;});
-  $('clManualMode').onclick=()=>{if(busy)return;++epoch;++poll;mode='manual';fail('');resetReview();appliedId=0;controls();};
-  $('clModuleMode').onclick=()=>{if(busy)return;++epoch;mode='module';fail('');controls();resume();};
+  $('clManualMode').onclick=()=>{if(busy||mode==='manual')return;++epoch;++poll;mode='manual';fail('');resetReview();appliedId=0;controls();form.elements.title.focus();};
+  $('clModuleMode').onclick=()=>{if(busy||mode==='module')return;++epoch;mode='module';fail('');controls();if(!upload.hidden)$('clModuleFile').focus();resume();};
   upload.addEventListener('submit',async e=>{e.preventDefault();if(busy)return;const file=$('clModuleFile').files[0];if(!file){fail('Choose your module first.');return;}if(file.size>5*1024*1024){fail('Module must be 5 MB or smaller.');return;}
    busy=true;$('clGenerateTask').disabled=true;fail('');const token=++epoch;
    try{const data=await request('generate',{language:upload.elements.language.value,difficulty:upload.elements.difficulty.value},file);if(token!==epoch||!dialog.open)return;showJob(data.job);watch(data.job.id);}catch(err){if(token===epoch)fail(err.message);}finally{busy=false;$('clGenerateTask').disabled=false;}
@@ -49,13 +54,17 @@
   $('clModuleDiscard').onclick=async()=>{if(busy||!job||!confirm('Discard this private draft and use another module? Published tasks are unchanged.'))return;busy=true;$('clModuleDiscard').disabled=true;fail('');const token=++epoch,id=job.id;++poll;
    try{await request('cancel',{job_id:id});if(token!==epoch||!dialog.open)return;job=null;appliedId=0;resetReview();upload.reset();showJob(null);}catch(e){if(token===epoch)fail(e.message);}finally{busy=false;$('clModuleDiscard').disabled=false;}
   };
+  form.addEventListener('invalid', event => {
+   const advanced = $('clTaskAdvanced');
+   if (advanced.contains(event.target)) advanced.open = true;
+  }, true);
   form.addEventListener('submit',async e=>{e.preventDefault();if(busy)return;if(mode==='module'&&job?.state!=='ready'){fail('Wait for a draft, or choose Write manually.');return;}
-   const data=Object.fromEntries(new FormData(form)),button=form.querySelector('[type=submit]');busy=true;button.disabled=true;fail('');
+   const data=Object.fromEntries(new FormData(form)),button=form.querySelector('[type=submit]');busy=true;button.disabled=true;button.textContent='Publishing…';fail('');
    try{for(const key of ['opens_at','due_at'])data[key]=data[key]?new Date(data[key]).toISOString():null;data.duration_minutes=data.duration_minutes?Number(data.duration_minutes):null;
     data.test_cases=data.grading_mode==='automatic'?[...$('clCaseRows').children].map(r=>({input:r.querySelector('[data-case=input]').value,expected_output:r.querySelector('[data-case=expected]').value,hidden:r.querySelector('[data-case=hidden]').checked,weight:Number(r.querySelector('[data-case=weight]').value)})):[];
     if(mode==='module')await request('publish',{...data,job_id:job.id});else await api('create',data,true);
     ++poll;++epoch;job=null;appliedId=0;dialog.close();resetReview();upload.reset();showJob(null);status('Task published to this server.');await onPublished();
-   }catch(err){fail(err.message);}finally{busy=false;button.disabled=false;}
+   }catch(err){fail(err.message);}finally{busy=false;button.disabled=false;button.textContent='Publish task';}
   });
  }};
 })();

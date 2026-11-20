@@ -23,9 +23,9 @@ class ResponsivePDO extends PDO {
     public function exec(string $statement):int|false{return 0;}
 }
 (new ReflectionProperty(Database::class,'instance'))->setValue(null,new ResponsivePDO());
-$pages=['landing'=>'index.php','policy'=>'terms.php','login'=>'modules/auth/login.php','signup'=>'modules/auth/signup.php','forgot'=>'modules/auth/forgot-password.php','admin'=>'modules/admin/dashboard.php','student'=>'modules/student/dashboard.php','facilitator'=>'modules/facilitator/dashboard.php','chat'=>'modules/chat/chat.php','settings'=>'modules/chat/settings.php','library'=>'modules/library/library.php','onboarding'=>'modules/onboarding/server-discovery.php','whiteboard'=>'modules/whiteboard/index.php','myspace'=>'modules/collaboration/my-space.php','codelab'=>'modules/code-lab/index.php','codelabfac'=>'modules/code-lab/index.php'];
+$pages=['collabs'=>'modules/collaboration/server-coworkspaces.php','collabs-picker'=>'modules/collaboration/server-coworkspaces.php','landing'=>'index.php','policy'=>'terms.php','login'=>'modules/auth/login.php','signup'=>'modules/auth/signup.php','forgot'=>'modules/auth/forgot-password.php','admin'=>'modules/admin/dashboard.php','student'=>'modules/student/dashboard.php','facilitator'=>'modules/facilitator/dashboard.php','chat'=>'modules/chat/chat.php','settings'=>'modules/chat/settings.php','library'=>'modules/library/library.php','onboarding'=>'modules/onboarding/server-discovery.php','whiteboard'=>'modules/whiteboard/index.php','myspace'=>'modules/collaboration/my-space.php','codelab'=>'modules/code-lab/index.php','codelabfac'=>'modules/code-lab/index.php'];
 $name=$argv[1]??'';if(!isset($pages[$name]))exit(1);
 AuthMiddleware::startSession();
 $_SESSION=in_array($name,['landing','policy','login','signup','forgot'],true)?[]:['user_id'=>1,'username'=>'responsive_learner','full_name'=>'Responsive Test Learner','email'=>'responsive@example.invalid','role'=>$name==='admin'?'admin':(in_array($name,['facilitator','codelabfac'],true)?'facilitator':'student'),'csrf_token'=>'test-csrf'];
-$_GET=['server_id'=>1,'channel_id'=>11];$_SERVER['REQUEST_METHOD']='GET';
+$_GET=$name==='collabs-picker'?[]:['server_id'=>1,'channel_id'=>11];$_SERVER['REQUEST_METHOD']='GET';
 include ROOT_PATH.'/'.$pages[$name];
