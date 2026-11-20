@@ -1,0 +1,14 @@
+# Collaboration and learning behavior changes
+
+Source: ecollab-collabs c838359. Work is isolated from PR106 and the live VPS.
+User authorized implementation. Keep PHP/vanilla JS/MySQL/Ratchet/LiveKit.
+
+1. Delete a temporary voice room only after its last authorized participant leaves, switches or disconnects. Wire cleanup to both HTTP and WebSocket paths; serialize room lifecycle to prevent join/delete races; broadcast channel removal to authorized server clients. Ordinary rooms remain.
+2. Every authorized voice participant can watch/unwatch and expand a remote screen. Keep media subscribed/attached across mute/reconnect; preserve room/private-channel authorization.
+3. A facilitator may publish tasks only where servers.owner_id equals their own ID, independently of membership. Admin moderation/review remains explicit. UI uses server-returned authority; API rejects foreign ownership.
+4. While a student's server-recorded Code Lab attempt is in progress and unexpired, all AI entrypoints give deterministic learning workflow/concept/debugging guidance without generated solutions or executing AI actions. No active attempt means normal assistance, including the playground. Browser surface flags do not determine the policy. Restore assistance after submit/expiry. Provide a workflow-assistance button in Code Lab.
+5. A shared capability description accurately lists available eCollab assistance and enabled actions. Unsupported operations use the user's exact sentence: "I'm sorry, the task that you want from me is not part of my capacity". Do not claim unsupported actions succeeded. Keep normal study conversations.
+6. Add privacy-aware activity collection and weekly snapshot refresh for peer matching. Respect existing ai_matching preference; avoid raw message text, DMs, private channel content and source code. Summarize public topic engagement, site navigation, trusted task performance and consented book browse/useful events. Bound/deduplicate client events; authoritative scores come from DB. No fabricated backfill. A bounded behavioral contribution augments current tags/preferences/semantic score; cold-start profiles preserve current score. Explain broad evidence categories without exposing private or individual scores.
+7. Supply a locked weekly CLI job/systemd timer for the VPS (Monday, Asia/Manila), retention and opt-out clearing, migration and rollback notes. This is application scheduling, not a ChatGPT reminder. Production installation/activation is not performed in this worktree.
+
+Implementation choices: use existing features rather than a replacement architecture; behavioral snapshots use a rolling 90-day window and at most 20% matching weight when both users have sufficient history. UI clearly discloses signals and limitations. Recommendations are estimates, not personality profiling or proof of academic ability.

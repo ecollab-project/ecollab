@@ -8,12 +8,81 @@
 // ── Helpers ──
 function _renderMsgContent(text) {
   if (window.EcollabComposer) return window.EcollabComposer.render(text);
-  const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  // Replace @word or @First Last with a purple mention span using the existing .mention class
-  return escaped.replace(/@([A-Za-z0-9_]+(?: [A-Za-z0-9_]+)?)/g, function (match) {
-    return '<span class="mention" style="color:#c084fc!important;font-weight:700;background:rgba(168,85,247,0.15);border-radius:3px;padding:1px 4px;">' + match + '</span>';
-  });
+  let rendered = '';
+  let end = 0;
+  for (const match of text.matchAll(mentionLinks())) {
+    rendered += renderLegacyMentions(text.slice(end, match.index));
+    rendered += '<span class="mention">' + escHtml(unescapeMentionLabel(match[1])) + '</span>';
+    end = match.index + match[0].length;
+  }
+  return rendered + renderLegacyMentions(text.slice(end));
 }
+
+window._renderMsgContent = _renderMsgContent;
+
+function renderLegacyMentions(text) {
+  return escHtml(text).replace(/(?<![\p{L}\p{N}_@/\\])@[\p{L}\p{N}_]+/gu, '<span class="mention">$&</span>');
+}
+
+function mentionLinks() {
+  return /\[((?:\\.|[^\[\]\\\r\n])+)\]\(#ecollab-mention-([1-9][0-9]{0,18})\)/g;
+}
+function unescapeMentionLabel(label) {
+  return label.replace(/\\([\\[\]*_])/g, '$1');
+}
+function plainMentionText(text) {
+  return String(text ?? '').replace(mentionLinks(), (_, label) => unescapeMentionLabel(label));
+}
+window.plainMentionText = plainMentionText;
+
+const nativeMentionState = new WeakMap();
+function syncNativeMentions(input) {
+  const value = input.value;
+  const previous = nativeMentionState.get(input);
+  if (!previous || previous.value === value) return previous?.ranges || [];
+  // Preserve tokens on either side of an edit and discard any token the user changed.
+  let start = 0;
+  while (start < Math.min(value.length, previous.value.length) && value[start] === previous.value[start]) start++;
+  let end = previous.value.length;
+  let newEnd = value.length;
+  while (end > start && newEnd > start && value[newEnd - 1] === previous.value[end - 1]) { end--; newEnd--; }
+  const offset = newEnd - end;
+  const ranges = previous.ranges.flatMap(range => {
+    if (range.end <= start) return [range];
+    if (range.start >= end) return [{...range, start: range.start + offset, end: range.end + offset}];
+    return [];
+  });
+  nativeMentionState.set(input, {value, ranges});
+  return ranges;
+}
+function channelInputContent(input) {
+  if (window.EcollabComposer?.getEditor?.(input)) return input.value;
+  let value = input.value;
+  for (const range of [...syncNativeMentions(input)].sort((a, b) => b.start - a.start)) {
+    const label = value.slice(range.start, range.end).replace(/[\\[\]*_]/g, '\\$&');
+    value = value.slice(0, range.start) + '[' + label + '](#ecollab-mention-' + range.id + ')' + value.slice(range.end);
+  }
+  return value;
+}
+function setChannelInputContent(input, content) {
+  if (window.EcollabComposer?.getEditor?.(input)) { input.value = content; return; }
+  const ranges = [];
+  let value = '';
+  let end = 0;
+  for (const match of content.matchAll(mentionLinks())) {
+    value += content.slice(end, match.index);
+    const text = unescapeMentionLabel(match[1]);
+    ranges.push({start: value.length, end: value.length + text.length, id: match[2]});
+    value += text;
+    end = match.index + match[0].length;
+  }
+  input.value = value + content.slice(end);
+  nativeMentionState.set(input, {value: input.value, ranges});
+}
+window.resumeChannelDraft = channelId => {
+  const input = document.getElementById('chatInputField');
+  if (input) setChannelInputContent(input, window._drafts?.[channelId]?.text || '');
+};
 
 function escHtml(str) {
   return String(str)
@@ -23,6 +92,13 @@ function escHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+function chatAccountBadge(type) {
+  const labels = {student: 'Student', professor: 'Professor', personal: 'Personal'};
+  const value = Object.hasOwn(labels, type) ? type : 'personal';
+  return '<span class="account-type-badge" data-account-type="' + value + '">' + labels[value] + '</span>';
+}
+window.chatAccountBadge = chatAccountBadge;
 
 function timeAgo(dateStr) {
   const d = new Date(dateStr);
@@ -59,7 +135,9 @@ async function apiFetch(url, options = {}, _retried = false) {
         }
       } catch (_) { /* fallback */ }
     }
-    throw new Error(err.error || 'Request failed');
+    const error = new Error(err.error || 'Request failed');
+    error.status = res.status;
+    throw error;
   }
   return res.json();
 }
@@ -265,17 +343,14 @@ async function loadServerChannels(serverId, startAtGeneral = false) {
 function renderChannelList(channels, startAtGeneral = false) {
   const textList = document.getElementById('channelList');
   const voiceList = document.getElementById('voiceChannelList');
-  const wbList = document.getElementById('whiteboardChannelList');
-  const wbSection = document.getElementById('whiteboardSection');
   if (!textList || !voiceList) return;
 
   textList.innerHTML = '';
   voiceList.innerHTML = '';
-  if (wbList) wbList.innerHTML = '';
-
-  let hasWhiteboard = false;
 
   channels.forEach(ch => {
+    if (ch.type === 'whiteboard') return;
+
     // ── Voice ─────────────────────────────────────────────────────
     if (ch.type === 'voice') {
       const el = document.createElement('div');
@@ -289,24 +364,6 @@ function renderChannelList(channels, startAtGeneral = false) {
       `;
       el.onclick = () => window.joinVoice?.(ch.slug, el, ch.id);
       voiceList.appendChild(el);
-
-      // ── Whiteboard ────────────────────────────────────────────────
-    } else if (ch.type === 'whiteboard') {
-      hasWhiteboard = true;
-      if (!wbList) return;
-      const el = document.createElement('div');
-      el.className = 'channel-item wb-channel-item';
-      el.dataset.channelId = ch.id;
-      el.dataset.channelName = ch.name;
-      el.dataset.channelType = ch.type;
-      el.innerHTML = `
-        <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24" style="color:var(--accent-purple);flex-shrink:0;">
-          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-        </svg>
-        <span class="channel-name" style="flex:1;">${escHtml(ch.name)}</span>
-      `;
-      el.onclick = () => openWhiteboardChannel(parseInt(ch.id), ch.name);
-      wbList.appendChild(el);
 
       // ── Text / Announcement / everything else ─────────────────────
     } else {
@@ -335,9 +392,6 @@ function renderChannelList(channels, startAtGeneral = false) {
       textList.appendChild(el);
     }
   });
-
-  // Show/hide whiteboard section based on whether channels exist
-  if (wbSection) wbSection.style.display = hasWhiteboard ? '' : 'none';
 
   // Changing servers starts at General. Same-server list updates retain selection.
   const wanted = startAtGeneral ? null : lastServerChannels.get(Number(currentServerId));
@@ -370,9 +424,9 @@ async function switchChannel(el, channelId) {
   // Save draft of current input before switching
   const inputEl = document.getElementById('chatInputField');
   if (inputEl && inputEl.value.trim() && currentChannelId) {
-    _saveDraft(currentChannelId, inputEl.value.trim());
+    _saveDraft(currentChannelId, channelInputContent(inputEl).trim());
     showToast('📝 Draft saved', 'info');
-    inputEl.value = '';
+    setChannelInputContent(inputEl, '');
   }
 
   // Unsubscribe old channel
@@ -385,6 +439,7 @@ async function switchChannel(el, channelId) {
   window.serverMembers = [];
   window.serverMembersComplete = false;
   _hideMentionDropdown();
+  mentionRoster = null;
   renderMembersPanel([]);
   window.EcollabTimeline?.reset(document.getElementById('messagesArea'));
   renderMessages([], false);
@@ -537,6 +592,19 @@ function renderMessages(messages, prepend = false, preserveLive = false) {
   }
 }
 
+function messageAvatarMarkup(name, url, gradient) {
+  const colors = String(gradient || '').split(',').map(color => color.trim());
+  const valid = colors.length === 2 && colors.every(color => /^#[0-9a-f]{3,8}$/i.test(color));
+  const background = valid ? colors.join(',') : '#3b82f6,#6366f1';
+  const initial = escHtml(Array.from(String(name || '').trim())[0]?.toUpperCase() || '?');
+  const source = chatAvatarUrl(url);
+  const photo = source ? `<img class="msg-avatar-photo" src="${escHtml(source)}" alt="" loading="lazy"
+    referrerpolicy="no-referrer" onload="this.previousElementSibling.hidden = true; this.classList.add('is-loaded')" onerror="this.remove()">` : '';
+  return `<div class="avatar-placeholder msg-avatar-face" aria-hidden="true" style="background:linear-gradient(135deg,${background})">
+    <span>${initial}</span>${photo}<div class="online-dot"></div>
+  </div>`;
+}
+
 function buildMessageElement(msg) {
   const div = document.createElement('div');
   div.dataset.rawContent = msg.content || '';
@@ -545,14 +613,10 @@ function buildMessageElement(msg) {
   div.dataset.senderId = msg.sender_id;
   div.dataset.messageTimestamp = msg.created_at||'';
 
-  const grad = msg.avatar_color_gradient || '#3b82f6,#6366f1';
-  const [c1, c2] = grad.split(',');
-  const init = (msg.full_name || msg.username || '?').charAt(0).toUpperCase();
-  const avatarUrl = chatAvatarUrl(msg.avatar_url);
-  const avatarBg = avatarUrl ? `url("${escHtml(avatarUrl)}") center/cover no-repeat` : `linear-gradient(135deg,${c1},${c2})`;
-  const avatarText = avatarUrl ? '' : init;
   const isMe = parseInt(msg.sender_id) === parseInt(window.ECOLLAB?.userId);
   const time = formatTime(msg.created_at);
+  const actionAuthor = escHtml(JSON.stringify(String(msg.username || '')));
+  const actionPreview = escHtml(JSON.stringify(plainMentionText(msg.content).slice(0, 60)));
   const edited = msg.is_edited ? '<span class="edited-tag" style="font-size:10px;color:var(--text-muted);margin-left:4px;">(edited)</span>' : '';
 
   // Reply preview
@@ -562,7 +626,7 @@ function buildMessageElement(msg) {
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;padding:4px 8px;background:rgba(255,255,255,0.04);border-left:2px solid var(--accent-purple);border-radius:4px;font-size:12px;color:var(--text-muted);">
         <svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
         <strong style="color:var(--accent-purple);">${escHtml(msg.parent_author || '')}</strong>
-        <span>${escHtml((msg.parent_content || '').substring(0, 80))}</span>
+        <span>${escHtml(plainMentionText(msg.parent_content).slice(0, 80))}</span>
       </div>
     `;
   }
@@ -607,24 +671,22 @@ function buildMessageElement(msg) {
   div.innerHTML = `
     <div class="msg-action-bar">
       <button class="msg-action-btn" title="Add Reaction" onclick="showEmojiForMsgBar(event,this)">😊</button>
-      <button class="msg-action-btn" title="Reply" onclick="msgReply(this,'${escHtml(msg.username)}', ${msg.id}, '${escHtml((msg.content || '').substring(0, 60))}')">
+      <button class="msg-action-btn" title="Reply" onclick="msgReply(this,${actionAuthor}, ${msg.id}, ${actionPreview})">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
       </button>
-      <button class="msg-action-btn ${msg.is_pinned ? 'pin-active' : ''}" title="${msg.is_pinned ? 'Unpin Message' : 'Pin Message'}" onclick="msgPin(this,'${escHtml(msg.username)}','${escHtml((msg.content || '').substring(0, 60))}', ${msg.id})">📌</button>
+      <button class="msg-action-btn ${msg.is_pinned ? 'pin-active' : ''}" title="${msg.is_pinned ? 'Unpin Message' : 'Pin Message'}" onclick="msgPin(this,${actionAuthor}, ${actionPreview}, ${msg.id})">📌</button>
       <button class="msg-action-btn" title="Bookmark" onclick="msgBookmark(this, ${msg.id})">🔖</button>
-      <button class="msg-action-btn" title="More Options" onclick="showMsgMenu(event,this,'${escHtml(msg.username)}', ${msg.id}, ${isMe ? 'true' : 'false'})">
+      <button class="msg-action-btn" title="More Options" onclick="showMsgMenu(event,this,${actionAuthor}, ${msg.id}, ${isMe ? 'true' : 'false'})">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
       </button>
     </div>
     <div class="msg-avatar" role="button" tabindex="0" aria-label="Open profile" data-profile-user-id="${Number(msg.sender_id)||0}">
-      <div class="avatar-placeholder" style="width:36px;height:36px;font-size:14px;border-radius:50%;background:${avatarBg};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;position:relative;flex-shrink:0;">
-        ${avatarText}
-        <div class="online-dot"></div>
-      </div>
+      ${messageAvatarMarkup(msg.full_name || msg.username, msg.avatar_url, msg.avatar_color_gradient)}
     </div>
     <div class="msg-content">
       <div class="msg-header">
         <span class="msg-username ${roleClass}" role="button" tabindex="0" data-profile-user-id="${Number(msg.sender_id)||0}" data-profile-name="${escHtml(msg.full_name||msg.username)}">${escHtml(msg.full_name || msg.username)}</span>
+        ${window.chatAccountBadge?.(msg.account_type) || ''}
         ${msg.role === 'facilitator' ? '<span class="msg-badge">FACULTY</span>' : ''}
         ${msg.is_verified ? '<span style="color:#a855f7;font-size:12px;" title="Verified">✓</span>' : ''}
         <span class="msg-timestamp">${time}</span>
@@ -717,7 +779,13 @@ async function sendMessage() {
   if (!input || !currentChannelId) return;
   if (window.EcollabComposer?.canSend(input) === false) return;
 
-  const content = input.value.trim();
+  if (_mentionActive) {
+    const query = _mentionQuery.trim().toLocaleLowerCase();
+    const matches = [...document.querySelectorAll('#mentionDropdown .mention-item')].filter(item =>
+      item.dataset.mentionId && item.dataset.mentionName.toLocaleLowerCase() === query);
+    if (matches.length === 1) _insertMention(matches[0].dataset.mentionName, matches[0].dataset.mentionId);
+  }
+  const content = channelInputContent(input).trim();
   if (!content && !pendingAttachment) return;
 
   const body = {
@@ -735,7 +803,8 @@ async function sendMessage() {
 
   const sentAttachment = pendingAttachment;
   const sentParentId = replyParentId;
-  input.value = '';
+  setChannelInputContent(input, '');
+  _hideMentionDropdown();
   clearAttachmentPreview();
   cancelReply();
 
@@ -749,6 +818,7 @@ async function sendMessage() {
     full_name: window.ECOLLAB?.fullName,
     avatar_color_gradient: window.ECOLLAB?.avatarGradient,
     role: window.ECOLLAB?.role,
+    account_type: window.ECOLLAB?.accountType,
     is_verified: false,
     is_pinned: false,
     is_edited: false,
@@ -787,7 +857,7 @@ async function sendMessage() {
     console.error('[sendMessage]', err);
     // Restore message in input so user doesn't lose it
     const inputRestore = document.getElementById('chatInputField');
-    if (inputRestore && content) inputRestore.value = content;
+    if (inputRestore && !inputRestore.value && content && Number(body.channel_id) === Number(currentChannelId)) setChannelInputContent(inputRestore, content);
   }
 }
 
@@ -795,14 +865,14 @@ async function sendMessage() {
 // Mention state
 let _mentionActive = false;
 let _mentionQuery = '';
-let _mentionStart = -1;
 
 let _draftSaveTimer = null;
 function handleTyping(e) {
   // Auto-save draft 2s after user stops typing
   clearTimeout(_draftSaveTimer);
   _draftSaveTimer = setTimeout(function () {
-    const val = document.getElementById('chatInputField')?.value?.trim();
+    const field = document.getElementById('chatInputField');
+    const val = field && channelInputContent(field).trim();
     if (val && currentChannelId) {
       _saveDraft(currentChannelId, val);
     } else if (!val && currentChannelId && _drafts[currentChannelId]) {
@@ -821,19 +891,14 @@ function handleTyping(e) {
   const val = input.value;
   const pos = input.selectionStart;
 
-  // Find the last @ before cursor
   const textBefore = window.EcollabComposer?.textBefore(input) ?? val.substring(0, pos);
-  const atIdx = textBefore.lastIndexOf('@');
-
-  if (atIdx !== -1 && (atIdx === 0 || /\s/.test(textBefore[atIdx - 1]))) {
-    const query = textBefore.substring(atIdx + 1);
-    if (!/\s/.test(query)) {
-      _mentionActive = true;
-      _mentionStart = atIdx;
-      _mentionQuery = query.toLowerCase();
-      _showMentionDropdown(_mentionQuery);
-      return;
-    }
+  const match = textBefore.match(/(?:^|\s)@([^\r\n@]{0,80})$/u);
+  const editor = window.EcollabComposer?.getEditor?.(input);
+  if (match && !match[1].startsWith(' ') && currentChannelId && !editor?.isActive('codeBlock') && !editor?.isActive('code')) {
+    _mentionActive = true;
+    _mentionQuery = match[1];
+    _showMentionDropdown(_mentionQuery);
+    return;
   }
   _hideMentionDropdown();
 }
@@ -861,7 +926,7 @@ function handleKeyDown(e) {
       }
       if (e.key === 'Enter' || e.key === 'Tab') {
         const sel = dd.querySelector('.mention-item.active') || dd.querySelector('.mention-item');
-        if (sel) { e.preventDefault(); _insertMention(sel.dataset.username); return; }
+        if (sel) { e.preventDefault(); _insertMention(sel.dataset.mentionName, sel.dataset.mentionId); return; }
       }
       if (e.key === 'Escape') { _hideMentionDropdown(); return; }
     }
@@ -872,30 +937,33 @@ function handleKeyDown(e) {
   }
 }
 
-function _showMentionDropdown(query, directoryLoaded = false) {
-  if (!directoryLoaded && window.serverMembersComplete === false) {
-    const channelId = currentChannelId;
-    loadChatMemberDirectory().then(() => {
-      if (_mentionActive && channelId === currentChannelId && _mentionQuery === query) _showMentionDropdown(query, true);
-    }).catch(() => {});
+let mentionRoster = null;
+function _showMentionDropdown(query) {
+  const channelId = currentChannelId;
+  if (mentionRoster?.channelId !== channelId) {
+    const request = {channelId, members: []};
+    mentionRoster = request;
+    apiFetch(`${API_BASE}/get-channel.php?id=${channelId}&members=mentions`).then(data => {
+      if (mentionRoster !== request) return;
+      if (!data.success || !data.has_access) { mentionRoster = null; return; }
+      request.members = data.members || [];
+      if (_mentionActive && currentChannelId === channelId) _showMentionDropdown(_mentionQuery);
+    }).catch(() => { if (mentionRoster === request) mentionRoster = null; });
   }
-  // Get members from sidebar
-  const members = [];
-  document.querySelectorAll('#membersList .member-item, #activeMembersList .active-user').forEach(el => {
-    const nameEl = el.querySelector('.member-name, [class*="name"]') || el;
-    const name = nameEl.textContent.trim().split('\n')[0].trim();
-    if (name && name.length > 1) members.push(name);
-  });
 
-  // Add server members from window.serverMembers if available
-  const allMembers = window.serverMembers || members;
-
-  const filtered = allMembers.filter(m => {
-    if (typeof m === 'string') return m.toLowerCase().includes(query);
-    const uname = (m.username || '').toLowerCase();
-    const fname = (m.full_name || '').toLowerCase();
-    return uname.includes(query) || fname.includes(query);
-  }).slice(0, 8);
+  const search = query.trim().toLocaleLowerCase();
+  const members = mentionRoster?.members || [];
+  const filtered = [];
+  if ('everyone'.startsWith(search)) filtered.push({name:'everyone', id:'', role:'Everyone in this channel'});
+  for (const member of members) {
+    if (Number(member.id) === Number(window.ECOLLAB?.userId)) continue;
+    const name = member.nickname?.trim() || member.full_name?.trim() || member.username;
+    if (!name) continue;
+    if ([name, member.full_name, member.username].some(value => value?.toLocaleLowerCase().includes(search))) {
+      filtered.push({...member, name});
+      if (filtered.length >= 8) break;
+    }
+  }
 
   let dd = document.getElementById('mentionDropdown');
   if (!dd) {
@@ -912,42 +980,52 @@ function _showMentionDropdown(query, directoryLoaded = false) {
     else document.body.appendChild(dd);
   }
 
-  if (!filtered.length) { const dd = document.getElementById('mentionDropdown'); if (dd) dd.style.display = 'none'; return; }
+  if (!filtered.length) { dd.style.display = 'none'; dd.replaceChildren(); return; }
 
   dd.innerHTML = filtered.map((m, i) => {
-    const name = typeof m === 'string' ? m : (m.full_name || m.username);
-    const username = typeof m === 'string' ? m : (m.username || m.full_name);
-    const role = typeof m === 'object' ? (m.role || '') : '';
-    const init = name.charAt(0).toUpperCase();
-    const grad = typeof m === 'object' ? (m.avatar_color_gradient || '#a855f7,#ec4899') : '#a855f7,#ec4899';
-    const [c1, c2] = grad.split(',');
-    return `<div class="mention-item${i === 0 ? ' active' : ''}" data-username="${escHtml(username)}"
+    const {name, role, id} = m;
+    const repeated = id && filtered.some(other => other.id !== id && other.name === name);
+    const subtitle = repeated ? m.username : role;
+    const init = escHtml(Array.from(name)[0].toUpperCase());
+    const colors = String(m.avatar_color_gradient || '').split(',');
+    const [c1, c2] = colors.length === 2 && colors.every(color => /^#[0-9a-f]{3,8}$/i.test(color.trim()))
+      ? colors : ['#a855f7', '#ec4899'];
+    return `<div class="mention-item${i === 0 ? ' active' : ''}" data-mention-name="${escHtml(name)}" data-mention-id="${id ? String(id).replace(/\D/g, '') : ''}"
       style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;transition:background 0.1s;"
       onmouseenter="document.querySelectorAll('.mention-item').forEach(i=>i.classList.remove('active'));this.classList.add('active')"
       >
       <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">${init}</div>
       <div>
-        <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${escHtml(name)}</div>
-        ${role ? `<div style="font-size:11px;color:var(--text-muted);">${escHtml(role)}</div>` : ''}
+        <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${escHtml(id ? name : "@everyone")}</div>
+        ${subtitle ? `<div style="font-size:11px;color:var(--text-muted);">${escHtml(subtitle)}</div>` : ''}
       </div>
     </div>`;
   }).join('');
-  dd.querySelectorAll('.mention-item').forEach(item => item.addEventListener('click', () => _insertMention(item.dataset.username)));
+  dd.querySelectorAll('.mention-item').forEach(item => item.addEventListener('click', () => _insertMention(item.dataset.mentionName, item.dataset.mentionId)));
   dd.style.display = 'block';
 }
 
-function _insertMention(username) {
+function _insertMention(name, id) {
   const input = document.getElementById('chatInputField');
-  if (!input) return;
-  if (window.EcollabComposer?.mention(input, username)) { _hideMentionDropdown(); return; }
-  const val = input.value;
-  const before = val.substring(0, _mentionStart);
-  const after = val.substring(input.selectionStart);
-  input.value = before + '@' + username + ' ' + after;
-  input.focus();
-  const newPos = _mentionStart + username.length + 2;
-  input.setSelectionRange(newPos, newPos);
+  if (!input || input.disabled) return;
+  const length = _mentionQuery.length + 1;
   _hideMentionDropdown();
+  if (window.EcollabComposer?.getEditor?.(input)) {
+    window.EcollabComposer.mention(input, name, id, length);
+    _hideMentionDropdown();
+    return;
+  }
+  const end = input.selectionStart;
+  const start = end - length;
+  if (start < 0 || input.value[start] !== '@') return;
+  const tracked = syncNativeMentions(input).filter(range => range.end <= start || range.start >= end);
+  nativeMentionState.set(input, {value: input.value, ranges: tracked});
+  const label = '@' + name;
+  input.setRangeText(label + ' ', start, end, 'end');
+  const ranges = syncNativeMentions(input);
+  if (id) ranges.push({start, end: start + label.length, id});
+  nativeMentionState.set(input, {value: input.value, ranges});
+  input.focus();
 }
 
 // Deduplicate simultaneous mention/modal requests, but never reuse access decisions.
@@ -1106,7 +1184,8 @@ function startEditMsg(msgGroup, originalText, msgId) {
   const textEl = msgGroup.querySelector('.msg-text');
   if (!textEl) return;
   originalText = msgGroup.dataset.rawContent ?? originalText;
-  textEl.textContent = originalText;
+  setChannelInputContent(textEl, originalText);
+  textEl.textContent = textEl.value;
   textEl.contentEditable = 'true';
   textEl.style.outline = '1px solid var(--accent-purple)';
   textEl.style.borderRadius = '4px';
@@ -1142,7 +1221,8 @@ async function saveEditMsg(el, msgId) {
   const textEl = msgContent.querySelector('.msg-text');
   if (!textEl) return;
 
-  const newContent = textEl.textContent?.trim();
+  textEl.value = textEl.textContent || '';
+  const newContent = channelInputContent(textEl).trim();
   textEl.contentEditable = 'false';
   textEl.style.outline = '';
   textEl.style.padding = '';
@@ -1425,13 +1505,14 @@ function renderMembersPanel(members, total = members.length) {
     const memberInitial = memberAvatarUrl ? '' : init;
     const online = chatMemberOnline(m) ? 'online' : '';
     return `
-      <div class="member-item" data-user-id="${m.id || m.user_id || 0}" data-user-grad="${grad}" role="button" tabindex="0" data-profile-user-id="${Number(m.id||m.user_id)||0}" data-profile-name="${escHtml(m.full_name||m.username)}">
+      <div class="member-item" data-user-id="${m.id || m.user_id || 0}" data-user-grad="${grad}" data-account-type="${['student', 'professor'].includes(m.account_type) ? m.account_type : 'personal'}" role="button" tabindex="0" data-profile-user-id="${Number(m.id||m.user_id)||0}" data-profile-name="${escHtml(m.full_name||m.username)}">
         <div class="user-avatar">
           ${chatSidebarAvatar(m.full_name || m.username, m.avatar_url, grad, 28)}
           <div class="online-dot ${chatMemberOnline(m) ? '' : 'offline'}"></div>
         </div>
         <div class="member-info">
           <div class="member-name">${escHtml(m.full_name || m.nickname || m.username)}${m.server_role === 'owner' ? ' <span class="member-badge">👑</span>' : ''}</div>
+          ${window.chatAccountBadge?.(m.account_type) || ''}
         </div>
         <div class="member-status ${online}">● ${chatMemberOnline(m) ? 'Online' : 'Offline'}</div>
       </div>
@@ -1515,7 +1596,7 @@ function renderPinnedModal(messages) {
   list.innerHTML = messages.map(msg => `
     <div class="pinned-msg">
       <div class="pinned-msg-meta">${escHtml(msg.username)} · ${timeAgo(msg.created_at)}</div>
-      <div class="pinned-msg-text">${escHtml(msg.content || '')}</div>
+      <div class="pinned-msg-text">${escHtml(plainMentionText(msg.content) || (msg.attachments || []).map(file => file.file_name).filter(Boolean).join(', ') || ({image:'Image attachment',file:'File attachment',voice:'Voice message',poll:'Poll',code:'Code snippet'}[msg.content_type]) || 'Message attachment')}</div>
     </div>
   `).join('');
 }
@@ -1575,19 +1656,22 @@ function markAllRead() {
 }
 
 // ── Modals ──
+const modalDisplayTimers = new WeakMap();
 function openModal(id) {
   const el = document.getElementById(id);
   if (el) {
+    clearTimeout(modalDisplayTimers.get(el));
     el.style.display = 'flex';
-    setTimeout(() => el.classList.add('open'), 10);
+    modalDisplayTimers.set(el, setTimeout(() => el.classList.add('open'), 10));
   }
 }
 
 function closeModal(id) {
   const el = document.getElementById(id);
   if (el) {
+    clearTimeout(modalDisplayTimers.get(el));
     el.classList.remove('open');
-    setTimeout(() => { el.style.display = ''; }, 200);
+    modalDisplayTimers.set(el, setTimeout(() => { el.style.display = 'none'; }, 200));
   }
 }
 window.openModal = openModal;
@@ -1638,14 +1722,54 @@ async function generateAIReply() {
 }
 
 // ── Mobile sidebar ──
-function toggleSidebar() {
-  const open = document.body.classList.toggle('sidebar-open');
+const mobileChannelLayout = window.matchMedia('(max-width: 860px)');
+
+function setChannelDrawer(open) {
+  const trigger = document.querySelector('.mob-hamburger');
+  const sidebar = document.getElementById('sidebarLeft');
+  const workspaces = document.getElementById('workspaceSwitcher');
+  const wasOpen = document.body.classList.contains('sidebar-open');
+  open = mobileChannelLayout.matches && open;
+  if (wasOpen && !open && mobileChannelLayout.matches) trigger?.focus();
+  document.body.classList.toggle('sidebar-open', open);
   document.getElementById('mobileOverlay')?.classList.toggle('open', open);
+  trigger?.setAttribute('aria-expanded', String(open));
+  if (sidebar) sidebar.inert = mobileChannelLayout.matches && !open;
+  if (workspaces) workspaces.inert = mobileChannelLayout.matches && !open;
+  const chat = document.getElementById('chatMain');
+  if (chat) chat.inert = open;
+  const members = document.getElementById('sidebarRight');
+  if (members) members.inert = open;
+}
+
+function toggleSidebar() {
+  setChannelDrawer(!document.body.classList.contains('sidebar-open'));
 }
 
 function closeSidebar() {
-  document.body.classList.remove('sidebar-open');
-  document.getElementById('mobileOverlay')?.classList.remove('open');
+  setChannelDrawer(false);
+}
+
+if (document.querySelector('.mob-hamburger')) {
+  closeSidebar();
+  mobileChannelLayout.addEventListener('change', closeSidebar);
+  document.addEventListener('keydown', event => {
+    if (event.defaultPrevented || !document.body.classList.contains('sidebar-open')) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeSidebar();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const controls = [...document.querySelectorAll('.mob-hamburger, #workspaceSwitcher button, #sidebarLeft :is(button, a[href], input, [tabindex])')]
+      .filter(control => !control.disabled && control.tabIndex >= 0 && control.getClientRects().length);
+    if (!controls.length) return;
+    const active = controls.indexOf(document.activeElement);
+    if (active < 0 || (event.shiftKey ? active === 0 : active === controls.length - 1)) {
+      event.preventDefault();
+      controls[event.shiftKey ? controls.length - 1 : 0].focus();
+    }
+  });
 }
 
 // ── Toast ──
@@ -1704,7 +1828,8 @@ window.openWhiteboardChannel = openWhiteboardChannel;
 const _drafts = JSON.parse(localStorage.getItem('ec_drafts') || '{}');
 const _bookmarks = JSON.parse(localStorage.getItem('ec_bookmarks') || '[]');
 const _threads = JSON.parse(localStorage.getItem('ec_threads') || '[]');
-const _mentions = JSON.parse(localStorage.getItem('ec_mentions') || '[]');
+window.chatMentionStorageKey = 'ec_mentions_' + String(window.ECOLLAB?.userId || 0);
+const _mentions = JSON.parse(localStorage.getItem(window.chatMentionStorageKey) || '[]');
 
 function _saveDraft(channelId, text) {
   const channelName = document.querySelector('.channel-topbar-name')?.textContent?.replace('#', '') || channelId;
@@ -1735,7 +1860,7 @@ function _checkResumeDraft(channelId) {
   }
   banner.style.display = 'flex';
   banner.innerHTML = `<span>📝 You have a draft in this channel</span>
-    <button onclick="document.getElementById('chatInputField').value=window._drafts['${channelId}']?.text||'';document.getElementById('draftResumeBanner').style.display='none';" style="margin-left:auto;background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.3);border-radius:6px;padding:3px 10px;color:#fbbf24;cursor:pointer;font-family:inherit;font-size:11px;">Resume</button>
+    <button onclick="window.resumeChannelDraft('${channelId}');document.getElementById('draftResumeBanner').style.display='none';" style="margin-left:auto;background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.3);border-radius:6px;padding:3px 10px;color:#fbbf24;cursor:pointer;font-family:inherit;font-size:11px;">Resume</button>
     <button onclick="window._deleteDraft('${channelId}');document.getElementById('draftResumeBanner').style.display='none';" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:0 4px;">✕</button>`;
 }
 function _addBookmark(item) {
@@ -1748,20 +1873,8 @@ function _addThread(item) {
   if (existing === -1) _threads.push({ ...item, replies: 1, lastReply: 'Just now' });
   localStorage.setItem('ec_threads', JSON.stringify(_threads));
 }
-function _detectAndStoreMentions(text, channelId) {
-  const myUsername = window.ECOLLAB?.username || '';
-  const myFullName = window.ECOLLAB?.fullName || '';
-  const channelName = document.querySelector('.channel-topbar-name')?.textContent?.replace('#', '') || '';
-  // Check if message mentions the current user
-  if (myUsername && text.toLowerCase().includes('@' + myUsername.toLowerCase())) {
-    _mentions.unshift({ author: myFullName || myUsername, text, channel: channelName, channelId, time: new Date().toLocaleTimeString(), letter: (myFullName || myUsername).charAt(0).toUpperCase() });
-    if (_mentions.length > 50) _mentions.pop();
-    localStorage.setItem('ec_mentions', JSON.stringify(_mentions));
-    _updateMentionBadge();
-  }
-}
 function _updateMentionBadge() {
-  const fresh = JSON.parse(localStorage.getItem('ec_mentions') || '[]');
+  const fresh = JSON.parse(localStorage.getItem(window.chatMentionStorageKey) || '[]');
   // Sync the in-memory array
   _mentions.length = 0;
   fresh.forEach(i => _mentions.push(i));

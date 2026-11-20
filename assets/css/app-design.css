@@ -161,7 +161,7 @@ div.dashboard-empty-state{width:100%;box-sizing:border-box;}
 body[data-mobile-surface="forms"] { color-scheme: dark; }
 body[data-mobile-surface="forms"] .input-row { min-width: 0; }
 body[data-mobile-surface="forms"] .input-row :is(input, select) {
-  min-width: 0; width: 100%; padding: 0; border-radius: 0;
+  min-width: 0; width: 100%; padding: 0; border-radius: 0; color: var(--ec-text, #fff);
 }
 body[data-mobile-surface="forms"] .input-row :is(input, select):focus,
 body[data-mobile-surface="forms"] .input-row :is(input, select):focus-visible {
@@ -174,12 +174,12 @@ body[data-mobile-surface="forms"] .input-row:focus-within {
 body[data-mobile-surface="forms"] .input-row input:-webkit-autofill,
 body[data-mobile-surface="forms"] .input-row input:-webkit-autofill:hover,
 body[data-mobile-surface="forms"] .input-row input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #fff; caret-color: #fff;
-  -webkit-box-shadow: 0 0 0 1000px #191523 inset;
-  box-shadow: 0 0 0 1000px #191523 inset;
+  -webkit-text-fill-color: var(--ec-text, #fff); caret-color: var(--ec-text, #fff);
+  -webkit-box-shadow: 0 0 0 1000px var(--auth-input, #191523) inset;
+  box-shadow: 0 0 0 1000px var(--auth-input, #191523) inset;
 }
 body[data-mobile-surface="forms"] .input-row input:autofill {
-  color: #fff; caret-color: #fff; background-color: #191523;
+  color: var(--ec-text, #fff); caret-color: var(--ec-text, #fff); background-color: var(--auth-input, #191523);
 }
 @media (forced-colors: active) {
   body[data-mobile-surface="forms"] .input-row:focus-within {

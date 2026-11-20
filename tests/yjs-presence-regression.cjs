@@ -1,10 +1,11 @@
 const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict'),{JSDOM}=require('jsdom'),Y=require('yjs'),protocol=require('y-protocols/awareness');
 const code=fs.readFileSync(__dirname+'/../assets/js/collab/yjs-presence.js','utf8').replace(/^import .*;$/gm,'').replace(/export function/g,'function');
 const tick=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-function client(userId){const dom=new JSDOM('',{runScripts:'outside-only'}),window=dom.window;const context={Y,...protocol,window,document:window.document,TextEncoder,Uint8Array,setTimeout,clearTimeout};vm.createContext(context);vm.runInContext(code,context);let calls=0,last;const messages=[];const presence=context.createWhiteboardPresence({channelId:20,whiteboardId:10},{send:m=>{messages.push(m);return true},changed:(states,id)=>{calls++;last=new Map(states);}});return{dom,window,presence,messages,get states(){return last},get calls(){return calls},userId};}
+function client(userId){const dom=new JSDOM('',{runScripts:'outside-only'}),window=dom.window;const context={Y,...protocol,window,document:window.document,TextEncoder,Uint8Array,setTimeout,clearTimeout};vm.createContext(context);vm.runInContext(code,context);let calls=0,last,connected;const messages=[];const presence=context.createWhiteboardPresence({channelId:20,whiteboardId:10},{send:m=>{messages.push(m);return true},changed:(states,id,live)=>{connected=live;calls++;last=new Map(states);}});return{dom,window,presence,messages,get states(){return last},get calls(){return calls},get connected(){return connected},userId};}
 function canonical(client,packet){return{client_id:packet.client_id,clock:packet.clock,state:packet.state===null?null:{...packet.state,user:{id:client.userId,name:'User '+client.userId,color:'#3b82f6'}}};}
 (async()=>{const a=client(1),b=client(2);try{
  a.presence.receive({type:'wb_joined',whiteboard_id:10,presence:[]});b.presence.receive({type:'wb_joined',whiteboard_id:10,presence:[canonical(a,a.messages.at(-1))]});
+ assert.equal(a.connected,true,'first solo join immediately renders live status');
  assert.equal(b.states.size,2,'join snapshot includes local and remote awareness');
  const before=b.messages.length;b.presence.receive({type:'wb_presence',whiteboard_id:10,presence:canonical(a,a.messages.at(-1))});assert.equal(b.messages.length,before,'receiving presence must never echo');
  for(let i=0;i<20;i++)a.presence.pointer({pointer:{x:i,y:20},button:'down'});await tick(120);assert.equal(a.messages.length,2,'pointer events coalesce into one update');

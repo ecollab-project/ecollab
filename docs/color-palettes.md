@@ -1,19 +1,22 @@
-# Ecollab color customization
+# eCollab color customization
 
-Forest & Mint is the default application palette. Settings → Appearance offers all 20 named combinations from the supplied reference, with the five source swatches visible on each card. Color palettes are independent of Dark / Light / System mode and avatar gradients. The selected palette saves to the authenticated user's account and applies to chat, taskbar, dashboards, settings and other Ecollab pages using the shared appearance assets. Public pages use Forest & Mint by default. Existing logos, uploaded content, editor syntax and status meanings retain their own colors.
+**eCollab Original** is the default palette, restored from the pink/violet, near-black look in the supplied Drive screenshots. Its source swatches are `#05010D`, `#FF2D75`, `#FF1493`, `#A855F7`, and `#FFFFFF`. The existing auth/landing design tokens also confirm these colors. Button shades are slightly darker than the bright screenshot gradient to keep white button labels readable. Light mode uses white surfaces, a faint pink/violet tint and dark text.
+
+Settings → Appearance now offers 21 named palettes, including eCollab Original and **FCMS Burgundy & Coral** as separate choices. Palettes remain independent of Dark / Light / System mode and avatar gradients. Saved choices apply across chat, the taskbar, dashboards, settings, Code Lab and public entry pages through the shared appearance assets. Logos, uploaded content, editor syntax and status meanings retain their own colors.
 
 Deploy on the application VPS:
 
 ```sh
-cd ~/ecollab-inspect
-git pull --ff-only origin ecollab-collabs
-php database/migrate.php
+cd ~/ecollab-inspect &&
+git pull --ff-only origin feat/collaboration-assistance-matching &&
+php database/migrate.php &&
+sudo systemctl restart php8.3-fpm
 ```
 
-Migration 059 adds `user_settings.color_palette`, with `forest-mint` as its default for existing and new accounts. It is safe to rerun and retains existing dark/light/system choices. No runtime service restart is required. Hard-refresh the browser after deployment.
+Migration 069 sets `ecollab-original` as the database default and switches rows using the previous default slot (`forest-mint`) to it. Other saved palettes and dark/light/system settings are preserved. FCMS now has its own stable ID, `fcms-burgundy-coral`; choosing it after deployment is retained on subsequent visits. Migration 059 remains unchanged for existing migration history. Hard-refresh after deployment. No other services need restarting.
 
-The catalog is `assets/data/color-palettes.json`. Its source swatches match the reference; its UI shades adapt those colors for readable text and buttons in both modes. PHP validates palette IDs against this catalog, and the settings API requires the existing authentication and CSRF checks. Unlisted IDs are rejected with HTTP 422. A failed save restores the previous palette and shows an error.
+The catalog is `assets/data/color-palettes.json`. PHP validates palette IDs against it; saving requires the existing authentication and CSRF checks. A failed save restores the previous palette. Run `python3 scripts/build-color-palettes.py` after changing the catalog, or `--check` to verify the generated CSS. The first-paint CSS, JavaScript fallback and PHP account defaults all use `ecollab-original`.
 
-Run `python3 scripts/build-color-palettes.py` after changing catalog UI colors to rebuild the CSS used before JavaScript loads. `--check` verifies the generated CSS. The DOM regression checks metadata, contrast, save behavior and rollback. The MariaDB test checks migration repeatability and persistence. Browser checks cover eight actual PHP page templates, all 20 palettes, both appearance modes and three viewport sizes.
+Verification covers all 21 palettes in light/dark mode, contrast, saving and rollback. The MariaDB test checks repeatable migrations, restoration of legacy defaults, preservation of explicit choices and new-row defaults. Browser checks cover eight PHP page templates and three viewport sizes, including switching between Original and FCMS and persistence after reload. These tests use synthetic settings; production deployment remains a separate step.
 
-The palettes are: Minimal Monochrome; Blue & Orange; Purple & Pink; Green & Neutral; Black & Gold; Red & White; Teal & Sand; Pastel Dream; Grey & Blue; Warm Earth Tones; Neon Pop; Sunset Vibes; Forest & Mint; Pink & Purple; Navy & Coral; Black & Purple; Beige & Brown; Cyan & Magenta; Grayscale + Accent; Vintage Retro.
+Reference screenshots: https://drive.google.com/drive/folders/1bXAcT2ZMLIJAX8eow27dLkxoGA63bVbY (login `image_2026-09-27_110036353.png` and signup `image_2026-09-27_110625805.png`). Screenshot files are references only and are not bundled into the application.

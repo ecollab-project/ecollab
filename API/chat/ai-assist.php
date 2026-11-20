@@ -8,12 +8,13 @@ require_once dirname(__DIR__, 2) . '/security/AuditLogger.php';
 require_once dirname(__DIR__, 2) . '/security/SecurityHeaders.php';
 require_once dirname(__DIR__, 2) . '/security/rate-limit/RateLimiter.php';
 require_once dirname(__DIR__, 2) . '/services/GeminiService.php';
-require_once dirname(__DIR__, 2) . '/services/CodeLabIntegrityPolicy.php';
+require_once dirname(__DIR__, 2) . '/services/JarredAssistancePolicy.php';
+require_once dirname(__DIR__, 2) . '/services/UserPreferences.php';
 
 header('Content-Type: application/json');
 SecurityHeaders::send(isApi: true);
 AuthMiddleware::startSession();
-AuthMiddleware::requireAuth(true);
+$user = AuthMiddleware::requireAuth(true);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405); echo json_encode(['error' => 'Method not allowed']); exit;
@@ -21,15 +22,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 AuthMiddleware::verifyCsrf();
 
 $body = json_decode(file_get_contents('php://input'), true) ?? [];
-if (CodeLabIntegrityPolicy::isCodeLab($body,(string)($_SERVER['HTTP_REFERER']??''))) {http_response_code(403);echo json_encode(['error'=>CodeLabIntegrityPolicy::AI_MESSAGE]);exit;}
-
-$apiKey = (string) env('GEMINI_API_KEY', '');
-if (!$apiKey || $apiKey === 'your_gemini_api_key_here') {
-    http_response_code(503);
-    echo json_encode(['error' => 'AI assist is not configured. Add your GEMINI_API_KEY to .env']);
-    exit;
-}
-
 try {
     $prompt = trim((string)($body['prompt'] ?? ''));
     $context = trim((string)($body['context'] ?? ''));
@@ -44,6 +36,12 @@ try {
         http_response_code(400); echo json_encode(['error' => 'Context must be 2000 characters or fewer.']); exit;
     }
 
+    $db = Database::getInstance();
+    UserPreferences::assertJarred(UserPreferences::get($db,(int)$user['id']));
+    $direct = JarredAssistancePolicy::reply($db,(int)$user['id'],$prompt);
+    if ($direct !== null) { echo json_encode(['success'=>true,'suggestion'=>$direct]); exit; }
+    $apiKey = (string)env('GEMINI_API_KEY','');
+    if ($apiKey === '' || $apiKey === 'your_gemini_api_key_here') throw new RuntimeException('AI assist is not configured.');
     $limiter = new \RateLimiter();
     $rlResult = $limiter->attempt('ai_assist', (string)$_SESSION['user_id'], 20, 3600);
     if (!$rlResult['allowed']) {
@@ -53,6 +51,7 @@ try {
     }
 
     $systemPrompt = 'You are a helpful study assistant in Ecollab, a collaborative learning platform. Keep responses concise, friendly, and relevant to academic/study contexts. If given chat context, use it to give a relevant reply suggestion. Return only the suggested message text — no explanation, no quotes.';
+    $systemPrompt .= JarredAssistancePolicy::instructions();
     $userContent = $context !== '' ? "Recent chat context:\n{$context}\n\nUser request: {$prompt}" : $prompt;
 
     $service = new GeminiService($apiKey, (string) env('GEMINI_MODEL', 'gemini-flash-latest'));

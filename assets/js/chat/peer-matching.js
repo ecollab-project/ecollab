@@ -42,15 +42,38 @@ function pmEsc(s) {
 /* ── state ───────────────────────────────────────────────────────────────── */
 let _pmTags       = null;   // {subjects, hobbies, interests}
 let _pmProfile    = null;   // own profile
+let compatibilityVersion = 0;
 let _pmMatches    = [];     // current match list
 let _pmActiveTab  = 'matches'; // matches|search|requests|leaderboard
+
+const pmCloseTimers = new WeakMap();
+
+function showMatchingDialog(dialog) {
+  clearTimeout(pmCloseTimers.get(dialog));
+  dialog.style.display = 'flex';
+  dialog.classList.add('modal-open');
+}
+
+function hideMatchingDialog(dialog) {
+  clearTimeout(pmCloseTimers.get(dialog));
+  dialog.classList.remove('modal-open');
+  pmCloseTimers.set(dialog, setTimeout(() => { dialog.style.display = 'none'; }, 240));
+}
+
+function matchingConnectionAction(state, id, name, score) {
+  if (state.already_connected) return '<button class="pm-btn-connected" disabled>✓ Connected</button>';
+  if (state.request_status === 'pending' || state.request_status === 'received') {
+    const label = state.request_status === 'pending' ? 'Request sent' : 'Request received';
+    return `<button class="pm-btn-connected" disabled>${label}</button>`;
+  }
+  return `<button class="pm-btn-primary" onclick="openSendRequestModal(${Number(id)},'${pmEsc(name)}',${Number(score)||0})">🤝 Connect</button>`;
+}
 
 /* ── open / close ────────────────────────────────────────────────────────── */
 function openPeerMatchingModal() {
   const m = document.getElementById('peerMatchingModal');
   if (!m) return;
-  m.style.display = 'flex';
-  requestAnimationFrame(() => m.classList.add('modal-open'));
+  showMatchingDialog(m);
   if (!_pmTags) _pmInit();
   else _pmShowTab(_pmActiveTab);
 }
@@ -58,7 +81,7 @@ window.openPeerMatchingModal = openPeerMatchingModal;
 
 function closePeerMatchingModal() {
   const m = document.getElementById('peerMatchingModal');
-  if (m) { m.classList.remove('modal-open'); setTimeout(() => m.style.display = 'none', 240); }
+  if (m) hideMatchingDialog(m);
 }
 window.closePeerMatchingModal = closePeerMatchingModal;
 
@@ -228,11 +251,7 @@ function _pmMatchCard(m) {
         <button class="pm-btn-secondary" onclick="openCompatibilityModal(${m.id}, '${pmEsc(m.name)}')">
           📊 Details
         </button>
-        ${m.already_connected
-          ? `<button class="pm-btn-connected" disabled>✓ Connected</button>`
-          : `<button class="pm-btn-primary" onclick="openSendRequestModal(${m.id}, '${pmEsc(m.name)}', '${pmEsc(m.pct)}')">
-               🤝 Connect
-             </button>`}
+        ${matchingConnectionAction(m, m.id, m.name, m.pct)}
       </div>
     </div>`;
 }
@@ -319,7 +338,7 @@ async function _pmRunSearch() {
           <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
             ${u.pct > 0 ? `<span class="pm-score-badge" style="background:${_pmScoreColor(u.pct)}20;color:${_pmScoreColor(u.pct)}">${Math.round(u.pct)}%</span>` : ''}
             <button class="pm-btn-secondary pm-btn-xs" onclick="openCompatibilityModal(${u.id},'${pmEsc(u.full_name||u.username)}')">📊</button>
-            <button class="pm-btn-primary pm-btn-xs" onclick="openSendRequestModal(${u.id},'${pmEsc(u.full_name||u.username)}',${Math.round(u.pct||0)})">Connect</button>
+            ${matchingConnectionAction(u, u.id, u.full_name || u.username, u.pct)}
           </div>
         </div>`;
     }).join('');
@@ -418,7 +437,7 @@ async function _pmRenderLeaderboard(body) {
                 <div class="pm-card-bio">${p.shared_subjects} subjects · ${p.shared_interests} interests · ${p.shared_hobbies} hobbies</div>
               </div>
               <div class="pm-lb-score" style="color:${_pmScoreColor(p.score_total)}">${Math.round(p.score_total)}%</div>
-              <button class="pm-btn-primary pm-btn-xs" onclick="openSendRequestModal(${p.peer_id},'${pmEsc(p.full_name||p.username)}',${Math.round(p.score_total)})">Connect</button>
+              ${matchingConnectionAction(p, p.peer_id, p.full_name || p.username, p.score_total)}
             </div>`;
         }).join('')}
       </div>`;
@@ -576,14 +595,18 @@ function openSendRequestModal(userId, name, pct) {
   m.dataset.targetId   = userId;
   m.dataset.targetName = name;
   m.dataset.pct        = pct;
-  m.style.display = 'flex';
-  requestAnimationFrame(() => m.classList.add('modal-open'));
+  const send = document.getElementById('pmReqSendBtn');
+  if (send) {
+    send.disabled = false;
+    send.textContent = 'Send Request';
+  }
+  showMatchingDialog(m);
 }
 window.openSendRequestModal = openSendRequestModal;
 
 function closeSendRequestModal() {
   const m = document.getElementById('pmSendRequestModal');
-  if (m) { m.classList.remove('modal-open'); setTimeout(() => m.style.display='none',220); }
+  if (m) hideMatchingDialog(m);
 }
 window.closeSendRequestModal = closeSendRequestModal;
 
@@ -630,16 +653,18 @@ function _pmBuildMatchedVia(userId) {
 async function openCompatibilityModal(userId, name) {
   const m = document.getElementById('pmCompatModal');
   if (!m) return;
+  const version = ++compatibilityVersion;
   m.innerHTML = `<div class="modal-box pm-compat-box">
     <div class="modal-header"><span>📊 Compatibility with ${pmEsc(name)}</span>
-    <button class="modal-close" onclick="closePmCompatModal()">✕</button></div>
+    <button class="modal-close" aria-label="Close compatibility details" onclick="closePmCompatModal()">✕</button></div>
     <div class="modal-body"><div class="pm-loading"><div class="collab-spinner"></div></div></div>
   </div>`;
-  m.style.display = 'flex';
-  requestAnimationFrame(() => m.classList.add('modal-open'));
+  showMatchingDialog(m);
 
   try {
     const data = await pmFetch('get_compatibility', { user_id: userId });
+    if (version !== compatibilityVersion) return;
+    const restoreFocus = m.contains(document.activeElement);
     const s    = data.score;
     const w    = data.weights;
 
@@ -673,7 +698,7 @@ async function openCompatibilityModal(userId, name) {
       <div class="modal-box pm-compat-box">
         <div class="modal-header">
           <span>📊 Compatibility with ${pmEsc(name)}</span>
-          <button class="modal-close" onclick="closePmCompatModal()">✕</button>
+          <button class="modal-close" aria-label="Close compatibility details" onclick="closePmCompatModal()">✕</button>
         </div>
         <div class="modal-body pm-compat-body">
           <div class="pm-compat-top">
@@ -717,21 +742,26 @@ async function openCompatibilityModal(userId, name) {
           </div>
         </div>
         <div class="modal-footer">
-          <button class="pm-btn-primary" onclick="openSendRequestModal(${userId},'${pmEsc(name)}',${s.total})">🤝 Connect</button>
+          ${matchingConnectionAction(data, userId, name, s.total)}
           <button class="timer-reset-btn" onclick="closePmCompatModal()">Close</button>
         </div>
       </div>`;
+    if (restoreFocus) m.querySelector('.modal-close')?.focus();
   } catch (e) {
+    if (version !== compatibilityVersion) return;
+    const restoreFocus = m.contains(document.activeElement);
     m.innerHTML = `<div class="modal-box pm-compat-box"><div class="modal-header">
-      <span>Compatibility</span><button class="modal-close" onclick="closePmCompatModal()">✕</button>
+      <span>Compatibility</span><button class="modal-close" aria-label="Close compatibility details" onclick="closePmCompatModal()">✕</button>
     </div><div class="modal-body pm-error">⚠ ${pmEsc(e.message)}</div></div>`;
+    if (restoreFocus) m.querySelector('.modal-close')?.focus();
   }
 }
 window.openCompatibilityModal = openCompatibilityModal;
 
 function closePmCompatModal() {
+  compatibilityVersion++;
   const m = document.getElementById('pmCompatModal');
-  if (m) { m.classList.remove('modal-open'); setTimeout(() => m.style.display='none',220); }
+  if (m) hideMatchingDialog(m);
 }
 window.closePmCompatModal = closePmCompatModal;
 
@@ -802,8 +832,7 @@ window.refreshMatches = async function(btn) {
               <div style="font-size:11px;color:var(--text-muted);">${pmEsc(m.style_label||m.detail||'')}</div>
               <div style="font-size:11px;color:#a855f7;font-weight:600;">${m.pct}% match</div>
             </div>
-            <button onclick="event.stopPropagation();openSendRequestModal(${m.id},'${pmEsc(m.name)}',${m.pct})"
-              style="font-size:11px;padding:4px 10px;border-radius:6px;background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.25);color:#c084fc;cursor:pointer;font-family:inherit;font-weight:600;">Connect</button>
+            ${matchingConnectionAction(m, m.id, m.name, m.pct)}
           </div>`;
       }).join('');
     }

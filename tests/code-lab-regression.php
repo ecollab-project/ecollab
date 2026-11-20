@@ -24,6 +24,8 @@ $now=strtotime('2026-10-20T00:00:00Z');$service=new CodeLabService($db,fn()=>$GL
 $input=['title'=>'Loops','instructions'=>'Sum inputs','language'=>'python','kind'=>'assignment','starter_code'=>'# Start here','duration_minutes'=>60];
 clReject(fn()=>$service->create(1,2,$input),403,'Students cannot create tasks');
 clReject(fn()=>$service->create(3,5,$input),403,'Student server ownership does not grant grading');
+$db->exec("INSERT INTO server_members VALUES(3,1)");
+clReject(fn()=>$service->create(3,1,$input),403,'Facilitator membership in a foreign owned server cannot publish');
 $tid=$service->create(1,1,$input)['id'];
 $a=$service->start(1,2,$tid);$b=$service->start(1,3,$tid);
 clCheck($a['attempt']['id']!==$b['attempt']['id'],'Separate attempt ids');

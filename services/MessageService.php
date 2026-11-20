@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/database/config/db.php';
+require_once __DIR__ . '/AccountType.php';
 require_once __DIR__ . '/RealtimeOutbox.php';
+require_once __DIR__ . '/ChatMentions.php';
 
 class MessageService
 {
@@ -56,12 +58,13 @@ class MessageService
         if ($after !== null) $beforeClause = 'AND m.id > :after';
         $messageOrder = $after !== null ? 'ASC' : 'DESC';
 
+        $accountType = AccountType::sql();
         $stmt = $this->db->prepare("
             SELECT m.id, m.channel_id, m.sender_id, m.content, m.content_type,
                    m.parent_id, m.is_edited, m.is_pinned, m.reaction_count,
                    m.created_at, m.updated_at,
                    u.username, u.full_name, u.avatar_url, u.avatar_color_gradient, u.role,
-                   u.is_verified,
+                   u.is_verified, $accountType AS account_type,
                    pm.content AS parent_content,
                    pu.full_name AS parent_author
             FROM messages m
@@ -219,48 +222,63 @@ class MessageService
             $content = $pollQuestion;
         }
 
-        $messageId = RealtimeOutbox::record($this->db, 'channel', $channelId, function () use ($channelId, $senderId, $content, $contentType, $parentId, $data, $pollQuestion, $pollOptions) {
-            $stmt = $this->db->prepare("
-                INSERT INTO messages (channel_id, sender_id, content, content_type, parent_id, created_at, updated_at)
-                VALUES (:cid, :uid, :content, :type, :parent, NOW(), NOW())
-            ");
-            $stmt->execute([
-                ':cid'     => $channelId,
-                ':uid'     => $senderId,
-                ':content' => $content,
-                ':type'    => $contentType,
-                ':parent'  => $parentId,
-            ]);
-            $messageId = (int)$this->db->lastInsertId();
-
-            // Insert poll rows if needed
-            if ($contentType === 'poll') {
-                $pStmt = $this->db->prepare("INSERT INTO polls (message_id, question) VALUES (:mid, :q)");
-                $pStmt->execute([':mid' => $messageId, ':q' => $pollQuestion]);
-                $pollId = (int)$this->db->lastInsertId();
-                $oStmt = $this->db->prepare("INSERT INTO poll_options (poll_id, option_text, position) VALUES (:pid, :txt, :pos)");
-                foreach ($pollOptions as $i => $opt) {
-                    $oStmt->execute([':pid' => $pollId, ':txt' => $opt, ':pos' => $i]);
-                }
-            }
-
-            // Handle attachment
-            if (!empty($data['attachment_path'])) {
-                $aStmt = $this->db->prepare("
-                    INSERT INTO message_attachments (message_id, file_name, file_path, file_size, mime_type)
-                    VALUES (:mid, :name, :path, :size, :mime)
+        $mentionIds = [];
+        $mentionEveryone = false;
+        if ($contentType === 'text') {
+            [$content, $mentionIds, $mentionEveryone] = ChatMentions::prepare($this->db, $channelId, $senderId, $content);
+        }
+        // Persist the message and its recipient notifications together, including without Centrifugo.
+        $ownsTransaction = ($mentionIds || $mentionEveryone) && !$this->db->inTransaction();
+        if ($ownsTransaction) $this->db->beginTransaction();
+        try {
+            $messageId = RealtimeOutbox::record($this->db, 'channel', $channelId, function () use ($channelId, $senderId, $content, $contentType, $parentId, $data, $pollQuestion, $pollOptions, $mentionIds, $mentionEveryone) {
+                $stmt = $this->db->prepare("
+                    INSERT INTO messages (channel_id, sender_id, content, content_type, parent_id, created_at, updated_at)
+                    VALUES (:cid, :uid, :content, :type, :parent, NOW(), NOW())
                 ");
-                $aStmt->execute([
-                    ':mid'  => $messageId,
-                    ':name' => $data['attachment_name'] ?? basename($data['attachment_path']),
-                    ':path' => $data['attachment_path'],
-                    ':size' => $data['attachment_size'] ?? 0,
-                    ':mime' => $data['attachment_mime'] ?? 'application/octet-stream',
+                $stmt->execute([
+                    ':cid'     => $channelId,
+                    ':uid'     => $senderId,
+                    ':content' => $content,
+                    ':type'    => $contentType,
+                    ':parent'  => $parentId,
                 ]);
-            }
+                $messageId = (int)$this->db->lastInsertId();
 
-            return $messageId;
-        });
+                // Insert poll rows if needed
+                if ($contentType === 'poll') {
+                    $pStmt = $this->db->prepare("INSERT INTO polls (message_id, question) VALUES (:mid, :q)");
+                    $pStmt->execute([':mid' => $messageId, ':q' => $pollQuestion]);
+                    $pollId = (int)$this->db->lastInsertId();
+                    $oStmt = $this->db->prepare("INSERT INTO poll_options (poll_id, option_text, position) VALUES (:pid, :txt, :pos)");
+                    foreach ($pollOptions as $i => $opt) {
+                        $oStmt->execute([':pid' => $pollId, ':txt' => $opt, ':pos' => $i]);
+                    }
+                }
+
+                // Handle attachment
+                if (!empty($data['attachment_path'])) {
+                    $aStmt = $this->db->prepare("
+                        INSERT INTO message_attachments (message_id, file_name, file_path, file_size, mime_type)
+                        VALUES (:mid, :name, :path, :size, :mime)
+                    ");
+                    $aStmt->execute([
+                        ':mid'  => $messageId,
+                        ':name' => $data['attachment_name'] ?? basename($data['attachment_path']),
+                        ':path' => $data['attachment_path'],
+                        ':size' => $data['attachment_size'] ?? 0,
+                        ':mime' => $data['attachment_mime'] ?? 'application/octet-stream',
+                    ]);
+                }
+
+                ChatMentions::notify($this->db, $channelId, $senderId, $messageId, $mentionIds, $mentionEveryone);
+                return $messageId;
+            });
+            if ($ownsTransaction) $this->db->commit();
+        } catch (Throwable $e) {
+            if ($ownsTransaction && $this->db->inTransaction()) $this->db->rollBack();
+            throw $e;
+        }
 
         return $this->getMessageById($messageId);
     }
@@ -282,6 +300,9 @@ class MessageService
         $content = trim($newContent);
         if ($content === '') {
             throw new InvalidArgumentException('Content cannot be empty', 400);
+        }
+        if (($msg['content_type'] ?? 'text') === 'text') {
+            [$content] = ChatMentions::prepare($this->db, (int)$msg['channel_id'], (int)$msg['sender_id'], $content);
         }
         $upd = $this->db->prepare("UPDATE messages SET content=:c, is_edited=1, updated_at=NOW() WHERE id=:id");
         $upd->execute([':c' => $content, ':id' => $messageId]);
@@ -370,7 +391,16 @@ class MessageService
             ORDER BY m.created_at DESC
         ");
         $stmt->execute([':cid' => $channelId]);
-        return $stmt->fetchAll() ?: [];
+        $messages = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        if (!$messages) return [];
+        $ids = array_column($messages, 'id');
+        $files = $this->db->prepare('SELECT message_id,file_name,file_path,file_size,mime_type FROM message_attachments WHERE message_id IN (' . implode(',', array_fill(0, count($ids), '?')) . ') ORDER BY id');
+        $files->execute($ids);
+        $attachments = [];
+        foreach ($files->fetchAll(PDO::FETCH_ASSOC) as $file) $attachments[$file['message_id']][] = $file;
+        foreach ($messages as &$message) $message['attachments'] = $attachments[$message['id']] ?? [];
+        unset($message);
+        return $messages;
     }
 
     /**
@@ -408,22 +438,24 @@ class MessageService
     }
     private function getMessageById(int $id): array
     {
+        $accountType = AccountType::sql();
         $stmt = $this->db->prepare("
-        SELECT m.*, 
-               u.username, 
-               u.full_name, 
-               u.avatar_url, 
+        SELECT m.*,
+               u.username,
+               u.full_name,
+               u.avatar_url,
                u.avatar_color_gradient,
-               u.role, 
+               u.role,
                u.is_verified,
+               $accountType AS account_type,
                pm.content AS parent_content,
                pu.full_name AS parent_author
         FROM messages m
         JOIN users u ON u.id = m.sender_id
-        LEFT JOIN messages pm 
-            ON pm.id = m.parent_id 
+        LEFT JOIN messages pm
+            ON pm.id = m.parent_id
             AND pm.is_deleted = 0
-        LEFT JOIN users pu 
+        LEFT JOIN users pu
             ON pu.id = pm.sender_id
         WHERE m.id = :id
         LIMIT 1

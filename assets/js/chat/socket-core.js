@@ -19,28 +19,33 @@ let socketReconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
 const typingUsers          = new Set();
 let _authed                = false;
-let _wsToken               = null;        // server-issued token, fetched before connect
+let _connectionAttempt     = null;
 let _socketAuthenticated    = false;
 
 // ── Token fetch + connect entry point ────────────────────────────────────────
-async function connectWebSocket() {
-  try {
+function connectWebSocket() {
+  if (chatSocket && [WebSocket.CONNECTING, WebSocket.OPEN].includes(chatSocket.readyState)) return Promise.resolve();
+  if (_connectionAttempt) return _connectionAttempt;
+  _connectionAttempt = (async () => { try {
     const base = window.ECOLLAB?.baseUrl || '';
-    const res  = await fetch(`${base}/API/auth/ws-token.php`, { credentials: 'same-origin' });
+    const res  = await fetch(`${base}/API/auth/ws-token.php`, { credentials: 'same-origin', cache: 'no-store' });
     if (!res.ok) throw new Error('ws-token fetch failed: ' + res.status);
     const data = await res.json();
-    if (!data.token) throw new Error('No token in ws-token response');
-    _wsToken = data.token;
+    if (typeof data.token !== 'string' || !data.token.trim()) throw new Error('No token in ws-token response');
+    initWebSocket(data.token);
   } catch (err) {
     console.warn('[WS] Could not fetch ws_token — falling back to polling.', err.message);
     startPollingFallback();
     return;
-  }
-  initWebSocket();
+  } })().finally(() => { _connectionAttempt = null; });
+  return _connectionAttempt;
 }
 
 // ── Core WebSocket init ───────────────────────────────────────────────────────
-function initWebSocket() {
+function initWebSocket(token) {
+  // Legacy DOMContentLoaded callers must go through token acquisition too.
+  // They can race the asynchronous token fetch performed by auto-start.
+  if (typeof token !== 'string' || !token.trim()) return connectWebSocket();
   const wsUrl = window.ECOLLAB?.wsUrl || 'ws://localhost:8080';
 
   if (chatSocket && (chatSocket.readyState === WebSocket.CONNECTING || chatSocket.readyState === WebSocket.OPEN)) {
@@ -61,7 +66,7 @@ function initWebSocket() {
       _socketAuthenticated    = false;
 
       // Authenticate this exact socket; a reconnect may have replaced the global.
-      socket.send(JSON.stringify({ type: 'auth', ws_token: _wsToken }));
+      socket.send(JSON.stringify({ type: 'auth', ws_token: token }));
     };
 
     socket.onmessage = (event) => {
@@ -117,15 +122,9 @@ function scheduleReconnect() {
   clearTimeout(socketReconnectTimer);
   socketReconnectAttempts++;
   // Fetch a fresh token before each reconnect attempt
-  socketReconnectTimer = setTimeout(async () => {
+  socketReconnectTimer = setTimeout(() => {
     console.log('[WS] Reconnecting… attempt', socketReconnectAttempts);
-    try {
-      const base = window.ECOLLAB?.baseUrl || '';
-      const res  = await fetch(`${base}/API/auth/ws-token.php`, { credentials: 'same-origin' });
-      const data = await res.json();
-      if (data.token) _wsToken = data.token;
-    } catch { /* use last token; server will reject if expired and we'll retry */ }
-    initWebSocket();
+    connectWebSocket();
   }, socketReconnectDelay);
   socketReconnectDelay = Math.min(socketReconnectDelay * 1.5, 30000);
 }
@@ -279,6 +278,19 @@ function handleSocketMessage(data) {
     case 'channel_created':
       handleChannelCreated(data.channel);
       break;
+    case 'voice_session_moved': {
+      if (Number(vcChannelId) === Number(data.channel_id)) {
+        disconnectVoice();
+        showToast('Your voice session moved to another room in another tab.', 'info');
+      }
+      break;
+    }
+    case 'channel_deleted': {
+      const id = Number(data.channel_id);
+      if (id > 0) document.querySelectorAll('.channel-item[data-channel-id="' + id + '"]').forEach(el => el.remove());
+      window.dispatchEvent(new CustomEvent('ecollab:channel-deleted', {detail:data}));
+      break;
+    }
     case 'channel_seen':
       handleChannelSeen(data);
       break;
@@ -294,9 +306,6 @@ function handleSocketMessage(data) {
       break;
 
     // ── Mentions ──
-    case 'mention':
-      handleMentionEvent(data);
-      break;
 
     // ── Voice ──
     case 'voice_join':
@@ -438,30 +447,6 @@ function handleIncomingMessage(msg) {
   const myUserId    = parseInt(window.ECOLLAB?.userId);
   const isFromMe    = parseInt(msg.sender_id) === myUserId;
 
-  // ── Mention detection — all channels, all messages not from self ──
-  if (!isFromMe) {
-    const myUsername = (window.ECOLLAB?.username || '').toLowerCase();
-    const myFullName = (window.ECOLLAB?.fullName  || '').toLowerCase();
-    const content    = (msg.content || '').toLowerCase();
-    const mentionedMe = (
-      (myUsername && content.includes('@' + myUsername)) ||
-      (myFullName  && content.includes('@' + myFullName))
-    );
-    if (mentionedMe) {
-      const entry = {
-        id:        msg.id,
-        author:    msg.full_name || msg.username || '?',
-        text:      msg.content,
-        channel:   msg.channel_name || msg.channel_id,
-        channelId: msg.channel_id,
-        time:      new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        letter:    (msg.full_name || msg.username || '?').charAt(0).toUpperCase(),
-        read:      false,
-      };
-      _storeMention(entry);
-    }
-  }
-
   // Only render if the message belongs to the currently open channel
   if (parseInt(msg.channel_id) !== parseInt(myChannelId)) return;
   if (isFromMe) return; // already rendered optimistically
@@ -475,7 +460,7 @@ function handleMessageEdited(msg) {
   if (!el) return;
   el.querySelectorAll('.edited-tag').forEach(t => t.remove());
   el.closest('[data-msg-id]').dataset.rawContent = msg.content;
-  if (window.EcollabComposer) el.innerHTML = window.EcollabComposer.render(msg.content);
+  if (window._renderMsgContent) el.innerHTML = window._renderMsgContent(msg.content);
   else if (el.firstChild) el.firstChild.textContent = msg.content;
   const tag = document.createElement('span');
   tag.className = 'edited-tag';
@@ -667,26 +652,6 @@ function showDesktopNotification(kind, title, body) {
 }
 window.showDesktopNotification = showDesktopNotification;
 
-// ── Mentions ─────────────────────────────────────────────────────────────────
-function handleMentionEvent(data) {
-  if (!data.entry) return;
-  _storeMention(data.entry);
-  if (typeof showToast === 'function')
-    showToast(`💬 You were mentioned in #${data.entry.channel || 'a channel'}`, 'info');
-  showDesktopNotification('notification_mentions', 'You were mentioned', `in #${data.entry.channel || 'a channel'}`);
-}
-
-function _storeMention(entry) {
-  const stored   = JSON.parse(localStorage.getItem('ec_mentions') || '[]');
-  const ids      = new Set(stored.map(s => s.id));
-  if (entry.id && ids.has(entry.id)) return; // dedupe
-  stored.unshift(entry);
-  if (stored.length > 100) stored.length = 100;
-  localStorage.setItem('ec_mentions', JSON.stringify(stored));
-  if (window._mentions) { window._mentions.length = 0; stored.forEach(i => window._mentions.push(i)); }
-  if (window._updateMentionBadge) window._updateMentionBadge();
-}
-
 // ── Screen share ─────────────────────────────────────────────────────────────
 function handleScreenShareNotify(data) {
   if (data.active) {
@@ -865,23 +830,24 @@ let _lastMentionPollId = 0;
 
 async function _fetchMentions(after) {
   try {
+    const key = window.chatMentionStorageKey;
+    if (!key) return;
     const base = window.ECOLLAB?.baseUrl || '';
     const res  = await fetch(`${base}/API/chat/get-mentions.php?after=${after}`);
     if (!res.ok) return;
     const data = await res.json();
     if (!data.mentions?.length) return;
 
-    const stored   = JSON.parse(localStorage.getItem('ec_mentions') || '[]');
+    const stored   = JSON.parse(localStorage.getItem(key) || '[]');
     const storedIds = new Set(stored.map(s => s.id));
     let added = 0;
     data.mentions.forEach(m => {
       if (!storedIds.has(m.id)) { stored.unshift(m); added++; }
     });
-    if (!added) return;
-
     _lastMentionPollId = Math.max(_lastMentionPollId, ...data.mentions.map(m => m.id));
+    if (!added) return;
     if (stored.length > 100) stored.length = 100;
-    localStorage.setItem('ec_mentions', JSON.stringify(stored));
+    localStorage.setItem(key, JSON.stringify(stored));
     if (window._mentions) { window._mentions.length = 0; stored.forEach(i => window._mentions.push(i)); }
     if (window._updateMentionBadge) window._updateMentionBadge();
   } catch { }

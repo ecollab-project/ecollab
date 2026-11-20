@@ -1,6 +1,6 @@
 import * as Y from 'yjs';
 import {Awareness,applyAwarenessUpdate,removeAwarenessStates} from 'y-protocols/awareness';
-import {awarenessFrame} from '../collab/yjs-presence.js?v=yjs-presence-1';
+import {awarenessFrame} from '../collab/yjs-presence.js?v=qa-runtime-20261117-1';
 
 export function createChannelPresence({send,changed}) {
   let room=null,doc=null,awareness=null,stop=null;
@@ -10,6 +10,16 @@ export function createChannelPresence({send,changed}) {
   return {
     receive(message){
       if(message.type==='joined_channel'){
+        // Repeated acknowledgements are not new browser clients. The server binds
+        // an awareness ID to this connection; preserve its ID and clock on rejoin.
+        if(room===Number(message.channel_id)&&awareness){
+          const remote=[...awareness.meta.keys()].filter(id=>id!==awareness.clientID);
+          removeAwarenessStates(awareness,remote,'remote');
+          for(const id of remote)awareness.meta.delete(id);
+          for(const entry of message.presence||[])if(entry.client_id!==awareness.clientID)applyAwarenessUpdate(awareness,awarenessFrame(entry),'remote');
+          awareness.setLocalState(awareness.getLocalState());
+          render();return;
+        }
         clear();room=Number(message.channel_id);doc=new Y.Doc();awareness=new Awareness(doc);
         awareness.on('update',(_changes,origin)=>{if(origin!=='remote')publish();});awareness.on('change',render);
         awareness.setLocalState(window._userSettings?.activity_status===0?null:{typing:false,status:document.hidden?'idle':'active'});
@@ -27,7 +37,7 @@ export function createChannelPresence({send,changed}) {
   };
 }
 
-if(typeof window!=='undefined'&&document.getElementById('chatInputField')){
+if(typeof window!=='undefined'&&document.getElementById('chatInputField')&&!window.EcollabChatPresence){
   const presence=createChannelPresence({send:message=>window.wsSend?.(message),changed:(states,localId,room)=>{
     const users=new Map(),typing=new Set();
     for(const [id,state] of states){if(!state.user)continue;users.set(state.user.id,state.user);if(id!==localId&&state.typing&&state.status==='active')typing.add(state.user.name);}
@@ -39,7 +49,11 @@ if(typeof window!=='undefined'&&document.getElementById('chatInputField')){
     if(badge){badge.textContent=room?(users.size+(states.has(localId)&&!users.has(Number(window.ECOLLAB?.userId))?1:0))+' viewing':'';badge.title=[...users.values()].map(u=>u.name).join(', ');}
   }});
   window.EcollabChatPresence=presence;window.addEventListener('ecollab:settings-applied',event=>presence.preferences(event.detail||{}));
-  window.addEventListener('ecollab:chat-presence',event=>presence.receive(event.detail));
+  window.addEventListener('ecollab:chat-presence',event=>{
+    // An acknowledgement may arrive after a newer channel was selected.
+    if(Number(event.detail?.channel_id)!==Number(window.ECOLLAB?.currentChannelId))return;
+    presence.receive(event.detail);
+  });
   window.addEventListener('ecollab:realtime-disconnected',()=>presence.disconnect());
   document.addEventListener('visibilitychange',()=>presence.idle(document.hidden));window.addEventListener('blur',()=>presence.idle(true));window.addEventListener('focus',()=>presence.idle(false));window.addEventListener('pagehide',()=>presence.dispose());
   // The module may finish loading after the first channel acknowledgement.

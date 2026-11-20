@@ -32,6 +32,11 @@ $target = BASE_URL . '/modules/collaboration/server-coworkspaces.php';
 $params = [];
 if ($serverId > 0) $params['server_id'] = $serverId;
 if ($channelId > 0) $params['channel_id'] = $channelId;
+$workspaceId = (int)($_GET['workspace_id'] ?? 0);
+if ($workspaceId > 0) $params['workspace_id'] = $workspaceId;
+$tab = $_GET['tab'] ?? '';
+if (in_array($tab, ['documents', 'whiteboards'], true)) $params['tab'] = $tab;
+if (($_GET['create'] ?? '') === 'document') $params['create'] = 'document';
 if ($params) $target .= '?' . http_build_query($params);
 
 header('Cache-Control: no-store, private');

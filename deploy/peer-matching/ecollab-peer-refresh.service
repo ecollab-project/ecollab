@@ -1,0 +1,12 @@
+[Unit]
+Description=eCollab weekly learning activity snapshots
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=ecollabadmin
+WorkingDirectory=/home/ecollabadmin/ecollab-inspect
+ExecStart=/usr/bin/php /home/ecollabadmin/ecollab-inspect/scripts/refresh-peer-behavior.php
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=full

@@ -10,8 +10,9 @@
   const notice=message=>{if(typeof window.showToast==='function')window.showToast(message,'info');else {const el=document.createElement('div');el.className='ec-call';el.setAttribute('role','status');el.textContent=message;el.style.padding='20px';document.body.appendChild(el);setTimeout(()=>el.remove(),7000);}};
   const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const media=()=>window.EcollabMediaSettings;
-  const busy=()=>!!call || !!window.EcollabLiveKit?.room;
+  const busy=()=>!!call || !!window.EcollabLiveKit?.room || !!window.EcollabCallContinuity?.remoteActive();
   async function claim() {
+    if(window.EcollabCallContinuity?.remoteActive())return false;
     if(!navigator.locks) return true;
     return new Promise(resolve=>navigator.locks.request('ecollab-active-call-'+config.userId,{ifAvailable:true},lock=>{
       if(!lock){resolve(false);return;}
@@ -44,6 +45,7 @@
     window.EcollabCallDock?.refresh();
     window._syncVoiceQuickActions?.();
     releaseLock?.();releaseLock=null;
+    window.EcollabCallContinuity?.refresh();
   }
   async function sdk() {
     if(window.LivekitClient)return window.LivekitClient;
@@ -140,6 +142,7 @@
   function syncSpeaking(c) { render(c); }
   function render(c){
     if(call!==c)return;
+    window.EcollabCallContinuity?.refresh();
     let panel=c.panel;
     if(!panel){
       panel=document.createElement('section');panel.className='ec-call';panel.setAttribute('role','region');panel.setAttribute('aria-label','Call');document.body.appendChild(panel);c.panel=panel;
@@ -198,6 +201,8 @@
   async function handle(data){
     if(!/^dm_(?:call_|group_call_)/.test(data.type||''))return false;
     if(data.type==='dm_call_offer'||data.type==='dm_group_call_start'){
+      // The media owner handles offers; workspace tabs must not decline its call.
+      if(window.EcollabCallContinuity?.remoteActive())return true;
       if(call && ((data.type==='dm_call_offer' && call.logId===Number(data.log_id)) || (data.type==='dm_group_call_start' && call.groupId===Number(data.group_id)))) return true;
       if(busy()){if(!data.group_id)send({type:'dm_call_decline',target_user_id:data.from_user_id,log_id:data.log_id});else send({type:'dm_group_call_busy',group_id:data.group_id,target_user_id:data.from_user_id});return true;}
       if(data.type==='dm_call_offer'&&data.media!=='livekit'){send({type:'dm_call_decline',target_user_id:data.from_user_id,log_id:data.log_id});notice('The caller needs to refresh eCollab before calling.');return true;}
@@ -218,7 +223,7 @@
     try{const res=await fetch(base+'/API/auth/ws-token.php',{credentials:'same-origin'});if(res.status===401)return;if(!res.ok)throw Error('Signaling unavailable');const data=await res.json();socket=new WebSocket(config.wsUrl);socket.onopen=()=>socket.send(JSON.stringify({type:'auth',ws_token:data.token}));socket.onmessage=e=>{try{const d=JSON.parse(e.data);if(d.type==='auth_ok'){authed=true;reconnect=0;}else handle(d).catch(console.error);}catch(_){}};socket.onclose=()=>{authed=false;clearTimeout(timer);timer=setTimeout(connectSignals,Math.min(30000,2000*2**reconnect++));};socket.onerror=()=>{};}catch(_){timer=setTimeout(connectSignals,10000);}
   }
   window.addEventListener('ecollab-media-settings-changed',()=>{if(call?.room)media().playback(call.room);});
-  window.EcollabCalls={handle,control:action,busy:()=>!!call,get room(){return call?.room;},get deafened(){return !!call?.deafened;}};
+  window.EcollabCalls={handle,control:action,busy:()=>!!call||!!window.EcollabCallContinuity?.remoteActive(),get snapshot(){return call&&call.state!=='incoming'?{active:true,state:call.state,kind:call.groupId?'group':'direct',muted:!call.room?.localParticipant?.isMicrophoneEnabled,deafened:!!call.deafened}:null;},get room(){return call?.room;},get deafened(){return !!call?.deafened;}};
   window.startDmCall=start;window.endDmCall=end;
   for(const data of window.__ecollabPendingCalls || []) handle(data).catch(console.error);
   delete window.__ecollabPendingCalls;

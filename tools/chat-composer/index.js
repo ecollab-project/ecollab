@@ -16,6 +16,13 @@ export function renderMessage(text) {
   });
   const template = document.createElement('template'); template.innerHTML = safe;
   template.content.querySelectorAll('a').forEach(link => {
+    if (/^#ecollab-mention-[1-9][0-9]{0,18}$/.test(link.getAttribute('href') || '') && link.textContent.startsWith('@')) {
+      const mention = document.createElement('span');
+      mention.className = 'mention';
+      mention.textContent = link.textContent;
+      link.replaceWith(mention);
+      return;
+    }
     try {
       const url = new URL(link.getAttribute('href'), window.location.href);
       if (!['https:','http:','mailto:'].includes(url.protocol)) link.removeAttribute('href');
@@ -26,8 +33,8 @@ export function renderMessage(text) {
   const walker = document.createTreeWalker(template.content, NodeFilter.SHOW_TEXT);
   const nodes=[];let node;while ((node=walker.nextNode())) nodes.push(node);
   for (const textNode of nodes) {
-    if (textNode.parentElement?.closest('a,pre,code')) continue;
-    const text=textNode.textContent, matches=[...text.matchAll(/@([A-Za-z0-9_]+(?: [A-Za-z0-9_]+)?)/g)];
+    if (textNode.parentElement?.closest('a,pre,code,.mention')) continue;
+    const text=textNode.textContent, matches=[...text.matchAll(/(?<![\p{L}\p{N}_@/\\])@[\p{L}\p{N}_]+/gu)];
     if (!matches.length) continue;
     const fragment=document.createDocumentFragment();let from=0;
     for (const match of matches) {fragment.append(document.createTextNode(text.slice(from,match.index)));const span=document.createElement('span');span.className='mention';span.textContent=match[0];fragment.append(span);from=match.index+match[0].length;}
@@ -82,7 +89,7 @@ function attach(input) {
     isChannel?window.sendMessage?.():window.sendDmMessage?.();return true;};
   editor=new Editor({
     element:surface,
-    extensions:[StarterKit.configure({heading:false,horizontalRule:false,link:false,underline:false}),Markdown],
+    extensions:[StarterKit.configure({heading:false,horizontalRule:false,link:{autolink:false,linkOnPaste:false,openOnClick:false},underline:false}),Markdown],
     content:value,contentType:'markdown',
     editorProps:{attributes:{role:'textbox','aria-label':isChannel?'Channel message':'Private or group message','aria-multiline':'true'},
       handleKeyDown:(_view,event)=>{
@@ -111,7 +118,17 @@ function attach(input) {
 function detach(input,state){state.editor.destroy();state.wrapper.remove();delete input.value;delete input.disabled;if(state.valueDescriptor)Object.defineProperty(input,'value',state.valueDescriptor);input.focus=state.nativeFocus;input.classList.remove('ec-composer-mirror');instances.delete(input);}
 export function canSend(input){if(!instances.has(input))return true;if(input.value.length<=limits)return true;window.showToast?.('Message is too long. Maximum 4,000 characters including formatting.','error');return false;}
 function insert(input,text){const state=instances.get(input);if(!state)return false;state.editor.chain().focus().insertContent({type:'text',text:String(text)}).run();return true;}
-function mention(input,username){const state=instances.get(input);if(!state)return false;const editor=state.editor;const pos=editor.state.selection.from;const before=editor.state.doc.textBetween(0,pos,'\n');const match=before.match(/(?:^|\s)@[^\s@]*$/);if(!match)return false;const length=match[0].trimStart().length;editor.chain().focus().insertContentAt({from:pos-length,to:pos},{type:'text',text:'@'+username+' '}).run();return true;}
+function mention(input, name, id, queryLength) {
+  const editor = instances.get(input)?.editor;
+  if (!editor || editor.isActive('code') || editor.isActive('codeBlock')) return false;
+  const pos = editor.state.selection.from;
+  const before = editor.state.doc.textBetween(0, pos, '\n');
+  const length = queryLength ?? before.match(/(?:^|\s)@[^\s@]*$/)?.[0].trimStart().length;
+  if (!length || before.at(-length) !== '@') return false;
+  const token = {type:'text', text:'@' + name};
+  if (/^[1-9]\d{0,18}$/.test(String(id))) token.marks = [{type:'link', attrs:{href:'#ecollab-mention-' + id}}];
+  return editor.chain().focus().insertContentAt({from:pos-length,to:pos}, [token,{type:'text',text:' '}]).command(({tr}) => {tr.setStoredMarks([]); return true;}).run();
+}
 function scan(){for(const [input,state] of instances){if(!input.isConnected)detach(input,state);else{state.editor.setEditable(!input.disabled,false);state.update();}}
   for(const id of ['chatInputField','dmInputField']){const input=document.getElementById(id);if(input)attach(input);}}
 export function start(){if(!window.ECOLLAB?.richComposerEnabled || window.EcollabComposer)return;

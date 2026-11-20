@@ -1,12 +1,12 @@
 name: Responsive page layouts
 on:
   pull_request:
-    paths: ['index.php', 'terms.php', 'modules/**', 'includes/layout/**', 'assets/css/**', 'assets/js/device-layout.js', 'assets/js/mobile-viewport.js', 'tests/*responsive*', 'tests/device-layout*', '.github/workflows/responsive-layout.yml']
+    paths: ['index.php', 'terms.php', 'modules/**', 'includes/layout/**', 'assets/css/**', 'assets/js/device-layout.js', 'assets/js/mobile-viewport.js', 'tests/*responsive*', 'assets/js/calls/**', 'tests/call-continuity*', 'tests/remote-stream-browser.cjs', 'tests/device-layout*', '.github/workflows/responsive-layout.yml']
 permissions:
   contents: read
 jobs:
   devices:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,7 +19,12 @@ jobs:
       - run: npm install --no-save --ignore-scripts playwright@1.58.2 jsdom@30.1.2
       - run: npx playwright install --with-deps chromium
       - run: node tests/device-layout-regression.cjs
+      - run: node tests/postdeploy-ui-browser.cjs
+      - run: node tests/code-lab-module-browser.cjs
       - run: node tests/responsive-browser-regression.cjs
+      - run: node tests/call-continuity-browser.cjs
+      - run: node tests/call-exit-browser.cjs
+      - run: node tests/remote-stream-browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

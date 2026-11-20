@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const source = fs.readFileSync('assets/js/chat/chat.js', 'utf8');
 const save = source.slice(source.indexOf('function saveChatLocation('), source.indexOf('window.saveChatLocation ='));
 const init = source.slice(source.indexOf('  // Deep-link:'), source.indexOf('  // Keyboard shortcut:'));
+const defaultChannel = source.slice(source.indexOf('function defaultChatChannel('), source.indexOf('// ── Init ──'));
 
 function page(href, server, ids) {
   const items = ids.map(id => ({dataset: {channelId: String(id), channelName: 'channel-' + id}}));
@@ -15,6 +16,7 @@ function page(href, server, ids) {
       location.href = String(url); location.search = new URL(url).search;
     }}},
     document: {
+      getElementById() { return null; },
       querySelector(selector) {
         const match = selector.match(/data-channel-id="([^"]+)"/);
         return match ? items.find(x => x.dataset.channelId === match[1]) : items[0];
@@ -26,7 +28,7 @@ function page(href, server, ids) {
       vm.runInContext('saveChatLocation({server_id: currentServerId, channel_id: ' + id + '})', context);
     },
   });
-  vm.runInContext(save + init, context);
+  vm.runInContext(save + defaultChannel + init, context);
   return {context, location, selected};
 }
 let first = page('https://ecollab.tech/modules/chat/chat.php?server_id=5&channel_id=20&view=bookmarks', 5, [19,20]);

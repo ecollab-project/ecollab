@@ -101,7 +101,7 @@ document.getElementById('requestBtn')?.addEventListener('click',async()=>{try{aw
 document.getElementById('enterBtn')?.addEventListener('click',()=>location.href=BASE+'/modules/collaboration/index.php?channel_id='+CHANNEL+'&workspace_id='+encodeURIComponent(w.id));
 document.getElementById('settingsBtn')?.addEventListener('click',()=>openSettings(w));
 document.getElementById('inviteBtn')?.addEventListener('click',()=>openInvite(w));
-document.getElementById('docBtn')?.addEventListener('click',()=>location.href=BASE+'/modules/collaboration/index.php?channel_id='+CHANNEL+'&workspace_id='+encodeURIComponent(w.id)+'&tab=documents');
+document.getElementById('docBtn')?.addEventListener('click',()=>location.href=BASE+'/modules/collaboration/index.php?channel_id='+CHANNEL+'&workspace_id='+encodeURIComponent(w.id)+'&tab=documents&create=document');
 document.querySelectorAll('[data-remove-user]').forEach(b=>b.addEventListener('click',async()=>{if(!confirm('Remove this member from the Coworkspace?'))return;try{await request(MEMBERS,{action:'remove',workspace_id:w.id,user_id:Number(b.dataset.removeUser)});await load(w.id)}catch(e){alert(e.message)}}));
 document.querySelectorAll('[data-role-user]').forEach(s=>s.addEventListener('change',async()=>{try{await request(MEMBERS,{action:'set_role',workspace_id:w.id,user_id:Number(s.dataset.roleUser),role:s.value});await load(w.id)}catch(e){alert(e.message)}}));
 if(host)loadRequests(w.id);

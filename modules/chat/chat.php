@@ -10,6 +10,7 @@ AuthMiddleware::startSession();
 $user = AuthMiddleware::requireAuth();
 
 $csrfToken = AuthMiddleware::csrfToken();
+$accountType = AccountType::forUser(Database::getInstance(), (int)$user['id']);
 
 $channelService = new ChannelService();
 $servers        = $channelService->getServersForUser($user['id']);
@@ -48,7 +49,8 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken) ?>">
   <script src="<?= BASE_URL ?>/assets/js/accessibility-apply.js?v=settings-speed-1" defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat.css?v=voice-name-spacing-1">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/account-type-badges.css?v=1">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat.css?v=chat-avatar-1">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/whiteboard.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/whiteboard-mobile.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/collab-tools.css">
@@ -176,12 +178,13 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </style>
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=notifications-2">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=3">
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat-taskbar.css?v=neon-account-1">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/chat-taskbar.css?v=dock-1">
 <script defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script>
 <script defer src="<?= BASE_URL ?>/assets/js/chat/workspace-taskbar.js?v=separators-tooltips-1"></script>
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=chat-layout-1">
 <script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
 <?php require_once ROOT_PATH.'/includes/layout/color-theme.php'; ?>
+<?php require_once ROOT_PATH.'/includes/layout/workspace-widgets.php'; ?>
 </head>
 
 <body data-mobile-surface="chat">
@@ -191,15 +194,15 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
   <!-- MOBILE TOPBAR -->
   <div class="mobile-topbar" id="mobileTopbar">
-    <div class="mob-hamburger" onclick="toggleSidebar()">
+    <button type="button" class="mob-hamburger" onclick="toggleSidebar()" aria-label="Open channel navigation" aria-controls="sidebarLeft workspaceSwitcher" aria-expanded="false">
       <span></span><span></span><span></span>
-    </div>
+    </button>
     <div class="mob-channel-info">
       <span style="color:var(--accent-purple);font-size:16px;">#</span>
       <span class="mob-channel-name" id="mobChannelName">channels</span>
     </div>
-    <div class="mob-right-btn" onclick="openFullMatchesModal()" title="AI Suggested Matches" aria-label="AI Suggested Matches">✨</div>
-    <div class="mob-right-btn" onclick="toggleNotifications()" title="Notifications" aria-label="Notifications">&#x1F514;</div>
+    <button type="button" class="ec-context-toggle" data-context-toggle aria-controls="sidebarRight" aria-expanded="false">Widgets</button>
+    <button type="button" class="mob-right-btn" onclick="toggleNotifications()" title="Notifications" aria-label="Notifications">&#x1F514;</button>
   </div>
 
   <!-- WORKSPACE SWITCHER -->
@@ -236,7 +239,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
   <!-- LEFT SIDEBAR -->
   <div class="sidebar-left" id="sidebarLeft">
-    <div class="sidebar-workspace-header" id="wsHeader" onclick="openServerManager()" title="Server settings">
+    <div class="sidebar-workspace-header" id="wsHeader" role="button" tabindex="0" onkeydown="if(event.target===this &amp;&amp; (event.key==='Enter' || event.key===' ')){event.preventDefault();openServerManager();}" onclick="openServerManager()" title="Server settings">
       <div class="ws-icon" id="wsIcon"><?= htmlspecialchars($firstServer['icon_emoji'] ?? '⭐') ?></div>
       <div class="ws-name" id="wsName"><?= htmlspecialchars($firstServer['name'] ?? 'Ecollab') ?></div>
       <div class="ws-chevron">▾</div>
@@ -250,38 +253,39 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       </div>
     </div>
 
-    <div class="sidebar-scroll">
-      <div class="sidebar-nav">
-        <div class="sidebar-nav-item active" onclick="switchView('home', this)">
+    <a class="ec-customize-link" href="<?= BASE_URL ?>/modules/chat/settings.php?section=appearance#workspace-layout" onclick="if(window.EcollabCallContinuity){event.preventDefault();window.EcollabCallContinuity.navigate(this.href);}">Customize workspace</a>
+    <div class="sidebar-scroll" id="ecWorkspaceLeft">
+      <div class="sidebar-nav" data-workspace-widget="shortcuts">
+        <button type="button" class="sidebar-nav-item active" onclick="switchView('home', this)">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
           </svg>
           Home
-        </div>
-        <div class="sidebar-nav-item" onclick="switchView('mentions', this)">
+        </button>
+        <button type="button" class="sidebar-nav-item" onclick="switchView('mentions', this)">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10h5v-2h-5c-4.34 0-8-3.66-8-8s3.66-8 8-8 8 3.66 8 8v1.43c0 .79-.71 1.57-1.5 1.57s-1.5-.78-1.5-1.57V12c0-2.76-2.24-5-5-5s-5 2.24-5 5 2.24 5 5 5c1.38 0 2.64-.56 3.54-1.47.65.89 1.77 1.47 2.96 1.47 1.97 0 3.5-1.6 3.5-3.57V12c0-5.52-4.48-10-10-10zm0 13c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z" />
           </svg>
           Mentions
-        </div>
-        <div class="sidebar-nav-item" onclick="switchView('bookmarks', this)">
+        </button>
+        <button type="button" class="sidebar-nav-item" onclick="switchView('bookmarks', this)">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
           </svg>
           Bookmarks
-        </div>
-        <div class="sidebar-nav-item" onclick="switchView('threads', this)">
+        </button>
+        <button type="button" class="sidebar-nav-item" onclick="switchView('threads', this)">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
           </svg>
-          Threads
-        </div>
-        <div class="sidebar-nav-item" onclick="switchView('drafts', this)">
+          Discussions
+        </button>
+        <button type="button" class="sidebar-nav-item" onclick="switchView('drafts', this)">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
             <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z" />
           </svg>
           Drafts
-        </div>
+        </button>
         <a class="sidebar-nav-item" id="serverCodeLabNav" href="<?= BASE_URL ?>/modules/code-lab/index.php?server_id=<?= (int)($firstServer['id'] ?? 0) ?>" style="text-decoration:none;color:inherit;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m8 6-6 6 6 6m8-12 6 6-6 6M14 4l-4 16"/></svg>
           Code Lab
@@ -294,13 +298,13 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         </a>
       </div>
 
-      <div class="sidebar-section">
+      <div class="sidebar-section" data-workspace-widget="channels">
         <div class="sidebar-section-header">
           <span class="sidebar-section-title">Channels</span>
           <span class="sidebar-section-add" onclick="openAddChannelModal('text')">+</span>
         </div>
         <div id="channelList">
-          <?php foreach ($channels as $ch): if ($ch['type'] !== 'voice'): ?>
+          <?php foreach ($channels as $ch): if (!in_array($ch['type'], ['voice', 'whiteboard'], true)): ?>
               <?php $isNew = !empty($ch['is_new']) && $ch['is_new'] == 1; ?>
               <div class="channel-item <?= $ch === reset($channels) ? 'active' : '' ?>"
                 data-channel-id="<?= (int)$ch['id'] ?>"
@@ -336,7 +340,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         </div>
       </div>
 
-      <div class="sidebar-section">
+      <div class="sidebar-section" data-workspace-widget="voice">
         <div class="sidebar-section-header">
           <span class="sidebar-section-title">Voice Channels</span>
           <span class="sidebar-section-add" onclick="openAddChannelModal('voice')">+</span>
@@ -356,31 +360,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         </div>
       </div>
 
-
-      <div class="sidebar-section" id="whiteboardSection">
-        <div class="sidebar-section-header">
-          <span class="sidebar-section-title">Whiteboard Channels</span>
-          <span class="sidebar-section-add" onclick="openAddChannelModal('whiteboard')" title="Add whiteboard channel">+</span>
-        </div>
-        <div id="whiteboardChannelList">
-          <?php foreach ($channels as $ch): if ($ch['type'] === 'whiteboard'): ?>
-              <div class="channel-item wb-channel-item" data-channel-id="<?= (int)$ch['id'] ?>" data-channel-name="<?= htmlspecialchars($ch['name']) ?>"
-                data-channel-type="<?= htmlspecialchars($ch['type']) ?>"
-                onclick="openWhiteboardChannel(<?= (int)$ch['id'] ?>, '<?= htmlspecialchars($ch['name']) ?>')" title="Open <?= htmlspecialchars($ch['name']) ?>">
-                <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24" style="color:var(--accent-purple);flex-shrink:0;">
-                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-                </svg>
-                <span class="channel-name" style="flex:1;"><?= htmlspecialchars($ch['name']) ?></span>
-                <span class="wb-live-badge" style="display:none;">
-                  <span class="wb-live-dot"></span>Live
-                </span>
-              </div>
-          <?php endif;
-          endforeach; ?>
-        </div>
-      </div>
-
-      <div class="sidebar-section">
+      <div class="sidebar-section" data-workspace-widget="direct">
         <div class="sidebar-section-header">
           <span class="sidebar-section-title">Direct Messages</span>
           <span class="sidebar-section-add" onclick="openNewDMModal()">+</span>
@@ -388,7 +368,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
         <div id="dmList"></div>
       </div>
 
-      <div class="sidebar-section">
+      <div class="sidebar-section" data-workspace-widget="groups">
         <div class="sidebar-section-header">
           <span class="sidebar-section-title">Group Messages</span>
           <span class="sidebar-section-add" onclick="openNewGroupModal()">+</span>
@@ -422,17 +402,19 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     <!-- USER PROFILE FOOTER -->
     <div id="workspaceAccountHome"></div>
     <div class="user-profile-footer" id="workspaceAccount">
-      <div class="user-avatar" aria-label="Your account">
+      <div class="user-avatar" role="img" aria-label="<?= htmlspecialchars($user['username']) ?>, online" title="<?= htmlspecialchars($user['username']) ?>">
         <div class="avatar-placeholder avatar-lg" style="<?= $avatarStyle ?>;border-radius:50%;">
           <?= htmlspecialchars($initials) ?>
         </div>
         <div class="online-dot"></div>
       </div>
-      <div class="taskbar-account-details" style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+      <div class="taskbar-account-details">
+        <div class="taskbar-account-name" title="<?= htmlspecialchars($user['username']) ?>">
           <?= htmlspecialchars($user['username']) ?>
         </div>
-        <div style="font-size:11px;color:var(--accent-green);">● Online</div>
+        <div class="taskbar-account-meta"><span>Online</span>
+          <span class="account-type-badge" data-account-type="<?= $accountType ?>"><?= AccountType::LABELS[$accountType] ?></span>
+        </div>
       </div>
       <div class="footer-controls">
         <button type="button" class="footer-icon-btn" onclick="event.stopPropagation();if(window.EcollabCalls?.busy())window.EcollabCalls.control('mic');else toggleMute(event)" title="Mute" id="muteBtn">
@@ -461,16 +443,17 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
     <!-- CHAT HEADER -->
     <div class="chat-header">
-      <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
-        <span style="font-size:22px;color:var(--text-muted);font-weight:300;">#</span>
-        <div>
-          <div style="font-size:15px;font-weight:700;color:var(--text-primary);line-height:1.2;" id="channelTitle">Select a channel</div>
-          <div class="channel-desc" id="channelDesc" style="font-size:12px;color:var(--text-muted);"></div>
+      <div class="chat-channel-heading">
+        <span class="chat-channel-mark" aria-hidden="true">#</span>
+        <div class="chat-channel-summary">
+          <div id="channelTitle">Select a channel</div>
+          <div class="channel-desc" id="channelDesc"></div>
           <a id="channelDashboardLink" href="<?= BASE_URL ?>/modules/student/dashboard.php" style="display:none;font-size:11px;color:#c084fc;text-decoration:none;font-weight:700;margin-top:3px;" title="Open dashboard">↗ Dashboard</a>
         </div>
       </div>
       <div class="header-sep"></div>
-      <div style="display:flex;align-items:center;gap:4px;">
+      <div class="chat-channel-actions">
+        <button type="button" class="ec-context-toggle" data-context-toggle aria-controls="sidebarRight" aria-expanded="false">Widgets</button>
         <!-- Manage private channel members - shown only when current channel is private and user is owner/admin -->
         <button class="header-icon-btn" id="manageChannelBtn" onclick="openPrivateChannelManager()" title="Manage Channel Members" style="display:none;">
           <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
@@ -620,7 +603,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
               <circle cx="19" cy="12" r="1.9" />
             </svg>
           </button>
-          <input class="chat-input-field" id="chatInputField" placeholder="Message…" oninput="handleTyping(event)" onkeydown="handleKeyDown(event)" />
+          <input class="chat-input-field" id="chatInputField" aria-label="Message" placeholder="Message…" oninput="handleTyping(event)" onkeydown="handleKeyDown(event)" />
           <button class="input-btn-icon" id="emojiBtn" title="Emoji" onclick="toggleEmojiPicker(event)">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10" />
@@ -666,7 +649,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
         <div class="chat-input-actions">
           <div class="input-spacer"></div>
-          <button class="ai-assist-btn" id="aiAssistBtn" onclick="generateAIReply()">✨ AI Assist <span class="ai-assist-chevron">▾</span></button>
+          <button class="ai-assist-btn" id="aiAssistBtn" aria-label="AI Assist" onclick="generateAIReply()">✨ <span class="ai-assist-label">AI Assist</span> <span class="ai-assist-chevron">▾</span></button>
           <button class="send-btn" onclick="sendMessage()">Send</button>
         </div>
       </div>
@@ -820,8 +803,9 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </div>
 
   <!-- RIGHT SIDEBAR -->
-  <div class="sidebar-right" id="sidebarRight">
-    <div class="right-panel">
+  <button id="ecContextBackdrop" type="button" tabindex="-1" aria-label="Close workspace widgets" hidden></button>
+  <div class="sidebar-right" id="sidebarRight" tabindex="-1" aria-label="Workspace widgets">
+    <div class="right-panel" data-workspace-widget="activity">
       <div class="panel-title" style="display:flex;align-items:center;justify-content:space-between;">
         Active Now
         <span id="activeNowCountBadge" style="font-size:11px;font-weight:700;background:rgba(34,197,94,0.15);color:#22c55e;padding:2px 8px;border-radius:99px;min-width:20px;text-align:center;">0</span>
@@ -829,7 +813,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       <div id="activeMembersList" style="display:flex;flex-direction:column;gap:3px;margin-bottom:8px;max-height:220px;overflow-y:auto;"></div>
       <button class="see-all-btn" onclick="openActiveNowModal()">See All</button>
     </div>
-    <div class="right-panel">
+    <div class="right-panel" data-workspace-widget="matches">
       <div class="matches-header">
         <div class="matches-title">AI Suggested Matches ✨</div>
         <button class="refresh-btn" onclick="refreshMatches(this)">Refresh</button>
@@ -837,7 +821,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       <div id="matchesList"></div>
       <button class="see-all-btn" style="margin-top:10px;" onclick="openFullMatchesModal()">See All Matches</button>
     </div>
-    <div class="right-panel">
+    <div class="right-panel" data-workspace-widget="members">
       <div class="panel-title">
         Members
         <span class="panel-badge" id="memberCountBadge"></span>
@@ -878,10 +862,6 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
             <div class="channel-type-opt" data-type="voice" onclick="selectChannelType(this,'voice')" style="flex:1;min-width:100px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;">
               <div style="font-size:13px;font-weight:600;color:var(--text-primary);">🔊 Voice</div>
               <div style="font-size:11px;color:var(--text-muted);">Hang out with voice &amp; video</div>
-            </div>
-            <div class="channel-type-opt" data-type="whiteboard" onclick="selectChannelType(this,'whiteboard')" style="flex:1;min-width:100px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;">
-              <div style="font-size:13px;font-weight:600;color:var(--text-primary);">✏️ Whiteboard</div>
-              <div style="font-size:11px;color:var(--text-muted);">Collaborate on a canvas</div>
             </div>
           </div>
         </div>
@@ -1042,6 +1022,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
       username: <?= json_encode($user['username']) ?>,
       fullName: <?= json_encode($user['full_name']) ?>,
       role: <?= json_encode($user['role']) ?>,
+      accountType: <?= json_encode($accountType) ?>,
       avatarGradient: <?= json_encode($user['avatar_color_gradient']) ?>,
       avatarUrl: <?= json_encode($user['avatar_url'] ?? '') ?>,
       initials: <?= json_encode($initials) ?>,
@@ -1062,7 +1043,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     (function() {
       var _deferred = [
         'openExtrasAction', 'switchActiveTab', 'filterActiveNow', 'openActiveNowModal',
-        'openMembersPanel', 'switchMembersTab', 'filterMembersModal',
+        'openMembersPanel', 'switchMembersTab', 'filterMembersModal', 'filterMembersByAccountType',
         'openFullMatchesModal', 'filterMatchTab', 'refreshMatches', 'sendConnectionRequest',
         'switchView', 'openSearchModal', 'closeSearchOverlay', 'searchMessages',
         'openUserSettings', 'closePlatformSettingsOverlay', 'switchSettingsTab',
@@ -1113,25 +1094,26 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     6. whiteboard.js — collaborative whiteboard
     7. dm-notifications.js — DM badge polling
   -->
-  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=settings-speed-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/socket.js?v=mentions-1" defer></script>
   <?php if (filter_var(env('CHAT_RESUMABLE_UPLOADS', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-uploads.css?v=uppy-1">
   <script src="<?= BASE_URL ?>/assets/js/chat/resumable-uploads.js?v=uppy-1" defer></script>
   <?php endif; ?>
   <?php if (filter_var(env('CHAT_RICH_COMPOSER', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-composer.css?v=tiptap-1">
-  <script src="<?= BASE_URL ?>/assets/js/chat/rich-composer.js?v=settings-speed-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/rich-composer.js?v=mentions-1" defer></script>
   <?php endif; ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-timeline.css?v=1">
-  <script src="<?= BASE_URL ?>/assets/js/chat/timeline.js?v=settings-speed-1" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=member-performance-1" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=member-performance-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/timeline.js?v=dm-identity-20261103" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat.js?v=channel-sidebar-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/modal-accessibility.js?v=ux-audit-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/chat-features.js?v=account-types-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/emoji.js?v=media-1" defer></script>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/chat-media.css?v=1">
   <script src="<?= BASE_URL ?>/assets/js/chat/media-picker.js?v=settings-speed-1" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=request-hardening-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/voice.js?v=qa-runtime-20261117-1" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.22.3/dist/livekit-client.umd.min.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/livekit-voice.js?v=sfx-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/livekit-voice.js?v=qa-runtime-20261117-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/whiteboard.js" defer></script>
   <!-- ── Private Channel Manager Modal ────────────────────────────────── -->
   <div id="privateChannelManagerModal" style="display:none!important;position:fixed;inset:0;z-index:11000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this)closePrivateChannelManager()">
@@ -1178,7 +1160,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
     </button>
   </div>
 
-  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=settings-speed-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/dm-notifications.js?v=ux-audit-1" defer></script>
   <?php if (filter_var(env('CENTRIFUGO_ENABLED', 'false'), FILTER_VALIDATE_BOOLEAN)): ?>
   <script src="<?= BASE_URL ?>/assets/js/chat/centrifugo-delivery.js?v=delivery-1" defer></script>
   <?php endif; ?>
@@ -1193,7 +1175,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-tools.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-liveeditor.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/collab-extra.js" defer></script>
-  <script src="<?= BASE_URL ?>/assets/js/chat/peer-matching.js?v=matching-avatars-1" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/peer-matching.js?v=ux-audit-1" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/server-channel-management.js" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/server-discovery.js?v=privacy1" defer></script>
 
@@ -1320,12 +1302,12 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </div>
 
   <!-- SEARCH OVERLAY -->
-  <div class="modal-overlay" id="searchOverlay" onclick="closeSearchOverlay(event)" style="display:none;">
+  <div class="modal-overlay" id="searchOverlay" aria-label="Search messages" onclick="closeSearchOverlay(event)" style="display:none;">
     <div class="modal modal-md" style="margin-top:-200px;">
       <div class="modal-header">
         <div style="display:flex;align-items:center;gap:8px;flex:1;">
           <span>🔍</span>
-          <input type="text" id="searchInput" style="flex:1;background:transparent;border:none;outline:none;font-size:16px;color:var(--text-primary);font-family:'Inter',sans-serif;" placeholder="Search messages..." oninput="searchMessages(this.value)" />
+          <input type="text" id="searchInput" aria-label="Search messages in this channel" style="flex:1;background:transparent;border:none;outline:none;font-size:16px;color:var(--text-primary);font-family:'Inter',sans-serif;" placeholder="Search messages..." oninput="searchMessages(this.value)" />
         </div>
         <button class="modal-close" onclick="closeModal('searchOverlay')">×</button>
       </div>
@@ -1384,6 +1366,14 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
           <button onclick="switchMembersTab(this,'idle')" class="filter-tab" style="font-size:11px;padding:4px 12px;">🟡 Idle</button>
           <button onclick="switchMembersTab(this,'offline')" class="filter-tab" style="font-size:11px;padding:4px 12px;">⚫ Offline</button>
         </div>
+        <label class="members-account-filter" for="membersAccountType">Account type
+          <select id="membersAccountType" onchange="filterMembersByAccountType(this.value)">
+            <option value="">All accounts</option>
+            <?php foreach (AccountType::LABELS as $type => $label): ?>
+              <option value="<?= $type ?>"><?= $label ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
         <div id="membersModalList" style="display:flex;flex-direction:column;gap:2px;max-height:440px;overflow-y:auto;"></div>
       </div>
     </div>
@@ -1798,7 +1788,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 
   <!-- ═══════════════════════════════════════════════════════════════════
      FULL-SCREEN WHITEBOARD — collaborative canvas
-     Triggered by: sidebar whiteboard channels, Join button, voice MoreMenu
+     Triggered by: Join button and voice MoreMenu
 ═══════════════════════════════════════════════════════════════════ -->
   <style>
     /* ── live pulse for sidebar dot ── */
@@ -3420,14 +3410,14 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   <!-- ══════════════════════════════════════════════════════════════
        PEER MATCHING MODAL
        ══════════════════════════════════════════════════════════════ -->
-  <div id="peerMatchingModal">
+  <div id="peerMatchingModal" aria-label="Find study partners">
     <div class="pm-shell">
       <div class="pm-header">
         <div>
           <div class="pm-header-title">🤝 Find Study Partners</div>
           <div class="pm-header-sub">Matched by subjects · study style · hobbies · interests</div>
         </div>
-        <button class="pm-close" onclick="closePeerMatchingModal()">✕</button>
+        <button class="pm-close" aria-label="Close study partners" onclick="closePeerMatchingModal()">✕</button>
       </div>
       <div class="pm-tab-bar">
         <button class="pm-tab-btn pm-active" data-tab="matches" onclick="_pmShowTab('matches')">✨ Matches</button>
@@ -3441,7 +3431,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </div>
 
   <!-- Send request modal -->
-  <div id="pmSendRequestModal">
+  <div id="pmSendRequestModal" aria-label="Send connection request">
     <div class="pm-req-box">
       <div class="modal-header">
         <div>
@@ -3463,17 +3453,14 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
   </div>
 
   <!-- Compatibility detail modal -->
-  <div id="pmCompatModal"></div>
+  <div id="pmCompatModal" aria-label="Compatibility details"></div>
 
   <script src="<?= BASE_URL ?>/assets/js/chat/functionality-overrides.js?v=profile-2" defer></script>
   <!-- Thread enhancements are loaded by functionality-overrides.js after threads-v2.js is ready. -->
-  <script src="<?= BASE_URL ?>/assets/js/chat/collabs-ui.js" defer></script>
+  <script src="<?= BASE_URL ?>/assets/js/chat/collabs-ui.js?v=inline-workspace-3" defer></script>
   <script src="<?= BASE_URL ?>/assets/js/chat/nav-persistence.js?v=2" defer></script>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/desktop/profile-view-overrides.css?v=1">
-  <script id="profileViewScript" src="<?= BASE_URL ?>/assets/js/chat/profile-view.js?v=2" defer></script>
-<script type="module" src="<?= BASE_URL ?>/assets/js/chat/yjs-channel-presence.js?v=settings-speed-1"></script>
-</body>
-
+  <script id="profileViewScript" src="<?= BASE_URL ?>/assets/js/chat/profile-view.js?v=account-types-1" defer></script>
 <!-- ── FLASHCARD MODALS ── -->
 <div id="createDeckModal" class="collab-modal-overlay" style="display:none">
   <div class="modal-box" style="max-width:480px;width:92%">
@@ -3573,7 +3560,7 @@ $initials    = strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1))
 <div id="resourceCommentsModal" class="collab-modal-overlay" style="display:none"></div>
 
 <?php require_once dirname(__DIR__, 2) . '/includes/calls/bootstrap.php'; ?>
-<script type="module" src="<?= BASE_URL ?>/assets/js/chat/yjs-channel-presence.js?v=settings-speed-1"></script>
+<script type="module" src="<?= BASE_URL ?>/assets/js/chat/yjs-channel-presence.js?v=qa-runtime-20261117-1"></script>
 </body>
 
 </html>

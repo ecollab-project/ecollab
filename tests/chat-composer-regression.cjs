@@ -17,6 +17,19 @@ input.disabled=true;assert.equal(editor.isEditable,false);input.disabled=false;a
 input.value='Hello ';editor.commands.setTextSelection(editor.state.doc.content.size-1);composer.insert(input,'😊');assert(input.value.includes('😊'));assert(typing>0);
 input.value='Hello @jar';editor.commands.setTextSelection(editor.state.doc.content.size-1);assert(composer.mention(input,'jarred_borbon'));assert(editor.getText().includes('@jarred_borbon'));
 assert(input.value.includes('@jarred_borbon'));assert(!input.value.includes('jarred\\_')); 
+input.value='Hello @legal shota';
+editor.commands.setTextSelection(editor.state.doc.content.size-1);
+assert(composer.mention(input,'Legal Shota',42,12));
+assert.equal(editor.getText(),'Hello @Legal Shota ');
+assert.match(input.value,/\[@Legal Shota\]\(#ecollab-mention-42\)/);
+const namedDraft=input.value;
+input.value='';
+input.value=namedDraft;
+assert.equal(editor.getText().trimEnd(),'Hello @Legal Shota');
+rendered.innerHTML=composer.render(namedDraft + ' @everyone.');
+assert.deepEqual([...rendered.querySelectorAll('.mention')].map(e=>e.textContent),['@Legal Shota','@everyone']);
+assert.equal(rendered.querySelector('a'),null);
+
 input.value='Send me';editor.view.dom.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));assert.equal(sent.at(-1),'Send me');assert(editor.isEmpty);assert.equal(editor.commands.undo(),false);
 input.value='First line';editor.commands.setTextSelection(editor.state.doc.content.size-1);editor.view.dom.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',shiftKey:true,bubbles:true,cancelable:true}));assert.equal(sent.length,1);assert(editor.getJSON().content[0].content.some(n=>n.type==='hardBreak'));
 input.value='```\nconst value = 1;\n```';editor.commands.setTextSelection(2);editor.view.dom.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));assert.equal(sent.length,1);editor.view.dom.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',ctrlKey:true,bubbles:true,cancelable:true}));assert.equal(sent.length,2);
@@ -29,6 +42,15 @@ w.EcollabPreferences={enabled:()=>false};dm.value='New paragraph';const beforeSe
 panel.remove();await tick();assert.equal(composer.getEditor(dm),undefined);assert(dmEditor.isDestroyed);
 // Inline edit/cancel uses raw Markdown, including quotes, without putting it into handlers.
 const source=fs.readFileSync(require('node:path').join(__dirname,'../assets/js/chat/chat.js'),'utf8');
+w.eval(source.slice(source.indexOf('function mentionLinks('),source.indexOf('function escHtml(')) +
+  'window.readMentionInput = channelInputContent; window.writeMentionInput = setChannelInputContent;');
+const native=w.document.createElement('input');
+w.writeMentionInput(native,'Hello [@Legal Shota](#ecollab-mention-42) and [@Legal Shota](#ecollab-mention-77)');
+assert.equal(native.value,'Hello @Legal Shota and @Legal Shota');
+native.value='Well, '+native.value;
+assert.equal(w.readMentionInput(native),'Well, Hello [@Legal Shota](#ecollab-mention-42) and [@Legal Shota](#ecollab-mention-77)');
+native.value=native.value.replace('@Legal Shota', '@Different');
+assert.equal(w.readMentionInput(native),'Well, Hello @Different and [@Legal Shota](#ecollab-mention-77)');
 w.eval(source.slice(source.indexOf('function startEditMsg('),source.indexOf('async function deleteMsg(')));
 w._renderMsgContent=composer.render;w.API_BASE='/API/chat';w.currentChannelId=5;
 const row=w.document.createElement('div');row.className='message-group';row.dataset.msgId='55';row.dataset.rawContent="**Study** and 'quoted' text";

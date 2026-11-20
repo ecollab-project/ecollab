@@ -1,0 +1,28 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require('jsdom');
+const dom=new JSDOM('<button id="trigger">Open</button><div class="modal-overlay" id="modal"><div class="modal"><div class="modal-header">Test dialog</div><button class="modal-close">Close</button><input><button id="last">Save</button></div></div>',{runScripts:'outside-only',pretendToBeVisual:true});
+const w=dom.window,d=w.document,modal=d.getElementById('modal'),trigger=d.getElementById('trigger');
+w.HTMLElement.prototype.getClientRects=function(){return [{}];};
+const chat=fs.readFileSync('assets/js/chat/chat.js','utf8');
+w.eval(chat.slice(chat.indexOf('// ── Modals ──'),chat.indexOf('// ── Sidebar filter ──')));
+w.eval(fs.readFileSync('assets/js/chat/modal-accessibility.js','utf8'));
+d.querySelector('.modal-close').onclick=()=>w.closeModal('modal');
+const tick=ms=>new Promise(r=>setTimeout(r,ms));
+(async()=>{
+ assert(modal.inert&&modal.getAttribute('aria-hidden')==='true','initial overlays are inert');
+ trigger.focus();w.openModal('modal');await tick(25);
+ assert(!modal.inert&&modal.getAttribute('role')==='dialog'&&modal.getAttribute('aria-modal')==='true');
+ assert.equal(d.activeElement,d.querySelector('.modal-close'),'focus enters opened dialog');
+ d.getElementById('last').focus();d.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Tab',bubbles:true,cancelable:true}));
+ assert.equal(d.activeElement,d.querySelector('.modal-close'),'Tab wraps');
+ d.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Tab',shiftKey:true,bubbles:true,cancelable:true}));
+ assert.equal(d.activeElement,d.getElementById('last'),'reverse Tab wraps');
+ d.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));await tick(0);
+ assert(modal.inert&&modal.getAttribute('aria-hidden')==='true');assert.equal(d.activeElement,trigger);
+ w.openModal('modal');await tick(25);w.closeModal('modal');w.openModal('modal');await tick(250);
+ assert(modal.classList.contains('open')&&modal.style.display==='flex'&&!modal.inert,'reopen cancels delayed close');
+ const dynamic=d.createElement('div');dynamic.className='modal-overlay';dynamic.id='dynamic';dynamic.innerHTML='<button>Dynamic</button>';d.body.append(dynamic);await tick(0);
+ assert(dynamic.inert);w.openModal('dynamic');await tick(25);assert(!dynamic.inert&&dynamic.getAttribute('aria-modal')==='true');
+ w.closeModal('dynamic');await tick(0);assert.equal(d.activeElement,d.querySelector('#modal .modal-close'),'nested close returns to parent dialog');
+ console.log('PASS: inactive dialogs, focus entry/trap/return, nested and dynamic overlays, reopen timer race');
+})().catch(e=>{console.error(e);process.exitCode=1;}).finally(()=>w.close());

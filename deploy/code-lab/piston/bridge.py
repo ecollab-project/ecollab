@@ -2,6 +2,8 @@
 No submitted source is executed in this process. Only Piston sandbox execution endpoints run submitted code.
 """
 import base64
+import importlib.util
+import pathlib
 import hmac
 import json
 import os
@@ -73,6 +75,10 @@ class Adapter:
         self.completed=threading.Condition(self.lock)
         self.jobs={}
         self.cached_bytes=0
+        self.execution=threading.BoundedSemaphore(execution_slots(slots))
+        spec=importlib.util.spec_from_file_location('ecollab_interactive',pathlib.Path(__file__).with_name('interactive.py'))
+        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        self.live=module.LiveManager(self.profiles,self.execution)
         self.pending=queue.Queue(maxsize=32)
         for _ in range(execution_slots(slots)):
             threading.Thread(target=self.worker,daemon=True).start()
@@ -126,10 +132,13 @@ class Adapter:
             self.jobs[token]={'result':{'status':{'id':1}},'at':time.monotonic()}
             try:
                 self.pending.put_nowait((token,payload,batch))
-            except queue.Full:
+            except (queue.Full,OverflowError):
                 del self.jobs[token]
                 raise
         return token
+
+    def execute_request(self,path,payload):
+        with self.execution:return self.request(path,payload)
 
     def worker(self):
         while True:
@@ -138,7 +147,7 @@ class Adapter:
                 self.jobs[token]['result']={'status':{'id':2}}
             try:
                 if batch:
-                    response=self.request('/ecollab-grade',payload)
+                    response=self.execute_request('/ecollab-grade',payload)
                     compile_result=response.get('compile')
                     if compile_result and (compile_result.get('code')!=0 or compile_result.get('signal') or compile_result.get('status')):
                         results=[translate({'compile':compile_result}) for _ in payload['inputs']]
@@ -152,7 +161,7 @@ class Adapter:
                         raise ValueError('Unexpected compilation count')
                     result={'status':{'id':3},'results':results,'compile_count':expected}
                 else:
-                    result=translate(self.request('/execute',payload))
+                    result=translate(self.execute_request('/execute',payload))
             except Exception:
                 result={'status':{'id':13}}  # Infrastructure error, never a zero grade.
             size=len(json.dumps(result).encode())
@@ -195,6 +204,9 @@ class Handler(BaseHTTPRequestHandler):
         path=urlsplit(self.path).path
         if path=='/languages':
             return self.send_json(200,[{'id':p['id'],'name':p['name']+' ('+p['language']+' '+p['version']+', Piston)', 'ecollab_grade_v1':p['id'] in (10001,10002,10003,10006)} for p in self.server.adapter.profiles.values()])
+        if path.startswith('/interactive/'):
+            result=self.server.adapter.live.get(path.split('/')[-1])
+            return self.send_json(200,result) if result else self.send_json(404,{'error':'Session not found'})
         if path.startswith('/submissions/'):
             try:
                 wait_ms=int(parse_qs(urlsplit(self.path).query).get('wait_ms',['0'])[0])
@@ -207,7 +219,7 @@ class Handler(BaseHTTPRequestHandler):
         if not self.authorized():
             return self.send_json(401,{'error':'Authentication required'})
         path=urlsplit(self.path).path
-        if path not in ('/submissions','/grade-submissions'):
+        if path not in ('/submissions','/grade-submissions','/interactive') and not path.startswith('/interactive/'):
             return self.send_json(404,{'error':'Not found'})
         try:
             length=int(self.headers.get('Content-Length','0'))
@@ -216,9 +228,19 @@ class Handler(BaseHTTPRequestHandler):
             body=json.loads(self.rfile.read(length))
             if not isinstance(body,dict):
                 raise ValueError('Invalid request')
+            if path=='/interactive':
+                token=self.server.adapter.live.start(body)
+                return self.send_json(201,{'token':token})
+            if path.startswith('/interactive/'):
+                parts=path.strip('/').split('/')
+                if len(parts)!=3:return self.send_json(404,{'error':'Not found'})
+                if parts[2]=='input':result=self.server.adapter.live.input(parts[1],body.get('sequence'),body.get('data',''),body.get('eof',False))
+                elif parts[2]=='stop':result=self.server.adapter.live.stop(parts[1])
+                else:return self.send_json(404,{'error':'Not found'})
+                return self.send_json(200,result) if result else self.send_json(404,{'error':'Session not found'})
             token=self.server.adapter.submit(body,batch=path=='/grade-submissions')
             return self.send_json(201,{'token':token,'poll_wait_ms':1000})
-        except queue.Full:
+        except (queue.Full,OverflowError):
             return self.send_json(429,{'error':'Execution queue full'})
         except (ValueError,TypeError,KeyError,AttributeError,UnicodeError):
             return self.send_json(400,{'error':'Invalid submission'})

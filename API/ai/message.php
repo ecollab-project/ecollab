@@ -9,7 +9,7 @@ require_once dirname(__DIR__, 2) . '/security/rate-limit/RateLimiter.php';
 require_once dirname(__DIR__, 2) . '/services/AiSessionService.php';
 require_once dirname(__DIR__, 2) . '/services/GeminiService.php';
 require_once dirname(__DIR__, 2) . '/services/OllamaService.php';
-require_once dirname(__DIR__, 2) . '/services/CodeLabIntegrityPolicy.php';
+require_once dirname(__DIR__, 2) . '/services/JarredAssistancePolicy.php';
 
 require_once dirname(__DIR__,2).'/services/JarredConversation.php';
 
@@ -25,7 +25,6 @@ try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') aiJson(['success'=>false,'error'=>'Method not allowed.'],405);
     AuthMiddleware::verifyCsrf();
     $body = json_decode(file_get_contents('php://input') ?: '', true) ?: [];
-    if (CodeLabIntegrityPolicy::isCodeLab($body,(string)($_SERVER['HTTP_REFERER']??''))) aiJson(['success'=>false,'error'=>CodeLabIntegrityPolicy::AI_MESSAGE],403);
     $sessionId = filter_var($body['session_id'] ?? null, FILTER_VALIDATE_INT);
     $prompt = trim((string)($body['prompt'] ?? ''));
     if (!$sessionId || $sessionId < 1) aiJson(['success'=>false,'error'=>'A valid session_id is required.'],400);
@@ -58,8 +57,9 @@ try {
 
     // The VPS local model remains available when Gemini is absent or unavailable.
     if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
-    $result = null;
-    if ($apiKey !== '' && $apiKey !== 'your_gemini_api_key_here') {
+    $direct = JarredAssistancePolicy::reply(Database::getInstance(), (int)$user['id'], $prompt);
+    $result = $direct === null ? null : ['text'=>$direct,'input_tokens'=>0,'output_tokens'=>0];
+    if ($result === null && $apiKey !== '' && $apiKey !== 'your_gemini_api_key_here') {
         try {
             $result = (new GeminiService($apiKey,(string)env('GEMINI_MODEL','gemini-flash-latest'),15))->generate($messages,$systemPrompt,$maxTokens);
             if (trim((string)($result['text'] ?? '')) === '') $result = null;

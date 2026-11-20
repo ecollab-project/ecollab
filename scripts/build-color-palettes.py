@@ -6,9 +6,9 @@ import sys
 root = Path(__file__).resolve().parent.parent
 palettes = json.loads((root / 'assets/data/color-palettes.json').read_text())
 lines = ['/* Named palettes from the supplied reference. UI shades preserve readable contrast. */']
-for palette in sorted(palettes, key=lambda p: p['id'] != 'forest-mint'):
+for palette in sorted(palettes, key=lambda p: p['id'] != 'ecollab-original'):
     for mode in ['dark', 'light']:
-        selector = 'html:root' if palette['id'] == 'forest-mint' else 'html:root[data-color-palette="' + palette['id'] + '"]'
+        selector = 'html:root' if palette['id'] == 'ecollab-original' else 'html:root[data-color-palette="' + palette['id'] + '"]'
         if mode == 'light':
             selector += '[data-theme="light"]'
         tokens = ''.join('--ec-' + key + ':' + value + ';' for key, value in palette[mode].items())

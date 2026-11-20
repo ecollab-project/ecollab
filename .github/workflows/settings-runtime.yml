@@ -3,7 +3,7 @@ on:
   pull_request:
 jobs:
   runtime:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       mariadb:
         image: mariadb:10.11
@@ -27,6 +27,7 @@ jobs:
       - run: php tests/settings-migration-regression.php
         env: {SETTINGS_TEST_DSN: 'mysql:host=127.0.0.1;port=3306;dbname=settings_runtime'}
       - run: node tests/jarred-provider-regression.cjs
+      - run: php tests/jarred-queue-regression.php
       - run: node tests/jarred-session-race.cjs
       - run: node tests/realtime-settings-regression.cjs
       - run: node tests/settings-runtime-browser.cjs

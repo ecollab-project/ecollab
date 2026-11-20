@@ -1,0 +1,9 @@
+'use strict';
+const http=require('http'),{execFile}=require('node:child_process'),assert=require('node:assert/strict');
+const held=[];let peak=0,timer;
+const server=http.createServer((req,res)=>{let body='';req.on('data',x=>body+=x);req.on('end',()=>{const p=JSON.parse(body),id=p.messages.at(-1).content;held.push({res,id,p});peak=Math.max(peak,held.length);if(held.length===5){clearTimeout(timer);for(const h of held)h.res.end(JSON.stringify({message:{content:h.id}}));}else if(!timer)timer=setTimeout(()=>{for(const h of held)if(!h.res.writableEnded)h.res.end(JSON.stringify({message:{content:h.id}}));},1500);});});
+(async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));const port=server.address().port;
+try{const results=await Promise.allSettled(Array.from({length:5},(_,i)=>new Promise((resolve,reject)=>{const code=`require 'services/OllamaService.php';$s=new OllamaService('http://127.0.0.1:${port}','fixture',4);echo json_encode($s->generate([['role'=>'user','content'=>'request-${i}']],'Only answer this request.',32));`;execFile(process.env.PHP_BIN||'php',['-r',code],{cwd:require('path').resolve(__dirname,'..'),timeout:7000},(e,out,err)=>e?reject(Error(err||String(e))):resolve(JSON.parse(out)));})));
+assert.equal(results.filter(r=>r.status==='fulfilled').length,5,'five independent requests must be admitted instead of globally rejecting four');assert.equal(peak,5,'five requests reach provider concurrently');for(let i=0;i<5;i++){assert.equal(results[i].value.text,'request-'+i);assert(!held[i].p.messages.some(m=>/request-/.test(m.content)&&m.content!==held[i].id));}
+console.log('PASS: five simultaneous PHP/provider requests accepted with isolated inputs and outputs');
+}finally{clearTimeout(timer);await new Promise(r=>server.close(r));}})().catch(e=>{console.error(e);server.close();process.exitCode=1;});

@@ -32,36 +32,272 @@ header("Content-Security-Policy: default-src 'self'; connect-src 'self' $callOri
 }
 ?>
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?=coEscape($d['title'])?> · eCollab</title>
-<style nonce="<?=$nonce?>">
-*{box-sizing:border-box}body{margin:0;background:#111827;color:#eef2ff;font:14px system-ui}header{display:flex;align-items:center;gap:16px;padding:12px 18px;flex-wrap:wrap}h1{font-size:17px;margin:0;flex:1}a{color:#a5b4fc}button,select,textarea,input{font:inherit;padding:9px;border:1px solid #475569;border-radius:6px}button{cursor:pointer;background:#818cf8;color:#111827}main{display:flex;height:calc(100dvh - 70px)}iframe{flex:1;border:0;background:white;min-width:0}aside{width:320px;overflow:auto;padding:16px;background:#1e293b}textarea{width:100%;min-height:160px;background:#0f172a;color:white;margin:12px 0}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit}small{color:#cbd5e1}details{margin:20px 0}#notice{padding:8px;color:#fcd34d}@media(max-width:750px){main{flex-direction:column;height:auto}iframe{height:75dvh;flex:auto}aside{width:100%}}
-</style><link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=1">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app-design.css?v=1">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/mobile/app-mobile.css?v=2">
 <script nonce="<?=$nonce?>" defer src="<?= BASE_URL ?>/assets/js/mobile-viewport.js?v=2"></script>
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/device-layout.css?v=1">
 <script defer src="<?= BASE_URL ?>/assets/js/device-layout.js?v=1"></script>
 <?php require_once ROOT_PATH.'/includes/layout/color-theme.php'; ?>
-</head><body data-mobile-surface="editor">
-<header><a href="<?=coEscape($backUrl)?>">← Coworkspace</a><h1><?=coEscape($d['title'])?></h1><span><?=coEscape($a['permission'])?></span><a href="<?=coEscape(BASE_URL)?>/API/collaboration/document-download.php?id=<?=$id?>">Download</a><?php if ((int)$d['created_by'] !== (int)$user['id']): ?><a target="_blank" rel="noopener" href="<?=coEscape(BASE_URL)?>/modules/collaboration/report-document.php?id=<?=$id?>">Report</a><?php endif ?></header>
-<?php if ($a['permission'] === 'comment'): ?><div id="notice">Comment permission currently opens as view-only in Collabora.</div><?php endif ?>
-<main><iframe name="office" title="Collaborative document editor" allow="clipboard-read; clipboard-write; fullscreen"></iframe><aside>
-<?php if (env('DOCUMENT_ML_ENABLED','false')==='true'): ?><details><summary>Related documents</summary><small>Compare titles of documents you can access in this workspace.</small><p><button id="related">Find related files</button></p><div id="related-result" role="status"></div></details><?php endif ?>
-<h2>Jarred</h2><small>Paste the excerpt you want help with. Only submitted text goes to the configured AI service. Review suggestions before applying them.</small>
-<textarea id="excerpt" maxlength="12000" placeholder="Paste text or a spreadsheet formula"></textarea>
-<select id="task"><option value="summarize">Summarize</option><option value="rewrite">Improve writing</option><option value="formula">Explain formula</option><option value="outline">Presentation outline</option></select>
-<button id="ask" <?=env('DOCUMENT_AI_ENABLED','false')==='true'?'':'disabled'?>>Suggest</button><pre id="result" role="status"></pre>
-<details><summary>Version history</summary><p>Current version: <?=(int)$d['version']?>. Refresh after saving to update this list.</p>
-<?php if (!$a['owner']): ?><p>History is available to document owners and workspace hosts.</p><?php endif ?>
-<?php foreach ($versions as $v): ?><p><a href="<?=coEscape(BASE_URL)?>/API/collaboration/document-download.php?id=<?=$id?>&amp;version=<?=(int)$v['version']?>">Download version <?=(int)$v['version']?></a></p><?php endforeach ?></details>
-<details><summary>Import a file</summary><p>Imports start private.</p><input id="upload-title" placeholder="Document title" maxlength="200"><input id="upload-file" type="file" accept=".docx,.xlsx,.pptx"><button id="upload">Upload</button><p id="upload-result" role="status"></p></details>
-<?php if ($a['owner']): ?><details><summary>Rename</summary><input id="new-title" value="<?=coEscape($d['title'])?>" maxlength="200"><button id="rename">Rename</button><p id="rename-result" role="status"></p></details><details><summary>Sharing</summary><p>Public means members with access to this workspace.</p><select id="visibility"><option value="private" <?=$d['visibility']==='private'?'selected':''?>>Private</option><option value="public" <?=$d['visibility']==='public'?'selected':''?>>Workspace</option></select><select id="public-permission"><option value="view" <?=$d['public_permission']==='view'?'selected':''?>>Viewer</option><option value="edit" <?=$d['public_permission']==='edit'?'selected':''?>>Editor</option></select><button id="sharing">Save sharing</button><p id="sharing-result" role="status"></p><small>Individual grants remain managed through eCollab resource sharing.</small></details><?php endif ?>
-</aside></main>
+<style nonce="<?=$nonce?>">
+body.collabora-page {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    height: min(100dvh, var(--app-viewport-height, 100dvh));
+    margin: 0;
+    font: 14px system-ui, sans-serif;
+}
+.collabora-page *, .collabora-page *::before, .collabora-page *::after { box-sizing: border-box; }
+body.collabora-page > .collabora-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
+    padding: 6px 14px;
+}
+.collabora-header h1 { flex: 1 1 12rem; min-width: 0; margin: 0; font-size: 1.05rem; overflow-wrap: anywhere; }
+.collabora-header h1 span { display: block; font-size: .8rem; font-weight: 500; color: var(--ec-muted); }
+.collabora-header nav { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.collabora-header a, .collabora-header button, .collabora-tools summary, .collabora-tools button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 6px 10px;
+}
+.collabora-header button, .collabora-tools button { font: inherit; cursor: pointer; }
+.collabora-header button, .collabora-tools button, .collabora-tools :is(input, select, textarea) { border: 1px solid var(--ec-line); }
+.collabora-page :is(a, button, summary, input, select, textarea):focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.collabora-notice { grid-row: 2; margin: 0; padding: 8px 14px; color: var(--ec-text); background: var(--ec-input); }
+body.collabora-page > main { grid-row: 3; display: block; min-height: 0; height: 100%; }
+body.collabora-page > main > iframe { display: block; width: 100%; height: 100%; min-height: 0; border: 0; background: #fff; }
+.collabora-tools {
+    position: fixed;
+    inset: 0 0 0 auto;
+    margin: 0;
+    width: min(100%, 25rem);
+    height: min(100dvh, var(--app-viewport-height, 100dvh));
+    max-width: 100%;
+    max-height: 100dvh;
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 0 16px 20px;
+    border: 1px solid var(--ec-line);
+    background: var(--ec-surface);
+    color: var(--ec-text);
+}
+.collabora-tools::backdrop { background: rgb(0 0 0 / 48%); }
+.collabora-tools-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--ec-line);
+    background: var(--ec-surface);
+}
+.collabora-tools h2 { margin: 0; font-size: 1.1rem; }
+.collabora-tools details { border-bottom: 1px solid var(--ec-line); }
+.collabora-tools summary { display: list-item; align-content: center; padding-inline: 4px; font-weight: 650; cursor: pointer; }
+.collabora-tools details > div { padding: 0 4px 12px; }
+.collabora-tools label { display: grid; gap: 5px; margin: 10px 0; }
+.collabora-tools :is(input, select, textarea) { width: 100%; min-width: 0; min-height: 44px; padding: 8px; font: inherit; }
+.collabora-tools textarea { min-height: 7rem; resize: vertical; }
+.collabora-tools pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
+.collabora-tools :is(p, small) { overflow-wrap: anywhere; }
+.collabora-tools [role="status"]:empty { margin: 0; }
+.collabora-mobile-actions { display: none; }
+@media (max-width: 820px) {
+    body.collabora-page > .collabora-header { gap: 0 6px; padding: 4px 8px; }
+    .collabora-header nav { margin-inline-start: auto; }
+    .collabora-header nav a { display: none; }
+    .collabora-header h1 { order: -1; flex-basis: 100%; }
+    .collabora-header h1 span { display: inline; margin-inline-start: 6px; }
+    .collabora-header a, .collabora-header button { padding-inline: 6px; }
+    .collabora-mobile-actions { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+    .collabora-mobile-actions a { display: inline-flex; align-items: center; min-height: 44px; }
+    .collabora-tools {
+        inset: auto 0 0;
+        width: 100%;
+        height: auto;
+        max-height: calc(var(--app-viewport-height, 100dvh) * .88);
+        padding-bottom: max(20px, env(safe-area-inset-bottom));
+        border-radius: 16px 16px 0 0;
+    }
+}
+</style>
+</head>
+<?php
+$permissionLabels = ['edit' => 'Can edit', 'view' => 'View only', 'comment' => 'View only'];
+$documentAiEnabled = env('DOCUMENT_AI_ENABLED', 'false') === 'true';
+$downloadUrl = BASE_URL . '/API/collaboration/document-download.php?id=' . $id;
+$reportUrl = (int)$d['created_by'] !== (int)$user['id']
+    ? BASE_URL . '/modules/collaboration/report-document.php?id=' . $id
+    : null;
+?>
+<body class="collabora-page" data-mobile-surface="editor">
+<header class="collabora-header">
+    <a href="<?=coEscape($backUrl)?>">← Coworkspace</a>
+    <h1><?=coEscape($d['title'])?> <span><?=coEscape($permissionLabels[$a['permission']] ?? 'View only')?></span></h1>
+    <nav aria-label="Document actions">
+        <button type="button" id="open-document-tools" aria-haspopup="dialog" aria-controls="document-tools">Document tools</button>
+        <a href="<?=coEscape($downloadUrl)?>">Download</a>
+        <?php if ($reportUrl !== null): ?>
+            <a target="_blank" rel="noopener" href="<?=coEscape($reportUrl)?>">Report</a>
+        <?php endif ?>
+    </nav>
+</header>
+<?php if ($a['permission'] === 'comment'): ?>
+    <p class="collabora-notice">This document opens in view-only mode in Collabora.</p>
+<?php endif ?>
+<main><iframe name="office" title="Collaborative document editor" allow="clipboard-read; clipboard-write; fullscreen"></iframe></main>
+<dialog id="document-tools" class="collabora-tools" aria-labelledby="document-tools-title">
+    <div class="collabora-tools-header">
+        <h2 id="document-tools-title">Document tools</h2>
+        <button id="close-document-tools" type="button" autofocus>Close</button>
+    </div>
+    <nav class="collabora-mobile-actions" aria-label="Document actions">
+        <a href="<?=coEscape($downloadUrl)?>">Download</a>
+        <?php if ($reportUrl !== null): ?>
+            <a target="_blank" rel="noopener" href="<?=coEscape($reportUrl)?>">Report</a>
+        <?php endif ?>
+    </nav>
+    <details>
+        <summary>Version history</summary>
+        <div>
+            <p>Current version: <?=(int)$d['version']?>.</p>
+            <?php if (!$a['owner']): ?>
+                <p>History is available to document owners and workspace hosts.</p>
+            <?php else: ?>
+                <p>Refresh after saving to update this list.</p>
+                <?php foreach ($versions as $v): ?>
+                    <p><a href="<?=coEscape(BASE_URL)?>/API/collaboration/document-download.php?id=<?=$id?>&amp;version=<?=(int)$v['version']?>">Download version <?=(int)$v['version']?></a></p>
+                <?php endforeach ?>
+            <?php endif ?>
+        </div>
+    </details>
+    <?php if ($a['owner']): ?>
+        <details>
+            <summary>Sharing</summary>
+            <div>
+                <label>Who can view
+                    <select id="visibility"><option value="private" <?=$d['visibility']==='private'?'selected':''?>>Private</option><option value="public" <?=$d['visibility']==='public'?'selected':''?>>Workspace</option></select>
+                </label>
+                <label>Workspace member access
+                    <select id="public-permission"><option value="view" <?=$d['public_permission']==='view'?'selected':''?>>Viewer</option><option value="edit" <?=$d['public_permission']==='edit'?'selected':''?>>Editor</option></select>
+                </label>
+                <button id="sharing" type="button">Save sharing</button>
+                <p id="sharing-result" role="status"></p>
+                <small>Manage individual access from the coworkspace.</small>
+            </div>
+        </details>
+        <details>
+            <summary>Rename</summary>
+            <div>
+                <label>Document title <input id="new-title" value="<?=coEscape($d['title'])?>" maxlength="200"></label>
+                <button id="rename" type="button">Rename</button>
+                <p id="rename-result" role="status"></p>
+            </div>
+        </details>
+    <?php endif ?>
+    <details>
+        <summary>Import a file</summary>
+        <div>
+            <p>Imports start private.</p>
+            <label>Document title <input id="upload-title" maxlength="200"></label>
+            <label>Office file (.docx, .xlsx, .pptx) <input id="upload-file" type="file" accept=".docx,.xlsx,.pptx"></label>
+            <button id="upload" type="button">Upload</button>
+            <p id="upload-result" role="status"></p>
+        </div>
+    </details>
+    <details>
+        <summary>Jarred</summary>
+        <div>
+            <?php if ($documentAiEnabled): ?>
+                <small>Only the excerpt you submit goes to the configured AI service. Review suggestions before applying them.</small>
+                <label>Text or spreadsheet formula <textarea id="excerpt" maxlength="12000"></textarea></label>
+                <label>What do you need help with?
+                    <select id="task"><option value="summarize">Summarize</option><option value="rewrite">Improve writing</option><option value="formula">Explain formula</option><option value="outline">Presentation outline</option></select>
+                </label>
+                <button id="ask" type="button">Suggest</button>
+                <pre id="result" role="status"></pre>
+            <?php else: ?>
+                <p>Jarred is unavailable for documents right now.</p>
+            <?php endif ?>
+        </div>
+    </details>
+    <?php if (env('DOCUMENT_ML_ENABLED','false')==='true'): ?>
+        <details>
+            <summary>Related documents</summary>
+            <div>
+                <small>Compare titles of documents you can access in this workspace.</small>
+                <p><button id="related" type="button">Find related files</button></p>
+                <div id="related-result" role="status"></div>
+            </div>
+        </details>
+    <?php endif ?>
+</dialog>
 <form id="launch" action="<?=coEscape($url)?>" method="post" target="office"><input type="hidden" name="access_token" value="<?=coEscape($issued['token'])?>"><input type="hidden" name="access_token_ttl" value="<?=$issued['ttl']?>"></form>
 <script nonce="<?=$nonce?>">
 const base=<?=json_encode(BASE_URL,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT)?>, csrf=<?=json_encode($csrf)?>, id=<?=$id?>, wid=<?=(int)$d['workspace_id']?>;
-document.getElementById('launch').submit();
-document.getElementById('launch').remove();
+const toolsDialog = document.getElementById('document-tools');
+const openTools = document.getElementById('open-document-tools');
+openTools.addEventListener('click', () => toolsDialog.showModal());
+document.getElementById('close-document-tools').addEventListener('click', () => toolsDialog.close());
+toolsDialog.addEventListener('close', () => openTools.focus());
+const officeFrame = document.querySelector('iframe[name="office"]');
+const launch = document.getElementById('launch');
+const officeOrigin = new URL(launch.action).origin;
+const narrowEditor = window.matchMedia('(max-width: 820px)');
+let officeLoaded = false;
+const launchedCompact = narrowEditor.matches;
+let compactRequested;
+
+function postToOffice(MessageId, Values = {}) {
+    officeFrame.contentWindow.postMessage(JSON.stringify({ MessageId, SendTime: Date.now(), Values }), officeOrigin);
+}
+
+function updateOfficeLayout() {
+    if (!officeLoaded) return;
+    const compact = narrowEditor.matches;
+    if (compact === compactRequested || (!compact && compactRequested === undefined && !launchedCompact)) return;
+    compactRequested = compact;
+    postToOffice('Action_ChangeUIMode', { Mode: compactRequested ? 'classic' : 'notebookbar' });
+}
+
+window.addEventListener('message', event => {
+    if (event.origin !== officeOrigin || event.source !== officeFrame.contentWindow) return;
+    let message;
+    try {
+        message = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+    } catch {
+        return;
+    }
+    if (message?.MessageId !== 'App_LoadingStatus') return;
+    const status = message.Values?.Status;
+    if (status === 'Initialized' || status === 'Frame_Ready' || status === 'Document_Loaded') {
+        postToOffice('Host_PostmessageReady');
+    }
+    if (status === 'Document_Loaded') {
+        officeLoaded = true;
+        updateOfficeLayout();
+    }
+});
+narrowEditor.addEventListener('change', updateOfficeLayout);
+
+if (launchedCompact) {
+    const defaults = document.createElement('input');
+    defaults.type = 'hidden';
+    defaults.name = 'ui_defaults';
+    defaults.value = 'UIMode=compact;TextSidebar=false;SpreadsheetSidebar=false;PresentationSidebar=false;';
+    launch.append(defaults);
+}
+launch.submit();
+launch.remove();
 document.getElementById('related')?.addEventListener('click',async()=>{const out=document.getElementById('related-result');out.textContent='Finding files…';try{const res=await fetch(base+'/API/collaboration/document-related.php',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({id})});const data=await res.json();out.textContent='';for(const file of data.related||[]){const p=document.createElement('p'),a=document.createElement('a');a.textContent=file.title;a.href=file.url;p.append(a);out.append(p);}if(!out.children.length)out.textContent='No semantic suggestions available.';}catch{out.textContent='Suggestions unavailable.';}});
-document.getElementById('ask').addEventListener('click',async()=>{const b=document.getElementById('ask'),r=document.getElementById('result');b.disabled=true;r.textContent='Preparing suggestion…';try{const res=await fetch(base+'/API/collaboration/document-ai.php',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({id,action:document.getElementById('task').value,text:document.getElementById('excerpt').value})});const data=await res.json();r.textContent=data.suggestion||data.error||'Suggestion unavailable.';}catch{r.textContent='Suggestion unavailable. Your document is unaffected.';}finally{b.disabled=false;}});
+document.getElementById('ask')?.addEventListener('click',async()=>{const b=document.getElementById('ask'),r=document.getElementById('result');b.disabled=true;r.textContent='Preparing suggestion…';try{const res=await fetch(base+'/API/collaboration/document-ai.php',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({id,action:document.getElementById('task').value,text:document.getElementById('excerpt').value})});const data=await res.json();r.textContent=data.suggestion||data.error||'Suggestion unavailable.';}catch{r.textContent='Suggestion unavailable. Your document is unaffected.';}finally{b.disabled=false;}});
 document.getElementById('upload').addEventListener('click',async()=>{const out=document.getElementById('upload-result'),f=new FormData();f.set('action','upload');f.set('workspace_id',wid);f.set('title',document.getElementById('upload-title').value);const file=document.getElementById('upload-file').files[0];if(!file){out.textContent='Choose a file.';return;}f.set('file',file);out.textContent='Uploading…';try{const res=await fetch(base+'/API/collaboration/document-manage.php',{method:'POST',headers:{'X-CSRF-Token':csrf},body:f});const data=await res.json();out.textContent=data.error||'Imported. ';if(data.url){const a=document.createElement('a');a.href=data.url;a.textContent='Open imported file';a.target='_blank';a.rel='noopener';out.append(a);}}catch{out.textContent='Upload failed.';}});
 document.getElementById('rename')?.addEventListener('click',async()=>{const out=document.getElementById('rename-result');try{const res=await fetch(base+'/API/collaboration/document-manage.php',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({action:'rename',id,title:document.getElementById('new-title').value})});const data=await res.json();out.textContent=data.success?'Renamed. Reopen after saving to update the editor title.':data.error;}catch{out.textContent='Rename failed.';}});
 document.getElementById('sharing')?.addEventListener('click',async()=>{const r=document.getElementById('sharing-result');try{const res=await fetch(base+'/API/collaboration/resource-access.php',{method:'PATCH',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({workspace_id:wid,resource_type:'document',resource_id:id,visibility:document.getElementById('visibility').value,public_permission:document.getElementById('public-permission').value})});const data=await res.json();r.textContent=data.success?'Sharing updated.':data.error||'Update failed.';}catch{r.textContent='Update failed.';}});

@@ -617,7 +617,7 @@ function disconnectVoice() {
   iceCandidateQueues = {};
 
   if (window.chatSocket && window.chatSocket.readyState === WebSocket.OPEN) {
-    window.chatSocket.send(JSON.stringify({ type: 'leave_voice' }));
+    window.chatSocket.send(JSON.stringify({ type: 'leave_voice', channel_id: vcChannelId }));
   }
 
   _reportVoiceStatus('leave', vcChannelId);
@@ -810,7 +810,9 @@ function openWhiteboard() {
     showToast('📋 Select a channel before opening the whiteboard', 'info');
     return;
   }
-  window.location.href = `${window.ECOLLAB?.baseUrl || ''}/modules/whiteboard/index.php?channel_id=${encodeURIComponent(channelId)}`;
+  const url = `${window.ECOLLAB?.baseUrl || ''}/modules/whiteboard/index.php?channel_id=${encodeURIComponent(channelId)}`;
+  if (window.EcollabCallContinuity) window.EcollabCallContinuity.navigate(url);
+  else window.location.href = url;
 }
 
 // ── Noise / Audio settings helpers ────────────────────────────────────────
@@ -1350,6 +1352,8 @@ function stopScreenShare() {
 
 // ── HTTP voice status reporting (for active-now polling) ──────────────────
 function _reportVoiceStatus(action, channelId) {
+  // The socket owns connected-tab leaves; an HTTP duplicate would erase other voice tabs.
+  if (action === 'leave' && window.chatSocket?.readyState === WebSocket.OPEN) return;
   const base = window.ECOLLAB?.baseUrl || '';
   const fd = new FormData();
   fd.append('action', action === 'join' ? 'join_voice' : 'leave_voice');
@@ -1827,11 +1831,11 @@ function _applyScreenWatchState(userId) {
   if (btn) {
     // Discord-style behavior: the card action starts watching. Once watched,
     // stopping is handled by the persistent control in the bottom call bar.
-    btn.textContent = 'Watch';
-    btn.setAttribute('aria-label', 'Watch screen share');
+    btn.textContent = watched ? 'Restore' : 'Watch and expand';
+    btn.setAttribute('aria-label', watched ? 'Stop watching this screen share' : 'Watch and expand screen share');
     btn.setAttribute('title', watched ? 'Currently watching' : 'Watch this screen');
     btn.classList.toggle('is-watching', watched);
-    btn.style.display = watched ? 'none' : '';
+    btn.style.display = '';
   }
   _syncScreenUnwatchControl();
 }

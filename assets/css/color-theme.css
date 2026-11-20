@@ -19,7 +19,6 @@ html:root :is(.cl-shell input,.cl-shell select,.cl-shell textarea,.cl-shell butt
 html:root :is(.cl-shell dialog,.cl-shell .cl-badge){background:var(--ec-raised);color:var(--ec-text);border-color:var(--ec-line)}
 html:root :is(.workspace-brand-mark,.workspace-server.active){border-color:var(--ec-accent)}
 html:root .workspace-logo-menu button:hover{background:var(--ec-accent-soft);outline-color:var(--ec-accent)}
-@media(min-width:861px){html:root #workspaceAccountDock .user-profile-footer{background:linear-gradient(var(--ec-surface),var(--ec-surface)) padding-box,linear-gradient(115deg,var(--ec-accent),var(--ec-accent2)) border-box;box-shadow:0 0 14px color-mix(in srgb,var(--ec-accent) 20%,transparent)}}
 /* Keep safety states distinct from cosmetic accents. */
 html:root.high-contrast{--ec-page:#000!important;--ec-surface:#000!important;--ec-raised:#151515!important;--ec-input:#000!important;--ec-line:#fff!important;--ec-text:#fff!important;--ec-muted:#fff!important;--ec-accent:#fde047!important;--ec-accent2:#fff!important;--ec-focus:#fde047!important}
 html:root.high-contrast[data-theme=light]{--ec-page:#fff!important;--ec-surface:#fff!important;--ec-raised:#eee!important;--ec-input:#fff!important;--ec-line:#000!important;--ec-text:#000!important;--ec-muted:#000!important;--ec-accent:#064e3b!important;--ec-accent2:#111!important;--ec-focus:#064e3b!important}
@@ -42,3 +41,41 @@ html:root body[data-mobile-surface="landing"] :is(.tablet-outer,.tab-body,.tab-s
 html:root body[data-mobile-surface="landing"] :is(.btn-start,.btn-cta,.cta-btn){background:var(--grad);color:#fff}
 html:root .send-btn{box-shadow:0 2px 12px var(--ec-accent-soft)}
 html:root .send-btn:hover{box-shadow:0 4px 18px var(--ec-accent-soft)}
+
+html:root[data-color-palette="custom"] {
+  --ec-page: var(--ec-custom-page);
+  --ec-surface: var(--ec-custom-surface);
+  --ec-raised: color-mix(in srgb, var(--ec-custom-surface) 91%, var(--ec-custom-text));
+  --ec-input: var(--ec-custom-surface);
+  --ec-line: color-mix(in srgb, var(--ec-custom-surface) 62%, var(--ec-custom-text));
+  --ec-text: var(--ec-custom-text);
+  --ec-muted: color-mix(in srgb, var(--ec-custom-text) 78%, var(--ec-custom-surface));
+  --ec-accent: var(--ec-custom-accent);
+  --ec-accent2: var(--ec-custom-accent);
+  --ec-primary: var(--ec-custom-primary);
+  --ec-primary-end: var(--ec-custom-primary);
+  --ec-button-text: var(--ec-custom-button-text);
+  --ec-focus: var(--ec-custom-accent);
+}
+html:root[data-color-palette="custom"]:not(.high-contrast) body[data-mobile-surface="chat"] .send-btn {
+  background: var(--ec-primary);
+  color: var(--ec-button-text);
+}
+.ec-palette-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 175px), 1fr)); gap: 12px; }
+.ec-color-field { display: grid; gap: 6px; padding: 12px; border: 1px solid var(--ec-line); border-radius: 10px; }
+.ec-color-field label { font-weight: 650; }
+.ec-color-field small { color: var(--ec-muted); font-size: .75rem; line-height: 1.45; }
+.ec-color-inputs { display: flex; align-items: center; gap: 8px; }
+.ec-color-inputs input[type="color"] { width: 46px; min-width: 46px; height: 44px; padding: 3px; cursor: pointer; }
+.ec-color-inputs input[type="text"] { width: 100%; min-width: 0; font-family: monospace; }
+.ec-palette-preview { margin-top: 14px; background: var(--ec-custom-page, var(--ec-page)); color: var(--ec-custom-text, var(--ec-text)); padding: 14px; border: 1px solid var(--ec-line); border-radius: 10px; }
+.ec-palette-preview > div { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 12px; border-radius: 8px; background: var(--ec-custom-surface, var(--ec-surface)); }
+.ec-palette-preview strong { color: var(--ec-custom-accent, var(--ec-accent)); }
+.ec-palette-preview span { padding: 5px 10px; border-radius: 6px; background: var(--ec-custom-primary, var(--ec-primary)); color: var(--ec-custom-button-text, var(--ec-button-text)); }
+#ecPaletteContrast[hidden] { display: none; }
+html:root .ec-theme-recovery {
+  background: #eaf0fc;
+  color: #14203b;
+  border-color: #8491ad;
+}
+html:root .ec-theme-recovery:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }

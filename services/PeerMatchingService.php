@@ -16,6 +16,8 @@ declare(strict_types=1);
  * The service intentionally contains no HTTP/session logic so it can be
  * tested independently from API/chat/peer-match.php.
  */
+require_once __DIR__.'/PeerBehaviorService.php';
+
 class PeerMatchingService
 {
     public const WEIGHT_SUBJECTS = 35;
@@ -93,20 +95,31 @@ class PeerMatchingService
         }
 
         $ruleTotal = round($total, 2);
+        $ruleTags = array_values(array_unique($tags));
         $usesML = $semantic !== null && is_finite($semantic) && $semantic >= 0 && $semantic <= 100;
         if ($usesML) {
             $total = $total * 0.75 + $semantic * 0.25;
             if ($semantic >= 60) $tags[] = 'Related study topics';
         }
 
+        $behavior = PeerBehaviorService::similarity($profileA['behavior'] ?? null, $profileB['behavior'] ?? null);
+        if ($behavior !== null) {
+            $total = $total * 0.8 + $behavior * 0.2;
+            if ($behavior >= 60) $tags[] = 'Similar learning activity';
+        }
+        $weights=$usesML
+            ? ['subjects'=>26.25,'style'=>18.75,'interests'=>18.75,'hobbies'=>11.25,'semantic'=>25]
+            : ['subjects'=>35,'style'=>25,'interests'=>25,'hobbies'=>15,'semantic'=>0];
+        if($behavior!==null){$weights=array_map(fn($w)=>$w*.8,$weights);$weights['behavior']=20;}
         return [
+            'behavior' => $behavior === null ? null : round($behavior, 2),
+            'behavior_weight' => $behavior === null ? 0 : 20,
             'total' => round($total, 2),
             'rule_total' => $ruleTotal,
+            'rule_tags' => $ruleTags,
             'semantic' => $usesML ? round($semantic, 2) : null,
-            'engine' => $usesML ? 'hybrid-v1' : 'rules-v1',
-            'weights' => $usesML
-                ? ['subjects'=>26.25, 'style'=>18.75, 'interests'=>18.75, 'hobbies'=>11.25, 'semantic'=>25]
-                : ['subjects'=>35, 'style'=>25, 'interests'=>25, 'hobbies'=>15, 'semantic'=>0],
+            'engine' => $behavior !== null ? ($usesML ? 'hybrid-behavior-v1' : 'rules-behavior-v1') : ($usesML ? 'hybrid-v1' : 'rules-v1'),
+            'weights' => $weights,
 
             'subjects' => round($subjects['score'], 2),
             'style' => round($style['score'], 2),
@@ -556,58 +569,48 @@ class PeerMatchingService
      */
     public function loadProfile(PDO $db, int $userId): array
     {
-        $prefsStmt = $db->prepare(
-            'SELECT * FROM pm_user_study_prefs WHERE user_id = :user_id LIMIT 1'
-        );
+        return $this->loadProfiles($db, [$userId])[$userId];
+    }
 
-        $prefsStmt->execute([
-            ':user_id' => $userId,
+    /** Load bounded groups of profiles, indexed by user ID. */
+    public function loadProfiles(PDO $db, array $userIds): array
+    {
+        $ids = array_values(array_unique(array_map('intval', $userIds)));
+        $profiles = array_fill_keys($ids, [
+            'prefs' => [], 'subjects' => [], 'interests' => [], 'hobbies' => [], 'behavior' => null,
         ]);
-
-        $prefs = $prefsStmt->fetch(PDO::FETCH_ASSOC) ?: [];
-
-        $subjectsStmt = $db->prepare(
-            'SELECT p.subject_id, p.role, p.proficiency, t.name
-             FROM pm_user_subjects p JOIN pm_subjects t ON t.id = p.subject_id
-             WHERE p.user_id = :user_id'
-        );
-
-        $subjectsStmt->execute([
-            ':user_id' => $userId,
-        ]);
-
-        $subjects = $subjectsStmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $interestsStmt = $db->prepare(
-            'SELECT p.interest_id, t.name
-             FROM pm_user_interests p JOIN pm_interest_tags t ON t.id = p.interest_id
-             WHERE p.user_id = :user_id'
-        );
-
-        $interestsStmt->execute([
-            ':user_id' => $userId,
-        ]);
-
-        $interests = $interestsStmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $hobbiesStmt = $db->prepare(
-            'SELECT p.hobby_id, t.name
-             FROM pm_user_hobbies p JOIN pm_hobby_tags t ON t.id = p.hobby_id
-             WHERE p.user_id = :user_id'
-        );
-
-        $hobbiesStmt->execute([
-            ':user_id' => $userId,
-        ]);
-
-        $hobbies = $hobbiesStmt->fetchAll(PDO::FETCH_ASSOC);
-
-        return [
-            'prefs' => $prefs,
-            'subjects' => $subjects,
-            'interests' => $interests,
-            'hobbies' => $hobbies,
-        ];
+        foreach (array_chunk($ids, 100) as $chunk) {
+            $parameters = implode(',', array_fill(0, count($chunk), '?'));
+            $queries = [
+                'prefs' => "SELECT * FROM pm_user_study_prefs WHERE user_id IN ($parameters)",
+                'subjects' => "SELECT p.user_id, p.subject_id, p.role, p.proficiency, t.name
+                    FROM pm_user_subjects p JOIN pm_subjects t ON t.id = p.subject_id
+                    WHERE p.user_id IN ($parameters) ORDER BY p.user_id, p.subject_id",
+                'interests' => "SELECT p.user_id, p.interest_id, t.name
+                    FROM pm_user_interests p JOIN pm_interest_tags t ON t.id = p.interest_id
+                    WHERE p.user_id IN ($parameters) ORDER BY p.user_id, p.interest_id",
+                'hobbies' => "SELECT p.user_id, p.hobby_id, t.name
+                    FROM pm_user_hobbies p JOIN pm_hobby_tags t ON t.id = p.hobby_id
+                    WHERE p.user_id IN ($parameters) ORDER BY p.user_id, p.hobby_id",
+            ];
+            foreach ($queries as $key => $sql) {
+                $statement = $db->prepare($sql);
+                $statement->execute($chunk);
+                foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                    $id = (int)$row['user_id'];
+                    if ($key === 'prefs') {
+                        $profiles[$id][$key] = $row;
+                    } else {
+                        unset($row['user_id']);
+                        $profiles[$id][$key][] = $row;
+                    }
+                }
+            }
+            foreach ((new PeerBehaviorService($db))->profiles($chunk) as $id => $behavior) {
+                $profiles[$id]['behavior'] = $behavior;
+            }
+        }
+        return $profiles;
     }
 
     /**

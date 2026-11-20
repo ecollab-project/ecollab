@@ -7,6 +7,9 @@ const a=client(1),b=client(2);
 try{
  a.provider.receive({type:'joined_channel',channel_id:20,presence:[]});b.provider.receive({type:'joined_channel',channel_id:20,presence:[canonical(a,a.messages.at(-1))]});assert.equal(b.states.size,2);
  a.provider.typing(true);const typing=a.messages.at(-1);assert.equal(typing.state.typing,true);assert(!Object.hasOwn(typing.state,'text'),'no draft text is sent');
+ a.provider.receive({type:'joined_channel',channel_id:20,presence:[]});
+ assert.equal(a.messages.at(-1).client_id,typing.client_id,'repeat acknowledgement preserves connection-bound identity');
+ assert(a.messages.at(-1).clock>typing.clock,'rejoin advances awareness clock');
  const before=b.messages.length;b.provider.receive({type:'chat_presence',channel_id:20,presence:canonical(a,typing)});assert.equal(b.messages.length,before);assert([...b.states.values()].some(s=>s.user?.id===1&&s.typing));
  for(const callback of a.timers.values())callback();assert.equal(a.messages.at(-1).state.typing,false,'typing stops after idle timeout');
  a.provider.preferences({activity_status:0});assert.equal(a.messages.at(-1).state,null,'Invisible status publishes a tombstone');a.provider.preferences({activity_status:1});assert(a.messages.at(-1).state,'Visibility can be restored');

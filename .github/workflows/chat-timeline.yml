@@ -17,5 +17,7 @@ jobs:
       - run: node tests/chat-profile-regression.cjs
       - run: node tests/chat-members-regression.cjs
       - run: php tests/chat-read-regression.php
+      - run: php tests/chat-mentions-regression.php
+      - run: php tests/admin-workspace-regression.php
       - run: |
           for file in API/chat/get-messages.php API/dm/open-conversation.php API/dm/group-message.php API/dm/groups.php API/profile/get-profile.php services/ChatReadService.php modules/chat/chat.php; do php -l "$file" || exit 1; done

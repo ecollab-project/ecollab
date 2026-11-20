@@ -9,6 +9,7 @@
   let activeChannelId = null;
   let screenQuality = null;
   let mediaBusy = false;
+  let screenBusy = false;
   let preferredMicMuted = vcMicMuted;
   let preferredDeafened = vcDeafened;
   let countFetchBusy = false;
@@ -126,6 +127,7 @@
     syncScreenControls();
     _syncVoiceQuickActions();
     refreshParticipantCounts();
+    window.EcollabCallContinuity?.refresh();
   }
 
   function syncParticipantState(participant) {
@@ -236,32 +238,17 @@
         if (typeof _showRemoteScreenShareSection === 'function') {
           _showRemoteScreenShareSection(uid, username, stream);
         }
+        // Adaptive streaming observes the SDK's attached elements. A raw cloned
+        // MediaStream alone leaves the subscriber invisible and can pause video.
+        const screenVideo = document.getElementById('vcScreenGrid')
+          ?.querySelector('[data-screen-user="' + uid + '"] .vc-screen-card-video');
+        if (screenVideo) {
+          track.attach(screenVideo);
+          screenVideo.play().catch(() => {});
+        }
 
-        // Ensure the screen-share card always has a visible Watch/Unwatch
-        // control even when the card was created by the LiveKit path.
-        requestAnimationFrame(() => {
-          const card = document.getElementById('vcScreenGrid')?.querySelector('[data-screen-user="' + uid + '"]');
-          if (!card) return;
-          let wrap = card.querySelector('.vc-screen-card-watch');
-          if (!wrap) {
-            wrap = document.createElement('div');
-            wrap.className = 'vc-screen-card-watch';
-            card.appendChild(wrap);
-          }
-          let btn = wrap.querySelector('.vc-screen-watch-btn');
-          if (!btn) {
-            btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'vc-screen-watch-btn';
-            wrap.appendChild(btn);
-          }
-          btn.onclick = event => {
-            event.stopPropagation();
-            if (typeof toggleScreenWatch === 'function') toggleScreenWatch(uid);
-          };
-          if (typeof _applyScreenWatchState === 'function') _applyScreenWatchState(uid);
-          else btn.textContent = 'Watch';
-        });
+        // voice.js owns the Watch listener. A second onclick here would toggle
+        // expansion twice on one click (remote shares only).
         return;
       }
 
@@ -458,9 +445,16 @@
 
   async function setScreen(enabled) {
     if (!room) throw new Error('Not connected to voice.');
+    const targetRoom = room;
     const options = window.EcollabMediaSettings.screenOptions(screenQuality || window.EcollabMediaSettings.preferences.quality);
-    await room.localParticipant.setScreenShareEnabled(Boolean(enabled), options.capture, options.publish);
-    vcScreenOn = room.localParticipant.isScreenShareEnabled;
+    await targetRoom.localParticipant.setScreenShareEnabled(Boolean(enabled), options.capture, options.publish);
+    // The native chooser can outlive the call. Never attach a late capture to
+    // a new room or leave its tracks running after the user has disconnected.
+    if (room !== targetRoom) {
+      await targetRoom.localParticipant.setScreenShareEnabled(false);
+      return;
+    }
+    vcScreenOn = targetRoom.localParticipant.isScreenShareEnabled;
     syncScreenControls();
 
     const uid = Number(window.ECOLLAB?.userId || 0);
@@ -504,7 +498,7 @@
       console.warn('[LiveKit] Ignored server voice join during DM group call flow.');
       return;
     }
-    if (window.EcollabCalls?.busy()) { showToast('Leave your current call first.', 'info'); return; }
+    if (window.EcollabCalls?.busy() || window.EcollabCallContinuity?.remoteActive()) { showToast('Leave your current call first.', 'info'); return; }
     if (vcActive && Number(vcChannelId) === Number(channelId)) { toggleVcMinimize(); return; }
     if (vcActive) await disconnectVoice();
     vcMicMuted = preferredMicMuted; vcCamOn = false; vcScreenOn = false; vcDeafened = preferredDeafened;
@@ -515,6 +509,7 @@
     if (el) el.classList.add('connected');
 
     vcActive = true;
+    window.EcollabCallContinuity?.refresh();
     vcMinimized = false;
     vcChannelId = Number(channelId);
     vcRoomName = roomNameOverride || el?.textContent?.trim()?.replace(/\\d+/g, '').trim() || 'Voice Channel';
@@ -537,6 +532,7 @@
       if (typeof _reportVoiceStatus === 'function') _reportVoiceStatus('join', channelId);
       window.wsSend?.({type:'join_voice',channel_id:Number(channelId)});
       refreshParticipantCounts();
+      window.EcollabCallContinuity?.refresh();
       showToast('🔊 Joined ' + vcRoomName, 'success');
     } catch (err) {
       console.error('[LiveKit] join failed', err);
@@ -553,6 +549,7 @@
     const leavingChannel = vcChannelId;
     vcActive = false;
     await disconnect();
+    window.EcollabCallContinuity?.refresh();
     vcMinimized = false;
     vcCamOn = false;
     vcScreenOn = false;
@@ -614,6 +611,7 @@
   }
   toggleScreenShare = function () {
     if (!room) return;
+    if (screenBusy) { showToast('Finish or cancel the browser screen chooser first.', 'info'); return; }
     if (!navigator.mediaDevices?.getDisplayMedia) { showToast('Screen sharing is unavailable in this browser.', 'info'); return; }
     if (vcScreenOn) stopScreenShare(); else {
       const selected=screenQuality||window.EcollabMediaSettings.preferences.quality;
@@ -626,12 +624,22 @@
     document.querySelectorAll('.screen-quality-btn').forEach(el=>el.classList.toggle('active',el===button));
   };
   startStopScreenShare = async function () {
-    if (!room || mediaBusy) return;
-    mediaBusy = true;
-    try { await setScreen(!vcScreenOn); closeModal('vcScreenModal'); }
-    catch (e) { showToast('Screen share: '+e.message,'info'); }
-    finally { mediaBusy = false; }
+    if (!room || screenBusy) return;
+    screenBusy = true;
+    const button = document.getElementById('vcScreenStartBtn');
+    if (button) button.disabled = true;
+    try {
+      // Request capture in this click's activation, then dismiss our setup
+      // overlay before waiting on the browser's own chooser. Mic/camera and
+      // leave-call controls remain usable while that chooser is pending.
+      const operation = setScreen(!vcScreenOn);
+      closeModal('vcScreenModal');
+      await operation;
+    }
+    catch (e) { showToast(e.name === 'NotAllowedError' ? 'Screen sharing cancelled or not permitted.' : 'Screen share: '+e.message,'info'); }
+    finally { screenBusy = false; if (button) button.disabled = false; }
   };
+  closeScreenShare = function () { closeModal('vcScreenModal'); };
   stopScreenShare = async function () {
     if (!room) return;
     try { await setScreen(false); } catch(e) { showToast(e.message,'info'); }
@@ -642,13 +650,14 @@
     document.querySelectorAll('audio.livekit-media-track').forEach(el=>el.muted=vcDeafened);
     document.getElementById('vcDeafBtn')?.classList.toggle('muted-state',vcDeafened);
     _syncVoiceQuickActions();
+    window.EcollabCallContinuity?.refresh();
   };
   toggleMute = function (event) { event?.stopPropagation(); return toggleVcMic(); };
   toggleDeafen = function (event) { event?.stopPropagation(); return toggleVcDeafen(); };
   openAudioSettings = function () { if(room) window.EcollabMediaSettings.open(room); };
   openNoiseCancelModal = openAudioSettings;
   // Keep deferred inline event stubs aligned with the media adapter.
-  for (const name of ['joinVoice','disconnectVoice','toggleVcMic','toggleCamera','toggleScreenShare','startStopScreenShare','stopScreenShare','selectScreenQuality','toggleVcDeafen','toggleMute','toggleDeafen','openAudioSettings','openNoiseCancelModal']) window['__real_'+name]=window[name];
+  for (const name of ['joinVoice','disconnectVoice','toggleVcMic','toggleCamera','toggleScreenShare','closeScreenShare','startStopScreenShare','stopScreenShare','selectScreenQuality','toggleVcDeafen','toggleMute','toggleDeafen','openAudioSettings','openNoiseCancelModal']) window['__real_'+name]=window[name];
 
   _syncVoiceQuickActions();
 

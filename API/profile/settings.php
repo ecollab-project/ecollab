@@ -51,7 +51,11 @@ try {
         if (!array_key_exists($key,$body)) continue;
         $value=$body[$key];
         if (is_array($value)||is_object($value)) {http_response_code(422);echo json_encode(['error'=>'Invalid setting value']);exit;}
-        if ($key==='color_palette' && (!is_string($value) || !ColorPaletteService::valid($value))) { http_response_code(422); echo json_encode(['error'=>'Unknown color palette']); exit; }
+        if ($key==='color_palette' && (!is_string($value) || ($value !== 'custom' && !ColorPaletteService::valid($value)))) { http_response_code(422); echo json_encode(['error'=>'Unknown color palette']); exit; }
+        if (in_array($key, ['custom_palette', 'workspace_layout'], true)) {
+            $value = WorkspaceCustomization::normalize($key, $value);
+            if ($value === null) { http_response_code(422); echo json_encode(['error'=>'Invalid customization']); exit; }
+        }
         if (is_int($defaults[$key])) {
             $value=(int)(bool)$value;
             if (in_array($key,['mic_volume','output_volume','input_sensitivity'],true)) $value=max(0,min(100,(int)$body[$key]));
@@ -74,6 +78,10 @@ try {
         ensureSettings($db,$userId,$defaults);
         $sql='UPDATE user_settings SET '.implode(', ',$updates).' WHERE user_id=:id LIMIT 1';
         $stmt=$db->prepare($sql); $stmt->execute($params);
+    }
+    if (array_key_exists('ai_matching',$body) && !(int)$params[':ai_matching']) {
+        require_once ROOT_PATH.'/services/PeerBehaviorService.php';
+        (new PeerBehaviorService($db))->clear($userId);
     }
     $stmt=$db->prepare('SELECT * FROM user_settings WHERE user_id=:id LIMIT 1');
     $stmt->execute([':id'=>$userId]);

@@ -169,12 +169,9 @@ function sendRecording() {
   const msgEl = document.createElement('div');
   msgEl.className = 'message-group';
   const user = window.ECOLLAB || {};
-  const grad = user.avatarGradient || '#a855f7,#ec4899';
-  const [c1, c2] = grad.split(',');
-  const init = (user.username || 'Me')[0].toUpperCase();
   msgEl.innerHTML = `
     <div class="msg-avatar">
-      <div class="avatar-placeholder" style="width:36px;height:36px;font-size:14px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;position:relative;">${init}<div class="online-dot"></div></div>
+      ${messageAvatarMarkup(user.fullName || user.username || 'Me', user.avatarUrl, user.avatarGradient)}
     </div>
     <div class="msg-content">
       <div class="msg-header">
@@ -368,9 +365,20 @@ async function castPollVote(msgId, pollId, optionId) {
 // SEARCH OVERLAY
 // ═══════════════════════════════════════════════════════
 function openSearchModal() {
+  _searchReturnFocus = document.activeElement;
   if (window.openModal) openModal('searchOverlay');
   setTimeout(() => document.getElementById('searchInput')?.focus(), 100);
 }
+
+let _searchReturnFocus = null;
+document.addEventListener('keydown', event => {
+  const overlay = document.getElementById('searchOverlay');
+  if (event.key === 'Escape' && overlay?.style.display === 'flex') {
+    event.preventDefault();
+    window.closeModal?.('searchOverlay');
+    _searchReturnFocus?.focus();
+  }
+});
 
 function closeSearchOverlay(event) {
   if (event.target === document.getElementById('searchOverlay')) {
@@ -396,7 +404,7 @@ function searchMessages(query) {
       const rows=data.results||[];
       if(!rows.length){resultsEl.innerHTML='<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">No matching messages found.</div>';return;}
       resultsEl.innerHTML=rows.map(m=>{
-        const author=_esc(m.full_name||m.username||'User'), channel=_esc(m.channel_name||'channel'), text=_esc(m.content||''), time=_esc(m.created_at||'');
+        const author=_esc(m.full_name||m.username||'User'), channel=_esc(m.channel_name||'channel'), text=_esc(window.plainMentionText?.(m.content) ?? m.content), time=_esc(window.EcollabTimeline?.stamp(m.created_at)||m.created_at||'');
         return '<button type="button" onclick="_openSearchResult('+Number(m.channel_id)+','+Number(m.id)+')" style="display:block;width:100%;text-align:left;padding:10px;background:var(--bg-tertiary);border-radius:8px;margin-bottom:8px;cursor:pointer;border:1px solid var(--border);color:inherit"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;"><strong style="color:var(--text-primary)">'+author+'</strong> · #'+channel+' · '+time+'</div><div style="font-size:13px;color:var(--text-secondary);white-space:normal;word-break:break-word;">'+text+'</div></button>';
       }).join('');
     }catch(e){resultsEl.innerHTML='<div style="text-align:center;color:#f87171;font-size:13px;padding:20px 0;">'+_esc(e.message||'Search failed')+'</div>';}
@@ -544,9 +552,12 @@ function _getPlaceholderActiveUsers() {
 // ═══════════════════════════════════════════════════════
 let _membersTab = 'all';
 let _membersSearch = '';
+let _membersAccountType = '';
 
 async function openMembersPanel() {
-  _membersTab = 'all'; _membersSearch = '';
+  _membersTab = 'all'; _membersSearch = ''; _membersAccountType = '';
+  const accountFilter = document.getElementById('membersAccountType');
+  if (accountFilter) accountFilter.value = '';
   const inp = document.getElementById('membersSearch');
   if (inp) inp.value = '';
   document.querySelectorAll('#membersStatusTabs .filter-tab').forEach((t, i) => t.classList.toggle('active', i === 0));
@@ -571,6 +582,7 @@ function _renderMembersModal() {
   const source = _getModalMembersSource();
   let data = source;
   if (_membersTab !== 'all') data = data.filter(m => m.status === _membersTab);
+  if (_membersAccountType) data = data.filter(m => m.accountType === _membersAccountType);
   if (_membersSearch) data = data.filter(m => m.name.toLowerCase().includes(_membersSearch) || (m.role || '').toLowerCase().includes(_membersSearch));
   if (!data.length) { container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px;font-size:13px;">No members found</div>'; return; }
   const order = ['online', 'idle', 'offline'];
@@ -590,7 +602,7 @@ function _renderMembersModal() {
           <div style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;border:2px solid var(--bg-secondary);background:${dotColor};"></div>
         </div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${_esc(m.name)}</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${_esc(m.name)} ${window.chatAccountBadge?.(m.accountType) || ''}</div>
           <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(m.role || 'Member')}</div>
         </div>
         <button onclick="event.stopPropagation();sendConnectionRequest(this,${m.id || 0})"
@@ -606,6 +618,7 @@ function _getModalMembersSource() {
   if (Array.isArray(window.serverMembers)) return window.serverMembers.map(m => ({
     id: Number(m.id), name: m.full_name || m.nickname || m.username || '?',
     role: m.server_role || m.role || 'Member', grad: m.avatar_color_gradient,
+    accountType: m.account_type || 'personal',
     status: Number(m.is_online) === 1 ? 'online' : 'offline',
   }));
   // Fallback for older pages without the directory loader.
@@ -619,11 +632,16 @@ function _getModalMembersSource() {
       const isOffline = item.querySelector('.online-dot.offline') !== null;
       const id = parseInt(item.dataset.userId || 0);
       const grad = item.dataset.userGrad || '#3b82f6,#6366f1';
-      result.push({ id, name, role, status: isOffline ? 'offline' : isOnline ? 'online' : 'idle', grad });
+      result.push({ id, name, role, accountType: item.dataset.accountType || 'personal', status: isOffline ? 'offline' : isOnline ? 'online' : 'idle', grad });
     });
     return result;
   }
   return [];
+}
+
+function filterMembersByAccountType(type) {
+  _membersAccountType = type;
+  _renderMembersModal();
 }
 
 function switchMembersTab(btn, tab) {
@@ -751,7 +769,7 @@ let _currentView = 'home';
 
 const _navViewConfigs = {
   mentions: { icon: '@', label: 'Mentions', desc: 'Messages that mentioned you', color: '#a855f7' },
-  bookmarks: { icon: '📌', label: 'Pinned', desc: 'All pinned messages across this server', color: '#f59e0b' },
+  bookmarks: { icon: '🔖', label: 'Bookmarks', desc: 'Saved messages and discussions across your spaces', color: '#f59e0b' },
   threads: { icon: '💬', label: 'Threads', desc: 'Direct messages with server members', color: '#22c55e' },
   drafts: { icon: '📝', label: 'Drafts', desc: 'Unsent messages', color: '#3b82f6' },
 };
@@ -775,16 +793,16 @@ async function _fetchNavViewData(viewName) {
       (json.items || []).forEach(i => _mentionMessages.push(i));
     } catch (e) {
       // Fall back to localStorage mentions if API fails
-      const data = window._mentions || JSON.parse(localStorage.getItem('ec_mentions') || '[]');
+      const data = window._mentions || JSON.parse(localStorage.getItem(window.chatMentionStorageKey) || '[]');
       _mentionMessages.length = 0;
       data.forEach(i => _mentionMessages.push(i));
     }
     // Mark all as read when viewing
-    localStorage.setItem('ec_mentions', JSON.stringify([]));
+    localStorage.setItem(window.chatMentionStorageKey, JSON.stringify([]));
     if (window._updateMentionBadge) window._updateMentionBadge();
   }
   if (viewName === 'bookmarks') {
-    // Fetch server-wide pinned messages from the API
+    // Fetch bookmarked messages and accessible saved discussions from the API
     try {
       const apiBase = window.API_BASE || '/API/chat';
       const resp = await fetch(`${apiBase}/nav-view-data.php?view=bookmarks`, { credentials: 'same-origin' });
@@ -949,8 +967,8 @@ function _renderNavView(viewName, overlay) {
           <span>${_esc(m.time)}</span>
         </div>
         <div style="display:flex;gap:10px;">
-          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#6366f1);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">${m.letter}</div>
-          <div><div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:2px;">${_esc(m.author)}</div><div style="font-size:12px;color:var(--text-secondary);">${_esc(m.text)}</div></div>
+          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#6366f1);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">${_esc(m.letter)}</div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:2px;">${_esc(m.author)}</div><div style="font-size:12px;color:var(--text-secondary);">${_esc(window.plainMentionText?.(m.text) ?? m.text)}</div></div>
         </div>
         <div style="display:flex;gap:8px;margin-top:8px;">
           <button onclick="event.stopPropagation()" style="font-size:11px;padding:4px 10px;border-radius:6px;background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.2);color:#c084fc;cursor:pointer;font-family:inherit;">↩ Reply</button>
@@ -969,7 +987,7 @@ function _renderNavView(viewName, overlay) {
           <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,${_esc(m.grad || '#a855f7,#ec4899')});display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">${_esc(m.letter || '?')}</div>
           <div style="flex:1;min-width:0;">
             <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:3px;">${_esc(m.author)}</div>
-            <div style="font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${_esc(m.text)}</div>
+            <div style="font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${_esc(window.plainMentionText?.(m.text) ?? m.text)}</div>
             ${m.image_url ? `<img src="${_esc(m.image_url)}" alt="${_esc(m.image_name || 'Bookmarked discussion image')}" loading="lazy" style="display:block;width:100%;max-width:520px;max-height:300px;object-fit:cover;border-radius:9px;border:1px solid var(--border);margin-top:10px;background:var(--bg-secondary);">` : ''}
           </div>
         </div>
@@ -1005,9 +1023,9 @@ function _renderNavView(viewName, overlay) {
           <span style="font-size:14px;">📝</span>
           <span>#${m.channelId ? _esc(m.channel || m.channelId) : 'unknown'} · Saved ${_esc(m.saved || '')}</span>
         </div>
-        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;">${_esc(m.text)}</div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;">${_esc(window.plainMentionText?.(m.text) ?? m.text)}</div>
         <div style="display:flex;gap:8px;">
-          <button onclick="event.stopPropagation();_editDraftInChannel('${m.channelId}','${m.text}')" style="font-size:11px;padding:4px 10px;border-radius:6px;background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.2);color:#c084fc;cursor:pointer;font-family:inherit;">✏️ Edit in channel</button>
+          <button onclick="event.stopPropagation();_editDraftInChannel(${Number(m.channelId) || 0})" style="font-size:11px;padding:4px 10px;border-radius:6px;background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.2);color:#c084fc;cursor:pointer;font-family:inherit;">✏️ Edit in channel</button>
           <button onclick="event.stopPropagation();_deleteDraftById('${m.channelId}');this.closest('div[style]').remove()" style="font-size:11px;padding:4px 10px;border-radius:6px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:#f87171;cursor:pointer;font-family:inherit;">🗑 Delete</button>
         </div>
       </div>`).join('') || _nvEmpty('No drafts saved.');
@@ -1081,6 +1099,7 @@ function switchSettingsTab(tabId, navEl) {
 }
 
 function handleLogout() {
+  window.EcollabCallContinuity?.endAll().catch(()=>{});
   if (window.closeModal) closeModal('platformSettingsModal');
   if (window.showToast) showToast('👋 Logging out…', 'info');
   setTimeout(() => { window.location.href = (window.ECOLLAB?.baseUrl || window.ECOLLAB_BASE || '') + '/modules/auth/logout.php'; }, 800);
@@ -1097,7 +1116,8 @@ function goToDashboard() {
   } else {
     url = base + '/modules/student/dashboard.php';
   }
-  window.location.href = url;
+  if (window.EcollabCallContinuity) window.EcollabCallContinuity.navigate(url);
+  else window.location.href = url;
 }
 
 function applyTheme(theme, el) {
@@ -1135,7 +1155,9 @@ function _vcNoop(name) { if (typeof window[name] === 'function' && window[name] 
 function openWhiteboard(boardName, channelId) {
   const targetChannelId = channelId || window.ECOLLAB?.currentChannelId || window.__currentChannelId;
   if (targetChannelId && !window.ECOLLAB?.whiteboardStandalone) {
-    window.location.href = `${window.ECOLLAB?.baseUrl || ''}/modules/whiteboard/index.php?channel_id=${encodeURIComponent(targetChannelId)}`;
+    const url = `${window.ECOLLAB?.baseUrl || ''}/modules/whiteboard/index.php?channel_id=${encodeURIComponent(targetChannelId)}`;
+    if (window.EcollabCallContinuity) window.EcollabCallContinuity.navigate(url);
+    else window.location.href = url;
     return;
   }
   if (window._wbOpen) { window._wbOpen(boardName, channelId); return; }
@@ -1602,7 +1624,7 @@ async function openChatNotification(el) {
   if (link) {
     try {
       const url = new URL(link, window.location.origin);
-      if (url.origin === window.location.origin) { window.location.href = url.href; return; }
+      if (url.origin === window.location.origin) { if(window.EcollabCallContinuity)window.EcollabCallContinuity.navigate(url.href);else window.location.href = url.href; return; }
     } catch (e) {}
   }
 }
@@ -1823,15 +1845,15 @@ function _removeBookmark(msgId) {
 function _deleteDraftById(channelId) {
   if (window._deleteDraft) window._deleteDraft(channelId);
 }
-function _editDraftInChannel(channelId, text) {
+async function _editDraftInChannel(channelId) {
+  if (!channelId) return;
   switchView('home', document.querySelector('.sidebar-nav-item'));
   const channelEl = document.querySelector(`.channel-item[data-channel-id="${channelId}"]`);
   if (channelEl && window.switchChannel) {
-    window.switchChannel(channelEl, parseInt(channelId));
-    setTimeout(() => {
-      const inputEl = document.getElementById('chatInputField');
-      if (inputEl) { inputEl.value = text; inputEl.focus(); }
-    }, 600);
+    await window.switchChannel(channelEl, channelId);
+    if (Number(window.ECOLLAB?.currentChannelId) !== channelId) return;
+    window.resumeChannelDraft?.(channelId);
+    document.getElementById('chatInputField')?.focus();
   }
 }
 window._jumpToBookmark = _jumpToBookmark;

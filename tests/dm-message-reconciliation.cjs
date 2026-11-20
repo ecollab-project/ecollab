@@ -1,0 +1,18 @@
+'use strict';
+const {JSDOM}=require('jsdom'),fs=require('fs'),assert=require('node:assert/strict');
+const dom=new JSDOM('<div id="dmMessagesArea"></div>',{url:'https://ecollab.test',runScripts:'outside-only'}),w=dom.window;
+w.ECOLLAB={userId:7};w.setTimeout=()=>0;w.CSS={escape:String};
+w.eval(fs.readFileSync('assets/js/chat/timeline.js','utf8'));
+let source=fs.readFileSync('assets/js/chat/dm-notifications.js','utf8');const a=source.indexOf("if (document.readyState === 'loading') {"),b=source.indexOf('// Export for global access',a);source=source.slice(0,a)+source.slice(b);
+w.eval(source+'\nwindow.fixtureAppend=_appendDmMessage;window.fixtureDM=DM;');w.fixtureDM.activeConvId=1;w.fixtureDM.activePartnerIsAI=true;
+const area=w.document.getElementById('dmMessagesArea'),nonce='b7fce7d0-174e-42d5-8ff7-118cf44c7461';
+const msg={sender_id:7,body:'same text',created_at:'2026-11-03 00:00:00',client_message_id:nonce};
+w.fixtureAppend({...msg,id:'opt_'+nonce});w.fixtureAppend({...msg,id:101});
+assert.equal(area.querySelectorAll('[data-msg-id]').length,1,'canonical polling echo must replace exact optimistic send before HTTP reply');
+w.fixtureAppend({...msg,id:101});assert.equal(area.querySelectorAll('[data-msg-id]').length,1,'repeated delivery is idempotent');
+w.fixtureAppend({...msg,id:102,client_message_id:'6d9a31b0-7544-46a2-86ad-81ba2d097044'});assert.equal(area.querySelectorAll('[data-msg-id]').length,2,'intentional repeated text remains distinct');
+area.innerHTML='';w.EcollabTimeline.reset(area);w.fixtureAppend({...msg,id:'opt_legacy'});area.querySelector('[data-msg-id]').dataset.msgId='103';
+assert(w.EcollabTimeline.has(area,103),'timeline index heals a changed optimistic id');w.fixtureAppend({...msg,id:103});assert.equal(area.querySelectorAll('[data-msg-id]').length,1,'ack before polling does not duplicate');
+area.innerHTML='';w.EcollabTimeline.reset(area);w.fixtureAppend({...msg,id:'opt_uncertain'});w.fixtureAppend({...msg,id:104,client_message_id:undefined});w.fixtureAppend({...msg,id:104});assert.equal(area.querySelectorAll('[data-msg-id]').length,1,'late identity from polling reconciles an earlier uncorrelated delivery');
+area.innerHTML='';w.EcollabTimeline.reset(area);w.fixtureAppend({...msg,id:'opt_owner'});w.fixtureAppend({...msg,id:105,sender_id:8});assert.equal(area.querySelectorAll('[data-msg-id]').length,2,'another sender cannot claim an optimistic send identity');
+w.close();console.log('PASS: before/after HTTP races, repeated delivery, intentional identical messages and timeline ID repair');

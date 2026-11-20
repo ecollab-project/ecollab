@@ -20,6 +20,8 @@ final class CodeLabService
         $row = $this->query('SELECT s.id,s.name,s.owner_id,u.role FROM servers s JOIN server_members m ON m.server_id=s.id JOIN users u ON u.id=m.user_id WHERE s.id=? AND m.user_id=? AND s.status=? AND u.deleted_at IS NULL AND u.status NOT IN ("banned","suspended","deactivated")', [$sid,$uid,'active'])->fetch(PDO::FETCH_ASSOC);
         if (!$row) self::fail('You are not a member of this active server.',403);
         $row['can_manage'] = in_array($row['role'],['facilitator','admin','super_admin'],true);
+        $row['can_publish'] = in_array($row['role'], ['admin','super_admin'], true)
+            || ($row['role'] === 'facilitator' && (int)$row['owner_id'] === $uid);
         return $row;
     }
     private function task(int $tid, int $sid): array
@@ -69,9 +71,18 @@ final class CodeLabService
         if ($date->format('Y-m-d\TH:i:s')!==substr($value,0,19)) self::fail('Invalid calendar date.');
         return $date->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
     }
+    public function assistance(int $sid,int $uid,string $focus='workflow'): array
+    {
+        $this->member($sid,$uid);
+        require_once __DIR__.'/JarredAssistancePolicy.php';
+        require_once __DIR__.'/UserPreferences.php';
+        UserPreferences::assertJarred(UserPreferences::get($this->db,$uid));
+        $task=CodeLabIntegrityPolicy::activeAttempt($this->db,$uid);
+        return ['mode'=>$task?'workflow':'normal','focus'=>CodeLabIntegrityPolicy::focus($focus),'message'=>$task?CodeLabIntegrityPolicy::workflow($task,$focus):JarredAssistancePolicy::capabilities()];
+    }
     public function create(int $sid,int $uid,array $input): array
     {
-        if (!$this->member($sid,$uid)['can_manage']) self::fail('Only server facilitators can create tasks.',403);
+        if (!$this->member($sid,$uid)['can_publish']) self::fail('Facilitators can publish tasks only in servers they own.',403);
         $title=self::text($input['title']??null,160,'title',true); $instructions=self::text($input['instructions']??null,20000,'instructions',true);
         $language=$input['language']??''; $kind=$input['kind']??'';
         if (!in_array($language,self::LANGUAGES,true) || !in_array($kind,['assignment','practice'],true)) self::fail('Invalid task type or language.');
@@ -85,16 +96,16 @@ final class CodeLabService
         $cases=$mode==='automatic'?CodeLabExecutionService::validateCases($input['test_cases']??null,$language):[];
         $runtime=$language==='web'?null:CodeLabRunner::runtime($language);
         if($mode==='automatic'&&$language!=='web'&&(!(new CodeLabRunner())->enabled()||!$runtime))self::fail('Configure the runner and language before publishing an automatically graded task.');
-        $this->db->beginTransaction();
+        $owns=!$this->db->inTransaction();if($owns)$this->db->beginTransaction();
         try {
             $this->query('INSERT INTO code_lab_tasks (server_id,created_by,title,instructions,language,kind,starter_code,opens_at,due_at,duration_minutes,grading_mode,runtime_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',[$sid,$uid,$title,$instructions,$language,$kind,$starter,$opens,$due,$duration,$mode,$runtime]);
             $id=(int)$this->db->lastInsertId();
             foreach($cases as$pos=>$case)$this->query('INSERT INTO code_lab_test_cases(task_id,position,input_data,expected_output,hidden,weight) VALUES(?,?,?,?,?,?)',[$id,$pos,$case['input'],$case['expected_output'],(int)$case['hidden'],$case['weight']]);
-            $this->db->commit();
+            if($owns)$this->db->commit();
             require_once __DIR__.'/NotificationService.php';
             try { foreach($this->query('SELECT user_id FROM server_members WHERE server_id=?',[$sid])->fetchAll(PDO::FETCH_COLUMN)as$recipient)NotificationService::create($this->db,(int)$recipient,$uid,'class_update','New Code Lab task','Your facilitator published a coding activity.','/modules/code-lab/index.php?server_id='.$sid,'💻'); } catch(Throwable $notificationError) { error_log('[code-lab/notifications] delivery unavailable'); }
             return ['id'=>$id];
-        }catch(Throwable $e){if($this->db->inTransaction())$this->db->rollBack();throw $e;}
+        }catch(Throwable $e){if($owns&&$this->db->inTransaction())$this->db->rollBack();throw $e;}
     }
     /** Unique (task,user) makes double clicks and refreshes resume the same session. */
     public function start(int $sid,int $uid,int $tid): array

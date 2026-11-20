@@ -1,0 +1,18 @@
+[Unit]
+Description=eCollab durable Jarred DM reply worker %i
+After=network-online.target mariadb.service ollama.service
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/home/ecollabadmin/ecollab-inspect
+ExecStart=/usr/bin/php /home/ecollabadmin/ecollab-inspect/scripts/jarred-reply-worker.php --watch
+Restart=on-failure
+RestartSec=2
+TimeoutStopSec=330
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

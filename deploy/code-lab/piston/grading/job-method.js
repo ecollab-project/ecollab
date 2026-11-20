@@ -89,4 +89,25 @@
             for (const file of snapshot) if (file.content) file.content.fill(0);
         }
     }
+    async ecollab_execute_live(box, bus) {
+        if (this.state !== job_states.PRIMED) throw Error('Unprimed live job');
+        const files=this.files.filter(f=>f.encoding==='utf8');
+        this.ecollab_live=true;
+        if(this.runtime.compiled){
+            bus.emit('stage','compile');
+            const compiled=await this.safe_call(box,'compile',files.map(f=>f.name),30000,10000,536870912);
+            if(compiled.stdout)bus.emit('stdout',Buffer.from(compiled.stdout));
+            if(compiled.stderr)bus.emit('stderr',Buffer.from(compiled.stderr));
+            if(compiled.code!==0||compiled.signal||compiled.status)return {reason:'Compilation error',code:compiled.code};
+            if(bus.cancelled)throw Error('Stopped');
+            const old=box.dir;
+            box=await this.#create_isolate_box();
+            await fs.rename(path.join(old,'submission'),path.join(box.dir,'submission'));
+        }
+        if(bus.cancelled)throw Error('Stopped');
+        bus.emit('stage','run');
+        const run=await this.safe_call(box,'run',[files[0].name],120000,2000,268435456,bus);
+        this.state=job_states.EXECUTED;
+        return {reason:run.status==='TO'?'Time limit exceeded':run.code===0?'Finished':'Runtime error',code:run.code};
+    }
     // ECOLLAB_GRADE_V1_END

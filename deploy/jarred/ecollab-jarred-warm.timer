@@ -1,0 +1,12 @@
+[Unit]
+Description=Keep the configured Jarred model warm between conversations
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=8min
+AccuracySec=15s
+RandomizedDelaySec=15s
+Unit=ecollab-jarred-warm.service
+
+[Install]
+WantedBy=timers.target

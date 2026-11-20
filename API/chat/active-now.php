@@ -59,9 +59,7 @@ if ($action === 'join_voice') {
             echo json_encode(['success'=>false,'error'=>'Voice channel access denied']);
             exit;
         }
-        $db->prepare("UPDATE users SET voice_channel_id=:cid WHERE id=:id")
-           ->execute([':cid' => $channelId, ':id' => $userId]);
-        $tempVoice->markJoined($channelId);
+        $tempVoice->joinChannel($userId, $channelId);
     }
     echo json_encode(['success' => true]);
     exit;
@@ -69,12 +67,8 @@ if ($action === 'join_voice') {
 
 // ── Leave voice ───────────────────────────────────────────────────────────
 if ($action === 'leave_voice') {
-    $oldStmt = $db->prepare("SELECT voice_channel_id FROM users WHERE id=:id LIMIT 1");
-    $oldStmt->execute([':id'=>$userId]);
-    $oldChannelId = (int)($oldStmt->fetchColumn() ?: 0);
-    $db->prepare("UPDATE users SET voice_channel_id=NULL WHERE id=:id")
-       ->execute([':id' => $userId]);
-    if ($oldChannelId > 0) $tempVoice->markLeftAndSchedule($oldChannelId);
+    $expectedChannelId=(int)($_POST['channel_id']??0);
+    $tempVoice->leaveChannel($userId,$expectedChannelId);
     echo json_encode(['success' => true]);
     exit;
 }

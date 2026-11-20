@@ -88,6 +88,12 @@ function client(id){
  a.w.endDmCall();
  // Closing while authorization is pending cannot resurrect a camera/call.
  let complete;a.w.fetch=()=>new Promise(r=>complete=r);const pending=a.w.startDmCall(true);await tick();a.w.endDmCall();complete({ok:true,json:async()=>({success:true,url:'wss://test',token:'x'})});await pending;assert(!a.w.EcollabCalls.room);
+ const workspace=client(9);workspace.w.EcollabCallContinuity={remoteActive:()=>true,refresh(){}};
+ await workspace.w.EcollabCalls.handle({type:'dm_call_offer',media:'livekit',log_id:88,from_user_id:2});
+ await workspace.w.EcollabCalls.handle({type:'dm_group_call_start',group_id:7,from_user_id:2});
+ assert.equal(workspace.sent.length,0,'workspace tabs defer incoming offers to the media owner');
+ assert(!workspace.w.document.querySelector('.ec-call'),'workspace cannot create a second incoming call');
+ assert(workspace.w.EcollabCalls.busy(),'workspace cannot join a competing call');
  for(const c of clients)c.dom.window.close();
  console.log('PASS: independent cameras, local group preview, call-id isolation, six tiles, cleanup, quality and cancellation');
 })().catch(e=>{console.error(e);for(const c of clients)c.dom.window.close();process.exitCode=1;});

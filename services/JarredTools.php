@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/PeerSemanticClient.php';
+require_once __DIR__.'/JarredCapabilities.php';
 
 require_once dirname(__DIR__) . '/database/config/db.php';
 require_once dirname(__DIR__) . '/services/ChannelService.php';
@@ -25,14 +27,7 @@ final class JarredTools
 
     public function toolDefinitions(): array
     {
-        return [
-            ['type'=>'function','function'=>['name'=>'get_active_members','description'=>'Get live active/idle/voice members for the current accessible eCollab server.','parameters'=>['type'=>'object','properties'=>[]]]],
-            ['type'=>'function','function'=>['name'=>'get_peer_matches','description'=>'Get deterministic eCollab peer matches for the requester, optionally scoped to the current server.','parameters'=>['type'=>'object','properties'=>['limit'=>['type'=>'integer','minimum'=>1,'maximum'=>12]]]]],
-            ['type'=>'function','function'=>['name'=>'get_servers_and_channels','description'=>'List eCollab servers and channels the requester is authorized to access.','parameters'=>['type'=>'object','properties'=>[]]]],
-            ['type'=>'function','function'=>['name'=>'search_messages','description'=>'Search authorized eCollab channel messages. Use only when the user asks to find or recall messages/discussions.','parameters'=>['type'=>'object','properties'=>['query'=>['type'=>'string'],'limit'=>['type'=>'integer','minimum'=>1,'maximum'=>25]],'required'=>['query']]]],
-            ['type'=>'function','function'=>['name'=>'get_collaboration_context','description'=>'Get authorized Coworkspace/document/whiteboard metadata and presence for the current eCollab surface.','parameters'=>['type'=>'object','properties'=>[]]]],
-            ['type'=>'function','function'=>['name'=>'get_library_recommendations','description'=>'Get academic book/library recommendations personalized for the requester or current server.','parameters'=>['type'=>'object','properties'=>['query'=>['type'=>'string']]]]],
-        ];
+        return JarredCapabilities::tools();
     }
 
     public function executeTool(int $requesterId, string $name, array $arguments, ?int $activeServerId = null, array $surface = []): array
@@ -177,29 +172,44 @@ final class JarredTools
     public function peerMatches(int $requesterId, ?int $serverId = null, int $limit = 8): array
     {
         $limit = max(1, min(12, $limit));
-        $mine = $this->loadMatchingProfile($requesterId);
+        if (!(int)UserPreferences::get($this->db, $requesterId)['ai_matching']) {
+            return ['profile_ready'=>false, 'matches'=>[]];
+        }
+        $engine = new PeerMatchingService();
+        $mine = $engine->loadProfile($this->db, $requesterId);
         if (!$this->profileReady($mine)) return ['profile_ready'=>false,'matches'=>[]];
 
-        $sql = "SELECT DISTINCT u.id,u.username,u.full_name,u.role,u.bio,u.is_online,u.last_active_at
+        $sql = "SELECT DISTINCT u.id,u.username,u.full_name,u.role,u.bio,u.last_active_at,
+                    CASE WHEN EXISTS(SELECT 1 FROM user_settings privacy
+                        WHERE privacy.user_id=u.id AND privacy.activity_status=0)
+                    THEN 0 ELSE u.is_online END AS is_online
                 FROM users u";
         $params = [':uid'=>$requesterId];
-        if ($serverId && $this->canAccessServer($requesterId, $serverId)) {
+        if ($serverId && !$this->canAccessServer($requesterId, $serverId)) {
+            return ['profile_ready'=>true, 'matches'=>[]];
+        }
+        if ($serverId) {
             $sql .= " JOIN server_members sm ON sm.user_id=u.id AND sm.server_id=:sid";
             $params[':sid'] = $serverId;
         }
         $sql .= " WHERE u.id<>:uid AND u.deleted_at IS NULL
                   AND u.status NOT IN ('banned','suspended','deactivated')
                   AND COALESCE(u.is_system,0)=0
-                  ORDER BY u.is_online DESC,u.last_active_at DESC LIMIT 100";
+                  AND NOT EXISTS(SELECT 1 FROM user_settings settings
+                                 WHERE settings.user_id=u.id AND settings.ai_matching=0)
+                  ORDER BY is_online DESC,u.last_active_at DESC LIMIT 100";
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
 
-        $engine = new PeerMatchingService();
+        $candidates = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $profiles = $engine->loadProfiles($this->db, array_column($candidates, 'id'));
+        $profiles = array_map(static fn($candidate) => $profiles[(int)$candidate['id']], $candidates);
+        $semantic = (new PeerSemanticClient())->scores($mine, $profiles);
         $matches = [];
-        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $candidate) {
-            $profile = $this->loadMatchingProfile((int)$candidate['id']);
+        foreach ($candidates as $index => $candidate) {
+            $profile = $profiles[$index];
             if (!$this->profileReady($profile)) continue;
-            $score = $engine->scoreProfiles($mine, $profile);
+            $score = $engine->scoreProfiles($mine, $profile, $semantic[$index]);
             $matches[] = [
                 'id'=>(int)$candidate['id'],
                 'name'=>(string)($candidate['full_name'] ?: $candidate['username']),
@@ -436,15 +446,6 @@ final class JarredTools
         $clean = preg_replace('/\\b(jarred|please|can you|could you|recommend|recommended|suggest|find|show|give|me|some|books?|ebooks?|textbooks?|resources?|references?|library|for|this|current|our|server|my|about|on|to|read|reading)\\b/i', ' ', $prompt);
         $clean = trim(preg_replace('/\\s+/', ' ', (string)$clean));
         return mb_substr($clean, 0, 100);
-    }
-
-    private function loadMatchingProfile(int $userId): array
-    {
-        $p=$this->db->prepare('SELECT * FROM pm_user_study_prefs WHERE user_id=?');$p->execute([$userId]);
-        $s=$this->db->prepare('SELECT subject_id,role,proficiency FROM pm_user_subjects WHERE user_id=?');$s->execute([$userId]);
-        $i=$this->db->prepare('SELECT interest_id FROM pm_user_interests WHERE user_id=?');$i->execute([$userId]);
-        $h=$this->db->prepare('SELECT hobby_id FROM pm_user_hobbies WHERE user_id=?');$h->execute([$userId]);
-        return ['prefs'=>$p->fetch(PDO::FETCH_ASSOC)?:[],'subjects'=>$s->fetchAll(PDO::FETCH_ASSOC),'interests'=>$i->fetchAll(PDO::FETCH_ASSOC),'hobbies'=>$h->fetchAll(PDO::FETCH_ASSOC)];
     }
 
     private function profileReady(array $p): bool

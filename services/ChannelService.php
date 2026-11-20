@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/database/config/db.php';
+require_once __DIR__ . '/AccountType.php';
 require_once __DIR__.'/ChannelReadQueries.php';
 
 class ChannelService
@@ -153,8 +154,9 @@ class ChannelService
      */
     public function getOnlineMembers(int $serverId, int $viewerId = 0, ?int $limit = null): array
     {
+        $accountType = AccountType::sql();
         $stmt = $this->db->prepare("
-            SELECT u.id, u.username, u.full_name,
+            SELECT u.id, u.username, u.full_name, $accountType AS account_type,
                    CASE
                        WHEN u.avatar_url IS NULL OR TRIM(u.avatar_url) = '' THEN ''
                        WHEN u.avatar_url LIKE 'http://%' OR u.avatar_url LIKE 'https://%' THEN u.avatar_url
