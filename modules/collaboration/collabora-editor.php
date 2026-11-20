@@ -43,7 +43,7 @@ body.collabora-page {
     box-sizing: border-box;
     display: grid;
     grid-template-rows: auto auto minmax(0, 1fr);
-    height: var(--app-viewport-height, 100dvh);
+    height: min(100dvh, var(--app-viewport-height, 100dvh));
     margin: 0;
     font: 14px system-ui, sans-serif;
 }
@@ -75,7 +75,7 @@ body.collabora-page > main > iframe { display: block; width: 100%; height: 100%;
     inset: 0 0 0 auto;
     margin: 0;
     width: min(100%, 25rem);
-    height: var(--app-viewport-height, 100dvh);
+    height: min(100dvh, var(--app-viewport-height, 100dvh));
     max-width: 100%;
     max-height: 100dvh;
     overflow: auto;
@@ -108,11 +108,16 @@ body.collabora-page > main > iframe { display: block; width: 100%; height: 100%;
 .collabora-tools pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
 .collabora-tools :is(p, small) { overflow-wrap: anywhere; }
 .collabora-tools [role="status"]:empty { margin: 0; }
-@media (max-width: 750px) {
+.collabora-mobile-actions { display: none; }
+@media (max-width: 820px) {
     body.collabora-page > .collabora-header { gap: 0 6px; padding: 4px 8px; }
+    .collabora-header nav { margin-inline-start: auto; }
+    .collabora-header nav a { display: none; }
     .collabora-header h1 { order: -1; flex-basis: 100%; }
     .collabora-header h1 span { display: inline; margin-inline-start: 6px; }
     .collabora-header a, .collabora-header button { padding-inline: 6px; }
+    .collabora-mobile-actions { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+    .collabora-mobile-actions a { display: inline-flex; align-items: center; min-height: 44px; }
     .collabora-tools {
         inset: auto 0 0;
         width: 100%;
@@ -127,6 +132,10 @@ body.collabora-page > main > iframe { display: block; width: 100%; height: 100%;
 <?php
 $permissionLabels = ['edit' => 'Can edit', 'view' => 'View only', 'comment' => 'View only'];
 $documentAiEnabled = env('DOCUMENT_AI_ENABLED', 'false') === 'true';
+$downloadUrl = BASE_URL . '/API/collaboration/document-download.php?id=' . $id;
+$reportUrl = (int)$d['created_by'] !== (int)$user['id']
+    ? BASE_URL . '/modules/collaboration/report-document.php?id=' . $id
+    : null;
 ?>
 <body class="collabora-page" data-mobile-surface="editor">
 <header class="collabora-header">
@@ -134,9 +143,9 @@ $documentAiEnabled = env('DOCUMENT_AI_ENABLED', 'false') === 'true';
     <h1><?=coEscape($d['title'])?> <span><?=coEscape($permissionLabels[$a['permission']] ?? 'View only')?></span></h1>
     <nav aria-label="Document actions">
         <button type="button" id="open-document-tools" aria-haspopup="dialog" aria-controls="document-tools">Document tools</button>
-        <a href="<?=coEscape(BASE_URL)?>/API/collaboration/document-download.php?id=<?=$id?>">Download</a>
-        <?php if ((int)$d['created_by'] !== (int)$user['id']): ?>
-            <a target="_blank" rel="noopener" href="<?=coEscape(BASE_URL)?>/modules/collaboration/report-document.php?id=<?=$id?>">Report</a>
+        <a href="<?=coEscape($downloadUrl)?>">Download</a>
+        <?php if ($reportUrl !== null): ?>
+            <a target="_blank" rel="noopener" href="<?=coEscape($reportUrl)?>">Report</a>
         <?php endif ?>
     </nav>
 </header>
@@ -149,6 +158,12 @@ $documentAiEnabled = env('DOCUMENT_AI_ENABLED', 'false') === 'true';
         <h2 id="document-tools-title">Document tools</h2>
         <button id="close-document-tools" type="button" autofocus>Close</button>
     </div>
+    <nav class="collabora-mobile-actions" aria-label="Document actions">
+        <a href="<?=coEscape($downloadUrl)?>">Download</a>
+        <?php if ($reportUrl !== null): ?>
+            <a target="_blank" rel="noopener" href="<?=coEscape($reportUrl)?>">Report</a>
+        <?php endif ?>
+    </nav>
     <details>
         <summary>Version history</summary>
         <div>
@@ -232,8 +247,55 @@ const openTools = document.getElementById('open-document-tools');
 openTools.addEventListener('click', () => toolsDialog.showModal());
 document.getElementById('close-document-tools').addEventListener('click', () => toolsDialog.close());
 toolsDialog.addEventListener('close', () => openTools.focus());
-document.getElementById('launch').submit();
-document.getElementById('launch').remove();
+const officeFrame = document.querySelector('iframe[name="office"]');
+const launch = document.getElementById('launch');
+const officeOrigin = new URL(launch.action).origin;
+const narrowEditor = window.matchMedia('(max-width: 820px)');
+let officeLoaded = false;
+const launchedCompact = narrowEditor.matches;
+let compactRequested;
+
+function postToOffice(MessageId, Values = {}) {
+    officeFrame.contentWindow.postMessage(JSON.stringify({ MessageId, SendTime: Date.now(), Values }), officeOrigin);
+}
+
+function updateOfficeLayout() {
+    if (!officeLoaded) return;
+    const compact = narrowEditor.matches;
+    if (compact === compactRequested || (!compact && compactRequested === undefined && !launchedCompact)) return;
+    compactRequested = compact;
+    postToOffice('Action_ChangeUIMode', { Mode: compactRequested ? 'classic' : 'notebookbar' });
+}
+
+window.addEventListener('message', event => {
+    if (event.origin !== officeOrigin || event.source !== officeFrame.contentWindow) return;
+    let message;
+    try {
+        message = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+    } catch {
+        return;
+    }
+    if (message?.MessageId !== 'App_LoadingStatus') return;
+    const status = message.Values?.Status;
+    if (status === 'Initialized' || status === 'Frame_Ready' || status === 'Document_Loaded') {
+        postToOffice('Host_PostmessageReady');
+    }
+    if (status === 'Document_Loaded') {
+        officeLoaded = true;
+        updateOfficeLayout();
+    }
+});
+narrowEditor.addEventListener('change', updateOfficeLayout);
+
+if (launchedCompact) {
+    const defaults = document.createElement('input');
+    defaults.type = 'hidden';
+    defaults.name = 'ui_defaults';
+    defaults.value = 'UIMode=compact;TextSidebar=false;SpreadsheetSidebar=false;PresentationSidebar=false;';
+    launch.append(defaults);
+}
+launch.submit();
+launch.remove();
 document.getElementById('related')?.addEventListener('click',async()=>{const out=document.getElementById('related-result');out.textContent='Finding files…';try{const res=await fetch(base+'/API/collaboration/document-related.php',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({id})});const data=await res.json();out.textContent='';for(const file of data.related||[]){const p=document.createElement('p'),a=document.createElement('a');a.textContent=file.title;a.href=file.url;p.append(a);out.append(p);}if(!out.children.length)out.textContent='No semantic suggestions available.';}catch{out.textContent='Suggestions unavailable.';}});
 document.getElementById('ask')?.addEventListener('click',async()=>{const b=document.getElementById('ask'),r=document.getElementById('result');b.disabled=true;r.textContent='Preparing suggestion…';try{const res=await fetch(base+'/API/collaboration/document-ai.php',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({id,action:document.getElementById('task').value,text:document.getElementById('excerpt').value})});const data=await res.json();r.textContent=data.suggestion||data.error||'Suggestion unavailable.';}catch{r.textContent='Suggestion unavailable. Your document is unaffected.';}finally{b.disabled=false;}});
 document.getElementById('upload').addEventListener('click',async()=>{const out=document.getElementById('upload-result'),f=new FormData();f.set('action','upload');f.set('workspace_id',wid);f.set('title',document.getElementById('upload-title').value);const file=document.getElementById('upload-file').files[0];if(!file){out.textContent='Choose a file.';return;}f.set('file',file);out.textContent='Uploading…';try{const res=await fetch(base+'/API/collaboration/document-manage.php',{method:'POST',headers:{'X-CSRF-Token':csrf},body:f});const data=await res.json();out.textContent=data.error||'Imported. ';if(data.url){const a=document.createElement('a');a.href=data.url;a.textContent='Open imported file';a.target='_blank';a.rel='noopener';out.append(a);}}catch{out.textContent='Upload failed.';}});
