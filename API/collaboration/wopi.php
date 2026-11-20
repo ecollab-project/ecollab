@@ -27,7 +27,7 @@ try {
             readfile($path); exit;
         }
         $s = $db->prepare('SELECT COALESCE(NULLIF(full_name,""),username) FROM users WHERE id=?'); $s->execute([$a['uid']]);
-        echo json_encode([
+        $fileInfo = [
             'BaseFileName' => $d['file_name'], 'OwnerId' => (string)$d['created_by'],
             'Size' => filesize($path), 'UserId' => (string)$a['uid'],
             'UserFriendlyName' => (string)$s->fetchColumn(), 'Version' => (string)$d['version'],
@@ -35,7 +35,11 @@ try {
             'UserCanWrite' => $a['write'], 'ReadOnly' => !$a['write'],
             'SupportsUpdate' => true, 'SupportsLocks' => false,
             'UserCanRename' => false, 'SupportsRename' => false,
-        ], JSON_THROW_ON_ERROR); exit;
+        ];
+        if (str_starts_with(BASE_URL, 'https://')) {
+            $fileInfo['PostMessageOrigin'] = CollaboraService::origin(BASE_URL);
+        }
+        echo json_encode($fileInfo, JSON_THROW_ON_ERROR); exit;
     }
     if ($method !== 'POST' || !$contents || ($_SERVER['HTTP_X_WOPI_OVERRIDE'] ?? '') !== 'PUT') throw new RuntimeException('Unsupported operation.', 501);
     if (!$a['write']) throw new RuntimeException('Read-only document.', 403);
